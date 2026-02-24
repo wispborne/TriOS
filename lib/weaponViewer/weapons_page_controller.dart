@@ -71,6 +71,8 @@ final weaponsPageControllerProvider =
 class WeaponsPageController extends Notifier<WeaponsPageState> {
   @override
   WeaponsPageState build() {
+    final vanillaName = 'Vanilla';
+
     // Initialize filter categories
     final filterCategories = [
       GridFilter<Weapon>(
@@ -81,7 +83,12 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
       GridFilter<Weapon>(
         name: 'Mod',
         valueGetter: (weapon) =>
-            weapon.modVariant?.modInfo.nameOrId ?? 'Vanilla',
+            weapon.modVariant?.modInfo.nameOrId ?? vanillaName,
+        sortComparator: (a, b) => a == vanillaName
+            ? -1
+            : b == vanillaName
+            ? 1
+            : a.compareTo(b),
       ),
       GridFilter<Weapon>(
         name: 'Size',

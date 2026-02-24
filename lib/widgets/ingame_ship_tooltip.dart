@@ -1,26 +1,35 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:trios/shipSystemsManager/ship_system.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
+import 'package:trios/shipViewer/models/ship_weapon_slot.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
-/// Builds tooltip content for ships, replicating the layout and
-/// conditional logic of the game's `CargoTooltipFactory`.
+/// Builds tooltip content for ships, replicating the layout of the game's
+/// ship codex panel: title, two-column stats with sprite, system, mounts,
+/// armaments, hull mods, and design-type footer.
 class IngameShipTooltip {
   IngameShipTooltip._();
 
-  static const _maxWidth = 400.0;
+  static const _maxWidth = 720.0;
 
   // ───────────────────────── Convenience wrapper ─────────────────────────
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows ship stats on hover.
-  static Widget ship({required Ship ship, required Widget child}) {
+  static Widget ship({
+    required Ship ship,
+    required Map<String, ShipSystem> shipSystemsMap,
+    required Map<String, Weapon> weaponsMap,
+    required Widget child,
+  }) {
     return Builder(
       builder: (context) => MovingTooltipWidget.framed(
         tooltipWidget: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _maxWidth),
-          child: buildShipContent(ship, context),
+          child: buildShipContent(ship, shipSystemsMap, weaponsMap, context),
         ),
         child: child,
       ),
@@ -29,315 +38,539 @@ class IngameShipTooltip {
 
   // ───────────────────────── Ship tooltip ─────────────────────────
 
-  /// Builds the ship tooltip body with sections for combat, defense,
-  /// mobility, logistics, and economics.
-  static Widget buildShipContent(Ship ship, BuildContext context) {
+  static Widget buildShipContent(
+    Ship ship,
+    Map<String, ShipSystem> shipSystemsMap,
+    Map<String, Weapon> weaponsMap,
+    BuildContext context,
+  ) {
     final theme = Theme.of(context);
+    final highlightColor = theme.colorScheme.primary;
 
-    final shieldTypeUpper = ship.shieldType?.toUpperCase();
-    final hasShield = shieldTypeUpper != null &&
-        shieldTypeUpper != 'NONE' &&
-        shieldTypeUpper != 'PHASE';
-    final hasPhase = shieldTypeUpper == 'PHASE';
+    final shieldUpper = ship.shieldType?.toUpperCase();
+    final hasShield =
+        shieldUpper != null && shieldUpper != 'NONE' && shieldUpper != 'PHASE';
+    final hasPhase = shieldUpper == 'PHASE';
+    final defenseLabel = hasPhase
+        ? 'Phase cloak'
+        : hasShield
+        ? '${ship.shieldType!.toTitleCase()} shield'
+        : 'None';
 
-    final shipSprite = _shipSprite(ship);
-
-    final dimStyle = theme.textTheme.bodySmall?.copyWith(
-      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-    );
+    final sprite = _shipSprite(ship);
+    final mountGroups = _groupMounts(ship);
+    final hasBays = (ship.fighterBays ?? 0) > 0;
+    final List<String> armaments = [
+      ...(ship.builtInWeapons?.values ?? const Iterable.empty()).map(
+        (id) => weaponsMap[id]?.name ?? _toDisplay(id),
+      ),
+      ...(ship.builtInWings ?? const []).map(
+        (id) => _toDisplay(id),
+      ),
+    ];
+    final hullMods = ship.builtInMods ?? const [];
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Ship silhouette sprite ──
-        if (shipSprite != null) ...[
-          shipSprite,
-          const SizedBox(height: 8),
-        ],
-
         // ── Title ──
-        Text(
-          ship.hullNameForDisplay(),
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        if (ship.designation != null)
-          Text(
-            ship.designation!,
-            style: dimStyle,
-          ),
-
-        // ── Manufacturer + hull size (matching O0Oo.java: "Design type: [name]") ──
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Row(
-            children: [
-              if (ship.techManufacturer != null) ...[
-                Text('Design type: ', style: dimStyle),
-                Text(
-                  ship.techManufacturer!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.85),
-                  ),
-                ),
-                Text(
-                  '  \u2022  ${ship.hullSizeForDisplay()}',
-                  style: dimStyle,
-                ),
-              ] else
-                Text(ship.hullSizeForDisplay(), style: dimStyle),
-            ],
-          ),
-        ),
-
+        _buildTitle(ship, theme, highlightColor),
         const SizedBox(height: 8),
 
-        // ════════════ Combat data ════════════
-        _heading('Combat data', theme),
-        const SizedBox(height: 4),
-        _grid(theme, [
-          if (ship.fleetPts != null) _row('Fleet points', _fmt(ship.fleetPts)),
-          _row('Hull integrity', _fmt(ship.hitpoints)),
-          _row('Armor rating', _fmt(ship.armorRating)),
-          _gap,
-          _row('Flux capacity', _fmt(ship.maxFlux)),
-          _row('Flux dissipation', _fmt(ship.fluxDissipation)),
-          if (ship.ordnancePoints != null)
-            _row('Ordnance points', _fmt(ship.ordnancePoints)),
-          if (ship.fighterBays != null && ship.fighterBays! > 0)
-            _row('Fighter bays', _fmt(ship.fighterBays)),
-          if (ship.mountableWeaponSlotCount > 0)
-            _row('Weapon slots', '${ship.mountableWeaponSlotCount}'),
-        ]),
+        // ════════ Two columns: Logistical Data | Combat Performance + Sprite ════════
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 16,
+          children: [
+            // ── Left: Logistical Data ──
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 4,
+                children: [
+                  _sectionHeader('Logistical data', theme, highlightColor),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statsGrid(theme, [
+                          if (ship.crToDeploy != null)
+                            _row(
+                              'CR per deployment',
+                              '${_fmt(ship.crToDeploy)}%',
+                            ),
+                          if (ship.crPercentPerDay != null)
+                            _row(
+                              'CR recovery/day',
+                              '${_fmt(ship.crPercentPerDay)}%/day',
+                            ),
+                          if (ship.fleetPts != null)
+                            _row('Deployment points', _fmt(ship.fleetPts)),
+                          if (ship.peakCrSec != null)
+                            _row(
+                              'Peak performance',
+                              _peakTime(ship.peakCrSec!),
+                            ),
+                          _gap,
+                          if (ship.minCrew != null || ship.maxCrew != null)
+                            _row(
+                              'Crew',
+                              ship.minCrew == ship.maxCrew
+                                  ? _fmt(ship.maxCrew)
+                                  : '${_fmt(ship.minCrew)} \u2013 ${_fmt(ship.maxCrew)}',
+                            ),
+                          _row('Hull size', ship.hullSizeForDisplay()),
+                          if (ship.ordnancePoints != null)
+                            _row('Ordnance points', _fmt(ship.ordnancePoints)),
+                        ]),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: _statsGrid(theme, [
+                          if (ship.suppliesMo != null)
+                            _row('Maintenance/month', _fmt(ship.suppliesMo)),
+                          if (ship.suppliesRec != null)
+                            _row('Supplies to recover', _fmt(ship.suppliesRec)),
+                          if (ship.cargo != null)
+                            _row('Cargo', _fmt(ship.cargo)),
+                          if (ship.fuel != null)
+                            _row('Fuel capacity', _fmt(ship.fuel)),
+                          if (ship.maxBurn != null)
+                            _row('Max burn', _fmt(ship.maxBurn)),
+                          if (ship.fuelPerLY != null)
+                            _row('Fuel/light-year', _fmt(ship.fuelPerLY)),
+                        ]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-        // ════════════ Defense ════════════
-        if (hasShield || hasPhase) ...[
+            // ── Middle: Combat Performance ──
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 4,
+                children: [
+                  _sectionHeader('Combat performance', theme, highlightColor),
+                  _statsGrid(theme, [
+                    if (ship.hitpoints != null)
+                      _row('Hull integrity', _fmt(ship.hitpoints)),
+                    if (ship.armorRating != null)
+                      _row('Armor rating', _fmt(ship.armorRating)),
+                    _gap,
+                    _row('Defense', defenseLabel),
+                    if (hasShield) ...[
+                      if (ship.shieldArc != null)
+                        _row('Shield arc', '${_fmt(ship.shieldArc)}\u00B0'),
+                      if (ship.shieldUpkeep != null)
+                        _row('Shield upkeep/sec', _fmt(ship.shieldUpkeep)),
+                      if (ship.shieldEfficiency != null)
+                        _row(
+                          'Shield flux/damage',
+                          _fmt(ship.shieldEfficiency, forceDecimal: true),
+                        ),
+                    ],
+                    if (hasPhase) ...[
+                      if (ship.phaseCost != null)
+                        _row(
+                          'Phase cost',
+                          _fmt(ship.phaseCost, forceDecimal: true),
+                        ),
+                      if (ship.phaseUpkeep != null)
+                        _row(
+                          'Phase upkeep/sec',
+                          _fmt(ship.phaseUpkeep, forceDecimal: true),
+                        ),
+                    ],
+                    _gap,
+                    if (ship.maxFlux != null)
+                      _row('Flux capacity', _fmt(ship.maxFlux)),
+                    if (ship.fluxDissipation != null)
+                      _row('Flux dissipation', _fmt(ship.fluxDissipation)),
+                    _gap,
+                    if (ship.maxSpeed != null)
+                      _row('Top speed', _fmt(ship.maxSpeed)),
+                    if (ship.maxTurnRate != null)
+                      _row('Turn rate', '${_fmt(ship.maxTurnRate)}\u00B0/s'),
+                    if (ship.acceleration != null)
+                      _row('Acceleration', _fmt(ship.acceleration)),
+                    if (ship.mass != null) _row('Mass', _fmt(ship.mass)),
+                  ]),
+                ],
+              ),
+            ),
+            ?sprite,
+          ],
+        ),
+
+        // ════════ System / Mounts / Armaments / Hull Mods ════════
+        if (ship.systemId != null ||
+            mountGroups.isNotEmpty ||
+            hasBays ||
+            armaments.isNotEmpty ||
+            hullMods.isNotEmpty) ...[
           const SizedBox(height: 8),
-          _heading(hasPhase ? 'Phase cloak' : 'Shield data', theme),
-          const SizedBox(height: 4),
-          _grid(theme, [
-            if (hasShield) ...[
-              _row('Shield type', ship.shieldType!.toTitleCase()),
-              if (ship.shieldArc != null)
-                _row('Shield arc', '${_fmt(ship.shieldArc)}\u00B0'),
-              if (ship.shieldUpkeep != null)
-                _row('Shield upkeep', _fmt(ship.shieldUpkeep)),
-              if (ship.shieldEfficiency != null)
-                _row(
-                  'Shield efficiency',
-                  _fmt(ship.shieldEfficiency, forceDecimal: true),
+          _hairline(theme),
+          const SizedBox(height: 6),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 4,
+            children: [
+              if (ship.systemId != null)
+                Row(
+                  spacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      child: Text('System:', style: theme.textTheme.bodySmall),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _toDisplay(
+                          shipSystemsMap[ship.systemId!]?.name ??
+                              ship.systemId!,
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: highlightColor.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              if (mountGroups.isNotEmpty || hasBays)
+                Row(
+                  spacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      child: Text('Mounts:', style: theme.textTheme.bodySmall),
+                    ),
+                    Expanded(
+                      child: _mountWrap(
+                        mountGroups,
+                        ship.fighterBays,
+                        theme,
+                        highlightColor,
+                      ),
+                    ),
+                  ],
+                ),
+              if (armaments.isNotEmpty)
+                Row(
+                  spacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      child: Text(
+                        'Armaments:',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        armaments.join(", "),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.80,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              if (hullMods.isNotEmpty)
+                Row(
+                  spacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      child: Text(
+                        'Hull Mods:',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        hullMods.map(_toDisplay).join(", "),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.80,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
             ],
-            if (hasPhase) ...[
-              if (ship.phaseCost != null)
-                _row('Phase cost', _fmt(ship.phaseCost, forceDecimal: true)),
-              if (ship.phaseUpkeep != null)
-                _row(
-                  'Phase upkeep',
-                  _fmt(ship.phaseUpkeep, forceDecimal: true),
-                ),
-            ],
-          ]),
+          ),
         ],
 
-        // ════════════ Mobility ════════════
-        const SizedBox(height: 8),
-        _heading('Mobility', theme),
-        const SizedBox(height: 4),
-        _grid(theme, [
-          _row('Max speed', _fmt(ship.maxSpeed)),
-          if (ship.acceleration != null)
-            _row('Acceleration', _fmt(ship.acceleration)),
-          if (ship.deceleration != null)
-            _row('Deceleration', _fmt(ship.deceleration)),
-          if (ship.maxTurnRate != null)
-            _row('Max turn rate', '${_fmt(ship.maxTurnRate)}\u00B0/s'),
-          if (ship.turnAcceleration != null)
-            _row(
-              'Turn acceleration',
-              '${_fmt(ship.turnAcceleration)}\u00B0/s\u00B2',
-            ),
-          if (ship.mass != null) _row('Mass', _fmt(ship.mass)),
-        ]),
-
-        // ════════════ Logistics ════════════
-        const SizedBox(height: 8),
-        _heading('Logistics', theme),
-        const SizedBox(height: 4),
-        _grid(theme, [
-          if (ship.minCrew != null || ship.maxCrew != null)
-            _row('Crew', '${_fmt(ship.minCrew)} \u2013 ${_fmt(ship.maxCrew)}'),
-          if (ship.cargo != null) _row('Cargo', _fmt(ship.cargo)),
-          if (ship.fuel != null) _row('Fuel', _fmt(ship.fuel)),
-          if (ship.fuelPerLY != null)
-            _row('Fuel / light-year', _fmt(ship.fuelPerLY)),
-          if (ship.range != null) _row('Range (ly)', _fmt(ship.range)),
-          if (ship.maxBurn != null) _row('Max burn', _fmt(ship.maxBurn)),
-        ]),
-
-        // ════════════ Economics & CR ════════════
-        const SizedBox(height: 8),
-        _heading('Economics', theme),
-        const SizedBox(height: 4),
-        _grid(theme, [
-          if (ship.baseValue != null) _row('Base value', _fmt(ship.baseValue)),
-          if (ship.suppliesRec != null)
-            _row('Supplies to recover', _fmt(ship.suppliesRec)),
-          if (ship.suppliesMo != null)
-            _row('Maintenance / month', _fmt(ship.suppliesMo)),
-          _gap,
-          if (ship.crToDeploy != null)
-            _row('CR to deploy', '${_fmt(ship.crToDeploy! * 100)}%'),
-          if (ship.crPercentPerDay != null)
-            _row(
-              'CR % / day',
-              '${_fmt(ship.crPercentPerDay, forceDecimal: true)}%',
-            ),
-          if (ship.peakCrSec != null)
-            _row('Peak deployment time', _fmt(ship.peakCrSec)),
-          if (ship.crLossPerSec != null)
-            _row(
-              'CR degradation rate',
-              _fmt(ship.crLossPerSec, forceDecimal: true),
-            ),
-        ]),
+        // ════════ Design type footer ════════
+        if (ship.techManufacturer != null) ...[
+          const SizedBox(height: 8),
+          _hairline(theme),
+          const SizedBox(height: 6),
+          Row(
+            spacing: 6,
+            children: [
+              Text(
+                'Design type:',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.50),
+                ),
+              ),
+              Text(
+                ship.techManufacturer!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: highlightColor.withValues(alpha: 0.90),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 }
 
-// ───────────────────────── Private helpers ─────────────────────────
+// ───────────────────────── Layout helpers ─────────────────────────
 
-/// Returns a full-width ship silhouette sprite constrained to 120 px tall,
-/// or null if the resolved sprite path is unavailable.
-Widget? _shipSprite(Ship ship) {
-  final path = ship.spriteFile;
-  if (path == null) return null;
-  return Container(
-    constraints: const BoxConstraints(maxHeight: 120),
-    alignment: Alignment.center,
-    child: Image.file(
-      File(path),
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stack) => const SizedBox.shrink(),
-    ),
+/// Title block: ship name, optional designation as subtitle.
+Widget _buildTitle(Ship ship, ThemeData theme, Color highlightColor) {
+  final name = ship.hullNameForDisplay();
+  final designation = ship.designation;
+  final subtitle = designation != null && designation != name
+      ? designation
+      : null;
+
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        name,
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: highlightColor,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.3,
+        ),
+      ),
+      if (subtitle != null)
+        Text(
+          subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: highlightColor.withValues(alpha: 0.60),
+          ),
+        ),
+    ],
   );
 }
 
-/// Colored section heading bar.
-Widget _heading(String text, ThemeData theme) {
+/// Gold-accented section header bar with left border stripe.
+Widget _sectionHeader(String text, ThemeData theme, Color highlightColor) {
   return Container(
-    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
     decoration: BoxDecoration(
-      color: theme.colorScheme.primary.withValues(alpha: 0.15),
-      borderRadius: BorderRadius.circular(4),
+      color: highlightColor.withValues(alpha: 0.10),
+      border: Border(
+        left: BorderSide(
+          color: highlightColor.withValues(alpha: 0.65),
+          width: 2,
+        ),
+      ),
     ),
-    child: Text(
-      text,
-      textAlign: TextAlign.center,
-      style: theme.textTheme.bodySmall?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: theme.colorScheme.primary,
+    child: Center(
+      child: Text(
+        text,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: highlightColor.withValues(alpha: 0.90),
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.8,
+        ),
       ),
     ),
   );
 }
 
+/// Thin 1 dp horizontal rule between sections.
+Widget _hairline(ThemeData theme) => Divider(
+  height: 1,
+  thickness: 1,
+  color: theme.colorScheme.onSurface.withValues(alpha: 0.10),
+);
+
+/// Ship silhouette sprite constrained to 128 px tall, or null if unavailable.
+Widget? _shipSprite(Ship ship) {
+  final path = ship.spriteFile;
+  if (path == null) return null;
+  return ConstrainedBox(
+    constraints: const BoxConstraints(maxHeight: 128),
+    child: Image.file(
+      File(path),
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+    ),
+  );
+}
+
+/// Groups mountable slots by "Size Type" and returns a size-sorted map.
+Map<String, int> _groupMounts(Ship ship) {
+  final groups = <String, int>{};
+  for (final ShipWeaponSlot slot in ship.weaponSlots ?? const []) {
+    if (!slot.isMountable) continue;
+    final key = '${slot.size.toTitleCase()} ${slot.type.toTitleCase()}';
+    groups[key] = (groups[key] ?? 0) + 1;
+  }
+  const sizeOrder = {'Large': 0, 'Medium': 1, 'Small': 2};
+  return Map.fromEntries(
+    groups.entries.toList()..sort((a, b) {
+      final aO = sizeOrder[a.key.split(' ').first] ?? 9;
+      final bO = sizeOrder[b.key.split(' ').first] ?? 9;
+      return aO != bO ? aO.compareTo(bO) : a.key.compareTo(b.key);
+    }),
+  );
+}
+
+/// Renders mount groups + fighter bays as a wrapping list of rich-text items
+/// with the count portion highlighted in [highlightColor].
+Widget _mountWrap(
+  Map<String, int> groups,
+  double? fighterBays,
+  ThemeData theme,
+  Color highlightColor,
+) {
+  final baseStyle = theme.textTheme.bodySmall?.copyWith(
+    color: theme.colorScheme.onSurface.withValues(alpha: 0.80),
+  );
+  final countStyle = baseStyle?.copyWith(
+    color: highlightColor.withValues(alpha: 0.85),
+    fontWeight: FontWeight.bold,
+  );
+
+  final items = <({String count, String label})>[
+    ...groups.entries.map(
+      (e) => (count: '${e.value}\u00D7', label: ' ${e.key}'),
+    ),
+    if (fighterBays != null && fighterBays > 0)
+      (count: '${_fmt(fighterBays)}\u00D7', label: ' Fighter bay'),
+  ];
+
+  return Wrap(
+    spacing: 16,
+    runSpacing: 2,
+    children: items
+        .map(
+          (item) => Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: item.count, style: countStyle),
+                TextSpan(text: item.label, style: baseStyle),
+              ],
+            ),
+          ),
+        )
+        .toList(),
+  );
+}
+
+/// Renders a collection of raw IDs as small labelled chips.
+Widget _idWrap(Iterable<String> ids, ThemeData theme) {
+  return Wrap(
+    spacing: 4,
+    runSpacing: 4,
+    children: ids.map((id) => _idChip(id, theme)).toList(),
+  );
+}
+
+Widget _idChip(String id, ThemeData theme) {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
+    decoration: BoxDecoration(
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.07),
+      border: Border.all(
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.18),
+      ),
+      borderRadius: BorderRadius.circular(3),
+    ),
+    child: Text(
+      _toDisplay(id),
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+      ),
+    ),
+  );
+}
+
+/// Converts a snake_case / kebab-case id to a Title Cased display string.
+String _toDisplay(String id) =>
+    id.replaceAll('_', ' ').replaceAll('-', ' ').toTitleCase();
+
+/// Converts peak CR seconds to a human-readable duration string.
+String _peakTime(double secs) =>
+    secs >= 60 ? '${_fmt(secs / 60)} min' : '${_fmt(secs)} s';
+
+// ───────────────────────── Stats grid ─────────────────────────
+
 /// Builds a two-column [Table] from a list of [_StatEntry] items.
-Widget _grid(ThemeData theme, List<_StatEntry> entries) {
+Widget _statsGrid(ThemeData theme, List<_StatEntry> entries) {
   return Table(
-    columnWidths: const {
-      0: FlexColumnWidth(),
-      1: IntrinsicColumnWidth(),
-    },
+    columnWidths: const {0: FlexColumnWidth(), 1: IntrinsicColumnWidth()},
     defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
     textBaseline: TextBaseline.alphabetic,
     children: entries.map((e) => e._build(theme)).toList(),
   );
 }
 
-/// A label-value stat row.
+/// A label–value stat row.
 _StatEntry _row(String label, String value) =>
     _StatEntry(label: label, value: value);
 
-/// A full-width informational note (empty label, dimmer text).
-_StatEntry _note(String text) =>
-    _StatEntry(label: '', value: text, isNote: true);
-
-/// An empty separator row.
+/// An empty spacer row.
 const _gap = _StatEntry.gap();
 
 /// Formats a number to match the game's display logic.
 ///
 /// Integer-valued numbers render without decimals. Small fractional values
-/// show 1-2 decimal places; large ones (|n| > 10) are rounded.
+/// show 1–2 decimal places; large ones (|n| > 10) are rounded.
 /// [forceDecimal] prevents the integer shortcut (used for ratios like
 /// flux-per-damage).
 String _fmt(num? n, {bool forceDecimal = false}) {
   if (n == null) return '-';
   final v = n.toDouble();
 
-  // Integer check (game: Math.abs(Math.round(var0) - var0) < 1E-4).
   if (!forceDecimal && (v.roundToDouble() - v).abs() < 1e-4) {
     return v.round().toString();
   }
 
-  // 1-decimal check (game: round(v*100) == round(v*10)*10).
   if ((v * 100).round() == (v * 10).round() * 10) {
     return v.abs() > 10 ? v.round().toString() : v.toStringAsFixed(1);
   }
 
-  // 2 decimals.
   return v.abs() > 10 ? v.round().toString() : v.toStringAsFixed(2);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Lightweight descriptor for a single stat row or separator in a [Table].
+/// Lightweight descriptor for a single stat row or spacer in a [Table].
 class _StatEntry {
   final String label;
   final String value;
-  final bool isNote;
   final bool _isGap;
 
-  const _StatEntry({
-    required this.label,
-    required this.value,
-    this.isNote = false,
-  }) : _isGap = false;
+  const _StatEntry({required this.label, required this.value}) : _isGap = false;
 
-  const _StatEntry.gap()
-      : label = '',
-        value = '',
-        isNote = false,
-        _isGap = true;
+  const _StatEntry.gap() : label = '', value = '', _isGap = true;
 
   TableRow _build(ThemeData theme) {
     if (_isGap) {
       return const TableRow(
-        children: [SizedBox(height: 6), SizedBox(height: 6)],
-      );
-    }
-
-    final dimColor = theme.colorScheme.onSurface.withValues(alpha: 0.55);
-
-    // Full-width note (no label).
-    if (label.isEmpty) {
-      return TableRow(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 1),
-            child: Text(
-              value,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: dimColor,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-          const SizedBox.shrink(),
-        ],
+        children: [SizedBox(height: 5), SizedBox(height: 5)],
       );
     }
 
@@ -348,7 +581,7 @@ class _StatEntry {
           child: Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
             ),
           ),
         ),
@@ -358,6 +591,7 @@ class _StatEntry {
             value,
             textAlign: TextAlign.right,
             style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.95),
               fontWeight: FontWeight.bold,
             ),
           ),

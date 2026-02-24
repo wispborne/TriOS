@@ -598,8 +598,8 @@ class _CtrlSwappedTooltipState extends State<CtrlSwappedTooltip> {
 
   @override
   Widget build(BuildContext context) {
-    return _isCtrl
-        ? widget.ctrlBuilder(context)
-        : widget.defaultBuilder(context);
+    // TODO swap to new tooltip in 1.3.x
+    // return _isCtrl
+    return true ? widget.ctrlBuilder(context) : widget.defaultBuilder(context);
   }
 }

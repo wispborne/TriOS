@@ -68,6 +68,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
       ShipsPageStatePersistedMapper.ensureInitialized();
       ShipMapper.ensureInitialized();
       ShipSystemMapper.ensureInitialized();
+      WeaponMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -107,6 +108,13 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
   _f$shipSystemsMap = Field(
     'shipSystemsMap',
     _$shipSystemsMap,
+    opt: true,
+    def: const {},
+  );
+  static Map<String, Weapon> _$weaponsMap(ShipsPageState v) => v.weaponsMap;
+  static const Field<ShipsPageState, Map<String, Weapon>> _f$weaponsMap = Field(
+    'weaponsMap',
+    _$weaponsMap,
     opt: true,
     def: const {},
   );
@@ -154,6 +162,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
     #filterCategories: _f$filterCategories,
     #shipSearchIndices: _f$shipSearchIndices,
     #shipSystemsMap: _f$shipSystemsMap,
+    #weaponsMap: _f$weaponsMap,
     #allShips: _f$allShips,
     #filteredShips: _f$filteredShips,
     #shipsBeforeGridFilter: _f$shipsBeforeGridFilter,
@@ -167,6 +176,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
       filterCategories: data.dec(_f$filterCategories),
       shipSearchIndices: data.dec(_f$shipSearchIndices),
       shipSystemsMap: data.dec(_f$shipSystemsMap),
+      weaponsMap: data.dec(_f$weaponsMap),
       allShips: data.dec(_f$allShips),
       filteredShips: data.dec(_f$filteredShips),
       shipsBeforeGridFilter: data.dec(_f$shipsBeforeGridFilter),
@@ -263,6 +273,8 @@ abstract class ShipsPageStateCopyWith<$R, $In extends ShipsPageState, $Out>
     ShipSystemCopyWith<$R, ShipSystem, ShipSystem>
   >
   get shipSystemsMap;
+  MapCopyWith<$R, String, Weapon, WeaponCopyWith<$R, Weapon, Weapon>>
+  get weaponsMap;
   ListCopyWith<$R, Ship, ShipCopyWith<$R, Ship, Ship>> get allShips;
   ListCopyWith<$R, Ship, ShipCopyWith<$R, Ship, Ship>> get filteredShips;
   ListCopyWith<$R, Ship, ShipCopyWith<$R, Ship, Ship>>
@@ -272,6 +284,7 @@ abstract class ShipsPageStateCopyWith<$R, $In extends ShipsPageState, $Out>
     List<GridFilter<Ship>>? filterCategories,
     Map<String, List<String>>? shipSearchIndices,
     Map<String, ShipSystem>? shipSystemsMap,
+    Map<String, Weapon>? weaponsMap,
     List<Ship>? allShips,
     List<Ship>? filteredShips,
     List<Ship>? shipsBeforeGridFilter,
@@ -334,6 +347,13 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
     (v) => call(shipSystemsMap: v),
   );
   @override
+  MapCopyWith<$R, String, Weapon, WeaponCopyWith<$R, Weapon, Weapon>>
+  get weaponsMap => MapCopyWith(
+    $value.weaponsMap,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(weaponsMap: v),
+  );
+  @override
   ListCopyWith<$R, Ship, ShipCopyWith<$R, Ship, Ship>> get allShips =>
       ListCopyWith(
         $value.allShips,
@@ -360,6 +380,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
     List<GridFilter<Ship>>? filterCategories,
     Map<String, List<String>>? shipSearchIndices,
     Map<String, ShipSystem>? shipSystemsMap,
+    Map<String, Weapon>? weaponsMap,
     List<Ship>? allShips,
     List<Ship>? filteredShips,
     List<Ship>? shipsBeforeGridFilter,
@@ -371,6 +392,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
       if (filterCategories != null) #filterCategories: filterCategories,
       if (shipSearchIndices != null) #shipSearchIndices: shipSearchIndices,
       if (shipSystemsMap != null) #shipSystemsMap: shipSystemsMap,
+      if (weaponsMap != null) #weaponsMap: weaponsMap,
       if (allShips != null) #allShips: allShips,
       if (filteredShips != null) #filteredShips: filteredShips,
       if (shipsBeforeGridFilter != null)
@@ -388,6 +410,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
       or: $value.shipSearchIndices,
     ),
     shipSystemsMap: data.get(#shipSystemsMap, or: $value.shipSystemsMap),
+    weaponsMap: data.get(#weaponsMap, or: $value.weaponsMap),
     allShips: data.get(#allShips, or: $value.allShips),
     filteredShips: data.get(#filteredShips, or: $value.filteredShips),
     shipsBeforeGridFilter: data.get(

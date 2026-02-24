@@ -515,18 +515,21 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         name: '',
         isSortable: false,
         itemCellBuilder: (item, _) => MovingTooltipWidget.framed(
-          tooltipWidget: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: CtrlSwappedTooltip(
-              ctrlBuilder: (ctx) => Padding(
+          tooltipWidget: CtrlSwappedTooltip(
+            ctrlBuilder: (ctx) => ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Padding(
                 padding: const EdgeInsets.all(8),
                 child: SingleChildScrollView(
                   child: _buildShipInfoPane(item, theme, controllerState),
                 ),
               ),
-              defaultBuilder: (ctx) => Padding(
+            ),
+            defaultBuilder: (ctx) => ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 700),
+              child: Padding(
                 padding: const EdgeInsets.all(8),
-                child: IngameShipTooltip.buildShipContent(item, ctx),
+                child: IngameShipTooltip.buildShipContent(item, controllerState.shipSystemsMap, controllerState.weaponsMap, ctx),
               ),
             ),
           ),

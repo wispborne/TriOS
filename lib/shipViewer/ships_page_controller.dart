@@ -13,6 +13,8 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/weaponViewer/models/weapon.dart';
+import 'package:trios/weaponViewer/weapons_manager.dart';
 
 part 'ships_page_controller.mapper.dart';
 
@@ -26,6 +28,7 @@ class ShipsPageState with ShipsPageStateMappable {
   /// Ship properties, lowercase, by ship id.
   final Map<String, List<String>> shipSearchIndices;
   final Map<String, ShipSystem> shipSystemsMap;
+  final Map<String, Weapon> weaponsMap;
   final List<Ship> allShips;
   final List<Ship> filteredShips;
   final List<Ship> shipsBeforeGridFilter;
@@ -46,6 +49,7 @@ class ShipsPageState with ShipsPageStateMappable {
     this.filterCategories = const [],
     this.shipSearchIndices = const {},
     this.shipSystemsMap = const {},
+    this.weaponsMap = const {},
     this.allShips = const [],
     this.filteredShips = const [],
     this.shipsBeforeGridFilter = const [],
@@ -76,6 +80,7 @@ enum SpoilerLevel { showNone, showSlightSpoilers, showAllSpoilers }
 class ShipsPageController extends Notifier<ShipsPageState> {
   final slightSpoilerTags = ["codex_unlockable"];
   final spoilerTags = ["threat", "dweller"];
+  final vanillaName = 'Vanilla';
 
   @override
   ShipsPageState build() {
@@ -91,7 +96,14 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       ),
       GridFilter<Ship>(
         name: 'Mod',
-        valueGetter: (ship) => ship.modVariant?.modInfo.nameOrId ?? 'Vanilla',
+        valueGetter: (ship) {
+          return ship.modVariant?.modInfo.nameOrId ?? vanillaName;
+        },
+        sortComparator: (a, b) => a == vanillaName
+            ? -1
+            : b == vanillaName
+            ? 1
+            : a.compareTo(b),
       ),
       GridFilter<Ship>(
         name: 'System',
@@ -120,7 +132,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       ),
     ];
 
-    // Watch ship data and ship systems
+    // Watch ship data, ship systems, and weapons
     final shipsAsync = ref.watch(shipListNotifierProvider);
     final shipSystemsAsync = ref.watch(shipSystemsStreamProvider);
     final mods = ref.watch(AppState.mods);
@@ -129,6 +141,13 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     final allShips = shipsAsync.value ?? [];
     final shipSystems = shipSystemsAsync.value ?? [];
     final shipSystemsMap = shipSystems.associateBy((e) => e.id);
+
+    // TODO for 1.3.x
+    if (false) {
+      final weaponsAsync = ref.watch(weaponListNotifierProvider);
+      final weapons = weaponsAsync.value ?? [];
+      final weaponsMap = weapons.associateBy((e) => e.id);
+    }
 
     // Build search index from current ships (incremental update)
     Map<String, List<String>> shipSearchIndices = _updateSearchIndices(
@@ -150,6 +169,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             .copyWith(
               filterCategories: filterCategories,
               shipSystemsMap: shipSystemsMap,
+              // weaponsMap: weaponsMap,
+              weaponsMap: {},
               allShips: allShips,
               shipSearchIndices: shipSearchIndices,
               isLoading: isLoadingShips,

@@ -90,6 +90,7 @@ class Weapon with WeaponMappable implements WispGridItem {
   @MappableField(key: 'type')
   final String? weaponType;
   final String? size;
+  final String? damageType;
   final String? turretSprite;
   final String? turretGunSprite;
   final String? hardpointSprite;
@@ -153,6 +154,7 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.specClass,
     this.weaponType,
     this.size,
+    this.damageType,
     this.turretSprite,
     this.turretGunSprite,
     this.hardpointSprite,

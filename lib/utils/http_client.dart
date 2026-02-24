@@ -13,6 +13,9 @@ final triOSHttpClient = Provider<TriOSHttpClient>(
     maxConcurrentRequests: ref.watch(
       appSettings.select((s) => s.maxHttpRequestsAtOnce),
     ),
+    allowInsecureConnectionsByDefault: ref.watch(
+      appSettings.select((s) => s.allowInsecureConnections),
+    ),
   ),
 );
 
@@ -42,15 +45,19 @@ class ApiClientConfig {
 
 class TriOSHttpClient {
   final int maxConcurrentRequests;
+  final bool allowInsecureConnectionsByDefault;
   final HttpClient _defaultHttpClient;
   final HttpClient _selfSignedHttpClient;
   final Queue<_RequestItem> _requestQueue = Queue();
   final ApiClientConfig config;
   int _activeRequests = 0;
 
-  TriOSHttpClient({required this.config, this.maxConcurrentRequests = 10})
-    : _defaultHttpClient = HttpClient(),
-      _selfSignedHttpClient = HttpClient() {
+  TriOSHttpClient({
+    required this.config,
+    this.maxConcurrentRequests = 10,
+    this.allowInsecureConnectionsByDefault = false,
+  })  : _defaultHttpClient = HttpClient(),
+        _selfSignedHttpClient = HttpClient() {
     // Set up the client that allows self-signed certificates
     _selfSignedHttpClient.badCertificateCallback =
         (X509Certificate cert, String host, int port) => true;
@@ -65,7 +72,7 @@ class TriOSHttpClient {
   /// Sends an HTTP GET request to the specified [url] with optional headers and timeout.
   Future<TriOSHttpResponse<dynamic>> get(
     String endpointOrUrl, {
-    bool allowSelfSignedCertificates = false,
+    bool? allowSelfSignedCertificates,
     Map<String, String>? headers,
     Duration timeout = const Duration(seconds: 30),
     int tries = 2,
@@ -77,7 +84,8 @@ class TriOSHttpClient {
         return Future.error(Exception('Invalid URL: $url'));
       }
 
-      final client = allowSelfSignedCertificates
+      final useInsecure = allowSelfSignedCertificates ?? allowInsecureConnectionsByDefault;
+      final client = useInsecure
           ? _selfSignedHttpClient
           : _defaultHttpClient;
       return _retry(

@@ -70,6 +70,18 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
       mainAxisSize: MainAxisSize.min,
       spacing: 8,
       children: [
+        MovingTooltipWidget.text(
+          message: "If mods are failing to download or update, disabling verification of SSL certificates may help.",
+          child: CheckboxWithLabel(
+            value: ref.watch(appSettings.select((s) => s.allowInsecureConnections)),
+            onChanged: (value) {
+              ref.read(appSettings.notifier).update(
+                (state) => state.copyWith(allowInsecureConnections: value ?? false),
+              );
+            },
+            label: "Allow insecure HTTPS connections",
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Row(

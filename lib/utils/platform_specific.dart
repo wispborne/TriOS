@@ -124,7 +124,7 @@ void _moveToTrashMacOS(String path, bool deleteIfFailed) {
 
   if (result != 0) {
     Fimber.w(
-      "Failed to move file to Trash: ${errorPtr.value.toDartString()}. Reason: $result",
+      "Failed to move file to Trash: ${errorPtr.value}. Reason: $result",
     );
 
     if (deleteIfFailed) {

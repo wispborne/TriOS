@@ -324,6 +324,12 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   );
   static String? _$size(Weapon v) => v.size;
   static const Field<Weapon, String> _f$size = Field('size', _$size, opt: true);
+  static String? _$damageType(Weapon v) => v.damageType;
+  static const Field<Weapon, String> _f$damageType = Field(
+    'damageType',
+    _$damageType,
+    opt: true,
+  );
   static String? _$turretSprite(Weapon v) => v.turretSprite;
   static const Field<Weapon, String> _f$turretSprite = Field(
     'turretSprite',
@@ -433,6 +439,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #specClass: _f$specClass,
     #weaponType: _f$weaponType,
     #size: _f$size,
+    #damageType: _f$damageType,
     #turretSprite: _f$turretSprite,
     #turretGunSprite: _f$turretGunSprite,
     #hardpointSprite: _f$hardpointSprite,
@@ -498,6 +505,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       specClass: data.dec(_f$specClass),
       weaponType: data.dec(_f$weaponType),
       size: data.dec(_f$size),
+      damageType: data.dec(_f$damageType),
       turretSprite: data.dec(_f$turretSprite),
       turretGunSprite: data.dec(_f$turretGunSprite),
       hardpointSprite: data.dec(_f$hardpointSprite),
@@ -604,6 +612,7 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     String? specClass,
     String? weaponType,
     String? size,
+    String? damageType,
     String? turretSprite,
     String? turretGunSprite,
     String? hardpointSprite,
@@ -672,6 +681,7 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     Object? specClass = $none,
     Object? weaponType = $none,
     Object? size = $none,
+    Object? damageType = $none,
     Object? turretSprite = $none,
     Object? turretGunSprite = $none,
     Object? hardpointSprite = $none,
@@ -730,6 +740,7 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
       if (specClass != $none) #specClass: specClass,
       if (weaponType != $none) #weaponType: weaponType,
       if (size != $none) #size: size,
+      if (damageType != $none) #damageType: damageType,
       if (turretSprite != $none) #turretSprite: turretSprite,
       if (turretGunSprite != $none) #turretGunSprite: turretGunSprite,
       if (hardpointSprite != $none) #hardpointSprite: hardpointSprite,
@@ -796,6 +807,7 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     specClass: data.get(#specClass, or: $value.specClass),
     weaponType: data.get(#weaponType, or: $value.weaponType),
     size: data.get(#size, or: $value.size),
+    damageType: data.get(#damageType, or: $value.damageType),
     turretSprite: data.get(#turretSprite, or: $value.turretSprite),
     turretGunSprite: data.get(#turretGunSprite, or: $value.turretGunSprite),
     hardpointSprite: data.get(#hardpointSprite, or: $value.hardpointSprite),

@@ -159,9 +159,7 @@ class ModProfileManagerNotifier
       description: description,
       sortOrder:
           sortOrder ??
-          (state.value?.modProfiles.map((e) => e.sortOrder).maxOrNull ??
-                  0) +
-              1,
+          (state.value?.modProfiles.map((e) => e.sortOrder).maxOrNull ?? 0) + 1,
     );
 
     updateState(
@@ -172,8 +170,7 @@ class ModProfileManagerNotifier
   }
 
   void updateModProfile(ModProfile updatedProfile) {
-    final startingState =
-        state.value ?? const ModProfiles(modProfiles: []);
+    final startingState = state.value ?? const ModProfiles(modProfiles: []);
 
     final newModProfiles = startingState.modProfiles
         .map(
@@ -216,7 +213,7 @@ class ModProfileManagerNotifier
     };
 
     final profileModIdToShallow = {
-      for (var item in profileShallows) item.modId: item,
+      for (final item in profileShallows) item.modId: item,
     };
 
     // Mods present in both current and profile
@@ -242,17 +239,6 @@ class ModProfileManagerNotifier
           });
 
           if (toVariant == null) {
-            final highestVersion = mod?.findHighestVersion;
-            final targetVersion = modProfileVariant?.version;
-
-            final toVariantAlternate = highestVersion?.bestVersion == null
-                ? null
-                : targetVersion == null
-                ? highestVersion
-                : highestVersion!.bestVersion! > targetVersion
-                ? highestVersion
-                : null;
-
             // Missing variant
             return ModChange(
               modId: modId,
@@ -260,7 +246,10 @@ class ModProfileManagerNotifier
               fromVariant: fromVariant,
               toVariant: null,
               variantAsShallowMod: modProfileVariant,
-              toVariantAlternate: toVariantAlternate,
+              toVariantAlternate: _calculateBestAlternateForMissingVariant(
+                mod,
+                modProfileVariant,
+              ),
               changeType: ModChangeType.missingVariant,
             );
           }
@@ -290,7 +279,7 @@ class ModProfileManagerNotifier
         (v) => v.smolId == modProfileVariant!.smolVariantId,
       );
 
-      if (mod == null || toVariant == null) {
+      if (mod == null) {
         // Missing mod
         return ModChange(
           modId: modId,
@@ -300,6 +289,22 @@ class ModProfileManagerNotifier
           variantAsShallowMod: modProfileVariant,
           toVariantAlternate: null,
           changeType: ModChangeType.missingMod,
+        );
+      }
+
+      if (toVariant == null) {
+        // Mod exists, but the requested variant doesn't.
+        return ModChange(
+          modId: modId,
+          mod: mod,
+          fromVariant: null,
+          toVariant: null,
+          variantAsShallowMod: modProfileVariant,
+          toVariantAlternate: _calculateBestAlternateForMissingVariant(
+            mod,
+            modProfileVariant,
+          ),
+          changeType: ModChangeType.missingVariant,
         );
       }
 
@@ -340,6 +345,23 @@ class ModProfileManagerNotifier
     }).toList();
 
     return [...toSwap, ...toEnable, ...toDisable];
+  }
+
+  static ModVariant? _calculateBestAlternateForMissingVariant(
+    Mod? mod,
+    ShallowModVariant? modProfileVariant,
+  ) {
+    final highestVersion = mod?.findHighestVersion;
+    final targetVersion = modProfileVariant?.version;
+
+    final toVariantAlternate = highestVersion?.bestVersion == null
+        ? null
+        : targetVersion == null
+        ? highestVersion
+        : highestVersion!.bestVersion! > targetVersion
+        ? highestVersion
+        : null;
+    return toVariantAlternate;
   }
 
   Future<void> activateModProfile(String modProfileId) async {

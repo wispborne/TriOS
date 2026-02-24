@@ -47,6 +47,7 @@ class ModVariantMapper extends ClassMapperBase<ModVariant> {
   static const Field<ModVariant, Directory> _f$gameCoreFolder = Field(
     'gameCoreFolder',
     _$gameCoreFolder,
+    hook: DirectoryHook(),
   );
 
   @override

@@ -115,7 +115,7 @@ abstract class GenericAsyncSettingsManager<T> {
       final serializedData = await serialize(stateToWrite);
       await settingsFile.writeAsBytes(serializedData);
       lastKnownValue = stateToWrite;
-      Fimber.i("$fileName successfully written to disk.");
+      Fimber.v(() => "$fileName successfully written to disk.");
     });
   }
 

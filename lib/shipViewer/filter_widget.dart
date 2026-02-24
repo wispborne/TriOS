@@ -146,9 +146,11 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
         children: [
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: const BorderRadius.only(
+            borderRadius: .only(
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
+              bottomLeft: !_isExpanded ? .circular(12) : .zero,
+              bottomRight: !_isExpanded ? .circular(12) : .zero,
             ),
             child: Padding(
               padding: const EdgeInsets.all(4),
@@ -250,7 +252,7 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
               ),
             ),
           ),
-          const Divider(height: 1),
+          if (_isExpanded) const Divider(height: 1),
           if (_isExpanded)
             Padding(
               padding: const EdgeInsets.all(4),

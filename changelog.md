@@ -1,3 +1,28 @@
+# 1.3.4
+- Added
+  - Portraits now read game data to display more info.
+  - Portrait Viewer/Replacer now has filters.
+  - Warning if there are two of the same mod with the same version in your mods folder.
+- Changed
+  - Ship/Weapon filters are now sorted alphabetically (except hull sizes).
+  - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
+
+# 1.3.3
+- Added
+  - Debug setting: "Allow insecure HTTPS connections" to help with mod downloads failing due to SSL certificate verification issues.
+- Fixed
+  - Tips page did not load.
+  - Version Checker not using correct comparison algorithm (did not take special cases such as "RC" into account).
+  - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.
+    - Note: this was due to a bug in Sentry and was fixed by Sentry.
+  - "Clean Up" button for removing old mods didn't work due to a debug flag being left on.
+  - Mod Profiles: activating a profile now correctly reports Missing Version when the mod is installed but the profile references a version you don't have, instead of incorrectly reporting the whole mod as missing.
+  - Mods that use `//` as comments in their mod_info.json file no longer fail to install/show (e.g. Epitaph Frost).
+  - Ship/Weapon pages did not load if already selected on app start.
+  - Ship Viewer: Decorative 'weapons' are no longer counted as weapon slots.
+- Changed
+  - Removed `libarchive`, which was replaced by 7zip in 1.1.0.
+
 # 1.3.2
 - Fixed
   - Mod downloads never completing.

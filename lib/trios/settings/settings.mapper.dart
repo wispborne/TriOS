@@ -693,6 +693,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: true,
   );
+  static bool _$allowInsecureConnections(Settings v) =>
+      v.allowInsecureConnections;
+  static const Field<Settings, bool> _f$allowInsecureConnections = Field(
+    'allowInsecureConnections',
+    _$allowInsecureConnections,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -751,6 +759,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #showForceUpdateWarning: _f$showForceUpdateWarning,
     #showDonationButton: _f$showDonationButton,
     #showReportBugButton: _f$showReportBugButton,
+    #allowInsecureConnections: _f$allowInsecureConnections,
   };
   @override
   final bool ignoreNull = true;
@@ -817,6 +826,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       showForceUpdateWarning: data.dec(_f$showForceUpdateWarning),
       showDonationButton: data.dec(_f$showDonationButton),
       showReportBugButton: data.dec(_f$showReportBugButton),
+      allowInsecureConnections: data.dec(_f$allowInsecureConnections),
     );
   }
 
@@ -948,6 +958,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showForceUpdateWarning,
     bool? showDonationButton,
     bool? showReportBugButton,
+    bool? allowInsecureConnections,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1047,6 +1058,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? showForceUpdateWarning,
     bool? showDonationButton,
     bool? showReportBugButton,
+    bool? allowInsecureConnections,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1129,6 +1141,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (showDonationButton != null) #showDonationButton: showDonationButton,
       if (showReportBugButton != null)
         #showReportBugButton: showReportBugButton,
+      if (allowInsecureConnections != null)
+        #allowInsecureConnections: allowInsecureConnections,
     }),
   );
   @override
@@ -1285,6 +1299,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     showReportBugButton: data.get(
       #showReportBugButton,
       or: $value.showReportBugButton,
+    ),
+    allowInsecureConnections: data.get(
+      #allowInsecureConnections,
+      or: $value.allowInsecureConnections,
     ),
   );
 

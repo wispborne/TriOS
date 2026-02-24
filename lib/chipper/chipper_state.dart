@@ -40,7 +40,7 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
   }
 
   void parseLogAndSetState(LogFile? next) {
-    if (next == null) return;
+    if (next == null || state.isLoading) return;
     state = const AsyncValue.loading();
 
     compute(handleNewLogContent, next.contents).then((LogChips? chips) {

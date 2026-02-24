@@ -561,9 +561,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         key: 'weaponSlotCount',
         name: 'Wpns',
         isSortable: true,
-        getSortValue: (ship) => ship.weaponSlots?.length ?? 0,
-        itemCellBuilder: (item, _) => Text('${item.weaponSlots?.length ?? 0}'),
-        csvValue: (ship) => ship.weaponSlots?.length.toString(),
+        getSortValue: (ship) => ship.mountableWeaponSlotCount,
+        itemCellBuilder: (item, _) => Text('${item.mountableWeaponSlotCount}'),
+        csvValue: (ship) => ship.mountableWeaponSlotCount.toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),
@@ -609,7 +609,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         col('fuelPerLY', 'Fuel/LY', (s) => s.fuelPerLY),
         col('range', 'Range', (s) => s.range),
         col('maxBurn', 'Max Burn', (s) => s.maxBurn),
-        col('baseValue', 'Credits (base)', (s) => s.baseValue),
+        col('baseValue', 'Credits (base)', (s) => s.baseValue.asCredits()),
         col('crPercentPerDay', 'CR%/Day', (s) => s.crPercentPerDay),
         col('crToDeploy', 'CR to Deploy', (s) => s.crToDeploy),
         col('peakCrSec', 'PPT', (s) => s.peakCrSec),
@@ -747,7 +747,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     );
   }
 
-  Column _buildShipInfoPane(
+  Widget _buildShipInfoPane(
     Ship s,
     ThemeData theme,
     ShipsPageState controllerState,
@@ -755,6 +755,17 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     final controller = ref.read(shipsPageControllerProvider.notifier);
     final gameCoreDir = controller.getGameCoreDir();
     final spriteDir = _getPathForSpriteName(s, gameCoreDir);
+
+    Widget section(String title) => Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Text(
+        title,
+        style: theme.textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,13 +838,22 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           theme,
         ),
         _kv('Hull Size', s.hullSizeForDisplay(), theme),
+        _kv('Designation', s.designation, theme),
+        _kv('Style', s.style?.toTitleCase(), theme),
         _kv(
           'System',
           controllerState.shipSystemsMap[s.systemId ?? ""]?.name ?? s.systemId,
           theme,
         ),
+        _kv(
+          'Defense',
+          controllerState.shipSystemsMap[s.defenseId ?? ""]?.name ??
+              s.defenseId,
+          theme,
+        ),
         _kv('Tech/Manufacturer', s.techManufacturer, theme),
-        const SizedBox(height: 12),
+        // Combat
+        section('Combat'),
         Wrap(
           runSpacing: 6,
           children: [
@@ -842,11 +862,86 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             _chip('Armor', _fmtNum(s.armorRating)),
             _chip('Max Flux', _fmtNum(s.maxFlux)),
             _chip('Flux Diss', _fmtNum(s.fluxDissipation)),
-            _chip('Shield', s.shieldType?.toTitleCase() ?? '-'),
-            _chip('Weapons', _fmtNum(s.weaponSlots?.length)),
-            if ((s.designation ?? '').isNotEmpty)
-              _chip('Designation', s.designation!),
-            if ((s.tags ?? []).isNotEmpty) _chip('Tags', s.tags!.join(", ")),
+            _chip('Ordnance Pts', _fmtNum(s.ordnancePoints)),
+            _chip('Fighter Bays', _fmtNum(s.fighterBays)),
+            _chip('Weapons', _fmtNum(s.mountableWeaponSlotCount)),
+          ],
+        ),
+        // Shields / Phase
+        if (s.shieldType != null) ...[
+          section('Shield / Phase'),
+          Wrap(
+            runSpacing: 6,
+            children: [
+              _chip('Shield', s.shieldType!.toTitleCase()),
+              _chip('Shield Arc', _fmtNum(s.shieldArc)),
+              _chip('Shield Upkeep', _fmtNum(s.shieldUpkeep)),
+              _chip('Shield Efficiency', _fmtNum(s.shieldEfficiency)),
+              _chip('Phase Cost', _fmtNum(s.phaseCost)),
+              _chip('Phase Upkeep', _fmtNum(s.phaseUpkeep)),
+            ],
+          ),
+        ],
+        // Mobility
+        section('Mobility'),
+        Wrap(
+          runSpacing: 6,
+          children: [
+            _chip('Max Speed', _fmtNum(s.maxSpeed)),
+            _chip('Acceleration', _fmtNum(s.acceleration)),
+            _chip('Deceleration', _fmtNum(s.deceleration)),
+            _chip('Turn Rate', _fmtNum(s.maxTurnRate)),
+            _chip('Turn Accel', _fmtNum(s.turnAcceleration)),
+            _chip('Mass', _fmtNum(s.mass)),
+          ],
+        ),
+        // Crew & Logistics
+        section('Crew & Logistics'),
+        Wrap(
+          runSpacing: 6,
+          children: [
+            _chip('Min Crew', _fmtNum(s.minCrew)),
+            _chip('Max Crew', _fmtNum(s.maxCrew)),
+            _chip('Cargo', _fmtNum(s.cargo)),
+            _chip('Fuel', _fmtNum(s.fuel)),
+            _chip('Fuel/LY', _fmtNum(s.fuelPerLY)),
+            _chip('Range', _fmtNum(s.range)),
+            _chip('Max Burn', _fmtNum(s.maxBurn)),
+          ],
+        ),
+        // Economics & CR
+        section('Economics & CR'),
+        Wrap(
+          runSpacing: 6,
+          children: [
+            _chip('Base Value', s.baseValue.asCredits()),
+            _chip('CR%/Day', _fmtNum(s.crPercentPerDay)),
+            _chip('CR to Deploy', _fmtNum(s.crToDeploy)),
+            _chip('PPT (s)', _fmtNum(s.peakCrSec)),
+            _chip('CR Loss/Sec', _fmtNum(s.crLossPerSec)),
+            _chip('Supplies/Mo', _fmtNum(s.suppliesMo)),
+            _chip('Supplies/Rec', _fmtNum(s.suppliesRec)),
+          ],
+        ),
+        // Misc
+        section('Misc'),
+        Wrap(
+          runSpacing: 6,
+          children: [
+            _chip('Rarity', s.rarity ?? '-'),
+            _chip('Break Prob', s.breakProb ?? '-'),
+            _chip('Min Pieces', _fmtNum(s.minPieces)),
+            _chip('Max Pieces', _fmtNum(s.maxPieces)),
+            _chip('Travel Drive', s.travelDrive ?? '-'),
+            _chip('Collision Radius', _fmtNum(s.collisionRadius)),
+            if ((s.hints ?? []).isNotEmpty) _chip('Hints', s.hints!.join(', ')),
+            if ((s.tags ?? []).isNotEmpty) _chip('Tags', s.tags!.join(', ')),
+            if ((s.builtInMods ?? []).isNotEmpty)
+              _chip('Built-in Mods', s.builtInMods!.join(', ')),
+            if ((s.builtInWings ?? []).isNotEmpty)
+              _chip('Built-in Wings', s.builtInWings!.join(', ')),
+            if ((s.builtInWeapons ?? {}).isNotEmpty)
+              _chip('Built-in Weapons', s.builtInWeapons!.values.join(', ')),
           ],
         ),
       ],
@@ -885,8 +980,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         color: Colors.black.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: RichText(
-        text: TextSpan(
+      child: SelectableText.rich(
+        TextSpan(
           style: const TextStyle(fontSize: 11, color: Colors.white70),
           children: [
             TextSpan(

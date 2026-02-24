@@ -374,6 +374,12 @@ class ShipMapper extends ClassMapperBase<Ship> {
     _$spriteName,
     opt: true,
   );
+  static String? _$spriteFile(Ship v) => v.spriteFile;
+  static const Field<Ship, String> _f$spriteFile = Field(
+    'spriteFile',
+    _$spriteFile,
+    opt: true,
+  );
   static String? _$style(Ship v) => v.style;
   static const Field<Ship, String> _f$style = Field(
     'style',
@@ -507,6 +513,7 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #shieldCenter: _f$shieldCenter,
     #shieldRadius: _f$shieldRadius,
     #spriteName: _f$spriteName,
+    #spriteFile: _f$spriteFile,
     #style: _f$style,
     #viewOffset: _f$viewOffset,
     #engineSlots: _f$engineSlots,
@@ -580,6 +587,7 @@ class ShipMapper extends ClassMapperBase<Ship> {
       shieldCenter: data.dec(_f$shieldCenter),
       shieldRadius: data.dec(_f$shieldRadius),
       spriteName: data.dec(_f$spriteName),
+      spriteFile: data.dec(_f$spriteFile),
       style: data.dec(_f$style),
       viewOffset: data.dec(_f$viewOffset),
       engineSlots: data.dec(_f$engineSlots),
@@ -718,6 +726,7 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
     List<double>? shieldCenter,
     double? shieldRadius,
     String? spriteName,
+    String? spriteFile,
     String? style,
     double? viewOffset,
     List<dynamic>? engineSlots,
@@ -900,6 +909,7 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     Object? shieldCenter = $none,
     Object? shieldRadius = $none,
     Object? spriteName = $none,
+    Object? spriteFile = $none,
     Object? style = $none,
     Object? viewOffset = $none,
     Object? engineSlots = $none,
@@ -969,6 +979,7 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
       if (shieldCenter != $none) #shieldCenter: shieldCenter,
       if (shieldRadius != $none) #shieldRadius: shieldRadius,
       if (spriteName != $none) #spriteName: spriteName,
+      if (spriteFile != $none) #spriteFile: spriteFile,
       if (style != $none) #style: style,
       if (viewOffset != $none) #viewOffset: viewOffset,
       if (engineSlots != $none) #engineSlots: engineSlots,
@@ -1040,6 +1051,7 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     shieldCenter: data.get(#shieldCenter, or: $value.shieldCenter),
     shieldRadius: data.get(#shieldRadius, or: $value.shieldRadius),
     spriteName: data.get(#spriteName, or: $value.spriteName),
+    spriteFile: data.get(#spriteFile, or: $value.spriteFile),
     style: data.get(#style, or: $value.style),
     viewOffset: data.get(#viewOffset, or: $value.viewOffset),
     engineSlots: data.get(#engineSlots, or: $value.engineSlots),

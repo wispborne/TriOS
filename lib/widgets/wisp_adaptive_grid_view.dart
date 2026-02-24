@@ -49,6 +49,11 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
 
   final bool shrinkWrap;
 
+  /// An optional scroll controller for the internal [ListView].
+  /// When provided, [primary] is set to false on the ListView so it does not
+  /// attach to the [PrimaryScrollController].
+  final ScrollController? controller;
+
   /// Builds each item in the grid. You receive the [BuildContext], the item
   /// itself, and the absolute index of the item in [items].
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
@@ -62,6 +67,7 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
     required this.itemBuilder,
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
+    this.controller,
   });
 
   @override
@@ -86,7 +92,9 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
 
         return ListView.builder(
           padding: padding,
-          primary: true,
+          controller: controller,
+          primary: shrinkWrap || controller != null ? false : true,
+          physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
           itemCount: totalRows,
           shrinkWrap: shrinkWrap,
           itemBuilder: (context, rowIndex) {

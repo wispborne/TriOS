@@ -33,6 +33,7 @@ class Settings with SettingsMappable {
   /// DO NOT USE directly; use `AppState.modsFolder`
   @MappableField(hook: DirectoryHook())
   final Directory? modsDir;
+
   /// Whether custom mods folder is being used instead of the default
   final bool hasCustomModsDir;
 
@@ -110,6 +111,7 @@ class Settings with SettingsMappable {
   final bool showForceUpdateWarning;
   final bool showDonationButton;
   final bool showReportBugButton;
+  final bool allowInsecureConnections;
 
   Settings({
     this.gameDir,
@@ -179,7 +181,8 @@ class Settings with SettingsMappable {
     this.activeModProfileId,
     this.showForceUpdateWarning = true,
     this.showDonationButton = true,
-    this.showReportBugButton = true
+    this.showReportBugButton = true,
+    this.allowInsecureConnections = false,
   });
 }
 
@@ -200,7 +203,19 @@ enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 enum DashboardGridModUpdateVisibility { allVisible, hideMuted, hideAll }
 
 @MappableEnum(defaultValue: CompressionLib.sevenZip)
-enum CompressionLib { sevenZip, libarchive }
+enum CompressionLib {
+  sevenZip,
+  @Deprecated("Removed libarchive, use sevenZip")
+  libarchive,
+}
 
 @MappableEnum(defaultValue: DashboardModListSort.name)
-enum DashboardModListSort { loadOrder, name, author, version, vram, gameVersion, enabled }
+enum DashboardModListSort {
+  loadOrder,
+  name,
+  author,
+  version,
+  vram,
+  gameVersion,
+  enabled,
+}

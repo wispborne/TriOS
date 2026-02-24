@@ -35,6 +35,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
   bool get wantKeepAlive => true;
 
   final SearchController _searchController = SearchController();
+  final ScrollController _scrollController = ScrollController();
   bool _onlyEnabled = false;
   bool _showHidden = false;
   TipsGrouping _grouping = TipsGrouping.none;
@@ -332,9 +333,11 @@ class _TipsPageState extends ConsumerState<TipsPage>
       final List<Mod> sortedKeys = grouped.keys.toList()..sort();
 
       return Scrollbar(
+        controller: _scrollController,
         thumbVisibility: true,
         child: SingleChildScrollView(
-          primary: true,
+          controller: _scrollController,
+          primary: false,
           child: Padding(
             padding: const EdgeInsets.only(left: 8, right: 8),
             child: Column(
@@ -432,8 +435,10 @@ class _TipsPageState extends ConsumerState<TipsPage>
       return Padding(
         padding: const EdgeInsets.only(left: 8, right: 8),
         child: Scrollbar(
+          controller: _scrollController,
           thumbVisibility: true,
           child: WispAdaptiveGridView<ModTip>(
+            controller: _scrollController,
             items: modTips,
             minItemWidth: 350,
             horizontalSpacing: 8,
@@ -516,6 +521,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 }

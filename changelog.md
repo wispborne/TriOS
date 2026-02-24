@@ -1,10 +1,17 @@
-# 1.3.3
+# 1.3.4
 - Added
-  - Debug setting: "Allow insecure HTTPS connections" to help with mod downloads failing due to SSL certificate verification issues.
   - Portraits now read game data to display more info.
   - Portrait Viewer/Replacer now has filters.
   - Warning if there are two of the same mod with the same version in your mods folder.
+- Changed
+  - Ship/Weapon filters are now sorted alphabetically (except hull sizes).
+  - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
+
+# 1.3.3
+- Added
+  - Debug setting: "Allow insecure HTTPS connections" to help with mod downloads failing due to SSL certificate verification issues.
 - Fixed
+  - Tips page did not load.
   - Version Checker not using correct comparison algorithm (did not take special cases such as "RC" into account).
   - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.
     - Note: this was due to a bug in Sentry and was fixed by Sentry.
@@ -15,8 +22,6 @@
   - Ship Viewer: Decorative 'weapons' are no longer counted as weapon slots.
 - Changed
   - Removed `libarchive`, which was replaced by 7zip in 1.1.0.
-  - Ship/Weapon filters are now sorted alphabetically (except hull sizes).
-  - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
 
 # 1.3.2
 - Fixed

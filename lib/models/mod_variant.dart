@@ -27,6 +27,7 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
 
   // Really shouldn't be in here, and neither should the icon generation logic.
   // Should move that to an extension method and have the cache populated when generating variants.
+  @MappableField(hook: DirectoryHook())
   final Directory gameCoreFolder;
 
   ModVariant({

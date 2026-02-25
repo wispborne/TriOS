@@ -1,4 +1,4 @@
-# 1.3.4
+# 1.3.5
 - Added
   - Portraits now read game data to display more info.
   - Portrait Viewer/Replacer now has filters.
@@ -6,6 +6,10 @@
 - Changed
   - Ship/Weapon filters are now sorted alphabetically (except hull sizes).
   - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
+
+# 1.3.4
+- Fixed
+  - Portrait Replacer could crash the game (`EXCEPTION_ACCESS_VIOLATION`) if a portrait's dimensions weren't a power of two.
 
 # 1.3.3
 - Added

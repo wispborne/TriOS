@@ -214,24 +214,36 @@ public class PortraitReplacer {
      * @param source The sprite whose texture will be used as replacement
      */
     private static void replaceTexture(SpriteAPI target, SpriteAPI source) {
-        log.debug("Replacing texture: width=" + source.getWidth() + ", height=" + source.getHeight());
 
         try {
-            // Create a buffer to hold the texture data
-            int bufferSize = (int) (source.getWidth() * source.getHeight() * 4);
+            // Bind source texture and query actual GPU-stored dimensions.
+            // These may differ from the logical dimensions (e.g. a 253x253 image
+            // is stored as 256x256 on the GPU due to POT padding). Sizing the
+            // buffer from the logical dimensions causes a buffer overrun and
+            // EXCEPTION_ACCESS_VIOLATION for non-power-of-two textures.
+            source.bindTexture();
+            int actualWidth = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
+            int actualHeight = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
+
+            // Create a buffer sized for the actual GPU texture dimensions
+            int bufferSize = actualWidth * actualHeight * 4;
             FloatBuffer buffer = BufferUtils.createFloatBuffer(bufferSize);
+            log.debug("Replacing source texture: logical size=" + (int) source.getWidth() + "x" + (int) source.getHeight()
+                    + ", GPU size=" + actualWidth + "x" + actualHeight
+                    + ", buffer=" + bufferSize + " floats");
 
             // Get the source texture data
-            source.bindTexture();
             GL11.glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer);
 
             // Replace the target texture
             target.bindTexture();
             GL11.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                    (int) source.getWidth(), (int) source.getHeight(),
+                    actualWidth, actualHeight,
                     0, GL_RGBA, GL_FLOAT, buffer);
 
-            log.debug("Texture replacement completed successfully");
+            log.debug("Texture replacement completed successfully"
+                    + " (logical " + (int) source.getWidth() + "x" + (int) source.getHeight()
+                    + " -> GPU " + actualWidth + "x" + actualHeight + ")");
         } catch (Exception e) {
             log.warn("OpenGL error during texture replacement", e);
             throw e; // Re-throw to be handled by the caller

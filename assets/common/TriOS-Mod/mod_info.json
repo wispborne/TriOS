@@ -3,7 +3,7 @@
   "name": "zzz TriOS Companion",
   "author": "Wisp",
   "utility": "true",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Overrides portraits without needing to change actual mods.",
   "jars": [ "jars/TriOS-Companion-Mod.jar" ],
   "modPlugin": "wisp.trios.TriosCompanionModPlugin",

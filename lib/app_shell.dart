@@ -611,6 +611,8 @@ class _AppShellState extends ConsumerState<AppShell>
                                 await SentryFlutter.captureScreenshot();
                             SentryId id = Sentry.lastEventId;
 
+                            // TODO would be good to find a way to avoid capturing a message before the user has given consent
+                            // Need to generate an id, though.
                             if (id == SentryId.empty()) {
                               id = await Sentry.captureMessage(
                                 reportBugMagicString,

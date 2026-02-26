@@ -1,4 +1,4 @@
-# 1.3.5
+# 1.3.4
 - Added
   - Portraits now read game data to display more info.
   - Portrait Viewer/Replacer now has filters.
@@ -7,14 +7,11 @@
   - Ship/Weapon filters are now sorted alphabetically (except hull sizes).
   - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
 
-# 1.3.4
-- Fixed
-  - Portrait Replacer could crash the game (`EXCEPTION_ACCESS_VIOLATION`) if a portrait's dimensions weren't a power of two.
-
 # 1.3.3
 - Added
   - Debug setting: "Allow insecure HTTPS connections" to help with mod downloads failing due to SSL certificate verification issues.
 - Fixed
+  - Portrait Replacer could crash the game (`EXCEPTION_ACCESS_VIOLATION`) if a portrait's dimensions weren't a power of two.
   - Tips page did not load.
   - Version Checker not using correct comparison algorithm (did not take special cases such as "RC" into account).
   - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.

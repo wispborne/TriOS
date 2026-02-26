@@ -11,6 +11,7 @@
 - Added
   - Debug setting: "Allow insecure HTTPS connections" to help with mod downloads failing due to SSL certificate verification issues.
 - Fixed
+  - Portrait Replacer could crash the game (`EXCEPTION_ACCESS_VIOLATION`) if a portrait's dimensions weren't a power of two.
   - Tips page did not load.
   - Version Checker not using correct comparison algorithm (did not take special cases such as "RC" into account).
   - Linux: Not starting on some Linux forks due to the Execute bit being set in Sentry's SDK.

@@ -166,6 +166,7 @@ class CompanionModManager {
       // Update the gameVersion key
       jsonData['gameVersion'] = gameVersion;
       jsonData['id'] = Constants.companionModId;
+      jsonData['version'] = Constants.companionModVersion;
 
       // Write back to file with pretty formatting
       const encoder = JsonEncoder.withIndent('  ');

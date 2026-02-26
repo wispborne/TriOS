@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/models/version.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/toasts/mod_added_toast.dart';
 import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/companion_mod_update_toast.dart';
 
 import '../app_state.dart';
 import '../download_manager/download_manager.dart';
@@ -24,6 +27,7 @@ final _downloadToastIdsCreated = <String>{};
 class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
   final modAddedDebouncer = Debouncer(duration: Duration(milliseconds: 750));
   List<ModVariant>? modsAtTimeOfLastRefresh;
+  bool _companionModToastShown = false;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +51,27 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
       );
       // modsAtTimeOfLastRefresh = currMods.value?.toList();
       // });
+    });
+
+    ref.listen(AppState.mods, (_, mods) {
+      if (_companionModToastShown) return;
+      if (mods.isEmpty) return;
+      final companionMod = mods.firstWhereOrNull(
+        (m) => m.id == Constants.companionModId,
+      );
+      if (companionMod == null || !companionMod.isEnabledOnUi) return;
+      final installedVersion = companionMod.findFirstEnabled?.modInfo.version;
+      final requiredVersion = Version.parse(Constants.companionModVersion);
+      if (installedVersion != null && installedVersion < requiredVersion) {
+        _companionModToastShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          toastification.showCustom(
+            context: context,
+            builder: (context, item) =>
+                CompanionModUpdateToast(installedVersion, item),
+          );
+        });
+      }
     });
     final downloads = ref.watch(downloadManager).value.orEmpty().toList();
 

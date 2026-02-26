@@ -84,6 +84,7 @@ class Constants {
   static const num maxPathLength = 260;
   static const companionModFolderName = "TriOS-Mod";
   static const companionModId = "wisp_trios_companion";
+  static const companionModVersion = "1.0.1";
 
   static const String modRepoUrl =
       "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";

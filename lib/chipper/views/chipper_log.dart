@@ -10,12 +10,14 @@ class ChipperLog extends ConsumerStatefulWidget {
   final List<LogLine> errors;
   final bool showInfoLogs;
   final bool showInfoIcons;
+  final String? highlightQuery;
 
   const ChipperLog({
     super.key,
     required this.errors,
     required this.showInfoLogs,
     required this.showInfoIcons,
+    this.highlightQuery,
   });
 
   @override
@@ -129,6 +131,8 @@ class _ChipperLogState extends ConsumerState<ChipperLog> {
                                         Expanded(
                                           child: errors[index].createLogWidget(
                                             context,
+                                            highlightQuery:
+                                                widget.highlightQuery,
                                           ),
                                         ),
                                       ],

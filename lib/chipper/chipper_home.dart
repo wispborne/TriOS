@@ -163,7 +163,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                   theme.colorScheme.onSurface,
                                 ),
                               ),
-                              label: const Text("Open File"),
+                              label: const Text("Open Log File"),
                             ),
                         ],
                       ),
@@ -180,24 +180,24 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                           //           AssetImage("assets/images/halloween.png"),
                           //           size: 48,
                           //         ))),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Row(
-                              children: [
-                                TextButton.icon(
-                                  label: const Text("About Chipper"),
-                                  onPressed: () =>
-                                      showChipperAboutDialog(context, theme),
-                                  icon: const Icon(Icons.info),
-                                  style: ButtonStyle(
-                                    foregroundColor: WidgetStateProperty.all(
-                                      theme.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          // Padding(
+                          //   padding: const EdgeInsets.only(left: 8),
+                          //   child: Row(
+                          //     children: [
+                          //       TextButton.icon(
+                          //         label: const Text("About Chipper"),
+                          //         onPressed: () =>
+                          //             showChipperAboutDialog(context, theme),
+                          //         icon: const Icon(Icons.info),
+                          //         style: ButtonStyle(
+                          //           foregroundColor: WidgetStateProperty.all(
+                          //             theme.colorScheme.onSurface,
+                          //           ),
+                          //         ),
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
                         ],
                       ),
                     ],

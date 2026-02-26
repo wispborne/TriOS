@@ -2,6 +2,45 @@ import 'package:flutter/material.dart';
 
 import '../utils.dart';
 
+/// Splits [text] into alternating normal/highlighted [TextSpan]s wherever
+/// [query] matches (case-insensitive). Returns a single-element list when
+/// [query] is null/empty or there is no match, so callers can always spread
+/// the result directly into a parent TextSpan's children list.
+List<TextSpan> _highlightSpans(
+  String? text,
+  TextStyle style,
+  String? query,
+  Color highlightBg,
+) {
+  if (text == null || text.isEmpty || query == null || query.isEmpty) {
+    return [TextSpan(text: text, style: style)];
+  }
+  final lower = text.toLowerCase();
+  final lowerQ = query.toLowerCase();
+  final spans = <TextSpan>[];
+  int start = 0;
+  while (true) {
+    final idx = lower.indexOf(lowerQ, start);
+    if (idx == -1) {
+      if (start < text.length) {
+        spans.add(TextSpan(text: text.substring(start), style: style));
+      }
+      break;
+    }
+    if (idx > start) {
+      spans.add(TextSpan(text: text.substring(start, idx), style: style));
+    }
+    spans.add(
+      TextSpan(
+        text: text.substring(idx, idx + query.length),
+        style: style.copyWith(backgroundColor: highlightBg),
+      ),
+    );
+    start = idx + query.length;
+  }
+  return spans;
+}
+
 abstract class LogLine {
   int lineNumber;
   String fullError;
@@ -14,7 +53,7 @@ abstract class LogLine {
     required this.isPreviousThreadLine,
   });
 
-  Widget createLogWidget(BuildContext context);
+  Widget createLogWidget(BuildContext context, {String? highlightQuery});
 }
 
 class GeneralErrorLogLine extends LogLine {
@@ -55,44 +94,74 @@ class GeneralErrorLogLine extends LogLine {
   }
 
   @override
-  Widget createLogWidget(BuildContext context) {
-    return GeneralErrorLogLineWidget(logLine: this);
+  Widget createLogWidget(BuildContext context, {String? highlightQuery}) {
+    return GeneralErrorLogLineWidget(
+      logLine: this,
+      highlightQuery: highlightQuery,
+    );
   }
 }
 
 class GeneralErrorLogLineWidget extends StatelessWidget {
   final GeneralErrorLogLine logLine;
+  final String? highlightQuery;
 
-  const GeneralErrorLogLineWidget({super.key, required this.logLine});
+  const GeneralErrorLogLineWidget({
+    super.key,
+    required this.logLine,
+    this.highlightQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hl = theme.colorScheme.primary.withAlpha(80);
+
+    final timeStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(200),
+    );
+    final threadStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(140),
+    );
+    final levelStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(200),
+    );
+    final namespaceStyle = TextStyle(
+      color: theme.colorScheme.tertiary.withAlpha(200),
+    );
+    final errorStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(240),
+    );
 
     return Text.rich(
       softWrap: logLine.shouldWrap,
       TextSpan(
         style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240)),
         children: [
-          TextSpan(
-            text: logLine.time,
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(200)),
+          ..._highlightSpans(logLine.time, timeStyle, highlightQuery, hl),
+          ..._highlightSpans(
+            logLine.thread?.prepend(" "),
+            threadStyle,
+            highlightQuery,
+            hl,
           ),
-          TextSpan(
-            text: logLine.thread?.prepend(" "),
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(140)),
+          ..._highlightSpans(
+            logLine.logLevel?.prepend(" "),
+            levelStyle,
+            highlightQuery,
+            hl,
           ),
-          TextSpan(
-            text: logLine.logLevel?.prepend(" "),
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(200)),
+          ..._highlightSpans(
+            logLine.namespace?.prepend(" "),
+            namespaceStyle,
+            highlightQuery,
+            hl,
           ),
-          TextSpan(
-            text: logLine.namespace?.prepend(" "),
-            style: TextStyle(color: theme.colorScheme.tertiary.withAlpha(200)),
-          ),
-          TextSpan(
-            text: logLine.error?.prepend(" "),
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(240)),
+          ..._highlightSpans(
+            logLine.error?.prepend(" "),
+            errorStyle,
+            highlightQuery,
+            hl,
           ),
         ],
       ),
@@ -138,53 +207,67 @@ class StacktraceLogLine extends LogLine {
   }
 
   @override
-  Widget createLogWidget(BuildContext context) {
-    return StacktraceLogLineWidget(logLine: this);
+  Widget createLogWidget(BuildContext context, {String? highlightQuery}) {
+    return StacktraceLogLineWidget(
+      logLine: this,
+      highlightQuery: highlightQuery,
+    );
   }
 }
 
 class StacktraceLogLineWidget extends StatelessWidget {
   final StacktraceLogLine logLine;
+  final String? highlightQuery;
 
-  const StacktraceLogLineWidget({super.key, required this.logLine});
+  const StacktraceLogLineWidget({
+    super.key,
+    required this.logLine,
+    this.highlightQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
-    var theme = Theme.of(context);
+    final theme = Theme.of(context);
     final obfColor = theme.colorScheme.onSurface.withAlpha(200);
-    final isObf = logLine.classAndLine == "Unknown Source"; // Hardcoding, baby
-    var importantColor = theme.colorScheme.tertiary;
+    final isObf = logLine.classAndLine == "Unknown Source";
+    final importantColor = theme.colorScheme.tertiary;
+    final hl = theme.colorScheme.primary.withAlpha(80);
+
+    final atStyle = TextStyle(color: theme.hintColor);
+    final namespaceStyle = TextStyle(
+      color: isObf ? obfColor : importantColor.withAlpha(180),
+    );
+    final methodStyle = TextStyle(
+      color: isObf ? obfColor : importantColor.withAlpha(240),
+    );
+    final classStyle = TextStyle(
+      color: isObf ? obfColor : importantColor.withAlpha(240),
+    );
 
     return Text.rich(
       softWrap: logLine.shouldWrap,
       style: TextStyle(color: isObf ? obfColor : importantColor.withAlpha(240)),
       TextSpan(
         children: [
-          TextSpan(
-            text: "    ",
-            style: TextStyle(color: theme.hintColor),
+          const TextSpan(text: "    "),
+          ..._highlightSpans(logLine.at, atStyle, highlightQuery, hl),
+          ..._highlightSpans(
+            logLine.namespace?.prepend(" "),
+            namespaceStyle,
+            highlightQuery,
+            hl,
           ),
-          TextSpan(
-            text: logLine.at,
-            style: TextStyle(color: theme.hintColor),
+          ..._highlightSpans(
+            logLine.method?.prepend("."),
+            methodStyle,
+            highlightQuery,
+            hl,
           ),
-          TextSpan(
-            text: logLine.namespace?.prepend(" "),
-            style: TextStyle(
-              color: isObf ? obfColor : importantColor.withAlpha(180),
-            ),
-          ),
-          TextSpan(
-            text: logLine.method?.prepend("."),
-            style: TextStyle(
-              color: isObf ? obfColor : importantColor.withAlpha(240),
-            ),
-          ),
-          TextSpan(
-            text: logLine.classAndLine?.prepend("(").append(")"),
-            style: TextStyle(
-              color: isObf ? obfColor : importantColor.withAlpha(240),
-            ),
+          ..._highlightSpans(
+            logLine.classAndLine?.prepend("(").append(")"),
+            classStyle,
+            highlightQuery,
+            hl,
           ),
         ],
       ),
@@ -212,24 +295,39 @@ class UnknownLogLine extends LogLine {
   }
 
   @override
-  Widget createLogWidget(BuildContext context) {
-    return UnknownLogLineWidget(logLine: this);
+  Widget createLogWidget(BuildContext context, {String? highlightQuery}) {
+    return UnknownLogLineWidget(logLine: this, highlightQuery: highlightQuery);
   }
 }
 
 class UnknownLogLineWidget extends StatelessWidget {
   final UnknownLogLine logLine;
+  final String? highlightQuery;
 
-  const UnknownLogLineWidget({super.key, required this.logLine});
+  const UnknownLogLineWidget({
+    super.key,
+    required this.logLine,
+    this.highlightQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final baseStyle = TextStyle(
+      color: theme.colorScheme.onSurface.withAlpha(180),
+    );
+    final hl = theme.colorScheme.primary.withAlpha(80);
+
     return Text.rich(
       softWrap: logLine.shouldWrap,
-      style: TextStyle(
-        color: Theme.of(context).colorScheme.onSurface.withAlpha(180),
+      TextSpan(
+        children: _highlightSpans(
+          logLine.fullError,
+          baseStyle,
+          highlightQuery,
+          hl,
+        ),
       ),
-      TextSpan(text: logLine.fullError, children: const []),
     );
   }
 }

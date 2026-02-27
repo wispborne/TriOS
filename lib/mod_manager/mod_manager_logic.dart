@@ -1129,7 +1129,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
               "Found multiple enabled versions for mod ${mod.id}. Disabling ${value.smolId}",
             );
             try {
-              _disableModVariant(
+              await _disableModVariant(
                 value,
                 brickModInfo: true,
                 disableModInVanillaLauncher: false,
@@ -1303,7 +1303,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         Fimber.i(
           "Disabling mod '${modVariant.modInfo.id}' as part of disabling variant '${modVariant.smolId}'.",
         );
-        _disableModInEnabledMods(modVariant.modInfo.id);
+        await _disableModInEnabledMods(modVariant.modInfo.id);
       } else {
         Fimber.i(
           "Mod '${modVariant.modInfo.id}' was already disabled in enabled_mods.json and won't be disabled as part of disabling variant ${modVariant.smolId}.",
@@ -1343,11 +1343,11 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   }
 
   Future<void> _disableModInEnabledMods(String modId) async {
-    ref.read(AppState.enabledModsFile.notifier).disableMod(modId);
+    await ref.read(AppState.enabledModsFile.notifier).disableMod(modId);
   }
 
   Future<void> _enableModInEnabledMods(String modId) async {
-    ref.read(AppState.enabledModsFile.notifier).enableMod(modId);
+    await ref.read(AppState.enabledModsFile.notifier).enableMod(modId);
   }
 
   Future<void> forceChangeModGameVersion(

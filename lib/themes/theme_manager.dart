@@ -233,7 +233,8 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         onSecondary: swatch.onSecondary,
         surface: swatch.surface,
         error: vanillaErrorColor,
-        errorContainer: vanillaErrorColor.lighter(5),
+        errorContainer: vanillaErrorColor.darker(5),
+        onErrorContainer: swatch.onSurface
       ),
       scaffoldBackgroundColor: swatch.surfaceContainer,
       dialogBackgroundColor: swatch.surfaceContainer,
@@ -252,6 +253,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
           iconColor: themeBase.colorScheme.onSurface.withValues(
             alpha: iconButtonOpacity,
           ),
+          foregroundColor: themeBase.colorScheme.onSurface
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

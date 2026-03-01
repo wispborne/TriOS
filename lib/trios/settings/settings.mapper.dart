@@ -701,6 +701,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool _$shouldLoadWebView(Settings v) => v.shouldLoadWebView;
+  static const Field<Settings, bool> _f$shouldLoadWebView = Field(
+    'shouldLoadWebView',
+    _$shouldLoadWebView,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -760,6 +767,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #showDonationButton: _f$showDonationButton,
     #showReportBugButton: _f$showReportBugButton,
     #allowInsecureConnections: _f$allowInsecureConnections,
+    #shouldLoadWebView: _f$shouldLoadWebView,
   };
   @override
   final bool ignoreNull = true;
@@ -827,6 +835,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       showDonationButton: data.dec(_f$showDonationButton),
       showReportBugButton: data.dec(_f$showReportBugButton),
       allowInsecureConnections: data.dec(_f$allowInsecureConnections),
+      shouldLoadWebView: data.dec(_f$shouldLoadWebView),
     );
   }
 
@@ -959,6 +968,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showDonationButton,
     bool? showReportBugButton,
     bool? allowInsecureConnections,
+    bool? shouldLoadWebView,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1059,6 +1069,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? showDonationButton,
     bool? showReportBugButton,
     bool? allowInsecureConnections,
+    bool? shouldLoadWebView,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1143,6 +1154,7 @@ class _SettingsCopyWithImpl<$R, $Out>
         #showReportBugButton: showReportBugButton,
       if (allowInsecureConnections != null)
         #allowInsecureConnections: allowInsecureConnections,
+      if (shouldLoadWebView != null) #shouldLoadWebView: shouldLoadWebView,
     }),
   );
   @override
@@ -1303,6 +1315,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     allowInsecureConnections: data.get(
       #allowInsecureConnections,
       or: $value.allowInsecureConnections,
+    ),
+    shouldLoadWebView: data.get(
+      #shouldLoadWebView,
+      or: $value.shouldLoadWebView,
     ),
   );
 

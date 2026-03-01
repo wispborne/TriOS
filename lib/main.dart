@@ -39,6 +39,9 @@ Object? loggingError;
 StateProvider<WebViewEnvironment?> webViewEnvironment =
     StateProvider<WebViewEnvironment?>((ref) => null);
 
+/// Whether the previous session crashed (running.lock was present at startup).
+bool didPreviousSessionCrash = false;
+
 List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
 
 Future<Rect> _convertLogicalToPhysicalPixels(Rect r) async {
@@ -123,6 +126,21 @@ void main() async {
   } catch (ex) {
     print("Error initializing logging. $ex");
     loggingError = ex;
+  }
+
+  // Crash detection: if running.lock exists, previous session didn't exit cleanly.
+  try {
+    final lockFile = File(
+      '${Constants.configDataFolderPath.path}/running.lock',
+    );
+    if (lockFile.existsSync()) {
+      didPreviousSessionCrash = true;
+      Fimber.w("Previous session did not exit cleanly (running.lock found).");
+    }
+    // Write lock file for this session.
+    lockFile.writeAsStringSync(DateTime.now().toIso8601String());
+  } catch (e) {
+    Fimber.w("Error managing running.lock file: $e");
   }
 
   try {
@@ -250,6 +268,7 @@ void main() async {
     windowManager.waitUntilReadyToShow(
       WindowOptions(size: windowFrame.size, minimumSize: minSize),
       () async {
+        await windowManager.setPreventClose(true);
         await windowManager.show();
         await windowManager.focus();
         if (settings?.isMaximized ?? false) {
@@ -384,6 +403,24 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   void dispose() {
     windowManager.removeListener(this);
     super.dispose();
+  }
+
+  @override
+  void onWindowClose() async {
+    await windowManager.hide();
+    try {
+      final lockFile = File(
+        '${Constants.configDataFolderPath.path}/running.lock',
+      );
+      if (lockFile.existsSync()) {
+        lockFile.deleteSync();
+        Fimber.i("running.lock deleted on clean exit.");
+      }
+    } catch (e) {
+      Fimber.w("Error deleting running.lock: $e");
+    } finally {
+      await windowManager.destroy();
+    }
   }
 
   void _saveWindowPosition() async {

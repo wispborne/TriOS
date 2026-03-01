@@ -39,6 +39,7 @@ class CatalogPage extends ConsumerStatefulWidget {
 
 enum WebViewStatus {
   loading,
+  optInRequired,
   webview2Required,
   linuxNotSupported,
   unknownError,
@@ -78,26 +79,50 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
 
     if (currentPlatform == TargetPlatform.linux) {
       _webViewStatus = WebViewStatus.linuxNotSupported;
-    } else if (currentPlatform == TargetPlatform.windows) {
-      // Only required on Windows.
+      return;
+    }
+
+    final shouldAutoLoad = ref.read(appSettings).shouldLoadWebView;
+    if (shouldAutoLoad && !didPreviousSessionCrash) {
+      _initWebViewForPlatform();
+    } else {
+      _webViewStatus = WebViewStatus.optInRequired;
+    }
+  }
+
+  void _initWebViewForPlatform() {
+    if (currentPlatform == TargetPlatform.windows) {
       try {
         WebViewEnvironment.getAvailableVersion().then((availableVersion) {
-          Fimber.i("Available WebView2version: $availableVersion");
+          Fimber.i("Available WebView2 version: $availableVersion");
           if (availableVersion != null) {
             _enableWebView();
-          } else if (currentPlatform == TargetPlatform.windows) {
-            _webViewStatus = WebViewStatus.webview2Required;
           } else {
-            _webViewStatus = WebViewStatus.unknownError;
+            setState(() {
+              _webViewStatus = WebViewStatus.webview2Required;
+            });
           }
         });
       } catch (ex, st) {
         Fimber.w("Failed to get webview2 version", ex: ex, stacktrace: st);
-        _webViewStatus = WebViewStatus.unknownError;
+        setState(() {
+          _webViewStatus = WebViewStatus.unknownError;
+        });
       }
     } else if (currentPlatform == TargetPlatform.macOS) {
       _enableWebView();
     }
+  }
+
+  void _loadWebViewOnce() {
+    _initWebViewForPlatform();
+  }
+
+  void _loadWebViewAlways() {
+    ref
+        .read(appSettings.notifier)
+        .update((state) => state.copyWith(shouldLoadWebView: true));
+    _initWebViewForPlatform();
   }
 
   void _enableWebView() {
@@ -109,7 +134,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
         useOnDownloadStart: true,
         algorithmicDarkeningAllowed: true,
       );
-      // downloadAdBlockList();
     });
   }
 
@@ -331,273 +355,396 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                       );
                       return Column(
                         children: [
-                          SizedBox(
-                            height: 50,
-                            child: Card(
-                              margin: const EdgeInsets.only(top: 4, bottom: 4),
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 8,
-                                  right: 8,
+                          if (_webViewStatus == WebViewStatus.loaded) ...[
+                            SizedBox(
+                              height: 50,
+                              child: Card(
+                                margin: const EdgeInsets.only(
+                                  top: 4,
+                                  bottom: 4,
                                 ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    FutureBuilder(
-                                      future:
-                                          webViewController?.canGoBack() ??
-                                          Future.value(false),
-                                      builder: (context, snapshot) {
-                                        final canGoBack = snapshot.hasData
-                                            ? snapshot.data!
-                                            : false;
-                                        return Disable(
-                                          isEnabled: canGoBack == true,
-                                          child: MovingTooltipWidget.text(
-                                            message: "Back",
-                                            child: IconButton(
-                                              onPressed: () async {
-                                                await webViewController
-                                                    ?.goBack();
-                                                setState(() {});
-                                              },
-                                              icon: const Icon(
-                                                Icons.arrow_back,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    FutureBuilder(
-                                      future:
-                                          webViewController?.canGoForward() ??
-                                          Future.value(false),
-                                      builder: (context, snapshot) {
-                                        final canGoForward = snapshot.hasData
-                                            ? snapshot.data!
-                                            : false;
-                                        return Disable(
-                                          isEnabled: canGoForward == true,
-                                          child: MovingTooltipWidget.text(
-                                            message: "Forward",
-                                            child: IconButton(
-                                              onPressed: () async {
-                                                await webViewController
-                                                    ?.goForward();
-                                                setState(() {});
-                                              },
-                                              icon: const Icon(
-                                                Icons.arrow_forward,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    FutureBuilder(
-                                      future:
-                                          webViewController?.getUrl() ??
-                                          Future.value(null),
-                                      builder: (context, snapshot) {
-                                        return (webLoadingProgress != null)
-                                            ? Padding(
-                                                padding: const EdgeInsets.only(
-                                                  left: 8,
-                                                  right: 8,
-                                                ),
-                                                child: SizedBox(
-                                                  width: 24,
-                                                  height: 24,
-                                                  child: Transform.flip(
-                                                    // Trick to have indeterminate progress go CCW, then loading progress goes CW as normal.
-                                                    flipX:
-                                                        webLoadingProgress == 0,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      value:
-                                                          webLoadingProgress ==
-                                                              0
-                                                          ? null
-                                                          : webLoadingProgress,
-                                                      color:
-                                                          theme.iconTheme.color,
-                                                      strokeCap:
-                                                          StrokeCap.round,
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                            : Disable(
-                                                isEnabled:
-                                                    snapshot.hasData &&
-                                                    snapshot.data != null,
-                                                child: MovingTooltipWidget.text(
-                                                  message: "Reload",
-                                                  child: IconButton(
-                                                    onPressed: () async {
-                                                      await webViewController
-                                                          ?.reload();
-                                                      setState(() {});
-                                                    },
-                                                    icon: const Icon(
-                                                      Icons.refresh,
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                      },
-                                    ),
-                                    MovingTooltipWidget.text(
-                                      message: "Open in Browser",
-                                      child: IconButton(
-                                        onPressed: () {
-                                          webViewController?.getUrl().then(
-                                            (url) => url
-                                                ?.toString()
-                                                .openAsUriInBrowser(),
-                                          );
-                                        },
-                                        icon: const Icon(Icons.public),
-                                      ),
-                                    ),
-                                    MovingTooltipWidget.text(
-                                      message: "Index",
-                                      child: IconButton(
-                                        onPressed: () {
-                                          webViewController?.loadUrl(
-                                            urlRequest: URLRequest(
-                                              url: WebUri(
-                                                Constants.forumModIndexUrl,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        icon: const Icon(Icons.home),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: FutureBuilder(
-                                        future: webViewController?.getUrl(),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    right: 8,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      FutureBuilder(
+                                        future:
+                                            webViewController?.canGoBack() ??
+                                            Future.value(false),
                                         builder: (context, snapshot) {
-                                          return TextField(
-                                            controller: urlController,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                            ),
-                                            maxLines: 1,
-                                            onSubmitted: (url) {
-                                              webViewController?.loadUrl(
-                                                urlRequest: URLRequest(
-                                                  url: WebUri(url),
+                                          final canGoBack = snapshot.hasData
+                                              ? snapshot.data!
+                                              : false;
+                                          return Disable(
+                                            isEnabled: canGoBack == true,
+                                            child: MovingTooltipWidget.text(
+                                              message: "Back",
+                                              child: IconButton(
+                                                onPressed: () async {
+                                                  await webViewController
+                                                      ?.goBack();
+                                                  setState(() {});
+                                                },
+                                                icon: const Icon(
+                                                  Icons.arrow_back,
                                                 ),
-                                              );
-                                              setState(() {});
-                                            },
-                                            decoration: const InputDecoration(
-                                              isDense: true,
-                                              contentPadding: EdgeInsets.all(8),
-                                              border: InputBorder.none,
-                                              hintText: 'URL',
+                                              ),
                                             ),
                                           );
                                         },
                                       ),
-                                    ),
-                                    Builder(
-                                      builder: (context) {
-                                        onPressedDarkTheme() {
-                                          ref
-                                              .read(appSettings.notifier)
-                                              .update(
-                                                (s) => s.copyWith(
-                                                  hasHiddenForumDarkModeTip:
-                                                      true,
+                                      FutureBuilder(
+                                        future:
+                                            webViewController?.canGoForward() ??
+                                            Future.value(false),
+                                        builder: (context, snapshot) {
+                                          final canGoForward = snapshot.hasData
+                                              ? snapshot.data!
+                                              : false;
+                                          return Disable(
+                                            isEnabled: canGoForward == true,
+                                            child: MovingTooltipWidget.text(
+                                              message: "Forward",
+                                              child: IconButton(
+                                                onPressed: () async {
+                                                  await webViewController
+                                                      ?.goForward();
+                                                  setState(() {});
+                                                },
+                                                icon: const Icon(
+                                                  Icons.arrow_forward,
                                                 ),
-                                              );
-                                          showDialog(
-                                            context: ref.read(
-                                              AppState.appContext,
-                                            )!,
-                                            builder: (context) {
-                                              return AlertDialog(
-                                                title: const Text(
-                                                  "Forum Dark Theme Instructions",
-                                                ),
-                                                content: const Text(
-                                                  ""
-                                                  "Read the whole thing first!\n"
-                                                  "\n1. Log in to the forum, then reopen this dialog."
-                                                  "\n2. Click the button below to navigate to the theme settings."
-                                                  "\n3. Next to 'Current Theme', click (change) and select 'Back n Black'.",
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      webViewController?.loadUrl(
-                                                        urlRequest: URLRequest(
-                                                          url: WebUri(
-                                                            "https://fractalsoftworks.com/forum/index.php?action=profile;area=theme",
-                                                          ),
-                                                        ),
-                                                      );
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                      setState(() {});
-                                                    },
-                                                    child: const Text(
-                                                      "Forum Profile Prefs",
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      FutureBuilder(
+                                        future:
+                                            webViewController?.getUrl() ??
+                                            Future.value(null),
+                                        builder: (context, snapshot) {
+                                          return (webLoadingProgress != null)
+                                              ? Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        left: 8,
+                                                        right: 8,
+                                                      ),
+                                                  child: SizedBox(
+                                                    width: 24,
+                                                    height: 24,
+                                                    child: Transform.flip(
+                                                      // Trick to have indeterminate progress go CCW, then loading progress goes CW as normal.
+                                                      flipX:
+                                                          webLoadingProgress ==
+                                                          0,
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        value:
+                                                            webLoadingProgress ==
+                                                                0
+                                                            ? null
+                                                            : webLoadingProgress,
+                                                        color: theme
+                                                            .iconTheme
+                                                            .color,
+                                                        strokeCap:
+                                                            StrokeCap.round,
+                                                      ),
                                                     ),
                                                   ),
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(
-                                                        context,
-                                                      ).pop();
-                                                    },
-                                                    child: const Text("Close"),
+                                                )
+                                              : Disable(
+                                                  isEnabled:
+                                                      snapshot.hasData &&
+                                                      snapshot.data != null,
+                                                  child: MovingTooltipWidget.text(
+                                                    message: "Reload",
+                                                    child: IconButton(
+                                                      onPressed: () async {
+                                                        await webViewController
+                                                            ?.reload();
+                                                        setState(() {});
+                                                      },
+                                                      icon: const Icon(
+                                                        Icons.refresh,
+                                                      ),
+                                                    ),
                                                   ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        }
-
-                                        return hasHiddenDarkModeTip != true
-                                            ? OutlinedButton.icon(
-                                                onPressed: onPressedDarkTheme,
-                                                label: const Text(
-                                                  "Forum Dark Theme Instructions",
+                                                );
+                                        },
+                                      ),
+                                      MovingTooltipWidget.text(
+                                        message: "Open in Browser",
+                                        child: IconButton(
+                                          onPressed: () {
+                                            webViewController?.getUrl().then(
+                                              (url) => url
+                                                  ?.toString()
+                                                  .openAsUriInBrowser(),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.public),
+                                        ),
+                                      ),
+                                      MovingTooltipWidget.text(
+                                        message: "Index",
+                                        child: IconButton(
+                                          onPressed: () {
+                                            webViewController?.loadUrl(
+                                              urlRequest: URLRequest(
+                                                url: WebUri(
+                                                  Constants.forumModIndexUrl,
                                                 ),
-                                                icon: const Icon(
-                                                  Icons.dark_mode,
+                                              ),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.home),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: FutureBuilder(
+                                          future: webViewController?.getUrl(),
+                                          builder: (context, snapshot) {
+                                            return TextField(
+                                              controller: urlController,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 1,
+                                              onSubmitted: (url) {
+                                                webViewController?.loadUrl(
+                                                  urlRequest: URLRequest(
+                                                    url: WebUri(url),
+                                                  ),
+                                                );
+                                                setState(() {});
+                                              },
+                                              decoration: const InputDecoration(
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.all(
+                                                  8,
                                                 ),
-                                              )
-                                            : MovingTooltipWidget.text(
-                                                message:
+                                                border: InputBorder.none,
+                                                hintText: 'URL',
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      Builder(
+                                        builder: (context) {
+                                          onPressedDarkTheme() {
+                                            ref
+                                                .read(appSettings.notifier)
+                                                .update(
+                                                  (s) => s.copyWith(
+                                                    hasHiddenForumDarkModeTip:
+                                                        true,
+                                                  ),
+                                                );
+                                            showDialog(
+                                              context: ref.read(
+                                                AppState.appContext,
+                                              )!,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  title: const Text(
                                                     "Forum Dark Theme Instructions",
-                                                child: IconButton(
+                                                  ),
+                                                  content: const Text(
+                                                    ""
+                                                    "Read the whole thing first!\n"
+                                                    "\n1. Log in to the forum, then reopen this dialog."
+                                                    "\n2. Click the button below to navigate to the theme settings."
+                                                    "\n3. Next to 'Current Theme', click (change) and select 'Back n Black'.",
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        webViewController?.loadUrl(
+                                                          urlRequest: URLRequest(
+                                                            url: WebUri(
+                                                              "https://fractalsoftworks.com/forum/index.php?action=profile;area=theme",
+                                                            ),
+                                                          ),
+                                                        );
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                        setState(() {});
+                                                      },
+                                                      child: const Text(
+                                                        "Forum Profile Prefs",
+                                                      ),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop();
+                                                      },
+                                                      child: const Text(
+                                                        "Close",
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          }
+
+                                          return hasHiddenDarkModeTip != true
+                                              ? OutlinedButton.icon(
                                                   onPressed: onPressedDarkTheme,
+                                                  label: const Text(
+                                                    "Forum Dark Theme Instructions",
+                                                  ),
                                                   icon: const Icon(
                                                     Icons.dark_mode,
                                                   ),
-                                                ),
-                                              );
-                                      },
-                                    ),
-                                  ],
+                                                )
+                                              : MovingTooltipWidget.text(
+                                                  message:
+                                                      "Forum Dark Theme Instructions",
+                                                  child: IconButton(
+                                                    onPressed:
+                                                        onPressedDarkTheme,
+                                                    icon: const Icon(
+                                                      Icons.dark_mode,
+                                                    ),
+                                                  ),
+                                                );
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
+                            const SizedBox(height: 4),
+                          ],
                           Expanded(
                             child: IgnoreDropMouseRegion(
                               child: switch (_webViewStatus) {
                                 WebViewStatus.loading => Center(
                                   child: const Text(
                                     "Checking for webview support...",
+                                  ),
+                                ),
+                                WebViewStatus.optInRequired => Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(32.0),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.web_asset_off,
+                                          size: 64,
+                                          color: theme.colorScheme.onSurface
+                                              .withOpacity(0.4),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        // Text(
+                                        //   "Web Browser",
+                                        //   style: theme.textTheme.headlineSmall,
+                                        // ),
+                                        // const SizedBox(height: 8),
+                                        if (!didPreviousSessionCrash)
+                                          Text(
+                                            "The web browser is disabled by default"
+                                                "\nto prevent crash looping on some systems."
+                                                "\n"
+                                                "\nClick Load Once, and, if it works, click Always Load next time.",
+                                            textAlign: TextAlign.center,
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withOpacity(0.7),
+                                                ),
+                                          ),
+                                        if (didPreviousSessionCrash) ...[
+                                          const SizedBox(height: 12),
+                                          Card.outlined(
+                                            color: theme
+                                                .colorScheme
+                                                .errorContainer,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(16),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.warning_amber_rounded,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onErrorContainer,
+                                                  ),
+                                                  const SizedBox(width: 16),
+                                                  Text(
+                                                    "${Constants.appName} quit unexpectedly.\n"
+                                                    "The browser has been disabled as a precaution.",
+                                                    style: TextStyle(
+                                                      color: theme
+                                                          .colorScheme
+                                                          .onErrorContainer,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        const SizedBox(height: 24),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            MovingTooltipWidget.text(
+                                              message: "Browser will be loaded until ${Constants.appName} exits.",
+                                              child: OutlinedButton.icon(
+                                                onPressed: _loadWebViewOnce,
+                                                icon: Icon(Icons.web),
+                                                label: const Text(
+                                                  "Load Once",
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            MovingTooltipWidget.text(
+                                              message: "Browser will always load (unless ${Constants.appName} crashes).",
+                                              child: OutlinedButton.icon(
+                                                onPressed: _loadWebViewAlways,
+                                                icon: const Icon(Icons.web),
+                                                label: const Text(
+                                                  "Always Load",
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        // const SizedBox(height: 8),
+                                        // Text(
+                                        //   "Clicking a mod in the list will open it in your default browser instead.",
+                                        //   textAlign: TextAlign.center,
+                                        //   style: theme.textTheme.bodySmall
+                                        //       ?.copyWith(
+                                        //         color: theme
+                                        //             .colorScheme
+                                        //             .onSurface
+                                        //             .withOpacity(0.5),
+                                        //       ),
+                                        // ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 WebViewStatus.loaded => InAppWebView(

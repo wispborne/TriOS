@@ -493,7 +493,7 @@ class ChangeRamWidget extends ConsumerWidget {
                       Padding(
                         padding: const .only(left: 8.0),
                         child: const Icon(
-                          Icons.warning_amber,
+                          Icons.warning_amber_rounded,
                           size: 24,
                           color: ThemeManager.vanillaWarningColor,
                         ),

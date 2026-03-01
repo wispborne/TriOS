@@ -112,6 +112,7 @@ class Settings with SettingsMappable {
   final bool showDonationButton;
   final bool showReportBugButton;
   final bool allowInsecureConnections;
+  final bool shouldLoadWebView;
 
   Settings({
     this.gameDir,
@@ -183,6 +184,7 @@ class Settings with SettingsMappable {
     this.showDonationButton = true,
     this.showReportBugButton = true,
     this.allowInsecureConnections = false,
+    this.shouldLoadWebView = false,
   });
 }
 

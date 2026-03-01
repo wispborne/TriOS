@@ -1,12 +1,19 @@
-# 1.3.4
+# 1.3.5
 - Added
   - Portraits now read game data to display more info.
   - Portrait Viewer/Replacer now has filters.
   - Warning if there are two of the same mod with the same version in your mods folder.
   - Log viewer now has a searchbar and makes better use of space.
+- Fixed
+  - Crash if `enabled_mods.json` was unwritable.
 - Changed
   - Ship/Weapon filters are now sorted alphabetically (except hull sizes).
   - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
+
+# 1.3.4
+- Changed
+  - The Mod Browser's webview is now disabled by default.
+    - This is to address crash loops that would happen on some systems, where if a user ever selected the mod browser, TriOS would crash on load.
 
 # 1.3.3
 - Added

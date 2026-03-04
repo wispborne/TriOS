@@ -57,346 +57,355 @@ class _ReadoutState extends State<Readout> {
     final filteredErrors = _searchQuery.isEmpty
         ? allErrors
         : allErrors
-            .where(
-              (e) => e.fullError.toLowerCase().contains(
-                    _searchQuery.toLowerCase(),
-                  ),
-            )
-            .toList(growable: false);
+              .where(
+                (e) => e.fullError.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ),
+              )
+              .toList(growable: false);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (chips.gameVersion != null ||
-            chips.javaVersion != null ||
-            mods.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 16,
-              children: [
-                // ── System info ──────────────────────────────────────────────
-                if (chips.gameVersion != null || chips.javaVersion != null)
-                  Expanded(
-                    child: SelectionArea(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                "System",
-                                style: theme.textTheme.titleLarge,
-                              ),
-                              IconButton(
-                                tooltip: "Copy",
-                                onPressed: () {
-                                  Clipboard.setData(
-                                    ClipboardData(
-                                      text: createSystemCopyString(chips),
-                                    ),
-                                  );
-                                },
-                                icon: Icon(
-                                  Icons.copy,
-                                  color: theme.iconTheme.color
-                                      ?.withAlpha(iconOpacity),
-                                ),
-                                iconSize: 20,
-                              ),
-                            ],
-                          ),
-                          Text.rich(
-                            TextSpan(
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface.withAlpha(
-                                  240,
-                                ),
-                              ),
+    return Padding(
+      padding: const .symmetric(horizontal: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (chips.gameVersion != null ||
+              chips.javaVersion != null ||
+              mods.isNotEmpty)
+            Padding(
+              padding: const .only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 16,
+                children: [
+                  // ── System info ──────────────────────────────────────────────
+                  if (chips.gameVersion != null || chips.javaVersion != null)
+                    Expanded(
+                      child: SelectionArea(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                TextSpan(
-                                  text: "Starsector: ",
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface
-                                        .withAlpha(190),
-                                  ),
+                                Text(
+                                  "System",
+                                  style: theme.textTheme.titleLarge,
                                 ),
-                                TextSpan(
-                                  text: gameVersion,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface
-                                        .withAlpha(240),
+                                IconButton(
+                                  tooltip: "Copy",
+                                  onPressed: () {
+                                    Clipboard.setData(
+                                      ClipboardData(
+                                        text: createSystemCopyString(chips),
+                                      ),
+                                    );
+                                  },
+                                  icon: Icon(
+                                    Icons.copy,
+                                    color: theme.iconTheme.color?.withAlpha(
+                                      iconOpacity,
+                                    ),
                                   ),
-                                ),
-                                TextSpan(
-                                  text: "\nJRE: ",
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface
-                                        .withAlpha(190),
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: javaVersion,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface
-                                        .withAlpha(240),
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: "\nOS: ",
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface
-                                        .withAlpha(190),
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: os,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface
-                                        .withAlpha(240),
-                                  ),
+                                  iconSize: 20,
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                // ── Mods list ────────────────────────────────────────────────
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (!isPerfectList && mods.isNotEmpty)
-                            Tooltip(
-                              message:
-                                  "This list may be incomplete.\n\"Running with the following mods\" block not found in log.",
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: Icon(
-                                  Icons.warning_rounded,
-                                  color: theme.colorScheme.primary,
-                                  size: 20,
-                                  shadows: [
-                                    Shadow(
-                                      blurRadius: 12.0,
-                                      color: theme.colorScheme.secondary,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          SelectionArea(
-                            child: Text(
-                              "Mods (${mods.length})",
-                              style: theme.textTheme.titleLarge,
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: "Copy",
-                            onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(
-                                  text: createModsCopyString(
-                                    chips,
-                                    minify: false,
-                                  ),
-                                ),
-                              );
-                            },
-                            icon: Icon(
-                              Icons.copy,
-                              color: theme.iconTheme.color
-                                  ?.withAlpha(iconOpacity),
-                            ),
-                            iconSize: 20,
-                          ),
-                          IconButton(
-                            tooltip: "Copy (less info)",
-                            onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(
-                                  text: createModsCopyString(
-                                    chips,
-                                    minify: true,
-                                  ),
-                                ),
-                              );
-                            },
-                            icon: Icon(
-                              Icons.copy,
-                              color: theme.iconTheme.color
-                                  ?.withAlpha(iconOpacity),
-                            ),
-                            iconSize: 14,
-                          ),
-                          // IconButton(
-                          //   tooltip: "Download",
-                          //   onPressed: () {
-                          //     FileSaver.instance.saveAs("mods", Uint8List.fromList(utf8.encode(createModsCopyString(_chips))),
-                          //         "txt", MimeType.TEXT);
-                          //     // Clipboard.setData(ClipboardData(text: createModsCopyString(_chips, minify: true)));
-                          //   },
-                          //   icon: Icon(Icons.file_download, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
-                          //   iconSize: 14,
-                          // ),
-                          IconButton(
-                            tooltip: "Popup",
-                            onPressed: () {
-                              showMyDialog(
-                                context,
-                                body: [ModsList(mods: mods)],
-                              );
-                            },
-                            icon: Icon(
-                              Icons.open_in_full,
-                              color: theme.iconTheme.color
-                                  ?.withAlpha(iconOpacity),
-                            ),
-                            iconSize: 20,
-                          ),
-                          Expanded(
-                            child: Text.rich(
+                            Text.rich(
                               TextSpan(
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.textTheme.labelSmall?.color
-                                      ?.withAlpha(120),
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface.withAlpha(
+                                    240,
+                                  ),
                                 ),
                                 children: [
-                                  chips.filepath == null
-                                      ? const TextSpan(text: "log")
-                                      : TextSpan(
-                                    text: basename(chips.filepath!),
+                                  TextSpan(
+                                    text: "Starsector: ",
                                     style: TextStyle(
-                                      color: theme
-                                          .textTheme
-                                          .labelSmall
-                                          ?.color
-                                          ?.withAlpha(200),
-                                      fontWeight: FontWeight.w500,
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(190),
                                     ),
                                   ),
                                   TextSpan(
-                                    text:
-                                    " chipped in ${NumberFormat.decimalPattern().format(chips.timeTaken)}ms",
+                                    text: gameVersion,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(240),
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: "\nJRE: ",
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(190),
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: javaVersion,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(240),
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: "\nOS: ",
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(190),
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: os,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface
+                                          .withAlpha(240),
+                                    ),
                                   ),
                                 ],
                               ),
-                              textAlign: TextAlign.right,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // ── Mods list ────────────────────────────────────────────────
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!isPerfectList && mods.isNotEmpty)
+                              Tooltip(
+                                message:
+                                    "This list may be incomplete.\n\"Running with the following mods\" block not found in log.",
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Icon(
+                                    Icons.warning_rounded,
+                                    color: theme.colorScheme.primary,
+                                    size: 20,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius: 12.0,
+                                        color: theme.colorScheme.secondary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            SelectionArea(
+                              child: Text(
+                                "Mods (${mods.length})",
+                                style: theme.textTheme.titleLarge,
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: "Copy",
+                              onPressed: () {
+                                Clipboard.setData(
+                                  ClipboardData(
+                                    text: createModsCopyString(
+                                      chips,
+                                      minify: false,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: Icon(
+                                Icons.copy,
+                                color: theme.iconTheme.color?.withAlpha(
+                                  iconOpacity,
+                                ),
+                              ),
+                              iconSize: 20,
+                            ),
+                            IconButton(
+                              tooltip: "Copy (less info)",
+                              onPressed: () {
+                                Clipboard.setData(
+                                  ClipboardData(
+                                    text: createModsCopyString(
+                                      chips,
+                                      minify: true,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: Icon(
+                                Icons.copy,
+                                color: theme.iconTheme.color?.withAlpha(
+                                  iconOpacity,
+                                ),
+                              ),
+                              iconSize: 14,
+                            ),
+                            // IconButton(
+                            //   tooltip: "Download",
+                            //   onPressed: () {
+                            //     FileSaver.instance.saveAs("mods", Uint8List.fromList(utf8.encode(createModsCopyString(_chips))),
+                            //         "txt", MimeType.TEXT);
+                            //     // Clipboard.setData(ClipboardData(text: createModsCopyString(_chips, minify: true)));
+                            //   },
+                            //   icon: Icon(Icons.file_download, color: theme.iconTheme.color?.withAlpha(iconOpacity)),
+                            //   iconSize: 14,
+                            // ),
+                            IconButton(
+                              tooltip: "Popup",
+                              onPressed: () {
+                                showMyDialog(
+                                  context,
+                                  body: [ModsList(mods: mods)],
+                                );
+                              },
+                              icon: Icon(
+                                Icons.open_in_full,
+                                color: theme.iconTheme.color?.withAlpha(
+                                  iconOpacity,
+                                ),
+                              ),
+                              iconSize: 20,
+                            ),
+                            Expanded(
+                              child: Text.rich(
+                                TextSpan(
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.textTheme.labelSmall?.color
+                                        ?.withAlpha(120),
+                                  ),
+                                  children: [
+                                    chips.filepath == null
+                                        ? const TextSpan(text: "log")
+                                        : TextSpan(
+                                            text: basename(chips.filepath!),
+                                            style: TextStyle(
+                                              color: theme
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.color
+                                                  ?.withAlpha(200),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                    TextSpan(
+                                      text:
+                                          " chipped in ${NumberFormat.decimalPattern().format(chips.timeTaken)}ms",
+                                    ),
+                                  ],
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                          ],
+                        ),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 150),
+                          child: InkWell(
+                            onTap: () => showMyDialog(
+                              context,
+                              body: [ModsList(mods: mods)],
+                            ),
+                            mouseCursor: SystemMouseCursors.click,
+                            child: ListView.builder(
+                              itemCount: mods.length,
+                              scrollDirection: Axis.vertical,
+                              itemBuilder: (context, index) =>
+                                  mods[index].createWidget(context),
                             ),
                           ),
-                        ],
-                      ),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 150),
-                        child: InkWell(
-                          onTap: () => showMyDialog(
-                            context,
-                            body: [ModsList(mods: mods)],
-                          ),
-                          mouseCursor: SystemMouseCursors.click,
-                          child: ListView.builder(
-                            itemCount: mods.length,
-                            scrollDirection: Axis.vertical,
-                            itemBuilder: (context, index) =>
-                                mods[index].createWidget(context),
-                          ),
                         ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (allErrors.isNotEmpty)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        _searchQuery.isEmpty
+                            ? "Errors (${allErrors.length})"
+                            : "Errors (${filteredErrors.length}/${allErrors.length})",
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      IconButton(
+                        tooltip: "Copy",
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(text: createErrorsCopyString(chips)),
+                          );
+                        },
+                        icon: Icon(
+                          Icons.copy,
+                          color: theme.iconTheme.color?.withAlpha(iconOpacity),
+                        ),
+                        iconSize: 20,
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-        if (allErrors.isNotEmpty)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      _searchQuery.isEmpty
-                          ? "Errors (${allErrors.length})"
-                          : "Errors (${filteredErrors.length}/${allErrors.length})",
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    IconButton(
-                      tooltip: "Copy",
-                      onPressed: () {
-                        Clipboard.setData(
-                          ClipboardData(text: createErrorsCopyString(chips)),
-                        );
-                      },
-                      icon: Icon(
-                        Icons.copy,
-                        color: theme.iconTheme.color?.withAlpha(iconOpacity),
-                      ),
-                      iconSize: 20,
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: "Filter...",
-                      prefixIcon: const Icon(Icons.search, size: 18),
-                      suffixIcon: _searchQuery.isEmpty
-                          ? null
-                          : IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = "");
-                              },
-                            ),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainer,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 1.5,
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: "Filter...",
+                        prefixIcon: const Icon(Icons.search, size: 18),
+                        suffixIcon: _searchQuery.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = "");
+                                },
+                              ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceContainer,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.primary,
+                            width: 1.5,
+                          ),
                         ),
                       ),
+                      onChanged: (value) =>
+                          setState(() => _searchQuery = value),
                     ),
-                    onChanged: (value) => setState(() => _searchQuery = value),
                   ),
-                ),
-                Expanded(
-                  child: ChipperLog(
-                    errors: filteredErrors,
-                    showInfoLogs: showInfoLogs,
-                    showInfoIcons: false,
-                    highlightQuery:
-                        _searchQuery.isEmpty ? null : _searchQuery,
+                  Expanded(
+                    child: ChipperLog(
+                      errors: filteredErrors,
+                      showInfoLogs: showInfoLogs,
+                      showInfoIcons: false,
+                      highlightQuery: _searchQuery.isEmpty
+                          ? null
+                          : _searchQuery,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

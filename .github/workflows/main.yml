@@ -6,7 +6,6 @@ on:
       - '*'
 
 env:
-  flutter_channel: "stable"
   windows_build_output_path: "build/windows/x64/runner/Release/*"
   macos_build_output_path: "build/macos/Build/Products/Release/TriOS.app"
   linux_build_output_path: "build/linux/x64/release/bundle"
@@ -29,13 +28,12 @@ jobs:
         run: echo "Setting up Flutter..."
       - uses: subosito/flutter-action@v2
         with:
-          channel: ${{ env.flutter_channel }}
+          flutter-version-file: pubspec.yaml
           architecture: x64
           cache: true
 
       - run: flutter --version
       - run: flutter clean
-      - run: flutter upgrade
       - run: flutter config --enable-windows-desktop
 
       # Use Visual C++ 2019 toolset so that the WebView doesn't crash on Windows 10
@@ -93,12 +91,11 @@ jobs:
         run: echo "Setting up Flutter..."
       - uses: subosito/flutter-action@v2
         with:
-          channel: ${{ env.flutter_channel }}
+          flutter-version-file: pubspec.yaml
           architecture: x64
           cache: true
 
       - run: flutter --version
-      - run: flutter upgrade
       - run: flutter config --enable-macos-desktop
 
       - name: Build macOS
@@ -145,12 +142,11 @@ jobs:
         run: echo "Setting up Flutter..."
       - uses: subosito/flutter-action@v2
         with:
-          channel: ${{ env.flutter_channel }}
+          flutter-version-file: pubspec.yaml
           architecture: x64
           cache: true
 
       - run: flutter --version
-      - run: flutter upgrade
       - run: flutter config --enable-linux-desktop
 
       - name: Build Linux

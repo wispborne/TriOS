@@ -52,6 +52,7 @@ static void my_application_activate(GApplication* application) {
       } else {
         gtk_window_set_title(window, "TriOS");
       }
+      gtk_window_set_icon_from_file(GTK_WINDOW(window),"assets/images/telos_faction_crest.png",NULL);
 
       gtk_window_set_default_size(window, 1280, 720);
       gtk_widget_show(GTK_WIDGET(window));
@@ -64,7 +65,6 @@ static void my_application_activate(GApplication* application) {
       gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
       fl_register_plugins(FL_PLUGIN_REGISTRY(view));
-
       gtk_widget_grab_focus(GTK_WIDGET(view));
   }
 }

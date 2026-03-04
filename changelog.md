@@ -9,6 +9,8 @@
   - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
 
 # 1.3.4
+- Added
+  - App icon on Linux.
 - Fixed
   - Crash if `enabled_mods.json` was unwritable.
 - Changed

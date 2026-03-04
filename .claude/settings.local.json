@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git log --oneline --grep=\"webview\\\\|webView\" -i)",
+      "Bash(grep -n \"LazyIndexedStack\" lib/widgets/*.dart)",
+      "Bash(grep -n \"appContext.notifier\\\\|appContext.*=\" /f/Code/Starsector/TriOS/lib/**/*.dart)"
+    ]
+  }
+}

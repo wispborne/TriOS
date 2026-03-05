@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
@@ -18,24 +19,25 @@ import 'package:trios/utils/logging.dart';
 
 final isLoadingShipSystems = StateProvider<bool>((ref) => false);
 
-/// Emits an updated list of ship systems any time [AppState.mods] changes.
+/// Emits an updated list of ship systems on startup.
 /// Reads from vanilla (core) and each enabled mod, merging and deduplicating.
 final shipSystemsStreamProvider = StreamProvider<List<ShipSystem>>((
   ref,
 ) async* {
-  ref.watch(isLoadingShipSystems.notifier).state = true;
+  ref.read(isLoadingShipSystems.notifier).state = true;
   final currentTime = DateTime.now();
   int filesProcessed = 0;
 
-  final gameCorePath = ref
-      .watch(AppState.gameCoreFolder).value
-      ?.path;
+  final gameCorePath = ref.watch(AppState.gameCoreFolder).value?.path;
   if (gameCorePath == null || gameCorePath.isEmpty) {
     throw Exception('Game folder path is not set.');
   }
 
+  // Refresh when mods are added or removed, but not enabled/disabled.
+  ref.watch(AppState.variantSmolIds);
+
   final variants = ref
-      .watch(AppState.mods)
+      .read(AppState.mods)
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
       .nonNulls
       .toList();
@@ -66,7 +68,7 @@ final shipSystemsStreamProvider = StreamProvider<List<ShipSystem>>((
     Fimber.w('Ship systems parsing errors:\n${allErrors.join('\n')}');
   }
 
-  ref.watch(isLoadingShipSystems.notifier).state = false;
+  ref.read(isLoadingShipSystems.notifier).state = false;
   Fimber.i(
     'Parsed ${allSystems.length} ship systems from ${variants.length + 1} sources and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
   );

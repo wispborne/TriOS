@@ -38,6 +38,8 @@ import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
+import 'package:trios/trios/navigation.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:trios/thirdparty/dartx/range.dart';
 
@@ -81,6 +83,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   final ScrollController _leftFilterScrollController = ScrollController();
   final ScrollController _rightFilterScrollController = ScrollController();
 
+  Widget? _cachedBuild;
   bool showOnlyReplaced = false;
   bool showOnlyEnabledMods = false;
   bool showOnlyWithMetadata = true; // "Confirmed Portraits" filter
@@ -720,10 +723,15 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   Widget build(BuildContext context) {
     super.build(context);
 
+    final isActive =
+        ref.watch(appSettings.select((s) => s.defaultTool)) ==
+        TriOSTools.portraits;
+    if (!isActive && _cachedBuild != null) return _cachedBuild!;
+
     // Watch the portraits provider and loading state
     final portraitsAsync = ref.watch(AppState.portraits);
 
-    return portraitsAsync.when(
+    final result = portraitsAsync.when(
       loading: () => const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1460,6 +1468,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         );
       },
     );
+
+    _cachedBuild = result;
+    return result;
   }
 
   List<({Portrait image, ModVariant? variant})> filterToOnlyReplacedImages(

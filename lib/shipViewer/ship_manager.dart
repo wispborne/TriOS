@@ -23,8 +23,13 @@ final shipListNotifierProvider =
     StreamNotifierProvider<ShipListNotifier, List<Ship>>(ShipListNotifier.new);
 
 class ShipListNotifier extends StreamNotifier<List<Ship>> {
+  /// Incremented each time build() starts. Stale builds compare against this
+  /// and return early, preventing cascading widget rebuilds.
+  var _buildToken = 0;
+
   @override
   Stream<List<Ship>> build() async* {
+    final myToken = ++_buildToken;
     int filesProcessed = 0;
 
     final currentTime = DateTime.now();
@@ -37,13 +42,17 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       return;
     }
 
-    // Watch modVariants so we rebuild once it resolves on startup.
-    // We still use ref.read(AppState.mods) below to avoid re-loading every
-    // time mod state changes (e.g. enable/disable).
-    final modVariantsAsync = ref.watch(AppState.modVariants);
-    if (!modVariantsAsync.hasValue) {
-      ref.read(isLoadingShipsList.notifier).state = false;
-      return;
+    // Wait for modVariants to resolve on startup without watching it.
+    // Using ref.read + ref.listen instead of ref.watch avoids re-triggering
+    // this entire stream on every mod version switch, which was causing
+    // cascading widget rebuilds.
+    if (!ref.read(AppState.modVariants).hasValue) {
+      final completer = Completer<void>();
+      ref.listen(AppState.modVariants, (prev, next) {
+        if (next.hasValue && !completer.isCompleted) completer.complete();
+      });
+      await completer.future;
+      if (_buildToken != myToken) return;
     }
 
     ref.listen(AppState.variantSmolIds, (previous, next) {
@@ -65,6 +74,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
 
     final coreResult = await _parseShips(Directory(gameCorePath), null);
+    if (_buildToken != myToken) return;
     filesProcessed += coreResult.filesProcessed;
     allShips.addAll(coreResult.ships);
     allShips = allShips.distinctBy((e) => e.id).toList();
@@ -74,7 +84,9 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     }
 
     for (final variant in variants) {
+      if (_buildToken != myToken) return;
       final modResult = await _parseShips(variant.modFolder, variant);
+      if (_buildToken != myToken) return;
       filesProcessed += modResult.filesProcessed;
       allShips.addAll(modResult.ships);
       allShips = allShips.distinctBy((e) => e.id).toList();

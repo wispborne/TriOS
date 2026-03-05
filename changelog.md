@@ -4,6 +4,8 @@
   - Portrait Viewer/Replacer now has filters.
   - Warning if there are two of the same mod with the same version in your mods folder.
   - Log viewer now has a searchbar and makes better use of space.
+- Fixed
+  - Lag when changing mods after having opened ships/weapons/portraits viewers.
 - Changed
   - Ship/Weapon filters are now sorted alphabetically (except hull sizes).
   - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).

@@ -13,7 +13,8 @@
       "Bash(head:*)",
       "Bash(git log --oneline --grep=\"webview\\\\|webView\" -i)",
       "Bash(grep -n \"LazyIndexedStack\" lib/widgets/*.dart)",
-      "Bash(grep -n \"appContext.notifier\\\\|appContext.*=\" /f/Code/Starsector/TriOS/lib/**/*.dart)"
+      "Bash(grep -n \"appContext.notifier\\\\|appContext.*=\" /f/Code/Starsector/TriOS/lib/**/*.dart)",
+      "Bash(git show c4babef --no-stat -p)"
     ]
   }
 }

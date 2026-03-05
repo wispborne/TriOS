@@ -28,6 +28,7 @@ import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 
+import '../trios/navigation.dart';
 import '../widgets/multi_split_mixin_view.dart';
 
 class ShipsPage extends ConsumerStatefulWidget {
@@ -45,6 +46,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
   final SearchController _searchController = SearchController();
 
   WispGridController<Ship>? _gridController;
+  Widget? _cachedBuild;
 
   @override
   List<Area> get areas {
@@ -64,6 +66,11 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
   Widget build(BuildContext context) {
     super.build(context);
 
+    final isActive =
+        ref.watch(appSettings.select((s) => s.defaultTool)) ==
+        TriOSTools.ships;
+    if (!isActive && _cachedBuild != null) return _cachedBuild!;
+
     final controller = ref.watch(shipsPageControllerProvider.notifier);
     final controllerState = ref.watch(shipsPageControllerProvider);
     final theme = Theme.of(context);
@@ -73,7 +80,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     final total = controllerState.allShips.length;
     final visible = controllerState.filteredShips.length;
 
-    return Column(
+    final result = Column(
       children: [
         _buildToolbar(
           context,
@@ -107,6 +114,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         ),
       ],
     );
+
+    _cachedBuild = result;
+    return result;
   }
 
   Widget _buildToolbar(

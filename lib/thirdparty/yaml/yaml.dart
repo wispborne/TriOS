@@ -5,8 +5,11 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
+import 'src/charcodes.dart';
 import 'src/error_listener.dart';
+import 'src/event.dart';
 import 'src/loader.dart';
+import 'src/parser.dart';
 import 'src/style.dart';
 import 'src/yaml_document.dart';
 import 'src/yaml_exception.dart';
@@ -123,4 +126,144 @@ List<YamlDocument> loadYamlDocuments(String yaml, {Uri? sourceUrl}) {
   }
 
   return documents;
+}
+
+/// Loads a single document from a YAML string as plain Dart objects.
+///
+/// Returns [Map]s, [List]s, and scalar values (String, int, double, bool,
+/// null) without any [YamlNode] wrappers. More efficient than [loadYaml]
+/// when source span metadata is not needed.
+///
+/// If [sourceUrl] is passed, it's used as the URL from which the YAML
+/// originated for error reporting.
+dynamic loadYamlValue(String yaml, {Uri? sourceUrl}) {
+  var parser = Parser(yaml, sourceUrl: sourceUrl);
+  var event = parser.parse();
+  assert(event.type == EventType.streamStart);
+
+  event = parser.parse();
+  if (event.type == EventType.streamEnd) return null;
+
+  // Skip DocumentStart.
+  var docEvent = event as DocumentStartEvent;
+  var result = _loadValue(parser, parser.parse());
+
+  // Skip DocumentEnd.
+  parser.parse();
+
+  return result;
+}
+
+/// Recursively builds plain Dart objects from parser events.
+dynamic _loadValue(Parser parser, Event event) => switch (event.type) {
+      EventType.scalar => _parseScalarValue((event as ScalarEvent).value),
+      EventType.alias => null,
+      EventType.sequenceStart => _loadListValue(parser),
+      EventType.mappingStart => _loadMapValue(parser),
+      _ => throw StateError('Unreachable'),
+    };
+
+/// Builds a plain [List] from parser events.
+List _loadListValue(Parser parser) {
+  var list = [];
+  var event = parser.parse();
+  while (event.type != EventType.sequenceEnd) {
+    list.add(_loadValue(parser, event));
+    event = parser.parse();
+  }
+  return list;
+}
+
+/// Builds a plain [Map] from parser events.
+Map _loadMapValue(Parser parser) {
+  var map = <dynamic, dynamic>{};
+  var event = parser.parse();
+  while (event.type != EventType.mappingEnd) {
+    var key = _loadValue(parser, event);
+    var value = _loadValue(parser, parser.parse());
+    map[key] = value;
+    event = parser.parse();
+  }
+  return map;
+}
+
+/// Parses a scalar string into the appropriate Dart type.
+dynamic _parseScalarValue(String value) {
+  var length = value.length;
+  if (length == 0) return null;
+
+  var firstChar = value.codeUnitAt(0);
+  return switch (firstChar) {
+    $dot || $plus || $minus => _parseNumberValue(value),
+    $n || $N => length == 4 ? _parseNullValue(value) : value,
+    $t || $T => length == 4 ? _parseBoolValue(value) ?? value : value,
+    $f || $F => length == 5 ? _parseBoolValue(value) ?? value : value,
+    $tilde => length == 1 ? null : value,
+    _ => (firstChar >= $0 && firstChar <= $9)
+        ? _parseNumberValue(value) ?? value
+        : value,
+  };
+}
+
+dynamic _parseNullValue(String value) => switch (value) {
+      'null' || 'Null' || 'NULL' => null,
+      _ => value,
+    };
+
+bool? _parseBoolValue(String value) => switch (value) {
+      'true' || 'True' || 'TRUE' => true,
+      'false' || 'False' || 'FALSE' => false,
+      _ => null,
+    };
+
+dynamic _parseNumberValue(String contents) {
+  var firstChar = contents.codeUnitAt(0);
+  var length = contents.length;
+
+  if (length == 1) {
+    var digit = firstChar - $0;
+    return digit >= 0 && digit <= 9 ? digit : contents;
+  }
+
+  var secondChar = contents.codeUnitAt(1);
+
+  if (firstChar == $0) {
+    if (secondChar == $x) return int.tryParse(contents) ?? contents;
+    if (secondChar == $o) {
+      return int.tryParse(contents.substring(2), radix: 8) ?? contents;
+    }
+  }
+
+  if ((firstChar >= $0 && firstChar <= $9) ||
+      ((firstChar == $plus || firstChar == $minus) &&
+          secondChar >= $0 &&
+          secondChar <= $9)) {
+    return int.tryParse(contents, radix: 10) ??
+        double.tryParse(contents) ??
+        contents;
+  }
+
+  if ((firstChar == $dot && secondChar >= $0 && secondChar <= $9) ||
+      (firstChar == $minus || firstChar == $plus) && secondChar == $dot) {
+    if (length == 5) {
+      switch (contents) {
+        case '+.inf' || '+.Inf' || '+.INF':
+          return double.infinity;
+        case '-.inf' || '-.Inf' || '-.INF':
+          return -double.infinity;
+      }
+    }
+    return double.tryParse(contents) ?? contents;
+  }
+
+  if (length == 4 && firstChar == $dot) {
+    switch (contents) {
+      case '.inf' || '.Inf' || '.INF':
+        return double.infinity;
+      case '.nan' || '.NaN' || '.NAN':
+        return double.nan;
+    }
+  }
+
+  return contents;
 }

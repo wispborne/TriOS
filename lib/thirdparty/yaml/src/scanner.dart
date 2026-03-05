@@ -324,10 +324,15 @@ class Scanner {
         // If the current token could be a simple key, we need to scan more
         // tokens until we determine whether it is or not. Otherwise we might
         // not emit the `KEY` token before we emit the value of the key.
-        if (!_simpleKeys
-            .any((key) => key != null && key.tokenNumber == _tokensParsed)) {
-          break;
+        var hasMatchingKey = false;
+        for (var i = 0; i < _simpleKeys.length; i++) {
+          var key = _simpleKeys[i];
+          if (key != null && key.tokenNumber == _tokensParsed) {
+            hasMatchingKey = true;
+            break;
+          }
         }
+        if (!hasMatchingKey) break;
       }
 
       _fetchNextToken();
@@ -1075,7 +1080,8 @@ class Scanner {
     }
 
     // libyaml manually decodes the URL, but we don't have to do that.
-    return Uri.decodeFull(_scanner.substring(start));
+    var raw = _scanner.substring(start);
+    return raw.contains('%') ? Uri.decodeFull(raw) : raw;
   }
 
   /// Scans a block scalar.
@@ -1141,7 +1147,8 @@ class Scanner {
 
     // Scan the leading line breaks to determine the indentation level if
     // needed.
-    var pair = _scanBlockScalarBreaks(indent);
+    var breaksBuf = StringBuffer();
+    var pair = _scanBlockScalarBreaks(indent, breaksBuf);
     indent = pair.indent;
     var trailingBreaks = pair.trailingBreaks;
 
@@ -1193,7 +1200,7 @@ class Scanner {
       if (!_scanner.isDone) leadingBreak = _readLine();
 
       // Eat the following indentation and spaces.
-      var pair = _scanBlockScalarBreaks(indent);
+      var pair = _scanBlockScalarBreaks(indent, breaksBuf);
       indent = pair.indent;
       trailingBreaks = pair.trailingBreaks;
     }
@@ -1210,9 +1217,10 @@ class Scanner {
   ///
   /// Determines the intendation level if needed. Returns the new indentation
   /// level and the text of the line breaks.
-  ({int indent, String trailingBreaks}) _scanBlockScalarBreaks(int indent) {
+  ({int indent, String trailingBreaks}) _scanBlockScalarBreaks(
+      int indent, StringBuffer breaks) {
+    breaks.clear();
     var maxIndent = 0;
-    var breaks = StringBuffer();
 
     while (true) {
       while ((indent == 0 || _scanner.column < indent) &&
@@ -1245,6 +1253,8 @@ class Scanner {
   Token _scanFlowScalar({bool singleQuote = false}) {
     var start = _scanner.state;
     var buffer = StringBuffer();
+    var whitespace = StringBuffer();
+    var trailingBreaks = StringBuffer();
 
     // Eat the left quote.
     _scanner.readChar();
@@ -1382,9 +1392,9 @@ class Scanner {
         break;
       }
 
-      var whitespace = StringBuffer();
+      whitespace.clear();
       var leadingBreak = '';
-      var trailingBreaks = StringBuffer();
+      trailingBreaks.clear();
       while (_isBlank || _isBreak) {
         if (_isBlank) {
           // Consume a space or a tab.

@@ -114,7 +114,7 @@ extension StringExt on String {
         .join("\n");
 
     try {
-      return json.encode(loadYaml(fixed));
+      return json.encode(loadYamlValue(fixed));
     } catch (e) {
       Fimber.d("Unable to fix json: ${fixed.take(2000)}", ex: e);
       rethrow;

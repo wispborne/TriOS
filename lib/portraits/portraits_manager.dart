@@ -59,7 +59,8 @@ class PortraitsNotifier
         _fullRescanRequested = true;
       }
 
-      if (_lastGameFolder.isNotEmpty && gameCoreFolder.path != _lastGameFolder) {
+      if (_lastGameFolder.isNotEmpty &&
+          gameCoreFolder.path != _lastGameFolder) {
         Fimber.i("Game folder changed, invalidating portraits.");
         _fullRescanRequested = true;
       }
@@ -84,6 +85,7 @@ class PortraitsNotifier
 
         final newVariants = variants
             .where((v) => !existingSmolIds.contains(v?.smolId))
+            .nonNulls // Remove vanilla, it's never a "new" mod.
             .toList();
 
         Fimber.i(

@@ -19,7 +19,28 @@ Map<K, V> deepEqualsMap<K, V>() =>
 ///
 /// This considers `NaN` values to be equivalent, handles self-referential
 /// structures, and considers [YamlScalar]s to be equal to their values.
-bool deepEquals(Object? obj1, Object? obj2) => _DeepEquals().equals(obj1, obj2);
+bool deepEquals(Object? obj1, Object? obj2) {
+  // Unwrap YamlScalar for both arguments.
+  if (obj1 is YamlScalar) obj1 = obj1.value;
+  if (obj2 is YamlScalar) obj2 = obj2.value;
+
+  // Fast path: identical objects.
+  if (identical(obj1, obj2)) return true;
+
+  // Fast path: simple scalars use == directly without allocating _DeepEquals.
+  if (obj1 is String) return obj1 == obj2;
+  if (obj1 is int) return obj1 == obj2;
+  if (obj1 is bool) return obj1 == obj2;
+  if (obj1 == null) return obj2 == null;
+  if (obj1 is double) {
+    if (obj2 is! double) return false;
+    if (obj1.isNaN && obj2.isNaN) return true;
+    return obj1 == obj2;
+  }
+
+  // Slow path: collections need cycle detection.
+  return _DeepEquals().equals(obj1, obj2);
+}
 
 /// A class that provides access to the list of parent objects used for loop
 /// detection.
@@ -101,9 +122,23 @@ class _DeepEquals {
 /// self-referential structures, and returns the same hash code for
 /// [YamlScalar]s and their values.
 int deepHashCode(Object? obj) {
+  // Fast path: simple scalars don't need cycle detection or collection hashing.
+  if (obj is YamlScalar) obj = obj.value;
+  if (obj is String || obj is int || obj is bool || obj == null) {
+    return obj.hashCode;
+  }
+  if (obj is double) return obj.isNaN ? 0 : obj.hashCode;
+
+  // Slow path: collections need cycle detection.
   var parents = <Object?>[];
 
   int deepHashCodeInner(Object? value) {
+    if (value is YamlScalar) value = value.value;
+    if (value is String || value is int || value is bool || value == null) {
+      return value.hashCode;
+    }
+    if (value is double) return value.isNaN ? 0 : value.hashCode;
+
     if (parents.any((parent) => identical(parent, value))) return -1;
 
     parents.add(value);
@@ -113,9 +148,8 @@ int deepHashCode(Object? obj) {
         return equality.hash(value.keys.map(deepHashCodeInner)) ^
             equality.hash(value.values.map(deepHashCodeInner));
       } else if (value is Iterable) {
-        return const IterableEquality<Object?>().hash(value.map(deepHashCode));
-      } else if (value is YamlScalar) {
-        return (value.value as Object?).hashCode;
+        return const IterableEquality<Object?>()
+            .hash(value.map(deepHashCodeInner));
       } else {
         return value.hashCode;
       }

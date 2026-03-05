@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show NumberFormat;
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/thirdparty/yaml/yaml.dart';
 
 // import 'package:toml/toml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
-import 'package:yaml/yaml.dart';
 
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";

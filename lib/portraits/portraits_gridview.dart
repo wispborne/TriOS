@@ -88,8 +88,11 @@ class PortraitsGridView extends ConsumerWidget {
           ),
         // Factions row
         if (metadata.factions.isNotEmpty) ...[
-          Text(
-            'Factions: ${metadata.factions.map((f) => f.toString()).sorted().join(', ')}',
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300),
+            child: Text(
+              'Factions: ${metadata.factions.map((f) => f.toString()).sorted().join(', ')}',
+            ),
           ),
         ],
       ],

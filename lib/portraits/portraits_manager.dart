@@ -59,7 +59,7 @@ class PortraitsNotifier
         _fullRescanRequested = true;
       }
 
-      if (gameCoreFolder.path != _lastGameFolder) {
+      if (_lastGameFolder.isNotEmpty && gameCoreFolder.path != _lastGameFolder) {
         Fimber.i("Game folder changed, invalidating portraits.");
         _fullRescanRequested = true;
       }

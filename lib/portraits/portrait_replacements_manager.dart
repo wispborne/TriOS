@@ -10,6 +10,10 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
+/// Tracks (originalHash:replacementHash) pairs that have already been warned about.
+/// Prevents flooding the log during streaming portrait reloads.
+final _warnedPortraitPairs = <String>{};
+
 /// State notifier for portrait replacements
 /// Key is original portrait hash, value is replacement portrait
 class PortraitReplacementsNotifier
@@ -239,27 +243,28 @@ extension SavedPortraitsMapExt on Map<String, SavedPortrait> {
     Map<String, Portrait> allPortraits, {
     required bool logWarnings,
   }) => map((hashOfOriginal, replacement) {
-    try {
-      return MapEntry(hashOfOriginal, allPortraits[replacement.hash]!);
-    } catch (ex) {
-      if (logWarnings) {
+    final found = allPortraits[replacement.hash];
+    if (found != null) return MapEntry(hashOfOriginal, found);
+    if (logWarnings) {
+      final key = '$hashOfOriginal:${replacement.hash}';
+      if (_warnedPortraitPairs.add(key)) {
         Fimber.w(
           'Failed to hydrate portrait: $hashOfOriginal (${allPortraits[hashOfOriginal]?.relativePath} to replacement ${replacement.hash} (${replacement.relativePath})'
           '\n\tUnable to find replacement portrait ${replacement.hash} in loaded portraits.',
         );
       }
-      return MapEntry(
-        hashOfOriginal,
-        Portrait( // TODO not sure if this is a good idea, want to display when a portrait cannot be found in the UI
-          modVariant: null,
-          hash: replacement.hash,
-          imageFile: replacement.lastKnownFullPath.toFile(),
-          relativePath: replacement.relativePath,
-          width: 100,
-          height: 100,
-        ),
-      );
     }
+    return MapEntry(
+      hashOfOriginal,
+      Portrait( // TODO not sure if this is a good idea, want to display when a portrait cannot be found in the UI
+        modVariant: null,
+        hash: replacement.hash,
+        imageFile: replacement.lastKnownFullPath.toFile(),
+        relativePath: replacement.relativePath,
+        width: 100,
+        height: 100,
+      ),
+    );
   });
 
   Map<String, Portrait> hydrateToPortraitMapFromLoaded(

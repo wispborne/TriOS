@@ -21,11 +21,18 @@ class PortraitsNotifier
   var _lastGameFolder = "";
   var _fullRescanRequested = false;
 
+  /// Incremented each time build() starts. Stale builds compare against this
+  /// and break early, preventing concurrent scans from flooding the message queue.
+  var _buildToken = 0;
+
   @override
   Future<Map<ModVariant?, List<Portrait>>> build() async {
     // Rebuild when these change (mods added/removed, game folder change)
     ref.watch(AppState.variantSmolIds);
     final gameCoreFolder = ref.watch(AppState.gameCoreFolder).value;
+
+    // Capture a token so stale concurrent builds can bail out early.
+    final myToken = ++_buildToken;
 
     // Mark loading
     isLoadingPortraits = true;
@@ -33,6 +40,7 @@ class PortraitsNotifier
     // Wait for metadata to finish loading.
     while (ref.read(AppState.portraitMetadata.notifier).isLoading) {
       await Future.delayed(Duration(milliseconds: 100));
+      if (_buildToken != myToken) return _lastState;
     }
 
     final metadata = ref.watch(AppState.portraitMetadata);
@@ -102,6 +110,7 @@ class PortraitsNotifier
             newVariants,
             gameCoreFolder,
           )) {
+            if (_buildToken != myToken) return _lastState;
             Fimber.i(
               "Added variant ${partial.keys.first?.smolId} to portrait scanning.",
             );
@@ -115,11 +124,13 @@ class PortraitsNotifier
         final metadataMap = metadata.value ?? {};
         var baseState = <ModVariant?, List<Portrait>>{};
         if (metadataMap.isNotEmpty) {
+          if (_buildToken != myToken) return _lastState;
           final knownPortraits = await _loadKnownPortraitsFromMetadata(
             scanner,
             variants,
             gameCoreFolder,
             metadataMap,
+            myToken,
           );
           if (knownPortraits.isNotEmpty) {
             baseState = Map.from(knownPortraits);
@@ -132,11 +143,13 @@ class PortraitsNotifier
             .read(AppState.portraitReplacementsManager.notifier)
             .getKnownReplacementRelativePaths();
         if (knownReplacementPaths.isNotEmpty) {
+          if (_buildToken != myToken) return _lastState;
           final knownReplacementPortraits = await _loadKnownPortraitsFromPaths(
             scanner,
             variants,
             gameCoreFolder,
             knownReplacementPaths,
+            myToken,
           );
           if (knownReplacementPortraits.isNotEmpty) {
             baseState = _mergeKnownPortraits(
@@ -152,6 +165,7 @@ class PortraitsNotifier
           variants,
           gameCoreFolder,
         )) {
+          if (_buildToken != myToken) return _lastState;
           final merged = <ModVariant?, List<Portrait>>{...baseState, ...result};
           state = AsyncValue.data(merged);
           _lastState = merged;
@@ -180,12 +194,14 @@ class PortraitsNotifier
     List<ModVariant?> variants,
     Directory gameCoreFolder,
     Map<String, PortraitMetadata> metadataMap,
+    int buildToken,
   ) async {
     return _loadKnownPortraitsFromPaths(
       scanner,
       variants,
       gameCoreFolder,
       metadataMap.keys,
+      buildToken,
     );
   }
 
@@ -194,14 +210,17 @@ class PortraitsNotifier
     List<ModVariant?> variants,
     Directory gameCoreFolder,
     Iterable<String> relativePaths,
+    int buildToken,
   ) async {
     final knownPortraits = <ModVariant?, List<Portrait>>{};
 
     for (final variant in variants) {
+      if (_buildToken != buildToken) return {};
       final knownPortraitsForVariant = await scanner.scanKnownPortraits(
         variant,
         gameCoreFolder,
         relativePaths,
+        isCancelled: () => _buildToken != buildToken,
       );
       if (knownPortraitsForVariant.isNotEmpty) {
         knownPortraits[variant] = knownPortraitsForVariant;

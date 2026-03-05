@@ -15,6 +15,7 @@ class PortraitMetadataNotifier
   var _lastState = <String, PortraitMetadata>{};
   var _lastGameFolder = "";
   var _fullRescanRequested = false;
+  var _buildToken = 0;
 
   @override
   Future<Map<String, PortraitMetadata>> build() async {
@@ -22,6 +23,7 @@ class PortraitMetadataNotifier
     ref.watch(AppState.variantSmolIds);
     final gameCoreFolder = ref.watch(AppState.gameCoreFolder).value;
 
+    final myToken = ++_buildToken;
     isLoading = true;
 
     try {
@@ -82,6 +84,7 @@ class PortraitMetadataNotifier
             }
           }
 
+          if (_buildToken != myToken) return _lastState;
           // Update state progressively
           state = AsyncValue.data(Map.from(allMetadata));
           _lastState = Map.from(allMetadata);

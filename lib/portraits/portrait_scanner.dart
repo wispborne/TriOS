@@ -42,8 +42,9 @@ class PortraitScanner {
   Future<List<Portrait>> scanKnownPortraits(
     ModVariant? variant,
     Directory gameCoreFolder,
-    Iterable<String> relativePaths,
-  ) async {
+    Iterable<String> relativePaths, {
+    bool Function()? isCancelled,
+  }) async {
     if (variant != null && !await variant.modFolder.exists()) return [];
     if (_isGraphicsLib(variant)) return [];
 
@@ -52,6 +53,7 @@ class PortraitScanner {
     final baseFolder = variant?.modFolder ?? gameCoreFolder;
 
     for (final relativePath in relativePaths) {
+      if (isCancelled?.call() == true) break;
       final normalizedPath = _normalizeRelativePath(relativePath);
       final file = File(p.join(baseFolder.path, normalizedPath));
       if (!await file.exists()) continue;

@@ -758,20 +758,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         ),
       ),
       data: (portraits) {
-        // TODO There's no way this is fast.
-        final loadedReplacements =
-            ref.watch(AppState.portraitReplacementsManager).value ?? {};
-        final replacements = loadedReplacements
-            .hydrateToPortraitMap(
-              portraits.convertToPortraitMap(),
-              logWarnings: !ref
-                  .read(AppState.portraits.notifier)
-                  .isLoadingPortraits,
-            )
-            .entries
-            .where((element) => element.value != null)
-            .toMap()
-            .cast<String, Portrait>();
+        final replacements =
+            ref.watch(portraitsPageControllerProvider).replacements;
 
         // Get portrait metadata for filtering by gender/faction
         final portraitMetadata =

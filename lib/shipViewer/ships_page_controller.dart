@@ -167,7 +167,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
                   ),
                 ))
             .copyWith(
-              filterCategories: filterCategories,
+              filterCategories: stateOrNull?.filterCategories ?? filterCategories,
               shipSystemsMap: shipSystemsMap,
               // weaponsMap: weaponsMap,
               weaponsMap: {},

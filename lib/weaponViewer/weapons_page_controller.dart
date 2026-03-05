@@ -127,7 +127,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
                   ),
                 ))
             .copyWith(
-              filterCategories: filterCategories,
+              filterCategories: stateOrNull?.filterCategories ?? filterCategories,
               allWeapons: allWeapons,
               weaponSearchIndices: weaponValuesByWeaponId,
               isLoading: isLoadingWeapons,

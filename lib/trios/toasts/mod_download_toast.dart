@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +41,22 @@ class ModDownloadToast extends ConsumerStatefulWidget {
 class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
   PaletteGenerator? palette;
   bool _isHovering = false;
+  ModVariant? _lastInstalledMod;
+  int? _installedSizeBytes;
+
+  Future<void> _computeInstalledSize(ModVariant mod) async {
+    final dir = mod.modFolder;
+    if (!dir.existsSync()) return;
+    var total = 0;
+    await for (final entity in dir.list(recursive: true)) {
+      if (entity is File) {
+        try {
+          total += await entity.length();
+        } catch (_) {}
+      }
+    }
+    if (mounted) setState(() => _installedSizeBytes = total);
+  }
 
   Future<void> _generatePalette(ModVariant variant) async {
     if (variant.iconFilePath.isNotNullOrEmpty()) {
@@ -81,6 +99,10 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
         : null;
     if (palette == null && installedMod != null) {
       _generatePalette(installedMod);
+    }
+    if (installedMod != null && installedMod != _lastInstalledMod) {
+      _lastInstalledMod = installedMod;
+      _computeInstalledSize(installedMod);
     }
     final currentlyEnabled = installedMod
         ?.mod(ref.read(AppState.mods))
@@ -243,6 +265,79 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                       .labelMedium,
                                                 ),
                                               ),
+                                            ValueListenableBuilder(
+                                              valueListenable:
+                                                  downloadTask.downloaded,
+                                              builder: (context, dl, _) {
+                                                final dlBytes = dl.totalBytes;
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 4,
+                                                      ),
+                                                  child: Opacity(
+                                                    opacity: 0.6,
+                                                    child: Row(
+                                                      spacing: 8,
+                                                      children: [
+                                                        if (dlBytes > 0)
+                                                          Tooltip(
+                                                            message:
+                                                                "Downloaded archive size",
+                                                            child: Row(
+                                                              spacing: 4,
+                                                              children: [
+                                                                const Icon(
+                                                                  Icons
+                                                                      .archive_outlined,
+                                                                  size: 12,
+                                                                ),
+                                                                Text(
+                                                                  dlBytes
+                                                                      .bytesAsReadableMB(),
+                                                                  style: theme
+                                                                      .textTheme
+                                                                      .labelSmall,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        if (dlBytes > 0 &&
+                                                            _installedSizeBytes !=
+                                                                null)
+                                                          const Icon(
+                                                            Icons.arrow_forward,
+                                                            size: 10,
+                                                          ),
+                                                        if (_installedSizeBytes !=
+                                                            null)
+                                                          Tooltip(
+                                                            message:
+                                                                "Installed size on disk",
+                                                            child: Row(
+                                                              spacing: 4,
+                                                              children: [
+                                                                const Icon(
+                                                                  Icons
+                                                                      .folder_outlined,
+                                                                  size: 12,
+                                                                ),
+                                                                Text(
+                                                                  _installedSizeBytes!
+                                                                      .bytesAsReadableMB(),
+                                                                  style: theme
+                                                                      .textTheme
+                                                                      .labelSmall,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
                                             Padding(
                                               padding: const EdgeInsets.only(
                                                 top: 4,

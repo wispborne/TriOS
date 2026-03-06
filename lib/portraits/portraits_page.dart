@@ -73,7 +73,10 @@ class _PortraitFilterItem {
 }
 
 class _PortraitsPageState extends ConsumerState<PortraitsPage>
-    with AutomaticKeepAliveClientMixin<PortraitsPage>, MultiSplitViewMixin {
+    with
+        AutomaticKeepAliveClientMixin<PortraitsPage>,
+        MultiSplitViewMixin,
+        SingleTickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
   final SearchController _searchController = SearchController();
@@ -84,6 +87,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   final ScrollController _rightFilterScrollController = ScrollController();
 
   Widget? _cachedBuild;
+  late final AnimationController _refreshSpinController;
   bool showOnlyReplaced = false;
   bool showOnlyEnabledMods = false;
   bool showOnlyWithMetadata = true; // "Confirmed Portraits" filter
@@ -120,6 +124,10 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   @override
   void initState() {
     super.initState();
+    _refreshSpinController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
     // Main/Viewer filters
     _modFilter = GridFilter<_PortraitFilterItem>(
       name: 'Mod',
@@ -728,6 +736,15 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         TriOSTools.portraits;
     if (!isActive && _cachedBuild != null) return _cachedBuild!;
 
+    final isLoadingPortraits = ref.watch(
+      portraitsPageControllerProvider.select((s) => s.isLoading),
+    );
+    if (isLoadingPortraits) {
+      if (!_refreshSpinController.isAnimating) _refreshSpinController.repeat();
+    } else {
+      _refreshSpinController.stop();
+    }
+
     // Watch the portraits provider and loading state
     final portraitsAsync = ref.watch(AppState.portraits);
 
@@ -759,7 +776,10 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _refreshPortraits,
-              icon: const Icon(Icons.refresh),
+              icon: RotationTransition(
+                turns: _refreshSpinController,
+                child: const Icon(Icons.refresh),
+              ),
               label: const Text('Retry'),
             ),
           ],
@@ -909,23 +929,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             ),
                             IconButton(
                               onPressed:
-                                  ref
-                                      .read(AppState.portraits.notifier)
-                                      .isLoadingPortraits
-                                  ? null
-                                  : _refreshPortraits,
-                              icon:
-                                  ref
-                                      .watch(AppState.portraits.notifier)
-                                      .isLoadingPortraits
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.refresh),
+                                  isLoadingPortraits ? null : _refreshPortraits,
+                              icon: RotationTransition(
+                                turns: _refreshSpinController,
+                                child: const Icon(Icons.refresh),
+                              ),
                             ),
                             // const SizedBox(width: 4),
                             // MovingTooltipWidget.text(
@@ -1605,6 +1613,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   @override
   void dispose() {
+    _refreshSpinController.dispose();
     _searchController.dispose();
     _leftSearchController.dispose();
     _rightSearchController.dispose();

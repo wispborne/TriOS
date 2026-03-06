@@ -123,10 +123,6 @@ class CompanionModManager {
 
       // Copy the file
       try {
-        if (await assetFile.exists()) {
-          await assetFile.delete();
-        }
-
         await assetFile.copy(destinationFile.path);
       } catch (e, st) {
         Fimber.e(

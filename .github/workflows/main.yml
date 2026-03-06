@@ -135,17 +135,18 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            ninja-build \
-            cmake \
-            g++ \
-            libgtk-3-dev \
-            libcurl4-openssl-dev \
-            default-jdk \
-            libwpe-1.0-dev \
-            libwpebackend-fdo-1.0-dev \
-            libwpewebkit-2.0-dev
+            sudo add-apt-repository universe
+            sudo apt-get update
+            sudo apt-get install -y \
+              ninja-build \
+              cmake \
+              g++ \
+              libgtk-3-dev \
+              libcurl4-openssl-dev \
+              default-jdk \
+              libwpe-1.0-dev \
+              libwpebackend-fdo-1.0-dev \
+              libwpewebkit-2.0-dev
 
       - name: Flutter Setup
         run: echo "Setting up Flutter..."

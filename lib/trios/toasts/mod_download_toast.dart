@@ -11,6 +11,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
+import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../utils/logging.dart';
@@ -37,6 +38,7 @@ class ModDownloadToast extends ConsumerStatefulWidget {
 
 class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
   PaletteGenerator? palette;
+  bool _isHovering = false;
 
   Future<void> _generatePalette(ModVariant variant) async {
     if (variant.iconFilePath.isNotNullOrEmpty()) {
@@ -80,6 +82,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
     if (palette == null && installedMod != null) {
       _generatePalette(installedMod);
     }
+    final currentlyEnabled = installedMod
+        ?.mod(ref.read(AppState.mods))
+        ?.findFirstEnabled;
     final timeElapsed = (widget.item.elapsedDuration?.inMilliseconds ?? 0);
     final timeTotal = (widget.item.originalDuration?.inMilliseconds ?? 1000);
 
@@ -100,238 +105,348 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
           child: Builder(
             builder: (context) {
               final theme = Theme.of(context);
-              return Card(
-                child: Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(
-                      ThemeManager.cornerRadius,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 4.0,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: ValueListenableBuilder(
-                    valueListenable: downloadTask.status,
-                    builder: (context, status, child) {
-                      // Fimber.i(item.isRunning.toString());
-                      final isStopped = (!item.isRunning || !item.isStarted);
-                      final isFinished = status.isCompleted;
-                      if (isStopped && isFinished) {
-                        Fimber.i(
-                          "Debug: isStopped: $isStopped, isFinished: $isFinished",
-                        );
-                        item.start();
-                      }
+              return MouseRegion(
+                onEnter: (_) {
+                  setState(() => _isHovering = true);
+                  widget.item.pause();
+                },
+                onExit: (_) {
+                  setState(() => _isHovering = false);
+                  if (downloadTask.status.value.isCompleted) {
+                    widget.item.start();
+                  }
+                },
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 16),
+                    color: theme.colorScheme.surface,
+                    child: ValueListenableBuilder(
+                      valueListenable: downloadTask.status,
+                      builder: (context, status, child) {
+                        final isStopped = (!item.isRunning || !item.isStarted);
+                        final isFinished = status.isCompleted;
+                        if (isStopped && isFinished && !_isHovering) {
+                          item.start();
+                        }
 
-                      return Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(right: 16),
-                            child: Tooltip(
-                              message: status.displayString,
-                              child: Icon(
-                                size: 40,
-                                switch (status) {
-                                  DownloadStatus.queued => Icons.schedule,
-                                  DownloadStatus.retrievingFileInfo =>
-                                    Icons.downloading,
-                                  DownloadStatus.downloading =>
-                                    Icons.downloading,
-                                  DownloadStatus.completed =>
-                                    Icons.check_circle,
-                                  DownloadStatus.failed => Icons.error,
-                                  DownloadStatus.canceled => Icons.circle,
-                                  _ => Icons.downloading,
-                                },
-                                color: switch (status) {
-                                  DownloadStatus.queued =>
-                                    theme.iconTheme.color,
-                                  DownloadStatus.retrievingFileInfo =>
-                                    theme.iconTheme.color,
-                                  DownloadStatus.downloading =>
-                                    theme.iconTheme.color,
-                                  DownloadStatus.completed =>
-                                    theme.colorScheme.secondary,
-                                  DownloadStatus.failed =>
-                                    ThemeManager.vanillaErrorColor,
-                                  DownloadStatus.canceled =>
-                                    ThemeManager.vanillaErrorColor,
-                                  _ => theme.iconTheme.color,
-                                },
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                left: 16,
+                                right: 16,
+                                bottom: 16,
                               ),
-                            ),
-                          ),
-                          Expanded(
-                            child: SelectionArea(
-                              child: Column(
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    modString,
-                                    style: theme.textTheme.bodyMedium,
-                                  ),
-                                  Opacity(
-                                    opacity: 0.9,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        downloadTask.request.url,
-                                        style: theme.textTheme.labelMedium,
-                                        maxLines: 3,
-                                      ),
-                                    ),
-                                  ),
-                                  if (status == DownloadStatus.failed &&
-                                      downloadTask.error != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Text(
-                                        downloadTask.error.toString(),
-                                        style: theme.textTheme.labelMedium
-                                            ?.copyWith(
-                                              color: ThemeManager
-                                                  .vanillaErrorColor,
-                                            ),
-                                      ),
-                                    ),
                                   Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: ValueListenableBuilder(
-                                      valueListenable: downloadTask.downloaded,
-                                      builder: (context, downloaded, child) {
-                                        final isIndeterminate =
-                                            status == DownloadStatus.queued ||
-                                            status ==
+                                    padding: const EdgeInsets.only(right: 16),
+                                    child:
+                                        status.isCompleted &&
+                                            installedMod != null
+                                        ? SizedBox(
+                                            width: 40,
+                                            height: 40,
+                                            child:
+                                                installedMod.iconFilePath
+                                                    .isNotNullOrEmpty()
+                                                ? Image.file(
+                                                    (installedMod
+                                                                .iconFilePath ??
+                                                            "")
+                                                        .toFile(),
+                                                  )
+                                                : const Icon(
+                                                    Icons.extension,
+                                                    size: 40,
+                                                  ),
+                                          )
+                                        : Tooltip(
+                                            message: status.displayString,
+                                            child: Icon(
+                                              size: 40,
+                                              switch (status) {
+                                                DownloadStatus.queued =>
+                                                  Icons.schedule,
                                                 DownloadStatus
-                                                    .retrievingFileInfo;
-                                        return TriOSDownloadProgressIndicator(
-                                          color: status == DownloadStatus.failed
-                                              ? ThemeManager.vanillaErrorColor
-                                              : null,
-                                          value: TriOSDownloadProgress(
-                                            downloaded.bytesReceived,
-                                            downloaded.totalBytes,
-                                            isIndeterminate: isIndeterminate,
+                                                    .retrievingFileInfo =>
+                                                  Icons.downloading,
+                                                DownloadStatus.downloading =>
+                                                  Icons.downloading,
+                                                DownloadStatus.completed =>
+                                                  Icons.check_circle,
+                                                DownloadStatus.failed =>
+                                                  Icons.error,
+                                                DownloadStatus.canceled =>
+                                                  Icons.circle,
+                                                _ => Icons.downloading,
+                                              },
+                                              color: switch (status) {
+                                                DownloadStatus.queued =>
+                                                  theme.iconTheme.color,
+                                                DownloadStatus
+                                                    .retrievingFileInfo =>
+                                                  theme.iconTheme.color,
+                                                DownloadStatus.downloading =>
+                                                  theme.iconTheme.color,
+                                                DownloadStatus.completed =>
+                                                  theme.colorScheme.secondary,
+                                                DownloadStatus.failed =>
+                                                  ThemeManager
+                                                      .vanillaErrorColor,
+                                                DownloadStatus.canceled =>
+                                                  ThemeManager
+                                                      .vanillaErrorColor,
+                                                _ => theme.iconTheme.color,
+                                              },
+                                            ),
                                           ),
-                                        );
-                                      },
-                                    ),
                                   ),
-                                  if (installedMod != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        "Currently enabled: ${installedMod.modInfo.version}",
-                                        style: theme.textTheme.labelMedium,
-                                      ),
-                                    ),
-                                  if (installedMod != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
+                                  Expanded(
+                                    child: SelectionArea(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          ElevatedButton.icon(
-                                            onPressed: () {
-                                              // open folder in file explorer
-                                              launchUrlString(
-                                                installedMod.modFolder.path,
-                                              );
-                                            },
-                                            icon: Icon(
-                                              Icons.folder_open,
-                                              color:
-                                                  theme.colorScheme.onSurface,
-                                            ),
-                                            label: Text(
-                                              "Open",
-                                              style: theme.textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                    color: theme
-                                                        .colorScheme
-                                                        .onSurface,
-                                                  ),
-                                            ),
+                                          Text(
+                                            modString,
+                                            style: theme.textTheme.bodyMedium,
                                           ),
-                                          const SizedBox(width: 8),
-                                          Builder(
-                                            builder: (context) {
-                                              final mods = ref.read(
-                                                AppState.mods,
-                                              );
-                                              final mod = installedMod.mod(
-                                                mods,
-                                              );
-
-                                              return ElevatedButton.icon(
-                                                onPressed: () async {
-                                                  if (mod == null) {
-                                                    Fimber.w(
-                                                      "Cannot enable, mod not found for variant ${installedMod.smolId}",
-                                                    );
-                                                    return;
-                                                  }
-                                                  await ref
-                                                      .read(modManager.notifier)
-                                                      .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
-                                                        mod,
-                                                        installedMod,
-                                                      );
-                                                  toastification.dismiss(item);
-                                                },
-                                                icon: const SizedBox(
-                                                  width: 24,
-                                                  height: 24,
-                                                  child: Icon(
-                                                    Icons.power_settings_new,
-                                                  ),
+                                          if (status.isCompleted &&
+                                              installedMod != null) ...[
+                                            // --- Installed state ---
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 2,
+                                              ),
+                                              child: Text(
+                                                installedMod.modInfo.version
+                                                    .toString(),
+                                                style:
+                                                    theme.textTheme.labelMedium,
+                                              ),
+                                            ),
+                                            if (currentlyEnabled != null &&
+                                                currentlyEnabled.smolId !=
+                                                    installedMod.smolId)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 2,
                                                 ),
-                                                label: const Text("Enable"),
-                                              );
-                                            },
-                                          ),
+                                                child: Text(
+                                                  "Previously enabled: ${currentlyEnabled.modInfo.version}",
+                                                  style: theme
+                                                      .textTheme
+                                                      .labelMedium,
+                                                ),
+                                              ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 4,
+                                              ),
+                                              child: Opacity(
+                                                opacity: 0.6,
+                                                child: Row(
+                                                  spacing: 4,
+                                                  crossAxisAlignment: .end,
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.download_done,
+                                                      size: 12,
+                                                    ),
+                                                    Expanded(
+                                                      child: TextTriOS(
+                                                        downloadTask
+                                                            .request
+                                                            .url,
+                                                        style: theme
+                                                            .textTheme
+                                                            .labelSmall,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        maxLines: 1,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 8,
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                children: [
+                                                  ElevatedButton.icon(
+                                                    onPressed: () {
+                                                      launchUrlString(
+                                                        installedMod
+                                                            .modFolder
+                                                            .path,
+                                                      );
+                                                    },
+                                                    icon: Icon(
+                                                      Icons.folder_open,
+                                                      color: theme
+                                                          .colorScheme
+                                                          .onSurface,
+                                                    ),
+                                                    label: Text(
+                                                      "Open",
+                                                      style: theme
+                                                          .textTheme
+                                                          .bodyMedium
+                                                          ?.copyWith(
+                                                            color: theme
+                                                                .colorScheme
+                                                                .onSurface,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Builder(
+                                                    builder: (context) {
+                                                      final mod = installedMod
+                                                          .mod(
+                                                            ref.read(
+                                                              AppState.mods,
+                                                            ),
+                                                          );
+                                                      return ElevatedButton.icon(
+                                                        onPressed: () async {
+                                                          if (mod == null) {
+                                                            Fimber.w(
+                                                              "Cannot enable, mod not found for variant ${installedMod.smolId}",
+                                                            );
+                                                            return;
+                                                          }
+                                                          await ref
+                                                              .read(
+                                                                modManager
+                                                                    .notifier,
+                                                              )
+                                                              .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                                                                mod,
+                                                                installedMod,
+                                                              );
+                                                          toastification
+                                                              .dismiss(item);
+                                                        },
+                                                        icon: const SizedBox(
+                                                          width: 24,
+                                                          height: 24,
+                                                          child: Icon(
+                                                            Icons
+                                                                .power_settings_new,
+                                                          ),
+                                                        ),
+                                                        label: const Text(
+                                                          "Enable",
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ] else ...[
+                                            // --- Downloading / failed state ---
+                                            Opacity(
+                                              opacity: 0.9,
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 4,
+                                                ),
+                                                child: TextTriOS(
+                                                  downloadTask.request.url,
+                                                  style: theme
+                                                      .textTheme
+                                                      .labelMedium,
+                                                  maxLines: 1,
+                                                ),
+                                              ),
+                                            ),
+                                            if (status ==
+                                                    DownloadStatus.failed &&
+                                                downloadTask.error != null)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 8,
+                                                ),
+                                                child: Text(
+                                                  downloadTask.error.toString(),
+                                                  style: theme
+                                                      .textTheme
+                                                      .labelMedium
+                                                      ?.copyWith(
+                                                        color: ThemeManager
+                                                            .vanillaErrorColor,
+                                                      ),
+                                                ),
+                                              ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 8,
+                                              ),
+                                              child: ValueListenableBuilder(
+                                                valueListenable:
+                                                    downloadTask.downloaded,
+                                                builder: (context, downloaded, child) {
+                                                  final isIndeterminate =
+                                                      status ==
+                                                          DownloadStatus
+                                                              .queued ||
+                                                      status ==
+                                                          DownloadStatus
+                                                              .retrievingFileInfo;
+                                                  return TriOSDownloadProgressIndicator(
+                                                    color:
+                                                        status ==
+                                                            DownloadStatus
+                                                                .failed
+                                                        ? ThemeManager
+                                                              .vanillaErrorColor
+                                                        : null,
+                                                    value:
+                                                        TriOSDownloadProgress(
+                                                          downloaded
+                                                              .bytesReceived,
+                                                          downloaded.totalBytes,
+                                                          isIndeterminate:
+                                                              isIndeterminate,
+                                                        ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ],
                                         ],
                                       ),
                                     ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () =>
+                                        toastification.dismiss(widget.item),
+                                    icon: const Icon(Icons.close),
+                                  ),
                                 ],
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: CircularProgressIndicator(
-                                    value:
-                                        (timeTotal - timeElapsed) / timeTotal,
-                                    strokeWidth: 3,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      theme.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () =>
-                                      toastification.dismiss(widget.item),
-                                  icon: const Icon(Icons.close),
-                                ),
-                              ],
+                            LinearProgressIndicator(
+                              value: ((timeTotal - timeElapsed) / timeTotal)
+                                  .clamp(0.0, 1.0),
+                              minHeight: 3,
+                              backgroundColor: Colors.transparent,
                             ),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               );

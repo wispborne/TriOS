@@ -96,6 +96,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
         "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
         remoteVersion.directDownloadURL!.fixModDownloadUrl(),
         activateVariantOnComplete: activateVariantOnComplete,
+        modInfo: modInfo,
       );
     } else if (remoteVersion.modThreadId != null) {
       launchUrl(

@@ -78,156 +78,152 @@ class _ModAddedToastState extends ConsumerState<ModAddedToast> {
           data: palette.createPaletteTheme(context),
           child: Builder(
             builder: (context) {
-              final theme = Theme.of(
-                context,
-              ); // Ensure the theme is within the Builder
-              return Card(
-                child: Container(
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
+              final theme = Theme.of(context);
+              return MouseRegion(
+                onEnter: (_) => widget.item.pause(),
+                onExit: (_) => widget.item.start(),
+                child: Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 8),
                     color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(
-                      ThemeManager.cornerRadius,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 4.0,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: Tooltip(
-                          message: widget.modVariant.modInfo.nameOrId,
-                          child: SizedBox(
-                            width: 40,
-                            height: 40,
-                            child: icon ?? const TriOSAppIcon(),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: SelectionArea(
-                          child: Column(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                modString,
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                              Opacity(
-                                opacity: 0.9,
-                                child: Text(
-                                  widget.modVariant.modInfo.version.toString(),
-                                  style: theme.textTheme.labelMedium,
-                                ),
-                              ),
-                              if (currentVariant != null)
-                                Text(
-                                  "Currently enabled: ${currentVariant.modInfo.version}",
-                                  style: theme.textTheme.labelMedium,
-                                ),
-                              if (currentVariant != null)
-                                Text(
-                                  "New version: ${widget.modVariant.bestVersion}",
-                                  style: theme.textTheme.labelMedium,
-                                ),
                               Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        // open folder in file explorer
-                                        launchUrl(
-                                          Uri.parse(
-                                            "file:${widget.modVariant.modFolder.absolute.path}",
-                                          ),
-                                        );
-                                      },
-                                      icon: Icon(
-                                        Icons.folder_open,
-                                        color: theme.colorScheme.onSurface,
+                                padding: const EdgeInsets.only(right: 16),
+                                child: Tooltip(
+                                  message: widget.modVariant.modInfo.nameOrId,
+                                  child: SizedBox(
+                                    width: 40,
+                                    height: 40,
+                                    child: icon ?? const TriOSAppIcon(),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: SelectionArea(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        modString,
+                                        style: theme.textTheme.bodyMedium,
                                       ),
-                                      label: Text(
-                                        "Open",
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color:
-                                                  theme.colorScheme.onSurface,
-                                            ),
+                                      Opacity(
+                                        opacity: 0.9,
+                                        child: Text(
+                                          widget.modVariant.modInfo.version
+                                              .toString(),
+                                          style: theme.textTheme.labelMedium,
+                                        ),
                                       ),
-                                    ),
-                                    if (widget.modVariant.bestVersion !=
-                                        currentVariant?.bestVersion)
-                                      Row(
-                                        children: [
-                                          const SizedBox(width: 8),
-                                          ElevatedButton.icon(
-                                            onPressed: () async {
-                                              if (mod == null) {
-                                                Fimber.w(
-                                                  "Cannot enable, mod not found for variant ${widget.modVariant.smolId}",
+                                      if (currentVariant != null)
+                                        Text(
+                                          "Currently enabled: ${currentVariant.modInfo.version}",
+                                          style: theme.textTheme.labelMedium,
+                                        ),
+                                      if (currentVariant != null)
+                                        Text(
+                                          "New version: ${widget.modVariant.bestVersion}",
+                                          style: theme.textTheme.labelMedium,
+                                        ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            ElevatedButton.icon(
+                                              onPressed: () {
+                                                launchUrl(
+                                                  Uri.parse(
+                                                    "file:${widget.modVariant.modFolder.absolute.path}",
+                                                  ),
                                                 );
-                                                return;
-                                              }
-                                              await ref
-                                                  .read(modManager.notifier)
-                                                  .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
-                                                    widget.modVariant.mod(
-                                                      mods,
-                                                    )!,
-                                                    widget.modVariant,
-                                                  );
-                                              toastification.dismiss(
-                                                widget.item,
-                                              );
-                                            },
-                                            icon: const SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: Icon(
-                                                Icons.power_settings_new,
+                                              },
+                                              icon: Icon(
+                                                Icons.folder_open,
+                                                color:
+                                                    theme.colorScheme.onSurface,
+                                              ),
+                                              label: Text(
+                                                "Open",
+                                                style: theme
+                                                    .textTheme.bodyMedium
+                                                    ?.copyWith(
+                                                      color: theme
+                                                          .colorScheme.onSurface,
+                                                    ),
                                               ),
                                             ),
-                                            label: const Text("Enable"),
-                                          ),
-                                        ],
+                                            if (widget.modVariant.bestVersion !=
+                                                currentVariant?.bestVersion)
+                                              Row(
+                                                children: [
+                                                  const SizedBox(width: 8),
+                                                  ElevatedButton.icon(
+                                                    onPressed: () async {
+                                                      if (mod == null) {
+                                                        Fimber.w(
+                                                          "Cannot enable, mod not found for variant ${widget.modVariant.smolId}",
+                                                        );
+                                                        return;
+                                                      }
+                                                      await ref
+                                                          .read(
+                                                            modManager.notifier,
+                                                          )
+                                                          .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                                                            widget.modVariant
+                                                                .mod(mods)!,
+                                                            widget.modVariant,
+                                                          );
+                                                      toastification.dismiss(
+                                                        widget.item,
+                                                      );
+                                                    },
+                                                    icon: const SizedBox(
+                                                      width: 24,
+                                                      height: 24,
+                                                      child: Icon(
+                                                        Icons.power_settings_new,
+                                                      ),
+                                                    ),
+                                                    label:
+                                                        const Text("Enable"),
+                                                  ),
+                                                ],
+                                              ),
+                                          ],
+                                        ),
                                       ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                              ),
+                              IconButton(
+                                onPressed: () =>
+                                    toastification.dismiss(widget.item),
+                                icon: const Icon(Icons.close),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: CircularProgressIndicator(
-                              value: (timeTotal - timeElapsed) / timeTotal,
-                              strokeWidth: 3,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () =>
-                                toastification.dismiss(widget.item),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ],
-                      ),
-                    ],
+                        LinearProgressIndicator(
+                          value: ((timeTotal - timeElapsed) / timeTotal)
+                              .clamp(0.0, 1.0),
+                          minHeight: 3,
+                          backgroundColor: Colors.transparent,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

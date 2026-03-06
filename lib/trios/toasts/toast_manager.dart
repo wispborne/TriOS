@@ -231,7 +231,7 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
     for (final newlyAddedVariant in addedVariants) {
       // If a download toast is already showing for this mod, don't show the mod added toast
       if (downloads.whereType<ModDownload>().any(
-        (element) => element.modInfo.smolId == newlyAddedVariant.smolId,
+        (element) => element.modInfo.id == newlyAddedVariant.modInfo.id,
       )) {
         continue;
       }

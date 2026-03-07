@@ -204,8 +204,8 @@ jobs:
         run: |
           echo "Building Linux app..."
           flutter clean
-          export CC=clang-15
-          export CXX=clang++-15
+          export CC=clang-18
+          export CXX=clang++-18
           flutter build linux
           echo "Build complete. Listing contents of the output directory:"
           ls -l ${{ env.linux_build_output_path }}

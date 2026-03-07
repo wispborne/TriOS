@@ -182,7 +182,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake g++ libgtk-3-dev libcurl4-openssl-dev default-jdk libwpebackend-fdo-1.0-dev libwpe-1.0-dev libwpewebkit-1.0-dev
+          sudo apt-get install -y ninja-build cmake g++ libgtk-3-dev libcurl4-openssl-dev default-jdk  lld-18
 
       - name: Flutter Setup
         run: echo "Setting up Flutter..."

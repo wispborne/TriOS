@@ -181,13 +181,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 18
           sudo apt-get update
           sudo apt-get install -y ninja-build cmake g++ libgtk-3-dev libcurl4-openssl-dev default-jdk libwpebackend-fdo-1.0-dev libwpe-1.0-dev libwpewebkit-1.0-dev
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100
 
       - name: Flutter Setup
         run: echo "Setting up Flutter..."
@@ -204,8 +199,10 @@ jobs:
         run: |
           echo "Building Linux app..."
           flutter clean
-          export CC=clang-18
-          export CXX=clang++-18
+          flutter pub get
+          
+          find -L . -type f -name "CMakeLists.txt" -exec sed -i 's/-Wno-deprecated-literal-operator//g' {} + 2>/dev/null || true
+          
           flutter build linux
           echo "Build complete. Listing contents of the output directory:"
           ls -l ${{ env.linux_build_output_path }}

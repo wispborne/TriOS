@@ -178,6 +178,17 @@ jobs:
           find assets/windows/ -type f -exec echo "Deleting: {}" \; -exec rm -f {} \;
           find assets/macos/ -type f -exec echo "Deleting: {}" \; -exec rm -f {} \;
           echo "Non-Linux asset files deleted."
+      
+
+      - name: Clean and set clang
+        run: |
+          echo "Building Linux app..."
+          flutter clean
+          export CC=clang-15
+          export CXX=clang++-15
+          flutter build linux
+          echo "Build complete. Listing contents of the output directory:"
+          ls -l ${{ env.linux_build_output_path }}
 
       - name: Install Dependencies
         run: |

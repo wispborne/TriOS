@@ -8,7 +8,6 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/toasts/mod_added_toast.dart';
 import 'package:trios/trios/toasts/notification_group_config.dart';
 import 'package:trios/trios/toasts/notification_group_manager.dart';
 import 'package:trios/trios/toasts/widgets/mod_download_group_toast.dart';
@@ -16,8 +15,13 @@ import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/companion_mod_update_toast.dart';
 
+import 'package:uuid/uuid.dart';
+
 import '../app_state.dart';
 import '../download_manager/download_manager.dart';
+import '../download_manager/download_request.dart';
+import '../download_manager/download_status.dart';
+import '../download_manager/download_task.dart';
 import 'mod_download_toast.dart';
 
 class ToastDisplayer extends ConsumerStatefulWidget {
@@ -229,20 +233,37 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
     //     .toList();
 
     for (final newlyAddedVariant in addedVariants) {
-      // If a download toast is already showing for this mod, don't show the mod added toast
-      if (downloads.whereType<ModDownload>().any(
-        (element) => element.modInfo.id == newlyAddedVariant.modInfo.id,
-      )) {
+      // If a download toast is already showing for this mod, don't show another toast.
+      if (downloads.any((d) {
+        if (d is ModDownload) {
+          return d.modInfo.id == newlyAddedVariant.modInfo.id;
+        }
+        // For plain Downloads (file picker / drag-drop): suppress while an install
+        // is in progress (installComplete fires in the finally block, AFTER
+        // reloadModVariants, so it's still false when this listener fires).
+        // Also suppress if this download already resolved to the same mod.
+        return (d.task.status.value == DownloadStatus.completed &&
+                !d.installComplete.value) ||
+            d.installedVariant.value?.modInfo.id == newlyAddedVariant.modInfo.id;
+      })) {
         continue;
       }
 
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final fakeTask = DownloadTask(DownloadRequest('', '', null));
+        fakeTask.status.value = DownloadStatus.completed;
+        final fakeDownload = Download(
+          const Uuid().v4(),
+          newlyAddedVariant.modInfo.nameOrId,
+          fakeTask,
+        );
+        fakeDownload.installedVariant.value = newlyAddedVariant;
+        fakeDownload.installComplete.value = true;
         toastification.showCustom(
           context: context,
           autoCloseDuration: Duration(milliseconds: toastDurationMillis),
-          builder: (context, item) {
-            return ModAddedToast(newlyAddedVariant, item);
-          },
+          builder: (context, item) =>
+              ModDownloadToast(fakeDownload, item, toastDurationMillis),
         );
       });
     }

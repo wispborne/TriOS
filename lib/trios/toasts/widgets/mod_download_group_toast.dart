@@ -71,6 +71,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
   final Map<String, VoidCallback> _statusListeners = {};
   final Map<String, VoidCallback> _installCompleteListeners = {};
   final Map<String, VoidCallback> _installProgressListeners = {};
+  final Map<String, VoidCallback> _installedVariantListeners = {};
 
   @override
   void initState() {
@@ -95,6 +96,9 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
 
       download.installProgress.addListener(installListener);
       _installProgressListeners[download.id] = installListener;
+
+      download.installedVariant.addListener(installListener);
+      _installedVariantListeners[download.id] = installListener;
     }
 
     // Timer loop for countdown
@@ -127,6 +131,12 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
       );
       download?.installProgress.removeListener(entry.value);
     }
+    for (final entry in _installedVariantListeners.entries) {
+      final download = widget.group.items.firstWhereOrNull(
+        (d) => d.id == entry.key,
+      );
+      download?.installedVariant.removeListener(entry.value);
+    }
     super.dispose();
   }
 
@@ -139,7 +149,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
               .orEmpty()
               .any((v) => v.smolId == download.modInfo.smolId);
     }
-    return download.installComplete.value;
+    return download.installedVariant.value != null || download.installComplete.value;
   }
 
   @override
@@ -418,9 +428,9 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
               .orEmpty()
               .firstWhereOrNull(
                 (ModVariant element) =>
-                    element.smolId == download.modInfo.smolId,
+                    element.smolId == (download as ModDownload).modInfo.smolId,
               )
-        : null;
+        : download.installedVariant.value;
 
     return Padding(
       padding: const .only(bottom: 6),

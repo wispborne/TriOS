@@ -14,6 +14,7 @@ import 'package:uuid/uuid.dart';
 import '../../mod_manager/mod_install_source.dart';
 import '../../mod_manager/mod_manager_logic.dart';
 import '../../models/mod_info.dart';
+import '../../models/mod_variant.dart';
 import '../constants.dart';
 import 'download_request.dart';
 import 'download_status.dart';
@@ -201,6 +202,10 @@ class Download {
 
   /// Set to true when installation (extraction) is complete.
   final ValueNotifier<bool> installComplete = ValueNotifier(false);
+
+  /// Set to the installed [ModVariant] after installation completes (for plain
+  /// [Download] objects that don't carry [ModInfo]).
+  final ValueNotifier<ModVariant?> installedVariant = ValueNotifier(null);
 
   Download(this.id, this.displayName, this.task);
 }

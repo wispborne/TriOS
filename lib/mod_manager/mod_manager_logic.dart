@@ -93,8 +93,32 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         return [];
       }
 
+      // Extraction complete; signal the post-extraction reload phase so the
+      // toast shows an indeterminate "Finalizing..." bar instead of freezing
+      // at 100% while reloadModVariants() reads mod data from disk.
+      installationDownload?.installProgress.value = TriOSDownloadProgress(
+        0,
+        0,
+        isIndeterminate: true,
+        customStatus: "Finalizing...",
+      );
+
       await ref.read(AppState.modVariants.notifier).reloadModVariants();
       final refreshedVariants = ref.read(AppState.modVariants).value ?? [];
+
+      // For plain Download installs (file picker / drag-drop), connect the
+      // installed variant so ModDownloadToast can reach the installed visual state.
+      if (installationDownload != null && installModsResult.isNotEmpty) {
+        for (final result in installModsResult.where((r) => r.err == null)) {
+          final variant = refreshedVariants.firstWhereOrNull(
+            (v) => v.smolId == result.modInfo.smolId,
+          );
+          if (variant != null) {
+            installationDownload.installedVariant.value = variant;
+            break;
+          }
+        }
+      }
 
       if (!forceDontEnableModUpdates &&
           ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==

@@ -32,9 +32,14 @@ import 'package:trios/widgets/restartable_app.dart';
 import '../../utils/util.dart';
 import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
+import 'package:uuid/uuid.dart';
+
 import '../download_manager/download_manager.dart';
+import '../download_manager/download_request.dart';
+import '../download_manager/download_status.dart';
+import '../download_manager/download_task.dart';
 import '../self_updater/script_generator.dart';
-import '../toasts/mod_added_toast.dart';
+import '../toasts/mod_download_toast.dart';
 
 class SettingsDebugSection extends ConsumerStatefulWidget {
   const SettingsDebugSection({super.key});
@@ -347,9 +352,23 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 .firstWhere(
                   (variant) => variant.modInfo.id.equalsIgnoreCase("magiclib"),
                 );
+            final durationMillis =
+                ref.read(appSettings.select((s) => s.toastDurationSeconds)) *
+                1000;
+            final fakeTask = DownloadTask(DownloadRequest('', '', null));
+            fakeTask.status.value = DownloadStatus.completed;
+            final fakeDownload = Download(
+              const Uuid().v4(),
+              testMod.modInfo.nameOrId,
+              fakeTask,
+            );
+            fakeDownload.installedVariant.value = testMod;
+            fakeDownload.installComplete.value = true;
             toastification.showCustom(
               context: context,
-              builder: (context, item) => ModAddedToast(testMod, item),
+              autoCloseDuration: Duration(milliseconds: durationMillis),
+              builder: (context, item) =>
+                  ModDownloadToast(fakeDownload, item, durationMillis),
             );
           },
           label: const Text('Show Mod Added Toast for MagicLib'),

@@ -83,6 +83,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
     // Listen for installComplete to trigger auto-dismiss for install-only entries.
     widget.download.installComplete.addListener(_onInstallComplete);
     widget.download.installProgress.addListener(_onInstallProgressChanged);
+    widget.download.installedVariant.addListener(_onInstalledVariantChanged);
   }
 
   void _onInstallComplete() {
@@ -93,10 +94,15 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
     if (mounted) setState(() {});
   }
 
+  void _onInstalledVariantChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     widget.download.installComplete.removeListener(_onInstallComplete);
     widget.download.installProgress.removeListener(_onInstallProgressChanged);
+    widget.download.installedVariant.removeListener(_onInstalledVariantChanged);
     super.dispose();
   }
 
@@ -113,9 +119,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
               .orEmpty()
               .firstWhereOrNull(
                 (ModVariant element) =>
-                    element.smolId == (download).modInfo.smolId,
+                    element.smolId == (download as ModDownload).modInfo.smolId,
               )
-        : null;
+        : download.installedVariant.value;
     if (palette == null && installedMod != null) {
       _generatePalette(installedMod);
     }
@@ -381,37 +387,38 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                 );
                                               },
                                             ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 4,
-                                              ),
-                                              child: Opacity(
-                                                opacity: 0.6,
-                                                child: Row(
-                                                  spacing: 4,
-                                                  crossAxisAlignment: .end,
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.download_done,
-                                                      size: 12,
-                                                    ),
-                                                    Expanded(
-                                                      child: TextTriOS(
-                                                        downloadTask
-                                                            .request
-                                                            .url,
-                                                        style: theme
-                                                            .textTheme
-                                                            .labelSmall,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        maxLines: 1,
+                                            if (downloadTask.request.url.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 4,
+                                                ),
+                                                child: Opacity(
+                                                  opacity: 0.6,
+                                                  child: Row(
+                                                    spacing: 4,
+                                                    crossAxisAlignment: .end,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.download_done,
+                                                        size: 12,
                                                       ),
-                                                    ),
-                                                  ],
+                                                      Expanded(
+                                                        child: TextTriOS(
+                                                          downloadTask
+                                                              .request
+                                                              .url,
+                                                          style: theme
+                                                              .textTheme
+                                                              .labelSmall,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          maxLines: 1,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
                                               ),
-                                            ),
                                             Padding(
                                               padding: const EdgeInsets.only(
                                                 top: 8,

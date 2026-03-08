@@ -847,7 +847,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                     const SizedBox(height: 16),
                                     Linkify(
                                       text:
-                                          "Use a standalone browser to find mods (maybe at https://starmodder2.pages.dev ?) instead.",
+                                          "Use a standalone browser to find mods (maybe at https://starmodder.pages.dev ?) instead.",
                                       onOpen: (link) =>
                                           OpenFilex.open(link.url),
                                     ),
@@ -863,7 +863,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                     const SizedBox(height: 16),
                                     Linkify(
                                       text:
-                                          "Use a standalone browser to find mods (maybe at https://starmodder2.pages.dev ?) instead.",
+                                          "Use a standalone browser to find mods (maybe at https://starmodder.pages.dev ?) instead.",
                                       onOpen: (link) =>
                                           OpenFilex.open(link.url),
                                     ),

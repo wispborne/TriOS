@@ -67,8 +67,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     super.build(context);
 
     final isActive =
-        ref.watch(appSettings.select((s) => s.defaultTool)) ==
-        TriOSTools.ships;
+        ref.watch(appSettings.select((s) => s.defaultTool)) == TriOSTools.ships;
     if (!isActive && _cachedBuild != null) return _cachedBuild!;
 
     final controller = ref.watch(shipsPageControllerProvider.notifier);
@@ -539,7 +538,12 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
               constraints: const BoxConstraints(maxWidth: 700),
               child: Padding(
                 padding: const EdgeInsets.all(8),
-                child: IngameShipTooltip.buildShipContent(item, controllerState.shipSystemsMap, controllerState.weaponsMap, ctx),
+                child: IngameShipTooltip.buildShipContent(
+                  item,
+                  controllerState.shipSystemsMap,
+                  controllerState.weaponsMap,
+                  ctx,
+                ),
               ),
             ),
           ),
@@ -1070,6 +1074,8 @@ class _ShipImageCellState extends State<ShipImageCell> {
           File(_extantPath!),
           width: 40,
           height: 40,
+          cacheWidth: 40,
+          cacheHeight: 40,
           fit: BoxFit.contain,
         ),
       ),

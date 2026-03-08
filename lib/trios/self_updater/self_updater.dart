@@ -377,12 +377,18 @@ class SelfUpdater extends AsyncNotifier<TriOSDownloadProgress?> {
     final platformToUse = platform ?? Platform.operatingSystem;
 
     // Uses the file with the platform name somewhere in it.
-    final assetNameForPlatform = switch (platformToUse) {
-      "windows" => "windows",
-      "linux" => "linux",
-      "macos" => "macos",
-      _ => throw UnsupportedError("Unsupported platform: $platformToUse"),
-    };
+    final String assetNameForPlatform;
+    if (platformToUse == "macos") {
+      final arch = Process.runSync('uname', ['-m']).stdout.toString().trim();
+      // arm64 = Apple Silicon (native), x86_64 = Intel (or Rosetta)
+      assetNameForPlatform = arch == "arm64" ? "applesilicon" : "intel";
+    } else {
+      assetNameForPlatform = switch (platformToUse) {
+        "windows" => "windows",
+        "linux" => "linux",
+        _ => throw UnsupportedError("Unsupported platform: $platformToUse"),
+      };
+    }
 
     return release.assets.firstWhereOrNull(
       (element) => element.name.toLowerCase().contains(assetNameForPlatform),

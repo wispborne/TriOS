@@ -23,7 +23,7 @@ class ModIcon extends ConsumerStatefulWidget {
     // this.showOnClick = false,
   });
 
-  static fromMod(
+  static ModIcon fromMod(
     Mod mod, {
     double size = 32,
     EdgeInsets? padding,
@@ -39,7 +39,7 @@ class ModIcon extends ConsumerStatefulWidget {
     // showOnClick: showOnClick,
   );
 
-  static fromVariant(
+  static ModIcon fromVariant(
     ModVariant? variant, {
     double size = 32,
     EdgeInsets? padding,
@@ -83,6 +83,8 @@ class _ModIconState extends ConsumerState<ModIcon> {
       widget.path!.toFile(),
       width: widget.size,
       height: widget.size,
+      cacheWidth: widget.size.toInt(),
+      cacheHeight: widget.size.toInt(),
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
         return widget.takeUpSpaceIfNoIcon

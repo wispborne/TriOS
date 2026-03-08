@@ -13,6 +13,7 @@
   - Ship/Weapon filters are now sorted alphabetically (except hull sizes) and not reset when the UI refreshes.
   - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
   - Cleaned up download notification UI.
+  - Improved json/yaml parsing performance by 20%. 
 
 # 1.3.3
 - Added

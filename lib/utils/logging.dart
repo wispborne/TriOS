@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 // import 'package:fimber/fimber.dart' as f;
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
@@ -32,6 +33,37 @@ AdvancedFileOutput? _advancedFileOutput;
 const useFimber = false;
 bool didLoggingInitializeSuccessfully = false;
 LoggingSettings _loggingSettings = LoggingSettings();
+
+/// When non-null, Fimber methods forward log messages through this port
+/// instead of logging locally. Used inside worker isolates.
+SendPort? _workerLogForwardPort;
+
+/// Minimum log level to forward from a worker isolate.
+/// Messages below this level are silently dropped. Defaults to debug (500),
+/// filtering out trace/verbose messages which can be extremely high-volume.
+int _workerLogMinLevel = 500;
+
+/// A log message forwarded from a worker isolate to the main isolate.
+class WorkerLogMessage {
+  final int levelValue;
+  final String message;
+  final String? error;
+  final String? stackTrace;
+
+  WorkerLogMessage(this.levelValue, this.message, this.error, this.stackTrace);
+}
+
+/// Configure this isolate to forward all Fimber log calls through [sendPort].
+/// Call this at the start of a worker isolate's entry point.
+///
+/// [minLevel] sets the minimum log level to forward (default: 500 / debug).
+/// Trace messages (level 0) are filtered by default since they tend to be
+/// extremely high-volume and are typically filtered on the receiving end anyway.
+void configureWorkerLogging(SendPort sendPort, {int minLevel = 500}) {
+  _workerLogForwardPort = sendPort;
+  _workerLogMinLevel = minLevel;
+  didLoggingInitializeSuccessfully = true;
+}
 
 LoggingSettings get currentSettings => _loggingSettings;
 
@@ -227,6 +259,20 @@ class Fimber {
     Object? ex,
     StackTrace? stacktrace,
   }) {
+    if (_workerLogForwardPort != null) {
+      if (0 >= _workerLogMinLevel) {
+        _workerLogForwardPort!.send(
+          WorkerLogMessage(
+            0,
+            message(),
+            ex?.toString(),
+            stacktrace?.toString(),
+          ),
+        );
+      }
+      return;
+    }
+
     if (!didLoggingInitializeSuccessfully) {
       print(message());
       return;
@@ -246,6 +292,20 @@ class Fimber {
   }
 
   static void d(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (_workerLogForwardPort != null) {
+      if (500 >= _workerLogMinLevel) {
+        _workerLogForwardPort!.send(
+          WorkerLogMessage(
+            500,
+            message,
+            ex?.toString(),
+            stacktrace?.toString(),
+          ),
+        );
+      }
+      return;
+    }
+
     if (!didLoggingInitializeSuccessfully) {
       print(message);
       return;
@@ -263,6 +323,20 @@ class Fimber {
   }
 
   static void i(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (_workerLogForwardPort != null) {
+      if (800 >= _workerLogMinLevel) {
+        _workerLogForwardPort!.send(
+          WorkerLogMessage(
+            800,
+            message,
+            ex?.toString(),
+            stacktrace?.toString(),
+          ),
+        );
+      }
+      return;
+    }
+
     if (!didLoggingInitializeSuccessfully) {
       print(message);
       return;
@@ -280,6 +354,20 @@ class Fimber {
   }
 
   static void w(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (_workerLogForwardPort != null) {
+      if (900 >= _workerLogMinLevel) {
+        _workerLogForwardPort!.send(
+          WorkerLogMessage(
+            900,
+            message,
+            ex?.toString(),
+            stacktrace?.toString(),
+          ),
+        );
+      }
+      return;
+    }
+
     if (!didLoggingInitializeSuccessfully) {
       print(message);
       return;
@@ -297,6 +385,20 @@ class Fimber {
   }
 
   static void e(String message, {Object? ex, StackTrace? stacktrace}) {
+    if (_workerLogForwardPort != null) {
+      if (1000 >= _workerLogMinLevel) {
+        _workerLogForwardPort!.send(
+          WorkerLogMessage(
+            1000,
+            message,
+            ex?.toString(),
+            stacktrace?.toString(),
+          ),
+        );
+      }
+      return;
+    }
+
     if (!didLoggingInitializeSuccessfully) {
       print(message);
       return;

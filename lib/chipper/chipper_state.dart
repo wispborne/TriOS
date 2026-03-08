@@ -1,11 +1,11 @@
 import 'dart:collection';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/chipper/views/chipper_home.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/utils/app_worker.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 
@@ -43,7 +43,7 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
     if (next == null || state.isLoading) return;
     state = const AsyncValue.loading();
 
-    compute(handleNewLogContent, next.contents).then((LogChips? chips) {
+    ref.read(appWorkerProvider).run(handleNewLogContent, next.contents).then((LogChips? chips) {
       state = AsyncValue.data(chips?..filepath = next.filepath);
       // setState(() {
       //   Fimber.i("Parsing false");

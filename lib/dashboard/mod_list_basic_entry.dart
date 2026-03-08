@@ -204,6 +204,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
                             child: modVariant.iconFilePath != null
                                 ? Image.file(
                                     (modVariant.iconFilePath ?? "").toFile(),
+                                    cacheHeight: rowHeight.toInt(),
+                                    cacheWidth: rowHeight.toInt(),
                                     isAntiAlias: true,
                                   )
                                 : Container(),

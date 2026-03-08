@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
-import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -45,9 +44,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
 
     final modVariant = widget.modVariant;
     final modInfo = modVariant.modInfo;
-    var cachedVersionChecks = ref
-        .watch(AppState.versionCheckResults)
-        .value;
+    var cachedVersionChecks = ref.watch(AppState.versionCheckResults).value;
     final versionCheckComparisonResult = modVariant.updateCheck(
       cachedVersionChecks,
     );
@@ -62,6 +59,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
       color: theme.colorScheme.primary,
     );
     const spacing = 4.0;
+    final int iconSize = 40;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,7 +78,9 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                   bottom: 8,
                 ),
                 child: SizedBox(
-                  width: modVariant.iconFilePath != null ? 40 : 0,
+                  width: modVariant.iconFilePath != null
+                      ? iconSize.toDouble()
+                      : 0,
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -90,6 +90,8 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                             ? Image.file(
                                 (modVariant.iconFilePath ?? "").toFile(),
                                 isAntiAlias: true,
+                                cacheWidth: iconSize,
+                                cacheHeight: iconSize,
                               )
                             : Container(),
                       ),

@@ -5,6 +5,7 @@
   - Warning if there are two of the same mod with the same version in your mods folder.
   - Log viewer now has a searchbar and makes better use of space.
   - Assign a custom RAM allocation.
+  - Option to make the mod list on the Dashboard colorful!
 - Fixed
   - Lag when changing mods after having opened ships/weapons/portraits viewers.
 - Changed

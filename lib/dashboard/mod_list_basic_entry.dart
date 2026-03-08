@@ -13,6 +13,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
@@ -142,7 +143,13 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
   }
 }
 
-class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
+class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
+    with PaletteGeneratorMixin<ModListBasicEntry> {
+  @override
+  String? getIconPath() =>
+      widget.mod.findFirstEnabledOrHighestVersion?.iconFilePath ??
+      widget.mod.modVariants.firstOrNull?.iconFilePath;
+
   @override
   Widget build(BuildContext context) {
     var cachedVersionChecks = ref.watch(AppState.versionCheckResults).value;
@@ -150,6 +157,9 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
     final modVariant =
         mod.findFirstEnabledOrHighestVersion ?? mod.modVariants.first;
 
+    final isColorfulModeOn = ref.watch(
+      appSettings.select((s) => s.dashboardModListColorful),
+    );
     final gameVersion = ref.watch(AppState.starsectorVersion).value;
     final modInfo = modVariant.modInfo;
     final versionCheckComparisonResult = mod.updateCheck(cachedVersionChecks);
@@ -162,7 +172,9 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
       gameVersion,
     );
     final theme = Theme.of(context);
-    final compatTextColor = compatWithGame.getGameCompatibilityColor();
+    final compatTextColor = isColorfulModeOn
+        ? theme.textTheme.labelLarge?.color?.withAlpha(200)
+        : compatWithGame.getGameCompatibilityColor();
     final changelogUrl = ref
         .read(AppState.changelogsProvider.notifier)
         .getChangelogUrl(localVersionCheck, remoteVersionCheck);
@@ -171,6 +183,12 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
         ? 0.55
         : 1.0;
 
+    final palette = isColorfulModeOn
+        ? paletteGenerator?.createPaletteTheme(context)
+        : null;
+    final paletteAccent = palette?.colorScheme.onSurface;
+    final paletteBg = palette?.colorScheme.surfaceContainer;
+
     const rowHeight = 25.0;
 
     return Row(
@@ -178,213 +196,231 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry> {
       children: [
         Flexible(
           child: InkWell(
-            child: SizedBox(
-              height: rowHeight,
-              child: MovingTooltipWidget.framed(
-                position: TooltipPosition.topLeft,
-                padding: const EdgeInsets.all(0),
-                tooltipWidget: SizedBox(
-                  width: 400,
-                  child: ModSummaryWidget(
-                    modVariant: modVariant,
-                    compatWithGame: compatWithGame,
-                    compatTextColor: compatTextColor,
-                    showIconTip: true,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: paletteBg?.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: SizedBox(
+                height: rowHeight,
+                child: MovingTooltipWidget.framed(
+                  position: TooltipPosition.topLeft,
+                  padding: const EdgeInsets.all(0),
+                  tooltipWidget: SizedBox(
+                    width: 400,
+                    child: ModSummaryWidget(
+                      modVariant: modVariant,
+                      compatWithGame: compatWithGame,
+                      compatTextColor: compatTextColor,
+                      showIconTip: true,
+                    ),
                   ),
-                ),
-                child: CheckboxWithLabel(
-                  labelWidget: Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: SizedBox(
-                          height: rowHeight,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: modVariant.iconFilePath != null
-                                ? Image.file(
-                                    (modVariant.iconFilePath ?? "").toFile(),
-                                    cacheHeight: rowHeight.toInt(),
-                                    cacheWidth: rowHeight.toInt(),
-                                    isAntiAlias: true,
-                                  )
-                                : Container(),
+                  child: CheckboxWithLabel(
+                    checkColor: paletteAccent,
+                    labelWidget: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: SizedBox(
+                            height: rowHeight,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: modVariant.iconFilePath != null
+                                  ? Image.file(
+                                      (modVariant.iconFilePath ?? "").toFile(),
+                                      cacheHeight: rowHeight.toInt(),
+                                      cacheWidth: rowHeight.toInt(),
+                                      isAntiAlias: true,
+                                    )
+                                  : Container(),
+                            ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                modInfo.nameOrId,
-                                style: GoogleFonts.roboto(
-                                  textStyle: theme.textTheme.labelLarge
-                                      ?.copyWith(
-                                        color: compatTextColor?.withOpacity(
-                                          modTextOpacity,
-                                        ),
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                ),
-                                overflow: TextOverflow.fade,
-                                softWrap: false,
-                                maxLines: 1,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 75),
-                              child: Text(
-                                modInfo.version.toString(),
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withOpacity(0.5),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                softWrap: false,
-                                maxLines: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      MovingTooltipWidget(
-                        position: TooltipPosition.topLeft,
-                        tooltipWidget:
-                            ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
-                              mod,
-                              changelogUrl,
-                              versionCheckComparison,
-                              localVersionCheck,
-                              remoteVersionCheck,
-                            ),
-                        child: Disable(
-                          isEnabled: !widget.isDisabled,
-                          child: InkWell(
-                            onTap: () {
-                              if (remoteVersionCheck?.remoteVersion != null &&
-                                  versionCheckComparison == -1) {
-                                ref
-                                    .read(downloadManager.notifier)
-                                    .downloadUpdateViaBrowser(
-                                      remoteVersionCheck!.remoteVersion!,
-                                      activateVariantOnComplete: false,
-                                      modInfo: modInfo,
-                                    );
-                              } else {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    content:
-                                        ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                          mod,
-                                          changelogUrl,
-                                          localVersionCheck,
-                                          remoteVersionCheck,
-                                          versionCheckComparison,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  modInfo.nameOrId,
+                                  style: GoogleFonts.roboto(
+                                    textStyle: theme.textTheme.labelLarge
+                                        ?.copyWith(
+                                          color:
+                                              paletteAccent?.withValues(
+                                                alpha: modTextOpacity,
+                                              ) ??
+                                              compatTextColor?.withOpacity(
+                                                modTextOpacity,
+                                              ),
+                                          decoration:
+                                              isColorfulModeOn &&
+                                                  compatWithGame ==
+                                                      GameCompatibility
+                                                          .incompatible
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                          fontWeight: FontWeight.normal,
                                         ),
                                   ),
-                                );
-                              }
-                            },
-                            onSecondaryTap: () => showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                content:
-                                    ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                      mod,
-                                      changelogUrl,
-                                      localVersionCheck,
-                                      remoteVersionCheck,
-                                      versionCheckComparison,
+                                  overflow: TextOverflow.fade,
+                                  softWrap: false,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 75),
+                                child: Text(
+                                  modInfo.version.toString(),
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.5),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: false,
+                                  maxLines: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        MovingTooltipWidget(
+                          position: TooltipPosition.topLeft,
+                          tooltipWidget:
+                              ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
+                                mod,
+                                changelogUrl,
+                                versionCheckComparison,
+                                localVersionCheck,
+                                remoteVersionCheck,
+                              ),
+                          child: Disable(
+                            isEnabled: !widget.isDisabled,
+                            child: InkWell(
+                              onTap: () {
+                                if (remoteVersionCheck?.remoteVersion != null &&
+                                    versionCheckComparison == -1) {
+                                  ref
+                                      .read(downloadManager.notifier)
+                                      .downloadUpdateViaBrowser(
+                                        remoteVersionCheck!.remoteVersion!,
+                                        activateVariantOnComplete: false,
+                                        modInfo: modInfo,
+                                      );
+                                } else {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      content:
+                                          ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                            mod,
+                                            changelogUrl,
+                                            localVersionCheck,
+                                            remoteVersionCheck,
+                                            versionCheckComparison,
+                                          ),
                                     ),
+                                  );
+                                }
+                              },
+                              onSecondaryTap: () => showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  content:
+                                      ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                        mod,
+                                        changelogUrl,
+                                        localVersionCheck,
+                                        remoteVersionCheck,
+                                        versionCheckComparison,
+                                      ),
+                                ),
                               ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5.0,
-                              ),
-                              child: VersionCheckIcon.fromComparison(
-                                comparison: versionCheckComparisonResult,
-                                modId: modInfo.id,
-                                theme: theme,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5.0,
+                                ),
+                                child: VersionCheckIcon.fromComparison(
+                                  comparison: versionCheckComparisonResult,
+                                  modId: modInfo.id,
+                                  theme: theme,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  checkWrapper: (child) =>
-                      Disable(isEnabled: !widget.isDisabled, child: child),
-                  textPadding: const EdgeInsets.only(left: 0, bottom: 2),
-                  value: isEnabled,
-                  expand: true,
-                  onChanged: (_) async {
-                    if (widget.isDisabled) {
-                      return;
-                    }
-                    final isCurrentlyEnabled = isEnabled;
+                      ],
+                    ),
+                    checkWrapper: (child) =>
+                        Disable(isEnabled: !widget.isDisabled, child: child),
+                    textPadding: const EdgeInsets.only(left: 0, bottom: 2),
+                    value: isEnabled,
+                    expand: true,
+                    onChanged: (_) async {
+                      if (widget.isDisabled) {
+                        return;
+                      }
+                      final isCurrentlyEnabled = isEnabled;
 
-                    if (!isCurrentlyEnabled) {
-                      final allMods =
-                          ref.read(AppState.modVariants).value ?? [];
-                      final enabledMods = ref
-                          .read(AppState.enabledModIds)
-                          .value!;
-                      // Check dependencies
-                      final dependencyCheck = modInfo.checkDependencies(
-                        allMods,
-                        enabledMods,
-                        gameVersion,
-                      );
+                      if (!isCurrentlyEnabled) {
+                        final allMods =
+                            ref.read(AppState.modVariants).value ?? [];
+                        final enabledMods = ref
+                            .read(AppState.enabledModIds)
+                            .value!;
+                        // Check dependencies
+                        final dependencyCheck = modInfo.checkDependencies(
+                          allMods,
+                          enabledMods,
+                          gameVersion,
+                        );
 
-                      // Check if any dependencies are completely missing
-                      final missingDependencies = dependencyCheck.where(
-                        (element) => element.satisfiedAmount is Missing,
-                      );
-                      if (missingDependencies.isNotEmpty) {
+                        // Check if any dependencies are completely missing
+                        final missingDependencies = dependencyCheck.where(
+                          (element) => element.satisfiedAmount is Missing,
+                        );
+                        if (missingDependencies.isNotEmpty) {
+                          showSnackBar(
+                            context: context,
+                            type: SnackBarType.error,
+                            content: Text(
+                              "'${modInfo.name}' is missing '${missingDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'.",
+                            ),
+                          );
+                          return;
+                        }
+                      }
+
+                      final modsFolder = ref.read(AppState.modsFolder).value;
+                      if (modsFolder == null) return;
+
+                      try {
+                        if (isCurrentlyEnabled) {
+                          // Disable
+                          ref
+                              .read(modManager.notifier)
+                              .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                                mod,
+                                null,
+                              );
+                        } else {
+                          // Enable highest version
+                          ref
+                              .read(modManager.notifier)
+                              .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                                mod,
+                                mod.findHighestVersion,
+                              );
+                        }
+                      } catch (e) {
                         showSnackBar(
                           context: context,
                           type: SnackBarType.error,
-                          content: Text(
-                            "'${modInfo.name}' is missing '${missingDependencies.joinToString(transform: (it) => it.dependency.name ?? it.dependency.id ?? "<unknown>")}'.",
-                          ),
+                          content: Text(e.toString()),
                         );
-                        return;
                       }
-                    }
-
-                    final modsFolder = ref.read(AppState.modsFolder).value;
-                    if (modsFolder == null) return;
-
-                    try {
-                      if (isCurrentlyEnabled) {
-                        // Disable
-                        ref
-                            .read(modManager.notifier)
-                            .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
-                              mod,
-                              null,
-                            );
-                      } else {
-                        // Enable highest version
-                        ref
-                            .read(modManager.notifier)
-                            .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
-                              mod,
-                              mod.findHighestVersion,
-                            );
-                      }
-                    } catch (e) {
-                      showSnackBar(
-                        context: context,
-                        type: SnackBarType.error,
-                        content: Text(e.toString()),
-                      );
-                    }
-                  },
+                    },
+                  ),
                 ),
               ),
             ),

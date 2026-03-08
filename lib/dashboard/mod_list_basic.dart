@@ -975,6 +975,22 @@ class _SettingsPopupMenu extends ConsumerWidget {
                   );
             },
           ),
+          _buildToggleSettingMenuItem(
+            context: context,
+            ref: ref,
+            isCheckedSelector: (s) => s.dashboardModListColorful,
+            tooltip:
+                "Color mod list rows using each mod's icon palette.",
+            label: "Colorful",
+            onChanged: (consumerRef, newValue) {
+              consumerRef
+                  .read(appSettings.notifier)
+                  .update(
+                    (s) =>
+                        s.copyWith(dashboardModListColorful: newValue ?? false),
+                  );
+            },
+          ),
           // _buildToggleSettingMenuItem(
           //   context: context,
           //   ref: ref,

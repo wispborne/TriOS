@@ -25,6 +25,8 @@ class _RamChangerState extends ConsumerState<RamChanger> {
   bool areAllCustomJresWritable = false;
   final List<String> vmParamsFilesThatCannotBeWritten = [];
   final TextEditingController _customRamController = TextEditingController();
+  double? _lastKnownRamMb;
+  bool _lastKnownHasMultiple = false;
 
   @override
   void dispose() {
@@ -61,6 +63,31 @@ class _RamChangerState extends ConsumerState<RamChanger> {
     final theme = Theme.of(context);
 
     final ramChoices = [1.5, 2, 3, 4, 6, 8, 10, 11, 16];
+    final hasMultiple =
+        jreManager?.hasMultipleActiveJresWithDifferentRamAmounts ?? false;
+    final currentRamMb = double.tryParse(
+      jreManager?.activeJre?.ramAmountInMb ?? "",
+    );
+    final ramChoicesInMb = ramChoices.map((gb) => gb * mbPerGb).toSet();
+    final isCustomRam =
+        !hasMultiple &&
+        currentRamMb != null &&
+        !ramChoicesInMb.contains(currentRamMb);
+
+    if (currentRamMb != _lastKnownRamMb ||
+        hasMultiple != _lastKnownHasMultiple) {
+      _lastKnownRamMb = currentRamMb;
+      _lastKnownHasMultiple = hasMultiple;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (isCustomRam) {
+          _customRamController.text = currentRamMb!.toStringAsFixed(0);
+        } else {
+          _customRamController.clear();
+        }
+      });
+    }
+
     return (isStandardVmparamsWritable == false ||
             areAllCustomJresWritable == false)
         ? Text(
@@ -153,8 +180,19 @@ class _RamChangerState extends ConsumerState<RamChanger> {
               ),
               Card(
                 color: theme.cardColor.darker(1),
+                shape: isCustomRam
+                    ? RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          ThemeManager.cornerRadius,
+                        ),
+                        side: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 2,
+                        ),
+                      )
+                    : null,
                 child: Padding(
-                  padding: const .all(8.0),
+                  padding: const .only(left: 8, top: 8, right: 8, bottom: 12),
                   child: Column(
                     spacing: 4,
                     children: [

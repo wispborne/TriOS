@@ -6,6 +6,7 @@
   - Log viewer now has a searchbar and makes better use of space.
   - Assign a custom RAM allocation.
   - Option to make the mod list on the Dashboard colorful!
+    - Also added one to the Mods list but it's kind of bad.
 - Fixed
   - Lag when changing mods after having opened ships/weapons/portraits viewers.
 - Changed
@@ -14,7 +15,8 @@
   - Ship/Weapon filters are now sorted alphabetically (except hull sizes) and not reset when the UI refreshes.
   - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
   - Cleaned up download notifications and added an "installation progress" notification.
-  - Improved json/yaml parsing performance by 20%. 
+  - Improved json/yaml parsing performance by 20%.
+  - Aligned dashboard mod list mod names.
 
 # 1.3.3
 - Added

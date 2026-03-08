@@ -187,7 +187,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
         ? paletteGenerator?.createPaletteTheme(context)
         : null;
     final paletteAccent = palette?.colorScheme.onSurface;
-    final paletteBg = palette?.colorScheme.surfaceContainer;
+    final paletteBg = palette?.colorScheme.surface;
 
     const rowHeight = 25.0;
 
@@ -232,7 +232,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                                       cacheWidth: rowHeight.toInt(),
                                       isAntiAlias: true,
                                     )
-                                  : Container(),
+                                  : Container(width: rowHeight),
                             ),
                           ),
                         ),

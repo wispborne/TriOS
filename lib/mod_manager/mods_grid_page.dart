@@ -41,6 +41,7 @@ import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/refresh_mods_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -250,22 +251,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         ?.userMetadata[item.id];
                     final isFavorited = modMetadata?.isFavorited ?? false;
 
-                    final backgroundBaseColor = isFavorited
-                        ? theme.colorScheme.primary.withOpacity(0.3)
-                        : Colors.transparent;
-
-                    // Mix in any hover/checked overlay color
-                    final backgroundColor = backgroundBaseColor.mix(
-                      modifiers.isRowChecked
-                          ? theme.colorScheme.onSurface.withOpacity(0.4)
-                          : isHovering
-                          ? theme.colorScheme.onInverseSurface.withOpacity(0.2)
-                          : Colors.transparent,
-                      0.5,
-                    );
-
-                    return Container(
-                      decoration: BoxDecoration(color: backgroundColor),
+                    return _ModGridRow(
+                      mod: item,
+                      isFavorited: isFavorited,
+                      isHovering: isHovering,
+                      isRowChecked: modifiers.isRowChecked,
                       child: Builder(
                         builder: (context) {
                           if (controller == null) return child;
@@ -1055,6 +1045,31 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         : Icons.check_box_outline_blank,
                   ),
                   title: Text("Pin Favorited Mods to Top"),
+                );
+              },
+            ),
+          ),
+          PopupMenuItem(
+            onTap: () {
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (s) => s.copyWith(modsGridColorful: !s.modsGridColorful),
+                  );
+            },
+            child: Builder(
+              builder: (context) {
+                final modsGridColorful = ref.watch(
+                  appSettings.select((s) => s.modsGridColorful),
+                );
+                return ListTile(
+                  dense: true,
+                  leading: Icon(
+                    modsGridColorful
+                        ? Icons.check_box
+                        : Icons.check_box_outline_blank,
+                  ),
+                  title: const Text("Colorful"),
                 );
               },
             ),
@@ -1980,6 +1995,86 @@ class FavoriteButton extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _ModGridRow extends ConsumerStatefulWidget {
+  final Mod mod;
+  final bool isFavorited;
+  final bool isHovering;
+  final bool isRowChecked;
+  final Widget child;
+
+  const _ModGridRow({
+    required this.mod,
+    required this.isFavorited,
+    required this.isHovering,
+    required this.isRowChecked,
+    required this.child,
+  });
+
+  @override
+  ConsumerState<_ModGridRow> createState() => _ModGridRowState();
+}
+
+class _ModGridRowState extends ConsumerState<_ModGridRow>
+    with PaletteGeneratorMixin<_ModGridRow> {
+  @override
+  String? getIconPath() =>
+      widget.mod.findFirstEnabledOrHighestVersion?.iconFilePath ??
+      widget.mod.modVariants.firstOrNull?.iconFilePath;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isColorfulModeOn = ref.watch(
+      appSettings.select((s) => s.modsGridColorful),
+    );
+    final paletteTheme = isColorfulModeOn
+        ? paletteGenerator?.createPaletteTheme(context)
+        : null;
+    final paletteBg = paletteTheme?.colorScheme.surfaceDim;
+    final paletteAccent = paletteTheme?.colorScheme.onSurface;
+
+    final backgroundBaseColor = isColorfulModeOn
+        ? (paletteBg?.withValues(alpha: 0.3) ?? Colors.transparent)
+        : widget.isFavorited
+        ? theme.colorScheme.primary.withValues(alpha: 0.3)
+        : Colors.transparent;
+
+    // Mix in any hover/checked overlay color, but only when there is one.
+    final overlayColor = widget.isRowChecked
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.4)
+        : widget.isHovering
+        ? theme.colorScheme.onInverseSurface.withValues(alpha: 0.2)
+        : null;
+    final backgroundColor = overlayColor != null
+        ? backgroundBaseColor.mix(overlayColor, 0.5)
+        : backgroundBaseColor;
+
+    // Recolor text and icons via the theme so that cells using Theme.of(context)
+    // pick up the palette accent. TextTheme.apply() recolors every text style
+    // while preserving fontFamily, fontWeight, fontSize, etc.
+    Widget child = widget.child;
+    if (paletteAccent != null) {
+      child = Theme(
+        data: theme.copyWith(
+          textTheme: theme.textTheme.apply(
+            bodyColor: paletteAccent,
+            displayColor: paletteAccent,
+          ),
+          iconTheme: theme.iconTheme.copyWith(color: paletteAccent),
+          colorScheme: theme.colorScheme.copyWith(onSurface: paletteAccent),
+          progressIndicatorTheme: paletteTheme?.progressIndicatorTheme,
+        ),
+        child: child,
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(color: backgroundColor),
+      child: child,
     );
   }
 }

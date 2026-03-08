@@ -145,6 +145,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
                 .read(modManager.notifier)
                 .installModFromSourceWithDefaultUI(
                   ArchiveModInstallSource(tempFolder.listSync().first.toFile()),
+                  installationDownload: value,
                 )
                 .then((installedVariants) {
                   // todo add a setting for this.

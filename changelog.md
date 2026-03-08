@@ -4,7 +4,7 @@
   - Portrait Viewer/Replacer now has filters.
   - Warning if there are two of the same mod with the same version in your mods folder.
   - Log viewer now has a searchbar and makes better use of space.
-  - App icon on Linux.
+  - Assign a custom RAM allocation.
 - Fixed
   - Lag when changing mods after having opened ships/weapons/portraits viewers.
 - Changed
@@ -12,7 +12,7 @@
     - This is to address crash loops that would happen on some systems, where if a user ever selected the mod browser, TriOS would crash on load.
   - Ship/Weapon filters are now sorted alphabetically (except hull sizes) and not reset when the UI refreshes.
   - Loading ships/weapons is slightly less laggy now (limited UI rebuilds and moved some logic to async).
-  - Cleaned up download notification UI.
+  - Cleaned up download notifications and added an "installation progress" notification.
   - Improved json/yaml parsing performance by 20%. 
 
 # 1.3.3

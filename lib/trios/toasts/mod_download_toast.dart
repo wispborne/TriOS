@@ -110,7 +110,6 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
   Widget build(BuildContext context) {
     final download = widget.download;
     final item = widget.item;
-    final modString = download.displayName;
     final downloadTask = download.task;
     var installedMod = download is ModDownload
         ? ref
@@ -119,9 +118,10 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
               .orEmpty()
               .firstWhereOrNull(
                 (ModVariant element) =>
-                    element.smolId == (download as ModDownload).modInfo.smolId,
+                    element.smolId == download.modInfo.smolId,
               )
         : download.installedVariant.value;
+    final modString = installedMod?.modInfo.name ?? download.displayName;
     if (palette == null && installedMod != null) {
       _generatePalette(installedMod);
     }
@@ -160,8 +160,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                 onExit: (_) {
                   setState(() => _isHovering = false);
                   final isReadyToAutoDismiss =
-                      installedMod != null ||
-                      download.installComplete.value;
+                      installedMod != null || download.installComplete.value;
                   if (downloadTask.status.value.isCompleted &&
                       isReadyToAutoDismiss) {
                     widget.item.start();
@@ -182,9 +181,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                         final isReadyToAutoDismiss =
                             installedMod != null ||
                             download.installComplete.value;
-                        if (isStopped &&
-                            isReadyToAutoDismiss &&
-                            !_isHovering) {
+                        if (isStopped && isReadyToAutoDismiss && !_isHovering) {
                           item.start();
                         }
 
@@ -223,7 +220,8 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                   ),
                                           )
                                         : Tooltip(
-                                            message: status ==
+                                            message:
+                                                status ==
                                                         DownloadStatus
                                                             .completed &&
                                                     installedMod == null
@@ -250,8 +248,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                         Icons.check_circle,
                                                       DownloadStatus.failed =>
                                                         Icons.error,
-                                                      DownloadStatus
-                                                          .canceled =>
+                                                      DownloadStatus.canceled =>
                                                         Icons.circle,
                                                       _ => Icons.downloading,
                                                     },
@@ -338,7 +335,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                               children: [
                                                                 const Icon(
                                                                   Icons
-                                                                      .archive_outlined,
+                                                                      .file_download_outlined,
                                                                   size: 12,
                                                                 ),
                                                                 Text(
@@ -387,7 +384,10 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                 );
                                               },
                                             ),
-                                            if (downloadTask.request.url.isNotEmpty)
+                                            if (downloadTask
+                                                .request
+                                                .url
+                                                .isNotEmpty)
                                               Padding(
                                                 padding: const EdgeInsets.only(
                                                   top: 4,
@@ -522,11 +522,12 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                               ),
                                               child: Builder(
                                                 builder: (context) {
-                                                  final progress =
-                                                      download.installProgress
-                                                          .value;
+                                                  final progress = download
+                                                      .installProgress
+                                                      .value;
                                                   return TriOSDownloadProgressIndicator(
-                                                    value: progress ??
+                                                    value:
+                                                        progress ??
                                                         TriOSDownloadProgress(
                                                           0,
                                                           0,

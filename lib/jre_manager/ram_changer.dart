@@ -24,6 +24,13 @@ class _RamChangerState extends ConsumerState<RamChanger> {
   bool isStandardVmparamsWritable = false;
   bool areAllCustomJresWritable = false;
   final List<String> vmParamsFilesThatCannotBeWritten = [];
+  final TextEditingController _customRamController = TextEditingController();
+
+  @override
+  void dispose() {
+    _customRamController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -51,6 +58,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
         await setWhetherVmParamsAreWritable(newState);
       }
     });
+    final theme = Theme.of(context);
 
     final ramChoices = [1.5, 2, 3, 4, 6, 8, 10, 11, 16];
     return (isStandardVmparamsWritable == false ||
@@ -62,83 +70,141 @@ class _RamChangerState extends ConsumerState<RamChanger> {
               color: ThemeManager.vanillaWarningColor,
             ),
           )
-        : GridView.builder(
-            shrinkWrap: true,
-            itemCount: ramChoices.length,
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCountAndFixedHeight(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  height: 25,
-                ),
-            itemBuilder: (context, index) {
-              final ram = ramChoices[index];
-              final activeJresByGb =
-                  activeJres?.groupBy(
-                    (jre) =>
-                        double.tryParse(
-                          jre.ramAmountInMb ?? "",
-                        )?.div(mbPerGb.toDouble()) ??
-                        0,
-                  ) ??
-                  {};
-
-              return ConditionalWrap(
-                condition: activeJres != null && activeJresByGb[ram] != null,
-                wrapper: (child) {
-                  final jres = activeJresByGb[ram]!;
-                  final firstJre = jres.first;
-                  final theme = Theme.of(context);
-                  Color color;
-
-                  if (jreManager
-                          ?.hasMultipleActiveJresWithDifferentRamAmounts ??
-                      false) {
-                    final palette = PaletteGenerator.fromColors([
-                      PaletteColor(firstJre.toString().toStableColor(), 20),
-                      PaletteColor(
-                        firstJre.vmParamsFileRelativePath.toStableColor(),
-                        20,
-                      ),
-                    ]);
-                    color =
-                        (palette.lightVibrantColor?.color ??
-                                palette.vibrantColor?.color ??
-                                palette.darkVibrantColor?.color)
-                            ?.mix(theme.colorScheme.primary, 0.5) ??
-                        theme.colorScheme.primary;
-                  } else {
-                    color = theme.colorScheme.primary;
-                  }
-                  return MovingTooltipWidget.text(
-                    message: jres.joinToString(
-                      separator: "\n",
-                      transform: (jre) =>
-                          "${jre.ramAmountInMb} MB set in ${jre.vmParamsFileAbsolutePath.relativeTo(gamePath)}",
+        : Column(
+            spacing: 8,
+            children: [
+              GridView.builder(
+                shrinkWrap: true,
+                itemCount: ramChoices.length,
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCountAndFixedHeight(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      height: 25,
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          ThemeManager.cornerRadius,
+                itemBuilder: (context, index) {
+                  final ram = ramChoices[index];
+                  final activeJresByGb =
+                      activeJres?.groupBy(
+                        (jre) =>
+                            double.tryParse(
+                              jre.ramAmountInMb ?? "",
+                            )?.div(mbPerGb.toDouble()) ??
+                            0,
+                      ) ??
+                      {};
+
+                  return ConditionalWrap(
+                    condition:
+                        activeJres != null && activeJresByGb[ram] != null,
+                    wrapper: (child) {
+                      final jres = activeJresByGb[ram]!;
+                      final firstJre = jres.first;
+                      final theme = Theme.of(context);
+                      Color color;
+
+                      if (jreManager
+                              ?.hasMultipleActiveJresWithDifferentRamAmounts ??
+                          false) {
+                        final palette = PaletteGenerator.fromColors([
+                          PaletteColor(firstJre.toString().toStableColor(), 20),
+                          PaletteColor(
+                            firstJre.vmParamsFileRelativePath.toStableColor(),
+                            20,
+                          ),
+                        ]);
+                        color =
+                            (palette.lightVibrantColor?.color ??
+                                    palette.vibrantColor?.color ??
+                                    palette.darkVibrantColor?.color)
+                                ?.mix(theme.colorScheme.primary, 0.5) ??
+                            theme.colorScheme.primary;
+                      } else {
+                        color = theme.colorScheme.primary;
+                      }
+                      return MovingTooltipWidget.text(
+                        message: jres.joinToString(
+                          separator: "\n",
+                          transform: (jre) =>
+                              "${jre.ramAmountInMb} MB set in ${jre.vmParamsFileAbsolutePath.relativeTo(gamePath)}",
                         ),
-                        border: Border.all(width: 2, color: color),
-                      ),
-                      child: child,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(
+                              ThemeManager.cornerRadius,
+                            ),
+                            border: Border.all(width: 2, color: color),
+                          ),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: ElevatedButton(
+                      onPressed: () {
+                        ref
+                            .read(jreManagerProvider.notifier)
+                            .changeRamAmount((ram * mbPerGb).toDouble());
+                      },
+                      child: Text("$ram GB"),
                     ),
                   );
                 },
-                child: ElevatedButton(
-                  onPressed: () {
-                    ref
-                        .read(jreManagerProvider.notifier)
-                        .changeRamAmount((ram * mbPerGb).toDouble());
-                  },
-                  child: Text("$ram GB"),
+              ),
+              Card(
+                color: theme.cardColor.darker(1),
+                child: Padding(
+                  padding: const .all(8.0),
+                  child: Column(
+                    spacing: 4,
+                    children: [
+                      Text(
+                        "or set a custom RAM assignment",
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontStyle: .italic,
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: .center,
+                        spacing: 8,
+                        children: [
+                          SizedBox(
+                            width: 8 * 11,
+                            child: TextField(
+                              controller: _customRamController,
+                              decoration: InputDecoration(
+                                suffixText: "MB",
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                              onSubmitted: (_) => _applyCustomRam(),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 24,
+                            child: ElevatedButton(
+                              onPressed: _applyCustomRam,
+                              child: const Text("Apply"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              );
-            },
+              ),
+            ],
           );
+  }
+
+  void _applyCustomRam() {
+    final mb = double.tryParse(_customRamController.text);
+    if (mb != null && mb > 0) {
+      ref.read(jreManagerProvider.notifier).changeRamAmount(mb);
+    }
   }
 
   Future<void> setWhetherVmParamsAreWritable(JreManagerState newState) async {

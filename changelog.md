@@ -9,6 +9,8 @@
     - Also added one to the Mods list but it's kind of bad.
 - Fixed
   - Lag when changing mods after having opened ships/weapons/portraits viewers.
+  - Linux: crash when disabling a mod.
+    - Note: Linux users, make sure that TriOS has permissions to your Starsector folder.
 - Changed
   - The Mod Browser's webview is now disabled by default.
     - This is to address crash loops that would happen on some systems, where if a user ever selected the mod browser, TriOS would crash on load.

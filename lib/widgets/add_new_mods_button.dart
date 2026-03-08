@@ -7,6 +7,7 @@ import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -67,6 +68,9 @@ class AddNewModsButton extends ConsumerWidget {
       if (value == null) return;
 
       for (final file in value.files) {
+        final download = ref
+            .read(downloadManager.notifier)
+            .addInstallation(file.name, file.path!);
         if (Constants.modInfoFileNames.contains(file.name)) {
           await ref
               .read(modManager.notifier)
@@ -74,12 +78,14 @@ class AddNewModsButton extends ConsumerWidget {
                 DirectoryModInstallSource(
                   Directory(File(file.path!).parent.path),
                 ),
+                installationDownload: download,
               );
         } else {
           await ref
               .read(modManager.notifier)
               .installModFromSourceWithDefaultUI(
                 ArchiveModInstallSource(File(file.path!)),
+                installationDownload: download,
               );
         }
       }

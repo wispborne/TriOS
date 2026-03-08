@@ -27,6 +27,7 @@ abstract class ModInstallSource {
     bool Function(String path)? fileFilter,
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace? st)? onError,
+    void Function(int completed, int total)? onProgress,
   });
 }
 
@@ -76,6 +77,7 @@ class ArchiveModInstallSource extends ModInstallSource {
     bool Function(String path)? fileFilter,
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace? st)? onError,
+    void Function(int completed, int total)? onProgress,
   }) async {
     final fileList = (await archive.listFiles(
       _archive,
@@ -92,6 +94,7 @@ class ArchiveModInstallSource extends ModInstallSource {
                   ? (entry) => pathTransform(entry.path)
                   : null,
               onError: onError,
+              onProgress: onProgress,
             )).nonNulls
             .map(
               (it) => SourcedFile(
@@ -177,16 +180,21 @@ class DirectoryModInstallSource extends ModInstallSource {
     bool Function(String path)? fileFilter,
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
+    void Function(int completed, int total)? onProgress,
   }) async {
     List<SourcedFile> sourcedFiles = [];
     try {
-      await for (FileSystemEntity entity in _directory.list(recursive: true)) {
+      final allFiles = await _directory
+          .list(recursive: true)
+          .where((e) => e is File)
+          .where((e) => fileFilter == null || fileFilter(e.path))
+          .toList();
+      final total = allFiles.length;
+      var completed = 0;
+
+      for (final entity in allFiles) {
         if (entity is File) {
           String relativePath = _relativePath(entity.path);
-
-          if (fileFilter != null && !fileFilter(entity.path)) {
-            continue;
-          }
 
           String destRelativePath = pathTransform != null
               ? pathTransform(entity.path)
@@ -199,6 +207,8 @@ class DirectoryModInstallSource extends ModInstallSource {
           await entity.copy(destFile.path);
 
           sourcedFiles.add(SourcedFile(entity, destFile, relativePath));
+          completed++;
+          onProgress?.call(completed, total);
         }
       }
     } catch (e, st) {

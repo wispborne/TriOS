@@ -143,6 +143,76 @@ class SevenZip implements ArchiveInterface {
     }
   }
 
+  /// Like [_run7zCommandWithPossibleFileList] but uses [Process.start] to
+  /// stream stdout, parsing per-file extraction lines (`- path`) produced
+  /// by the `-bb1` flag.
+  Future<ProcessResult> _run7zStreamingWithProgress(
+    List<String> baseArgs,
+    List<String> additionalArgs, {
+    void Function(int filesExtracted)? onProgress,
+    int maxCmdLength = 8000,
+  }) async {
+    final inlineLength =
+        baseArgs.fold<int>(0, (sum, arg) => sum + arg.length + 1) +
+        additionalArgs.fold<int>(0, (sum, arg) => sum + arg.length + 1);
+
+    List<String> finalArgs;
+    File? listFile;
+
+    if (inlineLength <= maxCmdLength) {
+      finalArgs = [...baseArgs, ...additionalArgs];
+    } else {
+      listFile = File(
+        p.join(
+          Directory.systemTemp.path,
+          '7z_filelist_${DateTime.now().millisecondsSinceEpoch}.txt',
+        ),
+      );
+      await listFile.writeAsString(additionalArgs.join('\n'), flush: true);
+      finalArgs = [...baseArgs, '@${listFile.path}'];
+    }
+
+    final process = await Process.start(sevenZipExecutable.path, finalArgs);
+
+    int filesExtracted = 0;
+    String partialLine = '';
+    final stdoutBuffer = StringBuffer();
+    final stderrBuffer = StringBuffer();
+
+    await for (final chunk in process.stdout.transform(utf8.decoder)) {
+      stdoutBuffer.write(chunk);
+      final combined = partialLine + chunk;
+      final lines = combined.split('\n');
+      partialLine = lines.removeLast();
+      for (final line in lines) {
+        if (line.trimLeft().startsWith('- ')) {
+          filesExtracted++;
+          onProgress?.call(filesExtracted);
+        }
+      }
+    }
+
+    await for (final chunk
+        in process.stderr.transform(systemEncoding.decoder)) {
+      stderrBuffer.write(chunk);
+    }
+
+    final exitCode = await process.exitCode;
+
+    try {
+      if (listFile != null && listFile.existsSync()) {
+        listFile.deleteSync();
+      }
+    } catch (_) {}
+
+    return ProcessResult(
+      process.pid,
+      exitCode,
+      stdoutBuffer.toString(),
+      stderrBuffer.toString(),
+    );
+  }
+
   /// Lists all in-archive file paths in [archiveFile].
   /// Returns a list of (String) paths found inside the archive.
   /// Throws an [Exception] on error (non-zero exit code, etc.).
@@ -241,6 +311,7 @@ class SevenZip implements ArchiveInterface {
     bool Function(SevenZipEntry entry)? fileFilter,
     String Function(SevenZipEntry entry)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
+    void Function(int completed, int total)? onProgress,
   }) async {
     final maxRenameRetries = 10;
     final renameRetryDelay = Duration(milliseconds: 200);
@@ -260,12 +331,15 @@ class SevenZip implements ArchiveInterface {
 
     final results = <SevenZipExtractedFile?>[];
 
-    final baseArgs = ['x', archivePath.path, '-y', '-o$tempFolder'];
+    final baseArgs = ['x', archivePath.path, '-y', '-bb1', '-sccUTF-8', '-o$tempFolder'];
     final inArchivePaths = toExtract.map((e) => e.path).toList();
 
-    final extractionResult = await _run7zCommandWithPossibleFileList(
+    final extractionResult = await _run7zStreamingWithProgress(
       baseArgs,
       inArchivePaths,
+      onProgress: onProgress != null
+          ? (filesExtracted) => onProgress(filesExtracted, toExtract.length)
+          : null,
     );
 
     try {

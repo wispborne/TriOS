@@ -79,6 +79,25 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
       }
       return mounted;
     });
+
+    // Listen for installComplete to trigger auto-dismiss for install-only entries.
+    widget.download.installComplete.addListener(_onInstallComplete);
+    widget.download.installProgress.addListener(_onInstallProgressChanged);
+  }
+
+  void _onInstallComplete() {
+    if (mounted) setState(() {});
+  }
+
+  void _onInstallProgressChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.download.installComplete.removeListener(_onInstallComplete);
+    widget.download.installProgress.removeListener(_onInstallProgressChanged);
+    super.dispose();
   }
 
   @override
@@ -134,7 +153,11 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                 },
                 onExit: (_) {
                   setState(() => _isHovering = false);
-                  if (downloadTask.status.value.isCompleted) {
+                  final isReadyToAutoDismiss =
+                      installedMod != null ||
+                      download.installComplete.value;
+                  if (downloadTask.status.value.isCompleted &&
+                      isReadyToAutoDismiss) {
                     widget.item.start();
                   }
                 },
@@ -147,8 +170,15 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                       valueListenable: downloadTask.status,
                       builder: (context, status, child) {
                         final isStopped = (!item.isRunning || !item.isStarted);
-                        final isFinished = status.isCompleted;
-                        if (isStopped && isFinished && !_isHovering) {
+                        // Don't auto-dismiss while installing. Wait for the
+                        // mod variant to appear (ModDownload) or
+                        // installComplete (install-only Download).
+                        final isReadyToAutoDismiss =
+                            installedMod != null ||
+                            download.installComplete.value;
+                        if (isStopped &&
+                            isReadyToAutoDismiss &&
+                            !_isHovering) {
                           item.start();
                         }
 
@@ -187,25 +217,38 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                   ),
                                           )
                                         : Tooltip(
-                                            message: status.displayString,
+                                            message: status ==
+                                                        DownloadStatus
+                                                            .completed &&
+                                                    installedMod == null
+                                                ? "Installing..."
+                                                : status.displayString,
                                             child: Icon(
                                               size: 40,
-                                              switch (status) {
-                                                DownloadStatus.queued =>
-                                                  Icons.schedule,
-                                                DownloadStatus
-                                                    .retrievingFileInfo =>
-                                                  Icons.downloading,
-                                                DownloadStatus.downloading =>
-                                                  Icons.downloading,
-                                                DownloadStatus.completed =>
-                                                  Icons.check_circle,
-                                                DownloadStatus.failed =>
-                                                  Icons.error,
-                                                DownloadStatus.canceled =>
-                                                  Icons.circle,
-                                                _ => Icons.downloading,
-                                              },
+                                              status ==
+                                                          DownloadStatus
+                                                              .completed &&
+                                                      installedMod == null
+                                                  ? Icons.install_desktop
+                                                  : switch (status) {
+                                                      DownloadStatus.queued =>
+                                                        Icons.schedule,
+                                                      DownloadStatus
+                                                          .retrievingFileInfo =>
+                                                        Icons.downloading,
+                                                      DownloadStatus
+                                                          .downloading =>
+                                                        Icons.downloading,
+                                                      DownloadStatus
+                                                          .completed =>
+                                                        Icons.check_circle,
+                                                      DownloadStatus.failed =>
+                                                        Icons.error,
+                                                      DownloadStatus
+                                                          .canceled =>
+                                                        Icons.circle,
+                                                      _ => Icons.downloading,
+                                                    },
                                               color: switch (status) {
                                                 DownloadStatus.queued =>
                                                   theme.iconTheme.color,
@@ -447,6 +490,43 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                     },
                                                   ),
                                                 ],
+                                              ),
+                                            ),
+                                          ] else if (status ==
+                                              DownloadStatus.completed) ...[
+                                            // --- Installing state ---
+                                            Opacity(
+                                              opacity: 0.9,
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 4,
+                                                ),
+                                                child: Text(
+                                                  "Installing...",
+                                                  style: theme
+                                                      .textTheme
+                                                      .labelMedium,
+                                                ),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 8,
+                                              ),
+                                              child: Builder(
+                                                builder: (context) {
+                                                  final progress =
+                                                      download.installProgress
+                                                          .value;
+                                                  return TriOSDownloadProgressIndicator(
+                                                    value: progress ??
+                                                        TriOSDownloadProgress(
+                                                          0,
+                                                          0,
+                                                          isIndeterminate: true,
+                                                        ),
+                                                  );
+                                                },
                                               ),
                                             ),
                                           ] else ...[

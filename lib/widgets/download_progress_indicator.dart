@@ -34,11 +34,12 @@ class _TriOSDownloadProgressIndicatorState
           ),
         ),
         Text(
-          widget.value.bytesReceived == 0 && widget.value.bytesTotal == 0
-              ? ""
-              : widget.value.bytesReceived == widget.value.bytesTotal
-              ? widget.value.bytesTotal.bytesAsReadableMB()
-              : "${widget.value.bytesReceived.bytesAsReadableMB()} / ${widget.value.bytesTotal.bytesAsReadableMB()}",
+          widget.value.customStatus ??
+              (widget.value.bytesReceived == 0 && widget.value.bytesTotal == 0
+                  ? ""
+                  : widget.value.bytesReceived == widget.value.bytesTotal
+                  ? widget.value.bytesTotal.bytesAsReadableMB()
+                  : "${widget.value.bytesReceived.bytesAsReadableMB()} / ${widget.value.bytesTotal.bytesAsReadableMB()}"),
           style: Theme.of(context).textTheme.labelSmall,
         ),
       ],

@@ -69,56 +69,32 @@ class ModDownloadGroupToast extends ConsumerStatefulWidget {
 class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
   PaletteGenerator? palette;
   final Map<String, VoidCallback> _statusListeners = {};
-
-  // Future<void> _generatePalette() async {
-  //   // Try to get palette from first mod's icon
-  //   final firstModDownload = widget.group.items
-  //       .whereType<ModDownload>()
-  //       .firstOrNull;
-  //
-  //   if (firstModDownload != null) {
-  //     final installedMod = ref
-  //         .read(AppState.modVariants)
-  //         .value
-  //         .orEmpty()
-  //         .firstWhereOrNull(
-  //           (ModVariant element) =>
-  //               element.smolId == firstModDownload.modInfo.smolId,
-  //         );
-  //
-  //     if (installedMod?.iconFilePath.isNotNullOrEmpty() == true) {
-  //       final icon = Image.file((installedMod!.iconFilePath ?? "").toFile());
-  //       palette = await PaletteGenerator.fromImageProvider(icon.image);
-  //       if (!mounted) return;
-  //       setState(() {});
-  //     }
-  //   }
-  // }
+  final Map<String, VoidCallback> _installCompleteListeners = {};
+  final Map<String, VoidCallback> _installProgressListeners = {};
 
   @override
   void initState() {
     super.initState();
     widget.item.pause();
 
-    // Generate palette
-    // _generatePalette();
-
-    // Add status listeners for all downloads
+    // Add status, installComplete, and installProgress listeners for all downloads
     for (final download in widget.group.items) {
-      void listener() {
-        if (mounted) {
-          setState(() {});
-
-          // Check if all downloads are complete
-          final allComplete = widget.group.allItemsCompleted();
-          if (allComplete && !widget.item.isRunning) {
-            widget.item.start();
-          }
-        }
+      void statusListener() {
+        if (mounted) setState(() {});
       }
 
-      download.task.status.addListener(listener);
-      _statusListeners[download.id] = listener;
+      void installListener() {
+        if (mounted) setState(() {});
+      }
+
+      download.task.status.addListener(statusListener);
+      _statusListeners[download.id] = statusListener;
+
+      download.installComplete.addListener(installListener);
+      _installCompleteListeners[download.id] = installListener;
+
+      download.installProgress.addListener(installListener);
+      _installProgressListeners[download.id] = installListener;
     }
 
     // Timer loop for countdown
@@ -133,14 +109,37 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
 
   @override
   void dispose() {
-    // Remove all listeners
     for (final entry in _statusListeners.entries) {
       final download = widget.group.items.firstWhereOrNull(
         (d) => d.id == entry.key,
       );
       download?.task.status.removeListener(entry.value);
     }
+    for (final entry in _installCompleteListeners.entries) {
+      final download = widget.group.items.firstWhereOrNull(
+        (d) => d.id == entry.key,
+      );
+      download?.installComplete.removeListener(entry.value);
+    }
+    for (final entry in _installProgressListeners.entries) {
+      final download = widget.group.items.firstWhereOrNull(
+        (d) => d.id == entry.key,
+      );
+      download?.installProgress.removeListener(entry.value);
+    }
     super.dispose();
+  }
+
+  /// Whether a single download is fully installed (not just downloaded).
+  bool _isInstalled(Download download) {
+    if (download is ModDownload) {
+      return ref
+              .read(AppState.modVariants)
+              .value
+              .orEmpty()
+              .any((v) => v.smolId == download.modInfo.smolId);
+    }
+    return download.installComplete.value;
   }
 
   @override
@@ -153,14 +152,36 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
     final totalCount = downloads.length;
     final failedCount = group.failedCount;
     final successfulCount = completedCount - failedCount;
-    final allComplete = group.allItemsCompleted();
+    final allDownloadsComplete = group.allItemsCompleted();
+    final allInstalled = allDownloadsComplete &&
+        downloads.every((d) => _isInstalled(d) ||
+            d.task.status.value == DownloadStatus.failed ||
+            d.task.status.value == DownloadStatus.canceled);
+    final isInstalling = allDownloadsComplete && !allInstalled;
 
     final timeElapsed = (item.elapsedDuration?.inMilliseconds ?? 0);
     final timeTotal = (item.originalDuration?.inMilliseconds ?? 1000);
 
+    // Auto-dismiss only after fully installed.
+    if (allInstalled && !widget.item.isRunning) {
+      widget.item.start();
+    }
+
     // Calculate aggregate progress
     double aggregateProgress = 0.0;
-    if (downloads.isNotEmpty) {
+    if (isInstalling) {
+      // Aggregate install progress
+      int totalFiles = 0;
+      int completedFiles = 0;
+      for (final download in downloads) {
+        final progress = download.installProgress.value;
+        if (progress != null) {
+          totalFiles += progress.bytesTotal;
+          completedFiles += progress.bytesReceived;
+        }
+      }
+      aggregateProgress = totalFiles > 0 ? completedFiles / totalFiles : 0.0;
+    } else if (downloads.isNotEmpty) {
       int totalBytes = 0;
       int receivedBytes = 0;
 
@@ -227,15 +248,19 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
                             Padding(
                               padding: const .only(right: 12),
                               child: Tooltip(
-                                message: allComplete
-                                    ? 'All downloads complete'
-                                    : 'Downloading mods',
+                                message: allInstalled
+                                    ? 'All mods installed'
+                                    : isInstalling
+                                        ? 'Installing mods'
+                                        : 'Downloading mods',
                                 child: Icon(
                                   size: 32,
-                                  allComplete
+                                  allInstalled
                                       ? Icons.check_circle
-                                      : Icons.downloading,
-                                  color: allComplete
+                                      : isInstalling
+                                          ? Icons.install_desktop
+                                          : Icons.downloading,
+                                  color: allInstalled
                                       ? theme.colorScheme.secondary
                                       : theme.iconTheme.color,
                                 ),
@@ -246,9 +271,11 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    allComplete
-                                        ? 'Downloaded $totalCount ${totalCount == 1 ? 'mod' : 'mods'}'
-                                        : 'Downloading $totalCount ${totalCount == 1 ? 'mod' : 'mods'}',
+                                    allInstalled
+                                        ? 'Installed $totalCount ${totalCount == 1 ? 'mod' : 'mods'}'
+                                        : isInstalling
+                                            ? 'Installing $totalCount ${totalCount == 1 ? 'mod' : 'mods'}'
+                                            : 'Downloading $totalCount ${totalCount == 1 ? 'mod' : 'mods'}',
                                     style: theme.textTheme.bodyMedium,
                                   ),
                                   Opacity(
@@ -256,7 +283,9 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
                                     child: Text(
                                       failedCount > 0
                                           ? '$successfulCount successful, $failedCount failed'
-                                          : '$completedCount of $totalCount complete',
+                                          : isInstalling
+                                              ? 'Installing...'
+                                              : '$completedCount of $totalCount complete',
                                       style: theme.textTheme.labelMedium,
                                     ),
                                   ),
@@ -314,7 +343,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
                         ),
                       ),
                       // Aggregate progress bar
-                      if (!allComplete)
+                      if (!allInstalled)
                         Padding(
                           padding: const .only(top: 8),
                           child: TriOSDownloadProgressIndicator(
@@ -322,6 +351,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
                               (aggregateProgress * 1000000).toInt(),
                               1000000,
                               isIndeterminate: aggregateProgress == 0,
+                              customStatus: isInstalling ? "Installing..." : null,
                             ),
                           ),
                         ),
@@ -412,18 +442,26 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
                 Padding(
                   padding: const .only(right: 6),
                   child: Tooltip(
-                    message: status.displayString,
+                    message: status == DownloadStatus.completed &&
+                            installedMod == null &&
+                            !download.installComplete.value
+                        ? "Installing..."
+                        : status.displayString,
                     child: Icon(
                       size: 20,
-                      switch (status) {
-                        DownloadStatus.queued => Icons.schedule,
-                        DownloadStatus.retrievingFileInfo => Icons.downloading,
-                        DownloadStatus.downloading => Icons.downloading,
-                        DownloadStatus.completed => Icons.check_circle,
-                        DownloadStatus.failed => Icons.error,
-                        DownloadStatus.canceled => Icons.cancel,
-                        _ => Icons.downloading,
-                      },
+                      status == DownloadStatus.completed &&
+                              installedMod == null &&
+                              !download.installComplete.value
+                          ? Icons.install_desktop
+                          : switch (status) {
+                              DownloadStatus.queued => Icons.schedule,
+                              DownloadStatus.retrievingFileInfo => Icons.downloading,
+                              DownloadStatus.downloading => Icons.downloading,
+                              DownloadStatus.completed => Icons.check_circle,
+                              DownloadStatus.failed => Icons.error,
+                              DownloadStatus.canceled => Icons.cancel,
+                              _ => Icons.downloading,
+                            },
                       color: switch (status) {
                         DownloadStatus.completed => theme.colorScheme.secondary,
                         DownloadStatus.failed => ThemeManager.vanillaErrorColor,
@@ -476,6 +514,23 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
                 ),
               ],
             ),
+            // Install progress (when download complete but not yet installed)
+            if (status == DownloadStatus.completed &&
+                installedMod == null &&
+                !download.installComplete.value)
+              Padding(
+                padding: const .only(top: 4),
+                child: Builder(
+                  builder: (context) {
+                    final progress = download.installProgress.value;
+                    return TriOSDownloadProgressIndicator(
+                      value: progress ??
+                          TriOSDownloadProgress(0, 0, isIndeterminate: true),
+                    );
+                  },
+                ),
+              ),
+            // Download progress (while downloading)
             if (status != DownloadStatus.completed &&
                 status != DownloadStatus.failed &&
                 status != DownloadStatus.canceled)

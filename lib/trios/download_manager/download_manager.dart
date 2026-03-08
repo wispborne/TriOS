@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -13,6 +15,7 @@ import '../../mod_manager/mod_install_source.dart';
 import '../../mod_manager/mod_manager_logic.dart';
 import '../../models/mod_info.dart';
 import '../constants.dart';
+import 'download_request.dart';
 import 'download_status.dart';
 import 'download_task.dart';
 import 'downloader.dart';
@@ -84,6 +87,19 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           });
           return download;
         });
+  }
+
+  /// Creates an install-only [Download] entry (no actual download).
+  /// The task status is pre-set to [DownloadStatus.completed] so the toast
+  /// immediately shows the "Installing..." state.
+  Download addInstallation(String displayName, String sourcePath) {
+    final id = const Uuid().v4();
+    final task = DownloadTask(DownloadRequest(sourcePath, '', null));
+    task.status.value = DownloadStatus.completed;
+    final download = Download(id, displayName, task);
+    _downloads.add(download);
+    state = AsyncValue.data(_downloads);
+    return download;
   }
 
   void downloadUpdateViaBrowser(
@@ -178,6 +194,13 @@ class Download {
   final String id;
   final String displayName;
   final DownloadTask task;
+
+  /// Tracks file-count progress during mod installation (extraction).
+  final ValueNotifier<TriOSDownloadProgress?> installProgress =
+      ValueNotifier(null);
+
+  /// Set to true when installation (extraction) is complete.
+  final ValueNotifier<bool> installComplete = ValueNotifier(false);
 
   Download(this.id, this.displayName, this.task);
 }

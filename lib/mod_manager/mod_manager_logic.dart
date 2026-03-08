@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart';
+import 'package:trios/models/download_progress.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/mod_manager/audit_log.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
@@ -55,10 +57,19 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   Future<List<InstallModResult>> installModFromSourceWithDefaultUI(
     ModInstallSource modInstallSource, {
     bool forceDontEnableModUpdates = false,
+    Download? installationDownload,
   }) async {
     final context = ref.read(AppState.appContext);
     if (context == null) {
       return Future.value([]);
+    }
+
+    void onProgress(int completed, int total) {
+      installationDownload?.installProgress.value = TriOSDownloadProgress(
+        completed,
+        total,
+        customStatus: "$completed / $total files",
+      );
     }
 
     try {
@@ -75,6 +86,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             ),
           );
         },
+        onProgress: installationDownload != null ? onProgress : null,
       );
 
       if (installModsResult.isEmpty) {
@@ -141,6 +153,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       if (!context.mounted) return [];
       showAlertDialog(context, title: "Error installing mod", content: "$e");
       return [];
+    } finally {
+      installationDownload?.installComplete.value = true;
     }
   }
 
@@ -161,6 +175,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     )
     userInputNeededHandler, {
     bool dryRun = false,
+    void Function(int completed, int total)? onProgress,
   }) async {
     Fimber.i(
       "Installing mod from ${modInstallSource.runtimeType}: ${modInstallSource.entity.path} to ${destinationFolder.path}",
@@ -339,6 +354,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             destinationFolder,
             targetModFolderName,
             dryRun: dryRun,
+            onProgress: onProgress,
           ),
         );
       } catch (e, st) {
@@ -474,6 +490,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     Directory destinationFolder,
     String targetModFolderName, {
     bool dryRun = true,
+    void Function(int completed, int total)? onProgress,
   }) async {
     final modInfo = modInfoToInstall.modInfo;
     var existingMod = currentMods.firstWhereOrNull((it) => it.id == modInfo.id);
@@ -526,6 +543,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           );
           return false;
         },
+        onProgress: onProgress,
       );
 
       final newModFolder = destinationFolder

@@ -304,18 +304,22 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
     // Log any errors and continue with the next archive.
     for (var file in files) {
       try {
-        // TODO: this works fine in _pickAndInstallMods with `await`, see what the difference is.
+        final download = ref
+            .read(downloadManager.notifier)
+            .addInstallation(file.toFile().nameWithExtension, file.path);
         if (file.isFile()) {
           ref
               .read(modManager.notifier)
               .installModFromSourceWithDefaultUI(
                 ArchiveModInstallSource(File(file.path)),
+                installationDownload: download,
               );
         } else {
           ref
               .read(modManager.notifier)
               .installModFromSourceWithDefaultUI(
                 DirectoryModInstallSource(Directory(file.path)),
+                installationDownload: download,
               );
         }
       } catch (e, st) {

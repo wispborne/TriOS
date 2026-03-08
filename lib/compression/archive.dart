@@ -66,6 +66,7 @@ abstract class ArchiveInterface {
     bool Function(ArchiveEntry entry)? fileFilter,
     String Function(ArchiveEntry entry)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
+    void Function(int completed, int total)? onProgress,
   });
 
   /// Reads entries into memory from [archivePath].

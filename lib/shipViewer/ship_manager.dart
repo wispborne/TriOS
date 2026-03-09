@@ -55,7 +55,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       if (_buildToken != myToken) return;
     }
 
-    ref.listen(AppState.variantSmolIds, (previous, next) {
+    ref.listen(AppState.smolIds, (previous, next) {
       ref.read(isShipsListDirty.notifier).state = true;
     });
 

@@ -34,9 +34,18 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     final allMods = ref.read(AppState.mods);
     _initializeMissingMetadata(allMods, settings, isDirty, timestamp);
 
-    ref.listen(AppState.mods, (prev, newMods) {
+    // Add empty metadata for any mods that show up and don't have any.
+    ref.listen(AppState.smolIds, (prev, newMods) {
       if (!listEquals(prev, newMods)) {
-        _initializeMissingMetadata(newMods, settings, isDirty, timestamp);
+        final newMods = ref.read(AppState.mods);
+        final currentSettings = state.valueOrNull;
+        if (currentSettings == null) return;
+        _initializeMissingMetadata(
+          newMods,
+          currentSettings,
+          false,
+          DateTime.now().millisecondsSinceEpoch,
+        );
       }
     });
 
@@ -66,7 +75,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
         variantsMetadata: baseVariantMetadata,
       );
 
-      if (settings.baseMetadata[mod.id].hashCode != newModMetadata.hashCode) {
+      if (settings.baseMetadata[mod.id] != newModMetadata) {
         settings.baseMetadata[mod.id] = newModMetadata;
         isDirty = true;
       }

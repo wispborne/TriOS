@@ -119,7 +119,7 @@ class AppState {
   });
 
   /// Emits when a mod is added/removed, but not when it's changed (e.g. enabled/disabled)
-  static final variantSmolIds = Provider<List<String>>((ref) {
+  static final smolIds = Provider<List<String>>((ref) {
     final mods = ref.watch(AppState.modVariants).value ?? [];
     return mods.map((mod) => mod.smolId).toList()..sort();
   });

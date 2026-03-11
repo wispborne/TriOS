@@ -6,6 +6,7 @@
     - Looking for feedback on how the changes look and feel, and what's missing.
   - Mod Group layouts: Line and Small Card.
     - Small Card is a shorter, more compact version of the previous mod group UI.
+  - Mod color tagging: place a color next to a mod's name as a mnemonic.
 - Changed
   - Mod groups have a more readable font.
   - VRAM Estimate on Mods page hides the exact VRAM estimates unless you hover over the VRAM column.

@@ -38,6 +38,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
   final BoxConstraints? constraints;
   final bool enabled;
   final TextStyle? textStyle;
+  final EdgeInsetsGeometry? padding;
 
   const MenuItem({
     required this.label,
@@ -49,6 +50,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     this.constraints,
     this.enabled = true,
     this.textStyle,
+    this.padding,
   });
 
   const MenuItem.submenu({
@@ -61,6 +63,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     this.constraints,
     this.enabled = true,
     this.textStyle,
+    this.padding,
   }) : super.submenu(items: items);
 
   @override
@@ -100,39 +103,44 @@ final class MenuItem<T> extends ContextMenuItem<T> {
             canRequestFocus: false,
             child: DefaultTextStyle(
               style: usedTextStyle,
-              child: Row(
-                children: [
-                  SizedBox.square(
-                    dimension: 32.0,
-                    child: Icon(
-                      icon,
-                      size: 16.0,
-                      color: foregroundColor.withOpacity(
-                        iconOpacity ?? foregroundColor.a,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4.0),
-                  Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8.0),
-                  SizedBox.square(
-                    dimension: 32.0,
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
+              child: Padding(
+                padding: padding ?? EdgeInsets.all(0),
+                child: Row(
+                  children: [
+                    SizedBox(width: 4.0),
+                    SizedBox.square(
+                      dimension: 32.0,
                       child: Icon(
-                        isSubmenuItem ? Icons.arrow_right : null,
+                        icon,
                         size: 16.0,
-                        color: foregroundColor,
+                        color: foregroundColor.withOpacity(
+                          iconOpacity ?? foregroundColor.a,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    if (label.isNotEmpty) const SizedBox(width: 4.0),
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8.0),
+                    if (isSubmenuItem)
+                      SizedBox.square(
+                        dimension: 32.0,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Icon(
+                            isSubmenuItem ? Icons.arrow_right : null,
+                            size: 16.0,
+                            color: foregroundColor,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

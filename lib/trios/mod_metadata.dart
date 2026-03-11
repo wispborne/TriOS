@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
+import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -223,12 +226,17 @@ class ModMetadata with ModMetadataMappable {
   /// Timestamp of when the mod variant was last enabled by TriOS.
   final int? lastEnabled;
 
+  /// User-assigned color tag for visual categorization on the Mods page.
+  @MappableField(hook: ColorHook())
+  final Color? color;
+
   ModMetadata({
     this.variantsMetadata = const {},
     required this.firstSeen,
     this.isFavorited = false,
     this.lastEnabled,
     this.areUpdatesMuted = false,
+    this.color,
   });
 
   static ModMetadata empty() => ModMetadata(
@@ -255,6 +263,7 @@ class ModMetadata with ModMetadataMappable {
       isFavorited: isFavorited,
       lastEnabled: lastEnabled ?? base.lastEnabled,
       areUpdatesMuted: areUpdatesMuted ?? base.areUpdatesMuted,
+      color: color ?? base.color,
     );
   }
 }

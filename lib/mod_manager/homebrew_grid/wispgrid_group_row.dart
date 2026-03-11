@@ -142,17 +142,32 @@ class _WispGridRowState<T extends WispGridItem>
                   ),
                   if (groupIcon != null)
                     Padding(
-                      padding: const .only(right: 4),
-                      child: groupIcon.toWidget(size: 24),
+                      padding: const .only(right: 6),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: groupIcon.toWidget(size: 24, color: groupColor),
+                      ),
+                    ),
+                  if (groupColor != null && groupIcon == null)
+                    Padding(
+                      padding: const .only(right: 8),
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.rectangle,
+                          color: groupColor,
+                          borderRadius: .circular(4),
+                        ),
+                      ),
                     ),
                   Text(
                     "${groupName.trim()} (${itemsInGroup.length})",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.robotoSlab(
-                      textStyle: Theme.of(
-                        context,
-                      ).textTheme.labelMedium?.copyWith(),
+                      textStyle: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
                 ],
@@ -205,7 +220,24 @@ class _WispGridRowState<T extends WispGridItem>
                   if (groupIcon != null)
                     Padding(
                       padding: const .only(right: 4),
-                      child: groupIcon.toWidget(size: 16),
+                      child: SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: groupIcon.toWidget(size: 16, color: groupColor),
+                      ),
+                    ),
+                  if (groupColor != null && groupIcon == null)
+                    Padding(
+                      padding: const .only(right: 6),
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.rectangle,
+                          color: groupColor,
+                          borderRadius: .circular(2),
+                        ),
+                      ),
                     ),
                   Text(
                     "${groupName.trim()} (${itemsInGroup.length})",
@@ -263,7 +295,24 @@ class _WispGridRowState<T extends WispGridItem>
               if (groupIcon != null)
                 Padding(
                   padding: const .only(right: 4),
-                  child: groupIcon.toWidget(size: 16),
+                  child: SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: groupIcon.toWidget(size: 16, color: groupColor),
+                  ),
+                ),
+              if (groupColor != null && groupIcon == null)
+                Padding(
+                  padding: const .only(right: 6),
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      color: groupColor,
+                      borderRadius: .circular(2),
+                    ),
+                  ),
                 ),
               Padding(
                 padding: const .only(left: 4, right: 8),

@@ -245,7 +245,7 @@ class CategoryManagerNotifier
       isUserCreated: true,
       color: autoColor,
       sortOrder: maxSortOrder + 1,
-    );
+    ).copyWith(icon: icon);
 
     updateState(
       (current) =>
@@ -262,6 +262,7 @@ class CategoryManagerNotifier
     Color? color,
     bool clearColor = false,
     CategoryIcon? icon,
+    bool clearIcon = false,
     int? sortOrder,
   }) {
     updateState((current) {
@@ -270,7 +271,7 @@ class CategoryManagerNotifier
         return c.copyWith(
           name: name ?? c.name,
           color: clearColor ? null : (color ?? c.color),
-          icon: icon ?? c.icon,
+          icon: clearIcon ? null : (icon ?? c.icon),
           sortOrder: sortOrder ?? c.sortOrder,
           isUserModified: !c.isUserCreated ? true : c.isUserModified,
         );

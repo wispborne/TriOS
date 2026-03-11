@@ -67,4 +67,6 @@ class Mod with ModMappable implements Comparable<Mod>, WispGridItem {
 
   @override
   String get key => id;
+
+  String get name => modVariants.first.modInfo.nameOrId;
 }

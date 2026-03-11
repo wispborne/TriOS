@@ -1738,8 +1738,13 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
+        final modColor = ref
+            .watch(AppState.modsMetadata)
+            .value
+            ?.getMergedModMetadata(mod.id)
+            ?.color;
 
-        return TextTriOS(
+        final nameText = TextTriOS(
           bestVersion.modInfo.name ?? "(no name)",
           style: GoogleFonts.roboto(
             textStyle: theme.textTheme.labelLarge?.copyWith(
@@ -1748,6 +1753,23 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+        );
+
+        if (modColor == null) return nameText;
+
+        return Row(
+          spacing: 8.0,
+          children: [
+            Container(
+              width: 4.0,
+              height: 16.0,
+              decoration: BoxDecoration(
+                color: modColor,
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+            ),
+            Expanded(child: nameText),
+          ],
         );
       },
     );

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/widgets/category_icon_picker_dialog.dart';
 import 'package:trios/mod_tag_manager/category.dart';
 import 'package:trios/mod_tag_manager/category_auto_color.dart';
 import 'package:trios/mod_tag_manager/category_manager.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 
 /// Shows a popup for bulk management of all categories.
@@ -10,17 +12,19 @@ import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart'
 void showCategoryManagementPopup({
   required BuildContext context,
   required WidgetRef ref,
+  required Mod mod,
 }) {
   showDialog(
     context: context,
-    builder: (context) => _CategoryManagementPopup(ref: ref),
+    builder: (context) => _CategoryManagementPopup(ref: ref, mod: mod),
   );
 }
 
 class _CategoryManagementPopup extends StatefulWidget {
   final WidgetRef ref;
+  final Mod mod;
 
-  const _CategoryManagementPopup({required this.ref});
+  const _CategoryManagementPopup({required this.ref, required this.mod});
 
   @override
   State<_CategoryManagementPopup> createState() =>
@@ -76,6 +80,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
                   return _buildCategoryRow(
                     key: ValueKey(category.id),
                     category: category,
+                    mod: widget.mod,
                     index: index,
                     isEditing: isEditing,
                     theme: theme,
@@ -122,6 +127,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
   Widget _buildCategoryRow({
     required Key key,
     required Category category,
+    required Mod mod,
     required int index,
     required bool isEditing,
     required ThemeData theme,
@@ -129,7 +135,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
     if (isEditing) {
       return ListTile(
         key: key,
-        leading: _buildColorDot(category),
+        leading: _buildLeadingIcon(category, mod),
         title: TextField(
           controller: _renameController,
           autofocus: true,
@@ -154,9 +160,9 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
 
     return ContextMenuRegion(
       key: key,
-      contextMenu: _buildCategoryItemContextMenu(category),
+      contextMenu: _buildCategoryItemContextMenu(category, mod),
       child: ListTile(
-        leading: _buildColorDot(category),
+        leading: _buildLeadingIcon(category, mod),
         title: GestureDetector(
           onDoubleTap: () {
             setState(() {
@@ -174,7 +180,20 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
     );
   }
 
-  Widget _buildColorDot(Category category) {
+  Widget _buildLeadingIcon(Category category, Mod mod) {
+    if (category.icon != null) {
+      return GestureDetector(
+        onTap: () => _showIconPicker(category, mod),
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: category.icon!.toWidget(
+            size: 20,
+            color: category.color ?? Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      );
+    }
     return GestureDetector(
       onTap: () => _showColorPicker(category),
       child: Container(
@@ -191,7 +210,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
     );
   }
 
-  ContextMenu _buildCategoryItemContextMenu(Category category) {
+  ContextMenu _buildCategoryItemContextMenu(Category category, Mod mod) {
     return ContextMenu(
       entries: [
         MenuItem(
@@ -213,6 +232,11 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
           icon: Icons.palette,
           onSelected: () => _showColorPicker(category),
         ),
+        MenuItem(
+          label: 'Change Icon',
+          icon: Icons.emoji_symbols,
+          onSelected: () => _showIconPicker(category, mod),
+        ),
         const MenuDivider(),
         MenuItem(
           label: 'Delete',
@@ -224,6 +248,22 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
         ),
       ],
       padding: const EdgeInsets.all(8.0),
+    );
+  }
+
+  void _showIconPicker(Category category, Mod mod) {
+    showCategoryIconPicker(
+      context: context,
+      currentIcon: category.icon,
+      onIconSelected: (icon) {
+        if (icon == null) {
+          _notifier.updateCategory(category.id, clearIcon: true);
+        } else {
+          _notifier.updateCategory(category.id, icon: icon);
+        }
+        setState(() {});
+      },
+      mod: mod
     );
   }
 

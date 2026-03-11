@@ -33,7 +33,7 @@ ContextMenu buildCategoryCellContextMenu({
       .categoryId;
   final mod = ref
       .read(AppState.mods)
-      .firstWhereOrNull((mod) => mod.id == modId);
+      .firstWhere((mod) => mod.id == modId);
 
   return ContextMenu(
     entries: [
@@ -92,6 +92,7 @@ ContextMenu buildCategoryCellContextMenu({
             onCreated: (category) {
               notifier.addCategoryToMod(modId, category.id, isPrimary: true);
             },
+            mod: mod
           );
         },
       ),
@@ -99,7 +100,7 @@ ContextMenu buildCategoryCellContextMenu({
         label: 'Manage Categories...',
         icon: Icons.settings,
         onSelected: () {
-          showCategoryManagementPopup(context: context, ref: ref);
+          showCategoryManagementPopup(context: context, ref: ref, mod: mod);
         },
       ),
     ],

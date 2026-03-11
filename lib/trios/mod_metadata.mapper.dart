@@ -231,6 +231,13 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
     opt: true,
     def: false,
   );
+  static Color? _$color(ModMetadata v) => v.color;
+  static const Field<ModMetadata, Color> _f$color = Field(
+    'color',
+    _$color,
+    opt: true,
+    hook: ColorHook(),
+  );
 
   @override
   final MappableFields<ModMetadata> fields = const {
@@ -239,6 +246,7 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
     #isFavorited: _f$isFavorited,
     #lastEnabled: _f$lastEnabled,
     #areUpdatesMuted: _f$areUpdatesMuted,
+    #color: _f$color,
   };
 
   static ModMetadata _instantiate(DecodingData data) {
@@ -248,6 +256,7 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
       isFavorited: data.dec(_f$isFavorited),
       lastEnabled: data.dec(_f$lastEnabled),
       areUpdatesMuted: data.dec(_f$areUpdatesMuted),
+      color: data.dec(_f$color),
     );
   }
 
@@ -324,6 +333,7 @@ abstract class ModMetadataCopyWith<$R, $In extends ModMetadata, $Out>
     bool? isFavorited,
     int? lastEnabled,
     bool? areUpdatesMuted,
+    Color? color,
   });
   ModMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -355,6 +365,7 @@ class _ModMetadataCopyWithImpl<$R, $Out>
     bool? isFavorited,
     Object? lastEnabled = $none,
     bool? areUpdatesMuted,
+    Object? color = $none,
   }) => $apply(
     FieldCopyWithData({
       if (variantsMetadata != null) #variantsMetadata: variantsMetadata,
@@ -362,6 +373,7 @@ class _ModMetadataCopyWithImpl<$R, $Out>
       if (isFavorited != null) #isFavorited: isFavorited,
       if (lastEnabled != $none) #lastEnabled: lastEnabled,
       if (areUpdatesMuted != null) #areUpdatesMuted: areUpdatesMuted,
+      if (color != $none) #color: color,
     }),
   );
   @override
@@ -371,6 +383,7 @@ class _ModMetadataCopyWithImpl<$R, $Out>
     isFavorited: data.get(#isFavorited, or: $value.isFavorited),
     lastEnabled: data.get(#lastEnabled, or: $value.lastEnabled),
     areUpdatesMuted: data.get(#areUpdatesMuted, or: $value.areUpdatesMuted),
+    color: data.get(#color, or: $value.color),
   );
 
   @override

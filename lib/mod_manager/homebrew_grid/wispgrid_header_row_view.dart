@@ -10,9 +10,9 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/thirdparty/dartx/function.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/hoverable_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/multi_split_mixin_view.dart';
 
 import 'wisp_grid.dart';
 
@@ -239,7 +239,7 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                     onSelected: () {
                       updateGridState(
                         (WispGridState state) => state.copyWith(
-                          groupingSetting: GroupingSetting(
+                          groupingSetting: state.groupingSetting?.copyWith(
                             currentGroupedByKey: group.key,
                           ),
                         ),

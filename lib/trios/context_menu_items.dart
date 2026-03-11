@@ -189,7 +189,7 @@ MenuItem buildMenuItemOpenModInfoFile(Mod mod) {
 MenuItem menuItemDeleteFolder(Mod mod, BuildContext context, WidgetRef ref) {
   if (mod.modVariants.length == 1) {
     return MenuItem(
-      label: 'Delete Mod',
+      label: 'Delete Mod...',
       icon: Icons.delete,
       onSelected: () {
         showDeleteModFoldersConfirmationDialog(

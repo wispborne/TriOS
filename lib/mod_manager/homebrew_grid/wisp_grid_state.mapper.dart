@@ -34,7 +34,7 @@ class GroupHeaderStyleMapper extends EnumMapper<GroupHeaderStyle> {
       case r'large':
         return GroupHeaderStyle.large;
       default:
-        return GroupHeaderStyle.values[0];
+        return GroupHeaderStyle.values[1];
     }
   }
 
@@ -1596,7 +1596,7 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
     'headerStyle',
     _$headerStyle,
     opt: true,
-    def: GroupHeaderStyle.small,
+    def: GroupHeaderStyle.medium,
   );
 
   @override

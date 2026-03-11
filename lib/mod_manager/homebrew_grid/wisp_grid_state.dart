@@ -140,11 +140,11 @@ class GroupingSetting with GroupingSettingMappable {
   const GroupingSetting({
     required this.currentGroupedByKey,
     this.isSortDescending = false,
-    this.headerStyle = GroupHeaderStyle.small,
+    this.headerStyle = GroupHeaderStyle.medium,
   });
 }
 
-@MappableEnum(defaultValue: GroupHeaderStyle.small)
+@MappableEnum(defaultValue: GroupHeaderStyle.medium)
 enum GroupHeaderStyle {
   small,
   medium,

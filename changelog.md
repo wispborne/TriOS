@@ -1,3 +1,16 @@
+# 1.4.0
+- Added
+  - Mod Categories
+    - IN PREVIEW. Expect things to change. Expect categories you make or modify to get reset.
+    - Current default categories are AI-gen placeholder and will change.
+    - Looking for feedback on how the changes look and feel, and what's missing.
+  - Mod Group layouts: Line and Small Card.
+    - Small Card is a shorter, more compact version of the previous mod group UI.
+- Changed
+  - Mod groups have a more readable font.
+  - VRAM Estimate on Mods page hides the exact VRAM estimates unless you hover over the VRAM column.
+    - The new, smaller mod group UI made it look very messy with so many numbers visible.
+
 # 1.3.4
 - Added
   - Portraits now read game data to display more info.

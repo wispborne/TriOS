@@ -260,6 +260,7 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
             label: column?.name ?? "???",
             icon: isVisible ? Icons.visibility : Icons.visibility_off,
             iconOpacity: isVisible ? null : 0.4,
+            keepMenuOpen: true,
             onSelected: () {
               updateGridState((WispGridState state) {
                 final columnSettings = state.sortedColumns(columns).toMap();

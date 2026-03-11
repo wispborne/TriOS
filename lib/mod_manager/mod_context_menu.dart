@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -41,6 +42,7 @@ ContextMenu buildModContextMenu(
           ref,
           modVariant,
         ),
+      _buildCategorySubmenu(mod.id, ref, context),
       MenuHeader(text: Constants.appName, disableUppercase: true),
       if (openSidebar != null)
         buildMenuItemOpenInSidebar(mod, ref, openSidebar),
@@ -186,5 +188,39 @@ ContextMenu buildModBulkActionContextMenu(
         ),
     ],
     padding: const EdgeInsets.all(8.0),
+  );
+}
+
+MenuItem _buildCategorySubmenu(
+  String modId,
+  WidgetRef ref,
+  BuildContext context,
+) {
+  final notifier = ref.read(categoryManagerProvider.notifier);
+  final allCategories = notifier.getAllCategories();
+  final assignments = notifier.getAssignmentsForMod(modId);
+  final assignedIds = assignments.map((a) => a.categoryId).toSet();
+
+  return MenuItem.submenu(
+    label: 'Categories',
+    icon: Icons.category,
+    items: [
+      ...allCategories.map(
+        (category) {
+          final isAssigned = assignedIds.contains(category.id);
+          return CheckableMenuItem(
+            label: category.name,
+            isChecked: isAssigned,
+            onSelected: () {
+              if (isAssigned) {
+                notifier.removeCategoryFromMod(modId, category.id);
+              } else {
+                notifier.addCategoryToMod(modId, category.id);
+              }
+            },
+          );
+        },
+      ),
+    ],
   );
 }

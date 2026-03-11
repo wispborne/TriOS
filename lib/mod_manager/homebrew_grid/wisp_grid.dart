@@ -249,6 +249,8 @@ class _WispGridState<T extends WispGridItem>
               },
               shownIndex: index++,
               columns: widget.columns,
+              gridState: gridState,
+              updateGridState: widget.updateGridState,
             );
             widgets.add(header);
           }

@@ -35,9 +35,13 @@ abstract base class ContextMenuItem<T> extends ContextMenuEntry {
   final List<ContextMenuEntry>? items;
   final VoidCallback? onSelected;
 
-  const ContextMenuItem({this.value, this.onSelected}) : items = null;
+  /// If true, the menu stays open after this item is selected.
+  final bool keepMenuOpen;
 
-  const ContextMenuItem.submenu({required this.items, this.onSelected})
+  const ContextMenuItem({this.value, this.onSelected, this.keepMenuOpen = false})
+    : items = null;
+
+  const ContextMenuItem.submenu({required this.items, this.onSelected, this.keepMenuOpen = false})
     : value = null;
 
   /// Indicates whether the menu item has subitems.
@@ -64,6 +68,8 @@ abstract base class ContextMenuItem<T> extends ContextMenuEntry {
 
     if (isSubmenuItem) {
       _toggleSubmenu(context, menuState);
+    } else if (keepMenuOpen) {
+      // Don't close the menu, just fire the callback.
     } else {
       menuState.setSelectedItem(this);
       if (Navigator.canPop(context)) {

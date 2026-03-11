@@ -5,63 +5,34 @@ import '../core/models/context_menu_entry.dart';
 import '../core/models/context_menu_item.dart';
 import '../core/utils/extensions.dart';
 import '../widgets/context_menu_state.dart';
-import 'menu_divider.dart';
-import 'menu_header.dart';
 
-/// Represents a selectable item in a context menu.
-///
-/// This class is used to define individual items that can be displayed within
-/// a context menu.
-///
-/// #### Parameters:
-/// - [label] - The title of the context menu item
-/// - [icon] - The icon of the context menu item.
-/// - [constraints] - The height of the context menu item.
-/// - [focusNode] - The focus node of the context menu item.
-/// - [value] - The value associated with the context menu item.
-/// - [items] - The list of subitems associated with the context menu item.
-/// - [onSelected] - The callback that is triggered when the context menu item
-///   is selected. If the item has subitems, it toggles the visibility of the
-///   submenu. If not, it pops the current context menu and returns the
-///   associated value.
-/// - [constraints] - The constraints of the context menu item.
-///
-/// see:
-/// - [ContextMenuEntry]
-/// - [MenuHeader]
-/// - [MenuDivider]
-///
-final class MenuItem<T> extends ContextMenuItem<T> {
+/// A menu item with a checkbox that stays open when toggled,
+/// allowing multiple selections without closing the menu.
+final class CheckableMenuItem extends ContextMenuItem<void> {
   final String label;
-  final IconData? icon;
-  final double? iconOpacity;
   final BoxConstraints? constraints;
   final bool enabled;
   final TextStyle? textStyle;
 
-  const MenuItem({
-    required this.label,
-    this.icon,
-    this.iconOpacity,
-    super.value,
-    super.onSelected,
-    super.keepMenuOpen,
-    this.constraints,
-    this.enabled = true,
-    this.textStyle,
-  });
+  /// Current checked state. Mutable so the menu can update visually.
+  bool isChecked;
 
-  const MenuItem.submenu({
+  CheckableMenuItem({
     required this.label,
-    required List<ContextMenuEntry> items,
-    this.icon,
-    this.iconOpacity,
+    required this.isChecked,
     super.onSelected,
-    super.keepMenuOpen,
     this.constraints,
     this.enabled = true,
     this.textStyle,
-  }) : super.submenu(items: items);
+  }) : super(keepMenuOpen: true);
+
+  @override
+  void handleItemSelection(BuildContext context) {
+    isChecked = !isChecked;
+    onSelected?.call();
+    // Force a visual rebuild even if this entry is already focused.
+    ContextMenuState.of(context).notifyListeners();
+  }
 
   @override
   Widget builder(
@@ -83,8 +54,6 @@ final class MenuItem<T> extends ContextMenuItem<T> {
       height: 1.0,
     ).merge(textStyle);
 
-    // ~~~~~~~~~~ //
-
     return Disable(
       isEnabled: enabled,
       child: ConstrainedBox(
@@ -105,11 +74,11 @@ final class MenuItem<T> extends ContextMenuItem<T> {
                   SizedBox.square(
                     dimension: 32.0,
                     child: Icon(
-                      icon,
+                      isChecked
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
                       size: 16.0,
-                      color: foregroundColor.withOpacity(
-                        iconOpacity ?? foregroundColor.a,
-                      ),
+                      color: foregroundColor,
                     ),
                   ),
                   const SizedBox(width: 4.0),
@@ -121,17 +90,6 @@ final class MenuItem<T> extends ContextMenuItem<T> {
                     ),
                   ),
                   const SizedBox(width: 8.0),
-                  SizedBox.square(
-                    dimension: 32.0,
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: Icon(
-                        isSubmenuItem ? Icons.arrow_right : null,
-                        size: 16.0,
-                        color: foregroundColor,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

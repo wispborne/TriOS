@@ -18,7 +18,8 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_summary_panel.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
-import 'package:trios/mod_tag_manager/mod_tag_manager.dart';
+import 'package:trios/mod_manager/widgets/category_cell.dart';
+import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
@@ -51,8 +52,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
-import '../thirdparty/flutter_tags/item_tags.dart';
-import '../thirdparty/flutter_tags/tags.dart' show Tags;
 import '../utils/search.dart';
 import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
@@ -60,6 +59,7 @@ import 'homebrew_grid/wispgrid_header_row_view.dart';
 import 'vram_checker_explanation.dart';
 
 final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
+final _vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
 
 class ModsGridPage extends ConsumerStatefulWidget {
   const ModsGridPage({super.key});
@@ -221,6 +221,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     UngroupedModGridGroup(),
                     EnabledStateModGridGroup(),
                     AuthorModGridGroup(),
+                    CategoryModGridGroup(ref),
                     ModTypeModGridGroup(),
                     GameVersionModGridGroup(),
                   ],
@@ -561,104 +562,37 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         width: 128,
                       ),
                     ),
-                    if (false)
-                      WispGridColumn<Mod>(
-                        key: ModGridHeader.tags.name,
-                        name: "Tags",
-                        isSortable: false,
-                        headerCellBuilder: (modifiers) => buildColumnHeader(
-                          ModGridHeader.tags,
-                          modifiers,
-                        ).child,
-                        itemCellBuilder: (mod, modifiers) => Opacity(
-                          opacity: WispGrid.lightTextOpacity,
-                          child: ContextMenuRegion(
-                            contextMenu: ContextMenu(
-                              entries: [
-                                MenuItem(
-                                  label: "Add Default Tags",
-                                  onSelected: () {
-                                    ref
-                                        .read(modTagManagerProvider.notifier)
-                                        .addDefaultModTags([
-                                          mod.findFirstEnabledOrHighestVersion!,
-                                        ]);
-                                  },
-                                ),
-                              ],
-                            ),
-                            child: Container(
-                              // For hit testing, same as the Row below
-                              color: Colors.transparent,
-                              child: Builder(
-                                builder: (context) {
-                                  final tagsForMod = ref
-                                      .watch(modTagManagerProvider.notifier)
-                                      .getTagsForMod(mod.id)
-                                      .toList();
-                                  return Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: [
-                                      Expanded(
-                                        child: tagsForMod.isEmpty
-                                            ? Text("")
-                                            : Tags(
-                                                itemCount: tagsForMod.length,
-                                                itemBuilder: (index) {
-                                                  return ItemTags(
-                                                    index: index,
-                                                    title:
-                                                        tagsForMod[index].name,
-                                                    singleItem: true,
-                                                    active: true,
-                                                    textActiveColor: theme
-                                                        .colorScheme
-                                                        .onPrimaryContainer,
-                                                    activeColor: theme
-                                                        .colorScheme
-                                                        .primaryContainer,
-                                                    splashColor:
-                                                        Colors.transparent,
-                                                    removeButton: ItemTagsRemoveButton(
-                                                      backgroundColor:
-                                                          Colors.transparent,
-                                                      onRemoved: () {
-                                                        ref
-                                                            .read(
-                                                              modTagManagerProvider
-                                                                  .notifier,
-                                                            )
-                                                            .removeTagIdsFromMod(
-                                                              mod.id,
-                                                              [
-                                                                tagsForMod[index]
-                                                                    .id,
-                                                              ],
-                                                            );
-                                                        return true;
-                                                      },
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                        csvValue: (mod) => ref
-                            .watch(modTagManagerProvider.notifier)
-                            .getTagsForMod(mod.id)
-                            .toList()
-                            .join(", "),
-                        defaultState: WispGridColumnState(
-                          position: 9,
-                          width: 150,
-                        ),
+                    WispGridColumn<Mod>(
+                      key: ModGridHeader.categories.name,
+                      name: "Category",
+                      isSortable: true,
+                      getSortValue: (mod) {
+                        final notifier = ref.read(
+                          categoryManagerProvider.notifier,
+                        );
+                        final primary = notifier.getPrimaryCategory(mod.id);
+                        return primary?.name.toLowerCase() ?? 'zzz';
+                      },
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.categories,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) =>
+                          CategoryCell(modId: mod.id),
+                      csvValue: (mod) {
+                        final notifier = ref.read(
+                          categoryManagerProvider.notifier,
+                        );
+                        return notifier
+                            .getCategoriesForMod(mod.id)
+                            .map((c) => c.name)
+                            .join(', ');
+                      },
+                      defaultState: WispGridColumnState(
+                        position: 9,
+                        width: 150,
                       ),
+                    ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.gameVersion.name,
                       name: "Game Version",
@@ -1229,7 +1163,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       ModGridHeader.version => ModGridSortField.version,
       ModGridHeader.updateStatus => ModGridSortField.updateStatus,
       ModGridHeader.vramImpact => ModGridSortField.vramImpact,
-      ModGridHeader.tags => null,
+      ModGridHeader.categories => ModGridSortField.categories,
       ModGridHeader.gameVersion => ModGridSortField.gameVersion,
       ModGridHeader.firstSeen => ModGridSortField.firstSeen,
       ModGridHeader.lastEnabled => ModGridSortField.lastEnabled,
@@ -1286,7 +1220,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             'Last Enabled',
             style: headerTextStyle,
           ),
-          ModGridHeader.tags => Text('Tags', style: headerTextStyle),
+          ModGridHeader.categories => Text('Category', style: headerTextStyle),
         };
       },
     );
@@ -1383,69 +1317,85 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 warningLevel: isIllustratedEntities
                     ? TooltipWarningLevel.warning
                     : null,
-                child: Stack(
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child:
-                            vramEstimate?.imagesNotIncludingGraphicsLib() !=
-                                null
-                            ? Text(
+                child: MouseRegion(
+                  onEnter: (_) =>
+                      ref.read(_vramColumnHovered.notifier).state = true,
+                  onExit: (_) =>
+                      ref.read(_vramColumnHovered.notifier).state = false,
+                  child: Align(
+                    alignment: .centerLeft,
+                    child: Stack(
+                      children: [
+                        if (vramEstimate != null)
+                          Align(
+                            alignment: .centerLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                              ),
+                              child: LinearProgressIndicator(
+                                value: ratio.isNaN || ratio.isInfinite
+                                    ? 0
+                                    : ratio,
+                                backgroundColor:
+                                    theme.colorScheme.surfaceContainer,
+                              ),
+                            ),
+                          ),
+                        if (vramEstimate?.imagesNotIncludingGraphicsLib() !=
+                                null &&
+                            ref.watch(_vramColumnHovered))
+                          Align(
+                            alignment: .topLeft,
+                            child: Padding(
+                              padding: const .only(left: 8, right: 12),
+                              child: Text(
                                 vramEstimate!
                                     .imagesNotIncludingGraphicsLib()
                                     .sum()
                                     .bytesAsReadableMB(),
-                                style: theme.textTheme.labelLarge?.copyWith(
+                                style: theme.textTheme.labelSmall?.copyWith(
                                   color: lightTextColor,
+                                  fontSize: 11,
                                 ),
-                              )
-                            : Align(
-                                alignment: Alignment.centerRight,
-                                child: Opacity(
-                                  opacity: 0.5,
-                                  child: Disable(
-                                    isEnabled:
-                                        vramEstimatorState.value?.isScanning !=
-                                        true,
-                                    child: MovingTooltipWidget.text(
-                                      message: "Estimate VRAM usage",
-                                      child: IconButton(
-                                        icon: const Icon(Icons.memory),
-                                        iconSize: 24,
-                                        onPressed: () {
-                                          ref
-                                              .read(
-                                                AppState
-                                                    .vramEstimatorProvider
-                                                    .notifier,
-                                              )
-                                              .startEstimating(
-                                                variantsToCheck: [
-                                                  mod.findFirstEnabledOrHighestVersion!,
-                                                ],
-                                              );
-                                        },
-                                      ),
-                                    ),
+                              ),
+                            ),
+                          )
+                        else if (vramEstimate == null)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Opacity(
+                              opacity: 0.5,
+                              child: Disable(
+                                isEnabled:
+                                    vramEstimatorState.value?.isScanning !=
+                                    true,
+                                child: MovingTooltipWidget.text(
+                                  message: "Estimate VRAM usage",
+                                  child: IconButton(
+                                    icon: const Icon(Icons.memory),
+                                    iconSize: 24,
+                                    onPressed: () {
+                                      ref
+                                          .read(
+                                            AppState
+                                                .vramEstimatorProvider
+                                                .notifier,
+                                          )
+                                          .startEstimating(
+                                            variantsToCheck: [
+                                              mod.findFirstEnabledOrHighestVersion!,
+                                            ],
+                                          );
+                                    },
                                   ),
                                 ),
                               ),
-                      ),
-                    ),
-                    if (vramEstimate != null)
-                      Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: LinearProgressIndicator(
-                            value: ratio.isNaN || ratio.isInfinite ? 0 : ratio,
-                            backgroundColor: theme.colorScheme.surfaceContainer,
+                            ),
                           ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               );
             },

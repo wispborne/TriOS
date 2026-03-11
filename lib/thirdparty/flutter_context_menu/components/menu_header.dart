@@ -25,7 +25,7 @@ final class MenuHeader extends ContextMenuEntry {
 
   const MenuHeader({
     required this.text,
-    this.disableUppercase = false,
+    this.disableUppercase = true,
     this.opacity = 0.8,
   });
 

@@ -6,11 +6,13 @@
     - Looking for feedback on how the changes look and feel, and what's missing.
   - Mod Group layouts: Line and Small Card.
     - Small Card is a shorter, more compact version of the previous mod group UI.
-  - Mod color tagging: place a color next to a mod's name as a mnemonic.
+  - Mod color tagging: show a color next to a mod's name as a mnemonic.
+  - Indicator on ship/weapon/portraits pages showing how many filters are active.
 - Changed
   - Mod groups have a more readable font.
   - VRAM Estimate on Mods page hides the exact VRAM estimates unless you hover over the VRAM column.
     - The new, smaller mod group UI made it look very messy with so many numbers visible.
+  - Moved some filters on the toolbar of the Ships/Weapons pages into the filter panel.
 
 # 1.3.4
 - Added

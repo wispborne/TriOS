@@ -190,7 +190,7 @@ class _WispGridRowState<T extends WispGridItem>
     OverlayWidgetData? overlayData,
   ) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      margin: const .only(left: 8, right: 8, top: 2, bottom: 1),
       child: InkWell(
         onTap: () {
           widget.setCollapsed(!widget.isCollapsed);
@@ -268,83 +268,87 @@ class _WispGridRowState<T extends WispGridItem>
   ) {
     final dividerColor = Theme.of(context).colorScheme.outlineVariant;
     // final dividerColor = groupColor?.withAlpha(150) ?? Theme.of(context).colorScheme.outlineVariant;
+    const rowLeftPadding = 8.0;
 
-    return InkWell(
-      onTap: () => widget.setCollapsed(!widget.isCollapsed),
-      highlightColor: Colors.transparent,
-      splashColor: Colors.transparent,
-      child: Stack(
-        alignment: .centerLeft,
-        children: [
-          Row(
-            children: [
-              // SizedBox(
-              //   width: 32,
-              //   child: Divider(color: dividerColor, height: 1),
-              // ),
-              SizedBox(
-                height: 24,
-                width: 24,
-                child: Icon(
-                  widget.isCollapsed
-                      ? Icons.keyboard_arrow_right
-                      : Icons.keyboard_arrow_down,
-                  size: 16,
-                ),
-              ),
-              if (groupIcon != null)
-                Padding(
-                  padding: const .only(right: 4),
-                  child: SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: groupIcon.toWidget(size: 16, color: groupColor),
+    return Padding(
+      padding: const .symmetric(horizontal: rowLeftPadding),
+      child: InkWell(
+        onTap: () => widget.setCollapsed(!widget.isCollapsed),
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        child: Stack(
+          alignment: .centerLeft,
+          children: [
+            Row(
+              children: [
+                // SizedBox(
+                //   width: 32,
+                //   child: Divider(color: dividerColor, height: 1),
+                // ),
+                SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: Icon(
+                    widget.isCollapsed
+                        ? Icons.keyboard_arrow_right
+                        : Icons.keyboard_arrow_down,
+                    size: 16,
                   ),
                 ),
-              if (groupColor != null && groupIcon == null)
+                if (groupIcon != null)
+                  Padding(
+                    padding: const .only(right: 4),
+                    child: SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: groupIcon.toWidget(size: 16, color: groupColor),
+                    ),
+                  ),
+                if (groupColor != null && groupIcon == null)
+                  Padding(
+                    padding: const .only(right: 6),
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.rectangle,
+                        color: groupColor,
+                        borderRadius: .circular(2),
+                      ),
+                    ),
+                  ),
                 Padding(
-                  padding: const .only(right: 6),
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.rectangle,
-                      color: groupColor,
-                      borderRadius: .circular(2),
+                  padding: const .only(left: 4, right: 8),
+                  child: Text(
+                    "${groupName.trim()} (${itemsInGroup.length})",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.robotoSlab(
+                      textStyle: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
                 ),
-              Padding(
-                padding: const .only(left: 4, right: 8),
-                child: Text(
-                  "${groupName.trim()} (${itemsInGroup.length})",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.robotoSlab(
-                    textStyle: Theme.of(context).textTheme.labelMedium,
-                  ),
-                ),
-              ),
-              Expanded(child: Divider(color: dividerColor, height: 1)),
-            ],
-          ),
-          if (overlayData != null)
-            Builder(
-              builder: (context) {
-                const leftMargin = 8.0;
-                return Positioned(
-                  left: overlayData.left - leftMargin,
-                  child: ColoredBox(
-                    color: Theme.of(context).colorScheme.surface,
-                    child: Padding(
-                      padding: const .only(left: leftMargin),
-                      child: overlayData.child,
-                    ),
-                  ),
-                );
-              },
+                Expanded(child: Divider(color: dividerColor, height: 1)),
+              ],
             ),
-        ],
+            if (overlayData != null)
+              Builder(
+                builder: (context) {
+                  const leftMargin = 8.0;
+                  return Positioned(
+                    left: overlayData.left - leftMargin - rowLeftPadding,
+                    child: ColoredBox(
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Padding(
+                        padding: const .only(left: leftMargin),
+                        child: overlayData.child,
+                      ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

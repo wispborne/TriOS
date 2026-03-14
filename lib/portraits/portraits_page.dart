@@ -22,7 +22,7 @@ import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portrait_scanner.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
+import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -433,6 +433,13 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     _FilterPane pane = _FilterPane.main,
     required bool showOnlyYourChangesFilter,
   }) {
+    final filterCategories = _getFilterCategories(pane);
+    final activeFilterCount = filterCategories
+            .fold(0, (sum, f) => sum + f.filterStates.length) +
+        (_getShowOnlyWithMetadata(pane) ? 1 : 0) +
+        (showOnlyYourChangesFilter && _getShowOnlyReplaced(pane) ? 1 : 0) +
+        (_getShowOnlyEnabledMods(pane) ? 1 : 0);
+
     if (!_getShowFilters(pane)) {
       return Padding(
         padding: const EdgeInsets.only(left: 4),
@@ -444,7 +451,17 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
               padding: const EdgeInsets.all(8.0),
               child: MovingTooltipWidget.text(
                 message: "Show filters",
-                child: const Icon(Icons.filter_list, size: 16),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.filter_list, size: 16),
+                    Positioned(
+                      top: -12,
+                      left: -16,
+                      child: ActiveFilterCountPill(count: activeFilterCount),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -457,6 +474,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       filterItems,
       pane: pane,
       showOnlyYourChangesFilter: showOnlyYourChangesFilter,
+      activeFilterCount: activeFilterCount,
     );
   }
 
@@ -465,114 +483,36 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     List<_PortraitFilterItem> filterItems, {
     _FilterPane pane = _FilterPane.main,
     required bool showOnlyYourChangesFilter,
+    required int activeFilterCount,
   }) {
     final filterCategories = _getFilterCategories(pane);
     final scrollController = _getFilterScrollController(pane);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Card(
-          child: Scrollbar(
-            thumbVisibility: true,
-            controller: scrollController,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 8,
-                right: 16,
-                top: 8,
-                bottom: 8,
-              ),
-              child: SizedBox(
-                width: 200,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message: "Hide filters",
-                          child: InkWell(
-                            onTap: () => _setShowFilters(pane, false),
-                            borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.filter_list, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Filters',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        if (filterCategories.any((f) => f.hasActiveFilters))
-                          TriOSToolbarItem(
-                            elevation: 0,
-                            child: TextButton.icon(
-                              onPressed: () => _clearAllFilters(pane),
-                              icon: const Icon(Icons.clear_all, size: 16),
-                              label: const Text('Clear'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Scrollable filter content
-                    Expanded(
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(
-                          context,
-                        ).copyWith(scrollbars: false),
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Checkbox filters section
-                              _buildCheckboxFilters(
-                                theme,
-                                pane: pane,
-                                showOnlyYourChangesFilter:
-                                    showOnlyYourChangesFilter,
-                              ),
-                              const SizedBox(height: 8),
-                              // Grid filter categories (Mod, Gender)
-                              ...filterCategories.map((filter) {
-                                return GridFilterWidget<_PortraitFilterItem>(
-                                  filter: filter,
-                                  items: filterItems,
-                                  filterStates: filter.filterStates,
-                                  onSelectionChanged: (states) {
-                                    _updateFilterStates(filter, states);
-                                  },
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+    return FiltersPanel(
+      onHide: () => _setShowFilters(pane, false),
+      scrollController: scrollController,
+      width: 200,
+      activeFilterCount: activeFilterCount,
+      showClearAll: filterCategories.any((f) => f.hasActiveFilters),
+      onClearAll: () => _clearAllFilters(pane),
+      filterWidgets: [
+        _buildCheckboxFilters(
+          theme,
+          pane: pane,
+          showOnlyYourChangesFilter: showOnlyYourChangesFilter,
         ),
-      ),
+        const SizedBox(height: 8),
+        ...filterCategories.map((filter) {
+          return GridFilterWidget<_PortraitFilterItem>(
+            filter: filter,
+            items: filterItems,
+            filterStates: filter.filterStates,
+            onSelectionChanged: (states) {
+              _updateFilterStates(filter, states);
+            },
+          );
+        }),
+      ],
     );
   }
 

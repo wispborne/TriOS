@@ -151,7 +151,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               // Removing Est. VRAM button because it's on the mod groups now.
                               // Maybe should add it to an overflow menu, though.
                               if (false) buildEstimateVramButton(theme),
-                              const SizedBox(width: 8),
+                              const Spacer(),
                               SizedBox(
                                 height: 30,
                                 width: 300,
@@ -161,7 +161,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   ref: ref,
                                 ),
                               ),
-                              const Spacer(),
+                              const SizedBox(width: 8),
                               MovingTooltipWidget.text(
                                 message: "Open side panel",
                                 child: IconButton(

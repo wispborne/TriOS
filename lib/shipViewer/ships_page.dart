@@ -1,17 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/ship_manager.dart';
 import 'package:trios/shipViewer/ships_page_controller.dart';
-import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/context_menu_items.dart';
@@ -21,6 +20,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/ingame_ship_tooltip.dart';
 import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -169,59 +169,17 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 ),
                 const SizedBox(width: 8),
                 MovingTooltipWidget.text(
-                  message: "Only ships from enabled mods.",
+                  message:
+                      "Split to show two displays that can be scrolled independently.",
                   child: TriOSToolbarCheckboxButton(
-                    text: "Only Enabled",
-                    value: controllerState.showEnabled,
-                    onChanged: (value) => controller.toggleShowEnabled(),
+                    text: "Compare Mode",
+                    value: controllerState.splitPane,
+                    onChanged: (value) {
+                      controller.toggleSplitPane();
+                      multiSplitController.areas = areas;
+                      setState(() {});
+                    },
                   ),
-                ),
-                const SizedBox(width: 8),
-                TriOSDropdownMenu<SpoilerLevel>(
-                  initialSelection: controllerState.spoilerLevelToShow,
-                  onSelected: (level) {
-                    if (level == null) return;
-                    controller.setShowSpoilers(level);
-                  },
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(
-                      value: SpoilerLevel.showNone,
-                      label: "No Spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        message: "No spoilers shown at all.",
-                        child: Text("No Spoilers"),
-                      ),
-                    ),
-                    DropdownMenuEntry(
-                      value: SpoilerLevel.showSlightSpoilers,
-                      label: "Slight spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        warningLevel: TooltipWarningLevel.warning,
-                        message: "Shows CODEX_UNLOCKABLE ships.",
-                        child: Text("Slight spoilers"),
-                      ),
-                    ),
-                    DropdownMenuEntry(
-                      value: SpoilerLevel.showAllSpoilers,
-                      label: "Show all spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        warningLevel: TooltipWarningLevel.error,
-                        message:
-                            "Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships",
-                        child: Text("Show all spoilers"),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                TriOSToolbarCheckboxButton(
-                  text: "Compare",
-                  value: controllerState.splitPane,
-                  onChanged: (value) {
-                    controller.toggleSplitPane();
-                    multiSplitController.areas = areas;
-                    setState(() {});
-                  },
                 ),
                 _buildOverflowButton(
                   context: context,
@@ -253,7 +211,19 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
               padding: const EdgeInsets.all(8.0),
               child: MovingTooltipWidget.text(
                 message: "Show filters",
-                child: const Icon(Icons.filter_list, size: 16),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.filter_list, size: 16),
+                    Positioned(
+                      top: -12,
+                      right: -16,
+                      child: ActiveFilterCountPill(
+                        count: controller.activeFilterCount,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -306,107 +276,106 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     );
   }
 
-  AnimatedContainer buildFilterPanel(
+  FiltersPanel buildFilterPanel(
     ThemeData theme,
     List<Ship> displayedShips,
     ShipsPageState controllerState,
     ShipsPageController controller,
   ) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    return FiltersPanel(
+      onHide: controller.toggleShowFilters,
+      activeFilterCount: controller.activeFilterCount,
+      showClearAll: controllerState.filterCategories.any(
+        (f) => f.hasActiveFilters,
+      ),
+      onClearAll: controller.clearAllFilters,
+      filterWidgets: [
+        _buildCheckboxFilters(theme, controllerState, controller),
+        const SizedBox(height: 8),
+        ...controllerState.filterCategories.map((filter) {
+          return GridFilterWidget(
+            filter: filter,
+            items: displayedShips,
+            filterStates: filter.filterStates,
+            onSelectionChanged: (states) {
+              controller.updateFilterStates(filter, states);
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildCheckboxFilters(
+    ThemeData theme,
+    ShipsPageState controllerState,
+    ShipsPageController controller,
+  ) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      color: theme.colorScheme.surfaceContainer,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Card(
-          child: Scrollbar(
-            thumbVisibility: true,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 8,
-                right: 16,
-                top: 8,
-                bottom: 8,
-              ),
-              child: SizedBox(
-                width: 300,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message: "Hide filters",
-                          child: InkWell(
-                            onTap: controller.toggleShowFilters,
-                            borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.filter_list, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Filters',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        if (controllerState.filterCategories.any(
-                          (f) => f.hasActiveFilters,
-                        ))
-                          TriOSToolbarItem(
-                            elevation: 0,
-                            child: TextButton.icon(
-                              onPressed: controller.clearAllFilters,
-                              icon: const Icon(Icons.clear_all, size: 16),
-                              label: const Text('Clear All'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: ScrollConfiguration(
-                        // Hide inner scrollbar, shown above instead.
-                        behavior: ScrollConfiguration.of(
-                          context,
-                        ).copyWith(scrollbars: false),
-                        child: SingleChildScrollView(
-                          primary: true,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 4,
-                            children: controllerState.filterCategories.map((
-                              filter,
-                            ) {
-                              return GridFilterWidget(
-                                filter: filter,
-                                items: displayedShips,
-                                filterStates: filter.filterStates,
-                                onSelectionChanged: (states) {
-                                  controller.updateFilterStates(filter, states);
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        padding: const .all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MovingTooltipWidget.text(
+              message: "Only show ships from enabled mods.",
+              child: CheckboxListTile(
+                title: const Text('Only Enabled Mods'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: .only(left: 8),
+                value: controllerState.showEnabled,
+                onChanged: (value) => controller.toggleShowEnabled(),
               ),
             ),
-          ),
+            const SizedBox(height: 8),
+            TriOSDropdownMenu<SpoilerLevel>(
+              initialSelection: controllerState.spoilerLevelToShow,
+              onSelected: (level) {
+                if (level == null) return;
+                controller.setShowSpoilers(level);
+              },
+              highlightOutlineColor:
+                  controllerState.spoilerLevelToShow !=
+                      SpoilerLevel.showAllSpoilers
+                  ? theme.colorScheme.primary
+                  : null,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: SpoilerLevel.showNone,
+                  label: "No Spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    message: "No spoilers shown at all.",
+                    child: Text("No Spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility_off, size: 20),
+                ),
+                DropdownMenuEntry(
+                  value: SpoilerLevel.showSlightSpoilers,
+                  label: "Show slight spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    warningLevel: TooltipWarningLevel.warning,
+                    message: "Shows CODEX_UNLOCKABLE ships.",
+                    child: Text("Show slight spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility, size: 20),
+                ),
+                DropdownMenuEntry(
+                  value: SpoilerLevel.showAllSpoilers,
+                  label: "Show all spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    warningLevel: TooltipWarningLevel.error,
+                    message:
+                        "Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships",
+                    child: Text("Show all spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility_outlined, size: 20),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

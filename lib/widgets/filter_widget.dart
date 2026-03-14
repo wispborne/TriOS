@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
+import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
 class GridFilter<T> {
   final String name;
@@ -355,6 +357,193 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// A reusable filter panel shell used by Ships, Weapons, and Portraits pages.
+///
+/// Renders the "Filters" header row (icon + label + active-count pill +
+/// optional "Clear All" button) above a scrollable column of [filterWidgets].
+class FiltersPanel extends StatefulWidget {
+  /// Called when the user taps the "Filters" header to collapse the panel.
+  final VoidCallback onHide;
+
+  /// Total number of active filters across all filter types (grid, checkbox,
+  /// dropdown, etc.). Passed in by the caller so the widget stays generic.
+  final int activeFilterCount;
+
+  /// Whether to show the "Clear All" button (typically true when any
+  /// [GridFilter] has active states).
+  final bool showClearAll;
+
+  /// Called when the user taps "Clear All".
+  final VoidCallback? onClearAll;
+
+  /// Filter content widgets rendered in the scrollable body (e.g.
+  /// a checkbox-filters card, then one [GridFilterWidget] per category).
+  final List<Widget> filterWidgets;
+
+  final ScrollController? scrollController;
+
+  /// Width of the panel. Defaults to 300.
+  final double width;
+
+  const FiltersPanel({
+    super.key,
+    required this.onHide,
+    required this.activeFilterCount,
+    required this.filterWidgets,
+    this.showClearAll = false,
+    this.onClearAll,
+    this.scrollController,
+    this.width = 300,
+  });
+
+  @override
+  State<FiltersPanel> createState() => _FiltersPanelState();
+}
+
+class _FiltersPanelState extends State<FiltersPanel> {
+  late final ScrollController _ownedController;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.scrollController == null) {
+      _ownedController = ScrollController();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.scrollController == null) {
+      _ownedController.dispose();
+    }
+    super.dispose();
+  }
+
+  ScrollController get _controller =>
+      widget.scrollController ?? _ownedController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Card(
+          child: Scrollbar(
+            thumbVisibility: true,
+            controller: _controller,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                left: 8,
+                right: 16,
+                top: 8,
+                bottom: 8,
+              ),
+              child: SizedBox(
+                width: widget.width,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        MovingTooltipWidget.text(
+                          message: "Hide filters",
+                          child: InkWell(
+                            onTap: widget.onHide,
+                            borderRadius: BorderRadius.circular(
+                              ThemeManager.cornerRadius,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Row(
+                                spacing: 8,
+                                children: [
+                                  const Icon(Icons.filter_list, size: 16),
+                                  Text(
+                                    'Filters',
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  ActiveFilterCountPill(
+                                    count: widget.activeFilterCount,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        if (widget.showClearAll)
+                          TriOSToolbarItem(
+                            elevation: 0,
+                            child: TextButton.icon(
+                              onPressed: widget.onClearAll,
+                              icon: const Icon(Icons.clear_all, size: 16),
+                              label: const Text('Clear All'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(
+                          context,
+                        ).copyWith(scrollbars: false),
+                        child: SingleChildScrollView(
+                          controller: _controller,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: 4,
+                            children: widget.filterWidgets,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small pill showing the number of active filter values across all categories.
+/// Returns an empty widget when [count] is 0.
+class ActiveFilterCountPill extends StatelessWidget {
+  final int count;
+
+  const ActiveFilterCountPill({super.key, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count == 0) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$count',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

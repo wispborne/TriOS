@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
+import 'package:trios/widgets/filter_widget.dart';
 
 part 'weapons_page_controller.mapper.dart';
 
@@ -127,7 +127,8 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
                   ),
                 ))
             .copyWith(
-              filterCategories: stateOrNull?.filterCategories ?? filterCategories,
+              filterCategories:
+                  stateOrNull?.filterCategories ?? filterCategories,
               allWeapons: allWeapons,
               weaponSearchIndices: weaponValuesByWeaponId,
               isLoading: isLoadingWeapons,
@@ -273,6 +274,15 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     final updatedState = state.copyWith(showFilters: !state.showFilters);
     state = updatedState;
   }
+
+  int get activeFilterCount =>
+      state.filterCategories.fold(
+        0,
+        (sum, f) => sum + f.filterStates.length,
+      ) +
+      (state.showEnabled ? 1 : 0) +
+      (state.showHidden ? 1 : 0) +
+      (state.weaponSpoilerLevel != WeaponSpoilerLevel.showAllSpoilers ? 1 : 0);
 
   /// Get game core directory
   Directory getGameCoreDir() {

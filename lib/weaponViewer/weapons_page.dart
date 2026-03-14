@@ -2,14 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
-import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
 import 'package:trios/thirdparty/flutter_context_menu/widgets/context_menu_region.dart';
@@ -24,6 +21,7 @@ import 'package:trios/weaponViewer/weapons_page_controller.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -173,59 +171,17 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 ),
                 const SizedBox(width: 8),
                 MovingTooltipWidget.text(
-                  message: "Only weapons from enabled mods.",
-                  child: TriOSToolbarCheckboxButton(
-                    text: "Only Enabled",
-                    value: controllerState.showEnabled,
-                    onChanged: (value) => controller.toggleShowEnabled(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                MovingTooltipWidget.text(
                   message:
-                      "Show hidden weapons (deco weapons, system weapons without SHOW_IN_CODEX tag).",
+                      "Split to show two displays that can be scrolled independently.",
                   child: TriOSToolbarCheckboxButton(
-                    text: "Show Hidden",
-                    value: controllerState.showHidden,
-                    onChanged: (value) => controller.toggleShowHidden(),
+                    text: "Compare Mode",
+                    value: controllerState.splitPane,
+                    onChanged: (value) {
+                      controller.toggleSplitPane();
+                      multiSplitController.areas = areas;
+                      setState(() {});
+                    },
                   ),
-                ),
-                const SizedBox(width: 8),
-                TriOSDropdownMenu<WeaponSpoilerLevel>(
-                  initialSelection: controllerState.weaponSpoilerLevel,
-                  onSelected: (level) {
-                    if (level == null) return;
-                    controller.setWeaponSpoilerLevel(level);
-                  },
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(
-                      value: WeaponSpoilerLevel.noSpoilers,
-                      label: "No spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        message: "Hides weapons tagged CODEX_UNLOCKABLE.",
-                        child: Text("No spoilers"),
-                      ),
-                    ),
-                    DropdownMenuEntry(
-                      value: WeaponSpoilerLevel.showAllSpoilers,
-                      label: "Show all spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        warningLevel: TooltipWarningLevel.warning,
-                        message: "Shows weapons tagged CODEX_UNLOCKABLE.",
-                        child: Text("Show all spoilers"),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                TriOSToolbarCheckboxButton(
-                  text: "Compare",
-                  value: controllerState.splitPane,
-                  onChanged: (value) {
-                    controller.toggleSplitPane();
-                    multiSplitController.areas = areas;
-                    setState(() {});
-                  },
                 ),
                 _buildOverflowButton(
                   context: context,
@@ -257,7 +213,19 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
               padding: const EdgeInsets.all(8.0),
               child: MovingTooltipWidget.text(
                 message: "Show filters",
-                child: const Icon(Icons.filter_list, size: 16),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.filter_list, size: 16),
+                    Positioned(
+                      top: -12,
+                      right: -16,
+                      child: ActiveFilterCountPill(
+                        count: controller.activeFilterCount,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -310,107 +278,108 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     );
   }
 
-  AnimatedContainer buildFilterPanel(
+  FiltersPanel buildFilterPanel(
     ThemeData theme,
     List<Weapon> displayedWeapons,
     WeaponsPageState controllerState,
     WeaponsPageController controller,
   ) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    return FiltersPanel(
+      onHide: controller.toggleShowFilters,
+      scrollController: _filterScrollController,
+      activeFilterCount: controller.activeFilterCount,
+      showClearAll: controllerState.filterCategories.any(
+        (f) => f.hasActiveFilters,
+      ),
+      onClearAll: controller.clearAllFilters,
+      filterWidgets: [
+        _buildCheckboxFilters(theme, controllerState, controller),
+        const SizedBox(height: 8),
+        ...controllerState.filterCategories.map((filter) {
+          return GridFilterWidget<Weapon>(
+            filter: filter,
+            items: displayedWeapons,
+            filterStates: filter.filterStates,
+            onSelectionChanged: (states) {
+              controller.updateFilterStates(filter, states);
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildCheckboxFilters(
+    ThemeData theme,
+    WeaponsPageState controllerState,
+    WeaponsPageController controller,
+  ) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      color: theme.colorScheme.surfaceContainer,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Card(
-          child: Scrollbar(
-            thumbVisibility: true,
-            controller: _filterScrollController,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 8,
-                right: 16,
-                top: 8,
-                bottom: 8,
-              ),
-              child: SizedBox(
-                width: 300,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message: "Hide filters",
-                          child: InkWell(
-                            onTap: controller.toggleShowFilters,
-                            borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.filter_list, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Filters',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        if (controllerState.filterCategories.any(
-                          (f) => f.hasActiveFilters,
-                        ))
-                          TriOSToolbarItem(
-                            elevation: 0,
-                            child: TextButton.icon(
-                              onPressed: controller.clearAllFilters,
-                              icon: const Icon(Icons.clear_all, size: 16),
-                              label: const Text('Clear All'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: ScrollConfiguration(
-                        // Hide inner scrollbar, shown above instead.
-                        behavior: ScrollConfiguration.of(
-                          context,
-                        ).copyWith(scrollbars: false),
-                        child: SingleChildScrollView(
-                          controller: _filterScrollController,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 4,
-                            children: controllerState.filterCategories.map((
-                              filter,
-                            ) {
-                              return GridFilterWidget<Weapon>(
-                                filter: filter,
-                                items: displayedWeapons,
-                                filterStates: filter.filterStates,
-                                onSelectionChanged: (states) {
-                                  controller.updateFilterStates(filter, states);
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MovingTooltipWidget.text(
+              message: "Only weapons from enabled mods.",
+              child: CheckboxListTile(
+                title: const Text('Only Enabled Mods'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: .only(left: 8),
+                value: controllerState.showEnabled,
+                onChanged: (value) => controller.toggleShowEnabled(),
               ),
             ),
-          ),
+            MovingTooltipWidget.text(
+              message:
+                  "Show hidden weapons (deco weapons, system weapons without SHOW_IN_CODEX tag).",
+              child: CheckboxListTile(
+                title: const Text('Show Hidden Weapons'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: .only(left: 8),
+                value: controllerState.showHidden,
+                onChanged: (value) => controller.toggleShowHidden(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TriOSDropdownMenu<WeaponSpoilerLevel>(
+              initialSelection: controllerState.weaponSpoilerLevel,
+              onSelected: (level) {
+                if (level == null) return;
+                controller.setWeaponSpoilerLevel(level);
+              },
+              highlightOutlineColor:
+                  controllerState.weaponSpoilerLevel !=
+                      WeaponSpoilerLevel.showAllSpoilers
+                  ? theme.colorScheme.primary
+                  : null,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: WeaponSpoilerLevel.noSpoilers,
+                  label: "No spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    message: "Hides weapons tagged CODEX_UNLOCKABLE.",
+                    child: Text("No spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility_off, size: 20),
+                ),
+                DropdownMenuEntry(
+                  value: WeaponSpoilerLevel.showAllSpoilers,
+                  label: "Show all spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    warningLevel: TooltipWarningLevel.warning,
+                    message: "Shows weapons tagged CODEX_UNLOCKABLE.",
+                    child: Text("Show all spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility_outlined, size: 20),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -821,7 +790,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           tooltipWidget: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: CtrlSwappedTooltip(
-                ctrlBuilder: (ctx) => Padding(
+              ctrlBuilder: (ctx) => Padding(
                 padding: const EdgeInsets.all(8),
                 child: SingleChildScrollView(
                   child: _buildInfoPane(item, theme, ctx),

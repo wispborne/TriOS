@@ -13,6 +13,8 @@ class TriOSDropdownMenu<T> extends StatelessWidget {
   final EdgeInsetsGeometry contentPadding;
   final TextStyle? textStyle;
   final bool enabled;
+  final Widget? leadingIcon;
+  final Color? highlightOutlineColor;
 
   const TriOSDropdownMenu({
     super.key,
@@ -24,16 +26,26 @@ class TriOSDropdownMenu<T> extends StatelessWidget {
     this.contentPadding = const EdgeInsets.symmetric(horizontal: 8),
     this.textStyle,
     this.enabled = true,
+    this.leadingIcon,
+    this.highlightOutlineColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final resolvedLeadingIcon =
+        leadingIcon ??
+        dropdownMenuEntries
+            .where((e) => e.value == initialSelection)
+            .firstOrNull
+            ?.leadingIcon;
+
     return DropdownMenu<T>(
       enabled: enabled,
       initialSelection: initialSelection,
       onSelected: onSelected,
+      leadingIcon: resolvedLeadingIcon,
       enableFilter: false,
       enableSearch: false,
       requestFocusOnTap: false,
@@ -52,12 +64,17 @@ class TriOSDropdownMenu<T> extends StatelessWidget {
         constraints: BoxConstraints.tight(Size.fromHeight(height)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+          borderSide: BorderSide(
+            width: highlightOutlineColor == null ? 1 : 1,
+            color: highlightOutlineColor ?? theme.colorScheme.outlineVariant,
+          ),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.4),
+            width: highlightOutlineColor == null ? 1 : 2,
+            color: (highlightOutlineColor ?? theme.colorScheme.outlineVariant)
+                .withOpacity(0.4),
           ),
         ),
         focusedBorder: OutlineInputBorder(

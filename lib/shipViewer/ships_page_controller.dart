@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/shipSystemsManager/ship_system.dart';
 import 'package:trios/shipSystemsManager/ship_systems_manager.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/ship_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -15,6 +14,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
+import 'package:trios/widgets/filter_widget.dart';
 
 part 'ships_page_controller.mapper.dart';
 
@@ -167,7 +167,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
                   ),
                 ))
             .copyWith(
-              filterCategories: stateOrNull?.filterCategories ?? filterCategories,
+              filterCategories:
+                  stateOrNull?.filterCategories ?? filterCategories,
               shipSystemsMap: shipSystemsMap,
               // weaponsMap: weaponsMap,
               weaponsMap: {},
@@ -316,6 +317,14 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     state = updatedState;
     _persistState(state);
   }
+
+  int get activeFilterCount =>
+      state.filterCategories.fold(
+        0,
+        (sum, f) => sum + f.filterStates.length,
+      ) +
+      (state.showEnabled ? 1 : 0) +
+      (state.spoilerLevelToShow != SpoilerLevel.showAllSpoilers ? 1 : 0);
 
   /// Get game core directory
   Directory getGameCoreDir() {

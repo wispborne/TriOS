@@ -16,13 +16,13 @@ import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portrait_scanner.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
+import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 part 'portraits_page_controller.mapper.dart';

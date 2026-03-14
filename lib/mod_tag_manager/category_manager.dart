@@ -208,6 +208,17 @@ class CategoryManagerNotifier
     });
   }
 
+  /// Remove all category assignments for a mod, making it "Uncategorized".
+  void removeAllCategoriesFromMod(String modId) {
+    updateState((current) {
+      final newAssignments = Map<String, List<ModCategoryAssignment>>.from(
+        current.modAssignments,
+      );
+      newAssignments.remove(modId);
+      return current.copyWith(modAssignments: newAssignments);
+    });
+  }
+
   /// Set which category is primary for a mod.
   void setPrimaryCategory(String modId, String categoryId) {
     updateState((current) {

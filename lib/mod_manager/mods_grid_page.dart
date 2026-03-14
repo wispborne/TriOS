@@ -94,6 +94,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final theme = Theme.of(context);
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
+    // Watch category state so the grid rebuilds immediately on category changes
+    // (e.g. drag-and-drop between category groups, context menu reassignment).
+    ref.watch(categoryManagerProvider);
 
     final query = _searchController.value.text;
     final modsMatchingSearch = searchMods(allMods, query) ?? [];

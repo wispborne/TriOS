@@ -18,6 +18,14 @@ abstract class WispGridItem {
   String get key;
 }
 
+/// Data carried during a drag-and-drop operation between groups.
+class _WispGridDragData {
+  final List<String> itemKeys;
+  final String dragDataType;
+
+  _WispGridDragData({required this.itemKeys, required this.dragDataType});
+}
+
 class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   static const gridRowSpacing = 8.0;
   static const lightTextOpacity = 0.8;
@@ -134,6 +142,9 @@ class _WispGridState<T extends WispGridItem>
   List<T> _lastDisplayedItems = [];
   List<MapEntry<WispGridGroup<T>?, List<T>>> _lastDisplayedItemsInGroups = [];
 
+  /// Updated by DragTargets to change drag feedback text.
+  final ValueNotifier<String?> _dragTargetGroupName = ValueNotifier(null);
+
   @override
   void initState() {
     super.initState();
@@ -146,6 +157,7 @@ class _WispGridState<T extends WispGridItem>
 
   @override
   void dispose() {
+    _dragTargetGroupName.dispose();
     _gridScrollControllerVertical.dispose();
     _gridScrollControllerHorizontal.dispose();
     super.dispose();
@@ -238,7 +250,7 @@ class _WispGridState<T extends WispGridItem>
           final widgets = <Widget>[];
 
           if (grouping != null && grouping.isGroupVisible) {
-            final header = WispGridGroupRowView(
+            Widget header = WispGridGroupRowView(
               grouping: grouping,
               itemsInGroup: itemsInGroup,
               isCollapsed: isCollapsed,
@@ -252,48 +264,126 @@ class _WispGridState<T extends WispGridItem>
               gridState: gridState,
               updateGridState: widget.updateGridState,
             );
+
+            if (grouping.supportsDragAndDrop) {
+              header = _DragTargetGroupHeader<T>(
+                grouping: grouping,
+                itemsInGroup: itemsInGroup,
+                hoverGroupName: _dragTargetGroupName,
+                child: header,
+              );
+            }
             widgets.add(header);
           }
+          final isDragEnabled = grouping?.supportsDragAndDrop == true;
           final items = !isCollapsed
               ? itemsInGroup
                     .map(
-                      (item) => WispGridRowView<T>(
-                        key: ValueKey(item.key),
-                        item: item,
-                        gridState: gridState,
-                        columns: widget.columns,
-                        rowBuilder: widget.rowBuilder,
-                        onTapped: () {
-                          if (HardwareKeyboard.instance.isShiftPressed) {
-                            _onRowCheck(
-                              modId: item.key,
-                              shiftPressed: true,
-                              ctrlPressed: false,
-                            );
-                          } else if (HardwareKeyboard
-                              .instance
-                              .isControlPressed) {
-                            _onRowCheck(
-                              modId: item.key,
-                              shiftPressed: false,
-                              ctrlPressed: true,
-                            );
-                          } else {
-                            if (widget.selectedItem != null) {
-                              widget.onRowSelected?.call(item);
+                      (item) {
+                        Widget rowWidget = WispGridRowView<T>(
+                          key: ValueKey(item.key),
+                          item: item,
+                          gridState: gridState,
+                          columns: widget.columns,
+                          rowBuilder: widget.rowBuilder,
+                          onTapped: () {
+                            if (HardwareKeyboard.instance.isShiftPressed) {
+                              _onRowCheck(
+                                modId: item.key,
+                                shiftPressed: true,
+                                ctrlPressed: false,
+                              );
+                            } else if (HardwareKeyboard
+                                .instance
+                                .isControlPressed) {
+                              _onRowCheck(
+                                modId: item.key,
+                                shiftPressed: false,
+                                ctrlPressed: true,
+                              );
+                            } else {
+                              if (widget.selectedItem != null) {
+                                widget.onRowSelected?.call(item);
+                              }
+                              _onRowCheck(
+                                modId: item.key,
+                                shiftPressed: false,
+                                ctrlPressed: false,
+                              );
                             }
-                            _onRowCheck(
-                              modId: item.key,
-                              shiftPressed: false,
-                              ctrlPressed: false,
-                            );
-                          }
-                        },
-                        onDoubleTapped: () {
-                          widget.onRowSelected?.call(item);
-                        },
-                        isRowChecked: _checkedItemIds.contains(item.key),
-                      ),
+                          },
+                          onDoubleTapped: () {
+                            widget.onRowSelected?.call(item);
+                          },
+                          isRowChecked: _checkedItemIds.contains(item.key),
+                        );
+
+                        if (isDragEnabled) {
+                          final draggedKeys =
+                              _checkedItemIds.contains(item.key) &&
+                                  _checkedItemIds.length > 1
+                              ? _checkedItemIds.toList()
+                              : [item.key];
+
+                          final baseRowWidget = rowWidget;
+                          rowWidget = DragTarget<_WispGridDragData>(
+                            onWillAcceptWithDetails: (details) =>
+                                details.data.dragDataType ==
+                                    grouping!.dragDataType &&
+                                !details.data.itemKeys.contains(item.key),
+                            onAcceptWithDetails: (details) {
+                              _dragTargetGroupName.value = null;
+                              grouping!.onItemsDropped(
+                                details.data.itemKeys,
+                                itemsInGroup,
+                                ref,
+                              );
+                            },
+                            onMove: (details) {
+                              final targetName = grouping!
+                                  .getGroupName(itemsInGroup.first);
+                              _dragTargetGroupName.value = targetName == null
+                                  ? null
+                                  : grouping!.dragHoverLabel(
+                                      targetName,
+                                      details.data.itemKeys,
+                                    );
+                            },
+                            onLeave: (_) {
+                              _dragTargetGroupName.value = null;
+                            },
+                            builder: (context, candidateData, rejectedData) {
+                              return LongPressDraggable<_WispGridDragData>(
+                                delay: const Duration(milliseconds: 200),
+                                data: _WispGridDragData(
+                                  itemKeys: draggedKeys,
+                                  dragDataType: grouping!.dragDataType,
+                                ),
+                                onDragEnd: (_) {
+                                  _dragTargetGroupName.value = null;
+                                },
+                                dragAnchorStrategy:
+                                    (draggable, context, position) =>
+                                        const Offset(16, 16),
+                                feedback: _DragFeedbackBadge(
+                                  label: grouping.dragFeedbackLabel(
+                                    draggedKeys,
+                                    widget.items.nonNulls.toList(),
+                                  ),
+                                  hoverGroupName: _dragTargetGroupName,
+                                ),
+                                childWhenDragging: Opacity(
+                                  opacity: 0.4,
+                                  child: baseRowWidget,
+                                ),
+                                child: baseRowWidget,
+                              );
+                            },
+                          );
+                        }
+
+                        return rowWidget;
+                      },
                     )
                     .toList()
               : <Widget>[];
@@ -616,4 +706,96 @@ class WispGridCsvExporter {
     WispGridController<T> controller, {
     bool includeHeaders = true,
   }) => controller._wispGridState.toCsv(includeHeaders: includeHeaders);
+}
+
+/// Wraps a group header in a [DragTarget] to accept drops from dragged rows.
+/// Drag feedback badge that reactively shows "Move to <group>" when hovering
+/// over a valid drop target.
+class _DragFeedbackBadge extends StatelessWidget {
+  final String label;
+  final ValueNotifier<String?> hoverGroupName;
+
+  const _DragFeedbackBadge({
+    required this.label,
+    required this.hoverGroupName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String?>(
+      valueListenable: hoverGroupName,
+      builder: (context, groupName, _) {
+        return Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              groupName ?? label,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DragTargetGroupHeader<T extends WispGridItem>
+    extends ConsumerWidget {
+  final WispGridGroup<T> grouping;
+  final List<T> itemsInGroup;
+  final ValueNotifier<String?> hoverGroupName;
+  final Widget child;
+
+  const _DragTargetGroupHeader({
+    super.key,
+    required this.grouping,
+    required this.itemsInGroup,
+    required this.hoverGroupName,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DragTarget<_WispGridDragData>(
+      onWillAcceptWithDetails: (details) {
+        return details.data.dragDataType == grouping.dragDataType;
+      },
+      onAcceptWithDetails: (details) {
+        hoverGroupName.value = null;
+        grouping.onItemsDropped(details.data.itemKeys, itemsInGroup, ref);
+      },
+      onMove: (details) {
+        final targetName = grouping.getGroupName(itemsInGroup.first);
+        hoverGroupName.value = targetName == null
+            ? null
+            : grouping.dragHoverLabel(
+                targetName,
+                details.data.itemKeys,
+              );
+      },
+      onLeave: (_) {
+        hoverGroupName.value = null;
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isHovered = candidateData.isNotEmpty;
+        if (!isHovered) return child;
+
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary,
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.1),
+          ),
+          child: child,
+        );
+      },
+    );
+  }
 }

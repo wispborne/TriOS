@@ -58,6 +58,36 @@ abstract class WispGridGroup<T extends WispGridItem> {
 
   WispGridGroup(this.key, this.displayName);
 
+  /// Whether rows in this grouping can be dragged to other groups.
+  bool get supportsDragAndDrop => false;
+
+  /// Called when items are dropped onto a group.
+  /// [droppedItemKeys] are the keys of the dragged WispGridItems.
+  /// [targetGroupItems] are the items currently in the target group.
+  void onItemsDropped(
+    List<String> droppedItemKeys,
+    List<T> targetGroupItems,
+    WidgetRef ref,
+  ) {}
+
+  /// Returns the label shown on the drag feedback badge.
+  /// [draggedKeys] are the keys of the items being dragged.
+  /// [allItems] is the full list of items so implementations can look up
+  /// display names.
+  String dragFeedbackLabel(List<String> draggedKeys, List<T> allItems) =>
+      draggedKeys.length > 1
+      ? '${draggedKeys.length} items'
+      : draggedKeys.first;
+
+  /// Returns the formatted label for the drag badge when hovering over a
+  /// target group, or null to keep the idle label (e.g. when hovering the
+  /// source group).
+  String? dragHoverLabel(String targetGroupName, List<String> draggedKeys) =>
+      targetGroupName;
+
+  /// Identifier for drag operations to prevent cross-grid drops.
+  String get dragDataType => key;
+
   String? getGroupName(T mod);
 
   Comparable? getGroupSortValue(T mod);
@@ -138,6 +168,71 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
   final WidgetRef ref;
 
   CategoryModGridGroup(this.ref) : super('category', 'Category');
+
+  @override
+  bool get supportsDragAndDrop => true;
+
+  @override
+  String dragFeedbackLabel(List<String> draggedKeys, List<Mod> allItems) =>
+      draggedKeys.length > 1
+          ? 'Move ${draggedKeys.length} items to\u2026'
+          : 'Move to\u2026';
+
+  @override
+  String? dragHoverLabel(String targetGroupName, List<String> draggedKeys) {
+    // Suppress when hovering the first dragged mod's own primary category.
+    final store = ref.read(categoryManagerProvider).value;
+    if (store != null && draggedKeys.isNotEmpty) {
+      final assignments = store.modAssignments[draggedKeys.first] ?? [];
+      final primary = assignments.firstWhereOrNull((a) => a.isPrimary);
+      final categoryId =
+          primary?.categoryId ?? assignments.firstOrNull?.categoryId;
+      final sourceName = categoryId == null
+          ? 'Uncategorized'
+          : store.categories
+                  .firstWhereOrNull((c) => c.id == categoryId)
+                  ?.name ??
+              'Uncategorized';
+      if (sourceName == targetGroupName) return null;
+    }
+
+    return draggedKeys.length > 1
+        ? 'Move ${draggedKeys.length} items to $targetGroupName'
+        : 'Move to $targetGroupName';
+  }
+
+  @override
+  void onItemsDropped(
+    List<String> droppedItemKeys,
+    List<Mod> targetGroupItems,
+    WidgetRef ref,
+  ) {
+    final store = ref.read(categoryManagerProvider).value;
+    if (store == null) return;
+    final notifier = ref.read(categoryManagerProvider.notifier);
+
+    // Resolve target category from the first item in the target group.
+    final targetCategory = targetGroupItems.isEmpty
+        ? null
+        : _getCategoryForGroup(targetGroupItems);
+
+    for (final modId in droppedItemKeys) {
+      if (targetCategory == null) {
+        // Dropping into "Uncategorized" — remove all assignments.
+        notifier.removeAllCategoriesFromMod(modId);
+      } else {
+        final assignments = store.modAssignments[modId] ?? [];
+        final alreadyAssigned = assignments.any(
+          (a) => a.categoryId == targetCategory.id,
+        );
+        if (alreadyAssigned) {
+          notifier.setPrimaryCategory(modId, targetCategory.id);
+        } else {
+          notifier.addCategoryToMod(modId, targetCategory.id, isPrimary: true);
+        }
+      }
+    }
+  }
 
   @override
   String getGroupName(Mod mod) {

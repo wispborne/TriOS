@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/dashboard/mod_list_basic.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
+import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
@@ -1758,21 +1759,43 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           overflow: TextOverflow.ellipsis,
         );
 
-        if (modColor == null) return nameText;
+        final gameVersion = ref.watch(AppState.starsectorVersion).value;
+        final compatWithGame = compareGameVersions(
+          bestVersion.modInfo.gameVersion,
+          gameVersion,
+        );
+        final compatTextColor = compatWithGame.getGameCompatibilityColor();
 
-        return Row(
-          spacing: 8.0,
-          children: [
-            Container(
-              width: 4.0,
-              height: 16.0,
-              decoration: BoxDecoration(
-                color: modColor,
-                borderRadius: BorderRadius.circular(4.0),
-              ),
+        final nameWidget = modColor == null
+            ? nameText
+            : Row(
+                spacing: 8.0,
+                children: [
+                  Container(
+                    width: 4.0,
+                    height: 16.0,
+                    decoration: BoxDecoration(
+                      color: modColor,
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                  ),
+                  Expanded(child: nameText),
+                ],
+              );
+
+        return MovingTooltipWidget.framed(
+          // position: TooltipPosition.topLeft,
+          padding: const EdgeInsets.all(0),
+          tooltipWidget: SizedBox(
+            width: 400,
+            child: ModSummaryWidget(
+              modVariant: bestVersion,
+              compatTextColor: compatTextColor,
+              compatWithGame: compatWithGame,
+              showIconTip: false,
             ),
-            Expanded(child: nameText),
-          ],
+          ),
+          child: nameWidget,
         );
       },
     );

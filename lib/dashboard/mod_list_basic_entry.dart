@@ -167,11 +167,11 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
     final localVersionCheck =
         versionCheckComparisonResult?.variant.versionCheckerInfo;
     final remoteVersionCheck = versionCheckComparisonResult?.remoteVersionCheck;
+    final theme = Theme.of(context);
     final compatWithGame = compareGameVersions(
       modInfo.gameVersion,
       gameVersion,
     );
-    final theme = Theme.of(context);
     final compatTextColor = isColorfulModeOn
         ? theme.textTheme.labelLarge?.color?.withAlpha(200)
         : compatWithGame.getGameCompatibilityColor();

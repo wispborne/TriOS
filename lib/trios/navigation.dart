@@ -13,6 +13,7 @@ enum TriOSTools {
   portraits,
   weapons,
   ships,
+  hullmods,
   settings,
   catalog,
   tips,

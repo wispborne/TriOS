@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
+import 'package:trios/hullmodViewer/hullmods_page_controller.dart';
 import 'package:trios/shipViewer/ships_page_controller.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
@@ -76,6 +77,9 @@ class Settings with SettingsMappable {
   final ShipsPageStatePersisted? shipsPageState;
   @MappableField(hook: SafeDecodeHook())
   final WeaponsPageStatePersisted? weaponsPageState;
+  final WispGridState hullmodsGridState;
+  @MappableField(hook: SafeDecodeHook())
+  final HullmodsPageStatePersisted? hullmodsPageState;
 
   // Mods Page
   final bool doubleClickForModsPanel;
@@ -156,6 +160,11 @@ class Settings with SettingsMappable {
     ),
     this.shipsPageState,
     this.weaponsPageState,
+    this.hullmodsGridState = const WispGridState(
+      groupingSetting: null,
+      columnsState: {},
+    ),
+    this.hullmodsPageState,
     this.customGameExePath,
     this.useCustomGameExePath = false,
     this.customSavesPath,

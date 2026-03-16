@@ -7,6 +7,14 @@ import 'package:trios/widgets/toolbar_checkbox_button.dart';
 class GridFilter<T> {
   final String name;
   final String Function(T) valueGetter;
+
+  /// Optional getter that returns multiple values per item.
+  /// When provided, the filter panel shows each individual value as a separate
+  /// chip and matching checks whether *any* of the item's values match.
+  /// [valueGetter] is still required but may return an empty string when
+  /// [valuesGetter] is used.
+  final List<String> Function(T)? valuesGetter;
+
   final String Function(String)? displayNameGetter;
 
   /// Custom comparator for sorting filter chip values (raw IDs).
@@ -23,6 +31,7 @@ class GridFilter<T> {
   GridFilter({
     required this.name,
     required this.valueGetter,
+    this.valuesGetter,
     this.displayNameGetter,
     this.sortComparator,
     this.useDefaultSort = false,
@@ -78,11 +87,20 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
   }
 
   void _updateUniqueValues() {
-    final values = widget.items
-        .map(widget.filter.valueGetter)
-        .where((value) => value.isNotEmpty)
-        .toSet()
-        .toList();
+    final List<String> values;
+    if (widget.filter.valuesGetter != null) {
+      values = widget.items
+          .expand(widget.filter.valuesGetter!)
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList();
+    } else {
+      values = widget.items
+          .map(widget.filter.valueGetter)
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList();
+    }
 
     if (!widget.filter.useDefaultSort) {
       final comparator = widget.filter.sortComparator;

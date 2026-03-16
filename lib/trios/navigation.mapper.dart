@@ -45,6 +45,8 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return TriOSTools.weapons;
       case r'ships':
         return TriOSTools.ships;
+      case r'hullmods':
+        return TriOSTools.hullmods;
       case r'settings':
         return TriOSTools.settings;
       case r'catalog':
@@ -77,6 +79,8 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return r'weapons';
       case TriOSTools.ships:
         return r'ships';
+      case TriOSTools.hullmods:
+        return r'hullmods';
       case TriOSTools.settings:
         return r'settings';
       case TriOSTools.catalog:

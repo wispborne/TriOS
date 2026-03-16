@@ -28,6 +28,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
+import 'package:trios/hullmodViewer/hullmods_page.dart';
 import 'package:trios/weaponViewer/weapons_page.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
@@ -73,9 +74,10 @@ class _AppShellState extends ConsumerState<AppShell>
     5: TriOSTools.portraits,
     6: TriOSTools.weapons,
     7: TriOSTools.ships,
-    8: TriOSTools.settings,
-    9: TriOSTools.catalog,
-    10: TriOSTools.tips,
+    8: TriOSTools.hullmods,
+    9: TriOSTools.settings,
+    10: TriOSTools.catalog,
+    11: TriOSTools.tips,
   };
 
   void _changeTab(TriOSTools tab) {
@@ -223,6 +225,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const PortraitsPage(),
       const WeaponsPage(),
       const ShipsPage(),
+      const HullmodsPage(),
       const SettingsPage(pagePadding: 8.0),
       const CatalogPage(pagePadding: 8),
       const TipsPage(),
@@ -404,6 +407,25 @@ class _AppShellState extends ConsumerState<AppShell>
                           ),
                           isSelected: _currentPage == TriOSTools.ships,
                           onPressed: () => _changeTab(TriOSTools.ships),
+                        ),
+                      ),
+                      MovingTooltipWidget.text(
+                        message:
+                            "Hullmod Viewer\n\nWarning: spoilers!",
+                        child: IconButton(
+                          icon: SvgImageIcon(
+                            "assets/images/icon-hullmod.svg",
+                            height: 24,
+                            width: 24,
+                          ),
+                          selectedIcon: SvgImageIcon(
+                            "assets/images/icon-hullmod.svg",
+                            color: Theme.of(context).colorScheme.primary,
+                            height: 24,
+                            width: 24,
+                          ),
+                          isSelected: _currentPage == TriOSTools.hullmods,
+                          onPressed: () => _changeTab(TriOSTools.hullmods),
                         ),
                       ),
                       MovingTooltipWidget.text(

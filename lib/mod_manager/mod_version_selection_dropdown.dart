@@ -223,8 +223,10 @@ class _ModVersionSelectionDropdownState
     final subButtonBgColor = getColorForCurrentState(
       buttonStyle.backgroundColor!,
       {WidgetState.selected},
-    )!.lighter(8);
-    final subButtonBorderColor = buttonColor.darker(6);
+    )!.lighter(enabledVariant == null ? 6 : 8);
+    final subButtonBorderColor = buttonColor.darker(
+      enabledVariant == null ? 12 : 6,
+    );
 
     return MovingTooltipWidget.text(
       message:
@@ -260,9 +262,7 @@ class _ModVersionSelectionDropdownState
                   // Main tap area — enable/disable
                   Expanded(
                     child: MovingTooltipWidget.text(
-                      message: isEnabled
-                          ? "Click to disable"
-                          : null,
+                      message: isEnabled ? "Click to disable" : null,
                       child: InkWell(
                         onTap: () async {
                           if (!mounted) return;
@@ -295,7 +295,8 @@ class _ModVersionSelectionDropdownState
                                   Center(
                                     child: Text(
                                       isEnabled
-                                          ? enabledVariant!.modInfo.version.toString()
+                                          ? enabledVariant!.modInfo.version
+                                                .toString()
                                           : "Enable",
                                     ),
                                   ),
@@ -361,7 +362,10 @@ class _ModVersionSelectionDropdownState
           items: items,
           valueListenable: ValueNotifier(enabledVariant),
           customButton: Center(
-            child: Icon(Icons.arrow_drop_down, color: textColor, size: 24),
+            child: Padding(
+              padding: const .only(right: 2),
+              child: Icon(Icons.arrow_drop_down, color: textColor, size: 24),
+            ),
           ),
           iconStyleData: const IconStyleData(iconSize: 0),
           underline: Container(),

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/chatbot/chatbot_dialog.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
@@ -247,6 +248,11 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             folder.openInExplorer();
           },
           label: const Text('Open ${Constants.appName} Settings Folder'),
+        ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.chat_bubble_outline),
+          onPressed: () => ChatbotDialog.show(context),
+          label: const Text('Open Debug Chatbot'),
         ),
         ElevatedButton.icon(
           icon: const Icon(Icons.restart_alt),

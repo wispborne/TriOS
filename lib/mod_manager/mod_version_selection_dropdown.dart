@@ -278,7 +278,7 @@ class _ModVersionSelectionDropdownState
   }
 
   Future<void> switchToVariant(ModVariant? modVariant) async {
-    ref
+    await ref
         .read(modManager.notifier)
         .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
           widget.mod,

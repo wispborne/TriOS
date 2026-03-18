@@ -806,10 +806,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       await ref
           .read(AppState.modVariants.notifier)
           .reloadModVariants(
-            onlyVariants: {
-              ...modInfoEnabledVariants,
-              modVariant,
-            }.nonNulls.toList(),
+            onlyVariants: mod.modVariants,
           );
     }
 
@@ -1156,8 +1153,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           builder: (context) {
             return ForceGameVersionWarningDialog(
               modVariant: modVariant,
-              onForced: () {
-                changeActiveModVariant(mod, modVariant);
+              onForced: () async {
+                await changeActiveModVariant(mod, modVariant);
               },
               refreshModlistAfter: refreshModlistAfter,
             );

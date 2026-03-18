@@ -15,10 +15,12 @@ part 'hullmods_page_controller.mapper.dart';
 class HullmodsPageStatePersisted with HullmodsPageStatePersistedMappable {
   final bool showEnabled;
   final bool splitPane;
+  final bool useContainFit;
 
   const HullmodsPageStatePersisted({
     this.showEnabled = false,
     this.splitPane = false,
+    this.useContainFit = false,
   });
 }
 
@@ -38,6 +40,7 @@ class HullmodsPageState with HullmodsPageStateMappable {
 
   bool get showEnabled => persisted.showEnabled;
   bool get splitPane => persisted.splitPane;
+  bool get useContainFit => persisted.useContainFit;
 
   const HullmodsPageState({
     this.persisted = const HullmodsPageStatePersisted(),
@@ -112,6 +115,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
                   persisted: HullmodsPageStatePersisted(
                     showEnabled: saved?.showEnabled ?? false,
                     splitPane: saved?.splitPane ?? false,
+                    useContainFit: saved?.useContainFit ?? false,
                   ),
                 ))
             .copyWith(
@@ -136,6 +140,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
           hullmodsPageState: current.copyWith(
             showEnabled: newState.showEnabled,
             splitPane: newState.splitPane,
+            useContainFit: newState.useContainFit,
           ),
         );
       });
@@ -246,6 +251,17 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
   void toggleShowFilters() {
     final updatedState = state.copyWith(showFilters: !state.showFilters);
     state = updatedState;
+  }
+
+  /// Toggle image fit between scaleDown and contain
+  void toggleUseContainFit() {
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(
+        useContainFit: !state.useContainFit,
+      ),
+    );
+    state = updatedState;
+    _persistState(state);
   }
 
   int get activeFilterCount =>

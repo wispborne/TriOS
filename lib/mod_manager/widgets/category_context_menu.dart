@@ -52,6 +52,9 @@ ContextMenu buildCategoryCellContextMenu({
               (category) => MenuItem(
                 label: category.name,
                 icon: category.id == primaryId ? Icons.check : null,
+                leading: category.id != primaryId
+                    ? _buildCategoryLeading(category)
+                    : null,
                 onSelected: () {
                   notifier.setPrimaryCategory(modId, category.id);
                 },
@@ -64,6 +67,7 @@ ContextMenu buildCategoryCellContextMenu({
         final isAssigned = assignedIds.contains(category.id);
         return CheckableMenuItem(
           label: category.name,
+          leading: _buildCategoryLeading(category),
           isChecked: isAssigned,
           onSelected: () {
             if (isAssigned) {
@@ -136,6 +140,25 @@ List<ContextMenuEntry> _buildPrimaryManagementItems({
     ),
     const MenuDivider(),
   ];
+}
+
+Widget? _buildCategoryLeading(Category category) {
+  final icon = category.icon;
+  final color = category.color;
+  if (icon == null && color == null) return null;
+
+  if (icon != null) {
+    return icon.toWidget(size: 16, color: color);
+  }
+
+  // Color only — show a color dot.
+  return Center(
+    child: Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    ),
+  );
 }
 
 void _showRenameDialog({

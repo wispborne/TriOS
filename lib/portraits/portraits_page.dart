@@ -128,10 +128,14 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+    int vanillaFirstComparator(String a, String b) =>
+        a == 'Vanilla' ? -1 : b == 'Vanilla' ? 1 : a.compareTo(b);
+
     // Main/Viewer filters
     _modFilter = GridFilter<_PortraitFilterItem>(
       name: 'Mod',
       valueGetter: (item) => item.modName,
+      sortComparator: vanillaFirstComparator,
     );
     _genderFilter = GridFilter<_PortraitFilterItem>(
       name: 'Gender',
@@ -143,6 +147,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     _leftModFilter = GridFilter<_PortraitFilterItem>(
       name: 'Mod',
       valueGetter: (item) => item.modName,
+      sortComparator: vanillaFirstComparator,
     );
     _leftGenderFilter = GridFilter<_PortraitFilterItem>(
       name: 'Gender',
@@ -154,6 +159,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     _rightModFilter = GridFilter<_PortraitFilterItem>(
       name: 'Mod',
       valueGetter: (item) => item.modName,
+      sortComparator: vanillaFirstComparator,
     );
     _rightGenderFilter = GridFilter<_PortraitFilterItem>(
       name: 'Gender',

@@ -196,6 +196,11 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
       GridFilter<PortraitFilterItem>(
         name: 'Mod',
         valueGetter: (item) => item.modName,
+        sortComparator: (a, b) => a == 'Vanilla'
+            ? -1
+            : b == 'Vanilla'
+            ? 1
+            : a.compareTo(b),
       ),
       GridFilter<PortraitFilterItem>(
         name: 'Gender',

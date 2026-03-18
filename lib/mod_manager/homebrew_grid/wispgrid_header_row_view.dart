@@ -239,9 +239,11 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                     onSelected: () {
                       updateGridState(
                         (WispGridState state) => state.copyWith(
-                          groupingSetting: state.groupingSetting?.copyWith(
-                            currentGroupedByKey: group.key,
-                          ),
+                          groupingSetting: (state.groupingSetting ??
+                                  GroupingSetting(
+                                    currentGroupedByKey: group.key,
+                                  ))
+                              .copyWith(currentGroupedByKey: group.key),
                         ),
                       );
                     },

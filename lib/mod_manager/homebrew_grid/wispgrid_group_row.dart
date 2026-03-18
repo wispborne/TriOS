@@ -19,6 +19,7 @@ class WispGridGroupRowView<T extends WispGridItem>
   final int shownIndex;
   final Function(bool isCollapsed) setCollapsed;
   final List<WispGridColumn<T>> columns;
+  final List<WispGridGroup<T>> groups;
   final WispGridState gridState;
   final Function(WispGridState? Function(WispGridState)) updateGridState;
 
@@ -30,6 +31,7 @@ class WispGridGroupRowView<T extends WispGridItem>
     required this.shownIndex,
     required this.setCollapsed,
     required this.columns,
+    required this.groups,
     required this.gridState,
     required this.updateGridState,
   });
@@ -354,11 +356,38 @@ class _WispGridRowState<T extends WispGridItem>
   }
 
   ContextMenu _buildGroupHeaderContextMenu() {
+    final groupingSetting = widget.gridState.groupingSetting;
     final currentStyle =
-        widget.gridState.groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
+        groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
 
     return ContextMenu(
       entries: [
+        if (widget.groups.length > 1)
+          MenuItem.submenu(
+            label: 'Group By',
+            icon: Icons.horizontal_split,
+            items: widget.groups
+                .map(
+                  (group) => MenuItem(
+                    label: group.displayName,
+                    icon: groupingSetting?.currentGroupedByKey == group.key
+                        ? Icons.check
+                        : null,
+                    onSelected: () {
+                      widget.updateGridState(
+                        (WispGridState state) => state.copyWith(
+                          groupingSetting: (state.groupingSetting ??
+                                  GroupingSetting(
+                                    currentGroupedByKey: group.key,
+                                  ))
+                              .copyWith(currentGroupedByKey: group.key),
+                        ),
+                      );
+                    },
+                  ),
+                )
+                .toList(),
+          ),
         MenuItem.submenu(
           label: 'Header Style',
           icon: Icons.view_agenda_outlined,

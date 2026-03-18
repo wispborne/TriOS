@@ -76,7 +76,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     final theme = Theme.of(context);
     final mods = ref.watch(AppState.mods);
 
-    final columns = _buildCols(theme);
+    final columns = _buildCols(theme, controllerState);
     final total = controllerState.allHullmods.length;
     final visible = controllerState.filteredHullmods.length;
 
@@ -377,7 +377,14 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildInfoPane(h, theme, context),
+                    _buildInfoPane(
+                      h,
+                      theme,
+                      context,
+                      useContainFit: ref
+                          .read(hullmodsPageControllerProvider)
+                          .useContainFit,
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -398,7 +405,12 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     );
   }
 
-  Column _buildInfoPane(Hullmod h, ThemeData theme, BuildContext context) {
+  Column _buildInfoPane(
+    Hullmod h,
+    ThemeData theme,
+    BuildContext context, {
+    bool useContainFit = false,
+  }) {
     Widget section(String title) => Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Text(
@@ -421,7 +433,8 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
                 padding: const EdgeInsets.only(right: 12),
                 child: _HullmodSpriteWidget(
                   spritePath: h.sprite!,
-                  size: 48,
+                  size: 32,
+                  fit: useContainFit ? BoxFit.contain : BoxFit.scaleDown,
                 ),
               ),
             Expanded(
@@ -566,7 +579,10 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     );
   }
 
-  List<WispGridColumn<Hullmod>> _buildCols(ThemeData theme) {
+  List<WispGridColumn<Hullmod>> _buildCols(
+    ThemeData theme,
+    HullmodsPageState controllerState,
+  ) {
     int position = 0;
 
     String hullmodValueToString(
@@ -616,7 +632,12 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: SingleChildScrollView(
-                child: _buildInfoPane(item, theme, context),
+                child: _buildInfoPane(
+                  item,
+                  theme,
+                  context,
+                  useContainFit: controllerState.useContainFit,
+                ),
               ),
             ),
           ),
@@ -649,7 +670,13 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         isSortable: false,
         name: '',
         itemCellBuilder: (item, _) => item.sprite != null
-            ? _HullmodSpriteWidget(spritePath: item.sprite!, size: 40)
+            ? _HullmodSpriteWidget(
+                spritePath: item.sprite!,
+                size: 40,
+                fit: controllerState.useContainFit
+                    ? BoxFit.contain
+                    : BoxFit.scaleDown,
+              )
             : const SizedBox(
                 width: 40,
                 height: 40,
@@ -659,19 +686,19 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         defaultState: WispGridColumnState(position: position++, width: 48),
       ),
       col('name', 'Name', (h) => h.name ?? h.id, width: 180),
-      col('tier', 'Tier', (h) => h.tier, width: 60),
+      col(
+        'techManufacturer',
+        'Tech/Manufacturer',
+            (h) => h.techManufacturer,
+        width: 150,
+      ),
       col('costFrigate', 'OP (Frig)', (h) => h.costFrigate, width: 80),
       col('costDest', 'OP (Dest)', (h) => h.costDest, width: 80),
       col('costCruiser', 'OP (Cru)', (h) => h.costCruiser, width: 80),
       col('costCapital', 'OP (Cap)', (h) => h.costCapital, width: 80),
-      col(
-        'techManufacturer',
-        'Tech/Manufacturer',
-        (h) => h.techManufacturer,
-        width: 150,
-      ),
-      col('uiTags', 'UI Tags', (h) => h.uiTags, width: 120),
-      col('short', 'Description', (h) => h.shortDescription, width: 200),
+      col('tier', 'Tier', (h) => h.tier, width: 60),
+      col('uiTags', 'Tags', (h) => h.uiTags, width: 120),
+      col('short', 'Short Desc.', (h) => h.shortDescription, width: 200),
     ];
   }
 
@@ -680,6 +707,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     required ThemeData theme,
     required HullmodsPageState controllerState,
   }) {
+    final controller = ref.read(hullmodsPageControllerProvider.notifier);
     return PopupMenuButton(
       tooltip: "More actions",
       icon: const Icon(Icons.more_vert),
@@ -706,6 +734,17 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             title: Text("Export to CSV"),
           ),
         ),
+        CheckedPopupMenuItem(
+          checked: controllerState.useContainFit,
+          onTap: () => controller.toggleUseContainFit(),
+          child: const Row(
+            spacing: 8,
+            children: [
+              Icon(Icons.fit_screen, size: 18),
+              Text('Stretch icons to fit'),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -716,8 +755,13 @@ final Map<String, bool> _hullmodSpritePathCache = {};
 class _HullmodSpriteWidget extends StatefulWidget {
   final String spritePath;
   final double size;
+  final BoxFit fit;
 
-  const _HullmodSpriteWidget({required this.spritePath, this.size = 40});
+  const _HullmodSpriteWidget({
+    required this.spritePath,
+    this.size = 32,
+    this.fit = BoxFit.scaleDown,
+  });
 
   @override
   State<_HullmodSpriteWidget> createState() => _HullmodSpriteWidgetState();
@@ -759,7 +803,7 @@ class _HullmodSpriteWidgetState extends State<_HullmodSpriteWidget> {
         File(widget.spritePath),
         width: widget.size,
         height: widget.size,
-        fit: BoxFit.contain,
+        fit: widget.fit,
       ),
     );
   }
@@ -779,7 +823,7 @@ class UngroupedHullmodGridGroup extends WispGridGroup<Hullmod> {
 }
 
 class ModNameHullmodGridGroup extends WispGridGroup<Hullmod> {
-  ModNameHullmodGridGroup() : super('modId', 'Mod');
+  ModNameHullmodGridGroup() : super('modVariant', 'Mod');
 
   @override
   String getGroupName(Hullmod mod) =>

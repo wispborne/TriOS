@@ -1,27 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-    <path d="M12 8h40v36H12z" fill="none" stroke="white" stroke-width="2"/>
-    <path d="M10 6h44v40H10z" fill="none" stroke="white" stroke-width="1" opacity="0.5"/>
-
-    <rect x="4" y="10" width="4" height="32" rx="1" fill="white"/>
-    <rect x="56" y="10" width="4" height="32" rx="1" fill="white"/>
-
-    <rect x="16" y="12" width="32" height="24" rx="1" fill="white" fill-opacity="0.2"/>
-
-    <path d="M20 44h24v12H20z" fill="white"/>
-
-    <rect x="22" y="46" width="2" height="2" fill="black"/>
-    <rect x="25" y="46" width="2" height="2" fill="black"/>
-    <rect x="28" y="46" width="2" height="2" fill="black"/>
-    <rect x="22" y="49" width="2" height="2" fill="black"/>
-    <rect x="25" y="49" width="2" height="2" fill="black"/>
-    <rect x="28" y="49" width="2" height="2" fill="black"/>
-
-    <rect x="34" y="46" width="8" height="8" rx="0.5" fill="black"/>
-    <path d="M36 48h4v1h-4zm0 2h4v1h-4zm0 2h4v1h-4z" fill="white" opacity="0.8"/>
-
-    <path d="M10 46c-4 0-4 8 0 8h6M54 46c4 0 4 8 0 8h-6" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
-
-    <rect x="18" y="4" width="6" height="3" fill="white"/>
-    <rect x="28" y="4" width="4" height="3" fill="white"/>
-    <rect x="36" y="4" width="10" height="3" fill="white"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+    <defs>
+        <clipPath id="c"><rect x="0" y="0" width="24" height="24"/></clipPath>
+        <linearGradient id="f" gradientUnits="userSpaceOnUse" x1="13" y1="27" x2="23.5" y2="18.5">
+            <stop offset="0%" stop-color="white" stop-opacity="0.62"/>
+            <stop offset="50%" stop-color="white" stop-opacity="0.32"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0"/>
+        </linearGradient>
+    </defs>
+    <g clip-path="url(#c)" fill="none" stroke-linecap="round">
+        <path d="M-2 26 A23.4 23.4 0 0 1 25 2.5" stroke="white" stroke-width="2.6" opacity="1.00"/>
+        <path d="M2 27 A18.5 18.5 0 0 1 24.5 7" stroke="white" stroke-width="2.3" opacity="1.00"/>
+        <path d="M5.5 27 A14.4 14.4 0 0 1 24 11" stroke="white" stroke-width="2.1" opacity="1.00"/>
+<!--        <path d="M9 27 A10 10 0 0 1 24 15" stroke="white" stroke-width="2" opacity="1.00"/>-->
+        <path d="M13 27 A6.5 6.5 0 0 1 23.5 18.5" stroke="url(#f)" stroke-width="2"/>
+    </g>
 </svg>

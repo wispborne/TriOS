@@ -44,6 +44,8 @@ class ShipsPageState with ShipsPageStateMappable {
 
   bool get showFilters => persisted.showFilters;
 
+  bool get useContainFit => persisted.useContainFit;
+
   const ShipsPageState({
     this.persisted = const ShipsPageStatePersisted(),
     this.filterCategories = const [],
@@ -64,12 +66,14 @@ class ShipsPageStatePersisted with ShipsPageStatePersistedMappable {
   final SpoilerLevel spoilerLevelToShow;
   final bool splitPane;
   final bool showFilters;
+  final bool useContainFit;
 
   const ShipsPageStatePersisted({
     this.showEnabled = false,
     this.spoilerLevelToShow = SpoilerLevel.showNone,
     this.splitPane = false,
     this.showFilters = false,
+    this.useContainFit = false,
   });
 }
 
@@ -164,6 +168,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
                         saved?.spoilerLevelToShow ?? SpoilerLevel.showNone,
                     splitPane: saved?.splitPane ?? false,
                     showFilters: saved?.showFilters ?? false,
+                    useContainFit: saved?.useContainFit ?? false,
                   ),
                 ))
             .copyWith(
@@ -195,6 +200,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
                     spoilerLevelToShow: newState.spoilerLevelToShow,
                     splitPane: newState.splitPane,
                     showFilters: newState.showFilters,
+                    useContainFit: newState.useContainFit,
                   ),
             ),
           );
@@ -313,6 +319,17 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   void toggleShowFilters() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(showFilters: !state.showFilters),
+    );
+    state = updatedState;
+    _persistState(state);
+  }
+
+  /// Toggle image fit between scaleDown and contain
+  void toggleUseContainFit() {
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(
+        useContainFit: !state.useContainFit,
+      ),
     );
     state = updatedState;
     _persistState(state);

@@ -10,6 +10,7 @@ import '../widgets/context_menu_state.dart';
 /// allowing multiple selections without closing the menu.
 final class CheckableMenuItem extends ContextMenuItem<void> {
   final String label;
+  final Widget? leading;
   final BoxConstraints? constraints;
   final bool enabled;
   final TextStyle? textStyle;
@@ -20,6 +21,7 @@ final class CheckableMenuItem extends ContextMenuItem<void> {
   CheckableMenuItem({
     required this.label,
     required this.isChecked,
+    this.leading,
     super.onSelected,
     this.constraints,
     this.enabled = true,
@@ -81,6 +83,10 @@ final class CheckableMenuItem extends ContextMenuItem<void> {
                       color: foregroundColor,
                     ),
                   ),
+                  if (leading != null) ...[
+                    SizedBox.square(dimension: 24.0, child: leading),
+                    const SizedBox(width: 4.0),
+                  ],
                   const SizedBox(width: 4.0),
                   Expanded(
                     child: Text(

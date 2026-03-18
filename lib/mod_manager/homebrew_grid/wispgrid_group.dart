@@ -439,6 +439,7 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
             const MenuDivider(),
             ...categoryEntries,
           ],
+
           if (additionalMenuEntries.isNotEmpty) ...[
             const MenuDivider(),
             ...additionalMenuEntries,

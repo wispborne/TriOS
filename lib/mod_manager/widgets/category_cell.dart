@@ -66,12 +66,14 @@ class _CategoryCellState extends ConsumerState<CategoryCell> {
               }
             : null,
         child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 32),
           color: Colors.transparent, // For hit testing
-          child: Opacity(
-            opacity: WispGrid.lightTextOpacity,
-            child: primaryCategory == null
-                ? const SizedBox.shrink()
-                : Row(
+          child: primaryCategory == null
+              ? null
+              : Opacity(
+                  opacity: WispGrid.lightTextOpacity,
+                  child: Row(
                     spacing: 8,
                     children: [
                       if (primaryCategory.color != null)
@@ -83,18 +85,18 @@ class _CategoryCellState extends ConsumerState<CategoryCell> {
                         //     shape: BoxShape.circle,
                         //   ),
                         // ),
-                      Expanded(
-                        child: Text(
-                          primaryCategory.name +
-                              (extraCount > 0 ? ' +$extraCount' : ''),
-                          style: theme.textTheme.labelLarge,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                        Expanded(
+                          child: Text(
+                            primaryCategory.name +
+                                (extraCount > 0 ? ' +$extraCount' : ''),
+                            style: theme.textTheme.labelLarge,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         ),
-                      ),
                     ],
                   ),
-          ),
+                ),
         ),
       ),
     );

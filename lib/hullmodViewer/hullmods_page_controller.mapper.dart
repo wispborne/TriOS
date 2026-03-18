@@ -85,17 +85,26 @@ class HullmodsPageStatePersistedMapper
     opt: true,
     def: false,
   );
+  static bool _$useContainFit(HullmodsPageStatePersisted v) => v.useContainFit;
+  static const Field<HullmodsPageStatePersisted, bool> _f$useContainFit = Field(
+    'useContainFit',
+    _$useContainFit,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<HullmodsPageStatePersisted> fields = const {
     #showEnabled: _f$showEnabled,
     #splitPane: _f$splitPane,
+    #useContainFit: _f$useContainFit,
   };
 
   static HullmodsPageStatePersisted _instantiate(DecodingData data) {
     return HullmodsPageStatePersisted(
       showEnabled: data.dec(_f$showEnabled),
       splitPane: data.dec(_f$splitPane),
+      useContainFit: data.dec(_f$useContainFit),
     );
   }
 
@@ -173,7 +182,7 @@ abstract class HullmodsPageStatePersistedCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? showEnabled, bool? splitPane});
+  $R call({bool? showEnabled, bool? splitPane, bool? useContainFit});
   HullmodsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -193,10 +202,11 @@ class _HullmodsPageStatePersistedCopyWithImpl<$R, $Out>
   late final ClassMapperBase<HullmodsPageStatePersisted> $mapper =
       HullmodsPageStatePersistedMapper.ensureInitialized();
   @override
-  $R call({bool? showEnabled, bool? splitPane}) => $apply(
+  $R call({bool? showEnabled, bool? splitPane, bool? useContainFit}) => $apply(
     FieldCopyWithData({
       if (showEnabled != null) #showEnabled: showEnabled,
       if (splitPane != null) #splitPane: splitPane,
+      if (useContainFit != null) #useContainFit: useContainFit,
     }),
   );
   @override
@@ -204,6 +214,7 @@ class _HullmodsPageStatePersistedCopyWithImpl<$R, $Out>
       HullmodsPageStatePersisted(
         showEnabled: data.get(#showEnabled, or: $value.showEnabled),
         splitPane: data.get(#splitPane, or: $value.splitPane),
+        useContainFit: data.get(#useContainFit, or: $value.useContainFit),
       );
 
   @override

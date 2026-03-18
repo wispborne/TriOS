@@ -1,16 +1,13 @@
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -105,16 +102,17 @@ class _ModVersionSelectionDropdownState
                 .getGameCompatibilityColor();
     }
 
+    const textStyle = TextStyle(
+      fontWeight: FontWeight.w900,
+      fontFamily: "Orbitron",
+    );
     final buttonStyle = ElevatedButton.styleFrom(
       foregroundColor: textColor,
       disabledForegroundColor: textColor,
       backgroundColor: buttonColor,
       disabledBackgroundColor: buttonColor,
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
-      textStyle: const TextStyle(
-        fontWeight: FontWeight.w900,
-        fontFamily: "Orbitron",
-      ),
+      textStyle: textStyle,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
         side: BorderSide(
@@ -222,6 +220,12 @@ class _ModVersionSelectionDropdownState
         ? highestVersionVariant
         : null;
 
+    final subButtonBgColor = getColorForCurrentState(
+      buttonStyle.backgroundColor!,
+      {WidgetState.selected},
+    )!.lighter(8);
+    final subButtonBorderColor = buttonColor.darker(6);
+
     return MovingTooltipWidget.text(
       message:
           errorTooltip ??
@@ -233,45 +237,96 @@ class _ModVersionSelectionDropdownState
           : TooltipWarningLevel.none,
       child: Disable(
         isEnabled: isButtonEnabled,
-        child: DropdownButton2<ModVariant?>(
-          items: items,
-          valueListenable: ValueNotifier(enabledVariant),
-          openWithLongPress: false,
-          alignment: Alignment.centerLeft,
-          hint: buildDropdownButton(
-            dropdownWidth,
-            buttonStyle,
-            useWarningUi,
-            warningIcon,
-            null,
-            textColor,
-            variantThatCanBeUpgradedTo,
+        child: SizedBox(
+          width: dropdownWidth,
+          height: buttonHeight,
+          child: Material(
+            color: buttonColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+              side: BorderSide(color: borderColor, width: 2.0),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: DefaultTextStyle.merge(
+              style: TextStyle(
+                color: textColor,
+                fontStyle: textStyle.fontStyle,
+                fontWeight: textStyle.fontWeight,
+                fontFamily: textStyle.fontFamily,
+                fontSize: 14,
+              ),
+              child: Row(
+                children: [
+                  // Main tap area — enable/disable
+                  Expanded(
+                    child: MovingTooltipWidget.text(
+                      message: isEnabled
+                          ? "Click to disable"
+                          : null,
+                      child: InkWell(
+                        onTap: () async {
+                          if (!mounted) return;
+                          try {
+                            isEnabled
+                                ? await switchToVariant(null)
+                                : await switchToVariant(
+                                    widget.mod.findHighestVersion,
+                                  );
+                          } catch (e, st) {
+                            Fimber.e(
+                              "Error changing active mod variant: $e\n$st",
+                            );
+                          }
+                        },
+                        child: Row(
+                          children: [
+                            SizedBox(width: 32),
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  if (useWarningUi)
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 4),
+                                        child: warningIcon,
+                                      ),
+                                    ),
+                                  Center(
+                                    child: Text(
+                                      isEnabled
+                                          ? enabledVariant!.modInfo.version.toString()
+                                          : "Enable",
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Sub-button on right side
+                  if (variantThatCanBeUpgradedTo != null)
+                    _buildUpgradeSubButton(
+                      variantThatCanBeUpgradedTo,
+                      subButtonBgColor,
+                      subButtonBorderColor,
+                      textColor,
+                    )
+                  else
+                    _buildDropdownSubButton(
+                      items: items,
+                      enabledVariant: enabledVariant,
+                      textColor: textColor,
+                      bgColor: subButtonBgColor,
+                      borderColor: subButtonBorderColor,
+                    ),
+                ],
+              ),
+            ),
           ),
-          iconStyleData: const IconStyleData(iconSize: 0),
-          // Removes ugly grey line below text
-          underline: Container(),
-          buttonStyleData: ButtonStyleData(
-            height: buttonHeight,
-            width: dropdownWidth,
-            overlayColor: WidgetStateColor.transparent,
-          ),
-          dropdownStyleData: DropdownStyleData(openInterval: Interval(0, 0.15)),
-          selectedItemBuilder: (BuildContext context) {
-            return items.map((item) {
-              return buildDropdownButton(
-                dropdownWidth,
-                buttonStyle,
-                useWarningUi,
-                warningIcon,
-                item,
-                textColor,
-                variantThatCanBeUpgradedTo,
-              );
-            }).toList();
-          },
-          onChanged: (ModVariant? variant) async {
-            await switchToVariant(variant);
-          },
         ),
       ),
     );
@@ -286,111 +341,67 @@ class _ModVersionSelectionDropdownState
         );
   }
 
-  Widget buildDropdownButton(
-    double dropdownWidth,
-    ButtonStyle buttonStyle,
-    bool useWarningUi,
-    Icon warningIcon,
-    DropdownItem<ModVariant?>? item,
-    Color textColor,
-    ModVariant? variantThatCanBeUpgradedTo,
-  ) {
-    return SizedBox(
-      width: dropdownWidth,
-      child: ElevatedButton(
-        onPressed: null,
-        style: variantThatCanBeUpgradedTo == null
-            ? buttonStyle
-            : buttonStyle.copyWith(
-                padding: WidgetStatePropertyAll(EdgeInsets.zero),
-              ),
-        child: Stack(
-          children: [
-            (useWarningUi
-                ? Align(alignment: Alignment.centerLeft, child: warningIcon)
-                : Container()),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: item?.value == null
-                        ? const Text("Enable")
-                        : item?.child,
-                  ),
-                ),
-                SizedBox(
-                  width: 16,
-                  child: Icon(
-                    Icons.arrow_drop_down,
-                    color: textColor,
-                    size: 24,
-                  ),
-                ),
-              ],
-            ),
-            if (variantThatCanBeUpgradedTo != null)
-              buildUpgradeButton(
-                variantThatCanBeUpgradedTo,
-                getColorForCurrentState(buttonStyle.backgroundColor!, {
-                  WidgetState.selected,
-                }),
-              ),
-          ],
+  /// Dropdown arrow sub-button that opens a version picker.
+  Widget _buildDropdownSubButton({
+    required List<DropdownItem<ModVariant?>> items,
+    required ModVariant? enabledVariant,
+    required Color textColor,
+    required Color bgColor,
+    required Color borderColor,
+  }) {
+    return MovingTooltipWidget.text(
+      message: "Select a different version",
+      child: Container(
+        width: 32,
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border(left: BorderSide(color: borderColor, width: 1)),
+        ),
+        child: DropdownButton2<ModVariant?>(
+          items: items,
+          valueListenable: ValueNotifier(enabledVariant),
+          customButton: Center(
+            child: Icon(Icons.arrow_drop_down, color: textColor, size: 24),
+          ),
+          iconStyleData: const IconStyleData(iconSize: 0),
+          underline: Container(),
+          dropdownStyleData: const DropdownStyleData(width: 120),
+          onChanged: (ModVariant? variant) async {
+            await switchToVariant(variant);
+          },
         ),
       ),
     );
   }
 
-  Widget buildUpgradeButton(
+  /// Upgrade sub-button that switches to the latest version.
+  Widget _buildUpgradeSubButton(
     ModVariant variantThatCanBeUpgradedTo,
-    Color? buttonBackgroundColor,
+    Color bgColor,
+    Color borderColor,
+    Color iconColor,
   ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Spacer(),
-        InkWell(
-          onTap: () => switchToVariant(variantThatCanBeUpgradedTo),
-          child: MovingTooltipWidget.text(
-            message:
-                "Click to use newer version ${variantThatCanBeUpgradedTo.bestVersion}",
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    width: 32,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: buttonBackgroundColor?.lighter(12),
-                        border: Border.all(
-                          color: buttonBackgroundColor!.darker(6),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(ThemeManager.cornerRadius),
-                          bottomRight: Radius.circular(
-                            ThemeManager.cornerRadius,
-                          ),
-                        ),
-                      ),
-                      child: SvgImageIcon(
-                        "assets/images/icon-swap-upgrade.svg",
-                        height: 16,
-                        width: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+    return MovingTooltipWidget.text(
+      message:
+          "Click to use newer version ${variantThatCanBeUpgradedTo.bestVersion}",
+      child: InkWell(
+        onTap: () => switchToVariant(variantThatCanBeUpgradedTo),
+        child: Container(
+          width: 32,
+          decoration: BoxDecoration(
+            color: bgColor,
+            border: Border(left: BorderSide(color: borderColor, width: 1)),
+          ),
+          child: Center(
+            child: SvgImageIcon(
+              "assets/images/icon-swap-upgrade.svg",
+              height: 16,
+              width: 16,
+              color: iconColor,
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 

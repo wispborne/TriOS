@@ -348,7 +348,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
               ),
             ),
           ),
-      groups: [ModShipGridGroup()],
+      groups: [UngroupedShipGridGroup(), ModShipGridGroup()],
     );
   }
 
@@ -470,6 +470,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         isSortable: false,
         itemCellBuilder: (item, _) => ShipImageCell(
           imagePath: _getPathForSpriteName(item, gameCoreDir).path,
+          fit: controllerState.useContainFit ? BoxFit.contain : BoxFit.scaleDown,
         ),
         csvValue: (ship) => _getPathForSpriteName(ship, gameCoreDir).path,
         defaultState: WispGridColumnState(position: position++, width: 50),
@@ -558,6 +559,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     required ThemeData theme,
     required ShipsPageState controllerState,
   }) {
+    final controller = ref.read(shipsPageControllerProvider.notifier);
     return PopupMenuButton(
       tooltip: "More actions",
       icon: const Icon(Icons.more_vert),
@@ -581,6 +583,17 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
               Icon(Icons.table_view, size: 18),
               SizedBox(width: 8),
               Text('Export to CSV'),
+            ],
+          ),
+        ),
+        CheckedPopupMenuItem(
+          checked: controllerState.useContainFit,
+          onTap: () => controller.toggleUseContainFit(),
+          child: const Row(
+            spacing: 8,
+            children: [
+              Icon(Icons.fit_screen, size: 18),
+              Text('Stretch icons to fit'),
             ],
           ),
         ),
@@ -881,8 +894,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 // Ship image loader with basic caching
 class ShipImageCell extends StatefulWidget {
   final String? imagePath;
+  final BoxFit fit;
 
-  const ShipImageCell({super.key, required this.imagePath});
+  const ShipImageCell({
+    super.key,
+    required this.imagePath,
+    this.fit = BoxFit.scaleDown,
+  });
 
   @override
   State<ShipImageCell> createState() => _ShipImageCellState();
@@ -933,11 +951,24 @@ class _ShipImageCellState extends State<ShipImageCell> {
           height: 40,
           cacheWidth: 40,
           cacheHeight: 40,
-          fit: BoxFit.contain,
+          fit: widget.fit,
         ),
       ),
     );
   }
+}
+
+class UngroupedShipGridGroup extends WispGridGroup<Ship> {
+  UngroupedShipGridGroup() : super('none', 'None');
+
+  @override
+  String getGroupName(Ship item) => 'All Ships';
+
+  @override
+  Comparable getGroupSortValue(Ship item) => 1;
+
+  @override
+  bool get isGroupVisible => false;
 }
 
 class ModShipGridGroup extends WispGridGroup<Ship> {

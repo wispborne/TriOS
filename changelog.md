@@ -7,13 +7,17 @@
   - Mod Group layouts: Line and Small Card.
     - Small Card is a shorter, more compact version of the previous mod group UI.
   - Mod color tagging: show a color next to a mod's name as a mnemonic.
+  - Hullmod Viewer.
   - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
+- Fixed
+  - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
 - Changed
   - Mods page: Groups have a more readable font.
   - VRAM Estimate on Mods page hides the exact VRAM estimates unless you hover over the VRAM column.
     - The new, smaller mod group UI made it look very messy with so many numbers visible.
   - Ships/Weapons Viewers: Moved some filters on the toolbar into the filter panel.
   - Mods page: Mod description tooltip now appears when hovering a mod name.
+  - Ships/Weapons Viewers: Images smaller than the display area won't be scaled up by default.
 
 # 1.3.4
 - Added

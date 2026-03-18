@@ -261,6 +261,7 @@ class _WispGridState<T extends WispGridItem>
               },
               shownIndex: index++,
               columns: widget.columns,
+              groups: widget.groups,
               gridState: gridState,
               updateGridState: widget.updateGridState,
             );
@@ -483,10 +484,7 @@ class _WispGridState<T extends WispGridItem>
               return Row(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: SizedBox(width: totalRowWidth, child: item),
                   ),
                   const Spacer(),
@@ -524,12 +522,7 @@ class _WispGridState<T extends WispGridItem>
                   ),
                 ),
               ),
-              widget.itemExtent == null
-                  ? SliverList(delegate: itemSliverDelegate)
-                  : SliverFixedExtentList(
-                      itemExtent: widget.itemExtent!,
-                      delegate: itemSliverDelegate,
-                    ),
+              _buildItemSliver(displayedMods, itemSliverDelegate),
               SliverPadding(
                 padding: EdgeInsets.only(bottom: widget.bottomPadding),
               ),
@@ -537,6 +530,38 @@ class _WispGridState<T extends WispGridItem>
           );
         },
       ),
+    );
+  }
+
+  Widget _buildItemSliver(
+    List<Widget> displayedMods,
+    SliverChildBuilderDelegate delegate,
+  ) {
+    if (widget.itemExtent == null) {
+      return SliverList(delegate: delegate);
+    }
+
+    final hasGroupHeaders = displayedMods.any((w) => w is WispGridGroupRowView);
+    if (!hasGroupHeaders) {
+      return SliverFixedExtentList(
+        itemExtent: widget.itemExtent!,
+        delegate: delegate,
+      );
+    }
+
+    final groupHeaderHeight = switch (
+      gridState.groupingSetting?.headerStyle ?? GroupHeaderStyle.small
+    ) {
+      GroupHeaderStyle.small => 28.0,
+      GroupHeaderStyle.medium => 32.0,
+      GroupHeaderStyle.large => 44.0,
+    };
+
+    return SliverVariedExtentList(
+      delegate: delegate,
+      itemExtentBuilder: (i, _) => displayedMods[i] is WispGridGroupRowView
+          ? groupHeaderHeight
+          : widget.itemExtent!,
     );
   }
 

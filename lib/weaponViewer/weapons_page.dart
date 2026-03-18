@@ -78,7 +78,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     final theme = Theme.of(context);
     final mods = ref.watch(AppState.mods);
 
-    final columns = buildCols(theme);
+    final columns = buildCols(theme, controllerState);
     final total = controllerState.allWeapons.length;
     final visible = controllerState.filteredWeapons.length;
 
@@ -667,7 +667,10 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     );
   }
 
-  List<WispGridColumn<Weapon>> buildCols(ThemeData theme) {
+  List<WispGridColumn<Weapon>> buildCols(
+    ThemeData theme,
+    WeaponsPageState controllerState,
+  ) {
     int position = 0;
 
     String wepValueToString(
@@ -755,8 +758,10 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         key: 'spritePaths',
         isSortable: false,
         name: '',
-        itemCellBuilder: (item, modifiers) =>
-            WeaponImageCell(imagePaths: spritesForWeapon(item)),
+        itemCellBuilder: (item, modifiers) => WeaponImageCell(
+          imagePaths: spritesForWeapon(item),
+          fit: controllerState.useContainFit ? BoxFit.contain : BoxFit.scaleDown,
+        ),
         csvValue: (weapon) => spritesForWeapon(weapon).join(","),
         defaultState: WispGridColumnState(position: position++, width: 40),
       ),
@@ -800,6 +805,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     required ThemeData theme,
     required WeaponsPageState controllerState,
   }) {
+    final controller = ref.read(weaponsPageControllerProvider.notifier);
     return PopupMenuButton(
       tooltip: "More actions",
       icon: const Icon(Icons.more_vert),
@@ -824,6 +830,17 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             dense: true,
             leading: Icon(Icons.table_view),
             title: Text("Export to CSV"),
+          ),
+        ),
+        CheckedPopupMenuItem(
+          checked: controllerState.useContainFit,
+          onTap: () => controller.toggleUseContainFit(),
+          child: const Row(
+            spacing: 8,
+            children: [
+              Icon(Icons.fit_screen, size: 18),
+              Text('Stretch icons to fit'),
+            ],
           ),
         ),
       ],
@@ -854,8 +871,13 @@ Future<String?> _getWeaponImagePath(List<String> imagePaths) async {
 // Custom widget for asynchronously checking file existence and displaying the image
 class WeaponImageCell extends StatefulWidget {
   final List<String> imagePaths;
+  final BoxFit fit;
 
-  const WeaponImageCell({super.key, required this.imagePaths});
+  const WeaponImageCell({
+    super.key,
+    required this.imagePaths,
+    this.fit = BoxFit.scaleDown,
+  });
 
   @override
   State<WeaponImageCell> createState() => _WeaponImageCellState();
@@ -900,7 +922,7 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
             File(_existingImagePath!),
             width: 40,
             height: 40,
-            fit: BoxFit.contain,
+            fit: widget.fit,
           ),
         ),
       );

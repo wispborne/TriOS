@@ -1,3 +1,5 @@
+import 'package:trios/utils/logging.dart';
+
 import 'chatbot_models.dart';
 
 /// Base class for all chatbot intents.
@@ -49,16 +51,35 @@ class ChatbotEngine {
 
     ChatIntent? bestIntent;
     double bestScore = -1;
+    final scores = <String, double>{};
 
     for (final intent in _intents) {
       final score = intent.match(normalized, context);
+      scores[intent.id] = score;
       if (score > bestScore) {
         bestScore = score;
         bestIntent = intent;
       }
     }
 
+    // Log all non-zero scores for debugging.
+    final nonZero = scores.entries.where((e) => e.value > 0).toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    if (nonZero.isNotEmpty) {
+      final scoreList = nonZero
+          .map((e) => '${e.key}: ${e.value.toStringAsFixed(2)}')
+          .join(', ');
+      Fimber.d(
+        '[Chatbot] Input: "$normalized" | '
+        'Scores: $scoreList | '
+        'Winner: ${bestIntent?.id ?? "none"} (${bestScore.toStringAsFixed(2)})',
+      );
+    }
+
     if (bestIntent == null || bestScore < matchThreshold) {
+      Fimber.d(
+        '[Chatbot]  Input: "$normalized" | No intent matched above threshold ($matchThreshold), using fallback.',
+      );
       // Find fallback (lowest-priority intent that always matches).
       final fallback = _intents.where((i) => i.id == 'fallback').firstOrNull;
       if (fallback != null) {

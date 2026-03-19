@@ -6,7 +6,6 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
-import 'package:trios/thirdparty/dartx/comparable.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -212,112 +211,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 SettingsGroup(
                   name: "Interface",
                   children: [
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message:
-                              "Change up the colors."
-                              "\nNote: only the default theme (StarsectorTriOSTheme) is regularly tested.",
-                          child: DropdownMenu(
-                            requestFocusOnTap: false,
-                            dropdownMenuEntries:
-                                (ref
-                                            .watch(AppState.themeData)
-                                            .value
-                                            ?.availableThemes
-                                            .entries ??
-                                        [])
-                                    .map(
-                                      (theme) => (
-                                        theme.key,
-                                        theme,
-                                        ref
-                                            .read(AppState.themeData.notifier)
-                                            .convertToThemeData(theme.value),
-                                      ),
-                                    )
-                                    .map((obj) {
-                                      var (key, triosTheme, themeData) = obj;
-                                      return DropdownMenuEntry(
-                                        value: triosTheme.value,
-                                        style: ButtonStyle(
-                                          backgroundColor:
-                                              WidgetStateProperty.all(
-                                                themeData
-                                                    .scaffoldBackgroundColor,
-                                              ),
-                                        ),
-                                        labelWidget: Row(
-                                          children: [
-                                            SizedBox(
-                                              width: 40,
-                                              height: 20,
-                                              child: Container(
-                                                color: themeData
-                                                    .colorScheme
-                                                    .primary,
-                                                child: const SizedBox.shrink(),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: Container(
-                                                color: themeData
-                                                    .colorScheme
-                                                    .secondary,
-                                                child: const SizedBox.shrink(),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Text(
-                                              triosTheme.key,
-                                              style: theme.textTheme.bodyLarge
-                                                  ?.copyWith(
-                                                    color: themeData
-                                                        .colorScheme
-                                                        .onSurface,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                        label: triosTheme.key,
-                                      );
-                                    })
-                                    .distinctBy((e) => e.value)
-                                    .toList(),
-                            onSelected: (TriOSTheme? theme) => ref
-                                .read(AppState.themeData.notifier)
-                                .switchThemes(theme!),
-                            initialSelection: ref
-                                .watch(AppState.themeData.notifier)
-                                .currentTheme,
-                            // borderRadius: BorderRadius.all(
-                            //     Radius.circular(ThemeManager.cornerRadius)),
-                            // padding: const EdgeInsets.symmetric(horizontal: 0),
-                          ),
-                        ),
-                        MovingTooltipWidget.text(
-                          message: "I'm feeling lucky",
-                          child: IconButton(
-                            onPressed: () => ref
-                                .read(AppState.themeData.notifier)
-                                .switchThemes(
-                                  ref
-                                      .read(AppState.themeData.notifier)
-                                      .allThemes
-                                      .values
-                                      .random(),
-                                ),
-                            icon: SvgImageIcon(
-                              "assets/images/icon-dice.svg",
-                              color: theme.colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const _ThemeDropdownRow(),
                     const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
@@ -1267,6 +1161,126 @@ class CheckForUpdatesButton extends StatelessWidget {
         });
       },
       child: const Text('Check for update'),
+    );
+  }
+}
+
+class _ThemeDropdownRow extends ConsumerStatefulWidget {
+  const _ThemeDropdownRow();
+
+  @override
+  ConsumerState<_ThemeDropdownRow> createState() => _ThemeDropdownRowState();
+}
+
+class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
+  TriOSTheme? _cachedInitialSelection;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final themeState = ref.watch(AppState.themeData).value;
+    final availableThemes = themeState?.availableThemes.entries ?? [];
+
+    final entries = availableThemes
+        .map((entry) {
+          final themeData = ref
+              .read(AppState.themeData.notifier)
+              .convertToThemeData(entry.value);
+          return DropdownMenuEntry(
+            value: entry.value,
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.all(
+                themeData.scaffoldBackgroundColor,
+              ),
+            ),
+            labelWidget: Row(
+              children: [
+                SizedBox(
+                  width: 40,
+                  height: 20,
+                  child: Container(
+                    color: themeData.colorScheme.primary,
+                    child: const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Container(
+                    color: themeData.colorScheme.secondary,
+                    child: const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  entry.key,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: themeData.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            label: entry.key,
+          );
+        })
+        .distinctBy((e) => e.value)
+        .toList();
+
+    _cachedInitialSelection ??= ref
+        .read(AppState.themeData.notifier)
+        .currentTheme;
+
+    return Row(
+      children: [
+        MovingTooltipWidget.text(
+          message:
+              "Change up the colors."
+              "\nNote: only the default theme (StarsectorTriOSTheme) is regularly tested.",
+          child: DropdownMenu(
+            requestFocusOnTap: false,
+            dropdownMenuEntries: entries,
+            onSelected: (TriOSTheme? theme) =>
+                ref.read(AppState.themeData.notifier).switchThemes(theme!),
+            initialSelection: _cachedInitialSelection,
+          ),
+        ),
+        MovingTooltipWidget.text(
+          message: "I'm feeling lucky",
+          child: IconButton(
+            onPressed: () async {
+              await ref
+                  .read(AppState.themeData.notifier)
+                  .switchThemes(
+                    ref
+                        .read(AppState.themeData.notifier)
+                        .allThemes
+                        .values
+                        .random(),
+                  );
+              setState(() {
+                _cachedInitialSelection = null;
+              });
+            },
+            icon: SvgImageIcon(
+              "assets/images/icon-dice.svg",
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+        MovingTooltipWidget.text(
+          message: "Reload themes from themes.json",
+          child: IconButton(
+            onPressed: () {
+              ref.invalidate(AppState.themeData);
+              setState(() {
+                _cachedInitialSelection = null;
+              });
+            },
+            icon: Icon(Icons.refresh, color: theme.colorScheme.onSurface),
+          ),
+        ),
+      ],
     );
   }
 }

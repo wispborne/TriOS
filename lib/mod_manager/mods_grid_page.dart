@@ -464,8 +464,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       itemCellBuilder: (mod, modifiers) => Builder(
                         builder: (context) {
                           final theme = Theme.of(context);
-                          final lightTextColor = theme.colorScheme.onSurface
-                              .withValues(alpha: WispGrid.lightTextOpacity);
+                          final lightTextColor = theme
+                              .textTheme
+                              .labelLarge
+                              ?.color
+                              ?.withValues(alpha: WispGrid.lightTextOpacity);
                           final bestVersion =
                               mod.findFirstEnabledOrHighestVersion!;
                           return TextTriOS(
@@ -1646,10 +1649,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
-        final lightTextColor = theme.colorScheme.onSurface.withOpacity(
-          lightTextOpacity,
+        final lightTextColor = theme.textTheme.labelLarge?.color?.withValues(
+          alpha: WispGrid.lightTextOpacity,
         );
-        final disabledVersionTextColor = lightTextColor.withOpacity(0.5);
+        final disabledVersionTextColor = lightTextColor?.withOpacity(0.5);
         final enabledVersion = mod.findFirstEnabled;
 
         return mod.modVariants.isEmpty

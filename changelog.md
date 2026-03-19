@@ -11,7 +11,11 @@
   - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
 - Fixed
   - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
+  - Scroll position on theme selector menu would reset.
+  - Light themes now suck slightly less and cleaned up a couple more themes.
 - Changed
+  - Mods page: Clicking the version button now immediately enables/disables a mod, rather than opening a mod version menu.
+    - New sub-button will open the version menu instead.
   - Mods page: Groups have a more readable font.
   - VRAM Estimate on Mods page hides the exact VRAM estimates unless you hover over the VRAM column.
     - The new, smaller mod group UI made it look very messy with so many numbers visible.

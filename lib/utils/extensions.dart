@@ -1114,7 +1114,7 @@ extension ObjectExt<T> on T {
   }
 }
 
-extension HexColor on Color {
+extension HexColorExt on Color {
   /// String is in the format "aabbcc" or "ffaabbcc" with an optional leading "#".
   static Color fromHex(String hexString) {
     final buffer = StringBuffer();

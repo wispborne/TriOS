@@ -979,6 +979,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             //   ),
                             const SizedBox(width: 8),
                             // Only show center search box when not in replace mode
+                            const Spacer(),
                             if (!inReplaceMode)
                               ExpandingConstrainedAlignedWidget(
                                 minWidth: 200,
@@ -987,7 +988,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 child: buildSearchBox(),
                               ),
                             const SizedBox(width: 8),
-                            const Spacer(),
                             _buildPortraitSizeControl(theme),
                             OverflowMenuButton(
                               menuItems: [

@@ -79,7 +79,7 @@ class _ModVersionSelectionDropdownState
     final buttonColor = switch ((useWarningUi, isEnabled)) {
       (true, _) => errorColor,
       (false, true) => theme.colorScheme.secondary,
-      _ => theme.colorScheme.surface,
+      _ => theme.colorScheme.surfaceContainerLow,
     };
 
     final textColor = switch ((useWarningUi, isEnabled)) {

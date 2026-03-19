@@ -380,7 +380,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                       const SizedBox(width: 4),
                       MovingTooltipWidget.text(
-                        message: "Weapon Viewer\n\nWarning: spoilers!",
+                        message: "Weapon Viewer",
                         child: IconButton(
                           icon: SvgImageIcon("assets/images/icon-target.svg"),
                           selectedIcon: SvgImageIcon(
@@ -411,7 +411,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                       MovingTooltipWidget.text(
                         message:
-                            "Hullmod Viewer\n\nWarning: spoilers!",
+                            "Hullmod Viewer",
                         child: IconButton(
                           icon: SvgImageIcon(
                             "assets/images/icon-hullmod.svg",
@@ -430,7 +430,7 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                       MovingTooltipWidget.text(
                         message:
-                            "Portrait Viewer & Replacer\n\nWarning: spoilers!",
+                            "Portrait Viewer & Replacer",
                         child: IconButton(
                           icon: SvgImageIcon(
                             "assets/images/icon-account-box-outline.svg",

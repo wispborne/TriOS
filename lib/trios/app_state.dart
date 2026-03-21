@@ -22,6 +22,7 @@ import 'package:trios/portraits/portraits_manager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/tips/tips_notifier.dart';
+import 'package:trios/trios/navigation_request.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
@@ -46,6 +47,13 @@ class AppState {
         SelfUpdater.new,
       );
   static final appContext = StateProvider<BuildContext?>((ref) => null);
+
+  /// Set this to programmatically navigate to a page, optionally highlighting a widget.
+  static final navigationRequest =
+      StateProvider<NavigationRequest?>((ref) => null);
+
+  /// The highlight key of the widget to highlight on the current page.
+  static final activeHighlightKey = StateProvider<String?>((ref) => null);
 
   /// Master list of all mod variants found in the mods folder.
   static final modVariants =

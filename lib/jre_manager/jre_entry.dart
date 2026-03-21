@@ -309,6 +309,22 @@ class Jre24InstalledJreEntry extends MikohimeCustomJreEntry {
       silent ? "Miko_Silent.bat" : "Miko_Rouge.bat";
 }
 
+class Jre26InstalledJreEntry extends MikohimeCustomJreEntry {
+  Jre26InstalledJreEntry(
+      super.gamePath,
+      super.gameCorePath,
+      super.jreRelativePath,
+      super.version,
+      );
+
+  @override
+  String get vmParamsFileRelativePath => "Miko_Simple.txt";
+
+  @override
+  String launchFileName(bool silent) =>
+      silent ? "Miko_Silent.bat" : "Miko_Rouge.bat";
+}
+
 class FastRenderingInstalledJreEntry extends CustomInstalledJreEntry {
   FastRenderingInstalledJreEntry(
     super.gamePath,

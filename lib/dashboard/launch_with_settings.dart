@@ -9,6 +9,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_link_button.dart';
 
@@ -17,6 +18,8 @@ import '../models/launch_settings.dart';
 import '../themes/theme_manager.dart';
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
+import '../trios/navigation.dart';
+import '../trios/navigation_request.dart';
 import '../utils/util.dart';
 import '../widgets/checkbox_with_label.dart';
 
@@ -207,35 +210,66 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                 ),
                               ),
                         const SizedBox(height: 8),
-                        Tooltip(
-                          message:
-                              "${Constants.appName} is not required to launch the game.",
-                          child: Builder(
-                            builder: (context) {
-                              final path = ref
-                                  .watch(AppState.gameExecutable)
-                                  .value
-                                  ?.absolute
-                                  .path
-                                  .let((p) {
-                                    return currentPlatform !=
-                                            TargetPlatform.macOS
-                                        ? p.let(
-                                            (p) => p.toFile().relativePath(
-                                              ref
-                                                  .watch(AppState.gameFolder)
-                                                  .value!,
-                                            ),
-                                          )
-                                        : File(p).nameWithExtension;
-                                  });
+                        Row(
+                          spacing: 4,
+                          children: [
+                            MovingTooltipWidget.text(
+                              message:
+                                  "${Constants.appName} is not required to launch the game.",
+                              child: Builder(
+                                builder: (context) {
+                                  final path = ref
+                                      .watch(AppState.gameExecutable)
+                                      .value
+                                      ?.absolute
+                                      .path
+                                      .let((p) {
+                                        return currentPlatform !=
+                                                TargetPlatform.macOS
+                                            ? p.let(
+                                                (p) => p.toFile().relativePath(
+                                                  ref
+                                                      .watch(
+                                                        AppState.gameFolder,
+                                                      )
+                                                      .value!,
+                                                ),
+                                              )
+                                            : File(p).nameWithExtension;
+                                      });
 
-                              return Text(
-                                path ?? "No game exe",
-                                style: Theme.of(context).textTheme.labelMedium,
-                              );
-                            },
-                          ),
+                                  return Text(
+                                    path ?? "No game exe",
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.labelMedium,
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(
+                              height: 16,
+                              width: 24,
+                              child: MovingTooltipWidget.text(
+                                message: "Change which file launches the game",
+                                child: IconButton(
+                                  onPressed: () {
+                                    ref
+                                        .read(
+                                          AppState.navigationRequest.notifier,
+                                        )
+                                        .state = NavigationRequest(
+                                      destination: TriOSTools.settings,
+                                      highlightKey:
+                                          "settings.starsectorLauncher",
+                                    );
+                                  },
+                                  icon: Icon(Icons.edit, size: 16),
+                                  padding: .zero,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         Text(
                           ref.watch(AppState.starsectorVersion).value ??

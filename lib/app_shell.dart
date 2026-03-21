@@ -20,6 +20,7 @@ import 'package:trios/shipViewer/ships_page.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/navigation.dart';
+import 'package:trios/trios/navigation_request.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings_page.dart';
@@ -210,6 +211,22 @@ class _AppShellState extends ConsumerState<AppShell>
     ref.listen(appSettings.select((s) => s.windowScaleFactor), (_, newValue) {
       ScaledWidgetsFlutterBinding.instance.scaleFactor = (_) => newValue;
       Fimber.i("Scale factor changed to $newValue");
+    });
+
+    ref.listen<NavigationRequest?>(AppState.navigationRequest, (
+      previous,
+      next,
+    ) {
+      if (next != null) {
+        _changeTab(next.destination);
+        ref.read(AppState.navigationRequest.notifier).state = null;
+        if (next.highlightKey != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(AppState.activeHighlightKey.notifier).state =
+                next.highlightKey;
+          });
+        }
+      }
     });
 
     final savedScaleFactor = ref.read(appSettings).windowScaleFactor;

@@ -17,6 +17,7 @@ import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/game_paths_widget/game_paths_widget.dart';
+import 'package:trios/widgets/highlightable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/settings_group.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -83,7 +84,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 SettingsGroup(
                   name: "Starsector",
-                  children: [GamePathsWidget()],
+                  children: [
+                    Highlightable(
+                      highlightKey: "settings.starsectorLauncher",
+                      child: GamePathsWidget(),
+                    ),
+                  ],
                 ),
                 SettingsGroup(
                   name: "${Constants.appName} Updates",

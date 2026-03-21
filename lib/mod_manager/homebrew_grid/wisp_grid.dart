@@ -9,6 +9,7 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group_row.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_header_row_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_row_view.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
@@ -53,6 +54,9 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   /// Controls which scrollbars are visible in the grid
   final ScrollbarConfig scrollbarConfig;
 
+  /// Per-column additional context menu entries for column headers, keyed by column key.
+  final Map<String, List<ContextMenuEntry>> perColumnContextMenuEntries;
+
   const WispGrid({
     super.key,
     required this.items,
@@ -71,6 +75,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     this.topPadding = 0,
     this.bottomPadding = 8,
     this.scrollbarConfig = const ScrollbarConfig(),
+    this.perColumnContextMenuEntries = const {},
   });
 
   static Widget defaultRowBuilder({
@@ -518,6 +523,8 @@ class _WispGridState<T extends WispGridItem>
                       updateGridState: widget.updateGridState,
                       columns: columns,
                       defaultGridSort: widget.defaultSortField,
+                      perColumnContextMenuEntries:
+                          widget.perColumnContextMenuEntries,
                     ),
                   ),
                 ),
@@ -807,16 +814,13 @@ class _DragTargetGroupHeader<T extends WispGridItem>
         final isHovered = candidateData.isNotEmpty;
         if (!isHovered) return child;
 
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primary,
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(8),
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.1),
+        final brightness = Theme.of(context).brightness;
+        return ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            brightness == Brightness.dark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.08),
+            BlendMode.srcATop,
           ),
           child: child,
         );

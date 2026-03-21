@@ -5,6 +5,7 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/mod_context_menu.dart';
 import 'package:trios/mod_manager/widgets/category_icon_picker_dialog.dart';
+import 'package:trios/mod_manager/widgets/category_management_popup.dart';
 import 'package:trios/mod_tag_manager/category.dart';
 import 'package:trios/mod_tag_manager/category_auto_color.dart';
 import 'package:trios/mod_tag_manager/category_icon_palette.dart';
@@ -216,22 +217,7 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
         ? null
         : _getCategoryForGroup(targetGroupItems);
 
-    for (final modId in droppedItemKeys) {
-      if (targetCategory == null) {
-        // Dropping into "Uncategorized" — remove all assignments.
-        notifier.removeAllCategoriesFromMod(modId);
-      } else {
-        final assignments = store.modAssignments[modId] ?? [];
-        final alreadyAssigned = assignments.any(
-          (a) => a.categoryId == targetCategory.id,
-        );
-        if (alreadyAssigned) {
-          notifier.setPrimaryCategory(modId, targetCategory.id);
-        } else {
-          notifier.addCategoryToMod(modId, targetCategory.id, isPrimary: true);
-        }
-      }
-    }
+    notifier.moveModsToCategory(droppedItemKeys, targetCategory?.id);
   }
 
   @override
@@ -412,6 +398,14 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
                 ),
               ),
         ],
+      ),
+      const MenuDivider(),
+      MenuItem(
+        label: 'Manage Categories...',
+        icon: Icons.settings,
+        onSelected: () {
+          showCategoryManagementPopup(context: context, ref: ref);
+        },
       ),
     ];
   }

@@ -20,6 +20,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_summary_panel.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/mod_manager/widgets/category_cell.dart';
+import 'package:trios/mod_manager/widgets/category_management_popup.dart';
 import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -216,6 +217,20 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         selectedMod = mod;
                       }
                     });
+                  },
+                  perColumnContextMenuEntries: {
+                    ModGridHeader.categories.name: [
+                      MenuItem(
+                        label: 'Manage Categories...',
+                        icon: Icons.settings,
+                        onSelected: () {
+                          showCategoryManagementPopup(
+                            context: context,
+                            ref: ref,
+                          );
+                        },
+                      ),
+                    ],
                   },
                   scrollbarConfig: ScrollbarConfig(),
                   selectedItem: selectedMod,
@@ -1142,6 +1157,17 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               dense: true,
               leading: Icon(Icons.table_view),
               title: Text("Export to CSV"),
+            ),
+          ),
+          PopupMenuDivider(),
+          PopupMenuItem(
+            onTap: () {
+              showCategoryManagementPopup(context: context, ref: ref);
+            },
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.settings),
+              title: Text("Manage Categories..."),
             ),
           ),
         ],

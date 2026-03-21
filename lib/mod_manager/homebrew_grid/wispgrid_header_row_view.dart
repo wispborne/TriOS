@@ -35,6 +35,8 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
   final String? defaultGridSort;
+  /// Per-column additional context menu entries, keyed by column key.
+  final Map<String, List<ContextMenuEntry>> perColumnContextMenuEntries;
 
   const WispGridHeaderRowView({
     super.key,
@@ -43,6 +45,7 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
     required this.columns,
     required this.groups,
     this.defaultGridSort,
+    this.perColumnContextMenuEntries = const {},
   });
 
   @override
@@ -192,7 +195,10 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                         .bodySmall
                         ?.copyWith(fontWeight: FontWeight.bold);
 
-                    return DraggableHeader(
+                    final columnEntries =
+                        widget.perColumnContextMenuEntries[column.key];
+
+                    Widget header = DraggableHeader(
                       columns: columns,
                       showDragHandle: isHovering,
                       header: columnSetting.key,
@@ -203,6 +209,21 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                         child: child,
                       ),
                     );
+
+                    if (columnEntries != null && columnEntries.isNotEmpty) {
+                      header = ContextMenuRegion(
+                        contextMenu: ContextMenu(
+                          entries: [
+                            ...buildHeaderContextMenu(gridState).entries,
+                            const MenuDivider(),
+                            ...columnEntries,
+                          ],
+                        ),
+                        child: header,
+                      );
+                    }
+
+                    return header;
                   },
                 ),
               ),

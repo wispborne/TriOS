@@ -76,8 +76,9 @@ class CategoryManagerNotifier
         reconciled.add(stored);
       } else if (defaultIds.contains(stored.id)) {
         // Unmodified default still in code — replace with code version.
-        final codeVersion =
-            defaultCategories.firstWhere((d) => d.id == stored.id);
+        final codeVersion = defaultCategories.firstWhere(
+          (d) => d.id == stored.id,
+        );
         if (stored != codeVersion) changed = true;
         reconciled.add(codeVersion);
       } else {
@@ -219,6 +220,51 @@ class CategoryManagerNotifier
     });
   }
 
+  /// Move multiple mods to a category in a single state update.
+  /// If [categoryId] is null, removes all category assignments (uncategorized).
+  void moveModsToCategory(List<String> modIds, String? categoryId) {
+    updateState((current) {
+      final newAssignments = Map<String, List<ModCategoryAssignment>>.from(
+        current.modAssignments,
+      );
+
+      for (final modId in modIds) {
+        if (categoryId == null) {
+          newAssignments.remove(modId);
+        } else {
+          final assignments = List<ModCategoryAssignment>.from(
+            newAssignments[modId] ?? [],
+          );
+          final alreadyAssigned = assignments.any(
+            (a) => a.categoryId == categoryId,
+          );
+
+          if (alreadyAssigned) {
+            // Set as primary.
+            for (var i = 0; i < assignments.length; i++) {
+              assignments[i] = assignments[i].copyWith(
+                isPrimary: assignments[i].categoryId == categoryId,
+              );
+            }
+          } else {
+            // Demote existing primary and add new assignment as primary.
+            for (var i = 0; i < assignments.length; i++) {
+              if (assignments[i].isPrimary) {
+                assignments[i] = assignments[i].copyWith(isPrimary: false);
+              }
+            }
+            assignments.add(
+              ModCategoryAssignment(categoryId: categoryId, isPrimary: true),
+            );
+          }
+          newAssignments[modId] = assignments;
+        }
+      }
+
+      return current.copyWith(modAssignments: newAssignments);
+    });
+  }
+
   /// Set which category is primary for a mod.
   void setPrimaryCategory(String modId, String categoryId) {
     updateState((current) {
@@ -284,6 +330,21 @@ class CategoryManagerNotifier
           color: clearColor ? null : (color ?? c.color),
           icon: clearIcon ? null : (icon ?? c.icon),
           sortOrder: sortOrder ?? c.sortOrder,
+          isUserModified: !c.isUserCreated ? true : c.isUserModified,
+        );
+      }).toList();
+      return current.copyWith(categories: categories);
+    });
+  }
+
+  /// Reorder categories by applying new sort orders in a single state update.
+  void reorderCategories(List<String> orderedCategoryIds) {
+    updateState((current) {
+      final categories = current.categories.map((c) {
+        final newIndex = orderedCategoryIds.indexOf(c.id);
+        if (newIndex == -1) return c;
+        return c.copyWith(
+          sortOrder: newIndex,
           isUserModified: !c.isUserCreated ? true : c.isUserModified,
         );
       }).toList();

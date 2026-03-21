@@ -45,7 +45,7 @@ class _WispGridRowViewState<T extends WispGridItem>
     final height = _standardRowHeight;
 
     return HoverableWidget(
-      onTapDown: () => widget.onTapped(),
+      onTap: () => widget.onTapped(),
       child: Builder(
         builder: (context) {
           final isHovering = HoverData.of(context)?.isHovering ?? false;

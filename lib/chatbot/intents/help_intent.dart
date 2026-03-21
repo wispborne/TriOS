@@ -47,40 +47,23 @@ class HelpIntent extends ChatIntent {
     return const ChatResponse(text: _response);
   }
 
-  static const _response = "Here's what I can help with:\n"
+  static const _response =
+      "Hey! I'm the TriOS assistant. I can help you with a bunch of things "
+      "— just ask me naturally and I'll do my best to figure out what you need.\n"
       '\n'
-      'Mods\n'
-      '  "find mod <name>" — search for a mod\n'
-      '  "enabled mods" — list active mods\n'
-      '  "mod updates" — check for updates\n'
-      '  "mod compatibility" — find issues\n'
-      '  "mods by <author>" — filter by author\n'
-      '  "mod categories" — browse by category\n'
-      '  "mod tips" — show gameplay tips\n'
+      "Here are some of the things I know about:\n"
       '\n'
-      'Game Info\n'
-      '  "game version" — detected Starsector version\n'
-      '  "how many ships/weapons/hullmods" — content counts\n'
-      '  "portrait stats" — portrait breakdown\n'
+      '• **Mods** — finding mods, checking which are enabled, looking for '
+      'updates, compatibility issues, browsing by author or category, and tips\n'
+      '• **Game info** — your Starsector version, content counts (ships, '
+      'weapons, hullmods), and portrait stats\n'
+      '• **Configuration** — RAM and VRAM, JRE details, game folder paths, '
+      'your settings, and mod profiles\n'
+      '• **Log analysis** — summarizing your log file or pulling out errors\n'
+      '• **Troubleshooting** — common issues, fixes, and file permission problems\n'
+      '• **Other** — TriOS version, whether the game is running, and '
+      'navigating to different pages\n'
       '\n'
-      'Configuration\n'
-      '  "current ram" — RAM allocation\n'
-      '  "vram estimate" — VRAM usage\n'
-      '  "jre info" — Java runtime details\n'
-      '  "game folder" — folder paths\n'
-      '  "my settings" — current settings\n'
-      '  "list profiles" — mod profiles\n'
-      '\n'
-      'Log Analysis\n'
-      '  "log summary" — overview of your log file\n'
-      '  "log errors" — errors found in log\n'
-      '\n'
-      'Troubleshooting\n'
-      '  "troubleshooting" — common issues & fixes\n'
-      '  "permission issues" — file permission help\n'
-      '\n'
-      'Other\n'
-      '  "trios version" — app version\n'
-      '  "is game running" — game process status\n'
-      '  "navigate to <page>" — find a page';
+      "You don't need to use exact commands — just describe what you're "
+      "looking for and I'll take it from there!";
 }

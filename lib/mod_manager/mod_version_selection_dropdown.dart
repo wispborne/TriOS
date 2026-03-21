@@ -262,7 +262,9 @@ class _ModVersionSelectionDropdownState
                   // Main tap area — enable/disable
                   Expanded(
                     child: MovingTooltipWidget.text(
-                      message: isEnabled ? "Click to disable" : null,
+                      message: isEnabled && errorTooltip == null
+                          ? "Click to disable"
+                          : null,
                       child: InkWell(
                         onTap: () async {
                           if (!mounted) return;
@@ -280,27 +282,25 @@ class _ModVersionSelectionDropdownState
                         },
                         child: Row(
                           children: [
-                            SizedBox(width: 32),
-                            Expanded(
-                              child: Stack(
-                                children: [
-                                  if (useWarningUi)
-                                    Align(
-                                      alignment: Alignment.centerLeft,
+                            SizedBox(
+                              width: 32,
+                              child: useWarningUi
+                                  ? Center(
                                       child: Padding(
-                                        padding: const EdgeInsets.only(left: 4),
+                                        padding: const .only(left: 12),
                                         child: warningIcon,
                                       ),
-                                    ),
-                                  Center(
-                                    child: Text(
-                                      isEnabled
-                                          ? enabledVariant!.modInfo.version
-                                                .toString()
-                                          : "Enable",
-                                    ),
-                                  ),
-                                ],
+                                    )
+                                  : null,
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                  isEnabled
+                                      ? enabledVariant!.modInfo.version
+                                            .toString()
+                                      : "Enable",
+                                ),
                               ),
                             ),
                           ],

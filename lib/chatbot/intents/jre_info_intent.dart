@@ -1,47 +1,48 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../chatbot_engine.dart';
 import '../chatbot_models.dart';
 import 'mod_aware_intent.dart';
 import 'settings_aware_intent.dart';
 
-/// Shows information about the active JRE and installed JREs.
-class JreInfoIntent extends ChatIntent with SettingsAwareIntent {
+/// Shows information about RAM allocation and managed vmparams files.
+class RamInfoIntent extends ChatIntent with SettingsAwareIntent {
   @override
   final Ref ref;
 
-  JreInfoIntent(this.ref);
+  RamInfoIntent(this.ref);
 
   static const _phrases = [
-    'jre info',
-    'java info',
-    'java version',
-    'jre version',
-    'which java',
-    'which jre',
-    'current jre',
-    'active jre',
-    'what java',
-    'what jre',
-    'java runtime',
+    'ram info',
+    'memory info',
+    'how much ram',
+    'current ram',
+    'ram allocation',
+    'xmx',
+    'xms',
+    'vmparams',
+    'heap size',
   ];
 
   static const _primaryKeywords = {
-    'jre': 0.55,
-    'java': 0.5,
+    'ram': 0.55,
+    'memory': 0.45,
+    'vmparams': 0.5,
   };
 
   static const _secondaryKeywords = {
-    'version': 0.15,
     'info': 0.1,
     'current': 0.1,
-    'active': 0.1,
-    'which': 0.1,
-    'runtime': 0.1,
+    'allocation': 0.15,
+    'heap': 0.15,
+    'size': 0.1,
+    'how': 0.05,
+    'much': 0.05,
   };
 
   @override
-  String get id => 'jre_info';
+  String get id => 'ram_info';
 
   @override
   double match(String input, ConversationContext context) {
@@ -55,44 +56,40 @@ class JreInfoIntent extends ChatIntent with SettingsAwareIntent {
 
   @override
   ChatResponse respond(String input, ConversationContext context) {
-    final jre = activeJre;
-    final state = jreState;
+    final state = vmparamsState;
 
-    if (jre == null && state == null) {
+    if (state == null) {
       return const ChatResponse(
-        text: 'No JRE information available. Make sure your game folder '
+        text: 'No RAM information available. Make sure your game folder '
             'is configured in Settings.',
       );
     }
 
-    final buf = StringBuffer('Java Runtime Environment\n');
+    final buf = StringBuffer('RAM Allocation\n');
 
-    if (jre != null) {
-      buf.writeln('  Active JRE:  ${jre.versionString}');
-      buf.writeln(
-        '  Type:        ${jre.isCustomJre ? "Custom (e.g. JRE 23)" : "Standard"}',
-      );
-      if (jre.ramAmountInMb != null) {
-        buf.writeln('  RAM:         ${jre.ramAmountInMb} MB');
+    if (state.currentRamAmountInMb != null) {
+      buf.writeln('  Current RAM: ${state.currentRamAmountInMb} MB');
+    }
+
+    final selected = state.selectedVmparamsFiles;
+    if (selected.isNotEmpty) {
+      buf.writeln('  Managed vmparams files (${selected.length}):');
+      final gameDir = gameFolder;
+      for (final file in selected) {
+        final ram = state.fileRamAmounts[file];
+        final displayPath = gameDir != null
+            ? p.relative(file.path, from: gameDir.path)
+            : file.path;
+        buf.writeln(
+          '    - $displayPath${ram != null ? " ($ram MB)" : ""}',
+        );
       }
     }
 
-    if (state != null) {
-      if (state.isUsingJre23) {
-        buf.writeln('  JRE 23:      Active');
-      }
-      final installed = state.installedJres;
-      if (installed.length > 1) {
-        buf.writeln('  Installed JREs (${installed.length}):');
-        for (final entry in installed) {
-          buf.writeln('    - ${entry.versionString}');
-        }
-      }
-      if (state.hasMultipleActiveJresWithDifferentRamAmounts) {
-        buf.writeln(
-          '\n  Warning: Multiple active JREs have different RAM amounts.',
-        );
-      }
+    if (state.hasMultipleFilesWithDifferentRam) {
+      buf.writeln(
+        '\n  Warning: Multiple vmparams files have different RAM amounts.',
+      );
     }
 
     return ChatResponse(text: buf.toString().trimRight());

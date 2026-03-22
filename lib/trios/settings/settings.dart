@@ -59,8 +59,9 @@ class Settings with SettingsMappable {
   final bool? isMinimized;
   final TriOSTools defaultTool;
 
-  final String? lastActiveJreVersion;
-  final bool showCustomJreConsoleWindow;
+  /// Relative paths from game dir to files the user has selected as vmparams files.
+  final List<String> vmparamsFilePaths;
+
   final String? themeKey;
   final bool? showChangelogNextLaunch;
 
@@ -133,8 +134,7 @@ class Settings with SettingsMappable {
     this.isMaximized,
     this.isMinimized,
     this.defaultTool = TriOSTools.dashboard,
-    this.lastActiveJreVersion,
-    this.showCustomJreConsoleWindow = true,
+    this.vmparamsFilePaths = const [],
     this.themeKey,
     this.showChangelogNextLaunch,
     this.enableDirectLaunch = false,

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -65,29 +64,17 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
           starsectorLaunchPrefs?.resolution.split("x")[0],
     );
 
-    // final gameDir = ref.read(appSettings.select((value) => value.gameDir));
-    final isUsingCustomJre = ref
-        .watch(jreManagerProvider)
-        .value
-        ?.activeJre
-        ?.isCustomJre;
-    // var currentScreenScaling = ref.watch(appSettings.select((value) => value.launchSettings)).screenScaling ??
-    //     starsectorLaunchPrefs?.screenScaling ??
-    //     1;
-
     final enableDirectLaunch = ref.watch(
       appSettings.select((s) => s.enableDirectLaunch),
     );
     final isRunning = widget.isGameRunning || _onClickedTimer?.isActive == true;
 
-    final showLauncherControls =
-        isUsingCustomJre != true && enableDirectLaunch == true;
+    final showLauncherControls = enableDirectLaunch == true;
     return Disable(
       isEnabled: !isRunning,
       child: Stack(
         children: [
-          if (isUsingCustomJre != true)
-            Positioned(
+          Positioned(
               right: 0,
               child: Padding(
                 padding: const EdgeInsets.only(left: 16, top: 12),
@@ -294,29 +281,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                       ],
                     ),
                   ),
-                  if (isUsingCustomJre == true)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: CheckboxWithLabel(
-                        label: "Show Console (log output) Window",
-                        value:
-                            ref.watch(
-                              appSettings.select(
-                                (value) => value.showCustomJreConsoleWindow,
-                              ),
-                            ) ??
-                            false,
-                        onChanged: (bool? value) {
-                          ref
-                              .read(appSettings.notifier)
-                              .update(
-                                (state) => state.copyWith(
-                                  showCustomJreConsoleWindow: value ?? false,
-                                ),
-                              );
-                        },
-                      ),
-                    ),
                   if (showLauncherControls)
                     Padding(
                       padding: const EdgeInsets.all(16.0),

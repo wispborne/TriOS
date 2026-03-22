@@ -1,11 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/jre_manager/jre_entry.dart';
-import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/vmparams/vmparams_manager.dart';
 
 /// Mixin for intents that need access to settings and system info.
 mixin SettingsAwareIntent {
@@ -22,11 +21,8 @@ mixin SettingsAwareIntent {
   bool get isGameRunning =>
       ref.read(AppState.isGameRunning).valueOrNull == true;
 
-  JreEntryInstalled? get activeJre =>
-      ref.read(AppState.activeJre).valueOrNull;
+  String? get currentRam => ref.read(currentRamAmountInMb);
 
-  String? get currentRam => ref.read(currentRamAmountInMb).valueOrNull;
-
-  JreManagerState? get jreState =>
-      ref.read(jreManagerProvider).valueOrNull;
+  VmparamsManagerState? get vmparamsState =>
+      ref.read(vmparamsManagerProvider).valueOrNull;
 }

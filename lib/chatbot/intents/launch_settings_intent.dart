@@ -61,14 +61,11 @@ class LaunchSettingsIntent extends ChatIntent with SettingsAwareIntent {
         '  Custom exe path: ${s.customGameExePath}',
       );
     }
-    buf.writeln(
-      '  Console window:  ${s.showCustomJreConsoleWindow ? "Shown" : "Hidden"}',
-    );
 
     if (!s.enableDirectLaunch) {
       buf.writeln(
         '\nTip: Enable Direct Launch in Settings for better mod '
-        'compatibility and JRE management.',
+        'compatibility.',
       );
     }
 

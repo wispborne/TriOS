@@ -9,7 +9,6 @@ enum TriOSTools {
   modProfiles,
   vramEstimator,
   chipper,
-  jreManager,
   portraits,
   weapons,
   ships,

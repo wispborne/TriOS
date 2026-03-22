@@ -85,10 +85,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 SettingsGroup(
                   name: "Starsector",
                   children: [
-                    Highlightable(
-                      highlightKey: "settings.starsectorLauncher",
-                      child: GamePathsWidget(),
-                    ),
+                    GamePathsWidget(),
                   ],
                 ),
                 SettingsGroup(

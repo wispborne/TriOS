@@ -8,7 +8,7 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
-import 'package:trios/jre_manager/jre_manager_logic.dart';
+import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -52,10 +52,6 @@ class LauncherButton extends HookConsumerWidget {
     var theme = Theme.of(context);
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
 
-    final currentJre = ref.watch(jreManagerProvider).value?.activeJre;
-    final gameVersion = ref.watch(AppState.starsectorVersion).value ?? "";
-    final isCurrentJreValid =
-        currentJre?.isGameVersionSupported(gameVersion) ?? true;
     final useCustomGameExe = ref.watch(
       appSettings.select((s) => s.useCustomGameExePath),
     );
@@ -91,19 +87,9 @@ class LauncherButton extends HookConsumerWidget {
     );
 
     return MovingTooltipWidget.framed(
-      warningLevel: isCurrentJreValid
-          ? TooltipWarningLevel.none
-          : TooltipWarningLevel.error,
       tooltipWidget: DefaultTextStyle.merge(
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: isCurrentJreValid ? null : ThemeManager.vanillaWarningColor,
-        ),
-        child: !isCurrentJreValid
-            ? Text(
-                "Current JRE may not work with $gameVersion!\n"
-                "Change JRE if there are issues.",
-              )
-            : isGameRunning
+        style: theme.textTheme.labelLarge,
+        child: isGameRunning
             ? const Text("Game is running")
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,21 +112,10 @@ class LauncherButton extends HookConsumerWidget {
                                 "${ref.watch(AppState.gameExecutable).value?.nameWithExtension}\n",
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                        const TextSpan(text: "Java: "),
+                        const TextSpan(text: "RAM: "),
                         TextSpan(
                           text:
-                              ref
-                                  .watch(AppState.activeJre)
-                                  .value
-                                  ?.version
-                                  .versionString ??
-                              "(unknown JRE)",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: "\nRAM: "),
-                        TextSpan(
-                          text:
-                              "${ref.watch(currentRamAmountInMb).value ?? "(unknown RAM)"} MB",
+                              "${ref.watch(currentRamAmountInMb) ?? "(unknown RAM)"} MB",
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -325,13 +300,6 @@ class LauncherButton extends HookConsumerWidget {
         ref.read(AppState.gameFolder).value!,
         customExePath: ref.read(AppState.gameExecutable).value,
       );
-    } else if (ref
-            .read(jreManagerProvider)
-            .value
-            ?.activeJre
-            ?.isCustomJre ==
-        true) {
-      launchGameJre23(ref);
     } else {
       launchGameVanilla(ref);
     }
@@ -514,36 +482,6 @@ class LauncherButton extends HookConsumerWidget {
   }
 
   // TODO: mac and linux
-  /// Launches game with JRE 23.
-  static launchGameJre23(WidgetRef ref) async {
-    // Starsector folder
-    final gameDir = ref.read(AppState.gameFolder).value?.toDirectory();
-    final command =
-        ref.read(
-          appSettings.select((value) => value.showCustomJreConsoleWindow),
-        )
-        ? "start Miko_Rouge.bat"
-        : "Miko_Silent.bat";
-
-    Fimber.d("gameDir: $gameDir");
-    final process = await Process.start(
-      command,
-      // Remove the `start ""` part to log all console output, including all Starsector logs.
-      [],
-      workingDirectory: gameDir?.path,
-      runInShell: true,
-    );
-    process.stdout.transform(utf8.decoder).listen((data) {
-      Fimber.i(data);
-    });
-    process.stderr.transform(utf8.decoder).listen((data) {
-      Fimber.e(data);
-    });
-    // process.stdin.writeln("go");
-  }
-
-  // TODO: mac and linux
-  /// Launches game without JRE 23.
   static launchGameVanilla(WidgetRef ref) async {
     // Starsector folder
     var gamePath = ref.read(AppState.gameFolder).value;
@@ -564,12 +502,16 @@ class LauncherButton extends HookConsumerWidget {
     }
 
     var javaExe = getJavaExecutable(getJreDir(gamePath));
-    final standardJre = ref
-        .read(jreManagerProvider)
+    final vmParamsFile = ref
+        .read(vmparamsManagerProvider)
         .value
-        ?.standardInstalledJres
-        .first;
-    var vmParams = standardJre!.vmParamsFileAbsolutePath;
+        ?.selectedVmparamsFiles
+        .firstOrNull;
+    if (vmParamsFile == null) {
+      Fimber.e('No vmparams file selected');
+      return;
+    }
+    var vmParams = vmParamsFile;
 
     if (javaExe.existsSync() != true) {
       Fimber.w('Java not found at $javaExe');

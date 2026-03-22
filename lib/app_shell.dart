@@ -42,7 +42,7 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tab_button.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
-import 'jre_manager/jre_manager_logic.dart';
+import 'vmparams/vmparams_manager.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_profiles/mod_profiles_page.dart';
@@ -962,47 +962,34 @@ class FilePermissionShield extends ConsumerStatefulWidget {
 }
 
 class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
-  bool isStandardVmparamsWritable = false;
-  bool areAllCustomJresWritable = false;
-  List<String> customVmParamsFilesThatCannotBeWritten = [];
+  bool _areAllVmparamsWritable = true;
+  List<String> _vmParamsFilesThatCannotBeWritten = [];
   bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
-    // copied from RamChanger
-    ref.listen(jreManagerProvider, (prev, next) async {
+    ref.listen(vmparamsManagerProvider, (prev, next) async {
       final newState = next.value;
       if (newState != null && prev?.value != newState) {
-        await refresh(newState);
+        await _refreshWritability(newState.selectedVmparamsFiles);
       }
     });
-
-    final usesCustomJre =
-        ref.watch(jreManagerProvider).value?.activeJre?.isCustomJre ?? false;
 
     if (!_initialized) {
       return const SizedBox();
     }
 
     final paths = [
-      (
-        description: 'vmparams file',
-        isWritable: isStandardVmparamsWritable ?? false,
-        path: ref.watch(AppState.vmParamsFile).value?.path,
-      ),
-      if (usesCustomJre)
+      for (final filePath in _vmParamsFilesThatCannotBeWritten)
         (
-          description: 'JRE 23 vmparams file',
-          isWritable: areAllCustomJresWritable ?? false,
-          path: customVmParamsFilesThatCannotBeWritten,
+          description: 'vmparams file',
+          isWritable: false,
+          path: filePath,
         ),
     ];
 
-    // Check if any paths are non-writable
-    final nonWritablePaths = paths.where((path) => path.isWritable == false);
-
     // If all paths are writable, return an empty widget
-    if (nonWritablePaths.isEmpty) {
+    if (_areAllVmparamsWritable) {
       return const SizedBox();
     }
 
@@ -1025,7 +1012,7 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
             ),
             TextSpan(
               text:
-                  "\n${nonWritablePaths.joinToString(separator: "\n", transform: (path) => "❌ Unable to edit ${path.description}."
+                  "\n${paths.joinToString(separator: "\n", transform: (path) => "❌ Unable to edit ${path.description}."
                       "\n    (${path.path ?? 'unknown path'}).")}",
             ),
           ],
@@ -1051,18 +1038,13 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
     );
   }
 
-  Future<void> refresh(JreManagerState newState) async {
-    customVmParamsFilesThatCannotBeWritten.clear();
-    isStandardVmparamsWritable =
-        await newState.standardActiveJre?.canWriteToVmParamsFile() ?? true;
-    areAllCustomJresWritable = true;
-    for (final customJre in newState.customInstalledJres) {
-      if (!await customJre.canWriteToVmParamsFile()) {
-        areAllCustomJresWritable = false;
-        customVmParamsFilesThatCannotBeWritten.add(
-          customJre.vmParamsFileRelativePath,
-        );
-        break;
+  Future<void> _refreshWritability(List<File> selectedFiles) async {
+    _vmParamsFilesThatCannotBeWritten = [];
+    _areAllVmparamsWritable = true;
+    for (final file in selectedFiles) {
+      if (file.existsSync() && await file.isNotWritable()) {
+        _areAllVmparamsWritable = false;
+        _vmParamsFilesThatCannotBeWritten.add(file.path);
       }
     }
     setState(() {

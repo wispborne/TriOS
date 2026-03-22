@@ -9,11 +9,18 @@
   - Mod color tagging: show a color next to a mod's name as a mnemonic.
   - Hullmod Viewer.
   - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
+  - Dashboard: added edit button next to game launcher path to show that you can set a custom launch file (e.g. fr.bat).
 - Fixed
   - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
   - Scroll position on theme selector menu would reset.
   - Light themes now suck slightly less and cleaned up a couple more themes.
 - Changed
+  - Removed JRE Manager.
+    - Every Mikohime version uses a different file structure and installation method, which would require TriOS patches for compatibility.
+    - TriOS supports setting custom launcher files (e.g. Miko_Rouge.bat).
+    - It will automatically find launcher settings files and update them when you assign RAM allocation.
+    - With vanilla now using Java 17, you no longer *require* a third-party performance mod like before. 
+    - tldr; install Mikohime/Fast Rendering without TriOS, then set the custom launcher file on the TriOS Settings page, and use TriOS to assign RAM.
   - Mods page: Clicking the version button now immediately enables/disables a mod, rather than opening a mod version menu.
     - New sub-button will open the version menu instead.
   - Mods page: Groups have a more readable font.

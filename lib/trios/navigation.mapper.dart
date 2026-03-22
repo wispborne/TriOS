@@ -37,8 +37,6 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return TriOSTools.vramEstimator;
       case r'chipper':
         return TriOSTools.chipper;
-      case r'jreManager':
-        return TriOSTools.jreManager;
       case r'portraits':
         return TriOSTools.portraits;
       case r'weapons':
@@ -71,8 +69,6 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return r'vramEstimator';
       case TriOSTools.chipper:
         return r'chipper';
-      case TriOSTools.jreManager:
-        return r'jreManager';
       case TriOSTools.portraits:
         return r'portraits';
       case TriOSTools.weapons:

@@ -378,19 +378,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: TriOSTools.dashboard,
   );
-  static String? _$lastActiveJreVersion(Settings v) => v.lastActiveJreVersion;
-  static const Field<Settings, String> _f$lastActiveJreVersion = Field(
-    'lastActiveJreVersion',
-    _$lastActiveJreVersion,
+  static List<String> _$vmparamsFilePaths(Settings v) => v.vmparamsFilePaths;
+  static const Field<Settings, List<String>> _f$vmparamsFilePaths = Field(
+    'vmparamsFilePaths',
+    _$vmparamsFilePaths,
     opt: true,
-  );
-  static bool _$showCustomJreConsoleWindow(Settings v) =>
-      v.showCustomJreConsoleWindow;
-  static const Field<Settings, bool> _f$showCustomJreConsoleWindow = Field(
-    'showCustomJreConsoleWindow',
-    _$showCustomJreConsoleWindow,
-    opt: true,
-    def: true,
+    def: const [],
   );
   static String? _$themeKey(Settings v) => v.themeKey;
   static const Field<Settings, String> _f$themeKey = Field(
@@ -756,8 +749,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #isMaximized: _f$isMaximized,
     #isMinimized: _f$isMinimized,
     #defaultTool: _f$defaultTool,
-    #lastActiveJreVersion: _f$lastActiveJreVersion,
-    #showCustomJreConsoleWindow: _f$showCustomJreConsoleWindow,
+    #vmparamsFilePaths: _f$vmparamsFilePaths,
     #themeKey: _f$themeKey,
     #showChangelogNextLaunch: _f$showChangelogNextLaunch,
     #enableDirectLaunch: _f$enableDirectLaunch,
@@ -823,8 +815,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       isMaximized: data.dec(_f$isMaximized),
       isMinimized: data.dec(_f$isMinimized),
       defaultTool: data.dec(_f$defaultTool),
-      lastActiveJreVersion: data.dec(_f$lastActiveJreVersion),
-      showCustomJreConsoleWindow: data.dec(_f$showCustomJreConsoleWindow),
+      vmparamsFilePaths: data.dec(_f$vmparamsFilePaths),
       themeKey: data.dec(_f$themeKey),
       showChangelogNextLaunch: data.dec(_f$showChangelogNextLaunch),
       enableDirectLaunch: data.dec(_f$enableDirectLaunch),
@@ -937,6 +928,8 @@ extension SettingsValueCopy<$R, $Out> on ObjectCopyWith<$R, Settings, $Out> {
 
 abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get vmparamsFilePaths;
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get weaponsGridState;
@@ -973,8 +966,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? isMaximized,
     bool? isMinimized,
     TriOSTools? defaultTool,
-    String? lastActiveJreVersion,
-    bool? showCustomJreConsoleWindow,
+    List<String>? vmparamsFilePaths,
     String? themeKey,
     bool? showChangelogNextLaunch,
     bool? enableDirectLaunch,
@@ -1034,6 +1026,13 @@ class _SettingsCopyWithImpl<$R, $Out>
   late final ClassMapperBase<Settings> $mapper =
       SettingsMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get vmparamsFilePaths => ListCopyWith(
+    $value.vmparamsFilePaths,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(vmparamsFilePaths: v),
+  );
+  @override
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings>
   get launchSettings =>
       $value.launchSettings.copyWith.$chain((v) => call(launchSettings: v));
@@ -1092,8 +1091,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? isMaximized = $none,
     Object? isMinimized = $none,
     TriOSTools? defaultTool,
-    Object? lastActiveJreVersion = $none,
-    bool? showCustomJreConsoleWindow,
+    List<String>? vmparamsFilePaths,
     Object? themeKey = $none,
     Object? showChangelogNextLaunch = $none,
     bool? enableDirectLaunch,
@@ -1155,10 +1153,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (isMaximized != $none) #isMaximized: isMaximized,
       if (isMinimized != $none) #isMinimized: isMinimized,
       if (defaultTool != null) #defaultTool: defaultTool,
-      if (lastActiveJreVersion != $none)
-        #lastActiveJreVersion: lastActiveJreVersion,
-      if (showCustomJreConsoleWindow != null)
-        #showCustomJreConsoleWindow: showCustomJreConsoleWindow,
+      if (vmparamsFilePaths != null) #vmparamsFilePaths: vmparamsFilePaths,
       if (themeKey != $none) #themeKey: themeKey,
       if (showChangelogNextLaunch != $none)
         #showChangelogNextLaunch: showChangelogNextLaunch,
@@ -1249,13 +1244,9 @@ class _SettingsCopyWithImpl<$R, $Out>
     isMaximized: data.get(#isMaximized, or: $value.isMaximized),
     isMinimized: data.get(#isMinimized, or: $value.isMinimized),
     defaultTool: data.get(#defaultTool, or: $value.defaultTool),
-    lastActiveJreVersion: data.get(
-      #lastActiveJreVersion,
-      or: $value.lastActiveJreVersion,
-    ),
-    showCustomJreConsoleWindow: data.get(
-      #showCustomJreConsoleWindow,
-      or: $value.showCustomJreConsoleWindow,
+    vmparamsFilePaths: data.get(
+      #vmparamsFilePaths,
+      or: $value.vmparamsFilePaths,
     ),
     themeKey: data.get(#themeKey, or: $value.themeKey),
     showChangelogNextLaunch: data.get(

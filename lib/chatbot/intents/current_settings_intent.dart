@@ -68,9 +68,6 @@ class CurrentSettingsIntent extends ChatIntent with SettingsAwareIntent {
       '  Game version:    ${s.lastStarsectorVersion ?? "Unknown"}',
     );
     buf.writeln(
-      '  JRE version:     ${s.lastActiveJreVersion ?? "Unknown"}',
-    );
-    buf.writeln(
       '  Colorful grid:   ${s.modsGridColorful ? "On" : "Off"}',
     );
 

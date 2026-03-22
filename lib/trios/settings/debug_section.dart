@@ -11,7 +11,7 @@ import 'package:trios/chatbot/chatbot_dialog.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
-import 'package:trios/jre_manager/jre_manager_logic.dart';
+import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
@@ -541,30 +541,20 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           },
         ),
         ElevatedButton.icon(
-          icon: const Icon(Icons.coffee),
-          label: const Text("Show found JREs / vmparams files"),
+          icon: const Icon(Icons.description),
+          label: const Text("Show detected vmparams files"),
           onPressed: () async {
             try {
-              showAlertDialog(
-                context,
-                content:
-                    (await ref
-                            .read(jreManagerProvider.notifier)
-                            .findJREs(
-                              ref
-                                  .watch(AppState.gameFolder)
-                                  .value
-                                  ?.toDirectory(),
-                              ref
-                                  .watch(AppState.gameCoreFolder)
-                                  .value
-                                  ?.toDirectory(),
-                            ))
-                        .joinToString(
-                          transform: (obj) => "- $obj",
-                          separator: "\n",
-                        ),
-              );
+              final vmState = ref.read(vmparamsManagerProvider).value;
+              final detected = vmState?.detectedVmparamsFiles ?? [];
+              final selected = vmState?.selectedVmparamsFiles ?? [];
+              final buf = StringBuffer();
+              buf.writeln("Detected (${detected.length}):");
+              for (final f in detected) {
+                final isSelected = selected.any((s) => s.path == f.path);
+                buf.writeln("  ${isSelected ? '✓' : '○'} ${f.path}");
+              }
+              showAlertDialog(context, content: buf.toString());
             } catch (e) {
               showSnackBar(
                 context: ref.read(AppState.appContext)!,

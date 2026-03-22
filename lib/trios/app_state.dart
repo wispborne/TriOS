@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/changelogs/mod_changelogs_manager.dart';
 import 'package:trios/compression/archive.dart';
-import 'package:trios/jre_manager/jre_entry.dart';
+import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
@@ -31,7 +31,6 @@ import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 
-import '../jre_manager/jre_manager_logic.dart';
 import '../mod_manager/audit_log.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
@@ -351,41 +350,25 @@ class AppState {
       Fimber.e("Error getting custom game executable", ex: e);
     }
 
-    final isJre23 =
-        ref.watch(jreManagerProvider).value?.activeJre?.isCustomJre ??
-        false;
     final gamePath = ref.watch(gameFolder).value?.toDirectory();
     if (gamePath == null) return null;
 
-    return isJre23
-        ? gamePath
-              .resolve(
-                ref.watch(
-                      appSettings.select(
-                        (value) => value.showCustomJreConsoleWindow,
-                      ),
-                    )
-                    ? "Miko_Rouge.bat"
-                    : "Miko_Silent.bat",
-              )
-              .toFile()
-        : getDefaultGameExecutable(gamePath).toFile();
+    return getDefaultGameExecutable(gamePath).toFile();
   });
 
   static final vmParamsFile = FutureProvider<File?>((ref) async {
     return ref
-        .watch(jreManagerProvider)
+        .watch(vmparamsManagerProvider)
         .value
-        ?.activeJre
-        ?.vmParamsFileAbsolutePath
-        .toFile();
+        ?.selectedVmparamsFiles
+        .firstOrNull;
   });
 
   static final canWriteToStarsectorFolder = FutureProvider<bool>((ref) async {
-    final vmParamsFileLocal = ref.watch(vmParamsFile).value;
-    if (vmParamsFileLocal == null) return false;
-    final filesAndFolders = [vmParamsFileLocal].nonNulls;
-    for (var file in filesAndFolders) {
+    final selectedFiles =
+        ref.watch(vmparamsManagerProvider).value?.selectedVmparamsFiles ?? [];
+    if (selectedFiles.isEmpty) return false;
+    for (var file in selectedFiles) {
       if (!file.existsSync() || await file.isNotWritable()) {
         Fimber.d("Cannot find or write to: $file");
         return false;
@@ -400,9 +383,6 @@ class AppState {
     return ref.read(AppState.enabledModsFile.notifier).isWritable();
   });
 
-  static final activeJre = FutureProvider<JreEntryInstalled?>(
-    (ref) async => ref.watch(jreManagerProvider).value?.activeJre,
-  );
 
   static final isGameRunning = FutureProvider<bool>(
     (ref) async =>

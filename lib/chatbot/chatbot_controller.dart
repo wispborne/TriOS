@@ -88,8 +88,8 @@ class ChatbotController extends AutoDisposeNotifier<ConversationContext> {
       LaunchSettingsIntent(ref),
       GameRunningIntent(ref),
 
-      // === JRE / RAM intents ===
-      JreInfoIntent(ref),
+      // === RAM intents ===
+      RamInfoIntent(ref),
       CurrentRamInfoIntent(ref),
 
       // === VRAM intents ===

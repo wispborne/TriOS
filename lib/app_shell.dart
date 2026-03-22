@@ -780,35 +780,63 @@ class _AppShellState extends ConsumerState<AppShell>
                       if (ref.watch(
                         appSettings.select((s) => s.showDonationButton),
                       ))
-                        MovingTooltipWidget.text(
-                          message: "Show donation popup",
-                          child: IconButton(
-                            icon: const SvgImageIcon(
-                              "assets/images/icon-donate.svg",
-                            ),
-                            color: Theme.of(context).iconTheme.color,
-                            onPressed: () {
-                              // donate options
-                              // Constants.patreonUrl.openAsUriInBrowser();
-                              // Constants.kofiUrl.openAsUriInBrowser();
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text("Donations"),
-                                    content: DonateView(),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: const Text("Close"),
-                                      ),
-                                    ],
+                        GestureDetector(
+                          onSecondaryTapDown: (details) async {
+                            final result = await showMenu<String>(
+                              context: context,
+                              position: RelativeRect.fromLTRB(
+                                details.globalPosition.dx,
+                                details.globalPosition.dy,
+                                details.globalPosition.dx,
+                                details.globalPosition.dy,
+                              ),
+                              items: [
+                                const PopupMenuItem<String>(
+                                  value: 'hide',
+                                  child: Text('Hide donation button'),
+                                ),
+                              ],
+                            );
+                            if (result == 'hide') {
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      showDonationButton: false,
+                                    ),
                                   );
-                                },
-                              );
-                            },
+                            }
+                          },
+                          child: MovingTooltipWidget.text(
+                            message: "Show donation popup",
+                            child: IconButton(
+                              icon: const SvgImageIcon(
+                                "assets/images/icon-donate.svg",
+                              ),
+                              color: Theme.of(context).iconTheme.color,
+                              onPressed: () {
+                                // donate options
+                                // Constants.patreonUrl.openAsUriInBrowser();
+                                // Constants.kofiUrl.openAsUriInBrowser();
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text("Donations"),
+                                      content: DonateView(),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text("Close"),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           ),
                         ),
                       MovingTooltipWidget.text(

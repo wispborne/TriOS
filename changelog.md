@@ -10,6 +10,7 @@
   - Hullmod Viewer.
   - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
   - Dashboard: added edit button next to game launcher path to show that you can set a custom launch file (e.g. fr.bat).
+  - Mods page: "Updates" group pinned to the top. May be configured/turned off.
 - Fixed
   - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
   - Scroll position on theme selector menu would reset.

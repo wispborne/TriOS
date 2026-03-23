@@ -22,6 +22,7 @@ class WispGridGroupRowView<T extends WispGridItem>
   final List<WispGridGroup<T>> groups;
   final WispGridState gridState;
   final Function(WispGridState? Function(WispGridState)) updateGridState;
+  final List<ContextMenuEntry> additionalContextMenuEntries;
 
   const WispGridGroupRowView({
     super.key,
@@ -34,6 +35,7 @@ class WispGridGroupRowView<T extends WispGridItem>
     required this.groups,
     required this.gridState,
     required this.updateGridState,
+    this.additionalContextMenuEntries = const [],
   });
 
   @override
@@ -102,7 +104,10 @@ class _WispGridRowState<T extends WispGridItem>
       ref,
       widget.shownIndex,
       widget.columns,
-      additionalMenuEntries: _buildGroupHeaderContextMenu().entries,
+      additionalMenuEntries: [
+        ...widget.additionalContextMenuEntries,
+        ..._buildGroupHeaderContextMenu().entries,
+      ],
       child: headerContent,
     );
   }

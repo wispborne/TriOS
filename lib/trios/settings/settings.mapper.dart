@@ -161,6 +161,60 @@ extension DashboardGridModUpdateVisibilityMapperExtension
   }
 }
 
+class ModsGridUpdateVisibilityMapper
+    extends EnumMapper<ModsGridUpdateVisibility> {
+  ModsGridUpdateVisibilityMapper._();
+
+  static ModsGridUpdateVisibilityMapper? _instance;
+  static ModsGridUpdateVisibilityMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(
+        _instance = ModsGridUpdateVisibilityMapper._(),
+      );
+    }
+    return _instance!;
+  }
+
+  static ModsGridUpdateVisibility fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  ModsGridUpdateVisibility decode(dynamic value) {
+    switch (value) {
+      case r'showAll':
+        return ModsGridUpdateVisibility.showAll;
+      case r'showUnmuted':
+        return ModsGridUpdateVisibility.showUnmuted;
+      case r'hide':
+        return ModsGridUpdateVisibility.hide;
+      default:
+        return ModsGridUpdateVisibility.values[2];
+    }
+  }
+
+  @override
+  dynamic encode(ModsGridUpdateVisibility self) {
+    switch (self) {
+      case ModsGridUpdateVisibility.showAll:
+        return r'showAll';
+      case ModsGridUpdateVisibility.showUnmuted:
+        return r'showUnmuted';
+      case ModsGridUpdateVisibility.hide:
+        return r'hide';
+    }
+  }
+}
+
+extension ModsGridUpdateVisibilityMapperExtension on ModsGridUpdateVisibility {
+  String toValue() {
+    ModsGridUpdateVisibilityMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<ModsGridUpdateVisibility>(this)
+        as String;
+  }
+}
+
 class CompressionLibMapper extends EnumMapper<CompressionLib> {
   CompressionLibMapper._();
 
@@ -284,6 +338,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       TriOSToolsMapper.ensureInitialized();
       LaunchSettingsMapper.ensureInitialized();
       DashboardGridModUpdateVisibilityMapper.ensureInitialized();
+      ModsGridUpdateVisibilityMapper.ensureInitialized();
       WispGridStateMapper.ensureInitialized();
       ShipsPageStatePersistedMapper.ensureInitialized();
       WeaponsPageStatePersistedMapper.ensureInitialized();
@@ -427,6 +482,15 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$dashboardGridModUpdateVisibility,
     opt: true,
     def: DashboardGridModUpdateVisibility.hideMuted,
+  );
+  static ModsGridUpdateVisibility _$modsGridUpdateVisibility(Settings v) =>
+      v.modsGridUpdateVisibility;
+  static const Field<Settings, ModsGridUpdateVisibility>
+  _f$modsGridUpdateVisibility = Field(
+    'modsGridUpdateVisibility',
+    _$modsGridUpdateVisibility,
+    opt: true,
+    def: ModsGridUpdateVisibility.hide,
   );
   static WispGridState _$modsGridState(Settings v) => v.modsGridState;
   static const Field<Settings, WispGridState> _f$modsGridState = Field(
@@ -756,6 +820,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #launchSettings: _f$launchSettings,
     #lastStarsectorVersion: _f$lastStarsectorVersion,
     #dashboardGridModUpdateVisibility: _f$dashboardGridModUpdateVisibility,
+    #modsGridUpdateVisibility: _f$modsGridUpdateVisibility,
     #modsGridState: _f$modsGridState,
     #weaponsGridState: _f$weaponsGridState,
     #shipsGridState: _f$shipsGridState,
@@ -824,6 +889,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       dashboardGridModUpdateVisibility: data.dec(
         _f$dashboardGridModUpdateVisibility,
       ),
+      modsGridUpdateVisibility: data.dec(_f$modsGridUpdateVisibility),
       modsGridState: data.dec(_f$modsGridState),
       weaponsGridState: data.dec(_f$weaponsGridState),
       shipsGridState: data.dec(_f$shipsGridState),
@@ -973,6 +1039,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     LaunchSettings? launchSettings,
     String? lastStarsectorVersion,
     DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
+    ModsGridUpdateVisibility? modsGridUpdateVisibility,
     WispGridState? modsGridState,
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
@@ -1098,6 +1165,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     LaunchSettings? launchSettings,
     Object? lastStarsectorVersion = $none,
     DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
+    ModsGridUpdateVisibility? modsGridUpdateVisibility,
     WispGridState? modsGridState,
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
@@ -1163,6 +1231,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         #lastStarsectorVersion: lastStarsectorVersion,
       if (dashboardGridModUpdateVisibility != null)
         #dashboardGridModUpdateVisibility: dashboardGridModUpdateVisibility,
+      if (modsGridUpdateVisibility != null)
+        #modsGridUpdateVisibility: modsGridUpdateVisibility,
       if (modsGridState != null) #modsGridState: modsGridState,
       if (weaponsGridState != null) #weaponsGridState: weaponsGridState,
       if (shipsGridState != null) #shipsGridState: shipsGridState,
@@ -1265,6 +1335,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     dashboardGridModUpdateVisibility: data.get(
       #dashboardGridModUpdateVisibility,
       or: $value.dashboardGridModUpdateVisibility,
+    ),
+    modsGridUpdateVisibility: data.get(
+      #modsGridUpdateVisibility,
+      or: $value.modsGridUpdateVisibility,
     ),
     modsGridState: data.get(#modsGridState, or: $value.modsGridState),
     weaponsGridState: data.get(#weaponsGridState, or: $value.weaponsGridState),

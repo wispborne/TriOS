@@ -70,6 +70,7 @@ class Settings with SettingsMappable {
   final LaunchSettings launchSettings;
   final String? lastStarsectorVersion;
   final DashboardGridModUpdateVisibility dashboardGridModUpdateVisibility;
+  final ModsGridUpdateVisibility modsGridUpdateVisibility;
   @MappableField(hook: SafeDecodeHook())
   final WispGridState modsGridState;
   final WispGridState weaponsGridState;
@@ -142,6 +143,7 @@ class Settings with SettingsMappable {
     this.lastStarsectorVersion,
     this.dashboardGridModUpdateVisibility =
         DashboardGridModUpdateVisibility.hideMuted,
+    this.modsGridUpdateVisibility = ModsGridUpdateVisibility.hide,
     this.modsGridState = const WispGridState(
       groupingSetting: GroupingSetting(
         currentGroupedByKey: 'enabledState',
@@ -216,6 +218,9 @@ enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 
 @MappableEnum(defaultValue: DashboardGridModUpdateVisibility.hideMuted)
 enum DashboardGridModUpdateVisibility { allVisible, hideMuted, hideAll }
+
+@MappableEnum(defaultValue: ModsGridUpdateVisibility.hide)
+enum ModsGridUpdateVisibility { showAll, showUnmuted, hide }
 
 @MappableEnum(defaultValue: CompressionLib.sevenZip)
 enum CompressionLib {

@@ -628,6 +628,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool _$modsGridUpdatesShowDisabledMods(Settings v) =>
+      v.modsGridUpdatesShowDisabledMods;
+  static const Field<Settings, bool> _f$modsGridUpdatesShowDisabledMods = Field(
+    'modsGridUpdatesShowDisabledMods',
+    _$modsGridUpdatesShowDisabledMods,
+    opt: true,
+    def: true,
+  );
   static bool _$shouldAutoUpdateOnLaunch(Settings v) =>
       v.shouldAutoUpdateOnLaunch;
   static const Field<Settings, bool> _f$shouldAutoUpdateOnLaunch = Field(
@@ -838,6 +846,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #pinFavorites: _f$pinFavorites,
     #dashboardModListColorful: _f$dashboardModListColorful,
     #modsGridColorful: _f$modsGridColorful,
+    #modsGridUpdatesShowDisabledMods: _f$modsGridUpdatesShowDisabledMods,
     #shouldAutoUpdateOnLaunch: _f$shouldAutoUpdateOnLaunch,
     #secondsBetweenModFolderChecks: _f$secondsBetweenModFolderChecks,
     #toastDurationSeconds: _f$toastDurationSeconds,
@@ -907,6 +916,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       pinFavorites: data.dec(_f$pinFavorites),
       dashboardModListColorful: data.dec(_f$dashboardModListColorful),
       modsGridColorful: data.dec(_f$modsGridColorful),
+      modsGridUpdatesShowDisabledMods: data.dec(
+        _f$modsGridUpdatesShowDisabledMods,
+      ),
       shouldAutoUpdateOnLaunch: data.dec(_f$shouldAutoUpdateOnLaunch),
       secondsBetweenModFolderChecks: data.dec(_f$secondsBetweenModFolderChecks),
       toastDurationSeconds: data.dec(_f$toastDurationSeconds),
@@ -1057,6 +1069,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? pinFavorites,
     bool? dashboardModListColorful,
     bool? modsGridColorful,
+    bool? modsGridUpdatesShowDisabledMods,
     bool? shouldAutoUpdateOnLaunch,
     int? secondsBetweenModFolderChecks,
     int? toastDurationSeconds,
@@ -1183,6 +1196,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? pinFavorites,
     bool? dashboardModListColorful,
     bool? modsGridColorful,
+    bool? modsGridUpdatesShowDisabledMods,
     bool? shouldAutoUpdateOnLaunch,
     int? secondsBetweenModFolderChecks,
     int? toastDurationSeconds,
@@ -1255,6 +1269,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (dashboardModListColorful != null)
         #dashboardModListColorful: dashboardModListColorful,
       if (modsGridColorful != null) #modsGridColorful: modsGridColorful,
+      if (modsGridUpdatesShowDisabledMods != null)
+        #modsGridUpdatesShowDisabledMods: modsGridUpdatesShowDisabledMods,
       if (shouldAutoUpdateOnLaunch != null)
         #shouldAutoUpdateOnLaunch: shouldAutoUpdateOnLaunch,
       if (secondsBetweenModFolderChecks != null)
@@ -1384,6 +1400,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.dashboardModListColorful,
     ),
     modsGridColorful: data.get(#modsGridColorful, or: $value.modsGridColorful),
+    modsGridUpdatesShowDisabledMods: data.get(
+      #modsGridUpdatesShowDisabledMods,
+      or: $value.modsGridUpdatesShowDisabledMods,
+    ),
     shouldAutoUpdateOnLaunch: data.get(
       #shouldAutoUpdateOnLaunch,
       or: $value.shouldAutoUpdateOnLaunch,

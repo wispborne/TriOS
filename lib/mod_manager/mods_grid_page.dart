@@ -109,8 +109,14 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final modsGridUpdateVisibility = ref.watch(
       appSettings.select((s) => s.modsGridUpdateVisibility),
     );
+    final modsGridUpdatesShowDisabledMods = ref.watch(
+      appSettings.select((s) => s.modsGridUpdatesShowDisabledMods),
+    );
     final modsWithUpdates = modsMatchingSearch
         .where((mod) => mod.updateCheck(versionCheck)?.hasUpdate == true)
+        .where(
+          (mod) => modsGridUpdatesShowDisabledMods || mod.hasEnabledVariant,
+        )
         .toList();
     final mutedUpdates = modsWithUpdates
         .where(
@@ -329,6 +335,20 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         ),
                       ],
                     ),
+                    MenuItem(
+                      label: 'Only show enabled mods',
+                      icon:
+                          modsGridUpdatesShowDisabledMods ? null : Icons.check,
+                      onSelected: () {
+                        ref.read(appSettings.notifier).update(
+                          (s) => s.copyWith(
+                            modsGridUpdatesShowDisabledMods:
+                                !s.modsGridUpdatesShowDisabledMods,
+                          ),
+                        );
+                      },
+                    ),
+                    MenuDivider(),
                   ],
                   scrollbarConfig: ScrollbarConfig(),
                   selectedItem: selectedMod,

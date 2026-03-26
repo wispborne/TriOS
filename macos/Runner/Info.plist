@@ -28,5 +28,16 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>starsector-mod</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>org.wisp.trios</string>
+		</dict>
+	</array>
 </dict>
 </plist>

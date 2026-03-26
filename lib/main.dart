@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:app_links/app_links.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,9 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/deep_link/deep_link_handler.dart';
+import 'package:trios/trios/deep_link/deep_link_parser.dart';
+import 'package:trios/trios/deep_link/protocol_registration.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -129,6 +133,32 @@ void main() async {
     loggingError = ex;
   }
 
+  // Deep link: initialize AppLinks and check for single-instance forwarding.
+  appLinks = AppLinks();
+  try {
+    final initialLink = await appLinks.getInitialLink();
+    if (initialLink != null &&
+        initialLink.scheme == deepLinkScheme) {
+      final lockFile = File(
+        '${Constants.configDataFolderPath.path}/running.lock',
+      );
+      if (lockFile.existsSync()) {
+        // Another instance is running — forward the URI and exit.
+        Fimber.i(
+          'Forwarding deep link to running instance: $initialLink',
+        );
+        File('${Constants.configDataFolderPath.path}/pending_deeplink')
+            .writeAsStringSync(initialLink.toString());
+        exit(0);
+      }
+      // Cold start with a deep link — store for later processing.
+      pendingDeepLinkUri = initialLink.toString();
+      Fimber.i('Cold-start deep link: $pendingDeepLinkUri');
+    }
+  } catch (e) {
+    Fimber.w('Error checking initial deep link: $e');
+  }
+
   // Crash detection: if running.lock exists, previous session didn't exit cleanly.
   try {
     final lockFile = File(
@@ -191,6 +221,18 @@ void main() async {
         context: context,
         builder: (context) => const OnboardingCarousel(),
         barrierDismissible: false,
+      );
+    });
+  }
+
+  // Show deep link protocol registration toast for existing users who haven't been asked.
+  if (settings?.allowCrashReporting != null &&
+      settings?.deepLinkProtocolRegistered == null) {
+    onAppLoadedActions.add((context) async {
+      toastification.showCustom(
+        context: context,
+        autoCloseDuration: const Duration(seconds: 15),
+        builder: (context, item) => _DeepLinkRegistrationToast(item: item),
       );
     });
   }
@@ -383,6 +425,9 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   void initState() {
     super.initState();
 
+    // Initialize deep link handler (listens for URIs, processes pending cold-start link).
+    ref.read(deepLinkHandlerProvider);
+
     ref.listenManual(AppState.mods, (_, variants) {
       if (ref.read(
         appSettings.select((value) => value.allowCrashReporting ?? false),
@@ -517,5 +562,76 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     } else if (eventName == "blur") {
       ref.read(AppState.isWindowFocused.notifier).update((state) => false);
     }
+  }
+}
+
+/// Toast shown to existing users prompting them to enable deep link protocol registration.
+class _DeepLinkRegistrationToast extends ConsumerWidget {
+  final ToastificationItem item;
+
+  const _DeepLinkRegistrationToast({required this.item});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: 32),
+      child: Card(
+        elevation: 8,
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              const Icon(Icons.link, size: 32),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'One-click mod install',
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Enable $deepLinkScheme:// links to install mods from the web?',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      spacing: 8,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            ref.read(appSettings.notifier).update(
+                              (s) => s.copyWith(deepLinkProtocolRegistered: false),
+                            );
+                            toastification.dismiss(item);
+                          },
+                          child: const Text('No thanks'),
+                        ),
+                        FilledButton(
+                          onPressed: () {
+                            ref.read(appSettings.notifier).update(
+                              (s) => s.copyWith(deepLinkProtocolRegistered: true),
+                            );
+                            ProtocolRegistration.register();
+                            toastification.dismiss(item);
+                          },
+                          child: const Text('Enable'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

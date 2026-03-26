@@ -16,6 +16,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  app_links: ^7.0.0
   collection: ^1.19.0
   # Copied to thirdparty/flutter_context_menu to be able to customize. Was abandoned lib.
   #  flutter_context_menu: ^0.2.0
@@ -192,5 +193,6 @@ msix_config:
   msix_version: 1.0.0.0
   logo_path: assets/images/telos_faction_crest.png
   capabilities: internetClient
+  protocol_activation: starsector-mod
   app_installer: #<-- app installer configuration
     publish_folder_path: 'publish'

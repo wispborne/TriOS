@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
+  gtk
   irondash_engine_context
   screen_retriever_linux
   sentry_flutter

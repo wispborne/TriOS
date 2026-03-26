@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/deep_link/deep_link_parser.dart';
+import 'package:trios/trios/deep_link/protocol_registration.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -34,6 +36,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
   bool enableMultipleVersions = true;
   int? lastNVersionsSetting;
   bool allowCrashReporting = false;
+  bool enableDeepLinks = true;
   List<Widget Function()> pages = [];
 
   int get totalPages => pages.length;
@@ -49,9 +52,11 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
         ? settings.keepLastNVersions
         : null;
     allowCrashReporting = settings.allowCrashReporting ?? false;
+    enableDeepLinks = settings.deepLinkProtocolRegistered ?? true;
     pages = [];
     pages.add(() => _buildGameDirectoryAndModPreferencesPage());
     pages.add(() => _buildCrashReportingPage());
+    pages.add(() => _buildDeepLinkPage());
   }
 
   @override
@@ -331,6 +336,67 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     );
   }
 
+  Widget _buildDeepLinkPage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.link, size: 45),
+          const SizedBox(height: 8),
+          const Text(
+            "4: One-Click Mod Install",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "${Constants.appName} can register as a handler for $deepLinkScheme:// links, "
+            "allowing you to install mods with a single click from web pages and forums.",
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "You will always be asked to confirm before any mod is downloaded.",
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          RadioListTile<bool>(
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle_outline),
+                SizedBox(width: 16),
+                Text("Enable one-click mod install"),
+              ],
+            ),
+            value: true,
+            groupValue: enableDeepLinks,
+            onChanged: (value) {
+              setState(() {
+                enableDeepLinks = value!;
+              });
+            },
+          ),
+          RadioListTile<bool>(
+            title: const Row(
+              children: [
+                Icon(Icons.block),
+                SizedBox(width: 16),
+                Text("No thanks"),
+              ],
+            ),
+            value: false,
+            groupValue: enableDeepLinks,
+            onChanged: (value) {
+              setState(() {
+                enableDeepLinks = value!;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBottomNavigation() {
     return Stack(
       children: [
@@ -431,8 +497,17 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
         )?.toDirectory(),
         keepLastNVersions: enableMultipleVersions ? lastNVersionsSetting : 1,
         allowCrashReporting: allowCrashReporting,
+        deepLinkProtocolRegistered: enableDeepLinks,
       ),
     );
+
+    // Register or unregister the protocol handler.
+    if (enableDeepLinks) {
+      ProtocolRegistration.register();
+    } else {
+      ProtocolRegistration.unregister();
+    }
+
     RestartableApp.softRestartApp(context);
     Navigator.of(context).pop();
   }

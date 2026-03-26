@@ -123,6 +123,13 @@ class Settings with SettingsMappable {
   final bool allowInsecureConnections;
   final bool shouldLoadWebView;
 
+  // Deep link protocol handler
+  /// null = never asked, true = registered, false = declined.
+  final bool? deepLinkProtocolRegistered;
+
+  /// When true, deep links skip the confirmation dialog and install directly.
+  final bool deepLinkSkipConfirmation;
+
   Settings({
     this.gameDir,
     this.gameCoreDir,
@@ -202,6 +209,8 @@ class Settings with SettingsMappable {
     this.showReportBugButton = true,
     this.allowInsecureConnections = false,
     this.shouldLoadWebView = false,
+    this.deepLinkProtocolRegistered,
+    this.deepLinkSkipConfirmation = false,
   });
 }
 

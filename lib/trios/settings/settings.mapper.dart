@@ -806,6 +806,21 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool? _$deepLinkProtocolRegistered(Settings v) =>
+      v.deepLinkProtocolRegistered;
+  static const Field<Settings, bool> _f$deepLinkProtocolRegistered = Field(
+    'deepLinkProtocolRegistered',
+    _$deepLinkProtocolRegistered,
+    opt: true,
+  );
+  static bool _$deepLinkSkipConfirmation(Settings v) =>
+      v.deepLinkSkipConfirmation;
+  static const Field<Settings, bool> _f$deepLinkSkipConfirmation = Field(
+    'deepLinkSkipConfirmation',
+    _$deepLinkSkipConfirmation,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -871,6 +886,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #showReportBugButton: _f$showReportBugButton,
     #allowInsecureConnections: _f$allowInsecureConnections,
     #shouldLoadWebView: _f$shouldLoadWebView,
+    #deepLinkProtocolRegistered: _f$deepLinkProtocolRegistered,
+    #deepLinkSkipConfirmation: _f$deepLinkSkipConfirmation,
   };
   @override
   final bool ignoreNull = true;
@@ -946,6 +963,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       showReportBugButton: data.dec(_f$showReportBugButton),
       allowInsecureConnections: data.dec(_f$allowInsecureConnections),
       shouldLoadWebView: data.dec(_f$shouldLoadWebView),
+      deepLinkProtocolRegistered: data.dec(_f$deepLinkProtocolRegistered),
+      deepLinkSkipConfirmation: data.dec(_f$deepLinkSkipConfirmation),
     );
   }
 
@@ -1093,6 +1112,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showReportBugButton,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
+    bool? deepLinkProtocolRegistered,
+    bool? deepLinkSkipConfirmation,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1220,6 +1241,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? showReportBugButton,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
+    Object? deepLinkProtocolRegistered = $none,
+    bool? deepLinkSkipConfirmation,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1311,6 +1334,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (allowInsecureConnections != null)
         #allowInsecureConnections: allowInsecureConnections,
       if (shouldLoadWebView != null) #shouldLoadWebView: shouldLoadWebView,
+      if (deepLinkProtocolRegistered != $none)
+        #deepLinkProtocolRegistered: deepLinkProtocolRegistered,
+      if (deepLinkSkipConfirmation != null)
+        #deepLinkSkipConfirmation: deepLinkSkipConfirmation,
     }),
   );
   @override
@@ -1492,6 +1519,14 @@ class _SettingsCopyWithImpl<$R, $Out>
     shouldLoadWebView: data.get(
       #shouldLoadWebView,
       or: $value.shouldLoadWebView,
+    ),
+    deepLinkProtocolRegistered: data.get(
+      #deepLinkProtocolRegistered,
+      or: $value.deepLinkProtocolRegistered,
+    ),
+    deepLinkSkipConfirmation: data.get(
+      #deepLinkSkipConfirmation,
+      or: $value.deepLinkSkipConfirmation,
     ),
   );
 

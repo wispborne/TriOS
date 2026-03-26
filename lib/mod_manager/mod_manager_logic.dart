@@ -174,6 +174,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       return installModsResult;
     } catch (e, st) {
       Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
+      // Propagate error to the download task so the toast shows the failure.
+      installationDownload?.task.error = e;
       if (!context.mounted) return [];
       showAlertDialog(context, title: "Error installing mod", content: "$e");
       return [];

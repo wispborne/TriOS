@@ -15,6 +15,7 @@
   - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
   - Scroll position on theme selector menu would reset.
   - Light themes now suck slightly less and cleaned up a couple more themes.
+  - Window position/size sometimes getting reset between restarts.
 - Changed
   - Removed JRE Manager.
     - Every Mikohime version uses a different file structure and installation method, which would require TriOS patches for compatibility.
@@ -30,6 +31,7 @@
   - Ships/Weapons Viewers: Moved some filters on the toolbar into the filter panel.
   - Mods page: Mod description tooltip now appears when hovering a mod name.
   - Ships/Weapons Viewers: Images smaller than the display area won't be scaled up by default.
+  - Improved error message when downloading a mod actually downloads a text file.
 
 # 1.3.4
 - Added

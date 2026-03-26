@@ -160,7 +160,8 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                 onExit: (_) {
                   setState(() => _isHovering = false);
                   final isReadyToAutoDismiss =
-                      installedMod != null || download.installComplete.value;
+                      !download.hasInstallError &&
+                      (installedMod != null || download.installComplete.value);
                   if (downloadTask.status.value.isCompleted &&
                       isReadyToAutoDismiss) {
                     widget.item.start();
@@ -178,9 +179,11 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                         // Don't auto-dismiss while installing. Wait for the
                         // mod variant to appear (ModDownload) or
                         // installComplete (install-only Download).
+                        // Never auto-dismiss if installation failed.
                         final isReadyToAutoDismiss =
-                            installedMod != null ||
-                            download.installComplete.value;
+                            !download.hasInstallError &&
+                            (installedMod != null ||
+                                download.installComplete.value);
                         if (isStopped && isReadyToAutoDismiss && !_isHovering) {
                           item.start();
                         }
@@ -225,7 +228,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                         DownloadStatus
                                                             .completed &&
                                                     installedMod == null
-                                                ? "Installing..."
+                                                ? download.hasInstallError
+                                                      ? "Installation failed"
+                                                      : "Installing..."
                                                 : status.displayString,
                                             child: Icon(
                                               size: 40,
@@ -233,7 +238,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                           DownloadStatus
                                                               .completed &&
                                                       installedMod == null
-                                                  ? Icons.install_desktop
+                                                  ? download.hasInstallError
+                                                        ? Icons.error
+                                                        : Icons.install_desktop
                                                   : switch (status) {
                                                       DownloadStatus.queued =>
                                                         Icons.schedule,
@@ -252,24 +259,36 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                         Icons.circle,
                                                       _ => Icons.downloading,
                                                     },
-                                              color: switch (status) {
-                                                DownloadStatus.queued =>
-                                                  theme.iconTheme.color,
-                                                DownloadStatus
-                                                    .retrievingFileInfo =>
-                                                  theme.iconTheme.color,
-                                                DownloadStatus.downloading =>
-                                                  theme.iconTheme.color,
-                                                DownloadStatus.completed =>
-                                                  theme.colorScheme.secondary,
-                                                DownloadStatus.failed =>
-                                                  ThemeManager
-                                                      .vanillaErrorColor,
-                                                DownloadStatus.canceled =>
-                                                  ThemeManager
-                                                      .vanillaErrorColor,
-                                                _ => theme.iconTheme.color,
-                                              },
+                                              color:
+                                                  status ==
+                                                          DownloadStatus
+                                                              .completed &&
+                                                      download.hasInstallError
+                                                  ? ThemeManager
+                                                        .vanillaErrorColor
+                                                  : switch (status) {
+                                                      DownloadStatus.queued =>
+                                                        theme.iconTheme.color,
+                                                      DownloadStatus
+                                                          .retrievingFileInfo =>
+                                                        theme.iconTheme.color,
+                                                      DownloadStatus
+                                                          .downloading =>
+                                                        theme.iconTheme.color,
+                                                      DownloadStatus
+                                                          .completed =>
+                                                        theme
+                                                            .colorScheme
+                                                            .secondary,
+                                                      DownloadStatus.failed =>
+                                                        ThemeManager
+                                                            .vanillaErrorColor,
+                                                      DownloadStatus.canceled =>
+                                                        ThemeManager
+                                                            .vanillaErrorColor,
+                                                      _ =>
+                                                        theme.iconTheme.color,
+                                                    },
                                             ),
                                           ),
                                   ),
@@ -497,6 +516,28 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                     },
                                                   ),
                                                 ],
+                                              ),
+                                            ),
+                                          ] else if (status ==
+                                                  DownloadStatus.completed &&
+                                              download.hasInstallError) ...[
+                                            // --- Installation failed state ---
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 8,
+                                              ),
+                                              child: TextTriOS(
+                                                downloadTask.error.toString(),
+                                                maxLines: 5,
+                                                overflow: .fade,
+                                                warningLevel: .error,
+                                                style: theme
+                                                    .textTheme
+                                                    .labelMedium
+                                                    ?.copyWith(
+                                                      color: ThemeManager
+                                                          .vanillaErrorColor,
+                                                    ),
                                               ),
                                             ),
                                           ] else if (status ==

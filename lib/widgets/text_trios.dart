@@ -8,6 +8,7 @@ class TextTriOS extends StatelessWidget {
   final TextAlign? textAlign;
   final int? maxLines;
   final TextOverflow overflow;
+  final TooltipWarningLevel warningLevel;
 
   const TextTriOS(
     this.text, {
@@ -15,7 +16,8 @@ class TextTriOS extends StatelessWidget {
     this.style,
     this.textAlign,
     this.maxLines,
-    this.overflow = TextOverflow.ellipsis,
+    this.overflow = .ellipsis,
+    this.warningLevel = .none,
   });
 
   @override
@@ -42,7 +44,7 @@ class TextTriOS extends StatelessWidget {
         final isOverflowing = textPainter.didExceedMaxLines;
 
         return isOverflowing
-            ? MovingTooltipWidget.text(message: text, child: textWidget)
+            ? MovingTooltipWidget.text(message: text, child: textWidget, warningLevel: warningLevel)
             : textWidget;
       },
     );

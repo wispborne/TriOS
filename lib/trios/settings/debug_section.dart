@@ -35,6 +35,7 @@ import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../mod_tag_manager/category_manager.dart';
 import '../download_manager/download_manager.dart';
 import '../download_manager/download_request.dart';
 import '../download_manager/download_status.dart';
@@ -414,6 +415,39 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             );
           },
           label: const Text('Wipe Settings'),
+        ),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.category),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Reset Categories?"),
+                  content: const Text(
+                    "This will reset categories to defaults, removing any user-created categories."
+                    "\nMod assignments to default categories will be kept.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        ref
+                            .read(categoryManagerProvider.notifier)
+                            .resetCategoriesToDefaults();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Reset'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          label: const Text('Reset Categories to Defaults'),
         ),
         ElevatedButton.icon(
           icon: const Icon(Icons.nearby_error),

@@ -33,6 +33,14 @@ class MaterialCategoryIcon extends CategoryIcon
   const MaterialCategoryIcon(this.codePoint);
 
   IconData get iconData => IconData(codePoint);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MaterialCategoryIcon && codePoint == other.codePoint;
+
+  @override
+  int get hashCode => codePoint.hashCode;
 }
 
 @MappableClass(discriminatorValue: 'svg')
@@ -40,6 +48,14 @@ class SvgCategoryIcon extends CategoryIcon with SvgCategoryIconMappable {
   final String assetPath;
 
   const SvgCategoryIcon(this.assetPath);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SvgCategoryIcon && assetPath == other.assetPath;
+
+  @override
+  int get hashCode => assetPath.hashCode;
 }
 
 @MappableClass()

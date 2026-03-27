@@ -717,8 +717,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         ModGridHeader.categories,
                         modifiers,
                       ).child,
-                      itemCellBuilder: (mod, modifiers) =>
-                          CategoryCell(modId: mod.id),
+                      itemCellBuilder: (mod, modifiers) => CategoryCell(
+                        modId: mod.id,
+                        checkedModIds:
+                            controller?.checkedItemIdsReadonly ?? {},
+                      ),
                       csvValue: (mod) {
                         final notifier = ref.read(
                           categoryManagerProvider.notifier,

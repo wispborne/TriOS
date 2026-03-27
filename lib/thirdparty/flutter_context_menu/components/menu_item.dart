@@ -86,7 +86,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     final foregroundColor = isFocused ? focusedTextColor : normalTextColor;
     final usedTextStyle = TextStyle(
       color: foregroundColor,
-      height: 1.0,
+      height: 0.95,
     ).merge(textStyle);
 
     // ~~~~~~~~~~ //

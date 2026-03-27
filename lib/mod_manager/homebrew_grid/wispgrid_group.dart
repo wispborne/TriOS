@@ -4,13 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/mod_context_menu.dart';
-import 'package:trios/mod_manager/widgets/category_icon_picker_dialog.dart';
+import 'package:trios/mod_manager/widgets/category_context_menu.dart';
 import 'package:trios/mod_manager/widgets/category_management_popup.dart';
 import 'package:trios/mod_tag_manager/category.dart';
-import 'package:trios/mod_tag_manager/category_auto_color.dart';
-import 'package:trios/mod_tag_manager/category_icon_palette.dart';
 import 'package:trios/mod_tag_manager/category_manager.dart';
-import 'package:trios/mod_tag_manager/category_store.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -176,8 +173,8 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
   @override
   String dragFeedbackLabel(List<String> draggedKeys, List<Mod> allItems) =>
       draggedKeys.length > 1
-          ? 'Move ${draggedKeys.length} items to\u2026'
-          : 'Move to\u2026';
+      ? 'Move ${draggedKeys.length} items to\u2026'
+      : 'Move to\u2026';
 
   @override
   String? dragHoverLabel(String targetGroupName, List<String> draggedKeys) {
@@ -191,9 +188,9 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
       final sourceName = categoryId == null
           ? 'Uncategorized'
           : store.categories
-                  .firstWhereOrNull((c) => c.id == categoryId)
-                  ?.name ??
-              'Uncategorized';
+                    .firstWhereOrNull((c) => c.id == categoryId)
+                    ?.name ??
+                'Uncategorized';
       if (sourceName == targetGroupName) return null;
     }
 
@@ -282,134 +279,6 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
     return store.categories.firstWhereOrNull((c) => c.id == categoryId);
   }
 
-  List<ContextMenuEntry> _buildCategoryContextMenuEntries(
-    BuildContext context,
-    List<Mod> itemsInGroup,
-  ) {
-    final category = _getCategoryForGroup(itemsInGroup);
-    if (category == null) return [];
-    final notifier = ref.read(categoryManagerProvider.notifier);
-
-    void onBrowseAllSelected() {
-      showCategoryIconPicker(
-        context: context,
-        currentIcon: category.icon,
-        onIconSelected: (icon) {
-          if (icon == null) {
-            notifier.updateCategory(category.id, clearIcon: true);
-          } else {
-            notifier.updateCategory(category.id, icon: icon);
-          }
-        },
-        mod: itemsInGroup.first,
-      );
-    }
-
-    return [
-      MenuItem(
-        label: 'Rename Category',
-        icon: Icons.edit,
-        onSelected: () {
-          final controller = TextEditingController(text: category.name);
-          showDialog(
-            context: context,
-            builder: (dialogContext) => AlertDialog(
-              title: Text('Rename "${category.name}"'),
-              content: TextField(
-                controller: controller,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Category name'),
-                onSubmitted: (value) {
-                  if (value.trim().isNotEmpty) {
-                    notifier.updateCategory(category.id, name: value.trim());
-                  }
-                  Navigator.of(dialogContext).pop();
-                },
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    final value = controller.text.trim();
-                    if (value.isNotEmpty) {
-                      notifier.updateCategory(category.id, name: value);
-                    }
-                    Navigator.of(dialogContext).pop();
-                  },
-                  child: const Text('Rename'),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-      MenuItem.submenu(
-        label: 'Change Color',
-        icon: Icons.palette,
-        items: [
-          MenuItem(
-            label: '',
-            icon: Icons.clear,
-            padding: .only(left: 4),
-            onSelected: () {
-              notifier.updateCategory(category.id, clearColor: true);
-            },
-          ),
-          for (final color in categoryColorPalette)
-            _CategoryColorMenuItem(
-              color: color,
-              isSelected: category.color == color,
-              onSelected: () {
-                notifier.updateCategory(category.id, color: color);
-              },
-            ),
-        ],
-      ),
-      MenuItem.submenu(
-        label: 'Change Icon',
-        icon: Icons.emoji_symbols,
-        onSelected: onBrowseAllSelected,
-        items: [
-          MenuItem(
-            label: 'Browse All…',
-            icon: Icons.apps,
-            onSelected: onBrowseAllSelected,
-          ),
-          MenuItem(
-            label: 'No icon',
-            icon: Icons.clear,
-            onSelected: () {
-              notifier.updateCategory(category.id, clearIcon: true);
-            },
-          ),
-          const MenuDivider(),
-          ..._getUnusedIcons(ref.read(categoryManagerProvider).value, category)
-              .take(10)
-              .map(
-                (icon) => _CategoryIconMenuItem(
-                  categoryIcon: icon,
-                  isSelected: _isSameIcon(category.icon, icon),
-                  onSelected: () {
-                    notifier.updateCategory(category.id, icon: icon);
-                  },
-                ),
-              ),
-        ],
-      ),
-      const MenuDivider(),
-      MenuItem(
-        label: 'Manage Categories...',
-        icon: Icons.settings,
-        onSelected: () {
-          showCategoryManagementPopup(context: context, ref: ref);
-        },
-      ),
-    ];
-  }
-
   @override
   Widget wrapGroupWidget(
     BuildContext context,
@@ -420,10 +289,15 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
     required Widget child,
     List<ContextMenuEntry> additionalMenuEntries = const [],
   }) {
-    final categoryEntries = _buildCategoryContextMenuEntries(
-      context,
-      itemsInGroup,
-    );
+    final category = _getCategoryForGroup(itemsInGroup);
+    final categoryEntries = category == null
+        ? []
+        : buildCategoryContextMenuEntries(
+            context,
+            ref,
+            category,
+            itemsInGroup.first,
+          );
 
     return ContextMenuRegion(
       contextMenu: ContextMenu(
@@ -432,6 +306,14 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
           if (categoryEntries.isNotEmpty) ...[
             const MenuDivider(),
             ...categoryEntries,
+            MenuDivider(),
+            MenuItem(
+              label: 'Manage Categories...',
+              icon: Icons.settings,
+              onSelected: () {
+                showCategoryManagementPopup(context: context, ref: ref);
+              },
+            ),
           ],
 
           if (additionalMenuEntries.isNotEmpty) ...[
@@ -632,143 +514,6 @@ class GameVersionModGridGroup extends WispGridGroup<Mod> {
     getGroupName(itemsInGroup.first),
     horizontalPaddingOffset: horizontalPaddingOffset,
   );
-}
-
-/// Returns icons from [allCategoryIcons] not used by any other category.
-List<CategoryIcon> _getUnusedIcons(CategoryStore? store, Category current) {
-  if (store == null) return allCategoryIcons;
-  final usedIcons = store.categories
-      .where((c) => c.id != current.id && c.icon != null)
-      .map((c) => c.icon!)
-      .toList();
-  return allCategoryIcons
-      .where((icon) => !usedIcons.any((used) => _isSameIcon(used, icon)))
-      .toList();
-}
-
-bool _isSameIcon(CategoryIcon? a, CategoryIcon? b) {
-  if (a == null || b == null) return false;
-  return switch ((a, b)) {
-    (MaterialCategoryIcon a, MaterialCategoryIcon b) =>
-      a.codePoint == b.codePoint,
-    (SvgCategoryIcon a, SvgCategoryIcon b) => a.assetPath == b.assetPath,
-    _ => false,
-  };
-}
-
-/// Custom context menu entry that renders a colored square swatch.
-final class _CategoryColorMenuItem extends ContextMenuItem<void> {
-  final Color color;
-  final bool isSelected;
-
-  const _CategoryColorMenuItem({
-    required this.color,
-    required this.isSelected,
-    super.onSelected,
-  });
-
-  @override
-  Widget builder(
-    BuildContext context,
-    ContextMenuState menuState, [
-    FocusNode? focusNode,
-  ]) {
-    final isFocused = menuState.focusedEntry == this;
-    final theme = Theme.of(context);
-    final background = theme.colorScheme.surfaceContainerLow;
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints.expand(height: 32.0),
-      child: Material(
-        color: isFocused ? theme.focusColor.withAlpha(20) : background,
-        borderRadius: BorderRadius.circular(4.0),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => handleItemSelection(context),
-          canRequestFocus: false,
-          child: Row(
-            children: [
-              const SizedBox(width: 8.0),
-              SizedBox.square(
-                dimension: 32.0,
-                child: Center(
-                  child: Container(
-                    width: isSelected ? 32 : 12,
-                    height: isSelected ? 16 : 12,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(isSelected ? 4 : 2),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  String get debugLabel =>
-      "[${hashCode.toString().substring(0, 5)}] color:$color";
-}
-
-/// Custom context menu entry that renders a category icon.
-final class _CategoryIconMenuItem extends ContextMenuItem<void> {
-  final CategoryIcon categoryIcon;
-  final bool isSelected;
-
-  const _CategoryIconMenuItem({
-    required this.categoryIcon,
-    required this.isSelected,
-    super.onSelected,
-  });
-
-  @override
-  Widget builder(
-    BuildContext context,
-    ContextMenuState menuState, [
-    FocusNode? focusNode,
-  ]) {
-    final isFocused = menuState.focusedEntry == this;
-    final theme = Theme.of(context);
-    final background = theme.colorScheme.surfaceContainerLow;
-    final iconColor = isFocused
-        ? theme.colorScheme.onSurface
-        : theme.colorScheme.onSurface.withValues(alpha: 0.7);
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints.expand(height: 32.0),
-      child: Material(
-        color: isFocused ? theme.focusColor.withAlpha(20) : background,
-        borderRadius: BorderRadius.circular(4.0),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => handleItemSelection(context),
-          canRequestFocus: false,
-          child: Row(
-            mainAxisAlignment: .center,
-            children: [
-              const SizedBox(width: 8.0),
-              SizedBox.square(
-                dimension: 32.0,
-                child: Center(
-                  child: categoryIcon.toWidget(size: 20, color: iconColor),
-                ),
-              ),
-              const SizedBox(width: 4),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  String get debugLabel =>
-      "[${hashCode.toString().substring(0, 5)}] icon:$categoryIcon";
 }
 
 OverlayWidgetData? _vramSummaryOverlayWidget(

@@ -1,21 +1,23 @@
 # 1.4.0
 - Added
-  - Mod Categories
-    - IN PREVIEW. Expect things to change. Expect categories you make or modify to get reset.
-    - Current default categories are AI-gen placeholder and will change.
-    - Looking for feedback on how the changes look and feel, and what's missing.
-  - Mod Group layouts: Line and Small Card.
+  - **Mod Categories**
+    - Assign one or more categories to a mod.
+    - Group mods by category.
+    - Add and edit categories.
+  - **Mod color tagging**: show a color next to a mod's name as a mnemonic.
+  - Mods page: new Header Styles: Line and Small Card.
     - Small Card is a shorter, more compact version of the previous mod group UI.
-  - Mod color tagging: show a color next to a mod's name as a mnemonic.
+    - Right-click on a mod group (e.g. Enabled) and select Header Style.
   - Hullmod Viewer.
-  - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
   - Dashboard: added edit button next to game launcher path to show that you can set a custom launch file (e.g. fr.bat).
   - Mods page: "Updates" group pinned to the top. May be configured/turned off.
+  - Mods page: mod info tooltip on hovering the mod title.
+  - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
 - Fixed
   - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
-  - Scroll position on theme selector menu would reset.
-  - Light themes now suck slightly less and cleaned up a couple more themes.
   - Window position/size sometimes getting reset between restarts.
+  - Light themes now suck slightly less and cleaned up a couple more themes.
+  - Scroll position on theme selector menu would reset.
 - Changed
   - Removed JRE Manager.
     - Every Mikohime version uses a different file structure and installation method, which would require TriOS patches for compatibility.

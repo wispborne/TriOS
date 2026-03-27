@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/generic_settings_notifier.dart';
@@ -292,9 +291,7 @@ class CategoryManagerNotifier
   /// If [color] is null and autoColorNewCategories is enabled, auto-assigns one.
   Category createCategory(String name, {Color? color, CategoryIcon? icon}) {
     final store = state.value ?? createDefaultState();
-    final autoColor =
-        color ??
-        (store.autoColorNewCategories ? pickAutoColor(store.categories) : null);
+    final autoColor = color ?? pickAutoColor(store.categories);
     final maxSortOrder =
         store.categories.map((c) => c.sortOrder).maxOrNull ?? -1;
     final category = Category.create(
@@ -387,9 +384,37 @@ class CategoryManagerNotifier
     });
   }
 
-  /// Set auto-color preference.
-  void setAutoColorNewCategories(bool value) {
-    updateState((current) => current.copyWith(autoColorNewCategories: value));
+  /// Reset categories to defaults, removing user-created categories.
+  /// Preserves mod-category assignments for categories that still exist.
+  void resetCategoriesToDefaults() {
+    updateState((current) {
+      final defaultIds = {for (final d in defaultCategories) d.id};
+
+      final newAssignments = Map<String, List<ModCategoryAssignment>>.from(
+        current.modAssignments,
+      );
+      for (final entry in newAssignments.entries.toList()) {
+        final wasPrimaryRemoved = entry.value.any(
+          (a) => !defaultIds.contains(a.categoryId) && a.isPrimary,
+        );
+        final filtered = entry.value
+            .where((a) => defaultIds.contains(a.categoryId))
+            .toList();
+        if (wasPrimaryRemoved && filtered.isNotEmpty) {
+          filtered[0] = filtered[0].copyWith(isPrimary: true);
+        }
+        if (filtered.isEmpty) {
+          newAssignments.remove(entry.key);
+        } else {
+          newAssignments[entry.key] = filtered;
+        }
+      }
+
+      return current.copyWith(
+        categories: List.of(defaultCategories),
+        modAssignments: newAssignments,
+      );
+    });
   }
 
   // --- Helpers ---
@@ -402,55 +427,131 @@ class CategoryManagerNotifier
 
   static const List<Category> defaultCategories = [
     Category(
-      id: 'cat-total-conversion',
-      name: 'Total Conversion',
+      id: 'cat-library',
+      name: 'Library',
       isUserCreated: false,
       sortOrder: 0,
-      color: const Color(0xFF9C27B0),
-      icon: SvgCategoryIcon("assets/images/icon-death-star.svg"),
-    ),
-    Category(
-      id: 'cat-faction',
-      name: 'Faction',
-      isUserCreated: false,
-      sortOrder: 1,
-      color: const Color(0xFF2196F3),
-      // icon: MaterialCategoryIcon(0xe366),
+      color: Color(0xFF607D8B),
     ),
     Category(
       id: 'cat-utility',
       name: 'Utility',
       isUserCreated: false,
-      sortOrder: 2,
-      color: const Color(0xFF4CAF50),
-    ),
-    Category(
-      id: 'cat-ship-weapon-pack',
-      name: 'Ship/Weapon Pack',
-      isUserCreated: false,
-      sortOrder: 3,
-      color: const Color(0xFFFF9800),
-    ),
-    Category(
-      id: 'cat-graphics',
-      name: 'Graphics',
-      isUserCreated: false,
-      sortOrder: 4,
-      color: const Color(0xFFE91E63),
+      sortOrder: 1,
+      color: Color(0xFF4CAF50),
     ),
     Category(
       id: 'cat-qol',
       name: 'Quality of Life',
       isUserCreated: false,
-      sortOrder: 5,
-      color: const Color(0xFF009688),
+      sortOrder: 2,
+      color: Color(0xFF009688),
     ),
     Category(
-      id: 'cat-library',
-      name: 'Library/API',
+      id: 'cat-megamod',
+      name: 'Megamod',
+      isUserCreated: false,
+      sortOrder: 3,
+      color: Color(0xFF9C27B0),
+    ),
+    Category(
+      id: 'cat-faction',
+      name: 'Faction',
+      isUserCreated: false,
+      sortOrder: 4,
+      color: Color(0xFF2196F3),
+    ),
+    Category(
+      id: 'cat-ship-pack',
+      name: 'Ship Pack',
+      isUserCreated: false,
+      sortOrder: 5,
+      color: Color(0xFFFF9800),
+    ),
+    Category(
+      id: 'cat-weapon-fighter-pack',
+      name: 'Weapon/Fighter Pack',
       isUserCreated: false,
       sortOrder: 6,
-      color: const Color(0xFF607D8B),
+      color: Color(0xFFFF5722),
+    ),
+    Category(
+      id: 'cat-graphics',
+      name: 'Graphics',
+      isUserCreated: false,
+      sortOrder: 7,
+      color: Color(0xFFE91E63),
+    ),
+    Category(
+      id: 'cat-colonies',
+      name: 'Colonies',
+      isUserCreated: false,
+      sortOrder: 8,
+      color: Color(0xFF8BC34A),
+    ),
+    Category(
+      id: 'cat-quests-bars',
+      name: 'Quests & Bars',
+      isUserCreated: false,
+      sortOrder: 9,
+      color: Color(0xFFFFC107),
+    ),
+    Category(
+      id: 'cat-exploration',
+      name: 'Exploration',
+      isUserCreated: false,
+      sortOrder: 10,
+      color: Color(0xFF00BCD4),
+    ),
+    Category(
+      id: 'cat-officers',
+      name: 'Officers',
+      isUserCreated: false,
+      sortOrder: 11,
+      color: Color(0xFF3F51B5),
+    ),
+    Category(
+      id: 'cat-skills-abilities',
+      name: 'Skills & Abilities',
+      isUserCreated: false,
+      sortOrder: 12,
+      color: Color(0xFF673AB7),
+    ),
+    Category(
+      id: 'cat-audio',
+      name: 'Audio',
+      isUserCreated: false,
+      sortOrder: 13,
+      color: Color(0xFFE040FB),
+    ),
+    Category(
+      id: 'cat-portrait-pack',
+      name: 'Portrait Pack',
+      isUserCreated: false,
+      sortOrder: 14,
+      color: Color(0xFF795548),
+    ),
+    Category(
+      id: 'cat-flag-pack',
+      name: 'Flag Pack',
+      isUserCreated: false,
+      sortOrder: 15,
+      color: Color(0xFFCDDC39),
+    ),
+    Category(
+      id: 'cat-total-conversion',
+      name: 'Total Conversion',
+      isUserCreated: false,
+      sortOrder: 16,
+      color: Color(0xFFF44336),
+      icon: SvgCategoryIcon("assets/images/icon-death-star.svg"),
+    ),
+    Category(
+      id: 'cat-misc-campaign',
+      name: 'Misc. Campaign Mod',
+      isUserCreated: false,
+      sortOrder: 17,
+      color: Color(0xFF9E9E9E),
     ),
   ];
 }

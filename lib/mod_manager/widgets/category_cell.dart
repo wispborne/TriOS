@@ -4,6 +4,9 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_tag_manager/category.dart';
 import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 import 'category_context_menu.dart';
 
@@ -12,8 +15,13 @@ import 'category_context_menu.dart';
 /// plus a +N suffix if additional categories are assigned.
 class CategoryCell extends ConsumerStatefulWidget {
   final String modId;
+  final Set<String> checkedModIds;
 
-  const CategoryCell({super.key, required this.modId});
+  const CategoryCell({
+    super.key,
+    required this.modId,
+    this.checkedModIds = const {},
+  });
 
   @override
   ConsumerState<CategoryCell> createState() => _CategoryCellState();
@@ -50,12 +58,22 @@ class _CategoryCellState extends ConsumerState<CategoryCell> {
       return _buildRenameField(primaryCategory, notifier);
     }
 
+    final isBatchSelection =
+        widget.checkedModIds.length > 1 &&
+        widget.checkedModIds.contains(widget.modId);
+
     return ContextMenuRegion(
-      contextMenu: buildCategoryCellContextMenu(
-        modId: widget.modId,
-        ref: ref,
-        context: context,
-      ),
+      contextMenu: isBatchSelection
+          ? buildCategoryBatchContextMenu(
+              modIds: widget.checkedModIds,
+              ref: ref,
+              context: context,
+            )
+          : buildCategoryCellContextMenu(
+              modId: widget.modId,
+              ref: ref,
+              context: context,
+            ),
       child: GestureDetector(
         onDoubleTap: primaryCategory != null
             ? () {
@@ -76,16 +94,22 @@ class _CategoryCellState extends ConsumerState<CategoryCell> {
                   child: Row(
                     spacing: 8,
                     children: [
-                      if (primaryCategory.color != null)
-                        // Container(
-                        //   width: 8,
-                        //   height: 8,
-                        //   decoration: BoxDecoration(
-                        //     color: primaryCategory.color,
-                        //     shape: BoxShape.circle,
-                        //   ),
-                        // ),
-                        Expanded(
+                      ConditionalWrap(
+                        condition: extraCount > 0,
+                        wrapper: (child) => MovingTooltipWidget.text(
+                          message:
+                              (categories.toList()..sort((a, b) {
+                                    if (a == primaryCategory) return -1;
+                                    if (b == primaryCategory) return 1;
+                                    return a.name.compareTo(b.name);
+                                  }))
+                                  .joinToString(
+                                    separator: "\n",
+                                    transform: (cat) => cat.name,
+                                  ),
+                          child: child,
+                        ),
+                        child: Expanded(
                           child: Text(
                             primaryCategory.name +
                                 (extraCount > 0 ? ' +$extraCount' : ''),
@@ -94,6 +118,7 @@ class _CategoryCellState extends ConsumerState<CategoryCell> {
                             maxLines: 1,
                           ),
                         ),
+                      ),
                     ],
                   ),
                 ),

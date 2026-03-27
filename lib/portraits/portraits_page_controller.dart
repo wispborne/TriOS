@@ -181,9 +181,9 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
     final existingState = stateOrNull;
 
     return (existingState ?? const PortraitsPageState()).copyWith(
-      mainFilterCategories: mainFilterCategories,
-      leftFilterCategories: leftFilterCategories,
-      rightFilterCategories: rightFilterCategories,
+      mainFilterCategories: existingState?.mainFilterCategories ?? mainFilterCategories,
+      leftFilterCategories: existingState?.leftFilterCategories ?? leftFilterCategories,
+      rightFilterCategories: existingState?.rightFilterCategories ?? rightFilterCategories,
       allPortraits: allPortraits,
       metadata: metadata,
       replacements: replacements,

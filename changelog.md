@@ -11,6 +11,7 @@
   - Hullmod Viewer.
   - Dashboard: added edit button next to game launcher path to show that you can set a custom launch file (e.g. fr.bat).
   - Mods page: "Updates" group pinned to the top. May be configured/turned off.
+  - Mods page: Right-click shortcut to view a mod's ships/weapons/hullmods/portraits.
   - Mods page: mod info tooltip on hovering the mod title.
   - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
 - Fixed

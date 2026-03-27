@@ -51,8 +51,7 @@ ContextMenu buildModContextMenu(
           ref.watch(AppState.vramEstimatorProvider).value?.isScanning != true)
         buildMenuItemCheckVram(mod, ref),
       buildMenuItemToggleMuteUpdates(mod, ref),
-      if (false) // not done
-        buildMenuItemViewModWeapons(context, mod, ref),
+      buildMenuItemViewInViewer(mod, ref),
       // MenuHeader(text: "Debugging", disableUppercase: true),
       buildMenuItemDebugging(context, mod, ref, isGameRunning),
     ],

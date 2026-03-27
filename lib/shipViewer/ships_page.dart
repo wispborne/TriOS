@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -74,6 +75,21 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     final controllerState = ref.watch(shipsPageControllerProvider);
     final theme = Theme.of(context);
     final mods = ref.watch(AppState.mods);
+
+    // Apply pending mod filter from context menu navigation.
+    final filterRequest = ref.watch(AppState.viewerFilterRequest);
+    if (filterRequest != null && filterRequest.destination == TriOSTools.ships) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final modFilter = ref.read(shipsPageControllerProvider).filterCategories
+            .firstWhereOrNull((f) => f.name == 'Mod');
+        if (modFilter != null) {
+          ref.read(shipsPageControllerProvider.notifier)
+              .updateFilterStates(modFilter, {filterRequest.modName: true});
+        }
+        ref.read(AppState.viewerFilterRequest.notifier).state = null;
+      });
+    }
 
     final columns = buildCols(theme, controllerState);
     final total = controllerState.allShips.length;

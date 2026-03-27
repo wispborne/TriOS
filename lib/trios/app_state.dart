@@ -51,6 +51,11 @@ class AppState {
   static final navigationRequest =
       StateProvider<NavigationRequest?>((ref) => null);
 
+  /// One-shot request to filter a viewer page by mod name.
+  /// Set before navigating; the target page reads it, applies the filter, then clears it.
+  static final viewerFilterRequest =
+      StateProvider<ViewerFilterRequest?>((ref) => null);
+
   /// The highlight key of the widget to highlight on the current page.
   static final activeHighlightKey = StateProvider<String?>((ref) => null);
 

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -75,6 +76,21 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     final controllerState = ref.watch(hullmodsPageControllerProvider);
     final theme = Theme.of(context);
     final mods = ref.watch(AppState.mods);
+
+    // Apply pending mod filter from context menu navigation.
+    final filterRequest = ref.watch(AppState.viewerFilterRequest);
+    if (filterRequest != null && filterRequest.destination == TriOSTools.hullmods) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final modFilter = ref.read(hullmodsPageControllerProvider).filterCategories
+            .firstWhereOrNull((f) => f.name == 'Mod');
+        if (modFilter != null) {
+          ref.read(hullmodsPageControllerProvider.notifier)
+              .updateFilterStates(modFilter, {filterRequest.modName: true});
+        }
+        ref.read(AppState.viewerFilterRequest.notifier).state = null;
+      });
+    }
 
     final columns = _buildCols(theme, controllerState);
     final total = controllerState.allHullmods.length;

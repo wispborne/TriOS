@@ -116,7 +116,12 @@ class Constants {
   static Directory get cacheDirPath =>
       Directory(p.join(configDataFolderPath.path, 'cache'));
 
-  static final portraitsSupportedImageFileExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+  static final portraitsSupportedImageFileExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+  ];
 
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],

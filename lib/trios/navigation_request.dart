@@ -6,3 +6,10 @@ class NavigationRequest {
 
   const NavigationRequest({required this.destination, this.highlightKey});
 }
+
+class ViewerFilterRequest {
+  final TriOSTools destination;
+  final String modName;
+
+  const ViewerFilterRequest({required this.destination, required this.modName});
+}

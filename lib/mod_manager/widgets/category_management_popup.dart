@@ -424,17 +424,14 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Cancel'),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-              foregroundColor: Theme.of(ctx).colorScheme.onError,
-            ),
+          FilledButton.icon(
+            icon: const Icon(Icons.delete),
             onPressed: () {
               _notifier.deleteCategory(category.id);
               Navigator.of(ctx).pop();
               setState(() {});
             },
-            child: const Text('Delete'),
+            label: const Text('Delete'),
           ),
         ],
       ),
@@ -979,5 +976,4 @@ class _InlineIconPicker extends StatelessWidget {
       ),
     );
   }
-
 }

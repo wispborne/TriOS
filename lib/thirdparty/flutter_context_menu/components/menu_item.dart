@@ -113,14 +113,19 @@ final class MenuItem<T> extends ContextMenuItem<T> {
                     SizedBox(width: 4.0),
                     SizedBox.square(
                       dimension: 32.0,
-                      child: leading ??
-                          Icon(
-                            icon,
-                            size: 16.0,
-                            color: foregroundColor.withOpacity(
-                              iconOpacity ?? foregroundColor.a,
-                            ),
-                          ),
+                      child: Center(
+                        child: SizedBox.square(
+                          dimension: 16.0,
+                          child: leading ??
+                              Icon(
+                                icon,
+                                size: 16.0,
+                                color: foregroundColor.withOpacity(
+                                  iconOpacity ?? foregroundColor.a,
+                                ),
+                              ),
+                        ),
+                      ),
                     ),
                     if (label.isNotEmpty) const SizedBox(width: 4.0),
                     Expanded(

@@ -12,6 +12,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/catalog/mod_browser_page.dart';
 import 'package:trios/chipper/chipper_home.dart';
 import 'package:trios/dashboard/dashboard.dart';
+import 'package:trios/hullmodViewer/hullmods_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/portraits/portraits_page.dart';
@@ -29,7 +30,6 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
-import 'package:trios/hullmodViewer/hullmods_page.dart';
 import 'package:trios/weaponViewer/weapons_page.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/changelog_viewer.dart';
@@ -42,7 +42,6 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/tab_button.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
-import 'vmparams/vmparams_manager.dart';
 import 'launcher/launcher.dart';
 import 'main.dart';
 import 'mod_profiles/mod_profiles_page.dart';
@@ -50,6 +49,7 @@ import 'tips/tips_page.dart';
 import 'trios/app_state.dart';
 import 'trios/drag_drop_handler.dart';
 import 'utils/dialogs.dart';
+import 'vmparams/vmparams_manager.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.child});
@@ -73,8 +73,8 @@ class _AppShellState extends ConsumerState<AppShell>
     3: TriOSTools.vramEstimator,
     4: TriOSTools.chipper,
     5: TriOSTools.portraits,
-    6: TriOSTools.weapons,
-    7: TriOSTools.ships,
+    6: TriOSTools.ships,
+    7: TriOSTools.weapons,
     8: TriOSTools.hullmods,
     9: TriOSTools.settings,
     10: TriOSTools.catalog,
@@ -240,8 +240,8 @@ class _AppShellState extends ConsumerState<AppShell>
       const VramEstimatorPage(),
       const ChipperApp(pagePadding: 8),
       const PortraitsPage(),
-      const WeaponsPage(),
       const ShipsPage(),
+      const WeaponsPage(),
       const HullmodsPage(),
       const SettingsPage(pagePadding: 8.0),
       const CatalogPage(pagePadding: 8),
@@ -397,18 +397,6 @@ class _AppShellState extends ConsumerState<AppShell>
                       ),
                       const SizedBox(width: 4),
                       MovingTooltipWidget.text(
-                        message: "Weapon Viewer",
-                        child: IconButton(
-                          icon: SvgImageIcon("assets/images/icon-target.svg"),
-                          selectedIcon: SvgImageIcon(
-                            "assets/images/icon-target.svg",
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          isSelected: _currentPage == TriOSTools.weapons,
-                          onPressed: () => _changeTab(TriOSTools.weapons),
-                        ),
-                      ),
-                      MovingTooltipWidget.text(
                         message: "Ship Viewer",
                         child: IconButton(
                           icon: SvgImageIcon(
@@ -427,8 +415,19 @@ class _AppShellState extends ConsumerState<AppShell>
                         ),
                       ),
                       MovingTooltipWidget.text(
-                        message:
-                            "Hullmod Viewer",
+                        message: "Weapon Viewer",
+                        child: IconButton(
+                          icon: SvgImageIcon("assets/images/icon-target.svg"),
+                          selectedIcon: SvgImageIcon(
+                            "assets/images/icon-target.svg",
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          isSelected: _currentPage == TriOSTools.weapons,
+                          onPressed: () => _changeTab(TriOSTools.weapons),
+                        ),
+                      ),
+                      MovingTooltipWidget.text(
+                        message: "Hullmod Viewer",
                         child: IconButton(
                           icon: SvgImageIcon(
                             "assets/images/icon-hullmod.svg",
@@ -446,8 +445,7 @@ class _AppShellState extends ConsumerState<AppShell>
                         ),
                       ),
                       MovingTooltipWidget.text(
-                        message:
-                            "Portrait Viewer & Replacer",
+                        message: "Portrait Viewer & Replacer",
                         child: IconButton(
                           icon: SvgImageIcon(
                             "assets/images/icon-account-box-outline.svg",
@@ -1009,11 +1007,7 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
 
     final paths = [
       for (final filePath in _vmParamsFilesThatCannotBeWritten)
-        (
-          description: 'vmparams file',
-          isWritable: false,
-          path: filePath,
-        ),
+        (description: 'vmparams file', isWritable: false, path: filePath),
     ];
 
     // If all paths are writable, return an empty widget

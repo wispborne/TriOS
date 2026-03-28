@@ -1040,6 +1040,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ],
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: CheckboxWithLabel(
+                        value: ref.watch(
+                          appSettings.select((value) => value.useTopToolbar),
+                        ),
+                        onChanged: (value) {
+                          ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (state) => state.copyWith(
+                                  useTopToolbar: value ?? false,
+                                ),
+                              );
+                        },
+                        label: "Use top toolbar instead of sidebar",
+                      ),
+                    ),
                     if (Platform.isLinux)
                       Padding(
                         padding: const EdgeInsets.only(top: 16),

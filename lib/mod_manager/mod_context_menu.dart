@@ -166,6 +166,7 @@ ContextMenu buildModBulkActionContextMenu(
         },
       ),
 
+      _buildBulkColorSubmenu(selectedMods, ref),
       menuItemDeleteMultipleMods(selectedMods, context, ref),
 
       if (selectedMods.any(
@@ -202,6 +203,49 @@ const _colorPresets = <(String, Color)>[
   ('Violet', Color(0xFF7E57C2)),
   ('Rose', Color(0xFFEC407A)),
 ];
+
+MenuItem _buildBulkColorSubmenu(List<Mod> selectedMods, WidgetRef ref) {
+  final metadata = ref.read(AppState.modsMetadata).value;
+  final colors = selectedMods.map(
+    (mod) => metadata?.getMergedModMetadata(mod.id)?.color?.toARGB32(),
+  );
+  // A preset is "selected" only if every selected mod has that exact color.
+  final allSameColor =
+      colors.isNotEmpty && colors.every((c) => c == colors.first)
+          ? colors.first
+          : null;
+
+  return MenuItem.submenu(
+    label: 'Color',
+    icon: Icons.palette,
+    items: [
+      MenuItem(
+        label: '',
+        icon: Icons.clear,
+        padding: .only(left: 4),
+        onSelected: () {
+          ref.read(AppState.modsMetadata.notifier).updateModsUserMetadata(
+            selectedMods.map((m) => m.id).toList(),
+            (old) => old.copyWith(color: null),
+          );
+        },
+      ),
+      ..._colorPresets.map(
+        (preset) => _ColorMenuItem(
+          label: preset.$1,
+          color: preset.$2,
+          isSelected: allSameColor == preset.$2.toARGB32(),
+          onSelected: () {
+            ref.read(AppState.modsMetadata.notifier).updateModsUserMetadata(
+              selectedMods.map((m) => m.id).toList(),
+              (old) => old.copyWith(color: preset.$2),
+            );
+          },
+        ),
+      ),
+    ],
+  );
+}
 
 MenuItem _buildColorSubmenu(String modId, WidgetRef ref) {
   final currentColor = ref

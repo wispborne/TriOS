@@ -58,6 +58,8 @@ class Settings with SettingsMappable {
   final bool? isMaximized;
   final bool? isMinimized;
   final TriOSTools defaultTool;
+  final bool isSidebarCollapsed;
+  final bool useTopToolbar;
 
   /// Relative paths from game dir to files the user has selected as vmparams files.
   final List<String> vmparamsFilePaths;
@@ -136,6 +138,8 @@ class Settings with SettingsMappable {
     this.isMaximized,
     this.isMinimized,
     this.defaultTool = TriOSTools.dashboard,
+    this.isSidebarCollapsed = false,
+    this.useTopToolbar = false,
     this.vmparamsFilePaths = const [],
     this.themeKey,
     this.showChangelogNextLaunch,

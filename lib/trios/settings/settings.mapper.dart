@@ -433,6 +433,20 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: TriOSTools.dashboard,
   );
+  static bool _$isSidebarCollapsed(Settings v) => v.isSidebarCollapsed;
+  static const Field<Settings, bool> _f$isSidebarCollapsed = Field(
+    'isSidebarCollapsed',
+    _$isSidebarCollapsed,
+    opt: true,
+    def: false,
+  );
+  static bool _$useTopToolbar(Settings v) => v.useTopToolbar;
+  static const Field<Settings, bool> _f$useTopToolbar = Field(
+    'useTopToolbar',
+    _$useTopToolbar,
+    opt: true,
+    def: false,
+  );
   static List<String> _$vmparamsFilePaths(Settings v) => v.vmparamsFilePaths;
   static const Field<Settings, List<String>> _f$vmparamsFilePaths = Field(
     'vmparamsFilePaths',
@@ -821,6 +835,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #isMaximized: _f$isMaximized,
     #isMinimized: _f$isMinimized,
     #defaultTool: _f$defaultTool,
+    #isSidebarCollapsed: _f$isSidebarCollapsed,
+    #useTopToolbar: _f$useTopToolbar,
     #vmparamsFilePaths: _f$vmparamsFilePaths,
     #themeKey: _f$themeKey,
     #showChangelogNextLaunch: _f$showChangelogNextLaunch,
@@ -889,6 +905,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       isMaximized: data.dec(_f$isMaximized),
       isMinimized: data.dec(_f$isMinimized),
       defaultTool: data.dec(_f$defaultTool),
+      isSidebarCollapsed: data.dec(_f$isSidebarCollapsed),
+      useTopToolbar: data.dec(_f$useTopToolbar),
       vmparamsFilePaths: data.dec(_f$vmparamsFilePaths),
       themeKey: data.dec(_f$themeKey),
       showChangelogNextLaunch: data.dec(_f$showChangelogNextLaunch),
@@ -1044,6 +1062,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? isMaximized,
     bool? isMinimized,
     TriOSTools? defaultTool,
+    bool? isSidebarCollapsed,
+    bool? useTopToolbar,
     List<String>? vmparamsFilePaths,
     String? themeKey,
     bool? showChangelogNextLaunch,
@@ -1171,6 +1191,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? isMaximized = $none,
     Object? isMinimized = $none,
     TriOSTools? defaultTool,
+    bool? isSidebarCollapsed,
+    bool? useTopToolbar,
     List<String>? vmparamsFilePaths,
     Object? themeKey = $none,
     Object? showChangelogNextLaunch = $none,
@@ -1235,6 +1257,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (isMaximized != $none) #isMaximized: isMaximized,
       if (isMinimized != $none) #isMinimized: isMinimized,
       if (defaultTool != null) #defaultTool: defaultTool,
+      if (isSidebarCollapsed != null) #isSidebarCollapsed: isSidebarCollapsed,
+      if (useTopToolbar != null) #useTopToolbar: useTopToolbar,
       if (vmparamsFilePaths != null) #vmparamsFilePaths: vmparamsFilePaths,
       if (themeKey != $none) #themeKey: themeKey,
       if (showChangelogNextLaunch != $none)
@@ -1330,6 +1354,11 @@ class _SettingsCopyWithImpl<$R, $Out>
     isMaximized: data.get(#isMaximized, or: $value.isMaximized),
     isMinimized: data.get(#isMinimized, or: $value.isMinimized),
     defaultTool: data.get(#defaultTool, or: $value.defaultTool),
+    isSidebarCollapsed: data.get(
+      #isSidebarCollapsed,
+      or: $value.isSidebarCollapsed,
+    ),
+    useTopToolbar: data.get(#useTopToolbar, or: $value.useTopToolbar),
     vmparamsFilePaths: data.get(
       #vmparamsFilePaths,
       or: $value.vmparamsFilePaths,

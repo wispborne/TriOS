@@ -94,22 +94,22 @@ class _CategoryCellState extends ConsumerState<CategoryCell> {
                   child: Row(
                     spacing: 8,
                     children: [
-                      ConditionalWrap(
-                        condition: extraCount > 0,
-                        wrapper: (child) => MovingTooltipWidget.text(
-                          message:
-                              (categories.toList()..sort((a, b) {
-                                    if (a == primaryCategory) return -1;
-                                    if (b == primaryCategory) return 1;
-                                    return a.name.compareTo(b.name);
-                                  }))
-                                  .joinToString(
-                                    separator: "\n",
-                                    transform: (cat) => cat.name,
-                                  ),
-                          child: child,
-                        ),
-                        child: Expanded(
+                      Expanded(
+                        child: ConditionalWrap(
+                          condition: extraCount > 0,
+                          wrapper: (child) => MovingTooltipWidget.text(
+                            message:
+                                (categories.toList()..sort((a, b) {
+                                      if (a == primaryCategory) return -1;
+                                      if (b == primaryCategory) return 1;
+                                      return a.name.compareTo(b.name);
+                                    }))
+                                    .joinToString(
+                                      separator: "\n",
+                                      transform: (cat) => cat.name,
+                                    ),
+                            child: child,
+                          ),
                           child: Text(
                             primaryCategory.name +
                                 (extraCount > 0 ? ' +$extraCount' : ''),

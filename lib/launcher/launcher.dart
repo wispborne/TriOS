@@ -8,7 +8,6 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
-import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -19,6 +18,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
+import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
@@ -44,8 +44,19 @@ class LaunchPrecheckError {
 
 class LauncherButton extends HookConsumerWidget {
   final bool showTextInsteadOfIcon;
+  final double? fontSize;
+  final double iconHeight;
+  final double iconWidth;
+  final Offset iconOffset;
 
-  const LauncherButton({super.key, required this.showTextInsteadOfIcon});
+  const LauncherButton({
+    super.key,
+    required this.showTextInsteadOfIcon,
+    this.fontSize,
+    this.iconHeight = 28,
+    this.iconWidth = 32,
+    this.iconOffset = Offset.zero,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -147,10 +158,12 @@ class LauncherButton extends HookConsumerWidget {
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
                         "Direct Launch is on."
-                            "\nInvisible ships, zoomed-in combat,"
-                            "\nand more may result.",
+                        "\nInvisible ships, zoomed-in combat,"
+                        "\nand more may result.",
                         style: TextStyle(
-                          color: ThemeManager.vanillaWarningColor.withAlpha(200),
+                          color: ThemeManager.vanillaWarningColor.withAlpha(
+                            200,
+                          ),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -226,6 +239,10 @@ class LauncherButton extends HookConsumerWidget {
                         child: StarsectorIcon(
                           colorAnimation: colorAnimation.value,
                           boxShadowAnimation: boxShadowAnimation.value,
+                          fontSize: fontSize,
+                          height: iconHeight,
+                          width: iconWidth,
+                          textOffset: iconOffset,
                         ),
                       );
                     },
@@ -721,10 +738,18 @@ class StarsectorIcon extends StatelessWidget {
     super.key,
     this.colorAnimation,
     this.boxShadowAnimation = 2,
+    this.fontSize,
+    this.height = 28,
+    this.width = 32,
+    this.textOffset = Offset.zero,
   });
 
   final Color? colorAnimation;
   final double boxShadowAnimation;
+  final double? fontSize;
+  final double height;
+  final double width;
+  final Offset textOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -756,20 +781,20 @@ class StarsectorIcon extends StatelessWidget {
         ],
       ),
       child: SizedBox(
-        height: 38,
-        width: 42,
+        height: height,
+        width: width,
         child: Transform.translate(
-          offset: const Offset(0, -1),
+          offset: textOffset,
           child: Center(
             child: StrokeText(
               'S',
-              strokeWidth: 3,
+              strokeWidth: 2.5,
               borderOnTop: true,
               strokeColor: theme.colorScheme.surfaceTint.darker(70),
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontFamily: "Orbitron",
-                fontSize: 30,
+                fontSize: fontSize ?? 22,
                 color: theme.colorScheme.primary.darker(5),
               ),
             ),

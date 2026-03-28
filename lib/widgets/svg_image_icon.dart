@@ -19,12 +19,14 @@ class SvgImageIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final iconThemeData = IconTheme.of(context);
     final colorLocal = color ?? iconThemeData.color;
+    final effectiveWidth = width ?? iconThemeData.size;
+    final effectiveHeight = height ?? iconThemeData.size;
     return Opacity(
       opacity: iconThemeData.opacity ?? 1,
       child: SvgPicture.asset(
         assetName,
-        width: width,
-        height: height,
+        width: effectiveWidth,
+        height: effectiveHeight,
         fit: BoxFit.scaleDown,
         colorFilter: colorLocal == null
             ? null

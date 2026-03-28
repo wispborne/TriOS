@@ -112,6 +112,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
             onSecondary: themeData["onSecondary"],
             onSurface: themeData["onSurface"],
             onError: themeData["onError"],
+            fontFamily: themeData["fontFamily"],
           );
         } catch (e, st) {
           Fimber.e(
@@ -219,7 +220,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
 
   ThemeData _customizeTheme(ThemeData themeBase, TriOSTheme swatch) {
     // Choose font here
-    final textTheme = GoogleFonts.robotoTextTheme(themeBase.textTheme);
+    final textTheme = swatch.fontFamily != null
+        ? themeBase.textTheme.apply(fontFamily: swatch.fontFamily)
+        : GoogleFonts.robotoTextTheme(themeBase.textTheme);
 
     final onSurfaceVariant = swatch.surface == null
         ? swatch.onSurface

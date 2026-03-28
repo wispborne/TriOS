@@ -156,6 +156,17 @@
       "onSecondary": "#FFFFFF",
       "onSurface": "#FFFFFF"
     },
+    "Turkey (real)": {
+      "isDark": true,
+      "primary": "#FFFFFF",
+      "secondary": "#B22234",
+      "surface": "#780000",
+      "surfaceContainer": "#e30917",
+      "onPrimary": "#FFFFFF",
+      "onSecondary": "#FFFFFF",
+      "onSurface": "#FFFFFF",
+      "fontFamily": "Comic Sans MS"
+    },
     "VIC": {
       "isDark": true,
       "primary": "#EE9E00",

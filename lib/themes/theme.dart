@@ -23,6 +23,7 @@ class TriOSTheme {
   final Color? onSecondary;
   final Color? onSurface;
   final Color? onError;
+  final String? fontFamily;
 
   TriOSTheme({
     this.isDark = true,
@@ -35,6 +36,7 @@ class TriOSTheme {
     this.onSecondary,
     this.onSurface,
     this.onError,
+    this.fontFamily,
   });
 
   /// Constructor that accepts hex color strings (e.g. "#FF0000").
@@ -49,6 +51,7 @@ class TriOSTheme {
     String? onSecondary,
     String? onSurface,
     String? onError,
+    this.fontFamily,
   }) : primary = _parseColor(primary)!,
        secondary = _parseColor(secondary),
        surface = _parseColor(surface),
@@ -67,7 +70,7 @@ class TriOSTheme {
 
   @override
   String toString() {
-    return 'TriOSTheme{isDark: $isDark, primary: $primary, secondary: $secondary, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError}';
+    return 'TriOSTheme{isDark: $isDark, primary: $primary, secondary: $secondary, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError, fontFamily: $fontFamily}';
   }
 
   TriOSTheme copyWith({
@@ -81,6 +84,7 @@ class TriOSTheme {
     Color? onSecondary,
     Color? onSurface,
     Color? onError,
+    String? fontFamily,
   }) {
     return TriOSTheme(
       isDark: isDark ?? this.isDark,
@@ -93,6 +97,7 @@ class TriOSTheme {
       onSecondary: onSecondary ?? this.onSecondary,
       onSurface: onSurface ?? this.onSurface,
       onError: onError ?? this.onError,
+      fontFamily: fontFamily ?? this.fontFamily,
     );
   }
 }

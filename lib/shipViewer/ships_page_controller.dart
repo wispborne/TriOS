@@ -58,6 +58,10 @@ class ShipsPageState with ShipsPageStateMappable {
     this.currentSearchQuery = '',
     this.isLoading = false,
   });
+
+  /// Returns the display name for a ship by its ID, or the ID itself if not found.
+  String hullNameById(String id) =>
+      allShips.where((s) => s.id == id).firstOrNull?.hullNameForDisplay() ?? id;
 }
 
 @MappableClass()
@@ -93,6 +97,10 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
     // Initialize filter categories
     final filterCategories = [
+      GridFilter<Ship>(
+        name: 'Type',
+        valueGetter: (ship) => ship.isSkin ? 'Skin' : 'Base Hull',
+      ),
       GridFilter<Ship>(
         name: 'Hull Size',
         valueGetter: (ship) => ship.hullSizeForDisplay(),

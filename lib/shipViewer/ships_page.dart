@@ -78,14 +78,19 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 
     // Apply pending mod filter from context menu navigation.
     final filterRequest = ref.watch(AppState.viewerFilterRequest);
-    if (filterRequest != null && filterRequest.destination == TriOSTools.ships) {
+    if (filterRequest != null &&
+        filterRequest.destination == TriOSTools.ships) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final modFilter = ref.read(shipsPageControllerProvider).filterCategories
+        final modFilter = ref
+            .read(shipsPageControllerProvider)
+            .filterCategories
             .firstWhereOrNull((f) => f.name == 'Mod');
         if (modFilter != null) {
-          ref.read(shipsPageControllerProvider.notifier)
-              .updateFilterStates(modFilter, {filterRequest.modName: true});
+          ref.read(shipsPageControllerProvider.notifier).updateFilterStates(
+            modFilter,
+            {filterRequest.modName: true},
+          );
         }
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
@@ -347,20 +352,23 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       },
       columns: columns,
       items: items,
-      itemExtent: 50,
+      itemExtent: 48,
       scrollbarConfig: ScrollbarConfig(
         showLeftScrollbar: ScrollbarVisibility.always,
         showRightScrollbar: ScrollbarVisibility.always,
         showBottomScrollbar: ScrollbarVisibility.always,
       ),
       rowBuilder: ({required item, required modifiers, required child}) =>
-          SizedBox(
-            height: 50,
-            child: InkWell(
-              onTap: () => _showShipDetailsDialog(context, item),
-              child: Container(
-                color: Colors.transparent,
-                child: buildRowContextMenu(item, child),
+          Padding(
+            padding: const .only(top: 4),
+            child: SizedBox(
+              height: 40,
+              child: InkWell(
+                onTap: () => _showShipDetailsDialog(context, item),
+                child: Container(
+                  color: Colors.transparent,
+                  child: buildRowContextMenu(item, child),
+                ),
               ),
             ),
           ),
@@ -486,12 +494,56 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         isSortable: false,
         itemCellBuilder: (item, _) => ShipImageCell(
           imagePath: _getPathForSpriteName(item, gameCoreDir).path,
-          fit: controllerState.useContainFit ? BoxFit.contain : BoxFit.scaleDown,
+          fit: controllerState.useContainFit
+              ? BoxFit.contain
+              : BoxFit.scaleDown,
         ),
         csvValue: (ship) => _getPathForSpriteName(ship, gameCoreDir).path,
         defaultState: WispGridColumnState(position: position++, width: 50),
       ),
-      col('hullName', 'Name', (s) => s.hullNameForDisplay(), width: 200),
+      WispGridColumn<Ship>(
+        key: 'hullName',
+        isSortable: true,
+        name: 'Name',
+        getSortValue: (ship) => ship.hullNameForDisplay(),
+        itemCellBuilder: (item, _) => Row(
+          children: [
+            TextTriOS(
+              item.hullNameForDisplay(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (item.isSkin)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: MovingTooltipWidget.text(
+                    message:
+                        "This ship comes from a .skin file."
+                        "\nSkins are variations of standard hulls. For example, the Falcon (P) is a skin of the Falcon.",
+                    child: Text(
+                      'Skin',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        csvValue: (item) => item.hullNameForDisplay(),
+        defaultState: WispGridColumnState(position: position++, width: 200),
+      ),
       col('hullSize', 'Hull', (s) => s.hullSizeForDisplay(), width: 80),
       WispGridColumn(
         key: 'weaponSlotCount',
@@ -568,7 +620,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         .resolve(item.spriteName ?? "")
         .toDirectory();
   }
-
 
   Widget _buildOverflowButton({
     required BuildContext context,
@@ -695,6 +746,35 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(s.id, style: theme.textTheme.labelSmall),
+                  if (s.isSkin && s.baseHullId != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        spacing: 4,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.secondaryContainer,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Skin',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'of ${controllerState.hullNameById(s.baseHullId!)}',
+                            style: theme.textTheme.labelSmall,
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -31,6 +31,7 @@ class ViewerSearchBox extends StatelessWidget {
               if (controller.text.isNotEmpty)
                 IconButton(
                   icon: const Icon(Icons.clear),
+                  padding: .zero,
                   onPressed: () {
                     controller.clear();
                     onClear();

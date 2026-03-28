@@ -441,6 +441,19 @@ class ShipMapper extends ClassMapperBase<Ship> {
     _$modName,
     opt: true,
   );
+  static bool _$isSkin(Ship v) => v.isSkin;
+  static const Field<Ship, bool> _f$isSkin = Field(
+    'isSkin',
+    _$isSkin,
+    opt: true,
+    def: false,
+  );
+  static String? _$baseHullId(Ship v) => v.baseHullId;
+  static const Field<Ship, String> _f$baseHullId = Field(
+    'baseHullId',
+    _$baseHullId,
+    opt: true,
+  );
   static Color? _$color(Ship v) => v.color;
   static const Field<Ship, Color> _f$color = Field('color', _$color, opt: true);
   static ModVariant? _$modVariant(Ship v) => v.modVariant;
@@ -525,6 +538,8 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #moduleAnchor: _f$moduleAnchor,
     #modId: _f$modId,
     #modName: _f$modName,
+    #isSkin: _f$isSkin,
+    #baseHullId: _f$baseHullId,
     #color: _f$color,
     #modVariant: _f$modVariant,
     #shipSizesMap: _f$shipSizesMap,
@@ -599,6 +614,8 @@ class ShipMapper extends ClassMapperBase<Ship> {
       moduleAnchor: data.dec(_f$moduleAnchor),
       modId: data.dec(_f$modId),
       modName: data.dec(_f$modName),
+      isSkin: data.dec(_f$isSkin),
+      baseHullId: data.dec(_f$baseHullId),
       color: data.dec(_f$color),
     );
   }
@@ -738,6 +755,8 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
     List<double>? moduleAnchor,
     String? modId,
     String? modName,
+    bool? isSkin,
+    String? baseHullId,
     Color? color,
   });
   ShipCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
@@ -921,6 +940,8 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     Object? moduleAnchor = $none,
     Object? modId = $none,
     Object? modName = $none,
+    bool? isSkin,
+    Object? baseHullId = $none,
     Object? color = $none,
   }) => $apply(
     FieldCopyWithData({
@@ -991,6 +1012,8 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
       if (moduleAnchor != $none) #moduleAnchor: moduleAnchor,
       if (modId != $none) #modId: modId,
       if (modName != $none) #modName: modName,
+      if (isSkin != null) #isSkin: isSkin,
+      if (baseHullId != $none) #baseHullId: baseHullId,
       if (color != $none) #color: color,
     }),
   );
@@ -1063,6 +1086,8 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     moduleAnchor: data.get(#moduleAnchor, or: $value.moduleAnchor),
     modId: data.get(#modId, or: $value.modId),
     modName: data.get(#modName, or: $value.modName),
+    isSkin: data.get(#isSkin, or: $value.isSkin),
+    baseHullId: data.get(#baseHullId, or: $value.baseHullId),
     color: data.get(#color, or: $value.color),
   );
 

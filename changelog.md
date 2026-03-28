@@ -13,6 +13,7 @@
   - Mods page: "Updates" group pinned to the top. May be configured/turned off.
   - Mods page: Right-click shortcut to view a mod's ships/weapons/hullmods/portraits.
   - Mods page: mod info tooltip on hovering the mod title.
+  - Ships viewer: .skin files are now shown (e.g. Falcon (P)).
   - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
 - Fixed
   - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).

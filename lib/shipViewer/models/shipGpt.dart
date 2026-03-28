@@ -124,6 +124,10 @@ class Ship with ShipMappable implements WispGridItem {
   final String? modId;
   final String? modName;
 
+  // Skin metadata
+  final bool isSkin;
+  final String? baseHullId;
+
   // Derived UI property
   final Color? color;
 
@@ -197,6 +201,8 @@ class Ship with ShipMappable implements WispGridItem {
     this.moduleAnchor,
     this.modId,
     this.modName,
+    this.isSkin = false,
+    this.baseHullId,
     this.color,
   });
 

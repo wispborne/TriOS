@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
+import 'package:trios/shipViewer/models/shipSkin.dart';
 import 'package:trios/shipViewer/models/ship_weapon_slot.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
@@ -73,7 +74,11 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     const yieldInterval = Duration(milliseconds: 500);
     var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
 
-    final coreResult = await _parseShips(Directory(gameCorePath), null);
+    final coreResult = await _parseShips(
+      Directory(gameCorePath),
+      null,
+      allShips,
+    );
     if (_buildToken != myToken) return;
     filesProcessed += coreResult.filesProcessed;
     allShips.addAll(coreResult.ships);
@@ -85,7 +90,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
 
     for (final variant in variants) {
       if (_buildToken != myToken) return;
-      final modResult = await _parseShips(variant.modFolder, variant);
+      final modResult = await _parseShips(variant.modFolder, variant, allShips);
       if (_buildToken != myToken) return;
       filesProcessed += modResult.filesProcessed;
       allShips.addAll(modResult.ships);
@@ -140,6 +145,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
   Future<ShipParseResult> _parseShips(
     Directory folder,
     ModVariant? modVariant,
+    List<Ship> allShipsSoFar,
   ) async {
     int filesProcessed = 0;
     final shipsCsvFile = p
@@ -152,8 +158,16 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
     if (!await shipsCsvFile.exists()) {
-      // No ships in the mod.
-      return ShipParseResult(ships, errors, filesProcessed);
+      // Still check for skins even if no CSV exists (mod may only add skins).
+      final skinShips = await _parseSkins(
+        folder,
+        modVariant,
+        allShipsSoFar,
+        [],
+      );
+      ships.addAll(skinShips.ships);
+      errors.addAll(skinShips.errors);
+      return ShipParseResult(ships, errors, filesProcessed + skinShips.filesProcessed);
     }
 
     // Load and index .ship files
@@ -287,7 +301,215 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       }
     }
 
+    // Parse .skin files and resolve against base hulls
+    final skinResult = await _parseSkins(
+      folder,
+      modVariant,
+      allShipsSoFar,
+      ships,
+    );
+    ships.addAll(skinResult.ships);
+    errors.addAll(skinResult.errors);
+    filesProcessed += skinResult.filesProcessed;
+
     return ShipParseResult(ships, errors, filesProcessed);
+  }
+
+  /// Parse `.skin` files from `data/hulls/skins/` and resolve each against
+  /// its base hull to produce fully-populated [Ship] objects.
+  Future<ShipParseResult> _parseSkins(
+    Directory folder,
+    ModVariant? modVariant,
+    List<Ship> allShipsSoFar,
+    List<Ship> currentModShips,
+  ) async {
+    final skinsDir = Directory(p.join(folder.path, 'data/hulls/skins'));
+    final ships = <Ship>[];
+    final errors = <String>[];
+    int filesProcessed = 0;
+    final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
+
+    if (!await skinsDir.exists()) {
+      return ShipParseResult(ships, errors, filesProcessed);
+    }
+
+    final skinFiles = skinsDir
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.skin'))
+        .toList();
+
+    // Build a lookup combining all previously loaded ships + this mod's ships
+    final allAvailable = <String, Ship>{};
+    for (final s in allShipsSoFar) {
+      allAvailable[s.id] = s;
+    }
+    for (final s in currentModShips) {
+      allAvailable[s.id] = s;
+    }
+
+    for (final skinFile in skinFiles) {
+      filesProcessed++;
+      try {
+        final raw = await skinFile.readAsString(encoding: utf8);
+        final cleaned = raw.removeJsonComments();
+        final map = await cleaned.parseJsonToMapAsync();
+        final skin = ShipSkinMapper.fromMap(map);
+
+        final baseHull = allAvailable[skin.baseHullId];
+        if (baseHull == null) {
+          errors.add(
+            '[$modName] Skin ${skin.skinHullId}: base hull "${skin.baseHullId}" not found',
+          );
+          continue;
+        }
+
+        final ship = _resolveSkin(skin, baseHull, folder, modVariant);
+        ships.add(ship);
+        // Also make resolved skins available as base hulls for other skins
+        allAvailable[ship.id] = ship;
+      } catch (e) {
+        errors.add(
+          '[$modName] Failed to parse .skin file ${skinFile.path}: $e',
+        );
+      }
+    }
+
+    return ShipParseResult(ships, errors, filesProcessed);
+  }
+
+  /// Resolve a [ShipSkin] against its [baseHull] to produce a complete [Ship].
+  Ship _resolveSkin(
+    ShipSkin skin,
+    Ship baseHull,
+    Directory folder,
+    ModVariant? modVariant,
+  ) {
+    // Built-in mods: remove then add
+    final builtInMods = List<String>.from(baseHull.builtInMods ?? []);
+    if (skin.removeBuiltInMods != null) {
+      builtInMods.removeWhere(skin.removeBuiltInMods!.contains);
+    }
+    if (skin.builtInMods != null) {
+      builtInMods.addAll(skin.builtInMods!);
+    }
+
+    // Built-in weapons: remove then add
+    final builtInWeapons = Map<String, String>.from(
+      baseHull.builtInWeapons ?? {},
+    );
+    if (skin.removeBuiltInWeapons != null) {
+      builtInWeapons.removeWhere(
+        (k, _) => skin.removeBuiltInWeapons!.contains(k),
+      );
+    }
+    if (skin.builtInWeapons != null) {
+      builtInWeapons.addAll(skin.builtInWeapons!);
+    }
+
+    // Weapon slots: remove by ID
+    var weaponSlots = baseHull.weaponSlots;
+    if (skin.removeWeaponSlots != null &&
+        skin.removeWeaponSlots!.isNotEmpty &&
+        weaponSlots != null) {
+      weaponSlots = weaponSlots
+          .where((s) => !skin.removeWeaponSlots!.contains(s.id))
+          .toList();
+    }
+
+    // Hints: remove then add
+    final hints = List<String>.from(baseHull.hints ?? []);
+    if (skin.removeHints != null) {
+      hints.removeWhere(skin.removeHints!.contains);
+    }
+    if (skin.addHints != null) {
+      hints.addAll(skin.addHints!);
+    }
+
+    // Tags: override if skin specifies, otherwise inherit
+    final tags = skin.tags ?? baseHull.tags;
+
+    // Base value: apply multiplier if specified
+    double? baseValue = skin.baseValue?.toDouble() ?? baseHull.baseValue;
+    if (skin.baseValueMult != null && baseValue != null) {
+      baseValue = baseValue * skin.baseValueMult!;
+    }
+
+    // Sprite: resolve from skin or keep base
+    final spriteName = skin.spriteName ?? baseHull.spriteName;
+    final spriteFile = skin.spriteName != null
+        ? p.join(folder.path, skin.spriteName!).toFile().normalize.path
+        : baseHull.spriteFile;
+
+    return Ship(
+      id: skin.skinHullId,
+      isSkin: true,
+      baseHullId: skin.baseHullId,
+      name: skin.hullName ?? baseHull.name,
+      designation: skin.hullDesignation ?? baseHull.designation,
+      techManufacturer: skin.manufacturer ?? skin.tech ?? baseHull.techManufacturer,
+      systemId: skin.systemId ?? baseHull.systemId,
+      fleetPts: skin.fleetPoints?.toDouble() ?? baseHull.fleetPts,
+      hitpoints: baseHull.hitpoints,
+      armorRating: baseHull.armorRating,
+      maxFlux: baseHull.maxFlux,
+      fluxDissipation: baseHull.fluxDissipation,
+      ordnancePoints: skin.ordnancePoints?.toDouble() ?? baseHull.ordnancePoints,
+      fighterBays: skin.fighterBays?.toDouble() ?? baseHull.fighterBays,
+      maxSpeed: baseHull.maxSpeed,
+      acceleration: baseHull.acceleration,
+      deceleration: baseHull.deceleration,
+      maxTurnRate: baseHull.maxTurnRate,
+      turnAcceleration: baseHull.turnAcceleration,
+      mass: baseHull.mass,
+      shieldType: baseHull.shieldType,
+      defenseId: baseHull.defenseId,
+      shieldArc: baseHull.shieldArc,
+      shieldUpkeep: baseHull.shieldUpkeep,
+      shieldEfficiency: baseHull.shieldEfficiency,
+      phaseCost: baseHull.phaseCost,
+      phaseUpkeep: baseHull.phaseUpkeep,
+      minCrew: baseHull.minCrew,
+      maxCrew: baseHull.maxCrew,
+      cargo: baseHull.cargo,
+      fuel: baseHull.fuel,
+      fuelPerLY: baseHull.fuelPerLY,
+      range: baseHull.range,
+      maxBurn: baseHull.maxBurn,
+      baseValue: baseValue,
+      crPercentPerDay: baseHull.crPercentPerDay,
+      crToDeploy: baseHull.crToDeploy,
+      peakCrSec: baseHull.peakCrSec,
+      crLossPerSec: baseHull.crLossPerSec,
+      suppliesRec: baseHull.suppliesRec,
+      suppliesMo: baseHull.suppliesMo,
+      hints: hints,
+      tags: tags,
+      rarity: baseHull.rarity,
+      breakProb: baseHull.breakProb,
+      minPieces: baseHull.minPieces,
+      maxPieces: baseHull.maxPieces,
+      travelDrive: baseHull.travelDrive,
+      number: baseHull.number,
+      bounds: baseHull.bounds,
+      center: baseHull.center,
+      collisionRadius: baseHull.collisionRadius,
+      height: baseHull.height,
+      width: baseHull.width,
+      hullSize: baseHull.hullSize,
+      shieldCenter: baseHull.shieldCenter,
+      shieldRadius: baseHull.shieldRadius,
+      spriteName: spriteName,
+      spriteFile: spriteFile,
+      style: baseHull.style,
+      viewOffset: baseHull.viewOffset,
+      engineSlots: baseHull.engineSlots,
+      weaponSlots: weaponSlots,
+      builtInWeapons: builtInWeapons,
+      builtInMods: builtInMods,
+      builtInWings: skin.builtInWings ?? baseHull.builtInWings,
+      moduleAnchor: baseHull.moduleAnchor,
+    )..modVariant = modVariant ?? baseHull.modVariant;
   }
 }
 

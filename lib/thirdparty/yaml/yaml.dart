@@ -175,13 +175,14 @@ List _loadListValue(Parser parser) {
 }
 
 /// Builds a plain [Map] from parser events.
-Map _loadMapValue(Parser parser) {
-  var map = <dynamic, dynamic>{};
+/// Keys are always converted to strings since this is used for JSON encoding.
+Map<String, dynamic> _loadMapValue(Parser parser) {
+  var map = <String, dynamic>{};
   var event = parser.parse();
   while (event.type != EventType.mappingEnd) {
     var key = _loadValue(parser, event);
     var value = _loadValue(parser, parser.parse());
-    map[key] = value;
+    map[key.toString()] = value;
     event = parser.parse();
   }
   return map;

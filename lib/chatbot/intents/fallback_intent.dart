@@ -12,7 +12,11 @@ class FallbackIntent extends ChatIntent {
   static final _random = Random();
 
   static const _responses = [
-    "I'm not sure what you mean. Try something else?",
+    "I'm not sure what you mean. Try \"help\" to see what I can answer.",
+    "I didn't catch that. You can ask about mods, RAM, VRAM, logs, or troubleshooting.",
+    "Hmm, I don't have an answer for that. Try asking about mod updates, compatibility, or settings.",
+    "Not sure about that one. Type \"help\" for a list of topics I know about.",
+    "I couldn't match that to anything I know. Try rephrasing, or ask \"help\" for ideas.",
   ];
 
   @override

@@ -5,6 +5,7 @@ import 'chatbot_models.dart';
 import 'intents/app_update_intent.dart';
 import 'intents/app_version_intent.dart';
 import 'intents/common_issues_intent.dart';
+import 'intents/csv_export_intent.dart';
 import 'intents/current_profile_intent.dart';
 import 'intents/current_ram_info_intent.dart';
 import 'intents/current_settings_intent.dart';
@@ -18,7 +19,7 @@ import 'intents/game_version_info_intent.dart';
 import 'intents/help_intent.dart';
 import 'intents/high_vram_mods_intent.dart';
 import 'intents/hullmod_count_intent.dart';
-import 'intents/jre_info_intent.dart';
+import 'intents/ram_info_intent.dart';
 import 'intents/launch_settings_intent.dart';
 import 'intents/list_profiles_intent.dart';
 import 'intents/log_errors_intent.dart';
@@ -26,6 +27,7 @@ import 'intents/log_location_intent.dart';
 import 'intents/log_mod_list_intent.dart';
 import 'intents/log_summary_intent.dart';
 import 'intents/mod_audit_intent.dart';
+import 'intents/mod_manager_features_intent.dart';
 import 'intents/mod_changelog_intent.dart';
 import 'intents/mod_compatibility_intent.dart';
 import 'intents/mod_conflicts_intent.dart';
@@ -76,6 +78,8 @@ class ChatbotController extends AutoDisposeNotifier<ConversationContext> {
       RamAllocationIntent(),
       CommonIssuesIntent(),
       PermissionIssuesIntent(ref),
+      ModManagerFeaturesIntent(),
+      CsvExportIntent(),
       FindModsIntent(), // Must be before ModSearchIntent for tiebreaking.
 
       // === App info ===

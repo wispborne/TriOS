@@ -181,7 +181,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     width: 600,
                                     height: 1200,
                                     child: TriOSChangelogViewer(
-                                      url: Constants.changelogUrl,
                                       lastestVersionToShow:
                                           ref.read(
                                                 appSettings.select(

@@ -70,8 +70,12 @@ class Constants {
   static const graphicsLibId = "shaderLib";
   static const lunalibId = "lunalib";
   static const illustratedEntitiesId = "illustrated_entities";
-  static const changelogUrl =
+  static const changelogReleasesApiUrl =
+      "https://api.github.com/repos/wispborne/TriOS/releases";
+  static const changelogFallbackUrl =
       "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
+  static String changelogUrlForBranch(String branch) =>
+      "https://raw.githubusercontent.com/wispborne/TriOS/$branch/changelog.md";
   static const triosForumThread =
       "https://fractalsoftworks.com/forum/index.php?topic=29674.0";
   static const supportedArchiveExtensions = [

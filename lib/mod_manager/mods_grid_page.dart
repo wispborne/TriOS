@@ -178,6 +178,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               const SizedBox(width: 8),
                               buildProfileSelector(isGameRunning),
                               const SizedBox(width: 8),
+                              buildGroupBySelector(gridState),
+                              const SizedBox(width: 8),
                               // Removing Est. VRAM button because it's on the mod groups now.
                               // Maybe should add it to an overflow menu, though.
                               if (false) buildEstimateVramButton(theme),
@@ -357,14 +359,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   selectedItem: selectedMod,
                   defaultGrouping: EnabledStateModGridGroup(),
                   defaultSortField: ModGridSortField.name.name,
-                  groups: [
-                    UngroupedModGridGroup(),
-                    EnabledStateModGridGroup(),
-                    AuthorModGridGroup(),
-                    CategoryModGridGroup(ref),
-                    ModTypeModGridGroup(),
-                    GameVersionModGridGroup(),
-                  ],
+                  groups: _allGroupOptions,
                   preSortComparator: (left, right) {
                     final leftMetadata = modsMetadata?.getMergedModMetadata(
                       left.id,
@@ -1092,6 +1087,91 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ],
         );
       },
+    );
+  }
+
+  static final List<WispGridGroup<Mod>> _groupOptions = [
+    UngroupedModGridGroup(),
+    EnabledStateModGridGroup(),
+    AuthorModGridGroup(),
+  ];
+
+  List<WispGridGroup<Mod>> get _allGroupOptions => [
+    ..._groupOptions,
+    CategoryModGridGroup(ref),
+    ModTypeModGridGroup(),
+    GameVersionModGridGroup(),
+  ];
+
+  Widget buildGroupBySelector(WispGridState gridState) {
+    final groups = _allGroupOptions;
+    final currentKey = gridState.groupingSetting?.currentGroupedByKey ??
+        EnabledStateModGridGroup().key;
+    final currentGroup = groups.firstWhereOrNull((g) => g.key == currentKey) ??
+        groups[1];
+
+    return SizedBox(
+      height: 36,
+      child: MovingTooltipWidget.text(
+        message: "Change how mods are grouped in the grid.",
+        child: PopupMenuButton<WispGridGroup<Mod>>(
+          onSelected: (group) {
+            ref.read(appSettings.notifier).update((state) {
+              final existing = state.modsGridState.groupingSetting ??
+                  const GroupingSetting(currentGroupedByKey: 'enabledState');
+              return state.copyWith(
+                modsGridState: state.modsGridState.copyWith(
+                  groupingSetting: existing.copyWith(
+                    currentGroupedByKey: group.key,
+                  ),
+                ),
+              );
+            });
+          },
+          tooltip: "",
+          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          itemBuilder: (BuildContext context) => groups
+              .map(
+                (g) => PopupMenuItem<WispGridGroup<Mod>>(
+                  value: g,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        child: g.key == currentKey
+                            ? const Icon(Icons.check, size: 16)
+                            : null,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        g.displayName,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Group By",
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                Text(
+                  currentGroup.displayName,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontSize: 8),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

@@ -1228,17 +1228,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               value: ref.watch(
                 appSettings.select((s) => s.modsGridShowModInAllCategories),
               ),
-              onPressed: () {
-                final current = ref
-                    .read(appSettings)
-                    .modsGridShowModInAllCategories;
-                ref
-                    .read(appSettings.notifier)
-                    .update(
-                      (s) =>
-                          s.copyWith(modsGridShowModInAllCategories: !current),
-                    );
-              },
+              onPressed: () => toggleShowModInAllCategories(ref),
               child: const Text("Repeat Mods In Each Category"),
             ),
           Divider(),

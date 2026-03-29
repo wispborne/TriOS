@@ -337,15 +337,18 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     ),
                     MenuItem(
                       label: 'Only show enabled mods',
-                      icon:
-                          modsGridUpdatesShowDisabledMods ? null : Icons.check,
+                      icon: modsGridUpdatesShowDisabledMods
+                          ? null
+                          : Icons.check,
                       onSelected: () {
-                        ref.read(appSettings.notifier).update(
-                          (s) => s.copyWith(
-                            modsGridUpdatesShowDisabledMods:
-                                !s.modsGridUpdatesShowDisabledMods,
-                          ),
-                        );
+                        ref
+                            .read(appSettings.notifier)
+                            .update(
+                              (s) => s.copyWith(
+                                modsGridUpdatesShowDisabledMods:
+                                    !s.modsGridUpdatesShowDisabledMods,
+                              ),
+                            );
                       },
                     ),
                     MenuDivider(),
@@ -719,8 +722,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       ).child,
                       itemCellBuilder: (mod, modifiers) => CategoryCell(
                         modId: mod.id,
-                        checkedModIds:
-                            controller?.checkedItemIdsReadonly ?? {},
+                        checkedModIds: controller?.checkedItemIdsReadonly ?? {},
                       ),
                       csvValue: (mod) {
                         final notifier = ref.read(
@@ -1710,6 +1712,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                     mod,
                                     localVersionCheck,
                                     remoteVersionCheck,
+                                    showVersionChips: false,
                                   ),
                                 ),
                               ],
@@ -1725,6 +1728,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   mod,
                                   localVersionCheck,
                                   remoteVersionCheck,
+                                  showVersionChips: true,
                                 ),
                               ),
                             );

@@ -66,6 +66,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                               mod,
                               localVersionCheck,
                               remoteVersionCheck,
+                              showVersionChips: false,
                             ),
                           ),
                           Padding(
@@ -120,7 +121,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
               child: SizedBox(
                 width: 500,
                 height: 500,
-                child: Changelogs(mod, localVersionCheck, remoteVersionCheck),
+                child: Changelogs(mod, localVersionCheck, remoteVersionCheck, showVersionChips: true,),
               ),
             ),
           if (changelogUrl.isNotNullOrEmpty())

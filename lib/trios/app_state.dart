@@ -517,7 +517,11 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
     try {
       // Check the titles of all windows
       if (Platform.isWindows) {
-        _checkIfAnyProcessIsRunningUsingWmic(errors);
+        final wmicResult =
+            await _checkIfAnyProcessIsRunningUsingWmic(errors);
+        if (wmicResult != null) {
+          return wmicResult;
+        }
         // _checkIfAnyProcessIsRunningUsingPowershell(errors);
       } else if (Platform.isMacOS || Platform.isLinux) {
         // Use 'ps aux' command to get processes with command line

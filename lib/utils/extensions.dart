@@ -104,8 +104,13 @@ extension StringExt on String {
     var fixed = replaceAll(r"\#", "#").trim();
     // Replace tabs with spaces because yaml is picky. Thank you VIC.
     fixed = fixed.replaceAll("\t", "  ");
+    // Add space after colon before quote for unquoted keys
+    // (e.g. WS0001:"value" → WS0001: "value"). Thank you Shadowyards.
+    fixed = fixed.replaceAllMapped(RegExp(r'(\w):"'), (m) => '${m[1]}: "');
     // Remove trailing commas. Thank you SkillExtra.
     fixed = fixed.trimEnd(",");
+    // Replace semicolons used as value separators.
+    fixed = fixed.replaceAll(RegExp(r';$', multiLine: true), ',');
     // Removes lines starting with //, which are not valid json or yaml comments.
     // Thank you Epitaph Frost.
     fixed = fixed

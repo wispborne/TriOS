@@ -301,12 +301,14 @@ class ShipMapper extends ClassMapperBase<Ship> {
     'minPieces',
     _$minPieces,
     opt: true,
+    hook: SafeDoubleHook(),
   );
   static double? _$maxPieces(Ship v) => v.maxPieces;
   static const Field<Ship, double> _f$maxPieces = Field(
     'maxPieces',
     _$maxPieces,
     opt: true,
+    hook: SafeDoubleHook(),
   );
   static String? _$travelDrive(Ship v) => v.travelDrive;
   static const Field<Ship, String> _f$travelDrive = Field(
@@ -320,6 +322,7 @@ class ShipMapper extends ClassMapperBase<Ship> {
     'number',
     _$number,
     opt: true,
+    hook: SafeDoubleHook(),
   );
   static List<double>? _$bounds(Ship v) => v.bounds;
   static const Field<Ship, List<double>> _f$bounds = Field(

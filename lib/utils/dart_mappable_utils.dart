@@ -107,6 +107,18 @@ class FileHook extends MappingHook {
   }
 }
 
+class SafeDoubleHook extends MappingHook {
+  const SafeDoubleHook();
+
+  @override
+  dynamic beforeDecode(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    final parsed = double.tryParse(value.toString());
+    return parsed; // Returns null for non-numeric strings like "jaaf1".
+  }
+}
+
 class SafeDecodeHook<T> extends MappingHook {
   final T? defaultValue;
 

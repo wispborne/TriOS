@@ -70,16 +70,22 @@ class Ship with ShipMappable implements WispGridItem {
   @MappableField(key: 'base value')
   final double? baseValue;
   @MappableField(key: 'cr %/day')
+  @MappableField(hook: SafeDoubleHook())
   final double? crPercentPerDay;
   @MappableField(key: 'cr to deploy')
+  @MappableField(hook: SafeDoubleHook())
   final double? crToDeploy;
   @MappableField(key: 'peak cr sec')
+  @MappableField(hook: SafeDoubleHook())
   final double? peakCrSec;
   @MappableField(key: 'cr loss/sec')
+  @MappableField(hook: SafeDoubleHook())
   final double? crLossPerSec;
   @MappableField(key: 'supplies/rec')
+  @MappableField(hook: SafeDoubleHook())
   final double? suppliesRec;
   @MappableField(key: 'supplies/mo')
+  @MappableField(hook: SafeDoubleHook())
   final double? suppliesMo;
   @MappableField(hook: StringArrayHook())
   final List<String>? hints;
@@ -87,10 +93,13 @@ class Ship with ShipMappable implements WispGridItem {
   final List<String>? tags;
   final String? rarity;
   final String? breakProb;
+  @MappableField(hook: SafeDoubleHook())
   final double? minPieces;
+  @MappableField(hook: SafeDoubleHook())
   final double? maxPieces;
   @MappableField(key: 'travel drive')
   final String? travelDrive;
+  @MappableField(hook: SafeDoubleHook())
   final double? number;
 
   // Visual and gameplay data

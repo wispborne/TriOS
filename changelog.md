@@ -20,6 +20,7 @@
   - Window position/size sometimes getting reset between restarts.
   - Light themes now suck slightly less and cleaned up a couple more themes.
   - Scroll position on theme selector menu would reset.
+  - More cases of invalid json are now treated as valid, meaning more ships/weapons are loaded.
 - Changed
   - Removed JRE Manager.
     - Every Mikohime version uses a different file structure and installation method, which would require TriOS patches for compatibility.

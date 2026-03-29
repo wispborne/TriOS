@@ -293,9 +293,6 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       try {
         final ship = ShipMapper.fromMap(data)..modVariant = modVariant;
         ships.add(ship);
-        if (modName.contains("ayasu")) {
-          Fimber.d("Mayasu ship: ${ship.id}");
-        }
       } catch (e) {
         errors.add('[$modName] Failed to create ship for id "$shipId": $e');
       }

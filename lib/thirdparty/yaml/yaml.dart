@@ -156,7 +156,8 @@ dynamic loadYamlValue(String yaml, {Uri? sourceUrl}) {
 
 /// Recursively builds plain Dart objects from parser events.
 dynamic _loadValue(Parser parser, Event event) => switch (event.type) {
-      EventType.scalar => _parseScalarValue((event as ScalarEvent).value),
+      EventType.scalar => _parseScalarValue(
+          (event as ScalarEvent).value, event.style.isQuoted),
       EventType.alias => null,
       EventType.sequenceStart => _loadListValue(parser),
       EventType.mappingStart => _loadMapValue(parser),
@@ -189,9 +190,10 @@ Map<String, dynamic> _loadMapValue(Parser parser) {
 }
 
 /// Parses a scalar string into the appropriate Dart type.
-dynamic _parseScalarValue(String value) {
+/// Quoted empty strings are preserved as empty strings rather than null.
+dynamic _parseScalarValue(String value, bool isQuoted) {
   var length = value.length;
-  if (length == 0) return null;
+  if (length == 0) return isQuoted ? '' : null;
 
   var firstChar = value.codeUnitAt(0);
   return switch (firstChar) {

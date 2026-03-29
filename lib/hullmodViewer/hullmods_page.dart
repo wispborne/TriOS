@@ -588,6 +588,13 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             hullmod.csvFile.parent,
             label: 'Open hullmod data folder',
           ),
+          if (hullmod.modVariant != null)
+            buildOpenSingleFolderMenuItem(
+              hullmod.modVariant!.modFolder.absolute,
+              label: 'Open Mod Folder',
+            ),
+          if (hullmod.modVariant != null)
+            buildMenuItemOpenForumPage(hullmod.modVariant!, context),
         ],
         padding: const EdgeInsets.all(8.0),
       ),

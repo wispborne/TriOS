@@ -675,6 +675,13 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
               secondFolder: weapon.wpnFile?.parent,
               label: 'Open weapon data folder(s)',
             ),
+          if (weapon.modVariant != null)
+            buildOpenSingleFolderMenuItem(
+              weapon.modVariant!.modFolder.absolute,
+              label: 'Open Mod Folder',
+            ),
+          if (weapon.modVariant != null)
+            buildMenuItemOpenForumPage(weapon.modVariant!, context),
         ],
         padding: const EdgeInsets.all(8.0),
       ),

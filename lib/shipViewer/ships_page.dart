@@ -386,6 +386,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           buildOpenSingleFolderMenuItem(
             _getPathForSpriteName(ship, gameCoreDir).parent,
           ),
+          if (ship.modVariant != null)
+            buildOpenSingleFolderMenuItem(
+              ship.modVariant!.modFolder.absolute,
+              label: 'Open Mod Folder',
+            ),
+          if (ship.modVariant != null)
+            buildMenuItemOpenForumPage(ship.modVariant!, context),
         ],
         padding: const EdgeInsets.all(8.0),
       ),

@@ -250,7 +250,19 @@ class _WispGridState<T extends WispGridItem>
               ? sortResult * -1
               : sortResult;
         })
-        .groupBy((item) => grouping?.getGroupSortValue(item))
+        .let((sortedItems) {
+          // Build groups, allowing items to appear in multiple groups
+          // when getAllGroupSortValues returns more than one value.
+          final Map<Comparable?, List<T>> grouped = {};
+          for (final item in sortedItems) {
+            final sortValues = grouping?.getAllGroupSortValues(item) ??
+                [grouping?.getGroupSortValue(item)];
+            for (final sv in sortValues) {
+              (grouped[sv] ??= []).add(item);
+            }
+          }
+          return grouped;
+        })
         .entries
         .let(
           (entries) => groupingSetting?.isSortDescending ?? false
@@ -349,6 +361,7 @@ class _WispGridState<T extends WispGridItem>
               groups: widget.groups,
               gridState: gridState,
               updateGridState: widget.updateGridState,
+              groupSortValue: groupSortValue is Comparable ? groupSortValue : null,
             );
 
             if (grouping.supportsDragAndDrop) {
@@ -903,14 +916,14 @@ class _PinnedWispGridGroup<T extends WispGridItem> extends WispGridGroup<T> {
   _PinnedWispGridGroup(this.info) : super('__pinned__', info.name);
 
   @override
-  String? getGroupName(T mod) => info.name;
+  String? getGroupName(T mod, {Comparable? groupSortValue}) => info.name;
 
   @override
   Comparable? getGroupSortValue(T mod) => null;
 
   @override
-  Color? getGroupColor(T mod) => info.color;
+  Color? getGroupColor(T mod, {Comparable? groupSortValue}) => info.color;
 
   @override
-  CategoryIcon? getGroupIcon(T mod) => info.icon;
+  CategoryIcon? getGroupIcon(T mod, {Comparable? groupSortValue}) => info.icon;
 }

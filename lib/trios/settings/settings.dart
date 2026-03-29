@@ -91,6 +91,7 @@ class Settings with SettingsMappable {
   final bool dashboardModListColorful;
   final bool modsGridColorful;
   final bool modsGridUpdatesShowDisabledMods;
+  final bool modsGridShowModInAllCategories;
 
   // Settings Page
   @Deprecated(
@@ -183,6 +184,7 @@ class Settings with SettingsMappable {
     this.dashboardModListColorful = false,
     this.modsGridColorful = false,
     this.modsGridUpdatesShowDisabledMods = true,
+    this.modsGridShowModInAllCategories = false,
     this.shouldAutoUpdateOnLaunch = false,
     this.secondsBetweenModFolderChecks = 15,
     this.toastDurationSeconds = 7,

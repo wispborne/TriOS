@@ -24,6 +24,10 @@ class WispGridGroupRowView<T extends WispGridItem>
   final Function(WispGridState? Function(WispGridState)) updateGridState;
   final List<ContextMenuEntry> additionalContextMenuEntries;
 
+  /// The sort value key for this group, passed through to [getGroupName] etc.
+  /// so multi-group items resolve the correct group identity.
+  final Comparable? groupSortValue;
+
   const WispGridGroupRowView({
     super.key,
     required this.grouping,
@@ -36,6 +40,7 @@ class WispGridGroupRowView<T extends WispGridItem>
     required this.gridState,
     required this.updateGridState,
     this.additionalContextMenuEntries = const [],
+    this.groupSortValue,
   });
 
   @override
@@ -47,14 +52,25 @@ class _WispGridRowState<T extends WispGridItem>
   @override
   Widget build(BuildContext context) {
     final itemsInGroup = widget.itemsInGroup;
-    final groupName =
-        widget.itemsInGroup.firstOrNull?.let(widget.grouping.getGroupName) ??
+    final sortValue = widget.groupSortValue;
+    final groupName = widget.itemsInGroup.firstOrNull?.let(
+          (mod) => widget.grouping.getGroupName(
+            mod,
+            groupSortValue: sortValue,
+          ),
+        ) ??
         "";
     final groupColor = widget.itemsInGroup.firstOrNull?.let(
-      widget.grouping.getGroupColor,
+      (mod) => widget.grouping.getGroupColor(
+        mod,
+        groupSortValue: sortValue,
+      ),
     );
     final groupIcon = widget.itemsInGroup.firstOrNull?.let(
-      widget.grouping.getGroupIcon,
+      (mod) => widget.grouping.getGroupIcon(
+        mod,
+        groupSortValue: sortValue,
+      ),
     );
 
     final headerStyle =

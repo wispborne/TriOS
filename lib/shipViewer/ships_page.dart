@@ -1058,7 +1058,7 @@ class UngroupedShipGridGroup extends WispGridGroup<Ship> {
   UngroupedShipGridGroup() : super('none', 'None');
 
   @override
-  String getGroupName(Ship item) => 'All Ships';
+  String getGroupName(Ship item, {Comparable? groupSortValue}) => 'All Ships';
 
   @override
   Comparable getGroupSortValue(Ship item) => 1;
@@ -1071,7 +1071,7 @@ class ModShipGridGroup extends WispGridGroup<Ship> {
   ModShipGridGroup() : super('mod', 'Mod');
 
   @override
-  String getGroupName(Ship item) =>
+  String getGroupName(Ship item, {Comparable? groupSortValue}) =>
       item.modVariant?.modInfo.nameOrId ?? "Vanilla";
 
   @override

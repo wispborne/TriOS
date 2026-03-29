@@ -86,15 +86,25 @@ abstract class WispGridGroup<T extends WispGridItem> {
   /// Identifier for drag operations to prevent cross-grid drops.
   String get dragDataType => key;
 
-  String? getGroupName(T mod);
+  /// Returns the display name for the group that [mod] belongs to.
+  /// When [groupSortValue] is provided, resolve the group from it instead
+  /// of from the item's primary assignment (needed for multi-group items).
+  String? getGroupName(T mod, {Comparable? groupSortValue});
 
   Comparable? getGroupSortValue(T mod);
 
+  /// Returns all group sort values for [mod]. Override to place an item
+  /// in multiple groups (e.g. a mod assigned to several categories).
+  /// Defaults to a single-element list from [getGroupSortValue].
+  List<Comparable?> getAllGroupSortValues(T item) => [getGroupSortValue(item)];
+
   /// Returns a color associated with the group that [mod] belongs to,
   /// or `null` if there is no color.
-  Color? getGroupColor(T mod) => null;
+  /// When [groupSortValue] is provided, resolve from it instead of from
+  /// the item's primary assignment.
+  Color? getGroupColor(T mod, {Comparable? groupSortValue}) => null;
 
-  CategoryIcon? getGroupIcon(T mod) => null;
+  CategoryIcon? getGroupIcon(T mod, {Comparable? groupSortValue}) => null;
 
   bool isGroupVisible = true;
 }
@@ -103,7 +113,7 @@ class UngroupedModGridGroup extends WispGridGroup<Mod> {
   UngroupedModGridGroup() : super('none', 'None');
 
   @override
-  String getGroupName(Mod mod) => 'All Mods';
+  String getGroupName(Mod mod, {Comparable? groupSortValue}) => 'All Mods';
 
   @override
   Comparable getGroupSortValue(Mod mod) => 1;
@@ -116,7 +126,8 @@ class EnabledStateModGridGroup extends WispGridGroup<Mod> {
   EnabledStateModGridGroup() : super('enabledState', 'Enabled');
 
   @override
-  String getGroupName(Mod mod) => mod.isEnabledOnUi ? 'Enabled' : 'Disabled';
+  String getGroupName(Mod mod, {Comparable? groupSortValue}) =>
+      mod.isEnabledOnUi ? 'Enabled' : 'Disabled';
 
   @override
   Comparable getGroupSortValue(Mod mod) => mod.isEnabledOnUi ? 0 : 1;
@@ -218,9 +229,21 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
   }
 
   @override
-  String getGroupName(Mod mod) {
+  String getGroupName(Mod mod, {Comparable? groupSortValue}) {
     final store = ref.read(categoryManagerProvider).value;
     if (store == null) return 'Uncategorized';
+
+    // When a groupSortValue is provided, resolve the category from it
+    // instead of from the mod's primary assignment. This is needed when
+    // a mod appears in multiple category groups.
+    if (groupSortValue != null) {
+      if (groupSortValue == 'zzzzzzzzz') return 'Uncategorized';
+      final cat = store.categories.firstWhereOrNull(
+        (c) => c.name.toLowerCase() == groupSortValue,
+      );
+      return cat?.name ?? 'Uncategorized';
+    }
+
     final assignments = store.modAssignments[mod.id] ?? [];
     final primary = assignments.firstWhereOrNull((a) => a.isPrimary);
     if (primary == null && assignments.isNotEmpty) {
@@ -244,7 +267,37 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
   }
 
   @override
-  Color? getGroupColor(Mod mod) {
+  List<Comparable?> getAllGroupSortValues(Mod item) {
+    final showAll = ref.read(appSettings).modsGridShowModInAllCategories;
+    if (!showAll) return [getGroupSortValue(item)];
+
+    final store = ref.read(categoryManagerProvider).value;
+    if (store == null) return [getGroupSortValue(item)];
+
+    final assignments = store.modAssignments[item.id] ?? [];
+    if (assignments.length <= 1) return [getGroupSortValue(item)];
+
+    return assignments.map((a) {
+      final cat = store.categories.firstWhereOrNull(
+        (c) => c.id == a.categoryId,
+      );
+      final name = cat?.name ?? 'Uncategorized';
+      return name == 'Uncategorized' ? 'zzzzzzzzz' : name.toLowerCase();
+    }).toList();
+  }
+
+  /// Resolves a category from a group sort value (lowercase name).
+  Category? _categoryFromSortValue(Comparable? sortValue) {
+    if (sortValue == null || sortValue == 'zzzzzzzzz') return null;
+    final store = ref.read(categoryManagerProvider).value;
+    if (store == null) return null;
+    return store.categories.firstWhereOrNull(
+      (c) => c.name.toLowerCase() == sortValue,
+    );
+  }
+
+  /// Resolves the primary category for a mod.
+  Category? _primaryCategoryForMod(Mod mod) {
     final store = ref.read(categoryManagerProvider).value;
     if (store == null) return null;
     final assignments = store.modAssignments[mod.id] ?? [];
@@ -252,19 +305,23 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
     final categoryId =
         primary?.categoryId ?? assignments.firstOrNull?.categoryId;
     if (categoryId == null) return null;
-    return store.categories.firstWhereOrNull((c) => c.id == categoryId)?.color;
+    return store.categories.firstWhereOrNull((c) => c.id == categoryId);
   }
 
   @override
-  CategoryIcon? getGroupIcon(Mod mod) {
-    final store = ref.read(categoryManagerProvider).value;
-    if (store == null) return null;
-    final assignments = store.modAssignments[mod.id] ?? [];
-    final primary = assignments.firstWhereOrNull((a) => a.isPrimary);
-    final categoryId =
-        primary?.categoryId ?? assignments.firstOrNull?.categoryId;
-    if (categoryId == null) return null;
-    return store.categories.firstWhereOrNull((c) => c.id == categoryId)?.icon;
+  Color? getGroupColor(Mod mod, {Comparable? groupSortValue}) {
+    if (groupSortValue != null) {
+      return _categoryFromSortValue(groupSortValue)?.color;
+    }
+    return _primaryCategoryForMod(mod)?.color;
+  }
+
+  @override
+  CategoryIcon? getGroupIcon(Mod mod, {Comparable? groupSortValue}) {
+    if (groupSortValue != null) {
+      return _categoryFromSortValue(groupSortValue)?.icon;
+    }
+    return _primaryCategoryForMod(mod)?.icon;
   }
 
   /// Resolves the category for a group of mods (based on the first mod's primary assignment).
@@ -308,6 +365,23 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
             ...categoryEntries,
             MenuDivider(),
             MenuItem(
+              icon: ref.read(appSettings).modsGridShowModInAllCategories
+                  ? Icons.check
+                  : null,
+              label: 'Repeat Mods In Each Category',
+              onSelected: () {
+                final current = ref
+                    .read(appSettings)
+                    .modsGridShowModInAllCategories;
+                ref
+                    .read(appSettings.notifier)
+                    .update(
+                      (s) =>
+                          s.copyWith(modsGridShowModInAllCategories: !current),
+                    );
+              },
+            ),
+            MenuItem(
               label: 'Manage Categories...',
               icon: Icons.settings,
               onSelected: () {
@@ -349,7 +423,7 @@ class AuthorModGridGroup extends WispGridGroup<Mod> {
   AuthorModGridGroup() : super('author', 'Author');
 
   @override
-  String getGroupName(Mod mod) =>
+  String getGroupName(Mod mod, {Comparable? groupSortValue}) =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.author ?? 'No Author';
 
   @override
@@ -401,7 +475,7 @@ class ModTypeModGridGroup extends WispGridGroup<Mod> {
   ModTypeModGridGroup() : super('modType', 'Mod Type');
 
   @override
-  String getGroupName(Mod mod) {
+  String getGroupName(Mod mod, {Comparable? groupSortValue}) {
     final modInfo = mod.findFirstEnabledOrHighestVersion?.modInfo;
     if (modInfo?.isUtility == true) {
       return 'Utility';
@@ -469,7 +543,7 @@ class GameVersionModGridGroup extends WispGridGroup<Mod> {
   GameVersionModGridGroup() : super('gameVersion', 'Game Version');
 
   @override
-  String getGroupName(Mod mod) =>
+  String getGroupName(Mod mod, {Comparable? groupSortValue}) =>
       mod.findFirstEnabledOrHighestVersion?.modInfo.gameVersion ?? 'Unknown';
 
   @override

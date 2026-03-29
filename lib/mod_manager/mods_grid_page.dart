@@ -1105,10 +1105,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
   Widget buildGroupBySelector(WispGridState gridState) {
     final groups = _allGroupOptions;
-    final currentKey = gridState.groupingSetting?.currentGroupedByKey ??
+    final currentKey =
+        gridState.groupingSetting?.currentGroupedByKey ??
         EnabledStateModGridGroup().key;
-    final currentGroup = groups.firstWhereOrNull((g) => g.key == currentKey) ??
-        groups[1];
+    final currentGroup =
+        groups.firstWhereOrNull((g) => g.key == currentKey) ?? groups[1];
 
     return SizedBox(
       height: 36,
@@ -1117,7 +1118,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         child: PopupMenuButton<WispGridGroup<Mod>>(
           onSelected: (group) {
             ref.read(appSettings.notifier).update((state) {
-              final existing = state.modsGridState.groupingSetting ??
+              final existing =
+                  state.modsGridState.groupingSetting ??
                   const GroupingSetting(currentGroupedByKey: 'enabledState');
               return state.copyWith(
                 modsGridState: state.modsGridState.copyWith(
@@ -1143,10 +1145,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             : null,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        g.displayName,
-                        style: const TextStyle(fontSize: 13),
-                      ),
+                      Text(g.displayName, style: const TextStyle(fontSize: 13)),
                     ],
                   ),
                 ),
@@ -1218,6 +1217,30 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             },
             child: const Text("Colorful"),
           ),
+          if (ref.watch(
+            appSettings.select(
+              (s) =>
+                  s.modsGridState.groupingSetting?.currentGroupedByKey ==
+                  'category',
+            ),
+          ))
+            PopupStyleMenuAnchor.checkboxItem(
+              value: ref.watch(
+                appSettings.select((s) => s.modsGridShowModInAllCategories),
+              ),
+              onPressed: () {
+                final current = ref
+                    .read(appSettings)
+                    .modsGridShowModInAllCategories;
+                ref
+                    .read(appSettings.notifier)
+                    .update(
+                      (s) =>
+                          s.copyWith(modsGridShowModInAllCategories: !current),
+                    );
+              },
+              child: const Text("Repeat Mods In Each Category"),
+            ),
           Divider(),
           SubmenuButton(
             leadingIcon: PopupStyleMenuAnchor.paddedIcon(

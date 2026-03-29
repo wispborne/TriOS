@@ -829,7 +829,8 @@ class UngroupedHullmodGridGroup extends WispGridGroup<Hullmod> {
   UngroupedHullmodGridGroup() : super('none', 'None');
 
   @override
-  String getGroupName(Hullmod mod) => 'All Hullmods';
+  String getGroupName(Hullmod mod, {Comparable? groupSortValue}) =>
+      'All Hullmods';
 
   @override
   Comparable getGroupSortValue(Hullmod mod) => 1;
@@ -842,7 +843,7 @@ class ModNameHullmodGridGroup extends WispGridGroup<Hullmod> {
   ModNameHullmodGridGroup() : super('modVariant', 'Mod');
 
   @override
-  String getGroupName(Hullmod mod) =>
+  String getGroupName(Hullmod mod, {Comparable? groupSortValue}) =>
       mod.modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
   @override

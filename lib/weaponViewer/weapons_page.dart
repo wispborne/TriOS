@@ -950,7 +950,8 @@ class UngroupedWeaponGridGroup extends WispGridGroup<Weapon> {
   UngroupedWeaponGridGroup() : super('none', 'None');
 
   @override
-  String getGroupName(Weapon mod) => 'All Weapons';
+  String getGroupName(Weapon mod, {Comparable? groupSortValue}) =>
+      'All Weapons';
 
   @override
   Comparable getGroupSortValue(Weapon mod) => 1;
@@ -963,7 +964,7 @@ class ModNameWeaponGridGroup extends WispGridGroup<Weapon> {
   ModNameWeaponGridGroup() : super('modId', 'Mod');
 
   @override
-  String getGroupName(Weapon mod) =>
+  String getGroupName(Weapon mod, {Comparable? groupSortValue}) =>
       mod.modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
   @override

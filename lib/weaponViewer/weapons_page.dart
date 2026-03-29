@@ -20,6 +20,7 @@ import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
 import 'package:trios/weaponViewer/weapons_page_controller.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
+import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/ingame_weapon_tooltip.dart';
@@ -81,14 +82,19 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
 
     // Apply pending mod filter from context menu navigation.
     final filterRequest = ref.watch(AppState.viewerFilterRequest);
-    if (filterRequest != null && filterRequest.destination == TriOSTools.weapons) {
+    if (filterRequest != null &&
+        filterRequest.destination == TriOSTools.weapons) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final modFilter = ref.read(weaponsPageControllerProvider).filterCategories
+        final modFilter = ref
+            .read(weaponsPageControllerProvider)
+            .filterCategories
             .firstWhereOrNull((f) => f.name == 'Mod');
         if (modFilter != null) {
-          ref.read(weaponsPageControllerProvider.notifier)
-              .updateFilterStates(modFilter, {filterRequest.modName: true});
+          ref.read(weaponsPageControllerProvider.notifier).updateFilterStates(
+            modFilter,
+            {filterRequest.modName: true},
+          );
         }
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
@@ -354,7 +360,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         },
         columns: columns,
         items: items,
-        itemExtent: 50,
+        itemExtent: 40,
         scrollbarConfig: ScrollbarConfig(
           showLeftScrollbar: ScrollbarVisibility.always,
           showRightScrollbar: ScrollbarVisibility.always,
@@ -362,7 +368,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         ),
         rowBuilder: ({required item, required modifiers, required child}) =>
             SizedBox(
-              height: 50,
+              height: 40,
               child: InkWell(
                 onTap: () => _showWeaponDetailsDialog(context, item),
                 child: Container(
@@ -507,14 +513,16 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             children: [
               const SizedBox(height: 8),
               if ((w.customPrimary ?? '').isNotEmpty)
-                w.customPrimary!.replaceSubstitutionsRich(
-                  w.customPrimaryHL,
+                DescriptionWithSubstitutions(
+                  description: w.customPrimary!,
+                  highlightValues: w.customPrimaryHL,
                   highlightColor: theme.colorScheme.secondary,
                   baseStyle: theme.textTheme.bodySmall,
                 ),
               if ((w.customAncillary ?? '').isNotEmpty)
-                w.customAncillary!.replaceSubstitutionsRich(
-                  w.customAncillaryHL,
+                DescriptionWithSubstitutions(
+                  description: w.customAncillary!,
+                  highlightValues: w.customAncillaryHL,
                   highlightColor: theme.colorScheme.secondary,
                   baseStyle: theme.textTheme.bodySmall,
                 ),
@@ -783,7 +791,9 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         name: '',
         itemCellBuilder: (item, modifiers) => WeaponImageCell(
           imagePaths: spritesForWeapon(item),
-          fit: controllerState.useContainFit ? BoxFit.contain : BoxFit.scaleDown,
+          fit: controllerState.useContainFit
+              ? BoxFit.contain
+              : BoxFit.scaleDown,
         ),
         csvValue: (weapon) => spritesForWeapon(weapon).join(","),
         defaultState: WispGridColumnState(position: position++, width: 40),
@@ -821,7 +831,6 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       item.turretSprite,
     ].whereType<String>().toList();
   }
-
 
   Widget _buildOverflowButton({
     required BuildContext context,

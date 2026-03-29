@@ -8,6 +8,7 @@ import 'package:trios/hullmodViewer/hullmods_manager.dart';
 import 'package:trios/hullmodViewer/hullmods_page_controller.dart';
 import 'package:trios/hullmodViewer/models/hullmod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
+import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
@@ -355,7 +356,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         },
         columns: columns,
         items: items,
-        itemExtent: 50,
+        itemExtent: 40,
         scrollbarConfig: ScrollbarConfig(
           showLeftScrollbar: ScrollbarVisibility.always,
           showRightScrollbar: ScrollbarVisibility.always,
@@ -363,7 +364,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         ),
         rowBuilder: ({required item, required modifiers, required child}) =>
             SizedBox(
-              height: 50,
+              height: 40,
               child: InkWell(
                 onTap: () => _showHullmodDetailsDialog(context, item),
                 child: Container(
@@ -484,15 +485,19 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         ],
         if ((h.desc ?? '').isNotEmpty) ...[
           const SizedBox(height: 8),
-          SelectableText(h.desc!, style: theme.textTheme.bodySmall),
+          DescriptionWithSubstitutions(
+            description: h.desc!,
+            baseStyle: theme.textTheme.bodySmall,
+          ),
         ],
         if ((h.sModDesc ?? '').isNotEmpty) ...[
           const SizedBox(height: 4),
-          SelectableText(
-            'S-Mod: ${h.sModDesc!}',
-            style: theme.textTheme.bodySmall?.copyWith(
+          DescriptionWithSubstitutions(
+            description: 'S-Mod: ${h.sModDesc!}',
+            baseStyle: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.secondary,
             ),
+            highlightColor: theme.colorScheme.secondary,
           ),
         ],
         Divider(color: theme.colorScheme.outline),

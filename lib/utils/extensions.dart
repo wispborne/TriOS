@@ -310,16 +310,10 @@ List<_SubstitutionPart> _parseStarsectorSubstitutions({
 }) {
   final parts = <_SubstitutionPart>[];
 
-  if (replacementValuesString == null || replacementValuesString.isEmpty) {
-    // No replacements: whole template is literal.
-    parts.add(_SubstitutionPart(template, false));
-    return parts;
-  }
-
-  final replacementValues = replacementValuesString
-      .split('|')
-      .map((it) => it.trim())
-      .toList();
+  final replacementValues = (replacementValuesString == null ||
+          replacementValuesString.isEmpty)
+      ? <String>[]
+      : replacementValuesString.split('|').map((it) => it.trim()).toList();
 
   final sb = StringBuffer();
   int i = 0;

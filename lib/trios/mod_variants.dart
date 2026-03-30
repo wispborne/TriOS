@@ -26,14 +26,12 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
 
   @override
   Future<List<ModVariant>> build() async {
-    // if (state.value == null && !state.hasError) {
     try {
       await reloadModVariants();
     } catch (e, stacktrace) {
       state = AsyncValue.error(e, stacktrace);
       Fimber.e("Failed to reload mod variants", ex: e, stacktrace: stacktrace);
     }
-    // }
 
     ref.listen(AppState.modsFolder, (previous, next) {
       if (previous != next) {
@@ -42,18 +40,20 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       }
     });
 
+    // Defer file watcher setup to avoid allocating OS resources during initial load.
     if (!_initializedFileWatcher) {
       _initializedFileWatcher = true;
-      final modsPath = ref.watch(AppState.modsFolder).value;
-
-      if (modsPath != null && modsPath.existsSync()) {
-        addModsFolderFileWatcher(modsPath, (List<File> files) {
-          _fileWatcherReloadDebouncer.debounce(() {
-            onModsFolderChanged(files);
-            return null;
+      Future.microtask(() {
+        final modsPath = ref.read(AppState.modsFolder).value;
+        if (modsPath != null && modsPath.existsSync()) {
+          addModsFolderFileWatcher(modsPath, (List<File> files) {
+            _fileWatcherReloadDebouncer.debounce(() {
+              onModsFolderChanged(files);
+              return null;
+            });
           });
-        });
-      }
+        }
+      });
     }
     return state.value ?? [];
   }
@@ -192,12 +192,16 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     Directory modsFolder, {
     required bool searchRootFolder,
   }) async {
-    final mods = <ModVariant?>[];
     if (!modsFolder.existsSync()) return [];
     final gameCoreFolder = ref.watch(AppState.gameCoreFolder).value;
     if (gameCoreFolder == null) return [];
 
-    final folders = modsFolder.listSync().whereType<Directory>().toList();
+    // Use async list() instead of blocking listSync().
+    final folders = await modsFolder
+        .list()
+        .where((e) => e is Directory)
+        .cast<Directory>()
+        .toList();
 
     // If we're searching the game's mods folder, we don't want to include `mods/mod_info.json` (invalid mod, and dangerous because its parent folder is `mods`).
     // But if we're searching just one mod's folder, then yeah we do expect there to be a mod_info.json` file at the root.
@@ -205,37 +209,41 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       folders.add(modsFolder);
     }
 
-    for (final modFolder in folders) {
-      try {
-        var progressText = StringBuffer();
-        var modInfo = await getModInfo(modFolder, progressText);
-        if (modInfo == null) {
-          continue;
+    // Parse all mod folders in parallel instead of sequentially.
+    final results = await Future.wait(
+      folders.map((modFolder) async {
+        try {
+          var progressText = StringBuffer();
+          var modInfo = await getModInfo(modFolder, progressText);
+          if (modInfo == null) {
+            return null;
+          }
+
+          // Use async versions to avoid blocking the main thread with sync file reads.
+          final versionFile = await getVersionFileAsync(modFolder);
+          final versionCheckerInfo = versionFile != null
+              ? await getVersionCheckerInfoAsync(versionFile)
+              : null;
+
+          final modVariant = ModVariant(
+            modInfo: modInfo,
+            modFolder: modFolder,
+            versionCheckerInfo: versionCheckerInfo,
+            hasNonBrickedModInfo: await modFolder
+                .resolve(Constants.unbrickedModInfoFileName)
+                .exists(),
+            gameCoreFolder: gameCoreFolder,
+          );
+
+          Fimber.d("Found mod ${modVariant.smolId} in folder ${modFolder.name}");
+          return modVariant;
+        } catch (e, st) {
+          Fimber.w("Unable to read mod in ${modFolder.absolute}. ($e)\n$st");
+          return null;
         }
+      }),
+    );
 
-        final modVariant = ModVariant(
-          modInfo: modInfo,
-          modFolder: modFolder,
-          versionCheckerInfo: getVersionFile(
-            modFolder,
-          )?.let((it) => getVersionCheckerInfo(it)),
-          hasNonBrickedModInfo: await modFolder
-              .resolve(Constants.unbrickedModInfoFileName)
-              .exists(),
-          gameCoreFolder: gameCoreFolder,
-        );
-
-        Fimber.d("Found mod ${modVariant.smolId} in folder ${modFolder.name}");
-
-        // Screenshot mode
-        // if (modVariant.modInfo.isCompatibleWithGame("0.97a-RC10") == GameCompatibility.compatible || (Random().nextBool() && Random().nextBool())) {
-        mods.add(modVariant);
-        // }
-      } catch (e, st) {
-        Fimber.w("Unable to read mod in ${modFolder.absolute}. ($e)\n$st");
-      }
-    }
-
-    return mods.whereType<ModVariant>().toList();
+    return results.whereType<ModVariant>().toList();
   }
 }

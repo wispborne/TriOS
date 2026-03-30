@@ -194,19 +194,19 @@ class SettingsFileManager {
     Fimber.i("Backup of $_fileName created at ${backupFile.path}");
   }
 
+  Settings _parseSettings(String contents) {
+    final map = jsonDecode(contents) as Map<String, dynamic>;
+    return SettingsMapper.fromMap(map);
+  }
+
   /// Attempts to load [Settings] from disk, returning `null` on failure.
   Settings? loadSync() {
     return _lock.protectSync(() {
       if (_settingsFile.existsSync()) {
         try {
-          final contents = _settingsFile.readAsStringSync();
-          final map =
-              // (_fileFormat == FileFormat.toml)
-              //     ? TomlDocument.parse(contents).toMap()
-              //     :
-              jsonDecode(contents) as Map<String, dynamic>;
+          final settings = _parseSettings(_settingsFile.readAsStringSync());
           Fimber.i("$_fileName successfully loaded from disk.");
-          return SettingsMapper.fromMap(map);
+          return settings;
         } catch (e, stackTrace) {
           Fimber.e(
             "Error reading from disk, creating backup: $e",
@@ -218,6 +218,25 @@ class SettingsFileManager {
       }
       return null;
     });
+  }
+
+  /// Async version of [loadSync] that avoids blocking the main thread.
+  Future<Settings?> loadAsync() async {
+    if (await _settingsFile.exists()) {
+      try {
+        final settings = _parseSettings(await _settingsFile.readAsString());
+        Fimber.i("$_fileName successfully loaded from disk.");
+        return settings;
+      } catch (e, stackTrace) {
+        Fimber.e(
+          "Error reading from disk, creating backup: $e",
+          ex: e,
+          stacktrace: stackTrace,
+        );
+        _createBackupSync();
+      }
+    }
+    return null;
   }
 
   /// Writes [settings] to the file system, replacing any existing data.

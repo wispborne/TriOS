@@ -77,6 +77,18 @@ File? getModInfoFile(Directory modFolder) {
   return null;
 }
 
+/// Parses the version checker CSV content to resolve the version file path.
+File _parseVersionFilePath(String csvContent, Directory modFolder) {
+  return modFolder
+      .resolve(
+        (const CsvToListConverter(
+              eol: "\n",
+            ).convert(csvContent.replaceAll("\r\n", "\n"))[1][0]
+            as String),
+      )
+      .toFile();
+}
+
 /// Reads the version checker CSV file and returns the path to the version JSON file.
 ///
 /// Returns null if the CSV doesn't exist or can't be read.
@@ -84,20 +96,44 @@ File? getVersionFile(Directory modFolder) {
   final csv = File(p.join(modFolder.path, Constants.versionCheckerCsvPath));
   if (!csv.existsSync()) return null;
   try {
-    return modFolder
-        .resolve(
-          (const CsvToListConverter(
-                eol: "\n",
-              ).convert(csv.readAsStringSync().replaceAll("\r\n", "\n"))[1][0]
-              as String),
-        )
-        .toFile();
+    return _parseVersionFilePath(csv.readAsStringSync(), modFolder);
   } catch (e, st) {
     Fimber.e(
       "Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st",
     );
     return null;
   }
+}
+
+/// Async version of [getVersionFile] that avoids blocking the main thread.
+Future<File?> getVersionFileAsync(Directory modFolder) async {
+  final csv = File(p.join(modFolder.path, Constants.versionCheckerCsvPath));
+  if (!await csv.exists()) return null;
+  try {
+    return _parseVersionFilePath(await csv.readAsString(), modFolder);
+  } catch (e, st) {
+    Fimber.e(
+      "Unable to read version checker csv file in ${modFolder.absolute}. ($e)\n$st",
+    );
+    return null;
+  }
+}
+
+/// Parses version checker JSON content and cleans up the mod thread ID.
+VersionCheckerInfo _parseVersionCheckerInfo(String contents) {
+  var info = VersionCheckerInfoMapper.fromJson(contents.fixJson());
+
+  if (info.modThreadId != null) {
+    info = info.copyWith(
+      modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9.]'), ''),
+    );
+
+    if (info.modThreadId!.trimStart("0").isEmpty) {
+      info = info.copyWith(modThreadId: null);
+    }
+  }
+
+  return info;
 }
 
 /// Reads and parses a version checker JSON file.
@@ -107,21 +143,20 @@ File? getVersionFile(Directory modFolder) {
 VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
   if (!versionFile.existsSync()) return null;
   try {
-    var info = VersionCheckerInfoMapper.fromJson(
-      versionFile.readAsStringSync().fixJson(),
+    return _parseVersionCheckerInfo(versionFile.readAsStringSync());
+  } catch (e, st) {
+    Fimber.e(
+      "Unable to read version checker json file in ${versionFile.absolute}. ($e)\n$st",
     );
+    return null;
+  }
+}
 
-    if (info.modThreadId != null) {
-      info = info.copyWith(
-        modThreadId: info.modThreadId?.replaceAll(RegExp(r'[^0-9.]'), ''),
-      );
-
-      if (info.modThreadId!.trimStart("0").isEmpty) {
-        info = info.copyWith(modThreadId: null);
-      }
-    }
-
-    return info;
+/// Async version of [getVersionCheckerInfo] that avoids blocking the main thread.
+Future<VersionCheckerInfo?> getVersionCheckerInfoAsync(File versionFile) async {
+  if (!await versionFile.exists()) return null;
+  try {
+    return _parseVersionCheckerInfo(await versionFile.readAsString());
   } catch (e, st) {
     Fimber.e(
       "Unable to read version checker json file in ${versionFile.absolute}. ($e)\n$st",

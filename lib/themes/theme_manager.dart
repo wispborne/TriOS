@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/themes/theme.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
@@ -59,6 +56,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     offset: const Offset(0, 3), // changes position of shadow
   );
 
+  /// Cache of theme key -> ThemeData to avoid recomputing ColorScheme.fromSeed().
+  static final Map<String, ThemeData> _themeDataCache = {};
+
   late Map<String, TriOSTheme> allThemes;
   late TriOSTheme _currentTheme;
 
@@ -80,7 +80,11 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       _currentTheme = allThemes.values.first;
     }
 
-    final themeData = convertToThemeData(_currentTheme);
+    final themeKey = allThemes.entries
+        .firstWhere((entry) => entry.value == _currentTheme,
+            orElse: () => allThemes.entries.first)
+        .key;
+    final themeData = _themeDataCache[themeKey] ??= convertToThemeData(_currentTheme);
     return ThemeState(themeData, allThemes, _currentTheme);
   }
 
@@ -131,11 +135,13 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
 
   Future<void> switchThemes(TriOSTheme theme) async {
     _currentTheme = theme;
-    state = AsyncData(ThemeState(convertToThemeData(theme), allThemes, theme));
 
     final themeKey = allThemes.entries
         .firstWhere((entry) => entry.value == theme)
         .key;
+    final themeData = _themeDataCache[themeKey] ??= convertToThemeData(theme);
+    state = AsyncData(ThemeState(themeData, allThemes, theme));
+
     ref
         .read(appSettings.notifier)
         .update((s) => s.copyWith(themeKey: themeKey));
@@ -219,10 +225,11 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
   }
 
   ThemeData _customizeTheme(ThemeData themeBase, TriOSTheme swatch) {
-    // Choose font here
+    // Use the base theme's Roboto directly instead of GoogleFonts.robotoTextTheme()
+    // to avoid a potential network fetch on first launch.
     final textTheme = swatch.fontFamily != null
         ? themeBase.textTheme.apply(fontFamily: swatch.fontFamily)
-        : GoogleFonts.robotoTextTheme(themeBase.textTheme);
+        : themeBase.textTheme;
 
     final onSurfaceVariant = swatch.surface == null
         ? swatch.onSurface

@@ -46,11 +46,14 @@ bool didPreviousSessionCrash = false;
 List<Future<void> Function(BuildContext)> onAppLoadedActions = [];
 
 Future<Rect> _convertLogicalToPhysicalPixels(Rect r) async {
-  final p = await ScreenRetriever.instance.getPrimaryDisplay();
-  final d = (await ScreenRetriever.instance.getAllDisplays()).firstWhere(
+  final (primary, allDisplays) = await (
+    ScreenRetriever.instance.getPrimaryDisplay(),
+    ScreenRetriever.instance.getAllDisplays(),
+  ).wait;
+  final d = allDisplays.firstWhere(
     (d) => (((d.visiblePosition ?? Offset.zero) & (d.visibleSize ?? d.size))
         .contains(r.center)),
-    orElse: () => p,
+    orElse: () => primary,
   );
   final s = (d.scaleFactor ?? 1).toDouble();
   return Rect.fromLTWH(r.left * s, r.top * s, r.width * s, r.height * s);
@@ -62,19 +65,21 @@ Future<void> _ensureWindowIsVisible() async {
     return Rect.fromLTWH(o.dx, o.dy, s.width, s.height);
   }
 
-  final display = await ScreenRetriever.instance.getAllDisplays();
-  if (display.isEmpty) return;
+  final (allDisplays, bounds, primary) = await (
+    ScreenRetriever.instance.getAllDisplays(),
+    windowManager.getBounds(),
+    ScreenRetriever.instance.getPrimaryDisplay(),
+  ).wait;
+  if (allDisplays.isEmpty) return;
 
-  final bounds = await windowManager.getBounds();
-  if (display.any((d) {
+  if (allDisplays.any((d) {
     final r = vis(d);
     return r.overlaps(bounds) || r.contains(bounds.center);
   })) {
     return;
   }
 
-  final t = await ScreenRetriever.instance.getPrimaryDisplay();
-  final r = vis(t), s = (t.scaleFactor ?? 1).toDouble();
+  final r = vis(primary), s = (primary.scaleFactor ?? 1).toDouble();
   await windowManager.setBounds(
     Rect.fromLTWH(
       r.left * s,
@@ -134,18 +139,17 @@ void main() async {
     final lockFile = File(
       '${Constants.configDataFolderPath.path}/running.lock',
     );
-    if (lockFile.existsSync()) {
+    if (await lockFile.exists()) {
       didPreviousSessionCrash = true;
       Fimber.w("Previous session did not exit cleanly (running.lock found).");
     }
-    // Write lock file for this session.
-    lockFile.writeAsStringSync(DateTime.now().toIso8601String());
+    await lockFile.writeAsString(DateTime.now().toIso8601String());
   } catch (e) {
     Fimber.w("Error managing running.lock file: $e");
   }
 
   // Migrate old cache files into the new cache/ subdirectory.
-  _migrateCacheFiles();
+  unawaited(_migrateCacheFiles());
 
   try {
     final locale = PlatformDispatcher.instance.locale;
@@ -166,9 +170,8 @@ void main() async {
   bool allowCrashReporting = false;
   Settings? settings;
 
-  // Read existing app settings
   try {
-    settings = fileManager.loadSync();
+    settings = await fileManager.loadAsync();
   } catch (e) {
     Fimber.e("Error reading app settings.", ex: e);
     onAppLoadedActions.add((context) async {
@@ -225,10 +228,6 @@ void main() async {
     Fimber.w("Error reading crash reporting setting.", ex: e);
   }
 
-  // Actually it's fine, just don't fuck up.
-  // Don't use Sentry in debug mode, ever.
-  // There's a max error limit and UI rendering errors send a million errors.
-  // if (allowCrashReporting && kDebugMode == false) {
   if (allowCrashReporting) {
     try {
       await SentryFlutter.init(
@@ -319,7 +318,7 @@ void main() async {
 
 /// Moves legacy cache files from [Constants.configDataFolderPath] into the
 /// `cache/` subdirectory so all caches live in one place.
-void _migrateCacheFiles() {
+Future<void> _migrateCacheFiles() async {
   const filesToMigrate = [
     'trios_version_checker_cache.json',
     'TriOS-VRAM_CheckerCache.json',
@@ -331,17 +330,17 @@ void _migrateCacheFiles() {
 
     for (final fileName in filesToMigrate) {
       final oldFile = File(p.join(configDir.path, fileName));
-      if (oldFile.existsSync()) {
-        if (!cacheDir.existsSync()) {
-          cacheDir.createSync(recursive: true);
+      if (await oldFile.exists()) {
+        if (!await cacheDir.exists()) {
+          await cacheDir.create(recursive: true);
         }
         final newFile = File(p.join(cacheDir.path, fileName));
-        if (!newFile.existsSync()) {
-          oldFile.renameSync(newFile.path);
+        if (!await newFile.exists()) {
+          await oldFile.rename(newFile.path);
           Fimber.i('Migrated $fileName to cache/');
         } else {
           // New file already exists, just delete the old one.
-          oldFile.deleteSync();
+          await oldFile.delete();
           Fimber.i('Deleted old $fileName (already exists in cache/)');
         }
       }

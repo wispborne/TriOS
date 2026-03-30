@@ -23,7 +23,8 @@
       "Bash(dart run:*)",
       "Bash(flutter pub:*)",
       "Bash(flutter --version)",
-      "Bash(where flutter:*)"
+      "Bash(where flutter:*)",
+      "Bash(grep -E \"\\\\.\\(dart\\)$\")"
     ]
   }
 }

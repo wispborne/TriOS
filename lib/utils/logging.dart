@@ -176,26 +176,25 @@ Future<void> configureLogging(LoggingSettings settings) async {
             output: _advancedFileOutput,
           );
 
-          // Clean up old log files.
-          try {
-            logFolderName
-                ?.toDirectory()
-                .listSync()
-                .where(
-                  (file) =>
-                      file is File &&
+          final logDir = logFolderName;
+          if (logDir != null) {
+            Future.microtask(() async {
+              try {
+                await for (final file in logDir.toDirectory().list()) {
+                  if (file is File &&
                       file.extension == ".log" &&
-                      file.nameWithExtension != logFileName,
-                )
-                .forEach((FileSystemEntity file) {
-                  try {
-                    file.moveToTrash(deleteIfFailed: true);
-                  } catch (e) {
-                    // Already logged, swallow
+                      file.nameWithExtension != logFileName) {
+                    try {
+                      file.moveToTrash(deleteIfFailed: true);
+                    } catch (e) {
+                      // Already logged, swallow
+                    }
                   }
-                });
-          } catch (e) {
-            Fimber.e("Error cleaning up old log files.", ex: e);
+                }
+              } catch (e) {
+                Fimber.e("Error cleaning up old log files.", ex: e);
+              }
+            });
           }
         }
       } catch (e) {

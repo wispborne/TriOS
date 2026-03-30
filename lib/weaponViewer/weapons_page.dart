@@ -25,6 +25,7 @@ import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
@@ -838,11 +839,11 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     required WeaponsPageState controllerState,
   }) {
     final controller = ref.read(weaponsPageControllerProvider.notifier);
-    return PopupMenuButton(
-      tooltip: "More actions",
-      icon: const Icon(Icons.more_vert),
-      itemBuilder: (context) => [
-        PopupMenuItem(
+    return OverflowMenuButton(
+      menuItems: [
+        OverflowMenuItem(
+          title: 'Export to CSV',
+          icon: Icons.table_view,
           onTap: () {
             if (_gridController == null) return;
 
@@ -858,23 +859,13 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                   .allWeaponsAsCsv(),
             );
           },
-          child: ListTile(
-            dense: true,
-            leading: Icon(Icons.table_view),
-            title: Text("Export to CSV"),
-          ),
-        ),
-        CheckedPopupMenuItem(
+        ).toEntry(0),
+        OverflowMenuCheckItem(
+          title: 'Stretch icons to fit',
+          icon: Icons.fit_screen,
           checked: controllerState.useContainFit,
           onTap: () => controller.toggleUseContainFit(),
-          child: const Row(
-            spacing: 8,
-            children: [
-              Icon(Icons.fit_screen, size: 18),
-              Text('Stretch icons to fit'),
-            ],
-          ),
-        ),
+        ).toEntry(1),
       ],
     );
   }

@@ -38,6 +38,7 @@ class _ChatbotDialogState extends ConsumerState<ChatbotDialog> {
   bool _showScrollToBottom = false;
   bool _isSendEnabled = false;
   final Map<DateTime, double> _waterUsage = {};
+  final Set<DateTime> _animatedMessages = {};
 
   @override
   void initState() {
@@ -84,7 +85,7 @@ class _ChatbotDialogState extends ConsumerState<ChatbotDialog> {
 
     _scrollToBottom();
 
-    final delaySecs = Random().nextInt(5) + 1;
+    final delaySecs = Random().nextInt(4) + 1;
     final delay = Duration(seconds: delaySecs);
 
     // Calculate water usage scaling with response time (joke stat)
@@ -200,9 +201,16 @@ class _ChatbotDialogState extends ConsumerState<ChatbotDialog> {
                           return const _TypingIndicator();
                         }
                         final msg = visibleMessages[index];
+                        final shouldAnimate =
+                            msg.sender == MessageSender.bot &&
+                            !_animatedMessages.contains(msg.timestamp);
+                        if (shouldAnimate) {
+                          _animatedMessages.add(msg.timestamp);
+                        }
                         return _ChatMessageView(
                           message: msg,
                           waterUsage: _waterUsage[msg.timestamp],
+                          animate: shouldAnimate,
                         );
                       },
                     ),
@@ -371,8 +379,13 @@ class _EmptyState extends StatelessWidget {
 class _ChatMessageView extends StatefulWidget {
   final ChatMessage message;
   final double? waterUsage;
+  final bool animate;
 
-  const _ChatMessageView({required this.message, this.waterUsage});
+  const _ChatMessageView({
+    required this.message,
+    this.waterUsage,
+    this.animate = false,
+  });
 
   @override
   State<_ChatMessageView> createState() => _ChatMessageViewState();
@@ -423,12 +436,19 @@ class _ChatMessageViewState extends State<_ChatMessageView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 4,
             children: [
-              SelectableText(
-                widget.message.text,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface,
-                ),
-              ),
+              widget.animate
+                  ? _AnimatedWordText(
+                      text: widget.message.text,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
+                    )
+                  : SelectableText(
+                      widget.message.text,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
               AnimatedOpacity(
                 opacity: _isHovered ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 150),
@@ -566,6 +586,86 @@ class _MessageActionsState extends State<_MessageActions> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Animated Word-by-Word Text (LLM-style reveal)
+// ---------------------------------------------------------------------------
+
+class _AnimatedWordText extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+
+  const _AnimatedWordText({required this.text, this.style});
+
+  @override
+  State<_AnimatedWordText> createState() => _AnimatedWordTextState();
+}
+
+class _AnimatedWordTextState extends State<_AnimatedWordText>
+    with SingleTickerProviderStateMixin {
+  late final List<String> _words;
+  late final AnimationController _controller;
+  bool _animationComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _words = widget.text.split(RegExp(r'(?<=\s)'));
+    final durationMs = (_words.length * 40).clamp(200, 3000);
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: durationMs),
+    );
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        setState(() => _animationComplete = true);
+      }
+    });
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_animationComplete) {
+      return SelectableText(widget.text, style: widget.style);
+    }
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final progress = _controller.value * _words.length;
+        final fullyVisible = progress.floor();
+
+        return Text.rich(
+          TextSpan(
+            children: List.generate(_words.length, (i) {
+              double opacity;
+              if (i < fullyVisible) {
+                opacity = 1.0;
+              } else if (i == fullyVisible) {
+                opacity = (progress - fullyVisible).clamp(0.0, 1.0);
+              } else {
+                opacity = 0.0;
+              }
+              return TextSpan(
+                text: _words[i],
+                style: widget.style?.copyWith(
+                  color: widget.style?.color?.withValues(alpha: opacity),
+                ),
+              );
+            }),
+          ),
+        );
+      },
     );
   }
 }

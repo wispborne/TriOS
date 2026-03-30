@@ -5,6 +5,7 @@
     - Group mods by category.
     - Add and edit categories.
   - **Mod color tagging**: show a color next to a mod's name as a mnemonic.
+  - New UI layout that moves most buttons to a left sidebar. Optional, enable it from the toolbar.
   - Mods page: new Header Styles: Line and Small Card.
     - Small Card is a shorter, more compact version of the previous mod group UI.
     - Right-click on a mod group (e.g. Enabled) and select Header Style.

@@ -168,7 +168,7 @@ class ToolbarLayoutToggle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final useTopToolbar = ref.watch(appSettings.select((s) => s.useTopToolbar));
     return MovingTooltipWidget.text(
-      message: useTopToolbar ? "Switch to sidebar" : "Switch to top toolbar",
+      message: useTopToolbar ? "Switch to sidebar layout" : "Switch to top toolbar layout",
       child: IconButton(
         icon: Transform.flip(
           flipX: true,

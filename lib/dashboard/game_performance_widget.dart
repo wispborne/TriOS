@@ -116,22 +116,26 @@ class ChangeRamWidget extends ConsumerWidget {
                           color: ThemeManager.vanillaWarningColor,
                         ),
                       ),
-                    StyledText(
-                      text: ramAmount == null
-                          ? "No vmparams file found."
-                          : hasMultipleWithDifferentRam
-                          ? "<b>Warning</b>: Not all vmparams files"
-                                "\nare set to use the same amount of RAM."
-                                "\nPick one RAM option below to set all"
-                                "\nto the same value."
-                          : "Assigned: <b>$ramAmount MB</b> in <b>${ref.watch(vmparamsManagerProvider).value?.detectedVmparamsFiles.length}</b> files",
-                      tags: {
-                        "b": StyledTextTag(
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      },
-                      style: Theme.of(context).textTheme.labelLarge,
+                    MovingTooltipWidget.text(
+                      message:
+                          "vmparams files:\n${ref.watch(vmparamsManagerProvider).value?.detectedVmparamsFiles.joinToString(separator: "\n", transform: (file) => file.nameWithExtension)}",
+                      child: StyledText(
+                        text: ramAmount == null
+                            ? "No vmparams file found."
+                            : hasMultipleWithDifferentRam
+                            ? "<b>Warning</b>: Not all vmparams files"
+                                  "\nare set to use the same amount of RAM."
+                                  "\nPick one RAM option below to set all"
+                                  "\nto the same value."
+                            : "Assigned: <b>$ramAmount MB</b> in <b>${ref.watch(vmparamsManagerProvider).value?.detectedVmparamsFiles.length}</b> files",
+                        tags: {
+                          "b": StyledTextTag(
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        },
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
                     ),
                   ],
                 ),

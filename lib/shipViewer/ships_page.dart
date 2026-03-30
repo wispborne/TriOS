@@ -23,6 +23,7 @@ import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/ingame_ship_tooltip.dart';
 import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
@@ -634,11 +635,11 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     required ShipsPageState controllerState,
   }) {
     final controller = ref.read(shipsPageControllerProvider.notifier);
-    return PopupMenuButton(
-      tooltip: "More actions",
-      icon: const Icon(Icons.more_vert),
-      itemBuilder: (context) => [
-        PopupMenuItem(
+    return OverflowMenuButton(
+      menuItems: [
+        OverflowMenuItem(
+          title: 'Export to CSV',
+          icon: Icons.table_view,
           onTap: () {
             if (_gridController == null) return;
 
@@ -649,28 +650,17 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 _gridController!,
                 includeHeaders: true,
               ),
-              () => ref.read(shipListNotifierProvider.notifier).allShipsAsCsv(),
+              () =>
+                  ref.read(shipListNotifierProvider.notifier).allShipsAsCsv(),
             );
           },
-          child: const Row(
-            children: [
-              Icon(Icons.table_view, size: 18),
-              SizedBox(width: 8),
-              Text('Export to CSV'),
-            ],
-          ),
-        ),
-        CheckedPopupMenuItem(
+        ).toEntry(0),
+        OverflowMenuCheckItem(
+          title: 'Stretch icons to fit',
+          icon: Icons.fit_screen,
           checked: controllerState.useContainFit,
           onTap: () => controller.toggleUseContainFit(),
-          child: const Row(
-            spacing: 8,
-            children: [
-              Icon(Icons.fit_screen, size: 18),
-              Text('Stretch icons to fit'),
-            ],
-          ),
-        ),
+        ).toEntry(1),
       ],
     );
   }

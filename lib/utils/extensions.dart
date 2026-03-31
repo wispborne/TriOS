@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:trios/thirdparty/yaml/yaml.dart';
 
 // import 'package:toml/toml.dart';
+import 'package:trios/themes/theme.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
@@ -1219,4 +1220,9 @@ extension ColorFromObject on Object {
 
     return Color.fromARGB(0xFF, r, g, b);
   }
+}
+
+extension TriOSBuildContextTheme on BuildContext {
+  bool get rainbowAccent =>
+      Theme.of(this).extension<TriOSThemeExtension>()?.rainbowAccent ?? false;
 }

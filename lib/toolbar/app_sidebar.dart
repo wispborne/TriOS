@@ -18,6 +18,7 @@ class AppSidebar extends StatelessWidget {
   final ValueChanged<TriOSTools> onTabChanged;
   final bool isCollapsed;
   final VoidCallback onToggleCollapsed;
+  final bool showBorder;
 
   const AppSidebar({
     super.key,
@@ -25,6 +26,7 @@ class AppSidebar extends StatelessWidget {
     required this.onTabChanged,
     required this.isCollapsed,
     required this.onToggleCollapsed,
+    this.showBorder = true,
   });
 
   @override
@@ -36,11 +38,13 @@ class AppSidebar extends StatelessWidget {
       width: isCollapsed ? _collapsedWidth : _expandedWidth,
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-          ),
-        ),
+        border: showBorder
+            ? Border(
+                right: BorderSide(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                ),
+              )
+            : null,
       ),
       child: Material(
         color: theme.colorScheme.surfaceContainer,

@@ -9,8 +9,10 @@ import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../models/mod.dart';
@@ -102,6 +104,9 @@ class _ModVersionSelectionDropdownState
                 .getGameCompatibilityColor();
     }
 
+    final rainbowAccent = context.rainbowAccent;
+    final effectiveRadius = rainbowAccent ? ThemeManager.cornerRadius - 2 : ThemeManager.cornerRadius;
+
     const textStyle = TextStyle(
       fontWeight: FontWeight.w900,
       fontFamily: "Orbitron",
@@ -114,12 +119,12 @@ class _ModVersionSelectionDropdownState
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       textStyle: textStyle,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-        side: BorderSide(
-          color: borderColor,
-          // Slightly darker buttonColor
-          width: 2.0,
+        borderRadius: BorderRadius.circular(
+          effectiveRadius,
         ),
+        side: rainbowAccent
+            ? BorderSide.none
+            : BorderSide(color: borderColor, width: 2.0),
       ),
     );
 
@@ -148,6 +153,46 @@ class _ModVersionSelectionDropdownState
           (widget.showTooltip
               ? (!isSupportedByGameVersion ? gameVersionMessage : "")
               : null);
+      Widget button = SizedBox(
+        width: rainbowAccent ? null : buttonWidth,
+        height: rainbowAccent ? null : buttonHeight,
+        child: ElevatedButton(
+          onPressed: () async {
+            if (!mounted) return;
+            try {
+              isEnabled
+                  ? await switchToVariant(null)
+                  : await switchToVariant(widget.mod.findHighestVersion);
+            } catch (e, st) {
+              Fimber.e("Error changing active mod variant: $e\n$st");
+            }
+          },
+          style: buttonStyle,
+          child: Stack(
+            children: [
+              (useWarningUi
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: warningIcon,
+                    )
+                  : Container()),
+              Center(child: Text(isEnabled ? "Disable" : "Enable")),
+            ],
+          ),
+        ),
+      );
+
+      if (rainbowAccent) {
+        button = SizedBox(
+          width: buttonWidth,
+          height: buttonHeight,
+          child: RainbowBorder(
+            borderRadius: ThemeManager.cornerRadius,
+            child: button,
+          ),
+        );
+      }
+
       return MovingTooltipWidget.text(
         message: tooltipMessage,
         warningLevel: tooltipMessage != null
@@ -155,35 +200,7 @@ class _ModVersionSelectionDropdownState
             : TooltipWarningLevel.none,
         child: Disable(
           isEnabled: isButtonEnabled,
-          child: SizedBox(
-            width: buttonWidth,
-            height: buttonHeight,
-            child: ElevatedButton(
-              onPressed: () async {
-                if (!mounted) return;
-                // Enable if disabled, disable if enabled
-                try {
-                  isEnabled
-                      ? await switchToVariant(null)
-                      : await switchToVariant(widget.mod.findHighestVersion);
-                } catch (e, st) {
-                  Fimber.e("Error changing active mod variant: $e\n$st");
-                }
-              },
-              style: buttonStyle,
-              child: Stack(
-                children: [
-                  (useWarningUi
-                      ? Align(
-                          alignment: Alignment.centerLeft,
-                          child: warningIcon,
-                        )
-                      : Container()),
-                  Center(child: Text(isEnabled ? "Disable" : "Enable")),
-                ],
-              ),
-            ),
-          ),
+          child: button,
         ),
       );
     }
@@ -242,89 +259,100 @@ class _ModVersionSelectionDropdownState
         child: SizedBox(
           width: dropdownWidth,
           height: buttonHeight,
-          child: Material(
-            color: buttonColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-              side: BorderSide(color: borderColor, width: 2.0),
+          child: ConditionalWrap(
+            condition: rainbowAccent,
+            wrapper: (child) => RainbowBorder(
+              borderRadius: ThemeManager.cornerRadius,
+              child: child,
             ),
-            clipBehavior: Clip.antiAlias,
-            child: DefaultTextStyle.merge(
-              style: TextStyle(
-                color: textColor,
-                fontStyle: textStyle.fontStyle,
-                fontWeight: textStyle.fontWeight,
-                fontFamily: textStyle.fontFamily,
-                fontSize: 14,
+            child: Material(
+              color: buttonColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                  effectiveRadius,
+                ),
+                side: rainbowAccent
+                    ? BorderSide.none
+                    : BorderSide(color: borderColor, width: 2.0),
               ),
-              child: Row(
-                children: [
-                  // Main tap area — enable/disable
-                  Expanded(
-                    child: MovingTooltipWidget.text(
-                      message: isEnabled && errorTooltip == null
-                          ? "Click to disable"
-                          : null,
-                      child: InkWell(
-                        onTap: () async {
-                          if (!mounted) return;
-                          try {
-                            isEnabled
-                                ? await switchToVariant(null)
-                                : await switchToVariant(
-                                    widget.mod.findHighestVersion,
-                                  );
-                          } catch (e, st) {
-                            Fimber.e(
-                              "Error changing active mod variant: $e\n$st",
-                            );
-                          }
-                        },
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 32,
-                              child: useWarningUi
-                                  ? Center(
-                                      child: Padding(
-                                        padding: const .only(left: 12),
-                                        child: warningIcon,
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  isEnabled
-                                      ? enabledVariant!.modInfo.version
-                                            .toString()
-                                      : "Enable",
+              clipBehavior: Clip.antiAlias,
+              child: DefaultTextStyle.merge(
+                style: TextStyle(
+                  color: textColor,
+                  fontStyle: textStyle.fontStyle,
+                  fontWeight: textStyle.fontWeight,
+                  fontFamily: textStyle.fontFamily,
+                  fontSize: 14,
+                ),
+                child: Row(
+                  children: [
+                    // Main tap area — enable/disable
+                    Expanded(
+                      child: MovingTooltipWidget.text(
+                        message: isEnabled && errorTooltip == null
+                            ? "Click to disable"
+                            : null,
+                        child: InkWell(
+                          onTap: () async {
+                            if (!mounted) return;
+                            try {
+                              isEnabled
+                                  ? await switchToVariant(null)
+                                  : await switchToVariant(
+                                      widget.mod.findHighestVersion,
+                                    );
+                            } catch (e, st) {
+                              Fimber.e(
+                                "Error changing active mod variant: $e\n$st",
+                              );
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 32,
+                                child: useWarningUi
+                                    ? Center(
+                                        child: Padding(
+                                          padding: const .only(left: 12),
+                                          child: warningIcon,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              Expanded(
+                                child: Center(
+                                  child: Text(
+                                    isEnabled
+                                        ? enabledVariant!.modInfo.version
+                                              .toString()
+                                        : "Enable",
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  // Sub-button on right side
-                  if (variantThatCanBeUpgradedTo != null)
-                    _buildUpgradeSubButton(
-                      variantThatCanBeUpgradedTo,
-                      subButtonBgColor,
-                      subButtonBorderColor,
-                      textColor,
-                    )
-                  else
-                    _buildDropdownSubButton(
-                      items: items,
-                      enabledVariant: enabledVariant,
-                      textColor: textColor,
-                      bgColor: subButtonBgColor,
-                      borderColor: subButtonBorderColor,
-                    ),
-                ],
+                    // Sub-button on right side
+                    if (variantThatCanBeUpgradedTo != null)
+                      _buildUpgradeSubButton(
+                        variantThatCanBeUpgradedTo,
+                        subButtonBgColor,
+                        subButtonBorderColor,
+                        textColor,
+                      )
+                    else
+                      _buildDropdownSubButton(
+                        items: items,
+                        enabledVariant: enabledVariant,
+                        textColor: textColor,
+                        bgColor: subButtonBgColor,
+                        borderColor: subButtonBorderColor,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

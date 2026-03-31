@@ -13,7 +13,9 @@ import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/portraits/portraits_page.dart';
 import 'package:trios/shipViewer/ships_page.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/toolbar/app_sidebar.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/toolbar/compact_top_bar.dart';
 import 'package:trios/toolbar/full_top_bar.dart';
 import 'package:trios/trios/constants.dart';
@@ -293,6 +295,7 @@ class _AppShellState extends ConsumerState<AppShell>
     final isSidebarCollapsed = ref.watch(
       appSettings.select((value) => value.isSidebarCollapsed),
     );
+    final rainbowAccent = context.rainbowAccent;
 
     return Row(
       children: [
@@ -300,10 +303,13 @@ class _AppShellState extends ConsumerState<AppShell>
           currentPage: _currentPage,
           onTabChanged: _changeTab,
           isCollapsed: isSidebarCollapsed,
+          showBorder: !rainbowAccent,
           onToggleCollapsed: () => ref.read(appSettings.notifier).update(
             (s) => s.copyWith(isSidebarCollapsed: !isSidebarCollapsed),
           ),
         ),
+        if (rainbowAccent)
+          RainbowAccentBar(axis: Axis.vertical),
         Expanded(
           child: Scaffold(
             appBar: CompactTopBar(
@@ -321,13 +327,22 @@ class _AppShellState extends ConsumerState<AppShell>
     BuildContext context,
     Widget body,
   ) {
+    final rainbowAccent = context.rainbowAccent;
+
     return Scaffold(
       appBar: FullTopBar(
         currentPage: _currentPage,
         onTabChanged: _changeTab,
         scrollController: rightToolbarScrollController,
       ),
-      body: body,
+      body: rainbowAccent
+          ? Column(
+              children: [
+                RainbowAccentBar(axis: Axis.horizontal),
+                Expanded(child: body),
+              ],
+            )
+          : body,
     );
   }
 }

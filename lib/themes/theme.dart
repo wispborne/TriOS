@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
+
 /// Material Design 3 color scheme for TriOS themes.
 ///
 /// @property primary The primary color displayed most frequently across the app.
@@ -12,6 +14,7 @@ import 'dart:ui';
 /// @property onSurface Color for text/icons on top of surface.
 /// @property onError Color for text/icons on top of error.
 /// @property isDark Whether this is a dark or light theme.
+/// @property rainbowAccent Whether to show a rainbow gradient accent bar.
 class TriOSTheme {
   final bool isDark;
   final Color primary;
@@ -24,6 +27,7 @@ class TriOSTheme {
   final Color? onSurface;
   final Color? onError;
   final String? fontFamily;
+  final bool rainbowAccent;
 
   TriOSTheme({
     this.isDark = true,
@@ -37,6 +41,7 @@ class TriOSTheme {
     this.onSurface,
     this.onError,
     this.fontFamily,
+    this.rainbowAccent = false,
   });
 
   /// Constructor that accepts hex color strings (e.g. "#FF0000").
@@ -52,6 +57,7 @@ class TriOSTheme {
     String? onSurface,
     String? onError,
     this.fontFamily,
+    this.rainbowAccent = false,
   }) : primary = _parseColor(primary)!,
        secondary = _parseColor(secondary),
        surface = _parseColor(surface),
@@ -70,7 +76,7 @@ class TriOSTheme {
 
   @override
   String toString() {
-    return 'TriOSTheme{isDark: $isDark, primary: $primary, secondary: $secondary, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError, fontFamily: $fontFamily}';
+    return 'TriOSTheme{isDark: $isDark, primary: $primary, secondary: $secondary, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError, fontFamily: $fontFamily, rainbowAccent: $rainbowAccent}';
   }
 
   TriOSTheme copyWith({
@@ -85,6 +91,7 @@ class TriOSTheme {
     Color? onSurface,
     Color? onError,
     String? fontFamily,
+    bool? rainbowAccent,
   }) {
     return TriOSTheme(
       isDark: isDark ?? this.isDark,
@@ -98,6 +105,26 @@ class TriOSTheme {
       onSurface: onSurface ?? this.onSurface,
       onError: onError ?? this.onError,
       fontFamily: fontFamily ?? this.fontFamily,
+      rainbowAccent: rainbowAccent ?? this.rainbowAccent,
     );
+  }
+}
+
+/// Theme extension to expose custom TriOS theme properties via [Theme.of].
+class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
+  final bool rainbowAccent;
+
+  const TriOSThemeExtension({this.rainbowAccent = false});
+
+  @override
+  TriOSThemeExtension copyWith({bool? rainbowAccent}) {
+    return TriOSThemeExtension(
+      rainbowAccent: rainbowAccent ?? this.rainbowAccent,
+    );
+  }
+
+  @override
+  TriOSThemeExtension lerp(TriOSThemeExtension? other, double t) {
+    return t < 0.5 ? this : (other ?? this);
   }
 }

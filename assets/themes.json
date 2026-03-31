@@ -86,6 +86,16 @@
       "surfaceContainer": "#282C34",
       "onPrimary": "#dadbe0"
     },
+    "Pride": {
+      "isDark": true,
+      "primary": "#ff00eb",
+      "secondary": "#444444",
+      "surface": "#161616",
+      "surfaceContainer": "#101010",
+      "onPrimary": "#FFFFFF",
+      "onSecondary": "#FFFFFF",
+      "rainbowAccent": true
+    },
     "Red Pain": {
       "isDark": true,
       "primary": "#F83A5B",

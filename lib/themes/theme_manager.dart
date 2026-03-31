@@ -113,6 +113,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
             onSurface: themeData["onSurface"],
             onError: themeData["onError"],
             fontFamily: themeData["fontFamily"],
+            rainbowAccent: themeData["rainbowAccent"] ?? false,
           );
         } catch (e, st) {
           Fimber.e(
@@ -172,6 +173,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       iconTheme: customTheme.iconTheme.copyWith(
         color: customTheme.colorScheme.onSurfaceVariant,
       ),
+      extensions: [TriOSThemeExtension(rainbowAccent: swatch.rainbowAccent)],
     );
   }
 
@@ -215,6 +217,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
           side: BorderSide(color: swatch.primary.mix(swatch.surfaceContainer!, 0.2)!),
         ),
       ),
+      extensions: [TriOSThemeExtension(rainbowAccent: swatch.rainbowAccent)],
     );
   }
 

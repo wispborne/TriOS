@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trios/toolbar/app_action_buttons.dart';
 import 'package:trios/toolbar/app_brand_header.dart';
 import 'package:trios/toolbar/app_right_toolbar.dart';
+import 'package:trios/toolbar/chatbot_button.dart';
 import 'package:trios/toolbar/tab_button.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -33,13 +34,20 @@ class FullTopBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         children: [
           const AppBrandHeader(compact: false),
-          const LauncherButton(showTextInsteadOfIcon: false, iconHeight: 38, iconWidth: 42, fontSize: 30, iconOffset: Offset(0, -1)),
+          const LauncherButton(
+            showTextInsteadOfIcon: false,
+            iconHeight: 38,
+            iconWidth: 42,
+            fontSize: 30,
+            iconOffset: Offset(0, -1),
+          ),
           // Nav items
           Padding(
             padding: const EdgeInsets.only(left: 16, right: 0, top: 2),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                const ChatbotButton(size: 40, iconSize: 20),
                 _coreTabButton(TriOSTools.dashboard),
                 _coreTabButton(TriOSTools.modManager),
                 _coreTabButton(TriOSTools.modProfiles),

@@ -4,6 +4,7 @@ import 'package:trios/launcher/launcher.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/toolbar/app_action_buttons.dart';
+import 'package:trios/toolbar/chatbot_button.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -64,6 +65,7 @@ class AppSidebar extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            const ChatbotButton(size: 40, iconSize: 20,),
             // Core tools
             _SidebarNavItem.fromTool(
               tool: TriOSTools.dashboard,

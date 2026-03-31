@@ -126,6 +126,8 @@ class Settings with SettingsMappable {
   final bool allowInsecureConnections;
   final bool shouldLoadWebView;
 
+  final bool? showAprilFools2026;
+
   Settings({
     this.gameDir,
     this.gameCoreDir,
@@ -208,6 +210,7 @@ class Settings with SettingsMappable {
     this.showReportBugButton = true,
     this.allowInsecureConnections = false,
     this.shouldLoadWebView = false,
+    this.showAprilFools2026,
   });
 }
 

@@ -828,6 +828,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool? _$showAprilFools2026(Settings v) => v.showAprilFools2026;
+  static const Field<Settings, bool> _f$showAprilFools2026 = Field(
+    'showAprilFools2026',
+    _$showAprilFools2026,
+    opt: true,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -896,6 +902,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #showReportBugButton: _f$showReportBugButton,
     #allowInsecureConnections: _f$allowInsecureConnections,
     #shouldLoadWebView: _f$shouldLoadWebView,
+    #showAprilFools2026: _f$showAprilFools2026,
   };
   @override
   final bool ignoreNull = true;
@@ -976,6 +983,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       showReportBugButton: data.dec(_f$showReportBugButton),
       allowInsecureConnections: data.dec(_f$allowInsecureConnections),
       shouldLoadWebView: data.dec(_f$shouldLoadWebView),
+      showAprilFools2026: data.dec(_f$showAprilFools2026),
     );
   }
 
@@ -1126,6 +1134,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showReportBugButton,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
+    bool? showAprilFools2026,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1256,6 +1265,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? showReportBugButton,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
+    Object? showAprilFools2026 = $none,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1351,6 +1361,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (allowInsecureConnections != null)
         #allowInsecureConnections: allowInsecureConnections,
       if (shouldLoadWebView != null) #shouldLoadWebView: shouldLoadWebView,
+      if (showAprilFools2026 != $none) #showAprilFools2026: showAprilFools2026,
     }),
   );
   @override
@@ -1541,6 +1552,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     shouldLoadWebView: data.get(
       #shouldLoadWebView,
       or: $value.shouldLoadWebView,
+    ),
+    showAprilFools2026: data.get(
+      #showAprilFools2026,
+      or: $value.showAprilFools2026,
     ),
   );
 

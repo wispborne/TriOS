@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -28,6 +29,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/april_fools_2026_toast.dart';
 import 'package:trios/widgets/post_update_toast.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:window_manager/window_manager.dart';
@@ -209,6 +211,25 @@ void main() async {
   } catch (e) {
     Fimber.w("Error checking for changelog notification.", ex: e);
   }
+
+  // April Fools 2026: Show AI Chat toast on April 1st if user hasn't seen it.
+  try {
+    final now = DateTime.now();
+    if (true || settings?.showAprilFools2026 == null &&
+        now.month == 4 &&
+        now.day == 1 &&
+        now.year == 2026) {
+      onAppLoadedActions.add((context) async {
+        toastification.showCustom(
+          context: context,
+          builder: (context, item) => AprilFools2026Toast(item),
+        );
+      });
+    }
+  } catch (e) {
+    Fimber.w("Error checking for April Fools toast.", ex: e);
+  }
+
   if (settings != null) {
     try {
       fileManager.writeSync(settings.copyWith(showChangelogNextLaunch: false));
@@ -220,7 +241,9 @@ void main() async {
   // Set up Sentry
   try {
     allowCrashReporting = settings?.allowCrashReporting ?? false;
-    modifyLoggingSettings((s) => s.copyWith(allowSentryReporting: allowCrashReporting));
+    modifyLoggingSettings(
+      (s) => s.copyWith(allowSentryReporting: allowCrashReporting),
+    );
   } catch (e) {
     Fimber.w("Error reading crash reporting setting.", ex: e);
   }
@@ -501,9 +524,11 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
     // Don't save window size if minimized, we want to restore to the previous size.
     if (!await windowManager.isMinimized()) {
-      ref.read(appSettings.notifier).update(
-        (state) => _applyWindowFrame(state, windowFrame, isMaximized),
-      );
+      ref
+          .read(appSettings.notifier)
+          .update(
+            (state) => _applyWindowFrame(state, windowFrame, isMaximized),
+          );
     }
 
     // try {

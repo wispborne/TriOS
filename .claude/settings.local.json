@@ -23,7 +23,9 @@
       "Bash(dart run:*)",
       "Bash(flutter pub:*)",
       "Bash(flutter --version)",
-      "Bash(where flutter:*)"
+      "Bash(where flutter:*)",
+      "Bash(dir \"C:\\\\Users\\\\whitm\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\" \")",
+      "Bash(findstr toastification:*)"
     ]
   }
 }

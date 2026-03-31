@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -103,6 +106,12 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     return download;
   }
 
+  /// Marks a [Download] as cancelled so the toast dismisses immediately.
+  void cancelInstallation(Download download) {
+    download.installCancelled.value = true;
+    download.installComplete.value = true;
+  }
+
   void downloadUpdateViaBrowser(
     VersionCheckerInfo remoteVersion, {
     required bool activateVariantOnComplete,
@@ -134,7 +143,9 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   }) {
     var tempFolder = Directory.systemTemp.createTempSync();
 
-    addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((value) async {
+    addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((
+      value,
+    ) async {
       if (value == null) return;
       final status = await value.task.whenDownloadComplete();
       if (status == DownloadStatus.completed) {
@@ -142,8 +153,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...",
         );
         try {
-          final downloadedFile =
-              (await tempFolder.list().first).toFile();
+          final downloadedFile = (await tempFolder.list().first).toFile();
           final installedVariants = await ref
               .read(modManager.notifier)
               .installModFromSourceWithDefaultUI(
@@ -210,11 +220,16 @@ class Download {
   final DownloadTask task;
 
   /// Tracks file-count progress during mod installation (extraction).
-  final ValueNotifier<TriOSDownloadProgress?> installProgress =
-      ValueNotifier(null);
+  final ValueNotifier<TriOSDownloadProgress?> installProgress = ValueNotifier(
+    null,
+  );
 
   /// Set to true when installation (extraction) is complete.
   final ValueNotifier<bool> installComplete = ValueNotifier(false);
+
+  /// Set to true when the user cancelled the installation dialog without
+  /// installing anything. The toast should dismiss immediately.
+  final ValueNotifier<bool> installCancelled = ValueNotifier(false);
 
   /// Set to the installed [ModVariant] after installation completes (for plain
   /// [Download] objects that don't carry [ModInfo]).
@@ -230,4 +245,42 @@ class ModDownload extends Download {
   final ModInfo modInfo;
 
   ModDownload(super.id, super.displayName, super.task, this.modInfo);
+}
+
+extension DownloadVariantResolution on Download {
+  /// Resolves the installed [ModVariant] for this download, gated on download
+  /// completion. Returns `null` while the download is still in progress to
+  /// prevent matching an already-installed old version during an update.
+  ModVariant? resolveInstalledVariant(WidgetRef ref) {
+    if (!task.status.value.isCompleted) return null;
+    if (this is ModDownload) {
+      final modDownload = this as ModDownload;
+      return ref
+              .read(AppState.modVariants)
+              .value
+              .orEmpty()
+              .firstWhereOrNull(
+                (v) => v.smolId == modDownload.modInfo.smolId,
+              ) ??
+          installedVariant.value;
+    }
+    return installedVariant.value;
+  }
+
+  /// Like [resolveInstalledVariant] but uses [ref.watch] for reactive rebuilds.
+  ModVariant? watchInstalledVariant(WidgetRef ref) {
+    if (!task.status.value.isCompleted) return null;
+    if (this is ModDownload) {
+      final modDownload = this as ModDownload;
+      return ref
+              .watch(AppState.modVariants)
+              .value
+              .orEmpty()
+              .firstWhereOrNull(
+                (v) => v.smolId == modDownload.modInfo.smolId,
+              ) ??
+          installedVariant.value;
+    }
+    return installedVariant.value;
+  }
 }

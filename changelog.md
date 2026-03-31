@@ -38,6 +38,7 @@
   - Mods page: Mod description tooltip now appears when hovering a mod name.
   - Ships/Weapons Viewers: Images smaller than the display area won't be scaled up by default.
   - Improved error message when downloading a mod actually downloads a text file.
+  - Improved notification behavior even more.
 
 # 1.3.4
 - Added

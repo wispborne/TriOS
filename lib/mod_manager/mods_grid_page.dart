@@ -355,7 +355,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     ),
                     MenuDivider(),
                   ],
-                  scrollbarConfig: ScrollbarConfig(),
+                  scrollbarConfig: ScrollbarConfig(showLeftScrollbar: .never, showRightScrollbar: .always),
                   selectedItem: selectedMod,
                   defaultGrouping: EnabledStateModGridGroup(),
                   defaultSortField: ModGridSortField.name.name,
@@ -1215,7 +1215,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   .read(appSettings.notifier)
                   .update((s) => s.copyWith(modsGridColorful: !current));
             },
-            child: const Text("Colorful"),
+            child: MovingTooltipWidget.text(
+              message:
+                  "If a mod has an icon, use its colors to style the mod row.",
+              child: const Text("Colorful"),
+            ),
           ),
           if (ref.watch(
             appSettings.select(
@@ -1229,7 +1233,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 appSettings.select((s) => s.modsGridShowModInAllCategories),
               ),
               onPressed: () => toggleShowModInAllCategories(ref),
-              child: const Text("Repeat Mods In Each Category"),
+              child: MovingTooltipWidget.text(
+                message:
+                    "If a mod is in multiple categories, show the mod in each category rather than only in its primary category.",
+                child: const Text("Repeat Mods In Each Category"),
+              ),
             ),
           Divider(),
           SubmenuButton(
@@ -1299,12 +1307,15 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 child: const Text("Don't show updates"),
               ),
             ],
-            child: Text(switch (modsGridUpdateVisibility) {
-              ModsGridUpdateVisibility.showUnmuted => "Showing Updates section",
-              ModsGridUpdateVisibility.showAll =>
-                "Showing Updates section (incl. muted)",
-              ModsGridUpdateVisibility.hide => "Not showing Update section",
-            }),
+            child: MovingTooltipWidget.text(
+              message: "Whether to show a section at the top of the page containing only mods with updates.",
+              child: Text(switch (modsGridUpdateVisibility) {
+                ModsGridUpdateVisibility.showUnmuted => "Showing Updates section",
+                ModsGridUpdateVisibility.showAll =>
+                  "Showing Updates section (incl. muted)",
+                ModsGridUpdateVisibility.hide => "Not showing Update section",
+              }),
+            ),
           ),
           Divider(),
           MenuItemButton(

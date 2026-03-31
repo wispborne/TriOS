@@ -505,18 +505,6 @@ class _WispGridState<T extends WispGridItem>
       );
     }
 
-    if (widget.scrollbarConfig.showRightScrollbar !=
-        ScrollbarVisibility.never) {
-      content = Scrollbar(
-        controller: _gridScrollControllerVertical, // Same controller for sync
-        scrollbarOrientation: ScrollbarOrientation.right,
-        thumbVisibility:
-            widget.scrollbarConfig.showRightScrollbar ==
-            ScrollbarVisibility.always,
-        child: content,
-      );
-    }
-
     // Apply horizontal scrollbar if needed
     if (widget.scrollbarConfig.showBottomScrollbar !=
         ScrollbarVisibility.never) {
@@ -553,6 +541,25 @@ class _WispGridState<T extends WispGridItem>
       );
     }
 
+    // Apply RIGHT scrollbar OUTSIDE horizontal scroll so it stays
+    // pinned to the visible viewport edge, not the content edge.
+    if (widget.scrollbarConfig.showRightScrollbar !=
+        ScrollbarVisibility.never) {
+      content = Scrollbar(
+        controller: _gridScrollControllerVertical,
+        scrollbarOrientation: ScrollbarOrientation.right,
+        thumbVisibility:
+            widget.scrollbarConfig.showRightScrollbar ==
+            ScrollbarVisibility.always,
+        // Allow vertical scroll notifications through regardless of depth,
+        // since the horizontal SingleChildScrollView sits between this
+        // Scrollbar and the vertical CustomScrollView.
+        notificationPredicate: (notification) =>
+            notification.metrics.axis == Axis.vertical,
+        child: content,
+      );
+    }
+
     return content;
   }
 
@@ -571,11 +578,11 @@ class _WispGridState<T extends WispGridItem>
             final item = displayedMods[index];
 
             // Handle group-row widgets vs normal row widgets
-            if (item is WispGridGroupRowView) {
+            if (_isGroupHeader(item)) {
               return Row(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 0),
                     child: SizedBox(width: totalRowWidth, child: item),
                   ),
                   const Spacer(),
@@ -626,6 +633,9 @@ class _WispGridState<T extends WispGridItem>
     );
   }
 
+  bool _isGroupHeader(Widget w) =>
+      w is WispGridGroupRowView || w is _DragTargetGroupHeader;
+
   Widget _buildItemSliver(
     List<Widget> displayedMods,
     SliverChildBuilderDelegate delegate,
@@ -634,7 +644,7 @@ class _WispGridState<T extends WispGridItem>
       return SliverList(delegate: delegate);
     }
 
-    final hasGroupHeaders = displayedMods.any((w) => w is WispGridGroupRowView);
+    final hasGroupHeaders = displayedMods.any(_isGroupHeader);
     if (!hasGroupHeaders) {
       return SliverFixedExtentList(
         itemExtent: widget.itemExtent!,
@@ -651,7 +661,7 @@ class _WispGridState<T extends WispGridItem>
 
     return SliverVariedExtentList(
       delegate: delegate,
-      itemExtentBuilder: (i, _) => displayedMods[i] is WispGridGroupRowView
+      itemExtentBuilder: (i, _) => _isGroupHeader(displayedMods[i])
           ? groupHeaderHeight
           : widget.itemExtent!,
     );

@@ -1,15 +1,13 @@
 import 'package:collection/collection.dart';
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
-import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/utils/extensions.dart';
+import 'package:trios/trios/toasts/toast_countdown_mixin.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -66,26 +64,40 @@ class ModDownloadGroupToast extends ConsumerStatefulWidget {
       _ModDownloadGroupToastState();
 }
 
-class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
+class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
+    with ToastCountdownMixin {
   PaletteGenerator? palette;
+  bool _isHovering = false;
   final Map<String, VoidCallback> _statusListeners = {};
   final Map<String, VoidCallback> _installCompleteListeners = {};
   final Map<String, VoidCallback> _installProgressListeners = {};
   final Map<String, VoidCallback> _installedVariantListeners = {};
 
   @override
+  ToastificationItem get toastItem => widget.item;
+  @override
+  int get toastDurationMillis => widget.toastDurationMillis;
+  @override
+  bool get isHovering => _isHovering;
+
+  @override
   void initState() {
     super.initState();
-    widget.item.pause();
 
     // Add status, installComplete, and installProgress listeners for all downloads
     for (final download in widget.group.items) {
       void statusListener() {
-        if (mounted) setState(() {});
+        if (mounted) {
+          setState(() {});
+          _checkCountdown();
+        }
       }
 
       void installListener() {
-        if (mounted) setState(() {});
+        if (mounted) {
+          setState(() {});
+          _checkCountdown();
+        }
       }
 
       download.task.status.addListener(statusListener);
@@ -100,19 +112,22 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
       download.installedVariant.addListener(installListener);
       _installedVariantListeners[download.id] = installListener;
     }
+  }
 
-    // Timer loop for countdown
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(milliseconds: 5));
-      if (mounted) {
-        setState(() {});
-      }
-      return mounted;
-    });
+  void _checkCountdown() {
+    final downloads = widget.group.items;
+    final allDownloadsComplete = widget.group.allItemsCompleted();
+    final allInstalled = allDownloadsComplete &&
+        downloads.every((d) =>
+            _isInstalled(d) ||
+            d.task.status.value == DownloadStatus.failed ||
+            d.task.status.value == DownloadStatus.canceled);
+    tryStartCountdown(isReadyToAutoDismiss: allInstalled);
   }
 
   @override
   void dispose() {
+    disposeCountdown();
     for (final entry in _statusListeners.entries) {
       final download = widget.group.items.firstWhereOrNull(
         (d) => d.id == entry.key,
@@ -142,14 +157,8 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
 
   /// Whether a single download is fully installed (not just downloaded).
   bool _isInstalled(Download download) {
-    if (download is ModDownload) {
-      return ref
-              .read(AppState.modVariants)
-              .value
-              .orEmpty()
-              .any((v) => v.smolId == download.modInfo.smolId);
-    }
-    return download.installedVariant.value != null || download.installComplete.value;
+    return download.resolveInstalledVariant(ref) != null ||
+        download.installComplete.value;
   }
 
   @override
@@ -169,13 +178,8 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
             d.task.status.value == DownloadStatus.canceled);
     final isInstalling = allDownloadsComplete && !allInstalled;
 
-    final timeElapsed = (item.elapsedDuration?.inMilliseconds ?? 0);
-    final timeTotal = (item.originalDuration?.inMilliseconds ?? 1000);
-
-    // Auto-dismiss only after fully installed.
-    if (allInstalled && !widget.item.isRunning) {
-      widget.item.start();
-    }
+    final timeElapsed = countdownStopwatch.elapsedMilliseconds;
+    final timeTotal = widget.toastDurationMillis;
 
     // Calculate aggregate progress
     double aggregateProgress = 0.0;
@@ -223,7 +227,16 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
           child: Builder(
             builder: (context) {
               final theme = Theme.of(context);
-              return Card(
+              return MouseRegion(
+                onEnter: (_) {
+                  setState(() => _isHovering = true);
+                  pauseCountdown();
+                },
+                onExit: (_) {
+                  setState(() => _isHovering = false);
+                  resumeCountdown();
+                },
+                child: Card(
                 child: Container(
                   padding: const .all(8),
                   decoration: BoxDecoration(
@@ -379,8 +392,9 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
                     ],
                   ),
                 ),
+              ),
               );
-            },
+              },
           ),
         ),
       ),
@@ -421,16 +435,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast> {
     final status = downloadTask.status.value;
     final modString = download.displayName;
 
-    var installedMod = download is ModDownload
-        ? ref
-              .watch(AppState.modVariants)
-              .value
-              .orEmpty()
-              .firstWhereOrNull(
-                (ModVariant element) =>
-                    element.smolId == (download as ModDownload).modInfo.smolId,
-              )
-        : download.installedVariant.value;
+    var installedMod = download.watchInstalledVariant(ref);
 
     return Padding(
       padding: const .only(bottom: 6),

@@ -90,6 +90,13 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       );
 
       if (installModsResult.isEmpty) {
+        // User cancelled the dialog — mark the download as cancelled so the
+        // toast dismisses immediately.
+        if (installationDownload != null) {
+          ref
+              .read(downloadManager.notifier)
+              .cancelInstallation(installationDownload);
+        }
         return [];
       }
 

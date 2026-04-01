@@ -295,7 +295,7 @@ List<ContextMenuEntry> buildCategoryContextMenuEntries(
       },
     ),
     MenuItem.submenu(
-      label: 'Change Color',
+      label: 'Category Color',
       icon: Icons.palette,
       items: [
         MenuItem(
@@ -317,7 +317,7 @@ List<ContextMenuEntry> buildCategoryContextMenuEntries(
       ],
     ),
     MenuItem.submenu(
-      label: 'Change Icon',
+      label: 'Category Icon',
       icon: Icons.emoji_symbols,
       onSelected: onBrowseAllSelected,
       items: [

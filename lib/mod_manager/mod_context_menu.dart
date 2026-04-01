@@ -216,7 +216,7 @@ MenuItem _buildBulkColorSubmenu(List<Mod> selectedMods, WidgetRef ref) {
           : null;
 
   return MenuItem.submenu(
-    label: 'Color',
+    label: 'Mod Color',
     icon: Icons.palette,
     items: [
       MenuItem(
@@ -255,7 +255,7 @@ MenuItem _buildColorSubmenu(String modId, WidgetRef ref) {
       ?.color;
 
   return MenuItem.submenu(
-    label: 'Color',
+    label: 'Mod Color',
     icon: Icons.palette,
     items: [
       MenuItem(

@@ -100,6 +100,10 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       GridFilter<Ship>(
         name: 'Type',
         valueGetter: (ship) => ship.isSkin ? 'Skin' : 'Base Hull',
+        valuesGetter: (ship) => [
+          ship.isSkin ? 'Skin' : 'Base Hull',
+          if (ship.hasStationSlots) 'Has Modules',
+        ],
       ),
       GridFilter<Ship>(
         name: 'Hull Size',
@@ -107,7 +111,53 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         useDefaultSort: true, // Sorts by hull size by default
       ),
       GridFilter<Ship>(
+        name: 'Weapon Slot Type',
+        valueGetter: (ship) => '',
+        valuesGetter: (ship) =>
+            ship.weaponSlots
+                ?.where((s) => s.isMountable)
+                .map((s) => s.type.toUpperCase())
+                .toSet()
+                .toList() ??
+            [],
+        displayNameGetter: (value) => value.toTitleCase(),
+      ),
+      GridFilter<Ship>(
+        name: 'Weapon Size',
+        valueGetter: (ship) => '',
+        valuesGetter: (ship) =>
+            ship.weaponSlots
+                ?.where((s) => s.isMountable)
+                .map((s) => s.size.toUpperCase())
+                .toSet()
+                .toList() ??
+            [],
+        displayNameGetter: (value) => value.toTitleCase(),
+        sortComparator: (a, b) {
+          const order = ['SMALL', 'MEDIUM', 'LARGE'];
+          return order.indexOf(a).compareTo(order.indexOf(b));
+        },
+      ),
+      GridFilter<Ship>(
+        name: 'Mount Type',
+        valueGetter: (ship) => '',
+        valuesGetter: (ship) =>
+            ship.weaponSlots
+                ?.where((s) => s.isMountable)
+                .map((s) => s.mount.toUpperCase())
+                .toSet()
+                .toList() ??
+            [],
+        displayNameGetter: (value) => value.toTitleCase(),
+      ),
+      GridFilter<Ship>(
+        name: 'Shield Type',
+        valueGetter: (ship) => ship.shieldType ?? '',
+        displayNameGetter: (value) => value.toTitleCase(),
+      ),
+      GridFilter<Ship>(
         name: 'Mod',
+        collapsedByDefault: true,
         valueGetter: (ship) {
           return ship.modVariant?.modInfo.nameOrId ?? vanillaName;
         },
@@ -119,27 +169,26 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       ),
       GridFilter<Ship>(
         name: 'System',
+        collapsedByDefault: true,
         valueGetter: (ship) => ship.systemId ?? '',
         displayNameGetter: (value) =>
-            state.shipSystemsMap[value ?? ""]?.name ?? value,
-      ),
-      GridFilter<Ship>(
-        name: 'Shield Type',
-        valueGetter: (ship) => ship.shieldType ?? '',
-        displayNameGetter: (value) => value.toTitleCase(),
+        state.shipSystemsMap[value ?? ""]?.name ?? value,
       ),
       GridFilter<Ship>(
         name: 'Defense Id',
+        collapsedByDefault: true,
         valueGetter: (ship) => ship.defenseId ?? '',
         displayNameGetter: (value) =>
-            state.shipSystemsMap[value ?? ""]?.name ?? value,
+        state.shipSystemsMap[value ?? ""]?.name ?? value,
       ),
       GridFilter<Ship>(
         name: 'Tech/Manufacturer',
+        collapsedByDefault: true,
         valueGetter: (ship) => ship.techManufacturer ?? '',
       ),
       GridFilter<Ship>(
         name: 'Designation',
+        collapsedByDefault: true,
         valueGetter: (ship) => ship.designation ?? '',
       ),
     ];
@@ -436,22 +485,23 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     for (final filter in filterCategories) {
       if (filter.hasActiveFilters) {
         ships = ships.where((ship) {
-          final value = filter.valueGetter(ship);
-          final filterState = filter.filterStates[value];
+          final values = filter.valuesGetter != null
+              ? filter.valuesGetter!(ship)
+              : [filter.valueGetter(ship)];
 
-          // If this value is explicitly excluded
-          if (filterState == false) {
+          // If any value is explicitly excluded, exclude the item
+          if (values.any((v) => filter.filterStates[v] == false)) {
             return false;
           }
 
           // If there are any explicitly included values
           final hasIncludedValues = filter.filterStates.values.contains(true);
           if (hasIncludedValues) {
-            // Must be explicitly included to pass the filter
-            return filterState == true;
+            // Must have at least one included value
+            return values.any((v) => filter.filterStates[v] == true);
           }
 
-          // If we have only exclusions, allow anything not explicitly excluded
+          // Only exclusions active — allow anything not excluded
           return true;
         }).toList();
       }

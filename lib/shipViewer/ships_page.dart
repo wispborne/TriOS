@@ -32,6 +32,9 @@ import 'package:trios/widgets/viewer_toolbar.dart';
 
 import '../trios/navigation.dart';
 import '../widgets/multi_split_mixin_view.dart';
+import 'ship_module_resolver.dart';
+import 'widgets/ship_sprite_composite.dart';
+import 'widgets/ship_weapon_slot_overlay.dart';
 
 class ShipsPage extends ConsumerStatefulWidget {
   const ShipsPage({super.key});
@@ -49,6 +52,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 
   WispGridController<Ship>? _gridController;
   Widget? _cachedBuild;
+
+  /// Cache resolved modules per ship ID to avoid recomputing on every build.
+  final _resolvedModulesCache = <String, List<ResolvedModule>>{};
 
   @override
   List<Area> get areas {
@@ -523,9 +529,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             ),
             if (item.isSkin)
               Padding(
-                padding: const EdgeInsets.only(left: 8),
+                padding: const .only(left: 8, top: 3),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: const .symmetric(
                     horizontal: 4,
                     vertical: 1,
                   ),
@@ -650,8 +656,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 _gridController!,
                 includeHeaders: true,
               ),
-              () =>
-                  ref.read(shipListNotifierProvider.notifier).allShipsAsCsv(),
+              () => ref.read(shipListNotifierProvider.notifier).allShipsAsCsv(),
             );
           },
         ).toEntry(0),
@@ -714,6 +719,14 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     final controller = ref.read(shipsPageControllerProvider.notifier);
     final gameCoreDir = controller.getGameCoreDir();
     final spriteDir = _getPathForSpriteName(s, gameCoreDir);
+
+    // Resolve station modules for this ship (cached per ship ID).
+    final modules = _resolvedModulesCache.putIfAbsent(s.id, () {
+      final allShips = ref.read(shipListNotifierProvider).valueOrNull ?? [];
+      final variants = ref.read(moduleVariantsProvider);
+      final variantHullIds = ref.read(variantHullIdMapProvider);
+      return resolveModules(s, allShips, variants, variantHullIds);
+    });
 
     Widget section(String title) => Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
@@ -795,11 +808,19 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                   children: [
                     MovingTooltipWidget.image(
                       path: spriteDir.path,
-                      child: Image.file(
-                        File(spriteDir.path),
+                      child: SizedBox(
                         width: 80,
                         height: 80,
-                        fit: BoxFit.contain,
+                        child: modules.isEmpty
+                            ? Image.file(
+                                File(spriteDir.path),
+                                fit: BoxFit.contain,
+                              )
+                            : ShipSpriteComposite(
+                                ship: s,
+                                modules: modules,
+                                fit: BoxFit.contain,
+                              ),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -819,6 +840,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           ],
         ),
         const SizedBox(height: 8),
+        if (s.weaponSlots != null &&
+            s.weaponSlots!.isNotEmpty &&
+            s.spriteFile != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: ShipWeaponSlotOverlay(ship: s, modules: modules),
+          ),
         Divider(color: Theme.of(context).colorScheme.outline),
         _kv(
           s.modVariant != null ? 'Mod' : null,

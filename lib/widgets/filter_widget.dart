@@ -24,6 +24,9 @@ class GridFilter<T> {
   /// If true, doesn't sort by display name or custom sort.
   final bool useDefaultSort;
 
+  /// If true, the filter section starts collapsed in the UI.
+  final bool collapsedByDefault;
+
   // Map of values to filter states:
   // true = include, false = exclude, null = no filter
   final Map<String, bool?> filterStates = {};
@@ -35,6 +38,7 @@ class GridFilter<T> {
     this.displayNameGetter,
     this.sortComparator,
     this.useDefaultSort = false,
+    this.collapsedByDefault = false,
   });
 
   Set<String> get includedValues => filterStates.entries
@@ -70,7 +74,7 @@ class GridFilterWidget<T> extends StatefulWidget {
 
 class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
   List<String> _uniqueValues = [];
-  bool _isExpanded = true;
+  late bool _isExpanded = !widget.filter.collapsedByDefault;
 
   @override
   void initState() {

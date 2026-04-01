@@ -39,4 +39,7 @@ class ShipWeaponSlot with ShipWeaponSlotMappable {
   /// Whether this slot is an actual mountable weapon slot (not decorative,
   /// system, built-in, launch bay, or station module).
   bool get isMountable => _mountableTypes.contains(type.toUpperCase());
+
+  /// Whether this slot is a station module docking point.
+  bool get isStationModule => type.toUpperCase() == 'STATION_MODULE';
 }

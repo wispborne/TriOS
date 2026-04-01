@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/models/shipSkin.dart';
+import 'package:trios/shipViewer/models/ship_variant.dart';
 import 'package:trios/shipViewer/models/ship_weapon_slot.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
@@ -19,6 +20,16 @@ import 'package:trios/utils/logging.dart';
 
 final isLoadingShipsList = StateProvider<bool>((ref) => false);
 final isShipsListDirty = StateProvider<bool>((ref) => false);
+
+/// Variants that define station modules, keyed by variant ID.
+/// Populated as a side-effect of ship list parsing.
+final moduleVariantsProvider =
+    StateProvider<Map<String, ShipVariant>>((ref) => {});
+
+/// Lightweight map of ALL variant IDs to their hull IDs.
+/// Used to resolve module variant ID → hull ID lookups.
+final variantHullIdMapProvider =
+    StateProvider<Map<String, String>>((ref) => {});
 
 final shipListNotifierProvider =
     StreamNotifierProvider<ShipListNotifier, List<Ship>>(ShipListNotifier.new);
@@ -110,6 +121,23 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     // Always yield the final complete list.
     yield allShips;
 
+    // Parse .variant files for module mappings (runs after ship list is
+    // complete so it doesn't slow down the main loading).
+    final allModuleVariants = <String, ShipVariant>{};
+    final allHullIdMap = <String, String>{};
+    final coreVariants =
+        await _parseVariants(Directory(gameCorePath), null, allErrors);
+    allModuleVariants.addAll(coreVariants.moduleVariants);
+    allHullIdMap.addAll(coreVariants.hullIdMap);
+    for (final variant in variants) {
+      final modVariants =
+          await _parseVariants(variant.modFolder, variant, allErrors);
+      allModuleVariants.addAll(modVariants.moduleVariants);
+      allHullIdMap.addAll(modVariants.hullIdMap);
+    }
+    ref.read(moduleVariantsProvider.notifier).state = allModuleVariants;
+    ref.read(variantHullIdMapProvider.notifier).state = allHullIdMap;
+
     if (allErrors.isNotEmpty) {
       Fimber.w('Ship parsing errors:\n${allErrors.join('\n')}');
     }
@@ -117,7 +145,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     ref.read(isLoadingShipsList.notifier).state = false;
     ref.read(isShipsListDirty.notifier).state = false;
     Fimber.i(
-      'Parsed ${allShips.length} ships from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
+      'Parsed ${allShips.length} ships and ${allModuleVariants.length} module variants from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
     );
   }
 
@@ -508,6 +536,78 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       moduleAnchor: baseHull.moduleAnchor,
     )..modVariant = modVariant ?? baseHull.modVariant;
   }
+
+  /// Parse `.variant` files from `data/variants/`.
+  ///
+  /// Returns [_VariantParseResult] containing:
+  /// - module variants (those with a `modules` field), keyed by variant ID
+  /// - a lightweight map of ALL variant IDs → hull IDs (for resolving
+  ///   module variant → hull lookups)
+  Future<_VariantParseResult> _parseVariants(
+    Directory folder,
+    ModVariant? modVariant,
+    List<String> errors,
+  ) async {
+    final variantsDir = Directory(p.join(folder.path, 'data/variants'));
+    final moduleVariants = <String, ShipVariant>{};
+    final hullIdMap = <String, String>{};
+    final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
+
+    if (!await variantsDir.exists()) {
+      return _VariantParseResult(moduleVariants, hullIdMap);
+    }
+
+    final variantFiles = await variantsDir
+        .list(recursive: true)
+        .where((e) => e is File && e.path.endsWith('.variant'))
+        .cast<File>()
+        .toList();
+
+    for (final file in variantFiles) {
+      try {
+        final raw = await file.readAsString(encoding: utf8);
+        final cleaned = raw.removeJsonComments();
+        final map = await cleaned.parseJsonToMapAsync();
+
+        final variantId = map['variantId'] as String?;
+        final hullId = map['hullId'] as String?;
+        if (variantId == null || hullId == null) continue;
+
+        // Always record the variantId → hullId mapping.
+        hullIdMap[variantId] = hullId;
+
+        // Only create full ShipVariant objects for variants with modules.
+        // Modules in .variant files are a List<Map> of single-entry objects:
+        //   [{"WS0017": "module_variant_id"}, {"WS0018": "other_variant"}]
+        // Flatten into a single Map<String, String> for the model.
+        final modulesRaw = map['modules'];
+        if (modulesRaw == null || modulesRaw is! List || modulesRaw.isEmpty) {
+          continue;
+        }
+
+        final flatModules = <String, String>{};
+        for (final entry in modulesRaw) {
+          if (entry is Map) {
+            for (final kv in entry.entries) {
+              flatModules[kv.key.toString()] = kv.value.toString();
+            }
+          }
+        }
+        if (flatModules.isEmpty) continue;
+
+        map['modules'] = flatModules;
+
+        final variant = ShipVariantMapper.fromMap(map);
+        moduleVariants[variant.variantId] = variant;
+      } catch (e) {
+        errors.add(
+          '[$modName] Failed to parse .variant file ${file.path}: $e',
+        );
+      }
+    }
+
+    return _VariantParseResult(moduleVariants, hullIdMap);
+  }
 }
 
 class ShipParseResult {
@@ -516,4 +616,11 @@ class ShipParseResult {
   final int filesProcessed;
 
   ShipParseResult(this.ships, this.errors, this.filesProcessed);
+}
+
+class _VariantParseResult {
+  final Map<String, ShipVariant> moduleVariants;
+  final Map<String, String> hullIdMap;
+
+  _VariantParseResult(this.moduleVariants, this.hullIdMap);
 }

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:trios/shipSystemsManager/ship_system.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/models/ship_weapon_slot.dart';
+import 'package:trios/shipViewer/ship_module_resolver.dart';
+import 'package:trios/shipViewer/widgets/ship_sprite_composite.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -24,12 +26,19 @@ class IngameShipTooltip {
     required Map<String, ShipSystem> shipSystemsMap,
     required Map<String, Weapon> weaponsMap,
     required Widget child,
+    List<ResolvedModule> modules = const [],
   }) {
     return Builder(
       builder: (context) => MovingTooltipWidget.framed(
         tooltipWidget: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: _maxWidth),
-          child: buildShipContent(ship, shipSystemsMap, weaponsMap, context),
+          child: buildShipContent(
+            ship,
+            shipSystemsMap,
+            weaponsMap,
+            context,
+            modules: modules,
+          ),
         ),
         child: child,
       ),
@@ -42,8 +51,9 @@ class IngameShipTooltip {
     Ship ship,
     Map<String, ShipSystem> shipSystemsMap,
     Map<String, Weapon> weaponsMap,
-    BuildContext context,
-  ) {
+    BuildContext context, {
+    List<ResolvedModule> modules = const [],
+  }) {
     final theme = Theme.of(context);
     final highlightColor = theme.colorScheme.primary;
 
@@ -57,7 +67,7 @@ class IngameShipTooltip {
         ? '${ship.shieldType!.toTitleCase()} shield'
         : 'None';
 
-    final sprite = _shipSprite(ship);
+    final sprite = _shipSprite(ship, modules);
     final mountGroups = _groupMounts(ship);
     final hasBays = (ship.fighterBays ?? 0) > 0;
     final List<String> armaments = [
@@ -406,9 +416,22 @@ Widget _hairline(ThemeData theme) => Divider(
 );
 
 /// Ship silhouette sprite constrained to 128 px tall, or null if unavailable.
-Widget? _shipSprite(Ship ship) {
+/// When [modules] is non-empty, renders the composite sprite with modules.
+Widget? _shipSprite(Ship ship, List<ResolvedModule> modules) {
   final path = ship.spriteFile;
   if (path == null) return null;
+
+  if (modules.isNotEmpty) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 128),
+      child: ShipSpriteComposite(
+        ship: ship,
+        modules: modules,
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+
   return ConstrainedBox(
     constraints: const BoxConstraints(maxHeight: 128),
     child: Image.file(

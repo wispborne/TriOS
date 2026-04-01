@@ -168,7 +168,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        CheckForUpdatesButton(ref: ref),
+                        CheckForUpdatesButton(),
                         const SizedBox(width: 8),
                         ElevatedButton(
                           child: const Text("Show Changelog"),
@@ -1124,61 +1124,74 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 }
 
-class CheckForUpdatesButton extends StatelessWidget {
-  const CheckForUpdatesButton({super.key, required this.ref});
+class CheckForUpdatesButton extends ConsumerStatefulWidget {
+  const CheckForUpdatesButton({super.key});
 
-  final WidgetRef ref;
+  @override
+  ConsumerState<CheckForUpdatesButton> createState() =>
+      _CheckForUpdatesButtonState();
+}
+
+class _CheckForUpdatesButtonState
+    extends ConsumerState<CheckForUpdatesButton> {
+  ScaffoldMessengerState? _scaffoldMessenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scaffoldMessenger = ScaffoldMessenger.of(context);
+  }
+
+  @override
+  void dispose() {
+    _scaffoldMessenger?.hideCurrentSnackBar();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
-          release,
-        ) {
-          if (release == null) {
-            showSnackBar(
-              context: context,
-              content: const Text("No new release found"),
-            );
-            return;
-          } else if (Version.parse(release.tagName, sanitizeInput: true) <=
-              Version.parse(Constants.version, sanitizeInput: true)) {
-            showSnackBar(
-              context: context,
-              content: Text(
-                "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})",
-              ),
-              action: SnackBarAction(
-                label: "I don't believe you (show update prompt)",
-                backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                onPressed: () {
-                  ref
-                      .watch(AppState.selfUpdate.notifier)
-                      .getLatestRelease()
-                      .then((release) {
-                        if (release == null) {
-                          Fimber.d("No release found");
-                          return;
-                        }
-
-                        toastification.showCustom(
-                          context: context,
-                          builder: (context, item) =>
-                              SelfUpdateToast(release, item),
-                        );
-                      });
-                },
-              ),
-            );
-            return;
-          } else {
-            toastification.showCustom(
-              context: context,
-              builder: (context, item) => SelfUpdateToast(release, item),
-            );
-          }
-        });
+        final selfUpdateNotifier = ref.read(AppState.selfUpdate.notifier);
+        final release = await selfUpdateNotifier.getLatestRelease();
+        if (!mounted) return;
+        if (release == null) {
+          showSnackBar(
+            context: context,
+            content: const Text("No new release found"),
+          );
+        } else if (Version.parse(release.tagName, sanitizeInput: true) <=
+            Version.parse(Constants.version, sanitizeInput: true)) {
+          showSnackBar(
+            context: context,
+            content: Text(
+              "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})",
+            ),
+            action: SnackBarAction(
+              label: "I don't believe you (show update prompt)",
+              backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              onPressed: () async {
+                final innerRelease =
+                    await selfUpdateNotifier.getLatestRelease();
+                if (innerRelease == null) {
+                  Fimber.d("No release found");
+                  return;
+                }
+                if (!context.mounted) return;
+                toastification.showCustom(
+                  context: context,
+                  builder: (context, item) =>
+                      SelfUpdateToast(innerRelease, item),
+                );
+              },
+            ),
+          );
+        } else {
+          toastification.showCustom(
+            context: context,
+            builder: (context, item) => SelfUpdateToast(release, item),
+          );
+        }
       },
       child: const Text('Check for update'),
     );

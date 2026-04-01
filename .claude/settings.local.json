@@ -25,7 +25,8 @@
       "Bash(flutter --version)",
       "Bash(where flutter:*)",
       "Bash(dir \"C:\\\\Users\\\\whitm\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\" \")",
-      "Bash(findstr toastification:*)"
+      "Bash(findstr toastification:*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(p[''''rootUri'''']\\) for p in d[''''packages''''] if ''''toastification'''' in p[''''name'''']]\")"
     ]
   }
 }

@@ -234,4 +234,8 @@ class Ship with ShipMappable implements WispGridItem {
   /// decorative, system, built-in, launch bay, and station module slots).
   int get mountableWeaponSlotCount =>
       weaponSlots?.where((s) => s.isMountable).length ?? 0;
+
+  /// Whether this ship has any STATION-type weapon slots (i.e., docks modules).
+  bool get hasStationSlots =>
+      weaponSlots?.any((s) => s.isStationModule) ?? false;
 }

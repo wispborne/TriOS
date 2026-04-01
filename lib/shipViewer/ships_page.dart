@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -7,26 +8,27 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/ship_manager.dart';
 import 'package:trios/shipViewer/ships_page_controller.dart';
-import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/disable.dart';
-import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
+import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/ingame_ship_tooltip.dart';
 import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
+import 'package:trios/widgets/viewer_search_box.dart';
+import 'package:trios/widgets/viewer_split_pane.dart';
+import 'package:trios/widgets/viewer_toolbar.dart';
 
 import '../trios/navigation.dart';
 import '../widgets/multi_split_mixin_view.dart';
@@ -74,6 +76,26 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     final controllerState = ref.watch(shipsPageControllerProvider);
     final theme = Theme.of(context);
     final mods = ref.watch(AppState.mods);
+
+    // Apply pending mod filter from context menu navigation.
+    final filterRequest = ref.watch(AppState.viewerFilterRequest);
+    if (filterRequest != null &&
+        filterRequest.destination == TriOSTools.ships) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final modFilter = ref
+            .read(shipsPageControllerProvider)
+            .filterCategories
+            .firstWhereOrNull((f) => f.name == 'Mod');
+        if (modFilter != null) {
+          ref.read(shipsPageControllerProvider.notifier).updateFilterStates(
+            modFilter,
+            {filterRequest.modName: true},
+          );
+        }
+        ref.read(AppState.viewerFilterRequest.notifier).state = null;
+      });
+    }
 
     final columns = buildCols(theme, controllerState);
     final total = controllerState.allShips.length;
@@ -126,113 +148,35 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     ShipsPageController controller,
     ShipsPageState controllerState,
   ) {
-    return Padding(
-      padding: const EdgeInsets.all(4),
-      child: SizedBox(
-        height: 50,
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                const SizedBox(width: 4),
-                Text(
-                  '$total Ships${total != visible ? " ($visible shown)" : ""}',
-                  style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20),
-                ),
-                const SizedBox(width: 4),
-                if (controllerState.isLoading)
-                  Padding(
-                    padding: const .only(left: 8),
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                if (!controllerState.isLoading)
-                  MovingTooltipWidget.text(
-                    message: "Refresh",
-                    child: Disable(
-                      isEnabled: !controllerState.isLoading,
-                      child: IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: () =>
-                            ref.invalidate(shipListNotifierProvider),
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                ExpandingConstrainedAlignedWidget(
-                  alignment: Alignment.centerRight,
-                  child: buildSearchBox(),
-                ),
-                const SizedBox(width: 8),
-                MovingTooltipWidget.text(
-                  message: "Only ships from enabled mods.",
-                  child: TriOSToolbarCheckboxButton(
-                    text: "Only Enabled",
-                    value: controllerState.showEnabled,
-                    onChanged: (value) => controller.toggleShowEnabled(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TriOSDropdownMenu<SpoilerLevel>(
-                  initialSelection: controllerState.spoilerLevelToShow,
-                  onSelected: (level) {
-                    if (level == null) return;
-                    controller.setShowSpoilers(level);
-                  },
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(
-                      value: SpoilerLevel.showNone,
-                      label: "No Spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        message: "No spoilers shown at all.",
-                        child: Text("No Spoilers"),
-                      ),
-                    ),
-                    DropdownMenuEntry(
-                      value: SpoilerLevel.showSlightSpoilers,
-                      label: "Slight spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        warningLevel: TooltipWarningLevel.warning,
-                        message: "Shows CODEX_UNLOCKABLE ships.",
-                        child: Text("Slight spoilers"),
-                      ),
-                    ),
-                    DropdownMenuEntry(
-                      value: SpoilerLevel.showAllSpoilers,
-                      label: "Show all spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        warningLevel: TooltipWarningLevel.error,
-                        message:
-                            "Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships",
-                        child: Text("Show all spoilers"),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                TriOSToolbarCheckboxButton(
-                  text: "Compare",
-                  value: controllerState.splitPane,
-                  onChanged: (value) {
-                    controller.toggleSplitPane();
-                    multiSplitController.areas = areas;
-                    setState(() {});
-                  },
-                ),
-                _buildOverflowButton(
-                  context: context,
-                  theme: theme,
-                  controllerState: controllerState,
-                ),
-              ],
-            ),
-          ),
-        ),
+    return ViewerToolbar(
+      entityName: "Ships",
+      total: total,
+      visible: visible,
+      isLoading: controllerState.isLoading,
+      onRefresh: () => ref.invalidate(shipListNotifierProvider),
+      searchBox: ViewerSearchBox(
+        searchController: _searchController,
+        hintText: "Filter ships...",
+        onChanged: (query) => ref
+            .read(shipsPageControllerProvider.notifier)
+            .updateSearchQuery(query),
+        onClear: () => ref
+            .read(shipsPageControllerProvider.notifier)
+            .updateSearchQuery(''),
       ),
+      splitPane: controllerState.splitPane,
+      onToggleSplitPane: () {
+        controller.toggleSplitPane();
+        multiSplitController.areas = areas;
+        setState(() {});
+      },
+      trailingActions: [
+        _buildOverflowButton(
+          context: context,
+          theme: theme,
+          controllerState: controllerState,
+        ),
+      ],
     );
   }
 
@@ -243,21 +187,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     List<Ship> shipsBeforeFilter,
   ) {
     if (!controllerState.showFilters) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Card(
-          child: InkWell(
-            onTap: controller.toggleShowFilters,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: MovingTooltipWidget.text(
-                message: "Show filters",
-                child: const Icon(Icons.filter_list, size: 16),
-              ),
-            ),
-          ),
-        ),
+      return CollapsedFilterButton(
+        onTap: controller.toggleShowFilters,
+        activeFilterCount: controller.activeFilterCount,
       );
     }
 
@@ -276,137 +208,121 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     List<Ship> ships,
     List<Mod> mods,
   ) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: MultiSplitViewTheme(
-        data: MultiSplitViewThemeData(
-          dividerThickness: 16,
-          dividerPainter: DividerPainters.dashed(
-            color: theme.colorScheme.onSurface.withOpacity(0.4),
-            highlightedColor: theme.colorScheme.onSurface,
-            highlightedThickness: 2,
-            gap: 1,
-          ),
-        ),
-        child: MultiSplitView(
-          controller: multiSplitController,
-          axis: Axis.vertical,
-          builder: (context, area) {
-            switch (area.id) {
-              case 'top':
-                return buildGrid(columns, ships, mods, true, theme);
-              case 'bottom':
-                return buildGrid(columns, ships, mods, false, theme);
-              default:
-                return const SizedBox.shrink();
-            }
-          },
-        ),
-      ),
+    return ViewerSplitPane(
+      controller: multiSplitController,
+      gridBuilder: (areaId) {
+        switch (areaId) {
+          case 'top':
+            return buildGrid(columns, ships, mods, true, theme);
+          case 'bottom':
+            return buildGrid(columns, ships, mods, false, theme);
+          default:
+            return const SizedBox.shrink();
+        }
+      },
     );
   }
 
-  AnimatedContainer buildFilterPanel(
+  FiltersPanel buildFilterPanel(
     ThemeData theme,
     List<Ship> displayedShips,
     ShipsPageState controllerState,
     ShipsPageController controller,
   ) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    return FiltersPanel(
+      onHide: controller.toggleShowFilters,
+      activeFilterCount: controller.activeFilterCount,
+      showClearAll: controllerState.filterCategories.any(
+        (f) => f.hasActiveFilters,
+      ),
+      onClearAll: controller.clearAllFilters,
+      filterWidgets: [
+        _buildCheckboxFilters(theme, controllerState, controller),
+        const SizedBox(height: 8),
+        ...controllerState.filterCategories.map((filter) {
+          return GridFilterWidget(
+            filter: filter,
+            items: displayedShips,
+            filterStates: filter.filterStates,
+            onSelectionChanged: (states) {
+              controller.updateFilterStates(filter, states);
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildCheckboxFilters(
+    ThemeData theme,
+    ShipsPageState controllerState,
+    ShipsPageController controller,
+  ) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      color: theme.colorScheme.surfaceContainer,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Card(
-          child: Scrollbar(
-            thumbVisibility: true,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 8,
-                right: 16,
-                top: 8,
-                bottom: 8,
-              ),
-              child: SizedBox(
-                width: 300,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message: "Hide filters",
-                          child: InkWell(
-                            onTap: controller.toggleShowFilters,
-                            borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.filter_list, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Filters',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        if (controllerState.filterCategories.any(
-                          (f) => f.hasActiveFilters,
-                        ))
-                          TriOSToolbarItem(
-                            elevation: 0,
-                            child: TextButton.icon(
-                              onPressed: controller.clearAllFilters,
-                              icon: const Icon(Icons.clear_all, size: 16),
-                              label: const Text('Clear All'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: ScrollConfiguration(
-                        // Hide inner scrollbar, shown above instead.
-                        behavior: ScrollConfiguration.of(
-                          context,
-                        ).copyWith(scrollbars: false),
-                        child: SingleChildScrollView(
-                          primary: true,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 4,
-                            children: controllerState.filterCategories.map((
-                              filter,
-                            ) {
-                              return GridFilterWidget(
-                                filter: filter,
-                                items: displayedShips,
-                                filterStates: filter.filterStates,
-                                onSelectionChanged: (states) {
-                                  controller.updateFilterStates(filter, states);
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        padding: const .all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MovingTooltipWidget.text(
+              message: "Only show ships from enabled mods.",
+              child: CheckboxListTile(
+                title: const Text('Only Enabled Mods'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: .only(left: 8),
+                value: controllerState.showEnabled,
+                onChanged: (value) => controller.toggleShowEnabled(),
               ),
             ),
-          ),
+            const SizedBox(height: 8),
+            TriOSDropdownMenu<SpoilerLevel>(
+              initialSelection: controllerState.spoilerLevelToShow,
+              onSelected: (level) {
+                if (level == null) return;
+                controller.setShowSpoilers(level);
+              },
+              highlightOutlineColor:
+                  controllerState.spoilerLevelToShow !=
+                      SpoilerLevel.showAllSpoilers
+                  ? theme.colorScheme.primary
+                  : null,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: SpoilerLevel.showNone,
+                  label: "No Spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    message: "No spoilers shown at all.",
+                    child: Text("No Spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility_off, size: 20),
+                ),
+                DropdownMenuEntry(
+                  value: SpoilerLevel.showSlightSpoilers,
+                  label: "Show slight spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    warningLevel: TooltipWarningLevel.warning,
+                    message: "Shows CODEX_UNLOCKABLE ships.",
+                    child: Text("Show slight spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility, size: 20),
+                ),
+                DropdownMenuEntry(
+                  value: SpoilerLevel.showAllSpoilers,
+                  label: "Show all spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    warningLevel: TooltipWarningLevel.error,
+                    message:
+                        "Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships",
+                    child: Text("Show all spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility_outlined, size: 20),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -437,24 +353,27 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       },
       columns: columns,
       items: items,
-      itemExtent: 50,
+      itemExtent: 48,
       scrollbarConfig: ScrollbarConfig(
         showLeftScrollbar: ScrollbarVisibility.always,
         showRightScrollbar: ScrollbarVisibility.always,
         showBottomScrollbar: ScrollbarVisibility.always,
       ),
       rowBuilder: ({required item, required modifiers, required child}) =>
-          SizedBox(
-            height: 50,
-            child: InkWell(
-              onTap: () => _showShipDetailsDialog(context, item),
-              child: Container(
-                color: Colors.transparent,
-                child: buildRowContextMenu(item, child),
+          Padding(
+            padding: const .only(top: 4),
+            child: SizedBox(
+              height: 40,
+              child: InkWell(
+                onTap: () => _showShipDetailsDialog(context, item),
+                child: Container(
+                  color: Colors.transparent,
+                  child: buildRowContextMenu(item, child),
+                ),
               ),
             ),
           ),
-      groups: [ModShipGridGroup()],
+      groups: [UngroupedShipGridGroup(), ModShipGridGroup()],
     );
   }
 
@@ -468,6 +387,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           buildOpenSingleFolderMenuItem(
             _getPathForSpriteName(ship, gameCoreDir).parent,
           ),
+          if (ship.modVariant != null)
+            buildOpenSingleFolderMenuItem(
+              ship.modVariant!.modFolder.absolute,
+              label: 'Open Mod Folder',
+            ),
+          if (ship.modVariant != null)
+            buildMenuItemOpenForumPage(ship.modVariant!, context),
         ],
         padding: const EdgeInsets.all(8.0),
       ),
@@ -576,11 +502,56 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         isSortable: false,
         itemCellBuilder: (item, _) => ShipImageCell(
           imagePath: _getPathForSpriteName(item, gameCoreDir).path,
+          fit: controllerState.useContainFit
+              ? BoxFit.contain
+              : BoxFit.scaleDown,
         ),
         csvValue: (ship) => _getPathForSpriteName(ship, gameCoreDir).path,
         defaultState: WispGridColumnState(position: position++, width: 50),
       ),
-      col('hullName', 'Name', (s) => s.hullNameForDisplay(), width: 200),
+      WispGridColumn<Ship>(
+        key: 'hullName',
+        isSortable: true,
+        name: 'Name',
+        getSortValue: (ship) => ship.hullNameForDisplay(),
+        itemCellBuilder: (item, _) => Row(
+          children: [
+            TextTriOS(
+              item.hullNameForDisplay(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (item.isSkin)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: MovingTooltipWidget.text(
+                    message:
+                        "This ship comes from a .skin file."
+                        "\nSkins are variations of standard hulls. For example, the Falcon (P) is a skin of the Falcon.",
+                    child: Text(
+                      'Skin',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        csvValue: (item) => item.hullNameForDisplay(),
+        defaultState: WispGridColumnState(position: position++, width: 200),
+      ),
       col('hullSize', 'Hull', (s) => s.hullSizeForDisplay(), width: 80),
       WispGridColumn(
         key: 'weaponSlotCount',
@@ -658,54 +629,17 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         .toDirectory();
   }
 
-  SizedBox buildSearchBox() {
-    return SizedBox(
-      height: 30,
-      width: 300,
-      child: SearchAnchor(
-        searchController: _searchController,
-        builder: (context, controller) {
-          return SearchBar(
-            controller: controller,
-            leading: const Icon(Icons.search),
-            hintText: "Filter ships...",
-            trailing: [
-              if (controller.text.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    controller.clear();
-                    ref
-                        .read(shipsPageControllerProvider.notifier)
-                        .updateSearchQuery('');
-                  },
-                ),
-            ],
-            onChanged: (query) {
-              ref
-                  .read(shipsPageControllerProvider.notifier)
-                  .updateSearchQuery(query);
-            },
-            backgroundColor: WidgetStateProperty.all(
-              Theme.of(context).colorScheme.surfaceContainer,
-            ),
-          );
-        },
-        suggestionsBuilder: (_, __) => [],
-      ),
-    );
-  }
-
   Widget _buildOverflowButton({
     required BuildContext context,
     required ThemeData theme,
     required ShipsPageState controllerState,
   }) {
-    return PopupMenuButton(
-      tooltip: "More actions",
-      icon: const Icon(Icons.more_vert),
-      itemBuilder: (context) => [
-        PopupMenuItem(
+    final controller = ref.read(shipsPageControllerProvider.notifier);
+    return OverflowMenuButton(
+      menuItems: [
+        OverflowMenuItem(
+          title: 'Export to CSV',
+          icon: Icons.table_view,
           onTap: () {
             if (_gridController == null) return;
 
@@ -716,17 +650,17 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 _gridController!,
                 includeHeaders: true,
               ),
-              () => ref.read(shipListNotifierProvider.notifier).allShipsAsCsv(),
+              () =>
+                  ref.read(shipListNotifierProvider.notifier).allShipsAsCsv(),
             );
           },
-          child: const Row(
-            children: [
-              Icon(Icons.table_view, size: 18),
-              SizedBox(width: 8),
-              Text('Export to CSV'),
-            ],
-          ),
-        ),
+        ).toEntry(0),
+        OverflowMenuCheckItem(
+          title: 'Stretch icons to fit',
+          icon: Icons.fit_screen,
+          checked: controllerState.useContainFit,
+          onTap: () => controller.toggleUseContainFit(),
+        ).toEntry(1),
       ],
     );
   }
@@ -809,6 +743,35 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(s.id, style: theme.textTheme.labelSmall),
+                  if (s.isSkin && s.baseHullId != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        spacing: 4,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.secondaryContainer,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Skin',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'of ${controllerState.hullNameById(s.baseHullId!)}',
+                            style: theme.textTheme.labelSmall,
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -1024,8 +987,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 // Ship image loader with basic caching
 class ShipImageCell extends StatefulWidget {
   final String? imagePath;
+  final BoxFit fit;
 
-  const ShipImageCell({super.key, required this.imagePath});
+  const ShipImageCell({
+    super.key,
+    required this.imagePath,
+    this.fit = BoxFit.scaleDown,
+  });
 
   @override
   State<ShipImageCell> createState() => _ShipImageCellState();
@@ -1075,19 +1043,31 @@ class _ShipImageCellState extends State<ShipImageCell> {
           width: 40,
           height: 40,
           cacheWidth: 40,
-          cacheHeight: 40,
-          fit: BoxFit.contain,
+          fit: widget.fit,
         ),
       ),
     );
   }
 }
 
+class UngroupedShipGridGroup extends WispGridGroup<Ship> {
+  UngroupedShipGridGroup() : super('none', 'None');
+
+  @override
+  String getGroupName(Ship item, {Comparable? groupSortValue}) => 'All Ships';
+
+  @override
+  Comparable getGroupSortValue(Ship item) => 1;
+
+  @override
+  bool get isGroupVisible => false;
+}
+
 class ModShipGridGroup extends WispGridGroup<Ship> {
   ModShipGridGroup() : super('mod', 'Mod');
 
   @override
-  String getGroupName(Ship item) =>
+  String getGroupName(Ship item, {Comparable? groupSortValue}) =>
       item.modVariant?.modInfo.nameOrId ?? "Vanilla";
 
   @override

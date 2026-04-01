@@ -90,6 +90,13 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       );
 
       if (installModsResult.isEmpty) {
+        // User cancelled the dialog — mark the download as cancelled so the
+        // toast dismisses immediately.
+        if (installationDownload != null) {
+          ref
+              .read(downloadManager.notifier)
+              .cancelInstallation(installationDownload);
+        }
         return [];
       }
 
@@ -174,6 +181,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       return installModsResult;
     } catch (e, st) {
       Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
+      // Propagate error to the download task so the toast shows the failure.
+      installationDownload?.task.error = e;
       if (!context.mounted) return [];
       showAlertDialog(context, title: "Error installing mod", content: "$e");
       return [];
@@ -806,10 +815,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       await ref
           .read(AppState.modVariants.notifier)
           .reloadModVariants(
-            onlyVariants: {
-              ...modInfoEnabledVariants,
-              modVariant,
-            }.nonNulls.toList(),
+            onlyVariants: mod.modVariants,
           );
     }
 
@@ -1156,8 +1162,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           builder: (context) {
             return ForceGameVersionWarningDialog(
               modVariant: modVariant,
-              onForced: () {
-                changeActiveModVariant(mod, modVariant);
+              onForced: () async {
+                await changeActiveModVariant(mod, modVariant);
               },
               refreshModlistAfter: refreshModlistAfter,
             );

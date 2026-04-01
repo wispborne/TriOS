@@ -10,6 +10,7 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/themes/theme.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../utils/logging.dart';
@@ -92,9 +93,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
 
     try {
       final themesJsonString = await rootBundle.loadString(
-        "assets/SMOL_Themes.json",
+        "assets/themes.json",
       );
-      final themesJson = jsonDecode(themesJsonString) as Map<String, dynamic>;
+      final themesJson = await themesJsonString.parseJsonToMapAsync();
       final themesMap = themesJson["themes"] as Map<String, dynamic>;
 
       for (var themeEntry in themesMap.entries) {
@@ -103,17 +104,16 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
           allThemes[themeEntry.key] = TriOSTheme.fromHexCodes(
             isDark: themeData["isDark"] ?? true,
             primary: themeData["primary"],
-            primaryVariant: themeData["primaryVariant"],
             secondary: themeData["secondary"],
-            secondaryVariant: themeData["secondaryVariant"],
-            background: themeData["background"],
             surface: themeData["surface"],
+            surfaceContainer: themeData["surfaceContainer"],
             error: themeData["error"],
             onPrimary: themeData["onPrimary"],
             onSecondary: themeData["onSecondary"],
             onSurface: themeData["onSurface"],
             onError: themeData["onError"],
-            hyperlink: themeData["hyperlink"],
+            fontFamily: themeData["fontFamily"],
+            rainbowAccent: themeData["rainbowAccent"] ?? false,
           );
         } catch (e, st) {
           Fimber.e(
@@ -173,6 +173,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       iconTheme: customTheme.iconTheme.copyWith(
         color: customTheme.colorScheme.onSurfaceVariant,
       ),
+      extensions: [TriOSThemeExtension(rainbowAccent: swatch.rainbowAccent)],
     );
   }
 
@@ -202,8 +203,8 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         bodyMedium: customTheme.textTheme.bodyMedium?.copyWith(fontSize: 16),
       ),
       iconTheme: customTheme.iconTheme.copyWith(
-        color: customTheme.colorScheme.onSurfaceVariant.withOpacity(
-          iconOpacity,
+        color: customTheme.colorScheme.onSurface.withOpacity(
+          0.7,
         ),
       ),
       tabBarTheme: customTheme.tabBarTheme.copyWith(
@@ -211,12 +212,20 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         unselectedLabelColor: customTheme.colorScheme.onSurfaceVariant,
       ),
       snackBarTheme: const SnackBarThemeData(),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: swatch.primary.mix(swatch.surfaceContainer!, 0.2)!),
+        ),
+      ),
+      extensions: [TriOSThemeExtension(rainbowAccent: swatch.rainbowAccent)],
     );
   }
 
   ThemeData _customizeTheme(ThemeData themeBase, TriOSTheme swatch) {
     // Choose font here
-    final textTheme = GoogleFonts.robotoTextTheme(themeBase.textTheme);
+    final textTheme = swatch.fontFamily != null
+        ? themeBase.textTheme.apply(fontFamily: swatch.fontFamily)
+        : GoogleFonts.robotoTextTheme(themeBase.textTheme);
 
     final onSurfaceVariant = swatch.surface == null
         ? swatch.onSurface
@@ -234,7 +243,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         surface: swatch.surface,
         error: vanillaErrorColor,
         errorContainer: vanillaErrorColor.darker(5),
-        onErrorContainer: swatch.onSurface
+        onErrorContainer: swatch.onSurface,
       ),
       scaffoldBackgroundColor: swatch.surfaceContainer,
       dialogBackgroundColor: swatch.surfaceContainer,
@@ -253,7 +262,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
           iconColor: themeBase.colorScheme.onSurface.withValues(
             alpha: iconButtonOpacity,
           ),
-          foregroundColor: themeBase.colorScheme.onSurface
+          foregroundColor: themeBase.colorScheme.onSurface,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -348,7 +357,6 @@ extension PaletteGeneratorExt on PaletteGenerator? {
         onError: Colors.white,
         surface: surfaceColor,
         onSurface: onSurfaceColor,
-        background: backgroundColor,
       ),
       textTheme: TextTheme(
         displayLarge: TextStyle(color: onSurfaceColor),

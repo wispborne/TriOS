@@ -1,0 +1,204 @@
+{
+  "themes": {
+    "AlexAtheos, Creator of Starsector": {
+      "isDark": true,
+      "primary": "#00FF00",
+      "secondary": "#0000FF",
+      "surface": "#C60000",
+      "surfaceContainer": "#9C0000"
+    },
+    "Aurica (light)": {
+      "isDark": false,
+      "primary": "#FFC900",
+      "secondary": "#FFDE00",
+      "surface": "#F0F0F0",
+      "surfaceContainer": "#FFFFFF"
+    },
+    "Trans (pink)": {
+      "isDark": false,
+      "primary": "#229AC9",
+      "secondary": "#1189B8",
+      "surface": "#EEEEEE",
+      "surfaceContainer": "#D56474",
+      "onPrimary": "#EEEEEE",
+      "onSecondary": "#EEEEEE",
+      "onSurface": "#FFFFFF"
+    },
+    "Trans (blue)": {
+      "isDark": false,
+      "primary": "#E67585",
+      "secondary": "#F78696",
+      "surface": "#EEEEEE",
+      "surfaceContainer": "#0078A7",
+      "onPrimary": "#EEEEEE",
+      "onSecondary": "#EEEEEE"
+    },
+    "Comes": {
+      "isDark": true,
+      "primary": "#C6A14B",
+      "secondary": "#B79782",
+      "surface": "#544A6A",
+      "surfaceContainer": "#383049"
+    },
+    "Iron Shell": {
+      "isDark": true,
+      "primary": "#820023",
+      "secondary": "#FFD586",
+      "surface": "#3F0011",
+      "surfaceContainer": "#210506",
+      "onPrimary": "#FFCF8A"
+    },
+    "Kemet - Frog": {
+      "isDark": true,
+      "primary": "#66C954",
+      "secondary": "#BEE45F",
+      "surface": "#27847A",
+      "surfaceContainer": "#136E64"
+    },
+    "Kemet - Phase": {
+      "isDark": true,
+      "primary": "#59DC63",
+      "secondary": "#A52208",
+      "surface": "#121316",
+      "surfaceContainer": "#121316",
+      "onPrimary": "#131418"
+    },
+    "Launcher": {
+      "isDark": true,
+      "primary": "#0937D5",
+      "secondary": "#49FCFF",
+      "surface": "#010F3F",
+      "surfaceContainer": "#0E162B",
+      "onPrimary": "#A8DBFC"
+    },
+    "Nia": {
+      "isDark": true,
+      "primary": "#BE00FF",
+      "secondary": "#CE3867",
+      "surface": "#21242B",
+      "surfaceContainer": "#282C34"
+    },
+    "One Dark": {
+      "isDark": true,
+      "primary": "#4D78CC",
+      "secondary": "#98C379",
+      "surface": "#21242B",
+      "surfaceContainer": "#282C34",
+      "onPrimary": "#dadbe0"
+    },
+    "Pride": {
+      "isDark": true,
+      "primary": "#ff00eb",
+      "secondary": "#444444",
+      "surface": "#161616",
+      "surfaceContainer": "#101010",
+      "onPrimary": "#FFFFFF",
+      "onSecondary": "#FFFFFF",
+      "rainbowAccent": true
+    },
+    "Red Pain": {
+      "isDark": true,
+      "primary": "#F83A5B",
+      "secondary": "#C24369",
+      "surface": "#21000C",
+      "surfaceContainer": "#21000C",
+      "onPrimary": "#FDFDFD"
+    },
+    "Royalty": {
+      "isDark": true,
+      "primary": "#C6A14B",
+      "secondary": "#B79782",
+      "surface": "#383049",
+      "surfaceContainer": "#291E3F"
+    },
+    "Ruby Mine": {
+      "isDark": true,
+      "primary": "#F22A51",
+      "secondary": "#F22A51",
+      "surface": "#202020",
+      "surfaceContainer": "#202020",
+      "onPrimary": "#FDFDFD"
+    },
+    "Sigma": {
+      "isDark": true,
+      "primary": "#40D7A3",
+      "secondary": "#18FFFF",
+      "surface": "#21242B",
+      "surfaceContainer": "#282C34"
+    },
+    "Society": {
+      "isDark": true,
+      "primary": "#1cdd32",
+      "secondary": "#1cdd32",
+      "surface": "#743fa1",
+      "surfaceContainer": "#3c2154"
+    },
+    "Starfarer": {
+      "isDark": true,
+      "primary": "#184957",
+      "secondary": "#FCCF00",
+      "surface": "#0A1D22",
+      "surfaceContainer": "#011E26",
+      "onPrimary": "#A8DBFC"
+    },
+    "Tiandong": {
+      "isDark": true,
+      "primary": "#73875F",
+      "secondary": "#886A38",
+      "surface": "#0C1009",
+      "surfaceContainer": "#020101"
+    },
+    "Tidal": {
+      "isDark": true,
+      "primary": "#CD005D",
+      "secondary": "#00FFFF",
+      "surface": "#17171A",
+      "surfaceContainer": "#17171A",
+      "onPrimary": "#FDFDFD"
+    },
+    "Türkiye": {
+      "isDark": true,
+      "primary": "#FFFFFF",
+      "secondary": "#B22234",
+      "surface": "#780000",
+      "surfaceContainer": "#e30917",
+      "onPrimary": "#FFFFFF",
+      "onSecondary": "#FFFFFF",
+      "onSurface": "#FFFFFF"
+    },
+    "Turkey (real)": {
+      "isDark": true,
+      "primary": "#FFFFFF",
+      "secondary": "#B22234",
+      "surface": "#780000",
+      "surfaceContainer": "#e30917",
+      "onPrimary": "#FFFFFF",
+      "onSecondary": "#FFFFFF",
+      "onSurface": "#FFFFFF",
+      "fontFamily": "Comic Sans MS"
+    },
+    "VIC": {
+      "isDark": true,
+      "primary": "#EE9E00",
+      "secondary": "#4DEFD2",
+      "surface": "#112B29",
+      "surfaceContainer": "#1B1B1B"
+    },
+    "Wisp": {
+      "isDark": true,
+      "primary": "#1080D6",
+      "secondary": "#2BE394",
+      "surface": "#042138",
+      "surfaceContainer": "#282C34",
+      "onPrimary": "#FDFDFD"
+    },
+    "Wunder": {
+      "isDark": true,
+      "primary": "#DD5D6F",
+      "secondary": "#ce6c7a",
+      "surface": "#32444F",
+      "surfaceContainer": "#112633",
+      "onPrimary": "#FDFDFD"
+    }
+  }
+}

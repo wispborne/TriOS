@@ -1,15 +1,13 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
-import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
 import 'package:trios/thirdparty/flutter_context_menu/widgets/context_menu_region.dart';
@@ -21,14 +19,18 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
 import 'package:trios/weaponViewer/weapons_page_controller.dart';
-import 'package:trios/widgets/disable.dart';
-import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
+import 'package:trios/widgets/collapsed_filter_button.dart';
+import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
+import 'package:trios/widgets/viewer_search_box.dart';
+import 'package:trios/widgets/viewer_split_pane.dart';
+import 'package:trios/widgets/viewer_toolbar.dart';
 
 import '../trios/navigation.dart';
 import '../widgets/multi_split_mixin_view.dart';
@@ -79,7 +81,27 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     final theme = Theme.of(context);
     final mods = ref.watch(AppState.mods);
 
-    final columns = buildCols(theme);
+    // Apply pending mod filter from context menu navigation.
+    final filterRequest = ref.watch(AppState.viewerFilterRequest);
+    if (filterRequest != null &&
+        filterRequest.destination == TriOSTools.weapons) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final modFilter = ref
+            .read(weaponsPageControllerProvider)
+            .filterCategories
+            .firstWhereOrNull((f) => f.name == 'Mod');
+        if (modFilter != null) {
+          ref.read(weaponsPageControllerProvider.notifier).updateFilterStates(
+            modFilter,
+            {filterRequest.modName: true},
+          );
+        }
+        ref.read(AppState.viewerFilterRequest.notifier).state = null;
+      });
+    }
+
+    final columns = buildCols(theme, controllerState);
     final total = controllerState.allWeapons.length;
     final visible = controllerState.filteredWeapons.length;
 
@@ -130,113 +152,35 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     WeaponsPageController controller,
     WeaponsPageState controllerState,
   ) {
-    return Padding(
-      padding: const EdgeInsets.all(4),
-      child: SizedBox(
-        height: 50,
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                const SizedBox(width: 4),
-                Text(
-                  '$total Weapons${total != visible ? " ($visible shown)" : ""}',
-                  style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20),
-                ),
-                const SizedBox(width: 4),
-                if (controllerState.isLoading)
-                  Padding(
-                    padding: const .only(left: 8),
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                if (!controllerState.isLoading)
-                  MovingTooltipWidget.text(
-                    message: "Refresh",
-                    child: Disable(
-                      isEnabled: !controllerState.isLoading,
-                      child: IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: () =>
-                            ref.invalidate(weaponListNotifierProvider),
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                ExpandingConstrainedAlignedWidget(
-                  alignment: Alignment.centerRight,
-                  child: buildSearchBox(),
-                ),
-                const SizedBox(width: 8),
-                MovingTooltipWidget.text(
-                  message: "Only weapons from enabled mods.",
-                  child: TriOSToolbarCheckboxButton(
-                    text: "Only Enabled",
-                    value: controllerState.showEnabled,
-                    onChanged: (value) => controller.toggleShowEnabled(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                MovingTooltipWidget.text(
-                  message:
-                      "Show hidden weapons (deco weapons, system weapons without SHOW_IN_CODEX tag).",
-                  child: TriOSToolbarCheckboxButton(
-                    text: "Show Hidden",
-                    value: controllerState.showHidden,
-                    onChanged: (value) => controller.toggleShowHidden(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TriOSDropdownMenu<WeaponSpoilerLevel>(
-                  initialSelection: controllerState.weaponSpoilerLevel,
-                  onSelected: (level) {
-                    if (level == null) return;
-                    controller.setWeaponSpoilerLevel(level);
-                  },
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(
-                      value: WeaponSpoilerLevel.noSpoilers,
-                      label: "No spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        message: "Hides weapons tagged CODEX_UNLOCKABLE.",
-                        child: Text("No spoilers"),
-                      ),
-                    ),
-                    DropdownMenuEntry(
-                      value: WeaponSpoilerLevel.showAllSpoilers,
-                      label: "Show all spoilers",
-                      labelWidget: MovingTooltipWidget.text(
-                        warningLevel: TooltipWarningLevel.warning,
-                        message: "Shows weapons tagged CODEX_UNLOCKABLE.",
-                        child: Text("Show all spoilers"),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                TriOSToolbarCheckboxButton(
-                  text: "Compare",
-                  value: controllerState.splitPane,
-                  onChanged: (value) {
-                    controller.toggleSplitPane();
-                    multiSplitController.areas = areas;
-                    setState(() {});
-                  },
-                ),
-                _buildOverflowButton(
-                  context: context,
-                  theme: theme,
-                  controllerState: controllerState,
-                ),
-              ],
-            ),
-          ),
-        ),
+    return ViewerToolbar(
+      entityName: "Weapons",
+      total: total,
+      visible: visible,
+      isLoading: controllerState.isLoading,
+      onRefresh: () => ref.invalidate(weaponListNotifierProvider),
+      searchBox: ViewerSearchBox(
+        searchController: _searchController,
+        hintText: "Filter weapons...",
+        onChanged: (query) => ref
+            .read(weaponsPageControllerProvider.notifier)
+            .updateSearchQuery(query),
+        onClear: () => ref
+            .read(weaponsPageControllerProvider.notifier)
+            .updateSearchQuery(''),
       ),
+      splitPane: controllerState.splitPane,
+      onToggleSplitPane: () {
+        controller.toggleSplitPane();
+        multiSplitController.areas = areas;
+        setState(() {});
+      },
+      trailingActions: [
+        _buildOverflowButton(
+          context: context,
+          theme: theme,
+          controllerState: controllerState,
+        ),
+      ],
     );
   }
 
@@ -247,21 +191,9 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     List<Weapon> weaponsBeforeFilter,
   ) {
     if (!controllerState.showFilters) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Card(
-          child: InkWell(
-            onTap: controller.toggleShowFilters,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: MovingTooltipWidget.text(
-                message: "Show filters",
-                child: const Icon(Icons.filter_list, size: 16),
-              ),
-            ),
-          ),
-        ),
+      return CollapsedFilterButton(
+        onTap: controller.toggleShowFilters,
+        activeFilterCount: controller.activeFilterCount,
       );
     }
 
@@ -280,137 +212,123 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     List<Weapon> weapons,
     List<Mod> mods,
   ) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: MultiSplitViewTheme(
-        data: MultiSplitViewThemeData(
-          dividerThickness: 16,
-          dividerPainter: DividerPainters.dashed(
-            color: theme.colorScheme.onSurface.withOpacity(0.4),
-            highlightedColor: theme.colorScheme.onSurface,
-            highlightedThickness: 2,
-            gap: 1,
-          ),
-        ),
-        child: MultiSplitView(
-          controller: multiSplitController,
-          axis: Axis.vertical,
-          builder: (context, area) {
-            switch (area.id) {
-              case 'top':
-                return buildGrid(columns, weapons, mods, true, theme);
-              case 'bottom':
-                return buildGrid(columns, weapons, mods, false, theme);
-              default:
-                return const SizedBox.shrink();
-            }
-          },
-        ),
-      ),
+    return ViewerSplitPane(
+      controller: multiSplitController,
+      gridBuilder: (areaId) {
+        switch (areaId) {
+          case 'top':
+            return buildGrid(columns, weapons, mods, true, theme);
+          case 'bottom':
+            return buildGrid(columns, weapons, mods, false, theme);
+          default:
+            return const SizedBox.shrink();
+        }
+      },
     );
   }
 
-  AnimatedContainer buildFilterPanel(
+  FiltersPanel buildFilterPanel(
     ThemeData theme,
     List<Weapon> displayedWeapons,
     WeaponsPageState controllerState,
     WeaponsPageController controller,
   ) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    return FiltersPanel(
+      onHide: controller.toggleShowFilters,
+      scrollController: _filterScrollController,
+      activeFilterCount: controller.activeFilterCount,
+      showClearAll: controllerState.filterCategories.any(
+        (f) => f.hasActiveFilters,
+      ),
+      onClearAll: controller.clearAllFilters,
+      filterWidgets: [
+        _buildCheckboxFilters(theme, controllerState, controller),
+        const SizedBox(height: 8),
+        ...controllerState.filterCategories.map((filter) {
+          return GridFilterWidget<Weapon>(
+            filter: filter,
+            items: displayedWeapons,
+            filterStates: filter.filterStates,
+            onSelectionChanged: (states) {
+              controller.updateFilterStates(filter, states);
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildCheckboxFilters(
+    ThemeData theme,
+    WeaponsPageState controllerState,
+    WeaponsPageController controller,
+  ) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      color: theme.colorScheme.surfaceContainer,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Card(
-          child: Scrollbar(
-            thumbVisibility: true,
-            controller: _filterScrollController,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 8,
-                right: 16,
-                top: 8,
-                bottom: 8,
-              ),
-              child: SizedBox(
-                width: 300,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message: "Hide filters",
-                          child: InkWell(
-                            onTap: controller.toggleShowFilters,
-                            borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.filter_list, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Filters',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        if (controllerState.filterCategories.any(
-                          (f) => f.hasActiveFilters,
-                        ))
-                          TriOSToolbarItem(
-                            elevation: 0,
-                            child: TextButton.icon(
-                              onPressed: controller.clearAllFilters,
-                              icon: const Icon(Icons.clear_all, size: 16),
-                              label: const Text('Clear All'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: ScrollConfiguration(
-                        // Hide inner scrollbar, shown above instead.
-                        behavior: ScrollConfiguration.of(
-                          context,
-                        ).copyWith(scrollbars: false),
-                        child: SingleChildScrollView(
-                          controller: _filterScrollController,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 4,
-                            children: controllerState.filterCategories.map((
-                              filter,
-                            ) {
-                              return GridFilterWidget<Weapon>(
-                                filter: filter,
-                                items: displayedWeapons,
-                                filterStates: filter.filterStates,
-                                onSelectionChanged: (states) {
-                                  controller.updateFilterStates(filter, states);
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MovingTooltipWidget.text(
+              message: "Only weapons from enabled mods.",
+              child: CheckboxListTile(
+                title: const Text('Only Enabled Mods'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: .only(left: 8),
+                value: controllerState.showEnabled,
+                onChanged: (value) => controller.toggleShowEnabled(),
               ),
             ),
-          ),
+            MovingTooltipWidget.text(
+              message:
+                  "Show hidden weapons (deco weapons, system weapons without SHOW_IN_CODEX tag).",
+              child: CheckboxListTile(
+                title: const Text('Show Hidden Weapons'),
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                contentPadding: .only(left: 8),
+                value: controllerState.showHidden,
+                onChanged: (value) => controller.toggleShowHidden(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TriOSDropdownMenu<WeaponSpoilerLevel>(
+              initialSelection: controllerState.weaponSpoilerLevel,
+              onSelected: (level) {
+                if (level == null) return;
+                controller.setWeaponSpoilerLevel(level);
+              },
+              highlightOutlineColor:
+                  controllerState.weaponSpoilerLevel !=
+                      WeaponSpoilerLevel.showAllSpoilers
+                  ? theme.colorScheme.primary
+                  : null,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(
+                  value: WeaponSpoilerLevel.noSpoilers,
+                  label: "No spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    message: "Hides weapons tagged CODEX_UNLOCKABLE.",
+                    child: Text("No spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility_off, size: 20),
+                ),
+                DropdownMenuEntry(
+                  value: WeaponSpoilerLevel.showAllSpoilers,
+                  label: "Show all spoilers",
+                  labelWidget: MovingTooltipWidget.text(
+                    warningLevel: TooltipWarningLevel.warning,
+                    message: "Shows weapons tagged CODEX_UNLOCKABLE.",
+                    child: Text("Show all spoilers"),
+                  ),
+                  leadingIcon: const Icon(Icons.visibility_outlined, size: 20),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -443,7 +361,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         },
         columns: columns,
         items: items,
-        itemExtent: 50,
+        itemExtent: 40,
         scrollbarConfig: ScrollbarConfig(
           showLeftScrollbar: ScrollbarVisibility.always,
           showRightScrollbar: ScrollbarVisibility.always,
@@ -451,7 +369,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         ),
         rowBuilder: ({required item, required modifiers, required child}) =>
             SizedBox(
-              height: 50,
+              height: 40,
               child: InkWell(
                 onTap: () => _showWeaponDetailsDialog(context, item),
                 child: Container(
@@ -596,14 +514,16 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             children: [
               const SizedBox(height: 8),
               if ((w.customPrimary ?? '').isNotEmpty)
-                w.customPrimary!.replaceSubstitutionsRich(
-                  w.customPrimaryHL,
+                DescriptionWithSubstitutions(
+                  description: w.customPrimary!,
+                  highlightValues: w.customPrimaryHL,
                   highlightColor: theme.colorScheme.secondary,
                   baseStyle: theme.textTheme.bodySmall,
                 ),
               if ((w.customAncillary ?? '').isNotEmpty)
-                w.customAncillary!.replaceSubstitutionsRich(
-                  w.customAncillaryHL,
+                DescriptionWithSubstitutions(
+                  description: w.customAncillary!,
+                  highlightValues: w.customAncillaryHL,
                   highlightColor: theme.colorScheme.secondary,
                   baseStyle: theme.textTheme.bodySmall,
                 ),
@@ -764,6 +684,13 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
               secondFolder: weapon.wpnFile?.parent,
               label: 'Open weapon data folder(s)',
             ),
+          if (weapon.modVariant != null)
+            buildOpenSingleFolderMenuItem(
+              weapon.modVariant!.modFolder.absolute,
+              label: 'Open Mod Folder',
+            ),
+          if (weapon.modVariant != null)
+            buildMenuItemOpenForumPage(weapon.modVariant!, context),
         ],
         padding: const EdgeInsets.all(8.0),
       ),
@@ -772,7 +699,10 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     );
   }
 
-  List<WispGridColumn<Weapon>> buildCols(ThemeData theme) {
+  List<WispGridColumn<Weapon>> buildCols(
+    ThemeData theme,
+    WeaponsPageState controllerState,
+  ) {
     int position = 0;
 
     String wepValueToString(
@@ -821,7 +751,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           tooltipWidget: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: CtrlSwappedTooltip(
-                ctrlBuilder: (ctx) => Padding(
+              ctrlBuilder: (ctx) => Padding(
                 padding: const EdgeInsets.all(8),
                 child: SingleChildScrollView(
                   child: _buildInfoPane(item, theme, ctx),
@@ -860,8 +790,12 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         key: 'spritePaths',
         isSortable: false,
         name: '',
-        itemCellBuilder: (item, modifiers) =>
-            WeaponImageCell(imagePaths: spritesForWeapon(item)),
+        itemCellBuilder: (item, modifiers) => WeaponImageCell(
+          imagePaths: spritesForWeapon(item),
+          fit: controllerState.useContainFit
+              ? BoxFit.contain
+              : BoxFit.scaleDown,
+        ),
         csvValue: (weapon) => spritesForWeapon(weapon).join(","),
         defaultState: WispGridColumnState(position: position++, width: 40),
       ),
@@ -899,54 +833,17 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     ].whereType<String>().toList();
   }
 
-  SizedBox buildSearchBox() {
-    return SizedBox(
-      height: 30,
-      width: 300,
-      child: SearchAnchor(
-        searchController: _searchController,
-        builder: (context, controller) {
-          return SearchBar(
-            controller: controller,
-            leading: const Icon(Icons.search),
-            hintText: "Filter weapons...",
-            trailing: [
-              if (controller.text.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    controller.clear();
-                    ref
-                        .read(weaponsPageControllerProvider.notifier)
-                        .updateSearchQuery('');
-                  },
-                ),
-            ],
-            onChanged: (query) {
-              ref
-                  .read(weaponsPageControllerProvider.notifier)
-                  .updateSearchQuery(query);
-            },
-            backgroundColor: WidgetStateProperty.all(
-              Theme.of(context).colorScheme.surfaceContainer,
-            ),
-          );
-        },
-        suggestionsBuilder: (_, __) => [],
-      ),
-    );
-  }
-
   Widget _buildOverflowButton({
     required BuildContext context,
     required ThemeData theme,
     required WeaponsPageState controllerState,
   }) {
-    return PopupMenuButton(
-      tooltip: "More actions",
-      icon: const Icon(Icons.more_vert),
-      itemBuilder: (context) => [
-        PopupMenuItem(
+    final controller = ref.read(weaponsPageControllerProvider.notifier);
+    return OverflowMenuButton(
+      menuItems: [
+        OverflowMenuItem(
+          title: 'Export to CSV',
+          icon: Icons.table_view,
           onTap: () {
             if (_gridController == null) return;
 
@@ -962,12 +859,13 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                   .allWeaponsAsCsv(),
             );
           },
-          child: ListTile(
-            dense: true,
-            leading: Icon(Icons.table_view),
-            title: Text("Export to CSV"),
-          ),
-        ),
+        ).toEntry(0),
+        OverflowMenuCheckItem(
+          title: 'Stretch icons to fit',
+          icon: Icons.fit_screen,
+          checked: controllerState.useContainFit,
+          onTap: () => controller.toggleUseContainFit(),
+        ).toEntry(1),
       ],
     );
   }
@@ -996,8 +894,13 @@ Future<String?> _getWeaponImagePath(List<String> imagePaths) async {
 // Custom widget for asynchronously checking file existence and displaying the image
 class WeaponImageCell extends StatefulWidget {
   final List<String> imagePaths;
+  final BoxFit fit;
 
-  const WeaponImageCell({super.key, required this.imagePaths});
+  const WeaponImageCell({
+    super.key,
+    required this.imagePaths,
+    this.fit = BoxFit.scaleDown,
+  });
 
   @override
   State<WeaponImageCell> createState() => _WeaponImageCellState();
@@ -1042,7 +945,7 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
             File(_existingImagePath!),
             width: 40,
             height: 40,
-            fit: BoxFit.contain,
+            fit: widget.fit,
           ),
         ),
       );
@@ -1054,7 +957,8 @@ class UngroupedWeaponGridGroup extends WispGridGroup<Weapon> {
   UngroupedWeaponGridGroup() : super('none', 'None');
 
   @override
-  String getGroupName(Weapon mod) => 'All Weapons';
+  String getGroupName(Weapon mod, {Comparable? groupSortValue}) =>
+      'All Weapons';
 
   @override
   Comparable getGroupSortValue(Weapon mod) => 1;
@@ -1067,7 +971,7 @@ class ModNameWeaponGridGroup extends WispGridGroup<Weapon> {
   ModNameWeaponGridGroup() : super('modId', 'Mod');
 
   @override
-  String getGroupName(Weapon mod) =>
+  String getGroupName(Weapon mod, {Comparable? groupSortValue}) =>
       mod.modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
   @override

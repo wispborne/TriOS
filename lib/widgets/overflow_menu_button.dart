@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Three-dot icon button that displays a popup menu.
 class OverflowMenuButton extends StatelessWidget {
@@ -19,16 +20,19 @@ class OverflowMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
+    return MovingTooltipWidget.text(
       message: tooltip,
-      child: PopupMenuButton<int>(
-        tooltip: "",
-        icon: Icon(
-          buttonIcon ?? Icons.more_vert,
-          color: iconColor,
-          size: iconSize,
+      child: Tooltip(
+        message: "",
+        child: PopupMenuButton<int>(
+          tooltip: "",
+          icon: Icon(
+            buttonIcon ?? Icons.more_vert,
+            color: iconColor,
+            size: iconSize,
+          ),
+          itemBuilder: (context) => menuItems,
         ),
-        itemBuilder: (context) => menuItems,
       ),
     );
   }
@@ -55,6 +59,34 @@ class OverflowMenuItem {
       leading: Icon(icon),
       title: Text(title),
       subtitle: subtitle != null ? Text(subtitle!) : null,
+    ),
+  );
+}
+
+/// Menu item that renders as a [CheckedPopupMenuItem] with a checkmark.
+class OverflowMenuCheckItem {
+  final String title;
+  final IconData icon;
+  final bool checked;
+  final VoidCallback onTap;
+
+  const OverflowMenuCheckItem({
+    required this.title,
+    required this.icon,
+    required this.checked,
+    required this.onTap,
+  });
+
+  PopupMenuEntry<int> toEntry(int? key) => CheckedPopupMenuItem<int>(
+    value: key,
+    checked: checked,
+    onTap: onTap,
+    child: Row(
+      spacing: 8,
+      children: [
+        Icon(icon, size: 18),
+        Text(title),
+      ],
     ),
   );
 }

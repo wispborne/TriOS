@@ -10,6 +10,7 @@ import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -286,6 +287,13 @@ class PortraitsGridView extends ConsumerWidget {
                         launchUrlString(portrait.imageFile.parent.path);
                       },
                     ),
+                    if (mod != null)
+                      buildOpenSingleFolderMenuItem(
+                        mod.modFolder.absolute,
+                        label: 'Open Mod Folder',
+                      ),
+                    if (mod != null)
+                      buildMenuItemOpenForumPage(mod, context),
                   ],
                 ),
                 child: ConditionalWrap(

@@ -8,6 +8,56 @@
 
 part of 'wisp_grid_state.dart';
 
+class GroupHeaderStyleMapper extends EnumMapper<GroupHeaderStyle> {
+  GroupHeaderStyleMapper._();
+
+  static GroupHeaderStyleMapper? _instance;
+  static GroupHeaderStyleMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = GroupHeaderStyleMapper._());
+    }
+    return _instance!;
+  }
+
+  static GroupHeaderStyle fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  GroupHeaderStyle decode(dynamic value) {
+    switch (value) {
+      case r'small':
+        return GroupHeaderStyle.small;
+      case r'medium':
+        return GroupHeaderStyle.medium;
+      case r'large':
+        return GroupHeaderStyle.large;
+      default:
+        return GroupHeaderStyle.values[1];
+    }
+  }
+
+  @override
+  dynamic encode(GroupHeaderStyle self) {
+    switch (self) {
+      case GroupHeaderStyle.small:
+        return r'small';
+      case GroupHeaderStyle.medium:
+        return r'medium';
+      case GroupHeaderStyle.large:
+        return r'large';
+    }
+  }
+}
+
+extension GroupHeaderStyleMapperExtension on GroupHeaderStyle {
+  String toValue() {
+    GroupHeaderStyleMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<GroupHeaderStyle>(this) as String;
+  }
+}
+
 class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
   ModGridHeaderMapper._();
 
@@ -53,8 +103,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return ModGridHeader.firstSeen;
       case r'lastEnabled':
         return ModGridHeader.lastEnabled;
-      case r'tags':
-        return ModGridHeader.tags;
+      case r'categories':
+        return ModGridHeader.categories;
       default:
         return ModGridHeader.values[5];
     }
@@ -89,8 +139,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return r'firstSeen';
       case ModGridHeader.lastEnabled:
         return r'lastEnabled';
-      case ModGridHeader.tags:
-        return r'tags';
+      case ModGridHeader.categories:
+        return r'categories';
     }
   }
 }
@@ -125,6 +175,8 @@ class ModGridGroupEnumMapper extends EnumMapper<ModGridGroupEnum> {
         return ModGridGroupEnum.enabledState;
       case r'author':
         return ModGridGroupEnum.author;
+      case r'category':
+        return ModGridGroupEnum.category;
       case r'modType':
         return ModGridGroupEnum.modType;
       case r'gameVersion':
@@ -141,6 +193,8 @@ class ModGridGroupEnumMapper extends EnumMapper<ModGridGroupEnum> {
         return r'enabledState';
       case ModGridGroupEnum.author:
         return r'author';
+      case ModGridGroupEnum.category:
+        return r'category';
       case ModGridGroupEnum.modType:
         return r'modType';
       case ModGridGroupEnum.gameVersion:
@@ -197,6 +251,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return ModGridSortField.firstSeen;
       case r'lastEnabled':
         return ModGridSortField.lastEnabled;
+      case r'categories':
+        return ModGridSortField.categories;
       default:
         return ModGridSortField.values[3];
     }
@@ -227,6 +283,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return r'firstSeen';
       case ModGridSortField.lastEnabled:
         return r'lastEnabled';
+      case ModGridSortField.categories:
+        return r'categories';
     }
   }
 }
@@ -1512,6 +1570,7 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
   static GroupingSettingMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = GroupingSettingMapper._());
+      GroupHeaderStyleMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -1532,17 +1591,26 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
     opt: true,
     def: false,
   );
+  static GroupHeaderStyle _$headerStyle(GroupingSetting v) => v.headerStyle;
+  static const Field<GroupingSetting, GroupHeaderStyle> _f$headerStyle = Field(
+    'headerStyle',
+    _$headerStyle,
+    opt: true,
+    def: GroupHeaderStyle.medium,
+  );
 
   @override
   final MappableFields<GroupingSetting> fields = const {
     #currentGroupedByKey: _f$currentGroupedByKey,
     #isSortDescending: _f$isSortDescending,
+    #headerStyle: _f$headerStyle,
   };
 
   static GroupingSetting _instantiate(DecodingData data) {
     return GroupingSetting(
       currentGroupedByKey: data.dec(_f$currentGroupedByKey),
       isSortDescending: data.dec(_f$isSortDescending),
+      headerStyle: data.dec(_f$headerStyle),
     );
   }
 
@@ -1608,7 +1676,11 @@ extension GroupingSettingValueCopy<$R, $Out>
 
 abstract class GroupingSettingCopyWith<$R, $In extends GroupingSetting, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? currentGroupedByKey, bool? isSortDescending});
+  $R call({
+    String? currentGroupedByKey,
+    bool? isSortDescending,
+    GroupHeaderStyle? headerStyle,
+  });
   GroupingSettingCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -1623,11 +1695,16 @@ class _GroupingSettingCopyWithImpl<$R, $Out>
   late final ClassMapperBase<GroupingSetting> $mapper =
       GroupingSettingMapper.ensureInitialized();
   @override
-  $R call({String? currentGroupedByKey, bool? isSortDescending}) => $apply(
+  $R call({
+    String? currentGroupedByKey,
+    bool? isSortDescending,
+    GroupHeaderStyle? headerStyle,
+  }) => $apply(
     FieldCopyWithData({
       if (currentGroupedByKey != null)
         #currentGroupedByKey: currentGroupedByKey,
       if (isSortDescending != null) #isSortDescending: isSortDescending,
+      if (headerStyle != null) #headerStyle: headerStyle,
     }),
   );
   @override
@@ -1637,6 +1714,7 @@ class _GroupingSettingCopyWithImpl<$R, $Out>
       or: $value.currentGroupedByKey,
     ),
     isSortDescending: data.get(#isSortDescending, or: $value.isSortDescending),
+    headerStyle: data.get(#headerStyle, or: $value.headerStyle),
   );
 
   @override

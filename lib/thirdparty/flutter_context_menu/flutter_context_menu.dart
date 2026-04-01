@@ -1,5 +1,6 @@
 library flutter_context_menu;
 
+export 'components/checkable_menu_item.dart';
 export 'components/menu_divider.dart';
 export 'components/menu_header.dart';
 export 'components/menu_item.dart';

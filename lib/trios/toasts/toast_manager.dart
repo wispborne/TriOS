@@ -177,7 +177,6 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         toastification.showCustom(
           context: context,
-          autoCloseDuration: Duration(milliseconds: toastDurationMillis),
           builder: (context, item) {
             _groupToastIdsCreated.add(group.id);
             return ModDownloadGroupToast(
@@ -196,7 +195,6 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         toastification.showCustom(
           context: context,
-          autoCloseDuration: Duration(milliseconds: toastDurationMillis),
           builder: (context, item) {
             return ModDownloadToast(download, item, toastDurationMillis);
           },
@@ -261,7 +259,6 @@ class _ToastDisplayerState extends ConsumerState<ToastDisplayer> {
         fakeDownload.installComplete.value = true;
         toastification.showCustom(
           context: context,
-          autoCloseDuration: Duration(milliseconds: toastDurationMillis),
           builder: (context, item) =>
               ModDownloadToast(fakeDownload, item, toastDurationMillis),
         );

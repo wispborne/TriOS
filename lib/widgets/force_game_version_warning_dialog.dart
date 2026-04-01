@@ -10,7 +10,7 @@ import 'package:trios/utils/extensions.dart';
 class ForceGameVersionWarningDialog extends ConsumerWidget {
   final ModVariant? modVariant;
   final List<Mod>? mods;
-  final Function()? onForced;
+  final Future<void> Function()? onForced;
   final bool refreshModlistAfter;
 
   ForceGameVersionWarningDialog({
@@ -169,15 +169,15 @@ class ForceGameVersionWarningDialog extends ConsumerWidget {
     );
   }
 
-  void _onPressedForce(
+  Future<void> _onPressedForce(
     BuildContext context,
     List<ModVariant> modsToForce,
     WidgetRef ref,
     String currentStarsectorVersion,
-  ) {
+  ) async {
     Navigator.of(context).pop();
     for (final variant in modsToForce) {
-      ref
+      await ref
           .read(modManager.notifier)
           .forceChangeModGameVersion(
             variant,
@@ -185,7 +185,7 @@ class ForceGameVersionWarningDialog extends ConsumerWidget {
             refreshModlistAfter: refreshModlistAfter,
           );
     }
-    ref.read(AppState.modVariants.notifier).reloadModVariants();
-    onForced?.call();
+    await ref.read(AppState.modVariants.notifier).reloadModVariants();
+    await onForced?.call();
   }
 }

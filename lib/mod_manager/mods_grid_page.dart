@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/dashboard/mod_list_basic.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
+import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
@@ -18,7 +19,10 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_summary_panel.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
-import 'package:trios/mod_tag_manager/mod_tag_manager.dart';
+import 'package:trios/mod_manager/widgets/category_cell.dart';
+import 'package:trios/mod_manager/widgets/category_management_popup.dart';
+import 'package:trios/mod_tag_manager/category.dart';
+import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
@@ -42,6 +46,7 @@ import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
+import 'package:trios/widgets/popup_style_menu_anchor.dart';
 import 'package:trios/widgets/refresh_mods_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -51,8 +56,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
-import '../thirdparty/flutter_tags/item_tags.dart';
-import '../thirdparty/flutter_tags/tags.dart' show Tags;
 import '../utils/search.dart';
 import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
@@ -60,6 +63,7 @@ import 'homebrew_grid/wispgrid_header_row_view.dart';
 import 'vram_checker_explanation.dart';
 
 final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
+final _vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
 
 class ModsGridPage extends ConsumerStatefulWidget {
   const ModsGridPage({super.key});
@@ -94,10 +98,39 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
     final theme = Theme.of(context);
     final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
+    // Watch category state so the grid rebuilds immediately on category changes
+    // (e.g. drag-and-drop between category groups, context menu reassignment).
+    ref.watch(categoryManagerProvider);
 
     final query = _searchController.value.text;
     final modsMatchingSearch = searchMods(allMods, query) ?? [];
     final modsMetadata = ref.watch(AppState.modsMetadata).value;
+    final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
+    final modsGridUpdateVisibility = ref.watch(
+      appSettings.select((s) => s.modsGridUpdateVisibility),
+    );
+    final modsGridUpdatesShowDisabledMods = ref.watch(
+      appSettings.select((s) => s.modsGridUpdatesShowDisabledMods),
+    );
+    final modsWithUpdates = modsMatchingSearch
+        .where((mod) => mod.updateCheck(versionCheck)?.hasUpdate == true)
+        .where(
+          (mod) => modsGridUpdatesShowDisabledMods || mod.hasEnabledVariant,
+        )
+        .toList();
+    final mutedUpdates = modsWithUpdates
+        .where(
+          (mod) =>
+              modsMetadata?.getMergedModMetadata(mod.id)?.areUpdatesMuted ==
+              true,
+        )
+        .toList();
+    final pinnedUpdateMods = switch (modsGridUpdateVisibility) {
+      ModsGridUpdateVisibility.showAll => modsWithUpdates,
+      ModsGridUpdateVisibility.showUnmuted =>
+        modsWithUpdates.where((mod) => !mutedUpdates.contains(mod)).toList(),
+      ModsGridUpdateVisibility.hide => <Mod>[],
+    };
     final vramEstState = ref.watch(AppState.vramEstimatorProvider);
     final loadOrderNumberLookupByModId = allMods
         .where((mod) => mod.hasEnabledVariant)
@@ -145,10 +178,12 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               const SizedBox(width: 8),
                               buildProfileSelector(isGameRunning),
                               const SizedBox(width: 8),
+                              buildGroupBySelector(gridState),
+                              const SizedBox(width: 8),
                               // Removing Est. VRAM button because it's on the mod groups now.
                               // Maybe should add it to an overflow menu, though.
                               if (false) buildEstimateVramButton(theme),
-                              const SizedBox(width: 8),
+                              const Spacer(),
                               SizedBox(
                                 height: 30,
                                 width: 300,
@@ -158,7 +193,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   ref: ref,
                                 ),
                               ),
-                              const Spacer(),
+                              const SizedBox(width: 8),
                               MovingTooltipWidget.text(
                                 message: "Open side panel",
                                 child: IconButton(
@@ -213,17 +248,118 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       }
                     });
                   },
-                  scrollbarConfig: ScrollbarConfig(),
+                  perColumnContextMenuEntries: {
+                    ModGridHeader.categories.name: [
+                      MenuItem(
+                        label: 'Manage Categories...',
+                        icon: Icons.settings,
+                        onSelected: () {
+                          showCategoryManagementPopup(
+                            context: context,
+                            ref: ref,
+                          );
+                        },
+                      ),
+                    ],
+                  },
+                  pinnedItems: pinnedUpdateMods,
+                  pinnedGroupInfo: PinnedGroupInfo(
+                    name: "Updates Available",
+                    icon: SvgCategoryIcon(
+                      "assets/images/icon-update-badge.svg",
+                    ),
+                  ),
+                  pinnedGroupContextMenuEntries: [
+                    MenuItem.submenu(
+                      label: 'Updates Visibility',
+                      leading: Center(
+                        child: SvgImageIcon(
+                          "assets/images/icon-update-badge.svg",
+                          height: 16,
+                          width: 16,
+                          color: theme.iconTheme.color,
+                        ),
+                      ),
+                      items: [
+                        MenuItem(
+                          label: 'Show unmuted updates',
+                          icon:
+                              modsGridUpdateVisibility ==
+                                  ModsGridUpdateVisibility.showUnmuted
+                              ? Icons.check
+                              : null,
+                          onSelected: () {
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (s) => s.copyWith(
+                                    modsGridUpdateVisibility:
+                                        ModsGridUpdateVisibility.showUnmuted,
+                                  ),
+                                );
+                          },
+                        ),
+                        MenuItem(
+                          label: 'Show all updates',
+                          icon:
+                              modsGridUpdateVisibility ==
+                                  ModsGridUpdateVisibility.showAll
+                              ? Icons.check
+                              : null,
+                          onSelected: () {
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (s) => s.copyWith(
+                                    modsGridUpdateVisibility:
+                                        ModsGridUpdateVisibility.showAll,
+                                  ),
+                                );
+                          },
+                        ),
+                        MenuItem(
+                          label: "Don't show updates",
+                          icon:
+                              modsGridUpdateVisibility ==
+                                  ModsGridUpdateVisibility.hide
+                              ? Icons.check
+                              : null,
+                          onSelected: () {
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (s) => s.copyWith(
+                                    modsGridUpdateVisibility:
+                                        ModsGridUpdateVisibility.hide,
+                                  ),
+                                );
+                          },
+                        ),
+                      ],
+                    ),
+                    MenuItem(
+                      label: 'Only show enabled mods',
+                      icon: modsGridUpdatesShowDisabledMods
+                          ? null
+                          : Icons.check,
+                      onSelected: () {
+                        ref
+                            .read(appSettings.notifier)
+                            .update(
+                              (s) => s.copyWith(
+                                modsGridUpdatesShowDisabledMods:
+                                    !s.modsGridUpdatesShowDisabledMods,
+                              ),
+                            );
+                      },
+                    ),
+                    MenuDivider(),
+                  ],
+                  scrollbarConfig: ScrollbarConfig(showLeftScrollbar: .never, showRightScrollbar: .always),
                   selectedItem: selectedMod,
                   defaultGrouping: EnabledStateModGridGroup(),
                   defaultSortField: ModGridSortField.name.name,
-                  groups: [
-                    UngroupedModGridGroup(),
-                    EnabledStateModGridGroup(),
-                    AuthorModGridGroup(),
-                    ModTypeModGridGroup(),
-                    GameVersionModGridGroup(),
-                  ],
+                  groups: _allGroupOptions,
                   preSortComparator: (left, right) {
                     final leftMetadata = modsMetadata?.getMergedModMetadata(
                       left.id,
@@ -459,8 +595,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       itemCellBuilder: (mod, modifiers) => Builder(
                         builder: (context) {
                           final theme = Theme.of(context);
-                          final lightTextColor = theme.colorScheme.onSurface
-                              .withValues(alpha: WispGrid.lightTextOpacity);
+                          final lightTextColor = theme
+                              .textTheme
+                              .labelLarge
+                              ?.color
+                              ?.withValues(alpha: WispGrid.lightTextOpacity);
                           final bestVersion =
                               mod.findFirstEnabledOrHighestVersion!;
                           return TextTriOS(
@@ -561,104 +700,39 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         width: 128,
                       ),
                     ),
-                    if (false)
-                      WispGridColumn<Mod>(
-                        key: ModGridHeader.tags.name,
-                        name: "Tags",
-                        isSortable: false,
-                        headerCellBuilder: (modifiers) => buildColumnHeader(
-                          ModGridHeader.tags,
-                          modifiers,
-                        ).child,
-                        itemCellBuilder: (mod, modifiers) => Opacity(
-                          opacity: WispGrid.lightTextOpacity,
-                          child: ContextMenuRegion(
-                            contextMenu: ContextMenu(
-                              entries: [
-                                MenuItem(
-                                  label: "Add Default Tags",
-                                  onSelected: () {
-                                    ref
-                                        .read(modTagManagerProvider.notifier)
-                                        .addDefaultModTags([
-                                          mod.findFirstEnabledOrHighestVersion!,
-                                        ]);
-                                  },
-                                ),
-                              ],
-                            ),
-                            child: Container(
-                              // For hit testing, same as the Row below
-                              color: Colors.transparent,
-                              child: Builder(
-                                builder: (context) {
-                                  final tagsForMod = ref
-                                      .watch(modTagManagerProvider.notifier)
-                                      .getTagsForMod(mod.id)
-                                      .toList();
-                                  return Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: [
-                                      Expanded(
-                                        child: tagsForMod.isEmpty
-                                            ? Text("")
-                                            : Tags(
-                                                itemCount: tagsForMod.length,
-                                                itemBuilder: (index) {
-                                                  return ItemTags(
-                                                    index: index,
-                                                    title:
-                                                        tagsForMod[index].name,
-                                                    singleItem: true,
-                                                    active: true,
-                                                    textActiveColor: theme
-                                                        .colorScheme
-                                                        .onPrimaryContainer,
-                                                    activeColor: theme
-                                                        .colorScheme
-                                                        .primaryContainer,
-                                                    splashColor:
-                                                        Colors.transparent,
-                                                    removeButton: ItemTagsRemoveButton(
-                                                      backgroundColor:
-                                                          Colors.transparent,
-                                                      onRemoved: () {
-                                                        ref
-                                                            .read(
-                                                              modTagManagerProvider
-                                                                  .notifier,
-                                                            )
-                                                            .removeTagIdsFromMod(
-                                                              mod.id,
-                                                              [
-                                                                tagsForMod[index]
-                                                                    .id,
-                                                              ],
-                                                            );
-                                                        return true;
-                                                      },
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                        csvValue: (mod) => ref
-                            .watch(modTagManagerProvider.notifier)
-                            .getTagsForMod(mod.id)
-                            .toList()
-                            .join(", "),
-                        defaultState: WispGridColumnState(
-                          position: 9,
-                          width: 150,
-                        ),
+                    WispGridColumn<Mod>(
+                      key: ModGridHeader.categories.name,
+                      name: "Category",
+                      isSortable: true,
+                      getSortValue: (mod) {
+                        final notifier = ref.read(
+                          categoryManagerProvider.notifier,
+                        );
+                        final primary = notifier.getPrimaryCategory(mod.id);
+                        return primary?.name.toLowerCase() ?? 'zzz';
+                      },
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.categories,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) => CategoryCell(
+                        modId: mod.id,
+                        checkedModIds: controller?.checkedItemIdsReadonly ?? {},
                       ),
+                      csvValue: (mod) {
+                        final notifier = ref.read(
+                          categoryManagerProvider.notifier,
+                        );
+                        return notifier
+                            .getCategoriesForMod(mod.id)
+                            .map((c) => c.name)
+                            .join(', ');
+                      },
+                      defaultState: WispGridColumnState(
+                        position: 9,
+                        width: 150,
+                      ),
+                    ),
                     WispGridColumn<Mod>(
                       key: ModGridHeader.gameVersion.name,
                       name: "Game Version",
@@ -926,20 +1000,19 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               tooltip: "",
               borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
               initialValue: activeProfile,
-              itemBuilder: (BuildContext context) {
-                return profiles?.modProfiles
-                        .map(
-                          (p) => PopupMenuItem(
-                            value: p,
-                            child: Text(
-                              "${p.name} (${p.enabledModVariants.length} mods)",
-                              style: const TextStyle(fontSize: 13),
-                            ),
+              itemBuilder: (BuildContext context) =>
+                  profiles?.modProfiles
+                      .map(
+                        (p) => PopupMenuItem(
+                          value: p,
+                          child: Text(
+                            "${p.name} (${p.enabledModVariants.length} mods)",
+                            style: const TextStyle(fontSize: 13),
                           ),
-                        )
-                        .toList() ??
-                    [];
-              },
+                        ),
+                      )
+                      .toList() ??
+                  [],
               child: Padding(
                 padding: const EdgeInsets.all(4),
                 child: Column(
@@ -1017,66 +1090,239 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     );
   }
 
+  static final List<WispGridGroup<Mod>> _groupOptions = [
+    UngroupedModGridGroup(),
+    EnabledStateModGridGroup(),
+    AuthorModGridGroup(),
+  ];
+
+  List<WispGridGroup<Mod>> get _allGroupOptions => [
+    ..._groupOptions,
+    CategoryModGridGroup(ref),
+    ModTypeModGridGroup(),
+    GameVersionModGridGroup(),
+  ];
+
+  Widget buildGroupBySelector(WispGridState gridState) {
+    final groups = _allGroupOptions;
+    final currentKey =
+        gridState.groupingSetting?.currentGroupedByKey ??
+        EnabledStateModGridGroup().key;
+    final currentGroup =
+        groups.firstWhereOrNull((g) => g.key == currentKey) ?? groups[1];
+
+    return SizedBox(
+      height: 36,
+      child: MovingTooltipWidget.text(
+        message: "Change how mods are grouped in the grid.",
+        child: PopupMenuButton<WispGridGroup<Mod>>(
+          onSelected: (group) {
+            ref.read(appSettings.notifier).update((state) {
+              final existing =
+                  state.modsGridState.groupingSetting ??
+                  const GroupingSetting(currentGroupedByKey: 'enabledState');
+              return state.copyWith(
+                modsGridState: state.modsGridState.copyWith(
+                  groupingSetting: existing.copyWith(
+                    currentGroupedByKey: group.key,
+                  ),
+                ),
+              );
+            });
+          },
+          tooltip: "",
+          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          itemBuilder: (BuildContext context) => groups
+              .map(
+                (g) => PopupMenuItem<WispGridGroup<Mod>>(
+                  value: g,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        child: g.key == currentKey
+                            ? const Icon(Icons.check, size: 16)
+                            : null,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(g.displayName, style: const TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Group By",
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                Text(
+                  currentGroup.displayName,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontSize: 8),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildOverflowButton(List<Mod> allMods) {
     final theme = Theme.of(context);
+    final modsGridUpdateVisibility = ref.watch(
+      appSettings.select((s) => s.modsGridUpdateVisibility),
+    );
 
     return MovingTooltipWidget.text(
       message: "More options",
-      child: PopupMenuButton(
-        tooltip: "",
-        icon: const Icon(Icons.more_vert),
-        itemBuilder: (context) => <PopupMenuEntry>[
-          PopupMenuItem(
-            onTap: () {
+      child: PopupStyleMenuAnchor(
+        builder: (context, menuController, child) {
+          return IconButton(
+            icon: const Icon(Icons.more_vert),
+            tooltip: "",
+            onPressed: () {
+              if (menuController.isOpen) {
+                menuController.close();
+              } else {
+                menuController.open();
+              }
+            },
+          );
+        },
+        menuChildren: [
+          PopupStyleMenuAnchor.checkboxItem(
+            value: ref.watch(appSettings.select((s) => s.pinFavorites)),
+            onPressed: () {
+              final current = ref.read(appSettings).pinFavorites;
               ref
                   .read(appSettings.notifier)
-                  .update((s) => s.copyWith(pinFavorites: !s.pinFavorites));
+                  .update((s) => s.copyWith(pinFavorites: !current));
             },
-            child: Builder(
-              builder: (context) {
-                final pinFavorites = ref.watch(
-                  appSettings.select((s) => s.pinFavorites),
-                );
-                return ListTile(
-                  dense: true,
-                  leading: Icon(
-                    pinFavorites
-                        ? Icons.check_box
-                        : Icons.check_box_outline_blank,
-                  ),
-                  title: Text("Pin Favorited Mods to Top"),
-                );
-              },
-            ),
+            child: const Text("Pin Favorited Mods to Top"),
           ),
-          PopupMenuItem(
-            onTap: () {
+          PopupStyleMenuAnchor.checkboxItem(
+            value: ref.watch(appSettings.select((s) => s.modsGridColorful)),
+            onPressed: () {
+              final current = ref.read(appSettings).modsGridColorful;
               ref
                   .read(appSettings.notifier)
-                  .update(
-                    (s) => s.copyWith(modsGridColorful: !s.modsGridColorful),
-                  );
+                  .update((s) => s.copyWith(modsGridColorful: !current));
             },
-            child: Builder(
-              builder: (context) {
-                final modsGridColorful = ref.watch(
-                  appSettings.select((s) => s.modsGridColorful),
-                );
-                return ListTile(
-                  dense: true,
-                  leading: Icon(
-                    modsGridColorful
-                        ? Icons.check_box
-                        : Icons.check_box_outline_blank,
-                  ),
-                  title: const Text("Colorful"),
-                );
-              },
+            child: MovingTooltipWidget.text(
+              message:
+                  "If a mod has an icon, use its colors to style the mod row.",
+              child: const Text("Colorful"),
             ),
           ),
-          PopupMenuDivider(),
-          PopupMenuItem(
-            onTap: () {
+          if (ref.watch(
+            appSettings.select(
+              (s) =>
+                  s.modsGridState.groupingSetting?.currentGroupedByKey ==
+                  'category',
+            ),
+          ))
+            PopupStyleMenuAnchor.checkboxItem(
+              value: ref.watch(
+                appSettings.select((s) => s.modsGridShowModInAllCategories),
+              ),
+              onPressed: () => toggleShowModInAllCategories(ref),
+              child: MovingTooltipWidget.text(
+                message:
+                    "If a mod is in multiple categories, show the mod in each category rather than only in its primary category.",
+                child: const Text("Repeat Mods In Each Category"),
+              ),
+            ),
+          Divider(),
+          SubmenuButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+              SvgImageIcon("assets/images/icon-update-badge.svg"),
+            ),
+            menuChildren: [
+              MenuItemButton(
+                leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+                  Icon(
+                    modsGridUpdateVisibility ==
+                            ModsGridUpdateVisibility.showUnmuted
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                  ),
+                ),
+                onPressed: () {
+                  ref
+                      .read(appSettings.notifier)
+                      .update(
+                        (s) => s.copyWith(
+                          modsGridUpdateVisibility:
+                              ModsGridUpdateVisibility.showUnmuted,
+                        ),
+                      );
+                },
+                child: const Text("Show unmuted updates"),
+              ),
+              MenuItemButton(
+                leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+                  Icon(
+                    modsGridUpdateVisibility == ModsGridUpdateVisibility.showAll
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                  ),
+                ),
+                onPressed: () {
+                  ref
+                      .read(appSettings.notifier)
+                      .update(
+                        (s) => s.copyWith(
+                          modsGridUpdateVisibility:
+                              ModsGridUpdateVisibility.showAll,
+                        ),
+                      );
+                },
+                child: const Text("Show all updates"),
+              ),
+              MenuItemButton(
+                leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+                  Icon(
+                    modsGridUpdateVisibility == ModsGridUpdateVisibility.hide
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                  ),
+                ),
+                onPressed: () {
+                  ref
+                      .read(appSettings.notifier)
+                      .update(
+                        (s) => s.copyWith(
+                          modsGridUpdateVisibility:
+                              ModsGridUpdateVisibility.hide,
+                        ),
+                      );
+                },
+                child: const Text("Don't show updates"),
+              ),
+            ],
+            child: MovingTooltipWidget.text(
+              message: "Whether to show a section at the top of the page containing only mods with updates.",
+              child: Text(switch (modsGridUpdateVisibility) {
+                ModsGridUpdateVisibility.showUnmuted => "Showing Updates section",
+                ModsGridUpdateVisibility.showAll =>
+                  "Showing Updates section (incl. muted)",
+                ModsGridUpdateVisibility.hide => "Not showing Update section",
+              }),
+            ),
+          ),
+          Divider(),
+          MenuItemButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+              Icon(Icons.local_fire_department),
+            ),
+            onPressed: () {
               showDialog(
                 context: context,
                 builder: (context) {
@@ -1114,14 +1360,13 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 },
               );
             },
-            child: ListTile(
-              dense: true,
-              leading: Icon(Icons.local_fire_department),
-              title: Text("Enable All Mods"),
-            ),
+            child: Text("Enable All Mods"),
           ),
-          PopupMenuItem(
-            onTap: () {
+          MenuItemButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+              Icon(Icons.fire_truck),
+            ),
+            onPressed: () {
               showDialog(
                 context: context,
                 builder: (context) {
@@ -1155,37 +1400,30 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 },
               );
             },
-            child: ListTile(
-              dense: true,
-              leading: Icon(Icons.fire_truck),
-              title: Text("Disable All Mods"),
-            ),
+            child: Text("Disable All Mods"),
           ),
-          PopupMenuItem(
-            onTap: () {
+          MenuItemButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(Icon(Icons.copy)),
+            onPressed: () {
               copyModListToClipboardFromMods(
                 allMods.where((mod) => mod.hasEnabledVariant).toList(),
                 context,
               );
             },
-            child: ListTile(
-              dense: true,
-              leading: Icon(Icons.copy),
-              title: Text("Copy Enabled Mods to Clipboard"),
-            ),
+            child: Text("Copy Enabled Mods to Clipboard"),
           ),
-          PopupMenuItem(
-            onTap: () {
+          MenuItemButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(Icon(Icons.copy_all)),
+            onPressed: () {
               copyModListToClipboardFromMods(allMods, context);
             },
-            child: ListTile(
-              dense: true,
-              leading: Icon(Icons.copy_all),
-              title: Text("Copy All Mods to Clipboard"),
-            ),
+            child: Text("Copy All Mods to Clipboard"),
           ),
-          PopupMenuItem(
-            onTap: () {
+          MenuItemButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+              Icon(Icons.table_view),
+            ),
+            onPressed: () {
               if (controller == null) return;
               showExportOrCopyDialog(
                 context,
@@ -1197,11 +1435,15 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 () => ref.read(modManager.notifier).allModsAsCsv(),
               );
             },
-            child: ListTile(
-              dense: true,
-              leading: Icon(Icons.table_view),
-              title: Text("Export to CSV"),
-            ),
+            child: Text("Export to CSV"),
+          ),
+          Divider(),
+          MenuItemButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(Icon(Icons.settings)),
+            onPressed: () {
+              showCategoryManagementPopup(context: context, ref: ref);
+            },
+            child: Text("Manage Categories..."),
           ),
         ],
       ),
@@ -1229,7 +1471,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       ModGridHeader.version => ModGridSortField.version,
       ModGridHeader.updateStatus => ModGridSortField.updateStatus,
       ModGridHeader.vramImpact => ModGridSortField.vramImpact,
-      ModGridHeader.tags => null,
+      ModGridHeader.categories => ModGridSortField.categories,
       ModGridHeader.gameVersion => ModGridSortField.gameVersion,
       ModGridHeader.firstSeen => ModGridSortField.firstSeen,
       ModGridHeader.lastEnabled => ModGridSortField.lastEnabled,
@@ -1286,7 +1528,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             'Last Enabled',
             style: headerTextStyle,
           ),
-          ModGridHeader.tags => Text('Tags', style: headerTextStyle),
+          ModGridHeader.categories => Text('Category', style: headerTextStyle),
         };
       },
     );
@@ -1383,69 +1625,85 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 warningLevel: isIllustratedEntities
                     ? TooltipWarningLevel.warning
                     : null,
-                child: Stack(
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child:
-                            vramEstimate?.imagesNotIncludingGraphicsLib() !=
-                                null
-                            ? Text(
+                child: MouseRegion(
+                  onEnter: (_) =>
+                      ref.read(_vramColumnHovered.notifier).state = true,
+                  onExit: (_) =>
+                      ref.read(_vramColumnHovered.notifier).state = false,
+                  child: Align(
+                    alignment: .centerLeft,
+                    child: Stack(
+                      children: [
+                        if (vramEstimate != null)
+                          Align(
+                            alignment: .centerLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8.0,
+                              ),
+                              child: LinearProgressIndicator(
+                                value: ratio.isNaN || ratio.isInfinite
+                                    ? 0
+                                    : ratio,
+                                backgroundColor:
+                                    theme.colorScheme.surfaceContainer,
+                              ),
+                            ),
+                          ),
+                        if (vramEstimate?.imagesNotIncludingGraphicsLib() !=
+                                null &&
+                            ref.watch(_vramColumnHovered))
+                          Align(
+                            alignment: .topLeft,
+                            child: Padding(
+                              padding: const .only(left: 8, right: 12),
+                              child: Text(
                                 vramEstimate!
                                     .imagesNotIncludingGraphicsLib()
                                     .sum()
                                     .bytesAsReadableMB(),
-                                style: theme.textTheme.labelLarge?.copyWith(
+                                style: theme.textTheme.labelSmall?.copyWith(
                                   color: lightTextColor,
+                                  fontSize: 11,
                                 ),
-                              )
-                            : Align(
-                                alignment: Alignment.centerRight,
-                                child: Opacity(
-                                  opacity: 0.5,
-                                  child: Disable(
-                                    isEnabled:
-                                        vramEstimatorState.value?.isScanning !=
-                                        true,
-                                    child: MovingTooltipWidget.text(
-                                      message: "Estimate VRAM usage",
-                                      child: IconButton(
-                                        icon: const Icon(Icons.memory),
-                                        iconSize: 24,
-                                        onPressed: () {
-                                          ref
-                                              .read(
-                                                AppState
-                                                    .vramEstimatorProvider
-                                                    .notifier,
-                                              )
-                                              .startEstimating(
-                                                variantsToCheck: [
-                                                  mod.findFirstEnabledOrHighestVersion!,
-                                                ],
-                                              );
-                                        },
-                                      ),
-                                    ),
+                              ),
+                            ),
+                          )
+                        else if (vramEstimate == null)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Opacity(
+                              opacity: 0.5,
+                              child: Disable(
+                                isEnabled:
+                                    vramEstimatorState.value?.isScanning !=
+                                    true,
+                                child: MovingTooltipWidget.text(
+                                  message: "Estimate VRAM usage",
+                                  child: IconButton(
+                                    icon: const Icon(Icons.memory),
+                                    iconSize: 24,
+                                    onPressed: () {
+                                      ref
+                                          .read(
+                                            AppState
+                                                .vramEstimatorProvider
+                                                .notifier,
+                                          )
+                                          .startEstimating(
+                                            variantsToCheck: [
+                                              mod.findFirstEnabledOrHighestVersion!,
+                                            ],
+                                          );
+                                    },
                                   ),
                                 ),
                               ),
-                      ),
-                    ),
-                    if (vramEstimate != null)
-                      Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: LinearProgressIndicator(
-                            value: ratio.isNaN || ratio.isInfinite ? 0 : ratio,
-                            backgroundColor: theme.colorScheme.surfaceContainer,
+                            ),
                           ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
@@ -1558,6 +1816,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                     mod,
                                     localVersionCheck,
                                     remoteVersionCheck,
+                                    showVersionChips: false,
                                   ),
                                 ),
                               ],
@@ -1573,6 +1832,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   mod,
                                   localVersionCheck,
                                   remoteVersionCheck,
+                                  showVersionChips: true,
                                 ),
                               ),
                             );
@@ -1692,10 +1952,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
-        final lightTextColor = theme.colorScheme.onSurface.withOpacity(
-          lightTextOpacity,
+        final lightTextColor = theme.textTheme.labelLarge?.color?.withValues(
+          alpha: WispGrid.lightTextOpacity,
         );
-        final disabledVersionTextColor = lightTextColor.withOpacity(0.5);
+        final disabledVersionTextColor = lightTextColor?.withOpacity(0.5);
         final enabledVersion = mod.findFirstEnabled;
 
         return mod.modVariants.isEmpty
@@ -1788,8 +2048,13 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
+        final modColor = ref
+            .watch(AppState.modsMetadata)
+            .value
+            ?.getMergedModMetadata(mod.id)
+            ?.color;
 
-        return TextTriOS(
+        final nameText = TextTriOS(
           bestVersion.modInfo.name ?? "(no name)",
           style: GoogleFonts.roboto(
             textStyle: theme.textTheme.labelLarge?.copyWith(
@@ -1798,6 +2063,45 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+        );
+
+        final gameVersion = ref.watch(AppState.starsectorVersion).value;
+        final compatWithGame = compareGameVersions(
+          bestVersion.modInfo.gameVersion,
+          gameVersion,
+        );
+        final compatTextColor = compatWithGame.getGameCompatibilityColor();
+
+        final nameWidget = modColor == null
+            ? nameText
+            : Row(
+                spacing: 8.0,
+                children: [
+                  Container(
+                    width: 4.0,
+                    height: 16.0,
+                    decoration: BoxDecoration(
+                      color: modColor,
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                  ),
+                  Expanded(child: nameText),
+                ],
+              );
+
+        return MovingTooltipWidget.framed(
+          // position: TooltipPosition.topLeft,
+          padding: const EdgeInsets.all(0),
+          tooltipWidget: SizedBox(
+            width: 400,
+            child: ModSummaryWidget(
+              modVariant: bestVersion,
+              compatTextColor: compatTextColor,
+              compatWithGame: compatWithGame,
+              showIconTip: false,
+            ),
+          ),
+          child: nameWidget,
         );
       },
     );

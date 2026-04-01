@@ -66,6 +66,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                               mod,
                               localVersionCheck,
                               remoteVersionCheck,
+                              showVersionChips: false,
                             ),
                           ),
                           Padding(
@@ -120,7 +121,12 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
               child: SizedBox(
                 width: 500,
                 height: 500,
-                child: Changelogs(mod, localVersionCheck, remoteVersionCheck),
+                child: Changelogs(
+                  mod,
+                  localVersionCheck,
+                  remoteVersionCheck,
+                  showVersionChips: true,
+                ),
               ),
             ),
           if (changelogUrl.isNotNullOrEmpty())
@@ -167,11 +173,11 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
     final localVersionCheck =
         versionCheckComparisonResult?.variant.versionCheckerInfo;
     final remoteVersionCheck = versionCheckComparisonResult?.remoteVersionCheck;
+    final theme = Theme.of(context);
     final compatWithGame = compareGameVersions(
       modInfo.gameVersion,
       gameVersion,
     );
-    final theme = Theme.of(context);
     final compatTextColor = isColorfulModeOn
         ? theme.textTheme.labelLarge?.color?.withAlpha(200)
         : compatWithGame.getGameCompatibilityColor();
@@ -188,6 +194,11 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
         : null;
     final paletteAccent = palette?.colorScheme.onSurface;
     final paletteBg = palette?.colorScheme.surface;
+    final modColor = ref
+        .watch(AppState.modsMetadata)
+        .value
+        ?.getMergedModMetadata(mod.id)
+        ?.color;
 
     const rowHeight = 25.0;
 
@@ -228,7 +239,6 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                               child: modVariant.iconFilePath != null
                                   ? Image.file(
                                       (modVariant.iconFilePath ?? "").toFile(),
-                                      cacheHeight: rowHeight.toInt(),
                                       cacheWidth: rowHeight.toInt(),
                                       isAntiAlias: true,
                                     )
@@ -239,6 +249,18 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                         Expanded(
                           child: Row(
                             children: [
+                              if (modColor != null)
+                                Padding(
+                                  padding: const .only(right: 6),
+                                  child: Container(
+                                    width: 4.0,
+                                    height: 16.0,
+                                    decoration: BoxDecoration(
+                                      color: modColor,
+                                      borderRadius: BorderRadius.circular(4.0),
+                                    ),
+                                  ),
+                                ),
                               Expanded(
                                 child: Text(
                                   modInfo.nameOrId,

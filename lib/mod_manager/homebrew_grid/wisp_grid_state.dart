@@ -135,11 +135,20 @@ class WispGridState with WispGridStateMappable {
 class GroupingSetting with GroupingSettingMappable {
   final String currentGroupedByKey;
   final bool isSortDescending;
+  final GroupHeaderStyle headerStyle;
 
   const GroupingSetting({
     required this.currentGroupedByKey,
     this.isSortDescending = false,
+    this.headerStyle = GroupHeaderStyle.medium,
   });
+}
+
+@MappableEnum(defaultValue: GroupHeaderStyle.medium)
+enum GroupHeaderStyle {
+  small,
+  medium,
+  large,
 }
 
 ///////// Things specific to the Mods tab
@@ -158,15 +167,14 @@ enum ModGridHeader {
   gameVersion,
   firstSeen,
   lastEnabled,
-  tags,
-  // category
+  categories,
 }
 
 @MappableEnum()
 enum ModGridGroupEnum {
   enabledState,
   author,
-  // category,
+  category,
   modType,
   gameVersion,
 }
@@ -184,7 +192,7 @@ enum ModGridSortField {
   gameVersion,
   firstSeen,
   lastEnabled,
-  // category
+  categories,
 }
 
 ///////// Things specific to the Weapons tab

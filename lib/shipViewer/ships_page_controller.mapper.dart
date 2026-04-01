@@ -478,6 +478,13 @@ class ShipsPageStatePersistedMapper
     opt: true,
     def: false,
   );
+  static bool _$useContainFit(ShipsPageStatePersisted v) => v.useContainFit;
+  static const Field<ShipsPageStatePersisted, bool> _f$useContainFit = Field(
+    'useContainFit',
+    _$useContainFit,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<ShipsPageStatePersisted> fields = const {
@@ -485,6 +492,7 @@ class ShipsPageStatePersistedMapper
     #spoilerLevelToShow: _f$spoilerLevelToShow,
     #splitPane: _f$splitPane,
     #showFilters: _f$showFilters,
+    #useContainFit: _f$useContainFit,
   };
 
   static ShipsPageStatePersisted _instantiate(DecodingData data) {
@@ -493,6 +501,7 @@ class ShipsPageStatePersistedMapper
       spoilerLevelToShow: data.dec(_f$spoilerLevelToShow),
       splitPane: data.dec(_f$splitPane),
       showFilters: data.dec(_f$showFilters),
+      useContainFit: data.dec(_f$useContainFit),
     );
   }
 
@@ -571,6 +580,7 @@ abstract class ShipsPageStatePersistedCopyWith<
     SpoilerLevel? spoilerLevelToShow,
     bool? splitPane,
     bool? showFilters,
+    bool? useContainFit,
   });
   ShipsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -592,12 +602,14 @@ class _ShipsPageStatePersistedCopyWithImpl<$R, $Out>
     SpoilerLevel? spoilerLevelToShow,
     bool? splitPane,
     bool? showFilters,
+    bool? useContainFit,
   }) => $apply(
     FieldCopyWithData({
       if (showEnabled != null) #showEnabled: showEnabled,
       if (spoilerLevelToShow != null) #spoilerLevelToShow: spoilerLevelToShow,
       if (splitPane != null) #splitPane: splitPane,
       if (showFilters != null) #showFilters: showFilters,
+      if (useContainFit != null) #useContainFit: useContainFit,
     }),
   );
   @override
@@ -609,6 +621,7 @@ class _ShipsPageStatePersistedCopyWithImpl<$R, $Out>
     ),
     splitPane: data.get(#splitPane, or: $value.splitPane),
     showFilters: data.get(#showFilters, or: $value.showFilters),
+    useContainFit: data.get(#useContainFit, or: $value.useContainFit),
   );
 
   @override

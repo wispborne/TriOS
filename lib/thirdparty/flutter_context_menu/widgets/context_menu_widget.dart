@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
 
 import '../core/utils/shortcuts/menu_shortcuts.dart';
 import 'context_menu_provider.dart';
@@ -72,7 +73,9 @@ class ContextMenuWidget extends StatelessWidget {
       borderRadius: state.borderRadius ?? BorderRadius.circular(4.0),
       border: Border.all(
         width: 1.0,
-        color: Theme.of(context).colorScheme.primaryFixedDim.withValues(alpha: 0.2),
+        color: Theme.of(
+          context,
+        ).colorScheme.primaryFixedDim.withValues(alpha: 0.2),
       ),
     );
 
@@ -82,18 +85,16 @@ class ContextMenuWidget extends StatelessWidget {
       builder: (context, value, child) {
         final menu = Container(
           padding: state.padding,
-          constraints: BoxConstraints(maxWidth: state.maxWidth),
+          constraints: BoxConstraints(
+            maxWidth: state.maxWidth,
+            maxHeight: state.maxHeight ?? double.infinity,
+          ),
           clipBehavior: state.clipBehavior,
           decoration: state.boxDecoration ?? boxDecoration,
           child: Material(
             type: MaterialType.transparency,
             child: IntrinsicWidth(
-              child: Column(
-                children: [
-                  for (final item in state.entries)
-                    MenuEntryWidget(entry: item),
-                ],
-              ),
+              child: _buildMenuContent(state),
             ),
           ),
         );
@@ -105,5 +106,25 @@ class ContextMenuWidget extends StatelessWidget {
         // );
       },
     );
+  }
+
+  Widget _buildMenuContent(ContextMenuState state) {
+    final column = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final item in state.entries) MenuEntryWidget(entry: item),
+      ],
+    );
+
+    final hasMaxHeight =
+        state.maxHeight != null && state.maxHeight != double.infinity;
+
+    if (hasMaxHeight) {
+      return FadedScrollable(
+        child: SingleChildScrollView(child: column),
+      );
+    }
+
+    return column;
   }
 }

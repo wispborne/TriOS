@@ -12,9 +12,9 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
-import '../jre_manager/game_performance_widget.dart';
-import '../jre_manager/jre_manager_logic.dart';
+import '../vmparams/vmparams_manager.dart';
 import '../widgets/trios_expansion_tile.dart';
+import 'game_performance_widget.dart';
 import 'launch_with_settings.dart';
 import 'mod_list_basic.dart';
 
@@ -70,36 +70,35 @@ class _DashboardState extends ConsumerState<Dashboard>
                         child: Column(
                           children: [
                             LaunchWithSettings(isGameRunning: isGameRunning),
-                            if (Platform.isWindows)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: TriOSExpansionTile(
-                                  title: const Text(
-                                    "JRE, RAM, and Game Settings",
-                                  ),
-                                  leading:
-                                      (ref
-                                              .watch(jreManagerProvider)
-                                              .value
-                                              ?.hasMultipleActiveJresWithDifferentRamAmounts ??
-                                          false)
-                                      ? const Icon(
-                                          Icons.warning_amber_rounded,
-                                          size: 32,
-                                          color:
-                                              ThemeManager.vanillaWarningColor,
-                                        )
-                                      : const Icon(Icons.speed, size: 32),
-                                  subtitle: Text(
-                                    "Java ${ref.watch(AppState.activeJre).value?.version.versionString ?? "(unknown JRE)"} • ${ref.watch(currentRamAmountInMb).value ?? "(unknown RAM)"} MB",
-                                  ),
-                                  collapsedBackgroundColor: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerLow
-                                      .withOpacity(0.5),
-                                  children: const [GamePerformanceWidget()],
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: TriOSExpansionTile(
+                                title: const Text(
+                                  "RAM and Game Settings",
                                 ),
+                                leading:
+                                    (ref
+                                            .watch(vmparamsManagerProvider)
+                                            .value
+                                            ?.hasMultipleFilesWithDifferentRam ??
+                                        false)
+                                    ? const Icon(
+                                        Icons.warning_amber_rounded,
+                                        size: 32,
+                                        color:
+                                            ThemeManager.vanillaWarningColor,
+                                      )
+                                    : const Icon(Icons.speed, size: 32),
+                                subtitle: Text(
+                                  "${ref.watch(currentRamAmountInMb) ?? "(unknown RAM)"} MB",
+                                ),
+                                collapsedBackgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerLow
+                                    .withOpacity(0.5),
+                                children: const [GamePerformanceWidget()],
                               ),
+                            ),
                           ],
                         ),
                       ),

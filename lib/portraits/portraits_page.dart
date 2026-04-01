@@ -1,35 +1,24 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:collection/collection.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
-import 'package:path/path.dart' as p;
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/portraits/portrait_metadata.dart';
-import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
-import 'package:trios/portraits/portrait_replacements_manager.dart';
-import 'package:trios/portraits/portrait_scanner.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
-import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:trios/utils/search.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/mode_switcher.dart';
@@ -40,36 +29,14 @@ import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:trios/thirdparty/dartx/range.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class PortraitsPage extends ConsumerStatefulWidget {
   const PortraitsPage({super.key});
 
   @override
   ConsumerState<PortraitsPage> createState() => _PortraitsPageState();
-}
-
-enum _PortraitsMode { viewer, replacer }
-
-/// Identifies which filter pane to use.
-enum _FilterPane { main, left, right }
-
-/// Helper class to hold portrait info for filtering.
-class _PortraitFilterItem {
-  final Portrait portrait;
-  final ModVariant? variant;
-  final PortraitMetadata? metadata;
-
-  _PortraitFilterItem({
-    required this.portrait,
-    required this.variant,
-    this.metadata,
-  });
-
-  String get modName => variant?.modInfo.nameOrId ?? 'Vanilla';
-
-  String get genderString => metadata?.gender?.toString() ?? 'Unknown';
 }
 
 class _PortraitsPageState extends ConsumerState<PortraitsPage>
@@ -88,38 +55,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   Widget? _cachedBuild;
   late final AnimationController _refreshSpinController;
-  bool showOnlyReplaced = false;
-  bool showOnlyEnabledMods = false;
-  bool showOnlyWithMetadata = true; // "Confirmed Portraits" filter
-  bool showFilters = true;
-  _PortraitsMode mode = _PortraitsMode.viewer;
-  static const double _portraitSizeMin = 64;
-  static const double _portraitSizeMax = 192;
-  static const double _portraitSizeStep = 8;
-  double _portraitSize = 128;
 
-  // Filter categories for the main/viewer sidebar
-  late final GridFilter<_PortraitFilterItem> _modFilter;
-  late final GridFilter<_PortraitFilterItem> _genderFilter;
-  late List<GridFilter<_PortraitFilterItem>> _filterCategories;
-
-  // Filter categories for the left pane (Replacer mode)
-  late final GridFilter<_PortraitFilterItem> _leftModFilter;
-  late final GridFilter<_PortraitFilterItem> _leftGenderFilter;
-  late List<GridFilter<_PortraitFilterItem>> _leftFilterCategories;
-  bool _leftShowOnlyWithMetadata = true;
-  bool _leftShowOnlyReplaced = false;
-  bool _leftShowOnlyEnabledMods = false;
-  bool _leftShowFilters = true;
-
-  // Filter categories for the right pane (Replacer mode)
-  late final GridFilter<_PortraitFilterItem> _rightModFilter;
-  late final GridFilter<_PortraitFilterItem> _rightGenderFilter;
-  late List<GridFilter<_PortraitFilterItem>> _rightFilterCategories;
-  bool _rightShowOnlyWithMetadata = true;
-  bool _rightShowOnlyReplaced = false;
-  bool _rightShowOnlyEnabledMods = false;
-  bool _rightShowFilters = true;
+  bool _inReplaceMode = false;
 
   @override
   void initState() {
@@ -128,51 +65,20 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    // Main/Viewer filters
-    _modFilter = GridFilter<_PortraitFilterItem>(
-      name: 'Mod',
-      valueGetter: (item) => item.modName,
-    );
-    _genderFilter = GridFilter<_PortraitFilterItem>(
-      name: 'Gender',
-      valueGetter: (item) => item.genderString,
-    );
-    _filterCategories = [_modFilter, _genderFilter];
-
-    // Left pane filters (Replacer mode)
-    _leftModFilter = GridFilter<_PortraitFilterItem>(
-      name: 'Mod',
-      valueGetter: (item) => item.modName,
-    );
-    _leftGenderFilter = GridFilter<_PortraitFilterItem>(
-      name: 'Gender',
-      valueGetter: (item) => item.genderString,
-    );
-    _leftFilterCategories = [_leftModFilter, _leftGenderFilter];
-
-    // Right pane filters (Replacer mode)
-    _rightModFilter = GridFilter<_PortraitFilterItem>(
-      name: 'Mod',
-      valueGetter: (item) => item.modName,
-    );
-    _rightGenderFilter = GridFilter<_PortraitFilterItem>(
-      name: 'Gender',
-      valueGetter: (item) => item.genderString,
-    );
-    _rightFilterCategories = [_rightModFilter, _rightGenderFilter];
   }
 
-  bool get inReplaceMode => mode == _PortraitsMode.replacer;
+  /// Keep SearchController text in sync with controller state,
+  /// without triggering unnecessary rebuilds.
+  void _syncSearchController(SearchController controller, String query) {
+    if (controller.text != query) {
+      controller.text = query;
+    }
+  }
 
   @override
-  List<Area> get areas => inReplaceMode
+  List<Area> get areas => _inReplaceMode
       ? [Area(id: 'left'), Area(id: 'right')]
       : [Area(id: 'main')];
-
-  void _refreshPortraits() {
-    ref.read(AppState.portraitMetadata.notifier).rescan();
-    ref.read(AppState.portraits.notifier).rescan();
-  }
 
   void _showReplacementsDialog(Map<String, Portrait> replacements) async {
     // Get current portraits to create hash-to-portrait lookup
@@ -203,248 +109,54 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     );
   }
 
-  List<({Portrait image, ModVariant? variant})> _filterImages(
-    List<({Portrait image, ModVariant? variant})> images,
-    String query,
-    Map<String, PortraitMetadata> metadata,
-  ) {
-    if (query.isEmpty) return images;
-
-    final lowerQuery = query.toLowerCase();
-
-    return images.where((item) {
-      final variant = item.variant;
-      final portrait = item.image;
-
-      // Check vanilla
-      if (lowerQuery == 'vanilla' && variant == null) return true;
-
-      // Check mod name
-      if (searchModVariants([?variant], query).isNotEmpty) return true;
-
-      // Check file path
-      if (portrait.imageFile.path.toLowerCase().contains(lowerQuery))
-        return true;
-
-      // Check portrait metadata (gender, factions, portrait ID)
-      final portraitMetadata = metadata.getMetadataFor(portrait.relativePath);
-      if (portraitMetadata.hasMetadata) {
-        // Check portrait ID (from settings.json)
-        if (portraitMetadata.portraitId?.toLowerCase().contains(lowerQuery) ??
-            false) {
-          return true;
-        }
-
-        // Check gender (male, female)
-        if (portraitMetadata.gender.toString().toLowerCase().contains(
-          lowerQuery,
-        )) {
-          return true;
-        }
-
-        // Check faction names
-        for (final faction in portraitMetadata.factions) {
-          if (faction.id.toLowerCase().contains(lowerQuery) ||
-              (faction.displayName?.toLowerCase().contains(lowerQuery) ??
-                  false)) {
-            return true;
-          }
-        }
-      }
-
-      return false;
-    }).toList();
-  }
-
-  /// Returns the filter categories for the specified pane.
-  List<GridFilter<_PortraitFilterItem>> _getFilterCategories(_FilterPane pane) {
-    return switch (pane) {
-      _FilterPane.main => _filterCategories,
-      _FilterPane.left => _leftFilterCategories,
-      _FilterPane.right => _rightFilterCategories,
-    };
-  }
-
   /// Returns the scroll controller for the specified pane.
-  ScrollController _getFilterScrollController(_FilterPane pane) {
+  ScrollController _getFilterScrollController(FilterPane pane) {
     return switch (pane) {
-      _FilterPane.main => _filterScrollController,
-      _FilterPane.left => _leftFilterScrollController,
-      _FilterPane.right => _rightFilterScrollController,
+      FilterPane.main => _filterScrollController,
+      FilterPane.left => _leftFilterScrollController,
+      FilterPane.right => _rightFilterScrollController,
     };
-  }
-
-  /// Returns whether filters are visible for the specified pane.
-  bool _getShowFilters(_FilterPane pane) {
-    return switch (pane) {
-      _FilterPane.main => showFilters,
-      _FilterPane.left => _leftShowFilters,
-      _FilterPane.right => _rightShowFilters,
-    };
-  }
-
-  /// Sets whether filters are visible for the specified pane.
-  void _setShowFilters(_FilterPane pane, bool value) {
-    setState(() {
-      switch (pane) {
-        case _FilterPane.main:
-          showFilters = value;
-        case _FilterPane.left:
-          _leftShowFilters = value;
-        case _FilterPane.right:
-          _rightShowFilters = value;
-      }
-    });
-  }
-
-  /// Returns the "Confirmed Portraits" filter value for the specified pane.
-  bool _getShowOnlyWithMetadata(_FilterPane pane) {
-    return switch (pane) {
-      _FilterPane.main => showOnlyWithMetadata,
-      _FilterPane.left => _leftShowOnlyWithMetadata,
-      _FilterPane.right => _rightShowOnlyWithMetadata,
-    };
-  }
-
-  /// Sets the "Confirmed Portraits" filter value for the specified pane.
-  void _setShowOnlyWithMetadata(_FilterPane pane, bool value) {
-    setState(() {
-      switch (pane) {
-        case _FilterPane.main:
-          showOnlyWithMetadata = value;
-        case _FilterPane.left:
-          _leftShowOnlyWithMetadata = value;
-        case _FilterPane.right:
-          _rightShowOnlyWithMetadata = value;
-      }
-    });
-  }
-
-  /// Returns the "View Replaced" filter value for the specified pane.
-  bool _getShowOnlyReplaced(_FilterPane pane) {
-    return switch (pane) {
-      _FilterPane.main => showOnlyReplaced,
-      _FilterPane.left => _leftShowOnlyReplaced,
-      _FilterPane.right => _rightShowOnlyReplaced,
-    };
-  }
-
-  /// Sets the "View Replaced" filter value for the specified pane.
-  void _setShowOnlyReplaced(_FilterPane pane, bool value) {
-    setState(() {
-      switch (pane) {
-        case _FilterPane.main:
-          showOnlyReplaced = value;
-        case _FilterPane.left:
-          _leftShowOnlyReplaced = value;
-        case _FilterPane.right:
-          _rightShowOnlyReplaced = value;
-      }
-    });
-  }
-
-  /// Returns the "Only Enabled" filter value for the specified pane.
-  bool _getShowOnlyEnabledMods(_FilterPane pane) {
-    return switch (pane) {
-      _FilterPane.main => showOnlyEnabledMods,
-      _FilterPane.left => _leftShowOnlyEnabledMods,
-      _FilterPane.right => _rightShowOnlyEnabledMods,
-    };
-  }
-
-  /// Sets the "Only Enabled" filter value for the specified pane.
-  void _setShowOnlyEnabledMods(_FilterPane pane, bool value) {
-    setState(() {
-      switch (pane) {
-        case _FilterPane.main:
-          showOnlyEnabledMods = value;
-        case _FilterPane.left:
-          _leftShowOnlyEnabledMods = value;
-        case _FilterPane.right:
-          _rightShowOnlyEnabledMods = value;
-      }
-    });
-  }
-
-  /// Apply grid filter categories (mod, gender) to the list of portraits.
-  List<({Portrait image, ModVariant? variant})> _applyGridFilters(
-    List<({Portrait image, ModVariant? variant})> images,
-    Map<String, PortraitMetadata> metadata, {
-    _FilterPane pane = _FilterPane.main,
-  }) {
-    final filterCategories = _getFilterCategories(pane);
-
-    // Convert to filter items for processing
-    var items = images.map((item) {
-      final portraitMetadata = metadata.getMetadataFor(item.image.relativePath);
-      return _PortraitFilterItem(
-        portrait: item.image,
-        variant: item.variant,
-        metadata: portraitMetadata.hasMetadata ? portraitMetadata : null,
-      );
-    }).toList();
-
-    // Apply each filter category
-    for (final filter in filterCategories) {
-      if (filter.hasActiveFilters) {
-        items = items.where((item) {
-          final value = filter.valueGetter(item);
-          final filterState = filter.filterStates[value];
-
-          if (filterState == false) return false; // Explicitly excluded
-
-          final hasIncludedValues = filter.filterStates.values.contains(true);
-          if (hasIncludedValues) {
-            return filterState == true; // Must be explicitly included
-          }
-
-          return true; // Only exclusions, allow anything not excluded
-        }).toList();
-      }
-    }
-
-    // Convert back to the original format
-    return items
-        .map((item) => (image: item.portrait, variant: item.variant))
-        .toList();
-  }
-
-  void _clearAllFilters(_FilterPane pane) {
-    setState(() {
-      for (final filter in _getFilterCategories(pane)) {
-        filter.filterStates.clear();
-      }
-    });
-  }
-
-  void _updateFilterStates(
-    GridFilter<_PortraitFilterItem> filter,
-    Map<String, bool?> states,
-  ) {
-    setState(() {
-      filter.filterStates.clear();
-      filter.filterStates.addAll(states);
-    });
   }
 
   Widget _buildFiltersSection(
     ThemeData theme,
-    List<_PortraitFilterItem> filterItems, {
-    _FilterPane pane = _FilterPane.main,
+    List<PortraitFilterItem> filterItems, {
+    FilterPane pane = FilterPane.main,
     required bool showOnlyYourChangesFilter,
   }) {
-    if (!_getShowFilters(pane)) {
+    final controllerState = ref.watch(portraitsPageControllerProvider);
+    final paneState = controllerState.getPaneState(pane);
+    final filterCategories = controllerState.getFilterCategories(pane);
+    final activeFilterCount = filterCategories
+            .fold(0, (sum, f) => sum + f.filterStates.length) +
+        (paneState.showOnlyWithMetadata ? 1 : 0) +
+        (showOnlyYourChangesFilter && paneState.showOnlyReplaced ? 1 : 0) +
+        (paneState.showOnlyEnabledMods ? 1 : 0);
+
+    if (!paneState.showFilters) {
       return Padding(
         padding: const EdgeInsets.only(left: 4),
         child: Card(
           child: InkWell(
-            onTap: () => _setShowFilters(pane, true),
+            onTap: () => ref
+                .read(portraitsPageControllerProvider.notifier)
+                .setShowFilters(pane, true),
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: MovingTooltipWidget.text(
                 message: "Show filters",
-                child: const Icon(Icons.filter_list, size: 16),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.filter_list, size: 16),
+                    Positioned(
+                      top: -12,
+                      left: -16,
+                      child: ActiveFilterCountPill(count: activeFilterCount),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -457,130 +169,59 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       filterItems,
       pane: pane,
       showOnlyYourChangesFilter: showOnlyYourChangesFilter,
+      activeFilterCount: activeFilterCount,
     );
   }
 
   Widget _buildFilterPanel(
     ThemeData theme,
-    List<_PortraitFilterItem> filterItems, {
-    _FilterPane pane = _FilterPane.main,
+    List<PortraitFilterItem> filterItems, {
+    FilterPane pane = FilterPane.main,
     required bool showOnlyYourChangesFilter,
+    required int activeFilterCount,
   }) {
-    final filterCategories = _getFilterCategories(pane);
+    final controllerState = ref.watch(portraitsPageControllerProvider);
+    final filterCategories = controllerState.getFilterCategories(pane);
     final scrollController = _getFilterScrollController(pane);
+    final notifier = ref.read(portraitsPageControllerProvider.notifier);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Card(
-          child: Scrollbar(
-            thumbVisibility: true,
-            controller: scrollController,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 8,
-                right: 16,
-                top: 8,
-                bottom: 8,
-              ),
-              child: SizedBox(
-                width: 200,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message: "Hide filters",
-                          child: InkWell(
-                            onTap: () => _setShowFilters(pane, false),
-                            borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.filter_list, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Filters',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        if (filterCategories.any((f) => f.hasActiveFilters))
-                          TriOSToolbarItem(
-                            elevation: 0,
-                            child: TextButton.icon(
-                              onPressed: () => _clearAllFilters(pane),
-                              icon: const Icon(Icons.clear_all, size: 16),
-                              label: const Text('Clear'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Scrollable filter content
-                    Expanded(
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(
-                          context,
-                        ).copyWith(scrollbars: false),
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Checkbox filters section
-                              _buildCheckboxFilters(
-                                theme,
-                                pane: pane,
-                                showOnlyYourChangesFilter:
-                                    showOnlyYourChangesFilter,
-                              ),
-                              const SizedBox(height: 8),
-                              // Grid filter categories (Mod, Gender)
-                              ...filterCategories.map((filter) {
-                                return GridFilterWidget<_PortraitFilterItem>(
-                                  filter: filter,
-                                  items: filterItems,
-                                  filterStates: filter.filterStates,
-                                  onSelectionChanged: (states) {
-                                    _updateFilterStates(filter, states);
-                                  },
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+    return FiltersPanel(
+      onHide: () => notifier.setShowFilters(pane, false),
+      scrollController: scrollController,
+      width: 200,
+      activeFilterCount: activeFilterCount,
+      showClearAll: filterCategories.any((f) => f.hasActiveFilters),
+      onClearAll: () => notifier.clearAllFilters(pane),
+      filterWidgets: [
+        _buildCheckboxFilters(
+          theme,
+          pane: pane,
+          showOnlyYourChangesFilter: showOnlyYourChangesFilter,
         ),
-      ),
+        const SizedBox(height: 8),
+        ...filterCategories.map((filter) {
+          return GridFilterWidget<PortraitFilterItem>(
+            filter: filter,
+            items: filterItems,
+            filterStates: filter.filterStates,
+            onSelectionChanged: (states) {
+              notifier.updateFilterStates(filter, states);
+            },
+          );
+        }),
+      ],
     );
   }
 
   Widget _buildCheckboxFilters(
     ThemeData theme, {
-    _FilterPane pane = _FilterPane.main,
+    FilterPane pane = FilterPane.main,
     required bool showOnlyYourChangesFilter,
   }) {
+    final paneState =
+        ref.watch(portraitsPageControllerProvider).getPaneState(pane);
+    final notifier = ref.read(portraitsPageControllerProvider.notifier);
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       color: theme.colorScheme.surfaceContainer,
@@ -600,9 +241,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                 dense: true,
                 visualDensity: VisualDensity.compact,
                 contentPadding: EdgeInsets.zero,
-                value: _getShowOnlyWithMetadata(pane),
+                value: paneState.showOnlyWithMetadata,
                 onChanged: (value) =>
-                    _setShowOnlyWithMetadata(pane, value ?? true),
+                    notifier.setShowOnlyWithMetadata(pane, value ?? true),
               ),
             ),
             // "View Replaced" checkbox
@@ -614,9 +255,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                   dense: true,
                   visualDensity: VisualDensity.compact,
                   contentPadding: EdgeInsets.zero,
-                  value: _getShowOnlyReplaced(pane),
+                  value: paneState.showOnlyReplaced,
                   onChanged: (value) =>
-                      _setShowOnlyReplaced(pane, value ?? false),
+                      notifier.setShowOnlyReplaced(pane, value ?? false),
                 ),
               ),
             // "Only Enabled" checkbox
@@ -627,9 +268,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                 dense: true,
                 visualDensity: VisualDensity.compact,
                 contentPadding: EdgeInsets.zero,
-                value: _getShowOnlyEnabledMods(pane),
+                value: paneState.showOnlyEnabledMods,
                 onChanged: (value) =>
-                    _setShowOnlyEnabledMods(pane, value ?? false),
+                    notifier.setShowOnlyEnabledMods(pane, value ?? false),
               ),
             ),
           ],
@@ -638,7 +279,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     );
   }
 
-  Widget _buildGridSearchBar(SearchController controller, String hintText) {
+  Widget _buildGridSearchBar(
+    SearchController controller,
+    String hintText,
+    FilterPane pane,
+  ) {
     return Container(
       padding: const .only(left: 8, right: 8),
       child: SizedBox(
@@ -659,7 +304,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                         padding: .zero,
                         onPressed: () {
                           controller.clear();
-                          setState(() {});
+                          ref
+                              .read(portraitsPageControllerProvider.notifier)
+                              .updateSearchQuery(pane, '');
                         },
                       ),
               ],
@@ -667,7 +314,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                 Theme.of(context).colorScheme.surfaceContainer,
               ),
               onChanged: (value) {
-                setState(() {});
+                ref
+                    .read(portraitsPageControllerProvider.notifier)
+                    .updateSearchQuery(pane, value);
               },
             );
           },
@@ -681,6 +330,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   }
 
   Widget _buildPortraitSizeControl(ThemeData theme) {
+    final portraitSize =
+        ref.watch(portraitsPageControllerProvider.select((s) => s.portraitSize));
+
     return TriOSToolbarItem(
       showOutline: false,
       elevation: 0,
@@ -704,18 +356,19 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                   ),
                 ),
                 child: Slider(
-                  value: _portraitSize,
-                  min: _portraitSizeMin,
-                  max: _portraitSizeMax,
+                  value: portraitSize,
+                  min: PortraitsPageState.portraitSizeMin,
+                  max: PortraitsPageState.portraitSizeMax,
                   divisions:
-                      ((_portraitSizeMax - _portraitSizeMin) /
-                              _portraitSizeStep)
+                      ((PortraitsPageState.portraitSizeMax -
+                                  PortraitsPageState.portraitSizeMin) /
+                              PortraitsPageState.portraitSizeStep)
                           .round(),
-                  label: _portraitSize.round().toString(),
+                  label: portraitSize.round().toString(),
                   onChanged: (value) {
-                    setState(() {
-                      _portraitSize = value;
-                    });
+                    ref
+                        .read(portraitsPageControllerProvider.notifier)
+                        .setPortraitSize(value);
                   },
                 ),
               ),
@@ -736,14 +389,41 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         TriOSTools.portraits;
     if (!isActive && _cachedBuild != null) return _cachedBuild!;
 
-    final isLoadingPortraits = ref.watch(
-      portraitsPageControllerProvider.select((s) => s.isLoading),
-    );
-    if (isLoadingPortraits) {
+    // Apply pending mod filter from context menu navigation.
+    final filterRequest = ref.watch(AppState.viewerFilterRequest);
+    if (filterRequest != null &&
+        filterRequest.destination == TriOSTools.portraits) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final notifier = ref.read(portraitsPageControllerProvider.notifier);
+        final modFilter = ref
+            .read(portraitsPageControllerProvider)
+            .mainFilterCategories
+            .firstWhereOrNull((f) => f.name == 'Mod');
+        if (modFilter != null) {
+          notifier.updateFilterStates(
+            modFilter,
+            {filterRequest.modName: true},
+          );
+        }
+        ref.read(AppState.viewerFilterRequest.notifier).state = null;
+      });
+    }
+
+    final controllerState = ref.watch(portraitsPageControllerProvider);
+    final notifier = ref.read(portraitsPageControllerProvider.notifier);
+    _inReplaceMode = controllerState.inReplaceMode;
+
+    if (controllerState.isLoading) {
       if (!_refreshSpinController.isAnimating) _refreshSpinController.repeat();
     } else {
       _refreshSpinController.stop();
     }
+
+    // Sync search controllers to controller state (needed for SearchBar widgets)
+    _syncSearchController(_searchController, controllerState.mainPaneState.searchQuery);
+    _syncSearchController(_leftSearchController, controllerState.leftPaneState.searchQuery);
+    _syncSearchController(_rightSearchController, controllerState.rightPaneState.searchQuery);
 
     // Watch the portraits provider and loading state
     final portraitsAsync = ref.watch(AppState.portraits);
@@ -775,7 +455,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: _refreshPortraits,
+              onPressed: notifier.refreshPortraits,
               icon: RotationTransition(
                 turns: _refreshSpinController,
                 child: const Icon(Icons.refresh),
@@ -786,65 +466,20 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         ),
       ),
       data: (portraits) {
-        final replacements =
-            ref.watch(portraitsPageControllerProvider).replacements;
-
-        // Get portrait metadata for filtering by gender/faction
-        final portraitMetadata =
-            ref.watch(AppState.portraitMetadata).value ?? {};
-
-        final List<({Portrait image, ModVariant? variant})> modsAndImages =
-            portraits.entries
-                .expand(
-                  (element) => element.value.map(
-                    (e) => (variant: element.key, image: e),
-                  ),
-                )
-                .toList();
-
-        var sortedImages = sortModsAndImages(
-          modsAndImages,
-          r'graphics\\.*portraits\\',
-        );
-
-        if (!inReplaceMode && showOnlyReplaced) {
-          sortedImages = filterToOnlyReplacedImages(sortedImages, replacements);
-        }
-
+        final replacements = controllerState.replacements;
         final allMods = ref.watch(AppState.mods);
 
-        if (showOnlyEnabledMods) {
-          sortedImages = filterToOnlyEnabledMods(sortedImages, allMods);
-        }
+        // Get filtered images for the main/viewer pane
+        final sortedImages = notifier.getFilteredImages(
+          FilterPane.main,
+          allMods,
+        );
 
-        // Apply "Confirmed Portraits" filter (only show portraits with metadata)
-        if (showOnlyWithMetadata) {
-          sortedImages = sortedImages.where((item) {
-            final meta = portraitMetadata.getMetadataFor(
-              item.image.relativePath,
-            );
-            return meta.hasMetadata;
-          }).toList();
-        }
+        // Get all images for counts and filter panels
+        final modsAndImages = notifier.getAllImages();
 
-        // Apply grid filters (mod, gender)
-        sortedImages = _applyGridFilters(sortedImages, portraitMetadata);
-
-        // Apply search filter (only when not in replace mode)
-        if (!inReplaceMode) {
-          final query = _searchController.value.text;
-          sortedImages = _filterImages(sortedImages, query, portraitMetadata);
-        }
-
-        // Create filter items for the sidebar (before search filter)
-        final filterItems = modsAndImages.map((item) {
-          final meta = portraitMetadata.getMetadataFor(item.image.relativePath);
-          return _PortraitFilterItem(
-            portrait: item.image,
-            variant: item.variant,
-            metadata: meta.hasMetadata ? meta : null,
-          );
-        }).toList();
+        // Create filter items for the sidebar
+        final filterItems = notifier.getFilterItems();
 
         final theme = Theme.of(context);
         final visible = sortedImages.length;
@@ -881,28 +516,21 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                     "Portrait Viewer: View and search portraits from your mods."
                                     "\nPortrait Replacer: Drag and drop portraits from the right pane to replace portraits on the left pane.",
                                 child: ModeSwitcher(
-                                  selected: mode,
+                                  selected: controllerState.mode,
                                   modes: {
-                                    _PortraitsMode.viewer: 'Viewer',
-                                    _PortraitsMode.replacer: 'Replacer',
+                                    PortraitsMode.viewer: 'Viewer',
+                                    PortraitsMode.replacer: 'Replacer',
                                   },
                                   modeIcons: {
-                                    _PortraitsMode.viewer: const Icon(
+                                    PortraitsMode.viewer: const Icon(
                                       Icons.portrait,
                                     ),
-                                    _PortraitsMode.replacer: const Icon(
+                                    PortraitsMode.replacer: const Icon(
                                       Icons.swap_horiz,
                                     ),
                                   },
                                   onChanged: (value) {
-                                    setState(() {
-                                      // Copy the Viewer search to the Replacer search if it's not empty
-                                      if (_searchController.text.isNotEmpty) {
-                                        _leftSearchController.text =
-                                            _searchController.text;
-                                      }
-                                      mode = value;
-                                    });
+                                    notifier.setMode(value);
                                   },
                                 ),
                               ),
@@ -913,7 +541,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                               //   ),
                               // ),
                             ),
-                            // if (!inReplaceMode)
+                            // if (!controllerState.inReplaceMode)
                             MovingTooltipWidget.text(
                               message:
                                   "Displays images that are *likely* to be portraits from the highest version of each mod."
@@ -929,7 +557,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             ),
                             IconButton(
                               onPressed:
-                                  isLoadingPortraits ? null : _refreshPortraits,
+                                  controllerState.isLoading ? null : notifier.refreshPortraits,
                               icon: RotationTransition(
                                 turns: _refreshSpinController,
                                 child: const Icon(Icons.refresh),
@@ -952,7 +580,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             //   ),
                             // ),
                             const SizedBox(width: 8),
-                            if (inReplaceMode)
+                            if (controllerState.inReplaceMode)
                               Padding(
                                 padding: const .only(left: 8),
                                 child: TriOSToolbarItem(
@@ -1033,7 +661,8 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                             //   ),
                             const SizedBox(width: 8),
                             // Only show center search box when not in replace mode
-                            if (!inReplaceMode)
+                            const Spacer(),
+                            if (!controllerState.inReplaceMode)
                               ExpandingConstrainedAlignedWidget(
                                 minWidth: 200,
                                 maxWidth: 350,
@@ -1041,7 +670,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                 child: buildSearchBox(),
                               ),
                             const SizedBox(width: 8),
-                            const Spacer(),
                             _buildPortraitSizeControl(theme),
                             OverflowMenuButton(
                               menuItems: [
@@ -1079,7 +707,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      if (!inReplaceMode)
+                      if (!controllerState.inReplaceMode)
                         Padding(
                           padding: const .only(left: 8, bottom: 6),
                           child: Text(
@@ -1146,7 +774,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                         allPortraits: modsAndImages,
                                         replacements: replacements,
                                         showPickReplacementIcon: true,
-                                        portraitSize: _portraitSize,
+                                        portraitSize: controllerState.portraitSize,
                                         onSelectedPortraitToReplace:
                                             _onSelectedPortraitToReplace,
                                         onAddRandomReplacement:
@@ -1156,75 +784,19 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                   ],
                                 );
                               case 'left':
-                                // Start with base sorted images
-                                var leftSortedImages = modsAndImages.toList();
-
-                                // Apply "Only Enabled" filter
-                                if (_getShowOnlyEnabledMods(_FilterPane.left)) {
-                                  leftSortedImages = filterToOnlyEnabledMods(
-                                    leftSortedImages,
-                                    allMods,
-                                  );
-                                }
-
-                                // Apply "Confirmed Portraits" filter
-                                if (_getShowOnlyWithMetadata(
-                                  _FilterPane.left,
-                                )) {
-                                  leftSortedImages = leftSortedImages.where((
-                                    item,
-                                  ) {
-                                    final meta = portraitMetadata
-                                        .getMetadataFor(
-                                          item.image.relativePath,
-                                        );
-                                    return meta.hasMetadata;
-                                  }).toList();
-                                }
-
-                                // Apply grid filters (mod, gender)
-                                leftSortedImages = _applyGridFilters(
-                                  leftSortedImages,
-                                  portraitMetadata,
-                                  pane: _FilterPane.left,
-                                );
-
-                                // Apply "View Replaced" filter
-                                if (_getShowOnlyReplaced(_FilterPane.left)) {
-                                  leftSortedImages = filterToOnlyReplacedImages(
-                                    leftSortedImages,
-                                    replacements,
-                                  );
-                                }
-
-                                // Apply search filter
-                                final leftFilteredImages = _filterImages(
-                                  leftSortedImages,
-                                  _leftSearchController.value.text,
-                                  portraitMetadata,
-                                );
-
-                                // Create filter items for left sidebar
-                                final leftFilterItems = modsAndImages.map((
-                                  item,
-                                ) {
-                                  final meta = portraitMetadata.getMetadataFor(
-                                    item.image.relativePath,
-                                  );
-                                  return _PortraitFilterItem(
-                                    portrait: item.image,
-                                    variant: item.variant,
-                                    metadata: meta.hasMetadata ? meta : null,
-                                  );
-                                }).toList();
+                                final leftFilteredImages =
+                                    notifier.getFilteredImages(
+                                      FilterPane.left,
+                                      allMods,
+                                    );
 
                                 return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildFiltersSection(
                                       theme,
-                                      leftFilterItems,
-                                      pane: _FilterPane.left,
+                                      filterItems,
+                                      pane: FilterPane.left,
                                       showOnlyYourChangesFilter: true,
                                     ),
                                     Expanded(
@@ -1240,6 +812,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                                 child: _buildGridSearchBar(
                                                   _leftSearchController,
                                                   "Filter...",
+                                                  FilterPane.left,
                                                 ),
                                               ),
                                             ],
@@ -1274,7 +847,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                               allPortraits: modsAndImages,
                                               replacements: replacements,
                                               showPickReplacementIcon: false,
-                                              portraitSize: _portraitSize,
+                                              portraitSize: controllerState.portraitSize,
                                               onAddRandomReplacement:
                                                   _addRandomReplacement,
                                               onSelectedPortraitToReplace:
@@ -1300,78 +873,19 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                   ],
                                 );
                               case 'right':
-                                // Start with base sorted images
-                                var rightSortedImages = modsAndImages.toList();
-
-                                // Apply "Only Enabled" filter
-                                if (_getShowOnlyEnabledMods(
-                                  _FilterPane.right,
-                                )) {
-                                  rightSortedImages = filterToOnlyEnabledMods(
-                                    rightSortedImages,
-                                    allMods,
-                                  );
-                                }
-
-                                // Apply "Confirmed Portraits" filter
-                                if (_getShowOnlyWithMetadata(
-                                  _FilterPane.right,
-                                )) {
-                                  rightSortedImages = rightSortedImages.where((
-                                    item,
-                                  ) {
-                                    final meta = portraitMetadata
-                                        .getMetadataFor(
-                                          item.image.relativePath,
-                                        );
-                                    return meta.hasMetadata;
-                                  }).toList();
-                                }
-
-                                // Apply grid filters (mod, gender)
-                                rightSortedImages = _applyGridFilters(
-                                  rightSortedImages,
-                                  portraitMetadata,
-                                  pane: _FilterPane.right,
-                                );
-
-                                // Apply "View Replaced" filter
-                                if (_getShowOnlyReplaced(_FilterPane.right)) {
-                                  rightSortedImages =
-                                      filterToOnlyReplacedImages(
-                                        rightSortedImages,
-                                        replacements,
-                                      );
-                                }
-
-                                // Apply search filter
-                                final rightFilteredImages = _filterImages(
-                                  rightSortedImages,
-                                  _rightSearchController.value.text,
-                                  portraitMetadata,
-                                );
-
-                                // Create filter items for right sidebar
-                                final rightFilterItems = modsAndImages.map((
-                                  item,
-                                ) {
-                                  final meta = portraitMetadata.getMetadataFor(
-                                    item.image.relativePath,
-                                  );
-                                  return _PortraitFilterItem(
-                                    portrait: item.image,
-                                    variant: item.variant,
-                                    metadata: meta.hasMetadata ? meta : null,
-                                  );
-                                }).toList();
+                                final rightFilteredImages =
+                                    notifier.getFilteredImages(
+                                      FilterPane.right,
+                                      allMods,
+                                    );
 
                                 return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _buildFiltersSection(
                                       theme,
-                                      rightFilterItems,
-                                      pane: _FilterPane.right,
+                                      filterItems,
+                                      pane: FilterPane.right,
                                       showOnlyYourChangesFilter: false,
                                     ),
                                     Expanded(
@@ -1396,6 +910,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                                   child: _buildGridSearchBar(
                                                     _rightSearchController,
                                                     "Filter...",
+                                                    FilterPane.right,
                                                   ),
                                                 ),
                                               ),
@@ -1448,7 +963,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                                               allPortraits: modsAndImages,
                                               replacements: {},
                                               showPickReplacementIcon: false,
-                                              portraitSize: _portraitSize,
+                                              portraitSize: controllerState.portraitSize,
                                               onAddRandomReplacement:
                                                   _addRandomReplacement,
                                               onSelectedPortraitToReplace:
@@ -1479,28 +994,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
     _cachedBuild = result;
     return result;
-  }
-
-  List<({Portrait image, ModVariant? variant})> filterToOnlyReplacedImages(
-    List<({Portrait image, ModVariant? variant})> sortedImages,
-    Map<String, Portrait> replacements,
-  ) {
-    return sortedImages
-        .where((element) => replacements.containsKey(element.image.hash))
-        .toList();
-  }
-
-  List<({Portrait image, ModVariant? variant})> filterToOnlyEnabledMods(
-    List<({Portrait image, ModVariant? variant})> sortedImages,
-    List<Mod> allMods,
-  ) {
-    return sortedImages
-        .where(
-          (element) =>
-              element.variant == null ||
-              element.variant?.mod(allMods)?.hasEnabledVariant == true,
-        )
-        .toList();
   }
 
   Padding buildCompanionModWarningIcon(ThemeData theme, Mod? companionMod) {
@@ -1567,7 +1060,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
                       padding: .zero,
                       onPressed: () {
                         controller.clear();
-                        setState(() {});
+                        ref
+                            .read(portraitsPageControllerProvider.notifier)
+                            .updateSearchQuery(FilterPane.main, '');
                       },
                     ),
             ],
@@ -1575,7 +1070,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
               Theme.of(context).colorScheme.surfaceContainer,
             ),
             onChanged: (value) {
-              setState(() {});
+              ref
+                  .read(portraitsPageControllerProvider.notifier)
+                  .updateSearchQuery(FilterPane.main, value);
             },
           );
         },
@@ -1585,30 +1082,6 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
             },
       ),
     );
-  }
-
-  List<({Portrait image, ModVariant? variant})> sortModsAndImages(
-    List<({Portrait image, ModVariant? variant})> modsAndImages,
-    String regexPattern,
-  ) {
-    final regex = RegExp(regexPattern);
-
-    return modsAndImages..sort((a, b) {
-      final aMatches = regex.hasMatch(a.image.imageFile.path);
-      final bMatches = regex.hasMatch(b.image.imageFile.path);
-
-      if (aMatches && !bMatches) return -1;
-      if (!aMatches && bMatches) return 1;
-
-      final variantComparison =
-          a.variant?.modInfo.nameOrId.compareTo(
-            b.variant?.modInfo.nameOrId ?? "",
-          ) ??
-          -1;
-      if (variantComparison != 0) return variantComparison;
-
-      return a.image.imageFile.path.compareTo(b.image.imageFile.path);
-    });
   }
 
   @override
@@ -1624,10 +1097,12 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   }
 
   void _onSelectedPortraitToReplace(Portrait selectedPortrait) {
-    setState(() {
-      _leftSearchController.text = selectedPortrait.relativePath;
-      mode = _PortraitsMode.replacer;
-    });
+    final notifier = ref.read(portraitsPageControllerProvider.notifier);
+    notifier.updateSearchQuery(
+      FilterPane.left,
+      selectedPortrait.relativePath,
+    );
+    notifier.setMode(PortraitsMode.replacer);
   }
 
   Future<void> _addRandomReplacement(

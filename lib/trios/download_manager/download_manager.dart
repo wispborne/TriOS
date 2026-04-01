@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -103,6 +106,12 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     return download;
   }
 
+  /// Marks a [Download] as cancelled so the toast dismisses immediately.
+  void cancelInstallation(Download download) {
+    download.installCancelled.value = true;
+    download.installComplete.value = true;
+  }
+
   void downloadUpdateViaBrowser(
     VersionCheckerInfo remoteVersion, {
     required bool activateVariantOnComplete,
@@ -134,60 +143,73 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   }) {
     var tempFolder = Directory.systemTemp.createTempSync();
 
-    addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((value) {
-      value?.task.whenDownloadComplete().then((status) {
-        if (status == DownloadStatus.completed) {
-          Fimber.d(
-            "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...",
-          );
-          try {
-            ref
-                .read(modManager.notifier)
-                .installModFromSourceWithDefaultUI(
-                  ArchiveModInstallSource(tempFolder.listSync().first.toFile()),
-                  installationDownload: value,
-                )
-                .then((installedVariants) {
-                  // todo add a setting for this.
-                  if (tempFolder.existsSync() &&
-                      !installedVariants.any((it) => it.err != null)) {
-                    tempFolder.deleteSync(recursive: true);
-                    Fimber.i(
-                      "Cleaned up downloaded file ${tempFolder.name} at ${tempFolder.path}",
-                    );
-                  }
+    addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((
+      value,
+    ) async {
+      if (value == null) return;
+      final status = await value.task.whenDownloadComplete();
+      if (status == DownloadStatus.completed) {
+        Fimber.d(
+          "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...",
+        );
+        try {
+          final downloadedFile = (await tempFolder.list().first).toFile();
+          final installedVariants = await ref
+              .read(modManager.notifier)
+              .installModFromSourceWithDefaultUI(
+                ArchiveModInstallSource(downloadedFile),
+                installationDownload: value,
+              );
 
-                  if (activateVariantOnComplete) {
-                    // final variants =
-                    //     ref.read(AppState.modVariants).value ?? [];
-
-                    // for (final installed in installedVariants) {
-                    // Find the variant post-install so we can activate it.
-                    // final actualVariant = variants.firstWhereOrNull(
-                    //     (variant) => variant.smolId == installed.modInfo.smolId);
-                    // try {
-                    // If the mod existed and was enabled, switch to the newly downloaded version.
-                    // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
-
-                    // if (actualVariant != null &&
-                    //     actualVariant.mod(mods)?.isEnabledInGame == true) {
-                    //   changeActiveModVariant(
-                    //       actualVariant.mod(mods)!, actualVariant, ref);
-                    // }
-                    // } catch (ex) {
-                    //   Fimber.w(
-                    //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
-                    // }
-                    // }
-                  }
-                });
-          } catch (e) {
-            Fimber.e("Error installing mod from archive", ex: e);
+          // todo add a setting for this.
+          if (tempFolder.existsSync() &&
+              !installedVariants.any((it) => it.err != null)) {
+            tempFolder.deleteSync(recursive: true);
+            Fimber.i(
+              "Cleaned up downloaded file ${tempFolder.name} at ${tempFolder.path}",
+            );
           }
-        } else {
-          Fimber.w("Download failed: $status");
+
+          if (activateVariantOnComplete) {
+            // final variants =
+            //     ref.read(AppState.modVariants).value ?? [];
+
+            // for (final installed in installedVariants) {
+            // Find the variant post-install so we can activate it.
+            // final actualVariant = variants.firstWhereOrNull(
+            //     (variant) => variant.smolId == installed.modInfo.smolId);
+            // try {
+            // If the mod existed and was enabled, switch to the newly downloaded version.
+            // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
+
+            // if (actualVariant != null &&
+            //     actualVariant.mod(mods)?.isEnabledInGame == true) {
+            //   changeActiveModVariant(
+            //       actualVariant.mod(mods)!, actualVariant, ref);
+            // }
+            // } catch (ex) {
+            //   Fimber.w(
+            //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
+            // }
+            // }
+          }
+        } catch (e) {
+          Fimber.e("Error installing mod from archive", ex: e);
+          value.task.error = Exception(
+            "Failed to install '$displayName'.\n"
+            "Download URL: $uri\n\n$e",
+          );
+        } finally {
+          // Ensure installComplete is always set so the toast can react.
+          // (installModFromSourceWithDefaultUI sets it in its own finally,
+          // but errors before that call — or if it's never reached — need this.)
+          if (!value.installComplete.value) {
+            value.installComplete.value = true;
+          }
         }
-      });
+      } else {
+        Fimber.w("Download failed: $status");
+      }
     });
   }
 }
@@ -198,21 +220,67 @@ class Download {
   final DownloadTask task;
 
   /// Tracks file-count progress during mod installation (extraction).
-  final ValueNotifier<TriOSDownloadProgress?> installProgress =
-      ValueNotifier(null);
+  final ValueNotifier<TriOSDownloadProgress?> installProgress = ValueNotifier(
+    null,
+  );
 
   /// Set to true when installation (extraction) is complete.
   final ValueNotifier<bool> installComplete = ValueNotifier(false);
+
+  /// Set to true when the user cancelled the installation dialog without
+  /// installing anything. The toast should dismiss immediately.
+  final ValueNotifier<bool> installCancelled = ValueNotifier(false);
 
   /// Set to the installed [ModVariant] after installation completes (for plain
   /// [Download] objects that don't carry [ModInfo]).
   final ValueNotifier<ModVariant?> installedVariant = ValueNotifier(null);
 
   Download(this.id, this.displayName, this.task);
+
+  /// Whether installation completed with an error.
+  bool get hasInstallError => installComplete.value && task.error != null;
 }
 
 class ModDownload extends Download {
   final ModInfo modInfo;
 
   ModDownload(super.id, super.displayName, super.task, this.modInfo);
+}
+
+extension DownloadVariantResolution on Download {
+  /// Resolves the installed [ModVariant] for this download, gated on download
+  /// completion. Returns `null` while the download is still in progress to
+  /// prevent matching an already-installed old version during an update.
+  ModVariant? resolveInstalledVariant(WidgetRef ref) {
+    if (!task.status.value.isCompleted) return null;
+    if (this is ModDownload) {
+      final modDownload = this as ModDownload;
+      return ref
+              .read(AppState.modVariants)
+              .value
+              .orEmpty()
+              .firstWhereOrNull(
+                (v) => v.smolId == modDownload.modInfo.smolId,
+              ) ??
+          installedVariant.value;
+    }
+    return installedVariant.value;
+  }
+
+  /// Like [resolveInstalledVariant] but uses [ref.watch] for reactive rebuilds.
+  ModVariant? watchInstalledVariant(WidgetRef ref) {
+    if (!task.status.value.isCompleted) return null;
+    if (this is ModDownload) {
+      final modDownload = this as ModDownload;
+      return ref
+              .watch(AppState.modVariants)
+              .value
+              .orEmpty()
+              .firstWhereOrNull(
+                (v) => v.smolId == modDownload.modInfo.smolId,
+              ) ??
+          installedVariant.value;
+    }
+    return installedVariant.value;
+  }
 }

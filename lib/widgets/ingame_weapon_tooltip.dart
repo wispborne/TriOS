@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
+import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Builds tooltip content for weapons, replicating the layout and
@@ -206,8 +207,9 @@ class IngameWeaponTooltip {
         if ((weapon.customPrimary ?? '').isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: weapon.customPrimary!.replaceSubstitutionsRich(
-              weapon.customPrimaryHL,
+            child: DescriptionWithSubstitutions(
+              description: weapon.customPrimary!,
+              highlightValues: weapon.customPrimaryHL,
               highlightColor: theme.colorScheme.primary,
               baseStyle: theme.textTheme.bodySmall,
             ),
@@ -285,8 +287,9 @@ class IngameWeaponTooltip {
         if ((weapon.customAncillary ?? '').isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: weapon.customAncillary!.replaceSubstitutionsRich(
-              weapon.customAncillaryHL,
+            child: DescriptionWithSubstitutions(
+              description: weapon.customAncillary!,
+              highlightValues: weapon.customAncillaryHL,
               highlightColor: theme.colorScheme.primary,
               baseStyle: theme.textTheme.bodySmall,
             ),

@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
+import 'package:trios/widgets/filter_widget.dart';
 
 part 'weapons_page_controller.mapper.dart';
 
@@ -17,11 +17,13 @@ class WeaponsPageStatePersisted with WeaponsPageStatePersistedMappable {
   final bool showEnabled;
   final bool showHidden;
   final bool splitPane;
+  final bool useContainFit;
 
   const WeaponsPageStatePersisted({
     this.showEnabled = false,
     this.showHidden = false,
     this.splitPane = false,
+    this.useContainFit = false,
   });
 }
 
@@ -44,6 +46,8 @@ class WeaponsPageState with WeaponsPageStateMappable {
   bool get showHidden => persisted.showHidden;
 
   bool get splitPane => persisted.splitPane;
+
+  bool get useContainFit => persisted.useContainFit;
 
   const WeaponsPageState({
     this.persisted = const WeaponsPageStatePersisted(),
@@ -124,10 +128,12 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
                     showEnabled: saved?.showEnabled ?? false,
                     showHidden: saved?.showHidden ?? false,
                     splitPane: saved?.splitPane ?? false,
+                    useContainFit: saved?.useContainFit ?? false,
                   ),
                 ))
             .copyWith(
-              filterCategories: stateOrNull?.filterCategories ?? filterCategories,
+              filterCategories:
+                  stateOrNull?.filterCategories ?? filterCategories,
               allWeapons: allWeapons,
               weaponSearchIndices: weaponValuesByWeaponId,
               isLoading: isLoadingWeapons,
@@ -148,6 +154,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
             showEnabled: newState.showEnabled,
             showHidden: newState.showHidden,
             splitPane: newState.splitPane,
+            useContainFit: newState.useContainFit,
           ),
         );
       });
@@ -273,6 +280,26 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     final updatedState = state.copyWith(showFilters: !state.showFilters);
     state = updatedState;
   }
+
+  /// Toggle image fit between scaleDown and contain
+  void toggleUseContainFit() {
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(
+        useContainFit: !state.useContainFit,
+      ),
+    );
+    state = updatedState;
+    _persistState(state);
+  }
+
+  int get activeFilterCount =>
+      state.filterCategories.fold(
+        0,
+        (sum, f) => sum + f.filterStates.length,
+      ) +
+      (state.showEnabled ? 1 : 0) +
+      (state.showHidden ? 1 : 0) +
+      (state.weaponSpoilerLevel != WeaponSpoilerLevel.showAllSpoilers ? 1 : 0);
 
   /// Get game core directory
   Directory getGameCoreDir() {

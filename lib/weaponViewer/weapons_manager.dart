@@ -47,7 +47,7 @@ class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
       return;
     }
 
-    ref.listen(AppState.variantSmolIds, (previous, next) {
+    ref.listen(AppState.smolIds, (previous, next) {
       ref.read(isWeaponsListDirty.notifier).state = true;
     });
 

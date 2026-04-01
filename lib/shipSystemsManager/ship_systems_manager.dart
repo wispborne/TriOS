@@ -34,7 +34,7 @@ final shipSystemsStreamProvider = StreamProvider<List<ShipSystem>>((
   }
 
   // Refresh when mods are added or removed, but not enabled/disabled.
-  ref.watch(AppState.variantSmolIds);
+  ref.watch(AppState.smolIds);
 
   final variants = ref
       .read(AppState.mods)

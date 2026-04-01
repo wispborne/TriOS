@@ -68,6 +68,7 @@ class ContextMenuState extends ChangeNotifier {
   Offset get position => menu.position ?? Offset.zero;
 
   double get maxWidth => menu.maxWidth;
+  double? get maxHeight => menu.maxHeight;
 
   BorderRadiusGeometry? get borderRadius => menu.borderRadius;
 

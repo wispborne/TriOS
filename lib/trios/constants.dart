@@ -6,10 +6,11 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.3.4";
+  static const version = "1.4.0";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
+  static const chatbotName = "Delta Core";
   static const appTitle = "$appName v$version";
   static String appSubtitle = [
     "Corporate Toolkit",
@@ -70,8 +71,12 @@ class Constants {
   static const graphicsLibId = "shaderLib";
   static const lunalibId = "lunalib";
   static const illustratedEntitiesId = "illustrated_entities";
-  static const changelogUrl =
+  static const changelogReleasesApiUrl =
+      "https://api.github.com/repos/wispborne/TriOS/releases";
+  static const changelogFallbackUrl =
       "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
+  static String changelogUrlForBranch(String branch) =>
+      "https://raw.githubusercontent.com/wispborne/TriOS/$branch/changelog.md";
   static const triosForumThread =
       "https://fractalsoftworks.com/forum/index.php?topic=29674.0";
   static const supportedArchiveExtensions = [
@@ -116,7 +121,12 @@ class Constants {
   static Directory get cacheDirPath =>
       Directory(p.join(configDataFolderPath.path, 'cache'));
 
-  static final portraitsSupportedImageFileExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+  static final portraitsSupportedImageFileExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+  ];
 
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],

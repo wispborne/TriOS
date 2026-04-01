@@ -17,8 +17,9 @@ final vanillaRulesCsvFile = StateProvider<File?>((ref) => null);
 
 class RulesHotReload extends ConsumerStatefulWidget {
   final bool isEnabled;
+  final bool showText;
 
-  const RulesHotReload({super.key, required this.isEnabled});
+  const RulesHotReload({super.key, required this.isEnabled, this.showText = true});
 
   @override
   ConsumerState createState() => _RulesHotReloadState();
@@ -105,14 +106,15 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
               ),
             ],
           ),
-          Text(
-            'rules.csv',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: widget.isEnabled
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface,
+          if (widget.showText)
+            Text(
+              'rules.csv',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: widget.isEnabled
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
+              ),
             ),
-          ),
           // RichText(
           //   textAlign: TextAlign.center,
           //   text: TextSpan(

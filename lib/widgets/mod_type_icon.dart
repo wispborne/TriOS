@@ -29,11 +29,11 @@ class ModTypeIcon extends StatelessWidget {
         : Container();
   }
 
-  static getTooltipText(ModVariant modVariant) {
+  static String getTooltipText(ModVariant modVariant) {
     return modVariant.modInfo.isTotalConversion
-        ? "Total Conversion mods should not be run with any other mods, except Utility mods, unless explicitly stated to be compatible."
+        ? "Total Conversion mods should not be run with other mods unless explicitly stated to be compatible."
         : modVariant.modInfo.isUtility
-        ? "Utility mods may be added to or removed from a save at will."
+        ? "This mod declares that it may be added to or removed from a save at will."
         : "";
   }
 }

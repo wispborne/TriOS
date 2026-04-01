@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:dart_mappable/dart_mappable.dart';
 
@@ -106,6 +107,18 @@ class FileHook extends MappingHook {
   }
 }
 
+class SafeDoubleHook extends MappingHook {
+  const SafeDoubleHook();
+
+  @override
+  dynamic beforeDecode(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    final parsed = double.tryParse(value.toString());
+    return parsed; // Returns null for non-numeric strings like "jaaf1".
+  }
+}
+
 class SafeDecodeHook<T> extends MappingHook {
   final T? defaultValue;
 
@@ -118,6 +131,24 @@ class SafeDecodeHook<T> extends MappingHook {
     } catch (_) {
       return defaultValue;
     }
+  }
+}
+
+class ColorHook extends MappingHook {
+  const ColorHook();
+
+  @override
+  dynamic beforeDecode(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return Color(value);
+    if (value is String) return Color(int.parse(value));
+    return null;
+  }
+
+  @override
+  dynamic beforeEncode(dynamic value) {
+    if (value is Color) return value.toARGB32();
+    return null;
   }
 }
 

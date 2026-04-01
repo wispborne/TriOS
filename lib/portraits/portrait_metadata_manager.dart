@@ -20,7 +20,7 @@ class PortraitMetadataNotifier
   @override
   Future<Map<String, PortraitMetadata>> build() async {
     // Rebuild when these change (mods added/removed, game folder change)
-    ref.watch(AppState.variantSmolIds);
+    ref.watch(AppState.smolIds);
     final gameCoreFolder = ref.watch(AppState.gameCoreFolder).value;
 
     final myToken = ++_buildToken;

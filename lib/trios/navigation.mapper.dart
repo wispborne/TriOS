@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -36,14 +37,14 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return TriOSTools.vramEstimator;
       case r'chipper':
         return TriOSTools.chipper;
-      case r'jreManager':
-        return TriOSTools.jreManager;
       case r'portraits':
         return TriOSTools.portraits;
       case r'weapons':
         return TriOSTools.weapons;
       case r'ships':
         return TriOSTools.ships;
+      case r'hullmods':
+        return TriOSTools.hullmods;
       case r'settings':
         return TriOSTools.settings;
       case r'catalog':
@@ -68,14 +69,14 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return r'vramEstimator';
       case TriOSTools.chipper:
         return r'chipper';
-      case TriOSTools.jreManager:
-        return r'jreManager';
       case TriOSTools.portraits:
         return r'portraits';
       case TriOSTools.weapons:
         return r'weapons';
       case TriOSTools.ships:
         return r'ships';
+      case TriOSTools.hullmods:
+        return r'hullmods';
       case TriOSTools.settings:
         return r'settings';
       case TriOSTools.catalog:

@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/changelogs/mod_changelogs_manager.dart';
 import 'package:trios/compression/archive.dart';
-import 'package:trios/jre_manager/jre_entry.dart';
+import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
@@ -22,6 +22,7 @@ import 'package:trios/portraits/portraits_manager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/tips/tip.dart';
 import 'package:trios/tips/tips_notifier.dart';
+import 'package:trios/trios/navigation_request.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
@@ -30,7 +31,6 @@ import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 
-import '../jre_manager/jre_manager_logic.dart';
 import '../mod_manager/audit_log.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/enabled_mods.dart';
@@ -46,6 +46,18 @@ class AppState {
         SelfUpdater.new,
       );
   static final appContext = StateProvider<BuildContext?>((ref) => null);
+
+  /// Set this to programmatically navigate to a page, optionally highlighting a widget.
+  static final navigationRequest =
+      StateProvider<NavigationRequest?>((ref) => null);
+
+  /// One-shot request to filter a viewer page by mod name.
+  /// Set before navigating; the target page reads it, applies the filter, then clears it.
+  static final viewerFilterRequest =
+      StateProvider<ViewerFilterRequest?>((ref) => null);
+
+  /// The highlight key of the widget to highlight on the current page.
+  static final activeHighlightKey = StateProvider<String?>((ref) => null);
 
   /// Master list of all mod variants found in the mods folder.
   static final modVariants =
@@ -119,7 +131,7 @@ class AppState {
   });
 
   /// Emits when a mod is added/removed, but not when it's changed (e.g. enabled/disabled)
-  static final variantSmolIds = Provider<List<String>>((ref) {
+  static final smolIds = Provider<List<String>>((ref) {
     final mods = ref.watch(AppState.modVariants).value ?? [];
     return mods.map((mod) => mod.smolId).toList()..sort();
   });
@@ -343,41 +355,25 @@ class AppState {
       Fimber.e("Error getting custom game executable", ex: e);
     }
 
-    final isJre23 =
-        ref.watch(jreManagerProvider).value?.activeJre?.isCustomJre ??
-        false;
     final gamePath = ref.watch(gameFolder).value?.toDirectory();
     if (gamePath == null) return null;
 
-    return isJre23
-        ? gamePath
-              .resolve(
-                ref.watch(
-                      appSettings.select(
-                        (value) => value.showCustomJreConsoleWindow,
-                      ),
-                    )
-                    ? "Miko_Rouge.bat"
-                    : "Miko_Silent.bat",
-              )
-              .toFile()
-        : getDefaultGameExecutable(gamePath).toFile();
+    return getDefaultGameExecutable(gamePath).toFile();
   });
 
   static final vmParamsFile = FutureProvider<File?>((ref) async {
     return ref
-        .watch(jreManagerProvider)
+        .watch(vmparamsManagerProvider)
         .value
-        ?.activeJre
-        ?.vmParamsFileAbsolutePath
-        .toFile();
+        ?.selectedVmparamsFiles
+        .firstOrNull;
   });
 
   static final canWriteToStarsectorFolder = FutureProvider<bool>((ref) async {
-    final vmParamsFileLocal = ref.watch(vmParamsFile).value;
-    if (vmParamsFileLocal == null) return false;
-    final filesAndFolders = [vmParamsFileLocal].nonNulls;
-    for (var file in filesAndFolders) {
+    final selectedFiles =
+        ref.watch(vmparamsManagerProvider).value?.selectedVmparamsFiles ?? [];
+    if (selectedFiles.isEmpty) return false;
+    for (var file in selectedFiles) {
       if (!file.existsSync() || await file.isNotWritable()) {
         Fimber.d("Cannot find or write to: $file");
         return false;
@@ -392,9 +388,6 @@ class AppState {
     return ref.read(AppState.enabledModsFile.notifier).isWritable();
   });
 
-  static final activeJre = FutureProvider<JreEntryInstalled?>(
-    (ref) async => ref.watch(jreManagerProvider).value?.activeJre,
-  );
 
   static final isGameRunning = FutureProvider<bool>(
     (ref) async =>
@@ -524,7 +517,11 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
     try {
       // Check the titles of all windows
       if (Platform.isWindows) {
-        _checkIfAnyProcessIsRunningUsingWmic(errors);
+        final wmicResult =
+            await _checkIfAnyProcessIsRunningUsingWmic(errors);
+        if (wmicResult != null) {
+          return wmicResult;
+        }
         // _checkIfAnyProcessIsRunningUsingPowershell(errors);
       } else if (Platform.isMacOS || Platform.isLinux) {
         // Use 'ps aux' command to get processes with command line

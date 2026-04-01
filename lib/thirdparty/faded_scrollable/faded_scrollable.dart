@@ -184,23 +184,27 @@ class _FadedScrollableState extends State<FadedScrollable> {
   Widget build(BuildContext context) {
     _GradientConfig gradientConfig = _getGradientConfig();
 
-    return NotificationListener<ScrollNotification>(
+    return NotificationListener<Notification>(
       onNotification: (notification) {
-        if (notification is ScrollUpdateNotification ||
-            notification is ScrollMetricsNotification) {
-          final metrics = notification.metrics;
-          final maxExtent = metrics.maxScrollExtent;
-
-          final bool isScrollableNow = maxExtent > 0;
-          final double ratio = isScrollableNow
-              ? (metrics.pixels / maxExtent).clamp(0.0, 1.0)
-              : 1.0;
-
-          setState(() {
-            _isScrollable = isScrollableNow;
-            scrollRatio = ratio;
-          });
+        final ScrollMetrics metrics;
+        if (notification is ScrollUpdateNotification) {
+          metrics = notification.metrics;
+        } else if (notification is ScrollMetricsNotification) {
+          metrics = notification.metrics;
+        } else {
+          return false;
         }
+
+        final maxExtent = metrics.maxScrollExtent;
+        final bool isScrollableNow = maxExtent > 0;
+        final double ratio = isScrollableNow
+            ? (metrics.pixels / maxExtent).clamp(0.0, 1.0)
+            : 1.0;
+
+        setState(() {
+          _isScrollable = isScrollableNow;
+          scrollRatio = ratio;
+        });
 
         return true;
       },

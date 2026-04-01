@@ -5,6 +5,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/game_paths_widget/game_paths_controller.dart';
+import 'package:trios/widgets/highlightable.dart';
 
 import 'custom_path_field_widget.dart';
 
@@ -80,25 +81,29 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
         ),
         const SizedBox(height: 24),
         // Custom Paths
-        CustomPathField(
-          labelText: "Starsector launcher",
-          checkboxTooltip: "If checked, overrides the default path.",
-          fieldTooltip:
-              "What to launch when you click 'Launch' within ${Constants.appName}.",
-          pathWhenUnchecked: state.customExecutablePathState.defaultPath,
-          customPathWhenChecked: state.customExecutablePathState.customPath,
-          isChecked: state.customExecutablePathState.useCustomPath,
-          isDirectoryPicker: false,
-          initialDirectory: settings.gameDir?.path ?? defaultGamePath().path,
-          pickerDialogTitle: "Select Starsector launcher",
-          errorMessage: state.customExecutablePathState.pathExists
-              ? null
-              : invalidPathMessage,
-          onCheckedChanged: (isEnabled) {
-            customGamePathsController.toggleUseCustomExecutable(isEnabled);
-          },
-          onPathChanged: customGamePathsController.updateCustomExecutablePath,
-          onSubmitted: customGamePathsController.submitCustomExecutablePath,
+        Highlightable(
+          highlightKey: "settings.starsectorLauncher",
+          borderPadding: .all(8),
+          child: CustomPathField(
+            labelText: "Starsector launcher",
+            checkboxTooltip: "If checked, overrides the default path.",
+            fieldTooltip:
+                "What to launch when you click 'Launch' within ${Constants.appName}.",
+            pathWhenUnchecked: state.customExecutablePathState.defaultPath,
+            customPathWhenChecked: state.customExecutablePathState.customPath,
+            isChecked: state.customExecutablePathState.useCustomPath,
+            isDirectoryPicker: false,
+            initialDirectory: settings.gameDir?.path ?? defaultGamePath().path,
+            pickerDialogTitle: "Select Starsector launcher",
+            errorMessage: state.customExecutablePathState.pathExists
+                ? null
+                : invalidPathMessage,
+            onCheckedChanged: (isEnabled) {
+              customGamePathsController.toggleUseCustomExecutable(isEnabled);
+            },
+            onPathChanged: customGamePathsController.updateCustomExecutablePath,
+            onSubmitted: customGamePathsController.submitCustomExecutablePath,
+          ),
         ),
         const SizedBox(height: 16),
         CustomPathField(

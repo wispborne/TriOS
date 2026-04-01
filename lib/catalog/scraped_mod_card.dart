@@ -288,7 +288,7 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
         return AlertDialog(
           title: Text(modName),
           content: SingleChildScrollView(
-            child: Text(description),
+            child: SelectableText(description),
             // If you have markdown content, you can use flutter_markdown package
             // child: MarkdownBody(data: description),
           ),

@@ -4,11 +4,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/jre_manager/jre_manager_logic.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_link_button.dart';
 
@@ -17,6 +17,8 @@ import '../models/launch_settings.dart';
 import '../themes/theme_manager.dart';
 import '../trios/app_state.dart';
 import '../trios/constants.dart';
+import '../trios/navigation.dart';
+import '../trios/navigation_request.dart';
 import '../utils/util.dart';
 import '../widgets/checkbox_with_label.dart';
 
@@ -62,93 +64,78 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
           starsectorLaunchPrefs?.resolution.split("x")[0],
     );
 
-    // final gameDir = ref.read(appSettings.select((value) => value.gameDir));
-    final isUsingCustomJre = ref
-        .watch(jreManagerProvider)
-        .value
-        ?.activeJre
-        ?.isCustomJre;
-    // var currentScreenScaling = ref.watch(appSettings.select((value) => value.launchSettings)).screenScaling ??
-    //     starsectorLaunchPrefs?.screenScaling ??
-    //     1;
-
     final enableDirectLaunch = ref.watch(
       appSettings.select((s) => s.enableDirectLaunch),
     );
     final isRunning = widget.isGameRunning || _onClickedTimer?.isActive == true;
 
-    final showLauncherControls =
-        isUsingCustomJre != true && enableDirectLaunch == true;
+    final showLauncherControls = enableDirectLaunch == true;
     return Disable(
       isEnabled: !isRunning,
       child: Stack(
         children: [
-          if (isUsingCustomJre != true)
-            Positioned(
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16, top: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Tooltip(
-                      message:
-                          "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this."
-                          "\nPossible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.error,
-                        borderRadius: BorderRadius.circular(
-                          ThemeManager.cornerRadius,
-                        ),
-                      ),
-                      child: Opacity(
-                        opacity: enableDirectLaunch ? 1 : 0.8,
-                        child: CheckboxWithLabel(
-                          labelWidget: Row(
-                            children: [
-                              Text(
-                                "Skip Launcher",
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              if (enableDirectLaunch)
-                                Transform.rotate(
-                                  angle: .6,
-                                  child: SvgImageIcon(
-                                    "assets/images/icon-experimental.svg",
-                                    width: 20,
-                                    color: Theme.of(
-                                      context,
-                                    ).iconTheme.color?.withValues(alpha: 0.8),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          textPadding: const EdgeInsets.only(
-                            left: 12,
-                            bottom: 0,
-                          ),
-                          flipCheckboxAndLabel: true,
-                          value: enableDirectLaunch,
-                          showGlow: enableDirectLaunch,
-                          onChanged: (bool? value) {
-                            if (value == null) return;
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (s) => s.copyWith(enableDirectLaunch: value),
-                                );
-                          },
-                        ),
+          Positioned(
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Tooltip(
+                    message:
+                        "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this."
+                        "\nPossible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(
+                        ThemeManager.cornerRadius,
                       ),
                     ),
-                    // Padding(
-                    //   padding: const EdgeInsets.only(right: 42),
-                    //   child: Text("(experimental)", style: Theme.of(context).textTheme.labelSmall),
-                    // ),
-                  ],
-                ),
+                    child: Opacity(
+                      opacity: enableDirectLaunch ? 1 : 0.8,
+                      child: CheckboxWithLabel(
+                        labelWidget: Row(
+                          children: [
+                            Text(
+                              "Skip Launcher",
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            if (enableDirectLaunch)
+                              Transform.rotate(
+                                angle: .6,
+                                child: SvgImageIcon(
+                                  "assets/images/icon-experimental.svg",
+                                  width: 20,
+                                  color: Theme.of(
+                                    context,
+                                  ).iconTheme.color?.withValues(alpha: 0.8),
+                                ),
+                              ),
+                          ],
+                        ),
+                        textPadding: const EdgeInsets.only(left: 12, bottom: 0),
+                        flipCheckboxAndLabel: true,
+                        value: enableDirectLaunch,
+                        showGlow: enableDirectLaunch,
+                        onChanged: (bool? value) {
+                          if (value == null) return;
+                          ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (s) => s.copyWith(enableDirectLaunch: value),
+                              );
+                        },
+                      ),
+                    ),
+                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(right: 42),
+                  //   child: Text("(experimental)", style: Theme.of(context).textTheme.labelSmall),
+                  // ),
+                ],
               ),
             ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -207,35 +194,60 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                 ),
                               ),
                         const SizedBox(height: 8),
-                        Tooltip(
-                          message:
-                              "${Constants.appName} is not required to launch the game.",
-                          child: Builder(
-                            builder: (context) {
-                              final path = ref
-                                  .watch(AppState.gameExecutable)
-                                  .value
-                                  ?.absolute
-                                  .path
-                                  .let((p) {
-                                    return currentPlatform !=
-                                            TargetPlatform.macOS
-                                        ? p.let(
-                                            (p) => p.toFile().relativePath(
-                                              ref
-                                                  .watch(AppState.gameFolder)
-                                                  .value!,
-                                            ),
-                                          )
-                                        : File(p).nameWithExtension;
-                                  });
+                        Row(
+                          spacing: 4,
+                          children: [
+                            Builder(
+                              builder: (context) {
+                                final path = ref
+                                    .watch(AppState.gameExecutable)
+                                    .value
+                                    ?.absolute
+                                    .path
+                                    .let((p) {
+                                      return currentPlatform !=
+                                              TargetPlatform.macOS
+                                          ? p.let(
+                                              (p) => p.toFile().relativePath(
+                                                ref
+                                                    .watch(AppState.gameFolder)
+                                                    .value!,
+                                              ),
+                                            )
+                                          : File(p).nameWithExtension;
+                                    });
 
-                              return Text(
-                                path ?? "No game exe",
-                                style: Theme.of(context).textTheme.labelMedium,
-                              );
-                            },
-                          ),
+                                return Text(
+                                  path ?? "No game exe",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                );
+                              },
+                            ),
+                            SizedBox(
+                              height: 16,
+                              width: 24,
+                              child: MovingTooltipWidget.text(
+                                message: "Change which file launches the game",
+                                child: IconButton(
+                                  onPressed: () {
+                                    ref
+                                        .read(
+                                          AppState.navigationRequest.notifier,
+                                        )
+                                        .state = NavigationRequest(
+                                      destination: TriOSTools.settings,
+                                      highlightKey:
+                                          "settings.starsectorLauncher",
+                                    );
+                                  },
+                                  icon: Icon(Icons.edit, size: 16),
+                                  padding: .zero,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         Text(
                           ref.watch(AppState.starsectorVersion).value ??
@@ -260,29 +272,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                       ],
                     ),
                   ),
-                  if (isUsingCustomJre == true)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: CheckboxWithLabel(
-                        label: "Show Console (log output) Window",
-                        value:
-                            ref.watch(
-                              appSettings.select(
-                                (value) => value.showCustomJreConsoleWindow,
-                              ),
-                            ) ??
-                            false,
-                        onChanged: (bool? value) {
-                          ref
-                              .read(appSettings.notifier)
-                              .update(
-                                (state) => state.copyWith(
-                                  showCustomJreConsoleWindow: value ?? false,
-                                ),
-                              );
-                        },
-                      ),
-                    ),
                   if (showLauncherControls)
                     Padding(
                       padding: const EdgeInsets.all(16.0),

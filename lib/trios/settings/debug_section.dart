@@ -10,7 +10,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
-import 'package:trios/jre_manager/jre_manager_logic.dart';
+import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
@@ -34,6 +34,7 @@ import '../../widgets/self_update_toast.dart';
 import '../app_state.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../mod_tag_manager/category_manager.dart';
 import '../download_manager/download_manager.dart';
 import '../download_manager/download_request.dart';
 import '../download_manager/download_status.dart';
@@ -248,6 +249,15 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           },
           label: const Text('Open ${Constants.appName} Settings Folder'),
         ),
+        CheckboxWithLabel(
+          value: ref.watch(appSettings.select((s) => s.showAprilFools2026)) ?? false,
+          onChanged: (value) {
+            ref.read(appSettings.notifier).update(
+              (state) => state.copyWith(showAprilFools2026: value ?? false),
+            );
+          },
+          label: "Enable April Fools 2026 (${Constants.chatbotName})",
+        ),
         ElevatedButton.icon(
           icon: const Icon(Icons.restart_alt),
           onPressed: () async {
@@ -410,6 +420,39 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           label: const Text('Wipe Settings'),
         ),
         ElevatedButton.icon(
+          icon: const Icon(Icons.category),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Reset Categories?"),
+                  content: const Text(
+                    "This will reset categories to defaults, removing any user-created categories."
+                    "\nMod assignments to default categories will be kept.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        ref
+                            .read(categoryManagerProvider.notifier)
+                            .resetCategoriesToDefaults();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Reset'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          label: const Text('Reset Categories to Defaults'),
+        ),
+        ElevatedButton.icon(
           icon: const Icon(Icons.nearby_error),
           onPressed: () {
             throw Exception("This is a test error");
@@ -535,30 +578,20 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           },
         ),
         ElevatedButton.icon(
-          icon: const Icon(Icons.coffee),
-          label: const Text("Show found JREs / vmparams files"),
+          icon: const Icon(Icons.description),
+          label: const Text("Show detected vmparams files"),
           onPressed: () async {
             try {
-              showAlertDialog(
-                context,
-                content:
-                    (await ref
-                            .read(jreManagerProvider.notifier)
-                            .findJREs(
-                              ref
-                                  .watch(AppState.gameFolder)
-                                  .value
-                                  ?.toDirectory(),
-                              ref
-                                  .watch(AppState.gameCoreFolder)
-                                  .value
-                                  ?.toDirectory(),
-                            ))
-                        .joinToString(
-                          transform: (obj) => "- $obj",
-                          separator: "\n",
-                        ),
-              );
+              final vmState = ref.read(vmparamsManagerProvider).value;
+              final detected = vmState?.detectedVmparamsFiles ?? [];
+              final selected = vmState?.selectedVmparamsFiles ?? [];
+              final buf = StringBuffer();
+              buf.writeln("Detected (${detected.length}):");
+              for (final f in detected) {
+                final isSelected = selected.any((s) => s.path == f.path);
+                buf.writeln("  ${isSelected ? '✓' : '○'} ${f.path}");
+              }
+              showAlertDialog(context, content: buf.toString());
             } catch (e) {
               showSnackBar(
                 context: ref.read(AppState.appContext)!,

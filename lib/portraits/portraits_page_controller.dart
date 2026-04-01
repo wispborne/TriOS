@@ -16,13 +16,13 @@ import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portrait_scanner.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
+import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 part 'portraits_page_controller.mapper.dart';
@@ -181,9 +181,9 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
     final existingState = stateOrNull;
 
     return (existingState ?? const PortraitsPageState()).copyWith(
-      mainFilterCategories: mainFilterCategories,
-      leftFilterCategories: leftFilterCategories,
-      rightFilterCategories: rightFilterCategories,
+      mainFilterCategories: existingState?.mainFilterCategories ?? mainFilterCategories,
+      leftFilterCategories: existingState?.leftFilterCategories ?? leftFilterCategories,
+      rightFilterCategories: existingState?.rightFilterCategories ?? rightFilterCategories,
       allPortraits: allPortraits,
       metadata: metadata,
       replacements: replacements,
@@ -196,6 +196,11 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
       GridFilter<PortraitFilterItem>(
         name: 'Mod',
         valueGetter: (item) => item.modName,
+        sortComparator: (a, b) => a == 'Vanilla'
+            ? -1
+            : b == 'Vanilla'
+            ? 1
+            : a.compareTo(b),
       ),
       GridFilter<PortraitFilterItem>(
         name: 'Gender',

@@ -161,6 +161,60 @@ extension DashboardGridModUpdateVisibilityMapperExtension
   }
 }
 
+class ModsGridUpdateVisibilityMapper
+    extends EnumMapper<ModsGridUpdateVisibility> {
+  ModsGridUpdateVisibilityMapper._();
+
+  static ModsGridUpdateVisibilityMapper? _instance;
+  static ModsGridUpdateVisibilityMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(
+        _instance = ModsGridUpdateVisibilityMapper._(),
+      );
+    }
+    return _instance!;
+  }
+
+  static ModsGridUpdateVisibility fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  ModsGridUpdateVisibility decode(dynamic value) {
+    switch (value) {
+      case r'showAll':
+        return ModsGridUpdateVisibility.showAll;
+      case r'showUnmuted':
+        return ModsGridUpdateVisibility.showUnmuted;
+      case r'hide':
+        return ModsGridUpdateVisibility.hide;
+      default:
+        return ModsGridUpdateVisibility.values[2];
+    }
+  }
+
+  @override
+  dynamic encode(ModsGridUpdateVisibility self) {
+    switch (self) {
+      case ModsGridUpdateVisibility.showAll:
+        return r'showAll';
+      case ModsGridUpdateVisibility.showUnmuted:
+        return r'showUnmuted';
+      case ModsGridUpdateVisibility.hide:
+        return r'hide';
+    }
+  }
+}
+
+extension ModsGridUpdateVisibilityMapperExtension on ModsGridUpdateVisibility {
+  String toValue() {
+    ModsGridUpdateVisibilityMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<ModsGridUpdateVisibility>(this)
+        as String;
+  }
+}
+
 class CompressionLibMapper extends EnumMapper<CompressionLib> {
   CompressionLibMapper._();
 
@@ -284,9 +338,11 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       TriOSToolsMapper.ensureInitialized();
       LaunchSettingsMapper.ensureInitialized();
       DashboardGridModUpdateVisibilityMapper.ensureInitialized();
+      ModsGridUpdateVisibilityMapper.ensureInitialized();
       WispGridStateMapper.ensureInitialized();
       ShipsPageStatePersistedMapper.ensureInitialized();
       WeaponsPageStatePersistedMapper.ensureInitialized();
+      HullmodsPageStatePersistedMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
       DashboardModListSortMapper.ensureInitialized();
@@ -377,19 +433,26 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: TriOSTools.dashboard,
   );
-  static String? _$lastActiveJreVersion(Settings v) => v.lastActiveJreVersion;
-  static const Field<Settings, String> _f$lastActiveJreVersion = Field(
-    'lastActiveJreVersion',
-    _$lastActiveJreVersion,
+  static bool _$isSidebarCollapsed(Settings v) => v.isSidebarCollapsed;
+  static const Field<Settings, bool> _f$isSidebarCollapsed = Field(
+    'isSidebarCollapsed',
+    _$isSidebarCollapsed,
     opt: true,
+    def: false,
   );
-  static bool _$showCustomJreConsoleWindow(Settings v) =>
-      v.showCustomJreConsoleWindow;
-  static const Field<Settings, bool> _f$showCustomJreConsoleWindow = Field(
-    'showCustomJreConsoleWindow',
-    _$showCustomJreConsoleWindow,
+  static bool _$useTopToolbar(Settings v) => v.useTopToolbar;
+  static const Field<Settings, bool> _f$useTopToolbar = Field(
+    'useTopToolbar',
+    _$useTopToolbar,
     opt: true,
-    def: true,
+    def: false,
+  );
+  static List<String> _$vmparamsFilePaths(Settings v) => v.vmparamsFilePaths;
+  static const Field<Settings, List<String>> _f$vmparamsFilePaths = Field(
+    'vmparamsFilePaths',
+    _$vmparamsFilePaths,
+    opt: true,
+    def: const [],
   );
   static String? _$themeKey(Settings v) => v.themeKey;
   static const Field<Settings, String> _f$themeKey = Field(
@@ -433,6 +496,15 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$dashboardGridModUpdateVisibility,
     opt: true,
     def: DashboardGridModUpdateVisibility.hideMuted,
+  );
+  static ModsGridUpdateVisibility _$modsGridUpdateVisibility(Settings v) =>
+      v.modsGridUpdateVisibility;
+  static const Field<Settings, ModsGridUpdateVisibility>
+  _f$modsGridUpdateVisibility = Field(
+    'modsGridUpdateVisibility',
+    _$modsGridUpdateVisibility,
+    opt: true,
+    def: ModsGridUpdateVisibility.hide,
   );
   static WispGridState _$modsGridState(Settings v) => v.modsGridState;
   static const Field<Settings, WispGridState> _f$modsGridState = Field(
@@ -481,6 +553,22 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         opt: true,
         hook: SafeDecodeHook(),
       );
+  static WispGridState _$hullmodsGridState(Settings v) => v.hullmodsGridState;
+  static const Field<Settings, WispGridState> _f$hullmodsGridState = Field(
+    'hullmodsGridState',
+    _$hullmodsGridState,
+    opt: true,
+    def: const WispGridState(groupingSetting: null, columnsState: {}),
+  );
+  static HullmodsPageStatePersisted? _$hullmodsPageState(Settings v) =>
+      v.hullmodsPageState;
+  static const Field<Settings, HullmodsPageStatePersisted>
+  _f$hullmodsPageState = Field(
+    'hullmodsPageState',
+    _$hullmodsPageState,
+    opt: true,
+    hook: SafeDecodeHook(),
+  );
   static String? _$customGameExePath(Settings v) => v.customGameExePath;
   static const Field<Settings, String> _f$customGameExePath = Field(
     'customGameExePath',
@@ -551,6 +639,22 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, bool> _f$modsGridColorful = Field(
     'modsGridColorful',
     _$modsGridColorful,
+    opt: true,
+    def: false,
+  );
+  static bool _$modsGridUpdatesShowDisabledMods(Settings v) =>
+      v.modsGridUpdatesShowDisabledMods;
+  static const Field<Settings, bool> _f$modsGridUpdatesShowDisabledMods = Field(
+    'modsGridUpdatesShowDisabledMods',
+    _$modsGridUpdatesShowDisabledMods,
+    opt: true,
+    def: true,
+  );
+  static bool _$modsGridShowModInAllCategories(Settings v) =>
+      v.modsGridShowModInAllCategories;
+  static const Field<Settings, bool> _f$modsGridShowModInAllCategories = Field(
+    'modsGridShowModInAllCategories',
+    _$modsGridShowModInAllCategories,
     opt: true,
     def: false,
   );
@@ -724,6 +828,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool? _$showAprilFools2026(Settings v) => v.showAprilFools2026;
+  static const Field<Settings, bool> _f$showAprilFools2026 = Field(
+    'showAprilFools2026',
+    _$showAprilFools2026,
+    opt: true,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -739,19 +849,23 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #isMaximized: _f$isMaximized,
     #isMinimized: _f$isMinimized,
     #defaultTool: _f$defaultTool,
-    #lastActiveJreVersion: _f$lastActiveJreVersion,
-    #showCustomJreConsoleWindow: _f$showCustomJreConsoleWindow,
+    #isSidebarCollapsed: _f$isSidebarCollapsed,
+    #useTopToolbar: _f$useTopToolbar,
+    #vmparamsFilePaths: _f$vmparamsFilePaths,
     #themeKey: _f$themeKey,
     #showChangelogNextLaunch: _f$showChangelogNextLaunch,
     #enableDirectLaunch: _f$enableDirectLaunch,
     #launchSettings: _f$launchSettings,
     #lastStarsectorVersion: _f$lastStarsectorVersion,
     #dashboardGridModUpdateVisibility: _f$dashboardGridModUpdateVisibility,
+    #modsGridUpdateVisibility: _f$modsGridUpdateVisibility,
     #modsGridState: _f$modsGridState,
     #weaponsGridState: _f$weaponsGridState,
     #shipsGridState: _f$shipsGridState,
     #shipsPageState: _f$shipsPageState,
     #weaponsPageState: _f$weaponsPageState,
+    #hullmodsGridState: _f$hullmodsGridState,
+    #hullmodsPageState: _f$hullmodsPageState,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
     #customSavesPath: _f$customSavesPath,
@@ -762,6 +876,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #pinFavorites: _f$pinFavorites,
     #dashboardModListColorful: _f$dashboardModListColorful,
     #modsGridColorful: _f$modsGridColorful,
+    #modsGridUpdatesShowDisabledMods: _f$modsGridUpdatesShowDisabledMods,
+    #modsGridShowModInAllCategories: _f$modsGridShowModInAllCategories,
     #shouldAutoUpdateOnLaunch: _f$shouldAutoUpdateOnLaunch,
     #secondsBetweenModFolderChecks: _f$secondsBetweenModFolderChecks,
     #toastDurationSeconds: _f$toastDurationSeconds,
@@ -786,6 +902,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #showReportBugButton: _f$showReportBugButton,
     #allowInsecureConnections: _f$allowInsecureConnections,
     #shouldLoadWebView: _f$shouldLoadWebView,
+    #showAprilFools2026: _f$showAprilFools2026,
   };
   @override
   final bool ignoreNull = true;
@@ -804,8 +921,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       isMaximized: data.dec(_f$isMaximized),
       isMinimized: data.dec(_f$isMinimized),
       defaultTool: data.dec(_f$defaultTool),
-      lastActiveJreVersion: data.dec(_f$lastActiveJreVersion),
-      showCustomJreConsoleWindow: data.dec(_f$showCustomJreConsoleWindow),
+      isSidebarCollapsed: data.dec(_f$isSidebarCollapsed),
+      useTopToolbar: data.dec(_f$useTopToolbar),
+      vmparamsFilePaths: data.dec(_f$vmparamsFilePaths),
       themeKey: data.dec(_f$themeKey),
       showChangelogNextLaunch: data.dec(_f$showChangelogNextLaunch),
       enableDirectLaunch: data.dec(_f$enableDirectLaunch),
@@ -814,11 +932,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       dashboardGridModUpdateVisibility: data.dec(
         _f$dashboardGridModUpdateVisibility,
       ),
+      modsGridUpdateVisibility: data.dec(_f$modsGridUpdateVisibility),
       modsGridState: data.dec(_f$modsGridState),
       weaponsGridState: data.dec(_f$weaponsGridState),
       shipsGridState: data.dec(_f$shipsGridState),
       shipsPageState: data.dec(_f$shipsPageState),
       weaponsPageState: data.dec(_f$weaponsPageState),
+      hullmodsGridState: data.dec(_f$hullmodsGridState),
+      hullmodsPageState: data.dec(_f$hullmodsPageState),
       customGameExePath: data.dec(_f$customGameExePath),
       useCustomGameExePath: data.dec(_f$useCustomGameExePath),
       customSavesPath: data.dec(_f$customSavesPath),
@@ -829,6 +950,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       pinFavorites: data.dec(_f$pinFavorites),
       dashboardModListColorful: data.dec(_f$dashboardModListColorful),
       modsGridColorful: data.dec(_f$modsGridColorful),
+      modsGridUpdatesShowDisabledMods: data.dec(
+        _f$modsGridUpdatesShowDisabledMods,
+      ),
+      modsGridShowModInAllCategories: data.dec(
+        _f$modsGridShowModInAllCategories,
+      ),
       shouldAutoUpdateOnLaunch: data.dec(_f$shouldAutoUpdateOnLaunch),
       secondsBetweenModFolderChecks: data.dec(_f$secondsBetweenModFolderChecks),
       toastDurationSeconds: data.dec(_f$toastDurationSeconds),
@@ -856,6 +983,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       showReportBugButton: data.dec(_f$showReportBugButton),
       allowInsecureConnections: data.dec(_f$allowInsecureConnections),
       shouldLoadWebView: data.dec(_f$shouldLoadWebView),
+      showAprilFools2026: data.dec(_f$showAprilFools2026),
     );
   }
 
@@ -916,6 +1044,8 @@ extension SettingsValueCopy<$R, $Out> on ObjectCopyWith<$R, Settings, $Out> {
 
 abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get vmparamsFilePaths;
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get weaponsGridState;
@@ -932,6 +1062,13 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     WeaponsPageStatePersisted
   >?
   get weaponsPageState;
+  WispGridStateCopyWith<$R, WispGridState, WispGridState> get hullmodsGridState;
+  HullmodsPageStatePersistedCopyWith<
+    $R,
+    HullmodsPageStatePersisted,
+    HullmodsPageStatePersisted
+  >?
+  get hullmodsPageState;
   $R call({
     Directory? gameDir,
     Directory? gameCoreDir,
@@ -945,19 +1082,23 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? isMaximized,
     bool? isMinimized,
     TriOSTools? defaultTool,
-    String? lastActiveJreVersion,
-    bool? showCustomJreConsoleWindow,
+    bool? isSidebarCollapsed,
+    bool? useTopToolbar,
+    List<String>? vmparamsFilePaths,
     String? themeKey,
     bool? showChangelogNextLaunch,
     bool? enableDirectLaunch,
     LaunchSettings? launchSettings,
     String? lastStarsectorVersion,
     DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
+    ModsGridUpdateVisibility? modsGridUpdateVisibility,
     WispGridState? modsGridState,
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
     ShipsPageStatePersisted? shipsPageState,
     WeaponsPageStatePersisted? weaponsPageState,
+    WispGridState? hullmodsGridState,
+    HullmodsPageStatePersisted? hullmodsPageState,
     String? customGameExePath,
     bool? useCustomGameExePath,
     Directory? customSavesPath,
@@ -968,6 +1109,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? pinFavorites,
     bool? dashboardModListColorful,
     bool? modsGridColorful,
+    bool? modsGridUpdatesShowDisabledMods,
+    bool? modsGridShowModInAllCategories,
     bool? shouldAutoUpdateOnLaunch,
     int? secondsBetweenModFolderChecks,
     int? toastDurationSeconds,
@@ -991,6 +1134,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showReportBugButton,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
+    bool? showAprilFools2026,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1003,6 +1147,13 @@ class _SettingsCopyWithImpl<$R, $Out>
   @override
   late final ClassMapperBase<Settings> $mapper =
       SettingsMapper.ensureInitialized();
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get vmparamsFilePaths => ListCopyWith(
+    $value.vmparamsFilePaths,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(vmparamsFilePaths: v),
+  );
   @override
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings>
   get launchSettings =>
@@ -1035,6 +1186,20 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(weaponsPageState: v),
   );
   @override
+  WispGridStateCopyWith<$R, WispGridState, WispGridState>
+  get hullmodsGridState => $value.hullmodsGridState.copyWith.$chain(
+    (v) => call(hullmodsGridState: v),
+  );
+  @override
+  HullmodsPageStatePersistedCopyWith<
+    $R,
+    HullmodsPageStatePersisted,
+    HullmodsPageStatePersisted
+  >?
+  get hullmodsPageState => $value.hullmodsPageState?.copyWith.$chain(
+    (v) => call(hullmodsPageState: v),
+  );
+  @override
   $R call({
     Object? gameDir = $none,
     Object? gameCoreDir = $none,
@@ -1048,19 +1213,23 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? isMaximized = $none,
     Object? isMinimized = $none,
     TriOSTools? defaultTool,
-    Object? lastActiveJreVersion = $none,
-    bool? showCustomJreConsoleWindow,
+    bool? isSidebarCollapsed,
+    bool? useTopToolbar,
+    List<String>? vmparamsFilePaths,
     Object? themeKey = $none,
     Object? showChangelogNextLaunch = $none,
     bool? enableDirectLaunch,
     LaunchSettings? launchSettings,
     Object? lastStarsectorVersion = $none,
     DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
+    ModsGridUpdateVisibility? modsGridUpdateVisibility,
     WispGridState? modsGridState,
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
     Object? shipsPageState = $none,
     Object? weaponsPageState = $none,
+    WispGridState? hullmodsGridState,
+    Object? hullmodsPageState = $none,
     Object? customGameExePath = $none,
     bool? useCustomGameExePath,
     Object? customSavesPath = $none,
@@ -1071,6 +1240,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? pinFavorites,
     bool? dashboardModListColorful,
     bool? modsGridColorful,
+    bool? modsGridUpdatesShowDisabledMods,
+    bool? modsGridShowModInAllCategories,
     bool? shouldAutoUpdateOnLaunch,
     int? secondsBetweenModFolderChecks,
     int? toastDurationSeconds,
@@ -1094,6 +1265,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? showReportBugButton,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
+    Object? showAprilFools2026 = $none,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1109,10 +1281,9 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (isMaximized != $none) #isMaximized: isMaximized,
       if (isMinimized != $none) #isMinimized: isMinimized,
       if (defaultTool != null) #defaultTool: defaultTool,
-      if (lastActiveJreVersion != $none)
-        #lastActiveJreVersion: lastActiveJreVersion,
-      if (showCustomJreConsoleWindow != null)
-        #showCustomJreConsoleWindow: showCustomJreConsoleWindow,
+      if (isSidebarCollapsed != null) #isSidebarCollapsed: isSidebarCollapsed,
+      if (useTopToolbar != null) #useTopToolbar: useTopToolbar,
+      if (vmparamsFilePaths != null) #vmparamsFilePaths: vmparamsFilePaths,
       if (themeKey != $none) #themeKey: themeKey,
       if (showChangelogNextLaunch != $none)
         #showChangelogNextLaunch: showChangelogNextLaunch,
@@ -1122,11 +1293,15 @@ class _SettingsCopyWithImpl<$R, $Out>
         #lastStarsectorVersion: lastStarsectorVersion,
       if (dashboardGridModUpdateVisibility != null)
         #dashboardGridModUpdateVisibility: dashboardGridModUpdateVisibility,
+      if (modsGridUpdateVisibility != null)
+        #modsGridUpdateVisibility: modsGridUpdateVisibility,
       if (modsGridState != null) #modsGridState: modsGridState,
       if (weaponsGridState != null) #weaponsGridState: weaponsGridState,
       if (shipsGridState != null) #shipsGridState: shipsGridState,
       if (shipsPageState != $none) #shipsPageState: shipsPageState,
       if (weaponsPageState != $none) #weaponsPageState: weaponsPageState,
+      if (hullmodsGridState != null) #hullmodsGridState: hullmodsGridState,
+      if (hullmodsPageState != $none) #hullmodsPageState: hullmodsPageState,
       if (customGameExePath != $none) #customGameExePath: customGameExePath,
       if (useCustomGameExePath != null)
         #useCustomGameExePath: useCustomGameExePath,
@@ -1142,6 +1317,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (dashboardModListColorful != null)
         #dashboardModListColorful: dashboardModListColorful,
       if (modsGridColorful != null) #modsGridColorful: modsGridColorful,
+      if (modsGridUpdatesShowDisabledMods != null)
+        #modsGridUpdatesShowDisabledMods: modsGridUpdatesShowDisabledMods,
+      if (modsGridShowModInAllCategories != null)
+        #modsGridShowModInAllCategories: modsGridShowModInAllCategories,
       if (shouldAutoUpdateOnLaunch != null)
         #shouldAutoUpdateOnLaunch: shouldAutoUpdateOnLaunch,
       if (secondsBetweenModFolderChecks != null)
@@ -1182,6 +1361,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (allowInsecureConnections != null)
         #allowInsecureConnections: allowInsecureConnections,
       if (shouldLoadWebView != null) #shouldLoadWebView: shouldLoadWebView,
+      if (showAprilFools2026 != $none) #showAprilFools2026: showAprilFools2026,
     }),
   );
   @override
@@ -1201,13 +1381,14 @@ class _SettingsCopyWithImpl<$R, $Out>
     isMaximized: data.get(#isMaximized, or: $value.isMaximized),
     isMinimized: data.get(#isMinimized, or: $value.isMinimized),
     defaultTool: data.get(#defaultTool, or: $value.defaultTool),
-    lastActiveJreVersion: data.get(
-      #lastActiveJreVersion,
-      or: $value.lastActiveJreVersion,
+    isSidebarCollapsed: data.get(
+      #isSidebarCollapsed,
+      or: $value.isSidebarCollapsed,
     ),
-    showCustomJreConsoleWindow: data.get(
-      #showCustomJreConsoleWindow,
-      or: $value.showCustomJreConsoleWindow,
+    useTopToolbar: data.get(#useTopToolbar, or: $value.useTopToolbar),
+    vmparamsFilePaths: data.get(
+      #vmparamsFilePaths,
+      or: $value.vmparamsFilePaths,
     ),
     themeKey: data.get(#themeKey, or: $value.themeKey),
     showChangelogNextLaunch: data.get(
@@ -1227,11 +1408,23 @@ class _SettingsCopyWithImpl<$R, $Out>
       #dashboardGridModUpdateVisibility,
       or: $value.dashboardGridModUpdateVisibility,
     ),
+    modsGridUpdateVisibility: data.get(
+      #modsGridUpdateVisibility,
+      or: $value.modsGridUpdateVisibility,
+    ),
     modsGridState: data.get(#modsGridState, or: $value.modsGridState),
     weaponsGridState: data.get(#weaponsGridState, or: $value.weaponsGridState),
     shipsGridState: data.get(#shipsGridState, or: $value.shipsGridState),
     shipsPageState: data.get(#shipsPageState, or: $value.shipsPageState),
     weaponsPageState: data.get(#weaponsPageState, or: $value.weaponsPageState),
+    hullmodsGridState: data.get(
+      #hullmodsGridState,
+      or: $value.hullmodsGridState,
+    ),
+    hullmodsPageState: data.get(
+      #hullmodsPageState,
+      or: $value.hullmodsPageState,
+    ),
     customGameExePath: data.get(
       #customGameExePath,
       or: $value.customGameExePath,
@@ -1263,6 +1456,14 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.dashboardModListColorful,
     ),
     modsGridColorful: data.get(#modsGridColorful, or: $value.modsGridColorful),
+    modsGridUpdatesShowDisabledMods: data.get(
+      #modsGridUpdatesShowDisabledMods,
+      or: $value.modsGridUpdatesShowDisabledMods,
+    ),
+    modsGridShowModInAllCategories: data.get(
+      #modsGridShowModInAllCategories,
+      or: $value.modsGridShowModInAllCategories,
+    ),
     shouldAutoUpdateOnLaunch: data.get(
       #shouldAutoUpdateOnLaunch,
       or: $value.shouldAutoUpdateOnLaunch,
@@ -1351,6 +1552,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     shouldLoadWebView: data.get(
       #shouldLoadWebView,
       or: $value.shouldLoadWebView,
+    ),
+    showAprilFools2026: data.get(
+      #showAprilFools2026,
+      or: $value.showAprilFools2026,
     ),
   );
 

@@ -92,12 +92,20 @@ class WeaponsPageStatePersistedMapper
     opt: true,
     def: false,
   );
+  static bool _$useContainFit(WeaponsPageStatePersisted v) => v.useContainFit;
+  static const Field<WeaponsPageStatePersisted, bool> _f$useContainFit = Field(
+    'useContainFit',
+    _$useContainFit,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<WeaponsPageStatePersisted> fields = const {
     #showEnabled: _f$showEnabled,
     #showHidden: _f$showHidden,
     #splitPane: _f$splitPane,
+    #useContainFit: _f$useContainFit,
   };
 
   static WeaponsPageStatePersisted _instantiate(DecodingData data) {
@@ -105,6 +113,7 @@ class WeaponsPageStatePersistedMapper
       showEnabled: data.dec(_f$showEnabled),
       showHidden: data.dec(_f$showHidden),
       splitPane: data.dec(_f$splitPane),
+      useContainFit: data.dec(_f$useContainFit),
     );
   }
 
@@ -182,7 +191,12 @@ abstract class WeaponsPageStatePersistedCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? showEnabled, bool? showHidden, bool? splitPane});
+  $R call({
+    bool? showEnabled,
+    bool? showHidden,
+    bool? splitPane,
+    bool? useContainFit,
+  });
   WeaponsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -198,11 +212,17 @@ class _WeaponsPageStatePersistedCopyWithImpl<$R, $Out>
   late final ClassMapperBase<WeaponsPageStatePersisted> $mapper =
       WeaponsPageStatePersistedMapper.ensureInitialized();
   @override
-  $R call({bool? showEnabled, bool? showHidden, bool? splitPane}) => $apply(
+  $R call({
+    bool? showEnabled,
+    bool? showHidden,
+    bool? splitPane,
+    bool? useContainFit,
+  }) => $apply(
     FieldCopyWithData({
       if (showEnabled != null) #showEnabled: showEnabled,
       if (showHidden != null) #showHidden: showHidden,
       if (splitPane != null) #splitPane: splitPane,
+      if (useContainFit != null) #useContainFit: useContainFit,
     }),
   );
   @override
@@ -211,6 +231,7 @@ class _WeaponsPageStatePersistedCopyWithImpl<$R, $Out>
         showEnabled: data.get(#showEnabled, or: $value.showEnabled),
         showHidden: data.get(#showHidden, or: $value.showHidden),
         splitPane: data.get(#splitPane, or: $value.splitPane),
+        useContainFit: data.get(#useContainFit, or: $value.useContainFit),
       );
 
   @override

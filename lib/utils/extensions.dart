@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:trios/thirdparty/yaml/yaml.dart';
 
 // import 'package:toml/toml.dart';
+import 'package:trios/themes/theme.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
@@ -104,8 +105,13 @@ extension StringExt on String {
     var fixed = replaceAll(r"\#", "#").trim();
     // Replace tabs with spaces because yaml is picky. Thank you VIC.
     fixed = fixed.replaceAll("\t", "  ");
+    // Add space after colon before quote for unquoted keys
+    // (e.g. WS0001:"value" → WS0001: "value"). Thank you Shadowyards.
+    fixed = fixed.replaceAllMapped(RegExp(r'(\w):"'), (m) => '${m[1]}: "');
     // Remove trailing commas. Thank you SkillExtra.
     fixed = fixed.trimEnd(",");
+    // Replace semicolons used as value separators.
+    fixed = fixed.replaceAll(RegExp(r';$', multiLine: true), ',');
     // Removes lines starting with //, which are not valid json or yaml comments.
     // Thank you Epitaph Frost.
     fixed = fixed
@@ -305,16 +311,10 @@ List<_SubstitutionPart> _parseStarsectorSubstitutions({
 }) {
   final parts = <_SubstitutionPart>[];
 
-  if (replacementValuesString == null || replacementValuesString.isEmpty) {
-    // No replacements: whole template is literal.
-    parts.add(_SubstitutionPart(template, false));
-    return parts;
-  }
-
-  final replacementValues = replacementValuesString
-      .split('|')
-      .map((it) => it.trim())
-      .toList();
+  final replacementValues = (replacementValuesString == null ||
+          replacementValuesString.isEmpty)
+      ? <String>[]
+      : replacementValuesString.split('|').map((it) => it.trim()).toList();
 
   final sb = StringBuffer();
   int i = 0;
@@ -1114,7 +1114,7 @@ extension ObjectExt<T> on T {
   }
 }
 
-extension HexColor on Color {
+extension HexColorExt on Color {
   /// String is in the format "aabbcc" or "ffaabbcc" with an optional leading "#".
   static Color fromHex(String hexString) {
     final buffer = StringBuffer();
@@ -1220,4 +1220,9 @@ extension ColorFromObject on Object {
 
     return Color.fromARGB(0xFF, r, g, b);
   }
+}
+
+extension TriOSBuildContextTheme on BuildContext {
+  bool get rainbowAccent =>
+      Theme.of(this).extension<TriOSThemeExtension>()?.rainbowAccent ?? false;
 }

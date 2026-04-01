@@ -1,3 +1,49 @@
+# 1.4.0
+- Added
+  - **Mod Categories**
+    - Assign one or more categories to a mod.
+    - Group mods by category.
+    - Add and edit categories.
+  - **Mod color tagging**: show a color next to a mod's name as a mnemonic.
+  - New UI layout that moves most buttons to a left sidebar. 
+    - Optional, enable it from the toolbar.
+  - Mods page: new Header Styles: Line and Small Card.
+    - Small Card is a shorter, more compact version of the previous mod group UI.
+    - Right-click on a mod group (e.g. Enabled) and select Header Style.
+  - Hullmod Viewer.
+  - Dashboard: added edit button next to game launcher path to show that you can set a custom launch file (e.g. fr.bat).
+  - Mods page: "Updates" group pinned to the top. May be configured/turned off.
+  - Mods page: Right-click shortcut to view a mod's ships/weapons/hullmods/portraits.
+  - Mods page: mod info tooltip on hovering the mod title.
+  - Ships viewer: .skin files are now shown (e.g. Falcon (P)).
+  - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
+  - Two new themes: Turkey (real), Pride.
+- Fixed
+  - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
+  - Window position/size sometimes getting reset between restarts.
+  - Light themes now suck slightly less and cleaned up a couple more themes.
+  - Scroll position on theme selector menu would reset.
+  - More cases of invalid json are now treated as valid, meaning more ships/weapons are loaded.
+- Changed
+  - Removed JRE Manager.
+    - Every Mikohime version uses a different file structure and installation method, which would require TriOS patches for compatibility.
+    - TriOS supports setting custom launcher files (e.g. Miko_Rouge.bat).
+    - It will automatically find launcher settings files and update them when you assign RAM allocation.
+    - With vanilla now using Java 17, you no longer *require* a third-party performance mod like before. 
+    - tldr; install Mikohime/Fast Rendering without TriOS, then set the custom launcher file on the TriOS Settings page, and use TriOS to assign RAM.
+  - Mods page: Clicking the version button now immediately enables/disables a mod, rather than opening a mod version menu.
+    - New sub-button will open the version menu instead.
+  - Mods page: Groups have a more readable font.
+  - VRAM Estimate on Mods page hides the exact VRAM estimates unless you hover over the VRAM column.
+    - The new, smaller mod group UI made it look very messy with so many numbers visible.
+  - Ships/Weapons Viewers: Moved some filters on the toolbar into the filter panel.
+  - Mods page: When hovering a mod name, show mod info tooltip.
+  - Ships/Weapons Viewers: Images smaller than the display area won't be scaled up by default.
+  - Improved error message when downloading a mod actually downloads a text file.
+  - Improved notification behavior even more.
+  - Ship Viewer: ship icons are less blurry.
+  - Too many other tiny tweaks to list.
+
 # 1.3.4
 - Added
   - Portraits now read game data to display more info.

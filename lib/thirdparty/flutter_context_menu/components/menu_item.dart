@@ -35,19 +35,24 @@ final class MenuItem<T> extends ContextMenuItem<T> {
   final String label;
   final IconData? icon;
   final double? iconOpacity;
+  final Widget? leading;
   final BoxConstraints? constraints;
   final bool enabled;
   final TextStyle? textStyle;
+  final EdgeInsetsGeometry? padding;
 
   const MenuItem({
     required this.label,
     this.icon,
     this.iconOpacity,
+    this.leading,
     super.value,
     super.onSelected,
+    super.keepMenuOpen,
     this.constraints,
     this.enabled = true,
     this.textStyle,
+    this.padding,
   });
 
   const MenuItem.submenu({
@@ -55,10 +60,13 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     required List<ContextMenuEntry> items,
     this.icon,
     this.iconOpacity,
+    this.leading,
     super.onSelected,
+    super.keepMenuOpen,
     this.constraints,
     this.enabled = true,
     this.textStyle,
+    this.padding,
   }) : super.submenu(items: items);
 
   @override
@@ -78,7 +86,7 @@ final class MenuItem<T> extends ContextMenuItem<T> {
     final foregroundColor = isFocused ? focusedTextColor : normalTextColor;
     final usedTextStyle = TextStyle(
       color: foregroundColor,
-      height: 1.0,
+      height: 0.95,
     ).merge(textStyle);
 
     // ~~~~~~~~~~ //
@@ -98,39 +106,50 @@ final class MenuItem<T> extends ContextMenuItem<T> {
             canRequestFocus: false,
             child: DefaultTextStyle(
               style: usedTextStyle,
-              child: Row(
-                children: [
-                  SizedBox.square(
-                    dimension: 32.0,
-                    child: Icon(
-                      icon,
-                      size: 16.0,
-                      color: foregroundColor.withOpacity(
-                        iconOpacity ?? foregroundColor.a,
+              child: Padding(
+                padding: padding ?? EdgeInsets.all(0),
+                child: Row(
+                  children: [
+                    SizedBox(width: 4.0),
+                    SizedBox.square(
+                      dimension: 32.0,
+                      child: Center(
+                        child: SizedBox.square(
+                          dimension: 16.0,
+                          child: leading ??
+                              Icon(
+                                icon,
+                                size: 16.0,
+                                color: foregroundColor.withOpacity(
+                                  iconOpacity ?? foregroundColor.a,
+                                ),
+                              ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 4.0),
-                  Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8.0),
-                  SizedBox.square(
-                    dimension: 32.0,
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: Icon(
-                        isSubmenuItem ? Icons.arrow_right : null,
-                        size: 16.0,
-                        color: foregroundColor,
+                    if (label.isNotEmpty) const SizedBox(width: 4.0),
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8.0),
+                    if (isSubmenuItem)
+                      SizedBox.square(
+                        dimension: 32.0,
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Icon(
+                            isSubmenuItem ? Icons.arrow_right : null,
+                            size: 16.0,
+                            color: foregroundColor,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

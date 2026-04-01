@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
+import 'package:trios/hullmodViewer/hullmods_page_controller.dart';
 import 'package:trios/shipViewer/ships_page_controller.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
@@ -57,9 +58,12 @@ class Settings with SettingsMappable {
   final bool? isMaximized;
   final bool? isMinimized;
   final TriOSTools defaultTool;
+  final bool isSidebarCollapsed;
+  final bool useTopToolbar;
 
-  final String? lastActiveJreVersion;
-  final bool showCustomJreConsoleWindow;
+  /// Relative paths from game dir to files the user has selected as vmparams files.
+  final List<String> vmparamsFilePaths;
+
   final String? themeKey;
   final bool? showChangelogNextLaunch;
 
@@ -68,6 +72,7 @@ class Settings with SettingsMappable {
   final LaunchSettings launchSettings;
   final String? lastStarsectorVersion;
   final DashboardGridModUpdateVisibility dashboardGridModUpdateVisibility;
+  final ModsGridUpdateVisibility modsGridUpdateVisibility;
   @MappableField(hook: SafeDecodeHook())
   final WispGridState modsGridState;
   final WispGridState weaponsGridState;
@@ -76,12 +81,17 @@ class Settings with SettingsMappable {
   final ShipsPageStatePersisted? shipsPageState;
   @MappableField(hook: SafeDecodeHook())
   final WeaponsPageStatePersisted? weaponsPageState;
+  final WispGridState hullmodsGridState;
+  @MappableField(hook: SafeDecodeHook())
+  final HullmodsPageStatePersisted? hullmodsPageState;
 
   // Mods Page
   final bool doubleClickForModsPanel;
   final bool pinFavorites;
   final bool dashboardModListColorful;
   final bool modsGridColorful;
+  final bool modsGridUpdatesShowDisabledMods;
+  final bool modsGridShowModInAllCategories;
 
   // Settings Page
   @Deprecated(
@@ -116,6 +126,8 @@ class Settings with SettingsMappable {
   final bool allowInsecureConnections;
   final bool shouldLoadWebView;
 
+  final bool? showAprilFools2026;
+
   Settings({
     this.gameDir,
     this.gameCoreDir,
@@ -129,8 +141,9 @@ class Settings with SettingsMappable {
     this.isMaximized,
     this.isMinimized,
     this.defaultTool = TriOSTools.dashboard,
-    this.lastActiveJreVersion,
-    this.showCustomJreConsoleWindow = true,
+    this.isSidebarCollapsed = false,
+    this.useTopToolbar = false,
+    this.vmparamsFilePaths = const [],
     this.themeKey,
     this.showChangelogNextLaunch,
     this.enableDirectLaunch = false,
@@ -138,6 +151,7 @@ class Settings with SettingsMappable {
     this.lastStarsectorVersion,
     this.dashboardGridModUpdateVisibility =
         DashboardGridModUpdateVisibility.hideMuted,
+    this.modsGridUpdateVisibility = ModsGridUpdateVisibility.hide,
     this.modsGridState = const WispGridState(
       groupingSetting: GroupingSetting(
         currentGroupedByKey: 'enabledState',
@@ -156,6 +170,11 @@ class Settings with SettingsMappable {
     ),
     this.shipsPageState,
     this.weaponsPageState,
+    this.hullmodsGridState = const WispGridState(
+      groupingSetting: null,
+      columnsState: {},
+    ),
+    this.hullmodsPageState,
     this.customGameExePath,
     this.useCustomGameExePath = false,
     this.customSavesPath,
@@ -166,6 +185,8 @@ class Settings with SettingsMappable {
     this.pinFavorites = true,
     this.dashboardModListColorful = false,
     this.modsGridColorful = false,
+    this.modsGridUpdatesShowDisabledMods = true,
+    this.modsGridShowModInAllCategories = false,
     this.shouldAutoUpdateOnLaunch = false,
     this.secondsBetweenModFolderChecks = 15,
     this.toastDurationSeconds = 7,
@@ -189,6 +210,7 @@ class Settings with SettingsMappable {
     this.showReportBugButton = true,
     this.allowInsecureConnections = false,
     this.shouldLoadWebView = false,
+    this.showAprilFools2026,
   });
 }
 
@@ -207,6 +229,9 @@ enum ModUpdateBehavior { doNotChange, switchToNewVersionIfWasEnabled }
 
 @MappableEnum(defaultValue: DashboardGridModUpdateVisibility.hideMuted)
 enum DashboardGridModUpdateVisibility { allVisible, hideMuted, hideAll }
+
+@MappableEnum(defaultValue: ModsGridUpdateVisibility.hide)
+enum ModsGridUpdateVisibility { showAll, showUnmuted, hide }
 
 @MappableEnum(defaultValue: CompressionLib.sevenZip)
 enum CompressionLib {

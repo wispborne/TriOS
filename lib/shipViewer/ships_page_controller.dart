@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/shipSystemsManager/ship_system.dart';
 import 'package:trios/shipSystemsManager/ship_systems_manager.dart';
-import 'package:trios/shipViewer/filter_widget.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/ship_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -15,6 +14,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
+import 'package:trios/widgets/filter_widget.dart';
 
 part 'ships_page_controller.mapper.dart';
 
@@ -44,6 +44,8 @@ class ShipsPageState with ShipsPageStateMappable {
 
   bool get showFilters => persisted.showFilters;
 
+  bool get useContainFit => persisted.useContainFit;
+
   const ShipsPageState({
     this.persisted = const ShipsPageStatePersisted(),
     this.filterCategories = const [],
@@ -56,6 +58,10 @@ class ShipsPageState with ShipsPageStateMappable {
     this.currentSearchQuery = '',
     this.isLoading = false,
   });
+
+  /// Returns the display name for a ship by its ID, or the ID itself if not found.
+  String hullNameById(String id) =>
+      allShips.where((s) => s.id == id).firstOrNull?.hullNameForDisplay() ?? id;
 }
 
 @MappableClass()
@@ -64,12 +70,14 @@ class ShipsPageStatePersisted with ShipsPageStatePersistedMappable {
   final SpoilerLevel spoilerLevelToShow;
   final bool splitPane;
   final bool showFilters;
+  final bool useContainFit;
 
   const ShipsPageStatePersisted({
     this.showEnabled = false,
     this.spoilerLevelToShow = SpoilerLevel.showNone,
     this.splitPane = false,
     this.showFilters = false,
+    this.useContainFit = false,
   });
 }
 
@@ -89,6 +97,10 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
     // Initialize filter categories
     final filterCategories = [
+      GridFilter<Ship>(
+        name: 'Type',
+        valueGetter: (ship) => ship.isSkin ? 'Skin' : 'Base Hull',
+      ),
       GridFilter<Ship>(
         name: 'Hull Size',
         valueGetter: (ship) => ship.hullSizeForDisplay(),
@@ -164,10 +176,12 @@ class ShipsPageController extends Notifier<ShipsPageState> {
                         saved?.spoilerLevelToShow ?? SpoilerLevel.showNone,
                     splitPane: saved?.splitPane ?? false,
                     showFilters: saved?.showFilters ?? false,
+                    useContainFit: saved?.useContainFit ?? false,
                   ),
                 ))
             .copyWith(
-              filterCategories: stateOrNull?.filterCategories ?? filterCategories,
+              filterCategories:
+                  stateOrNull?.filterCategories ?? filterCategories,
               shipSystemsMap: shipSystemsMap,
               // weaponsMap: weaponsMap,
               weaponsMap: {},
@@ -194,6 +208,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
                     spoilerLevelToShow: newState.spoilerLevelToShow,
                     splitPane: newState.splitPane,
                     showFilters: newState.showFilters,
+                    useContainFit: newState.useContainFit,
                   ),
             ),
           );
@@ -316,6 +331,25 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     state = updatedState;
     _persistState(state);
   }
+
+  /// Toggle image fit between scaleDown and contain
+  void toggleUseContainFit() {
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(
+        useContainFit: !state.useContainFit,
+      ),
+    );
+    state = updatedState;
+    _persistState(state);
+  }
+
+  int get activeFilterCount =>
+      state.filterCategories.fold(
+        0,
+        (sum, f) => sum + f.filterStates.length,
+      ) +
+      (state.showEnabled ? 1 : 0) +
+      (state.spoilerLevelToShow != SpoilerLevel.showAllSpoilers ? 1 : 0);
 
   /// Get game core directory
   Directory getGameCoreDir() {

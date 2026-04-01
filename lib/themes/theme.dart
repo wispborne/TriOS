@@ -1,98 +1,72 @@
 import 'dart:ui';
 
-/// /**
-/// <a href="https://material.io/design/color/the-color-system.html" class="external" target="_blank">Material Design color system</a>.
+import 'package:flutter/material.dart';
+
+/// Material Design 3 color scheme for TriOS themes.
 ///
-/// The Material Design color system can help you create a color theme that reflects your brand or
-/// style.
-///
-/// ![Color image](https://developer.android.com/images/reference/androidx/compose/material/color.png)
-///
-/// @property primary The primary color is the color displayed most frequently across your app’s
-/// screens and components.
-/// @property primaryVariant The primary variant color is used to distinguish two elements of the
-/// app using the primary color, such as the top app bar and the system bar.
-/// @property secondary The secondary color provides more ways to accent and distinguish your
-/// product. Secondary colors are best for:
-/// - Floating action buttons
-/// - Selection controls, like checkboxes and radio buttons
-/// - Highlighting selected text
-/// - Links and headlines
-/// @property secondaryVariant The secondary variant color is used to distinguish two elements of the
-/// app using the secondary color.
-/// @property surface The surface color appears behind scrollable content.
-/// @property surfaceContainer The surface container color is used for backgrounds of components, such as cards, sheets and
-/// menus.
-/// @property error The error color is used to indicate error within components, such as text fields.
-/// @property onPrimary Color used for text and icons displayed on top of the primary color.
-/// @property onSecondary Color used for text and icons displayed on top of the secondary color.
-/// @property onSurface Color used for text and icons displayed on top of the surface color.
-/// @property onError Color used for text and icons displayed on top of the error color.
-/// @property isDark Whether this Colors is considered as a 'light' or 'dark' set of colors. This
-/// affects default behavior for some components: for example, in a light theme a [TopAppBar] will
-/// use [primary] by default for its background color, when in a dark theme it will use [surfaceContainer].
+/// @property primary The primary color displayed most frequently across the app.
+/// @property secondary Accent color for distinguishing elements (FABs, selection controls, links).
+/// @property surface The base surface color (behind scrollable content).
+/// @property surfaceContainer Background color for components like cards, sheets, and menus.
+/// @property error Color indicating errors within components.
+/// @property onPrimary Color for text/icons on top of primary.
+/// @property onSecondary Color for text/icons on top of secondary.
+/// @property onSurface Color for text/icons on top of surface.
+/// @property onError Color for text/icons on top of error.
+/// @property isDark Whether this is a dark or light theme.
+/// @property rainbowAccent Whether to show a rainbow gradient accent bar.
 class TriOSTheme {
   final bool isDark;
   final Color primary;
-  final Color? primaryVariant;
   final Color? secondary;
-  final Color? secondaryVariant;
   final Color? surface;
   final Color? surfaceContainer;
   final Color? error;
   final Color? onPrimary;
   final Color? onSecondary;
-  // final Color? onBackground;
   final Color? onSurface;
   final Color? onError;
-  final Color? hyperlink;
+  final String? fontFamily;
+  final bool rainbowAccent;
 
   TriOSTheme({
     this.isDark = true,
     required this.primary,
-    this.primaryVariant,
     this.secondary,
-    this.secondaryVariant,
     this.surface,
     this.surfaceContainer,
     this.error,
     this.onPrimary,
     this.onSecondary,
-    // this.onBackground,
     this.onSurface,
     this.onError,
-    this.hyperlink,
+    this.fontFamily,
+    this.rainbowAccent = false,
   });
 
-  // Constructor Handling Hexadecimal Strings
+  /// Constructor that accepts hex color strings (e.g. "#FF0000").
   TriOSTheme.fromHexCodes({
     required this.isDark,
     required String primary,
-    String? primaryVariant,
     String? secondary,
-    String? secondaryVariant,
-    String? background,
     String? surface,
+    String? surfaceContainer,
     String? error,
     String? onPrimary,
     String? onSecondary,
-    // String? onBackground,
     String? onSurface,
     String? onError,
-    String? hyperlink,
+    this.fontFamily,
+    this.rainbowAccent = false,
   }) : primary = _parseColor(primary)!,
-       primaryVariant = _parseColor(primaryVariant),
        secondary = _parseColor(secondary),
-       secondaryVariant = _parseColor(secondaryVariant),
-       surface = _parseColor(background),
-       surfaceContainer = _parseColor(surface),
+       surface = _parseColor(surface),
+       surfaceContainer = _parseColor(surfaceContainer),
        error = _parseColor(error),
        onPrimary = _parseColor(onPrimary),
        onSecondary = _parseColor(onSecondary),
-       // onBackground = _parseColor(onBackground),
        onSurface = _parseColor(onSurface),
-       onError = _parseColor(onError),
-       hyperlink = _parseColor(hyperlink);
+       onError = _parseColor(onError);
 
   static Color? _parseColor(String? hexCode) {
     if (hexCode == null) return null;
@@ -102,40 +76,55 @@ class TriOSTheme {
 
   @override
   String toString() {
-    return 'TriOSTheme{isDark: $isDark, primary: $primary, primaryVariant: $primaryVariant, secondary: $secondary, secondaryVariant: $secondaryVariant, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError, hyperlink: $hyperlink}';
+    return 'TriOSTheme{isDark: $isDark, primary: $primary, secondary: $secondary, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError, fontFamily: $fontFamily, rainbowAccent: $rainbowAccent}';
   }
 
   TriOSTheme copyWith({
     bool? isDark,
     Color? primary,
-    Color? primaryVariant,
     Color? secondary,
-    Color? secondaryVariant,
     Color? surface,
     Color? surfaceContainer,
     Color? error,
     Color? onPrimary,
     Color? onSecondary,
-    // Color? onBackground,
     Color? onSurface,
     Color? onError,
-    Color? hyperlink,
+    String? fontFamily,
+    bool? rainbowAccent,
   }) {
     return TriOSTheme(
       isDark: isDark ?? this.isDark,
       primary: primary ?? this.primary,
-      primaryVariant: primaryVariant ?? this.primaryVariant,
       secondary: secondary ?? this.secondary,
-      secondaryVariant: secondaryVariant ?? this.secondaryVariant,
       surface: surface ?? this.surface,
       surfaceContainer: surfaceContainer ?? this.surfaceContainer,
       error: error ?? this.error,
       onPrimary: onPrimary ?? this.onPrimary,
       onSecondary: onSecondary ?? this.onSecondary,
-      // onBackground: onBackground ?? this.onBackground,
       onSurface: onSurface ?? this.onSurface,
       onError: onError ?? this.onError,
-      hyperlink: hyperlink ?? this.hyperlink,
+      fontFamily: fontFamily ?? this.fontFamily,
+      rainbowAccent: rainbowAccent ?? this.rainbowAccent,
     );
+  }
+}
+
+/// Theme extension to expose custom TriOS theme properties via [Theme.of].
+class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
+  final bool rainbowAccent;
+
+  const TriOSThemeExtension({this.rainbowAccent = false});
+
+  @override
+  TriOSThemeExtension copyWith({bool? rainbowAccent}) {
+    return TriOSThemeExtension(
+      rainbowAccent: rainbowAccent ?? this.rainbowAccent,
+    );
+  }
+
+  @override
+  TriOSThemeExtension lerp(TriOSThemeExtension? other, double t) {
+    return t < 0.5 ? this : (other ?? this);
   }
 }

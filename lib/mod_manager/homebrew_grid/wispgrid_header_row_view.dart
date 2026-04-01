@@ -10,9 +10,9 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/thirdparty/dartx/function.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/hoverable_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/multi_split_mixin_view.dart';
 
 import 'wisp_grid.dart';
 
@@ -35,6 +35,8 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
   final String? defaultGridSort;
+  /// Per-column additional context menu entries, keyed by column key.
+  final Map<String, List<ContextMenuEntry>> perColumnContextMenuEntries;
 
   const WispGridHeaderRowView({
     super.key,
@@ -43,6 +45,7 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
     required this.columns,
     required this.groups,
     this.defaultGridSort,
+    this.perColumnContextMenuEntries = const {},
   });
 
   @override
@@ -192,7 +195,10 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                         .bodySmall
                         ?.copyWith(fontWeight: FontWeight.bold);
 
-                    return DraggableHeader(
+                    final columnEntries =
+                        widget.perColumnContextMenuEntries[column.key];
+
+                    Widget header = DraggableHeader(
                       columns: columns,
                       showDragHandle: isHovering,
                       header: columnSetting.key,
@@ -203,6 +209,21 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                         child: child,
                       ),
                     );
+
+                    if (columnEntries != null && columnEntries.isNotEmpty) {
+                      header = ContextMenuRegion(
+                        contextMenu: ContextMenu(
+                          entries: [
+                            ...buildHeaderContextMenu(gridState).entries,
+                            const MenuDivider(),
+                            ...columnEntries,
+                          ],
+                        ),
+                        child: header,
+                      );
+                    }
+
+                    return header;
                   },
                 ),
               ),
@@ -239,9 +260,11 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                     onSelected: () {
                       updateGridState(
                         (WispGridState state) => state.copyWith(
-                          groupingSetting: GroupingSetting(
-                            currentGroupedByKey: group.key,
-                          ),
+                          groupingSetting: (state.groupingSetting ??
+                                  GroupingSetting(
+                                    currentGroupedByKey: group.key,
+                                  ))
+                              .copyWith(currentGroupedByKey: group.key),
                         ),
                       );
                     },
@@ -260,6 +283,7 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
             label: column?.name ?? "???",
             icon: isVisible ? Icons.visibility : Icons.visibility_off,
             iconOpacity: isVisible ? null : 0.4,
+            keepMenuOpen: true,
             onSelected: () {
               updateGridState((WispGridState state) {
                 final columnSettings = state.sortedColumns(columns).toMap();

@@ -17,6 +17,7 @@
   - Mods page: mod info tooltip on hovering the mod title.
   - Ships viewer: .skin files are now shown (e.g. Falcon (P)).
   - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
+  - Two new themes: Turkey (real), Pride.
 - Fixed
   - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
   - Window position/size sometimes getting reset between restarts.

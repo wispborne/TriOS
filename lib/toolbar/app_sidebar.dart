@@ -77,7 +77,7 @@ class AppSidebar extends StatelessWidget {
                     true) {
                   return const SizedBox.shrink();
                 }
-                return const ChatbotButton(size: 40, iconSize: 20);
+                return const ChatbotButton(size: 40, iconSize: 16);
               },
             ),
             // Core tools

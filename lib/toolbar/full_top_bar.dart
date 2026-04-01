@@ -54,7 +54,7 @@ class FullTopBar extends StatelessWidget implements PreferredSizeWidget {
                     if (ref.watch(appSettings.select((s) => s.showAprilFools2026)) != true) {
                       return const SizedBox.shrink();
                     }
-                    return const ChatbotButton(size: 40, iconSize: 20);
+                    return const ChatbotButton(size: 40, iconSize: 18);
                   },
                 ),
                 _coreTabButton(TriOSTools.dashboard),

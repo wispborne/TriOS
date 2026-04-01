@@ -5,7 +5,8 @@
     - Group mods by category.
     - Add and edit categories.
   - **Mod color tagging**: show a color next to a mod's name as a mnemonic.
-  - New UI layout that moves most buttons to a left sidebar. Optional, enable it from the toolbar.
+  - New UI layout that moves most buttons to a left sidebar. 
+    - Optional, enable it from the toolbar.
   - Mods page: new Header Styles: Line and Small Card.
     - Small Card is a shorter, more compact version of the previous mod group UI.
     - Right-click on a mod group (e.g. Enabled) and select Header Style.
@@ -35,10 +36,12 @@
   - VRAM Estimate on Mods page hides the exact VRAM estimates unless you hover over the VRAM column.
     - The new, smaller mod group UI made it look very messy with so many numbers visible.
   - Ships/Weapons Viewers: Moved some filters on the toolbar into the filter panel.
-  - Mods page: Mod description tooltip now appears when hovering a mod name.
+  - Mods page: When hovering a mod name, show mod info tooltip.
   - Ships/Weapons Viewers: Images smaller than the display area won't be scaled up by default.
   - Improved error message when downloading a mod actually downloads a text file.
   - Improved notification behavior even more.
+  - Ship Viewer: ship icons are less blurry.
+  - Too many other tiny tweaks to list.
 
 # 1.3.4
 - Added

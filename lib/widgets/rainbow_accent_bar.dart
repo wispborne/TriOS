@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Rainbow pride colors shared across accent widgets.
-const _rainbowColors = [
+const rainbowColors = [
   Color(0xFFFF0000), // Red
   Color(0xFFFF8C00), // Orange
   Color(0xFFFFD700), // Yellow
@@ -15,11 +15,7 @@ class RainbowAccentBar extends StatelessWidget {
   final Axis axis;
   final double thickness;
 
-  const RainbowAccentBar({
-    super.key,
-    required this.axis,
-    this.thickness = 4.0,
-  });
+  const RainbowAccentBar({super.key, required this.axis, this.thickness = 4.0});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +24,7 @@ class RainbowAccentBar extends StatelessWidget {
       height: axis == Axis.horizontal ? thickness : double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: _rainbowColors,
+          colors: rainbowColors,
           begin: axis == Axis.vertical
               ? Alignment.topCenter
               : Alignment.centerLeft,
@@ -46,19 +42,27 @@ class RainbowBorder extends StatelessWidget {
   final Widget child;
   final double borderWidth;
   final double borderRadius;
+  final double alpha;
 
   const RainbowBorder({
     super.key,
     required this.child,
     this.borderWidth = 2.0,
     this.borderRadius = 6.0,
+    this.alpha = 1.0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: _rainbowColors),
+        gradient: LinearGradient(
+          colors: alpha == 1.0
+              ? rainbowColors
+              : rainbowColors
+                    .map((color) => color.withValues(alpha: alpha))
+                    .toList(),
+        ),
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       padding: EdgeInsets.all(borderWidth),

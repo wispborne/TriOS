@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:trios/toolbar/app_action_buttons.dart';
 import 'package:trios/toolbar/app_brand_header.dart';
 import 'package:trios/toolbar/app_right_toolbar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/toolbar/chatbot_button.dart';
 import 'package:trios/toolbar/tab_button.dart';
 import 'package:trios/trios/navigation.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 import '../launcher/launcher.dart';
@@ -47,7 +49,14 @@ class FullTopBar extends StatelessWidget implements PreferredSizeWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const ChatbotButton(size: 40, iconSize: 20),
+                Consumer(
+                  builder: (context, ref, _) {
+                    if (ref.watch(appSettings.select((s) => s.showAprilFools2026)) != true) {
+                      return const SizedBox.shrink();
+                    }
+                    return const ChatbotButton(size: 40, iconSize: 20);
+                  },
+                ),
                 _coreTabButton(TriOSTools.dashboard),
                 _coreTabButton(TriOSTools.modManager),
                 _coreTabButton(TriOSTools.modProfiles),

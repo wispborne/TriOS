@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/launcher/launcher.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/toolbar/app_action_buttons.dart';
+import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
 import 'package:trios/toolbar/chatbot_button.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -69,7 +69,17 @@ class AppSidebar extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const ChatbotButton(size: 40, iconSize: 20,),
+            Consumer(
+              builder: (context, ref, _) {
+                if (ref.watch(
+                      appSettings.select((s) => s.showAprilFools2026),
+                    ) !=
+                    true) {
+                  return const SizedBox.shrink();
+                }
+                return const ChatbotButton(size: 40, iconSize: 20);
+              },
+            ),
             // Core tools
             _SidebarNavItem.fromTool(
               tool: TriOSTools.dashboard,
@@ -103,43 +113,53 @@ class AppSidebar extends StatelessWidget {
             ),
             const _SidebarDivider(),
             // Viewer tools
-            _SidebarNavItem.fromTool(
-              tool: TriOSTools.ships,
-              isSelected: currentPage == TriOSTools.ships,
-              isCollapsed: isCollapsed,
-              onTap: () => onTabChanged(TriOSTools.ships),
+            Expanded(
+              child: FadedScrollable(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _SidebarNavItem.fromTool(
+                        tool: TriOSTools.ships,
+                        isSelected: currentPage == TriOSTools.ships,
+                        isCollapsed: isCollapsed,
+                        onTap: () => onTabChanged(TriOSTools.ships),
+                      ),
+                      _SidebarNavItem.fromTool(
+                        tool: TriOSTools.weapons,
+                        isSelected: currentPage == TriOSTools.weapons,
+                        isCollapsed: isCollapsed,
+                        onTap: () => onTabChanged(TriOSTools.weapons),
+                      ),
+                      _SidebarNavItem.fromTool(
+                        tool: TriOSTools.hullmods,
+                        isSelected: currentPage == TriOSTools.hullmods,
+                        isCollapsed: isCollapsed,
+                        onTap: () => onTabChanged(TriOSTools.hullmods),
+                      ),
+                      _SidebarNavItem.fromTool(
+                        tool: TriOSTools.portraits,
+                        isSelected: currentPage == TriOSTools.portraits,
+                        isCollapsed: isCollapsed,
+                        onTap: () => onTabChanged(TriOSTools.portraits),
+                      ),
+                      _SidebarNavItem.fromTool(
+                        tool: TriOSTools.vramEstimator,
+                        isSelected: currentPage == TriOSTools.vramEstimator,
+                        isCollapsed: isCollapsed,
+                        onTap: () => onTabChanged(TriOSTools.vramEstimator),
+                      ),
+                      _SidebarNavItem.fromTool(
+                        tool: TriOSTools.tips,
+                        isSelected: currentPage == TriOSTools.tips,
+                        isCollapsed: isCollapsed,
+                        onTap: () => onTabChanged(TriOSTools.tips),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            _SidebarNavItem.fromTool(
-              tool: TriOSTools.weapons,
-              isSelected: currentPage == TriOSTools.weapons,
-              isCollapsed: isCollapsed,
-              onTap: () => onTabChanged(TriOSTools.weapons),
-            ),
-            _SidebarNavItem.fromTool(
-              tool: TriOSTools.hullmods,
-              isSelected: currentPage == TriOSTools.hullmods,
-              isCollapsed: isCollapsed,
-              onTap: () => onTabChanged(TriOSTools.hullmods),
-            ),
-            _SidebarNavItem.fromTool(
-              tool: TriOSTools.portraits,
-              isSelected: currentPage == TriOSTools.portraits,
-              isCollapsed: isCollapsed,
-              onTap: () => onTabChanged(TriOSTools.portraits),
-            ),
-            _SidebarNavItem.fromTool(
-              tool: TriOSTools.vramEstimator,
-              isSelected: currentPage == TriOSTools.vramEstimator,
-              isCollapsed: isCollapsed,
-              onTap: () => onTabChanged(TriOSTools.vramEstimator),
-            ),
-            _SidebarNavItem.fromTool(
-              tool: TriOSTools.tips,
-              isSelected: currentPage == TriOSTools.tips,
-              isCollapsed: isCollapsed,
-              onTap: () => onTabChanged(TriOSTools.tips),
-            ),
-            const Spacer(),
+            // const Spacer(),
             _SidebarRulesHotReload(isCollapsed: isCollapsed),
             const _SidebarDivider(),
             _SidebarLayoutToggle(isCollapsed: isCollapsed),
@@ -300,9 +320,7 @@ class _SidebarRulesHotReload extends ConsumerWidget {
       isCollapsed: isCollapsed,
       onTap: () => ref
           .read(appSettings.notifier)
-          .update(
-            (s) => s.copyWith(isRulesHotReloadEnabled: !isEnabled),
-          ),
+          .update((s) => s.copyWith(isRulesHotReloadEnabled: !isEnabled)),
       icon: RulesHotReload(isEnabled: isEnabled, showText: false),
       label: "rules.csv",
       tooltip:

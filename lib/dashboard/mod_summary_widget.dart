@@ -91,7 +91,6 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                                 (modVariant.iconFilePath ?? "").toFile(),
                                 isAntiAlias: true,
                                 cacheWidth: iconSize,
-                                cacheHeight: iconSize,
                               )
                             : Container(),
                       ),

@@ -109,6 +109,7 @@ class ChatbotController extends AutoDisposeNotifier<ConversationContext> {
       ModSearchIntent(ref),
       ModsByAuthorIntent(ref),
       ModDependenciesIntent(ref),
+      // ModlistRatingIntent(ref), // too cringe to use
       ModCompatibilityIntent(ref),
       ModConflictsIntent(ref),
       ModUpdatesIntent(ref),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/toolbar/chatbot_button.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/animated_gradient_border.dart';
 
@@ -23,7 +23,7 @@ class _AprilFools2026ToastState extends ConsumerState<AprilFools2026Toast> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final gradientColors = ChatbotButton.gradientColorsFrom(theme.colorScheme);
+    final gradientColors = deltaCoreColors;
 
     return Padding(
       padding: const EdgeInsets.only(right: 32),
@@ -60,7 +60,7 @@ class _AprilFools2026ToastState extends ConsumerState<AprilFools2026Toast> {
                       Text(
                         _showSecondPhase
                             ? "Ok, it's actually an April Fool's joke. It's completely offline and harmless, promise."
-                            : "New! AI Chat is now available in TriOS.",
+                            : "New! ${Constants.chatbotName} is now available in TriOS.",
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),

@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/chatbot/chatbot_dialog.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
@@ -250,10 +249,14 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           },
           label: const Text('Open ${Constants.appName} Settings Folder'),
         ),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.chat_bubble_outline),
-          onPressed: () => ChatbotDialog.show(context),
-          label: const Text('Open Debug Chatbot'),
+        CheckboxWithLabel(
+          value: ref.watch(appSettings.select((s) => s.showAprilFools2026)) ?? false,
+          onChanged: (value) {
+            ref.read(appSettings.notifier).update(
+              (state) => state.copyWith(showAprilFools2026: value ?? false),
+            );
+          },
+          label: "Enable April Fools 2026 (${Constants.chatbotName})",
         ),
         ElevatedButton.icon(
           icon: const Icon(Icons.restart_alt),

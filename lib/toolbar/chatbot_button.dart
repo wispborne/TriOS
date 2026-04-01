@@ -3,11 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:trios/chatbot/chatbot_dialog.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/animated_gradient_border.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
-/// AI chatbot button with an animated conic-gradient glowing border.
-/// Opens the chatbot dialog when pressed.
+/// Delta Core button with an animated conic-gradient glowing border.
+/// Opens the Delta Core dialog when pressed.
 class ChatbotButton extends StatefulWidget {
   /// Overall size of the button (width and height).
   final double size;
@@ -27,19 +28,6 @@ class ChatbotButton extends StatefulWidget {
     this.iconOffsetX = -2,
     this.iconOffsetY = 0,
   });
-
-  /// Derives gradient colors from a [ColorScheme].
-  /// Shared so other widgets (e.g. toasts) can use the same palette.
-  static List<Color> gradientColorsFrom(ColorScheme colorScheme) {
-    return [
-      colorScheme.primary,
-      colorScheme.tertiary,
-      colorScheme.secondary,
-      colorScheme.primaryContainer,
-      colorScheme.tertiaryContainer,
-      colorScheme.primary, // wraps back to start
-    ];
-  }
 
   @override
   State<ChatbotButton> createState() => _ChatbotButtonState();
@@ -90,7 +78,7 @@ class _ChatbotButtonState extends State<ChatbotButton>
 
   @override
   Widget build(BuildContext context) {
-    final gradientColors = ChatbotButton.gradientColorsFrom(Theme.of(context).colorScheme);
+    final gradientColors = deltaCoreColors;
 
     return MouseRegion(
       onEnter: (_) => _onHoverChanged(true),
@@ -134,7 +122,7 @@ class _ChatbotButtonState extends State<ChatbotButton>
                   // );
                   return MovingTooltipWidget(
                     tooltipWidget: _AnimatedGradientTooltip(
-                      message: "Chat with TriOS Assistant",
+                      message: "Chat with ${Constants.chatbotName}",
                       colors: gradientColors,
                     ),
                     child: IconButton(

@@ -212,10 +212,10 @@ void main() async {
     Fimber.w("Error checking for changelog notification.", ex: e);
   }
 
-  // April Fools 2026: Show AI Chat toast on April 1st if user hasn't seen it.
+  // April Fools 2026: Show Delta Core toast on April 1st if user hasn't seen it.
   try {
     final now = DateTime.now();
-    if (true || settings?.showAprilFools2026 == null &&
+    if (settings?.showAprilFools2026 == null &&
         now.month == 4 &&
         now.day == 1 &&
         now.year == 2026) {

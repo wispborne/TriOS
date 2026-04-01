@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 
 class TriOSAppIcon extends StatelessWidget {
   final double width;
@@ -15,14 +17,28 @@ class TriOSAppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SvgPicture.asset(
-      ("assets/images/telos_faction_crest.svg"),
+    final rainbowAccent = context.rainbowAccent;
+
+    final svg = SvgPicture.asset(
+      "assets/images/telos_faction_crest.svg",
       colorFilter: ColorFilter.mode(
-        color ?? Theme.of(context).colorScheme.primary,
+        color ?? (rainbowAccent ? Colors.white : Theme.of(context).colorScheme.primary),
         BlendMode.srcIn,
       ),
       width: width,
       height: height,
+    );
+
+    if (!rainbowAccent || color != null) return svg;
+
+    return ShaderMask(
+      shaderCallback: (bounds) => const LinearGradient(
+        colors: rainbowColors,
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(bounds),
+      blendMode: BlendMode.srcIn,
+      child: svg,
     );
   }
 }

@@ -2,6 +2,16 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+/// Delta Core gradient colors shared across chatbot-related widgets.
+const deltaCoreColors = [
+  Color(0xFFFF6B6B), // red
+  Color(0xFFFFD93D), // yellow
+  Color(0xFF6BCB77), // green
+  Color(0xFF4D96FF), // blue
+  Color(0xFFBB6BFF), // purple
+  Color(0xFFFF6B6B), // red (wraps)
+];
+
 /// Wraps a child widget with an animated rotating conic-gradient border
 /// and optional outer glow. The gradient rotates continuously.
 class AnimatedGradientBorder extends StatefulWidget {
@@ -16,7 +26,7 @@ class AnimatedGradientBorder extends StatefulWidget {
   const AnimatedGradientBorder({
     super.key,
     required this.child,
-    required this.colors,
+    this.colors = deltaCoreColors,
     this.borderRadius = 8,
     this.borderWidth = 1.5,
     this.glowStrokeWidth = 3,

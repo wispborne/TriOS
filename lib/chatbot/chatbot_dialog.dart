@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:trios/trios/constants.dart';
+import 'package:trios/widgets/animated_gradient_border.dart';
 
 import 'chatbot_controller.dart';
 import 'chatbot_models.dart';
@@ -158,7 +160,7 @@ class _ChatbotDialogState extends ConsumerState<ChatbotDialog> {
                     size: 22,
                   ),
                   Text(
-                    "Assistant",
+                    Constants.chatbotName,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -248,38 +250,39 @@ class _ChatbotDialogState extends ConsumerState<ChatbotDialog> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      focusNode: _focusNode,
-                      decoration: InputDecoration(
-                        hintText: "Message Assistant...",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(
-                            color: colorScheme.outlineVariant,
+                    child: AnimatedGradientBorder(
+                      borderRadius: 20,
+                      child: TextField(
+                        controller: _textController,
+                        focusNode: _focusNode,
+                        decoration: InputDecoration(
+                          hintText: "Message ${Constants.chatbotName}...",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.transparent),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                              width: 1.5,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surfaceContainerLow,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide(
-                            color: colorScheme.primary,
-                            width: 1.5,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: colorScheme.surfaceContainerLow,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                        minLines: 1,
+                        maxLines: 1,
+                        keyboardType: TextInputType.multiline,
+                        autofocus: true,
                       ),
-                      minLines: 1,
-                      maxLines: 1,
-                      keyboardType: TextInputType.multiline,
-                      autofocus: true,
                     ),
                   ),
                   IconButton.filled(
@@ -296,6 +299,19 @@ class _ChatbotDialogState extends ConsumerState<ChatbotDialog> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            Opacity(
+              opacity: 0.6,
+              child: Padding(
+                padding: const .only(bottom: 6),
+                child: Text(
+                  "Caution: AI can make mistakes. "
+                  "${Constants.chatbotName} will never make mistakes, though, because it isn't a real AI.",
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontStyle: .italic,
+                  ),
+                ),
               ),
             ),
           ],
@@ -329,7 +345,7 @@ class _EmptyState extends StatelessWidget {
             Icon(
               Icons.auto_awesome,
               size: 48,
-              color: colorScheme.primary.withValues(alpha: 0.4),
+              color: colorScheme.primary.withValues(alpha: 0.8),
             ),
             const SizedBox(height: 8),
             Text(
@@ -431,34 +447,36 @@ class _ChatMessageViewState extends State<_ChatMessageView> {
             color: colorScheme.onPrimaryContainer,
           ),
         ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 4,
-            children: [
-              widget.animate
-                  ? _AnimatedWordText(
-                      text: widget.message.text,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface,
+        Padding(
+          padding: const .only(top: 4),
+          child: Expanded(
+            child: Column(
+              crossAxisAlignment: .start,
+              children: [
+                widget.animate
+                    ? _AnimatedWordText(
+                        text: widget.message.text,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                        ),
+                      )
+                    : SelectableText(
+                        widget.message.text,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                        ),
                       ),
-                    )
-                  : SelectableText(
-                      widget.message.text,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-              AnimatedOpacity(
-                opacity: _isHovered ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 150),
-                child: _MessageActions(
-                  timeStr: timeStr,
-                  text: widget.message.text,
-                  waterUsageLiters: widget.waterUsage,
+                AnimatedOpacity(
+                  opacity: _isHovered ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: _MessageActions(
+                    timeStr: timeStr,
+                    text: widget.message.text,
+                    waterUsageLiters: widget.waterUsage,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

@@ -10,6 +10,7 @@ class Constants {
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
+  static const chatbotName = "Delta Core";
   static const appTitle = "$appName v$version";
   static String appSubtitle = [
     "Corporate Toolkit",

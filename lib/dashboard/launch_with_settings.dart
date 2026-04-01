@@ -75,70 +75,67 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
       child: Stack(
         children: [
           Positioned(
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16, top: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Tooltip(
-                      message:
-                          "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this."
-                          "\nPossible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.error,
-                        borderRadius: BorderRadius.circular(
-                          ThemeManager.cornerRadius,
-                        ),
-                      ),
-                      child: Opacity(
-                        opacity: enableDirectLaunch ? 1 : 0.8,
-                        child: CheckboxWithLabel(
-                          labelWidget: Row(
-                            children: [
-                              Text(
-                                "Skip Launcher",
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              if (enableDirectLaunch)
-                                Transform.rotate(
-                                  angle: .6,
-                                  child: SvgImageIcon(
-                                    "assets/images/icon-experimental.svg",
-                                    width: 20,
-                                    color: Theme.of(
-                                      context,
-                                    ).iconTheme.color?.withValues(alpha: 0.8),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          textPadding: const EdgeInsets.only(
-                            left: 12,
-                            bottom: 0,
-                          ),
-                          flipCheckboxAndLabel: true,
-                          value: enableDirectLaunch,
-                          showGlow: enableDirectLaunch,
-                          onChanged: (bool? value) {
-                            if (value == null) return;
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (s) => s.copyWith(enableDirectLaunch: value),
-                                );
-                          },
-                        ),
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Tooltip(
+                    message:
+                        "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this."
+                        "\nPossible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(
+                        ThemeManager.cornerRadius,
                       ),
                     ),
-                    // Padding(
-                    //   padding: const EdgeInsets.only(right: 42),
-                    //   child: Text("(experimental)", style: Theme.of(context).textTheme.labelSmall),
-                    // ),
-                  ],
-                ),
+                    child: Opacity(
+                      opacity: enableDirectLaunch ? 1 : 0.8,
+                      child: CheckboxWithLabel(
+                        labelWidget: Row(
+                          children: [
+                            Text(
+                              "Skip Launcher",
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            if (enableDirectLaunch)
+                              Transform.rotate(
+                                angle: .6,
+                                child: SvgImageIcon(
+                                  "assets/images/icon-experimental.svg",
+                                  width: 20,
+                                  color: Theme.of(
+                                    context,
+                                  ).iconTheme.color?.withValues(alpha: 0.8),
+                                ),
+                              ),
+                          ],
+                        ),
+                        textPadding: const EdgeInsets.only(left: 12, bottom: 0),
+                        flipCheckboxAndLabel: true,
+                        value: enableDirectLaunch,
+                        showGlow: enableDirectLaunch,
+                        onChanged: (bool? value) {
+                          if (value == null) return;
+                          ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (s) => s.copyWith(enableDirectLaunch: value),
+                              );
+                        },
+                      ),
+                    ),
+                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(right: 42),
+                  //   child: Text("(experimental)", style: Theme.of(context).textTheme.labelSmall),
+                  // ),
+                ],
               ),
             ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -200,39 +197,33 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                         Row(
                           spacing: 4,
                           children: [
-                            MovingTooltipWidget.text(
-                              message:
-                                  "${Constants.appName} is not required to launch the game.",
-                              child: Builder(
-                                builder: (context) {
-                                  final path = ref
-                                      .watch(AppState.gameExecutable)
-                                      .value
-                                      ?.absolute
-                                      .path
-                                      .let((p) {
-                                        return currentPlatform !=
-                                                TargetPlatform.macOS
-                                            ? p.let(
-                                                (p) => p.toFile().relativePath(
-                                                  ref
-                                                      .watch(
-                                                        AppState.gameFolder,
-                                                      )
-                                                      .value!,
-                                                ),
-                                              )
-                                            : File(p).nameWithExtension;
-                                      });
+                            Builder(
+                              builder: (context) {
+                                final path = ref
+                                    .watch(AppState.gameExecutable)
+                                    .value
+                                    ?.absolute
+                                    .path
+                                    .let((p) {
+                                      return currentPlatform !=
+                                              TargetPlatform.macOS
+                                          ? p.let(
+                                              (p) => p.toFile().relativePath(
+                                                ref
+                                                    .watch(AppState.gameFolder)
+                                                    .value!,
+                                              ),
+                                            )
+                                          : File(p).nameWithExtension;
+                                    });
 
-                                  return Text(
-                                    path ?? "No game exe",
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelMedium,
-                                  );
-                                },
-                              ),
+                                return Text(
+                                  path ?? "No game exe",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                );
+                              },
                             ),
                             SizedBox(
                               height: 16,

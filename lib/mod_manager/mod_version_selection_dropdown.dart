@@ -61,6 +61,7 @@ class _ModVersionSelectionDropdownState
     final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
     final useWarningUi =
         hasMultipleEnabled || hasMultipleSameVersionInModsFolder;
+    final rainbowAccent = context.rainbowAccent;
 
     // TODO consolidate this logic with the logic in smol2.
     final areAllDependenciesSatisfied = modDependenciesSatisfied?.every(
@@ -80,7 +81,10 @@ class _ModVersionSelectionDropdownState
     // Button color logic
     final buttonColor = switch ((useWarningUi, isEnabled)) {
       (true, _) => errorColor,
-      (false, true) => theme.colorScheme.secondary,
+      (false, true) =>
+        rainbowAccent
+            ? theme.colorScheme.surfaceContainerHigh
+            : theme.colorScheme.secondary,
       _ => theme.colorScheme.surfaceContainerLow,
     };
 
@@ -104,8 +108,9 @@ class _ModVersionSelectionDropdownState
                 .getGameCompatibilityColor();
     }
 
-    final rainbowAccent = context.rainbowAccent;
-    final effectiveRadius = rainbowAccent ? ThemeManager.cornerRadius - 2 : ThemeManager.cornerRadius;
+    final effectiveRadius = rainbowAccent
+        ? ThemeManager.cornerRadius - 2
+        : ThemeManager.cornerRadius;
 
     const textStyle = TextStyle(
       fontWeight: FontWeight.w900,
@@ -119,9 +124,7 @@ class _ModVersionSelectionDropdownState
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       textStyle: textStyle,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          effectiveRadius,
-        ),
+        borderRadius: BorderRadius.circular(effectiveRadius),
         side: rainbowAccent
             ? BorderSide.none
             : BorderSide(color: borderColor, width: 2.0),
@@ -171,10 +174,7 @@ class _ModVersionSelectionDropdownState
           child: Stack(
             children: [
               (useWarningUi
-                  ? Align(
-                      alignment: Alignment.centerLeft,
-                      child: warningIcon,
-                    )
+                  ? Align(alignment: Alignment.centerLeft, child: warningIcon)
                   : Container()),
               Center(child: Text(isEnabled ? "Disable" : "Enable")),
             ],
@@ -188,6 +188,7 @@ class _ModVersionSelectionDropdownState
           height: buttonHeight,
           child: RainbowBorder(
             borderRadius: ThemeManager.cornerRadius,
+            alpha: 0.7,
             child: button,
           ),
         );
@@ -198,10 +199,7 @@ class _ModVersionSelectionDropdownState
         warningLevel: tooltipMessage != null
             ? TooltipWarningLevel.warning
             : TooltipWarningLevel.none,
-        child: Disable(
-          isEnabled: isButtonEnabled,
-          child: button,
-        ),
+        child: Disable(isEnabled: isButtonEnabled, child: button),
       );
     }
 
@@ -263,14 +261,13 @@ class _ModVersionSelectionDropdownState
             condition: rainbowAccent,
             wrapper: (child) => RainbowBorder(
               borderRadius: ThemeManager.cornerRadius,
+              alpha: 0.7,
               child: child,
             ),
             child: Material(
               color: buttonColor,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  effectiveRadius,
-                ),
+                borderRadius: BorderRadius.circular(effectiveRadius),
                 side: rainbowAccent
                     ? BorderSide.none
                     : BorderSide(color: borderColor, width: 2.0),

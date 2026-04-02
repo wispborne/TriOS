@@ -390,6 +390,21 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: <ContextMenuEntry>[
+          if (ship.dataFile != null)
+            MenuItem(
+              label: 'Open ${ship.isSkin ? '.skin' : '.ship'} file',
+              icon: Icons.edit_note,
+              onSelected: () {
+                ship.dataFile!.absolute.showInExplorer();
+              },
+            ),
+          MenuItem(
+            label: 'Open ship_data.csv',
+            icon: Icons.edit_note,
+            onSelected: () {
+              ship.csvFile.absolute.showInExplorer();
+            },
+          ),
           buildOpenSingleFolderMenuItem(
             _getPathForSpriteName(ship, gameCoreDir).parent,
           ),

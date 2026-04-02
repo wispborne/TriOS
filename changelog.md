@@ -1,3 +1,9 @@
+# 1.4.1
+- Added
+  - Ships Viewer: overlays for mounts, modules, and bounds.
+  - Ships Veiwer: filter by weapon slot parameters.
+  - Weapons Viewer: filter by hint.
+
 # 1.4.0
 - Added
   - **Mod Categories**

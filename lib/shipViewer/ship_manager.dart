@@ -207,6 +207,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
         .toList();
 
     final shipJsonData = <String, Map<String, dynamic>>{};
+    final shipFilesByHullId = <String, File>{};
     for (final shipFile in shipFiles) {
       filesProcessed++;
       try {
@@ -221,6 +222,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
                 p.join(folder.path, spriteName).toFile().normalize.path;
           }
           shipJsonData[id] = map;
+          shipFilesByHullId[id] = shipFile;
         } else {
           errors.add('[$modName] .ship file ${shipFile.path} missing "hullId"');
         }
@@ -319,7 +321,10 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       data.addAll(json);
 
       try {
-        final ship = ShipMapper.fromMap(data)..modVariant = modVariant;
+        final ship = ShipMapper.fromMap(data)
+          ..modVariant = modVariant
+          ..csvFile = shipsCsvFile
+          ..dataFile = shipFilesByHullId[shipId];
         ships.add(ship);
       } catch (e) {
         errors.add('[$modName] Failed to create ship for id "$shipId": $e');
@@ -389,7 +394,9 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
           continue;
         }
 
-        final ship = _resolveSkin(skin, baseHull, folder, modVariant);
+        final ship = _resolveSkin(skin, baseHull, folder, modVariant)
+          ..csvFile = baseHull.csvFile
+          ..dataFile = skinFile;
         ships.add(ship);
         // Also make resolved skins available as base hulls for other skins
         allAvailable[ship.id] = ship;

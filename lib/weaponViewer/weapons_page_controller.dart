@@ -85,7 +85,19 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
         displayNameGetter: (name) => name.toTitleCase(),
       ),
       GridFilter<Weapon>(
+        name: 'Size',
+        valueGetter: (weapon) => weapon.size ?? '',
+        displayNameGetter: (name) => name.toTitleCase(),
+      ),
+      GridFilter<Weapon>(
+        name: 'Hint',
+        valueGetter: (weapon) => weapon.hints ?? "",
+        valuesGetter: (weapon) => weapon.hintsAsSet.toList(),
+        displayNameGetter: (hint) => hint.toTitleCase(),
+      ),
+      GridFilter<Weapon>(
         name: 'Mod',
+        collapsedByDefault: true,
         valueGetter: (weapon) =>
             weapon.modVariant?.modInfo.nameOrId ?? vanillaName,
         sortComparator: (a, b) => a == vanillaName
@@ -95,12 +107,8 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
             : a.compareTo(b),
       ),
       GridFilter<Weapon>(
-        name: 'Size',
-        valueGetter: (weapon) => weapon.size ?? '',
-        displayNameGetter: (name) => name.toTitleCase(),
-      ),
-      GridFilter<Weapon>(
         name: 'Tech/Manufacturer',
+        collapsedByDefault: true,
         valueGetter: (weapon) => weapon.techManufacturer ?? '',
       ),
     ];
@@ -284,19 +292,14 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   /// Toggle image fit between scaleDown and contain
   void toggleUseContainFit() {
     final updatedState = state.copyWith(
-      persisted: state.persisted.copyWith(
-        useContainFit: !state.useContainFit,
-      ),
+      persisted: state.persisted.copyWith(useContainFit: !state.useContainFit),
     );
     state = updatedState;
     _persistState(state);
   }
 
   int get activeFilterCount =>
-      state.filterCategories.fold(
-        0,
-        (sum, f) => sum + f.filterStates.length,
-      ) +
+      state.filterCategories.fold(0, (sum, f) => sum + f.filterStates.length) +
       (state.showEnabled ? 1 : 0) +
       (state.showHidden ? 1 : 0) +
       (state.weaponSpoilerLevel != WeaponSpoilerLevel.showAllSpoilers ? 1 : 0);
@@ -392,22 +395,23 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     for (final filter in filterCategories) {
       if (filter.hasActiveFilters) {
         weapons = weapons.where((weapon) {
-          final value = filter.valueGetter(weapon);
-          final filterState = filter.filterStates[value];
+          final values = filter.valuesGetter != null
+              ? filter.valuesGetter!(weapon)
+              : [filter.valueGetter(weapon)];
 
-          // If this value is explicitly excluded
-          if (filterState == false) {
+          // If any value is explicitly excluded, exclude the item
+          if (values.any((v) => filter.filterStates[v] == false)) {
             return false;
           }
 
           // If there are any explicitly included values
           final hasIncludedValues = filter.filterStates.values.contains(true);
           if (hasIncludedValues) {
-            // Must be explicitly included to pass the filter
-            return filterState == true;
+            // Must have at least one included value
+            return values.any((v) => filter.filterStates[v] == true);
           }
 
-          // If we have only exclusions, allow anything not explicitly excluded
+          // Only exclusions active — allow anything not excluded
           return true;
         }).toList();
       }

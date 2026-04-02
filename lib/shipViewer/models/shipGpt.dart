@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -141,6 +143,12 @@ class Ship with ShipMappable implements WispGridItem {
   final Color? color;
 
   late ModVariant? modVariant;
+
+  /// The ship_data.csv file this ship was loaded from.
+  late File csvFile;
+
+  /// The .ship or .skin file for this hull (null if not found during parsing).
+  File? dataFile;
 
   Ship({
     required this.id,

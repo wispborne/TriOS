@@ -10,6 +10,7 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
+import 'package:trios/thirdparty/flutter_context_menu/components/menu_item.dart';
 import 'package:trios/thirdparty/flutter_context_menu/widgets/context_menu_region.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/context_menu_items.dart';
@@ -678,6 +679,21 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: <ContextMenuEntry>[
+          if (weapon.wpnFile != null)
+            MenuItem(
+              label: 'Open .wpn file',
+              icon: Icons.edit_note,
+              onSelected: () {
+                weapon.wpnFile!.absolute.showInExplorer();
+              },
+            ),
+          MenuItem(
+            label: 'Open weapon_data.csv',
+            icon: Icons.edit_note,
+            onSelected: () {
+              weapon.csvFile.absolute.showInExplorer();
+            },
+          ),
           if (weaponSpritePath != null)
             buildOpenSingleFolderMenuItem(
               weapon.csvFile.parent,

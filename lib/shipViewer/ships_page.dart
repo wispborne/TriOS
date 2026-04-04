@@ -496,24 +496,24 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         getSortValue: (ship) => ship.hullNameForDisplay(),
         itemCellBuilder: (item, _) => Row(
           children: [
-            MovingTooltipWidget.starsector(
-              tooltipWidget: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 700),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: IngameShipTooltip.buildShipContent(
-                    item,
-                    controllerState.shipSystemsMap,
-                    controllerState.weaponsMap,
-                    context,
-                    hullmodsMap: controllerState.hullmodsMap,
-                    modules: ref.watch(resolvedModulesProvider(item.id)),
+            Flexible(
+              child: MovingTooltipWidget.starsector(
+                tooltipWidget: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: IngameShipTooltip.buildShipContent(
+                      item,
+                      controllerState.shipSystemsMap,
+                      controllerState.weaponsMap,
+                      context,
+                      hullmodsMap: controllerState.hullmodsMap,
+                      modules: ref.watch(resolvedModulesProvider(item.id)),
+                    ),
                   ),
                 ),
-              ),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.none,
-                child: Flexible(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.none,
                   child: Text(
                     item.hullNameForDisplay(),
                     maxLines: 1,
@@ -669,9 +669,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       context: context,
       builder: (ctx) {
         return Dialog(
-          insetPadding: const EdgeInsets.all(16),
+          insetPadding: const EdgeInsets.all(32),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 650),
+            constraints: const BoxConstraints(maxWidth: 1050),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: SingleChildScrollView(
@@ -709,8 +709,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     ShipsPageState controllerState,
   ) {
     final controller = ref.read(shipsPageControllerProvider.notifier);
-    final gameCoreDir = controller.getGameCoreDir();
-    final spriteDir = _getPathForSpriteName(s, gameCoreDir);
 
     Widget section(String title) => Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
@@ -777,54 +775,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
               icon: const Icon(Icons.close),
               onPressed: () => Navigator.of(context).pop(),
             ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            if ((spriteDir.path).isNotEmpty)
-              GestureDetector(
-                onTap: () => spriteDir.toFile().showInExplorer(),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    MovingTooltipWidget(
-                      tooltipWidget: Card(
-                        color: kDarkTooltipBackground,
-                        child: Padding(
-                          padding: .all(16),
-                          child: SizedBox(
-                            width: 300,
-                            height: 300,
-                            child: ShipBlueprintView.minimal(ship: s),
-                          ),
-                        ),
-                      ),
-                      child: SizedBox(
-                        width: 80,
-                        height: 80,
-                        child: ShipBlueprintView.minimal(
-                          ship: s,
-                          cacheWidth: 160,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: 80,
-                      child: TextTriOS(
-                        spriteDir.path.split(Platform.pathSeparator).last,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
         const SizedBox(height: 8),

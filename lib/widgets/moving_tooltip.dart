@@ -322,7 +322,7 @@ class MovingTooltipWidget extends StatefulWidget {
                 context,
               ).colorScheme.onSecondaryContainer.withOpacity(0.5),
             },
-            backgroundColor: Colors.black.withAlpha(100),
+            backgroundColor: context.theme.colorScheme.surfaceContainerHighest.withAlpha(100),
             child: tooltipWidget,
           ),
           windowEdgePadding: windowEdgePadding,

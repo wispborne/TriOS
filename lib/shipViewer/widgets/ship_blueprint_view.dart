@@ -10,7 +10,9 @@ import 'package:trios/shipViewer/models/ship_weapon_slot.dart';
 import 'package:trios/shipViewer/ship_module_resolver.dart';
 import 'package:trios/shipViewer/utils/polygon_utils.dart';
 import 'package:trios/shipViewer/utils/sprite_utils.dart';
+import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
 /// Displays a ship sprite at 1:1 scale with weapon slot markers and firing
@@ -36,14 +38,14 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
   /// Whether to render firing arc wedges.
   final bool initialShowArcs;
 
-  /// Whether to render module bounds separately from parent bounds.
-  final bool initialShowModuleBounds;
-
   /// Whether to render turret angle indicator lines.
   final bool initialShowAngleIndicators;
 
   /// Whether to show tooltips on slot hover.
   final bool showSlotTooltips;
+
+  /// Whether to show the path of the ship's sprite.
+  final bool showPath;
 
   /// Whether to show the bottom-left toggle toolbar.
   final bool showToolbar;
@@ -65,9 +67,9 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     this.initialShowBounds = false,
     this.initialShowMounts = true,
     this.initialShowArcs = true,
-    this.initialShowModuleBounds = true,
     this.initialShowAngleIndicators = true,
     this.showSlotTooltips = true,
+    this.showPath = true,
     this.showToolbar = true,
     this.interactive = true,
     this.cacheWidth,
@@ -85,9 +87,9 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     bool initialShowBounds = false,
     bool initialShowMounts = false,
     bool initialShowArcs = false,
-    bool initialShowModuleBounds = false,
     bool initialShowAngleIndicators = false,
     bool showSlotTooltips = false,
+    bool showPath = false,
     bool showToolbar = false,
     bool interactive = false,
     int? cacheWidth,
@@ -99,9 +101,9 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
       initialShowBounds: initialShowBounds,
       initialShowMounts: initialShowMounts,
       initialShowArcs: initialShowArcs,
-      initialShowModuleBounds: initialShowModuleBounds,
       initialShowAngleIndicators: initialShowAngleIndicators,
       showSlotTooltips: showSlotTooltips,
+      showPath: showPath,
       showToolbar: showToolbar,
       interactive: interactive,
       cacheWidth: cacheWidth,
@@ -120,7 +122,6 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
   late bool _showBounds;
   late bool _showMounts;
   late bool _showArcs;
-  late bool _showModuleBounds;
   Size? _imageSize;
   double? _viewportWidth;
   bool _hasAppliedInitialTransform = false;
@@ -167,7 +168,6 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     _showBounds = widget.initialShowBounds;
     _showMounts = widget.initialShowMounts;
     _showArcs = widget.initialShowArcs;
-    _showModuleBounds = widget.initialShowModuleBounds;
     _resolveImageSize();
   }
 
@@ -318,16 +318,18 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
         polygons.add(const []);
       }
 
-      rects.add(angleDeg == 0
-          ? Rect.fromLTWH(left, top, modSize.width, modSize.height)
-          : rotatedBounds(
-              left,
-              top,
-              modSize.width,
-              modSize.height,
-              angleRad,
-              Offset(anchorX, anchorY),
-            ));
+      rects.add(
+        angleDeg == 0
+            ? Rect.fromLTWH(left, top, modSize.width, modSize.height)
+            : rotatedBounds(
+                left,
+                top,
+                modSize.width,
+                modSize.height,
+                angleRad,
+                Offset(anchorX, anchorY),
+              ),
+      );
       layouts.add(
         _ModuleSpriteLayout(
           left: left,
@@ -507,6 +509,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     final slots = ship.weaponSlots;
     final center = ship.center;
     final modules = ref.watch(resolvedModulesProvider(ship.id));
+    final theme = context.theme;
 
     // Detect module changes from Riverpod and trigger image size resolution.
     if (!identical(_lastModules, modules)) {
@@ -676,8 +679,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                                   imgH - center[1],
                                 )
                               : null,
-                          moduleBoundsPolygons:
-                              _showModules && _showModuleBounds
+                          moduleBoundsPolygons: _showModules
                               ? (_cachedModuleGeometry?.polygons ?? const [])
                               : const [],
                         ),
@@ -795,19 +797,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                       _compactIconButton(
                         onPressed: () =>
                             setState(() => _showBounds = !_showBounds),
-                        icon: Icons.hexagon,
+                        icon: Icons.polyline,
                         isActive: _showBounds,
                         tooltip: 'Show bounds',
                       ),
-                      if (modules.isNotEmpty && _showModules)
-                        _compactIconButton(
-                          onPressed: () => setState(
-                            () => _showModuleBounds = !_showModuleBounds,
-                          ),
-                          icon: Icons.dashboard,
-                          isActive: _showModuleBounds,
-                          tooltip: 'Show module bounds',
-                        ),
                       if (modules.isNotEmpty)
                         _compactIconButton(
                           onPressed: () =>
@@ -819,15 +812,25 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                       _compactIconButton(
                         onPressed: () =>
                             setState(() => _showMounts = !_showMounts),
-                        icon: Icons.location_on,
+                        icon: Icons.radar,
                         isActive: _showMounts,
                         tooltip: 'Show mounts',
                       ),
                       _compactIconButton(
                         onPressed: () => setState(() => _showArcs = !_showArcs),
-                        icon: Icons.radar,
+                        icon: Icons.signal_wifi_4_bar,
                         isActive: _showArcs,
                         tooltip: 'Show arcs',
+                      ),
+                      Flexible(
+                        child: TextTriOS(
+                          ship.spriteFile?.split(Platform.pathSeparator).last ??
+                              "",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ],
                   ),

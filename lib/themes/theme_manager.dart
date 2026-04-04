@@ -47,6 +47,8 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
   static const double cornerRadius = 6;
   static const Color vanillaErrorColor = Color.fromARGB(255, 252, 99, 0);
   static const Color vanillaWarningColor = Color.fromARGB(255, 253, 212, 24);
+  static const Color vanillaCyanColor = Color(0xFFaadeff);
+  static const vanillaYellowGoldColor = Color(0XFFDCB834);
   static const String orbitron = "Orbitron";
   static const iconOpacity = 0.3;
   static const iconButtonOpacity = 0.8;
@@ -203,9 +205,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         bodyMedium: customTheme.textTheme.bodyMedium?.copyWith(fontSize: 16),
       ),
       iconTheme: customTheme.iconTheme.copyWith(
-        color: customTheme.colorScheme.onSurface.withOpacity(
-          0.7,
-        ),
+        color: customTheme.colorScheme.onSurface.withOpacity(0.7),
       ),
       tabBarTheme: customTheme.tabBarTheme.copyWith(
         labelColor: customTheme.colorScheme.onSurface,
@@ -214,7 +214,9 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       snackBarTheme: const SnackBarThemeData(),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: swatch.primary.mix(swatch.surfaceContainer!, 0.2)!),
+          side: BorderSide(
+            color: swatch.primary.mix(swatch.surfaceContainer!, 0.2)!,
+          ),
         ),
       ),
       extensions: [TriOSThemeExtension(rainbowAccent: swatch.rainbowAccent)],

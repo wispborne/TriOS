@@ -95,6 +95,11 @@ class Weapon with WeaponMappable implements WispGridItem {
   final String? turretGunSprite;
   final String? hardpointSprite;
   final String? hardpointGunSprite;
+  final String? mountTypeOverride;
+
+  /// Returns the effective mount type, considering mountTypeOverride.
+  /// Use this wherever mount type display or slot compatibility is needed.
+  String? get effectiveMountType => mountTypeOverride ?? type;
 
   late ModVariant? modVariant;
   late File csvFile;
@@ -159,11 +164,28 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.turretGunSprite,
     this.hardpointSprite,
     this.hardpointGunSprite,
+    this.mountTypeOverride,
   });
 
   /// Returns the hints as a set of strings, with each hint trimmed and lowercased.
-  late Set<String> hintsAsSet = hints?.split(',').map((hint) => hint.trim().toLowerCase()).toSet() ?? {};
+  late Set<String> hintsAsSet =
+      hints?.split(',').map((hint) => hint.trim().toLowerCase()).toSet() ?? {};
 
   /// Returns the tags as a set of strings, with each tag trimmed and lowercased.
-  late Set<String> tagsAsSet = tags?.split(',').map((tag) => tag.trim().toLowerCase()).toSet() ?? {};
+  late Set<String> tagsAsSet =
+      tags?.split(',').map((tag) => tag.trim().toLowerCase()).toSet() ?? {};
+
+  bool isHidden() {
+    if (weaponType?.toLowerCase() == "decorative") return true;
+    if (hintsAsSet.contains("system") && !tagsAsSet.contains("show_in_codex"))
+      return true;
+    return false;
+  }
+
+  List<String> get spritesForWeapon => [
+    hardpointGunSprite,
+    hardpointSprite,
+    turretGunSprite,
+    turretSprite,
+  ].whereType<String>().toList();
 }

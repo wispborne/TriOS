@@ -179,6 +179,7 @@ Future<ParseResult> _parseWeaponsCsv(
         final Map<String, dynamic> wpnFields = {
           'specClass': jsonData['specClass'],
           'type': jsonData['type'],
+          'mountTypeOverride': jsonData['mountTypeOverride'],
           'size': jsonData['size'],
           'damageType': jsonData['damageType'],
           'turretSprite': p
@@ -300,10 +301,15 @@ Future<ParseResult> _parseWeaponsCsv(
         continue;
       }
 
+      // Preserve CSV damage type before .wpn overwrites 'type' with mount type.
+      final csvDamageType = weaponData['type'];
+
       // Merge the .wpn data into weaponData
       final wpnData = wpnDataMap[weaponId];
       if (wpnData != null) {
         weaponData.addAll(wpnData);
+        // .wpn files rarely have damageType; fall back to the CSV type column.
+        weaponData['damageType'] ??= csvDamageType;
       } else {
         errors.add(
           '[$modName] No .wpn data found for weapon id "$weaponId" (addon mods sometimes tweak weapons in their parent mod or vanilla)',

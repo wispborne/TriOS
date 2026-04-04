@@ -127,6 +127,7 @@ class Settings with SettingsMappable {
   final bool shouldLoadWebView;
 
   final bool? showAprilFools2026;
+  final bool? forceShowAprilFools2026;
 
   Settings({
     this.gameDir,
@@ -141,8 +142,8 @@ class Settings with SettingsMappable {
     this.isMaximized,
     this.isMinimized,
     this.defaultTool = TriOSTools.dashboard,
-    this.isSidebarCollapsed = false,
-    this.useTopToolbar = false,
+    this.isSidebarCollapsed = true,
+    this.useTopToolbar = true,
     this.vmparamsFilePaths = const [],
     this.themeKey,
     this.showChangelogNextLaunch,
@@ -211,6 +212,7 @@ class Settings with SettingsMappable {
     this.allowInsecureConnections = false,
     this.shouldLoadWebView = false,
     this.showAprilFools2026,
+    this.forceShowAprilFools2026,
   });
 }
 

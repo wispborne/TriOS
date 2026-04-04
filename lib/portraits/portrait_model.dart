@@ -22,6 +22,8 @@ class Portrait with PortraitMappable {
   final int height;
   String hash;
 
+  final int fileSizeInBytes;
+
   Portrait({
     this.modVariant,
     required this.imageFile,
@@ -29,6 +31,7 @@ class Portrait with PortraitMappable {
     required this.width,
     required this.height,
     required this.hash,
+    this.fileSizeInBytes = 0,
   });
 
   Portrait.fromBytes({
@@ -38,7 +41,8 @@ class Portrait with PortraitMappable {
     required this.width,
     required this.height,
     required Uint8List imageBytes,
-  }) : hash = hashImagesBytes(imageBytes);
+  }) : hash = hashImagesBytes(imageBytes),
+       fileSizeInBytes = imageBytes.length;
 
   static String hashImagesBytes(Uint8List imageBytes) =>
       crc64.convert(imageBytes).toString();

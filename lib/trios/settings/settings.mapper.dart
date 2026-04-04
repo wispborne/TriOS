@@ -438,14 +438,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'isSidebarCollapsed',
     _$isSidebarCollapsed,
     opt: true,
-    def: false,
+    def: true,
   );
   static bool _$useTopToolbar(Settings v) => v.useTopToolbar;
   static const Field<Settings, bool> _f$useTopToolbar = Field(
     'useTopToolbar',
     _$useTopToolbar,
     opt: true,
-    def: false,
+    def: true,
   );
   static List<String> _$vmparamsFilePaths(Settings v) => v.vmparamsFilePaths;
   static const Field<Settings, List<String>> _f$vmparamsFilePaths = Field(
@@ -834,6 +834,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$showAprilFools2026,
     opt: true,
   );
+  static bool? _$forceShowAprilFools2026(Settings v) =>
+      v.forceShowAprilFools2026;
+  static const Field<Settings, bool> _f$forceShowAprilFools2026 = Field(
+    'forceShowAprilFools2026',
+    _$forceShowAprilFools2026,
+    opt: true,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -903,6 +910,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #allowInsecureConnections: _f$allowInsecureConnections,
     #shouldLoadWebView: _f$shouldLoadWebView,
     #showAprilFools2026: _f$showAprilFools2026,
+    #forceShowAprilFools2026: _f$forceShowAprilFools2026,
   };
   @override
   final bool ignoreNull = true;
@@ -984,6 +992,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       allowInsecureConnections: data.dec(_f$allowInsecureConnections),
       shouldLoadWebView: data.dec(_f$shouldLoadWebView),
       showAprilFools2026: data.dec(_f$showAprilFools2026),
+      forceShowAprilFools2026: data.dec(_f$forceShowAprilFools2026),
     );
   }
 
@@ -1135,6 +1144,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
     bool? showAprilFools2026,
+    bool? forceShowAprilFools2026,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1266,6 +1276,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
     Object? showAprilFools2026 = $none,
+    Object? forceShowAprilFools2026 = $none,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1362,6 +1373,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         #allowInsecureConnections: allowInsecureConnections,
       if (shouldLoadWebView != null) #shouldLoadWebView: shouldLoadWebView,
       if (showAprilFools2026 != $none) #showAprilFools2026: showAprilFools2026,
+      if (forceShowAprilFools2026 != $none)
+        #forceShowAprilFools2026: forceShowAprilFools2026,
     }),
   );
   @override
@@ -1556,6 +1569,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     showAprilFools2026: data.get(
       #showAprilFools2026,
       or: $value.showAprilFools2026,
+    ),
+    forceShowAprilFools2026: data.get(
+      #forceShowAprilFools2026,
+      or: $value.forceShowAprilFools2026,
     ),
   );
 

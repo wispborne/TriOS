@@ -355,6 +355,12 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     _$hardpointGunSprite,
     opt: true,
   );
+  static String? _$mountTypeOverride(Weapon v) => v.mountTypeOverride;
+  static const Field<Weapon, String> _f$mountTypeOverride = Field(
+    'mountTypeOverride',
+    _$mountTypeOverride,
+    opt: true,
+  );
   static ModVariant? _$modVariant(Weapon v) => v.modVariant;
   static const Field<Weapon, ModVariant> _f$modVariant = Field(
     'modVariant',
@@ -445,6 +451,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #turretGunSprite: _f$turretGunSprite,
     #hardpointSprite: _f$hardpointSprite,
     #hardpointGunSprite: _f$hardpointGunSprite,
+    #mountTypeOverride: _f$mountTypeOverride,
     #modVariant: _f$modVariant,
     #csvFile: _f$csvFile,
     #wpnFile: _f$wpnFile,
@@ -511,6 +518,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       turretGunSprite: data.dec(_f$turretGunSprite),
       hardpointSprite: data.dec(_f$hardpointSprite),
       hardpointGunSprite: data.dec(_f$hardpointGunSprite),
+      mountTypeOverride: data.dec(_f$mountTypeOverride),
     );
   }
 
@@ -618,6 +626,7 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     String? turretGunSprite,
     String? hardpointSprite,
     String? hardpointGunSprite,
+    String? mountTypeOverride,
   });
   WeaponCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -687,6 +696,7 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     Object? turretGunSprite = $none,
     Object? hardpointSprite = $none,
     Object? hardpointGunSprite = $none,
+    Object? mountTypeOverride = $none,
   }) => $apply(
     FieldCopyWithData({
       if (name != $none) #name: name,
@@ -746,6 +756,7 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
       if (turretGunSprite != $none) #turretGunSprite: turretGunSprite,
       if (hardpointSprite != $none) #hardpointSprite: hardpointSprite,
       if (hardpointGunSprite != $none) #hardpointGunSprite: hardpointGunSprite,
+      if (mountTypeOverride != $none) #mountTypeOverride: mountTypeOverride,
     }),
   );
   @override
@@ -815,6 +826,10 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     hardpointGunSprite: data.get(
       #hardpointGunSprite,
       or: $value.hardpointGunSprite,
+    ),
+    mountTypeOverride: data.get(
+      #mountTypeOverride,
+      or: $value.mountTypeOverride,
     ),
   );
 

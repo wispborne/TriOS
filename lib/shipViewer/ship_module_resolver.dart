@@ -1,6 +1,9 @@
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/shipViewer/models/shipGpt.dart';
 import 'package:trios/shipViewer/models/ship_variant.dart';
 import 'package:trios/shipViewer/models/ship_weapon_slot.dart';
+import 'package:trios/shipViewer/ship_manager.dart';
 
 /// A resolved module: the parent's STATION slot paired with the actual module
 /// [Ship] that docks there.
@@ -13,6 +16,19 @@ class ResolvedModule {
     required this.moduleShip,
   });
 }
+
+/// Riverpod provider that resolves station modules for a ship by ID.
+final resolvedModulesProvider =
+    Provider.family<List<ResolvedModule>, String>((ref, shipId) {
+  final allShips = ref.watch(shipListNotifierProvider).valueOrNull ?? [];
+  final moduleVariants = ref.watch(moduleVariantsProvider);
+  final variantHullIdMap = ref.watch(variantHullIdMapProvider);
+
+  final parentShip = allShips.firstWhereOrNull((s) => s.id == shipId);
+  if (parentShip == null) return const [];
+
+  return resolveModules(parentShip, allShips, moduleVariants, variantHullIdMap);
+});
 
 /// Resolve station modules for [parentShip] by finding a variant that maps
 /// its STATION_MODULE slots to module hull IDs, then looking up those hulls

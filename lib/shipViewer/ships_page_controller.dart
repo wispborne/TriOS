@@ -12,6 +12,8 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/hullmodViewer/hullmods_manager.dart';
+import 'package:trios/hullmodViewer/models/hullmod.dart';
 import 'package:trios/weaponViewer/models/weapon.dart';
 import 'package:trios/weaponViewer/weapons_manager.dart';
 import 'package:trios/widgets/filter_widget.dart';
@@ -29,6 +31,7 @@ class ShipsPageState with ShipsPageStateMappable {
   final Map<String, List<String>> shipSearchIndices;
   final Map<String, ShipSystem> shipSystemsMap;
   final Map<String, Weapon> weaponsMap;
+  final Map<String, Hullmod> hullmodsMap;
   final List<Ship> allShips;
   final List<Ship> filteredShips;
   final List<Ship> shipsBeforeGridFilter;
@@ -52,6 +55,7 @@ class ShipsPageState with ShipsPageStateMappable {
     this.shipSearchIndices = const {},
     this.shipSystemsMap = const {},
     this.weaponsMap = const {},
+    this.hullmodsMap = const {},
     this.allShips = const [],
     this.filteredShips = const [],
     this.shipsBeforeGridFilter = const [],
@@ -172,14 +176,14 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         collapsedByDefault: true,
         valueGetter: (ship) => ship.systemId ?? '',
         displayNameGetter: (value) =>
-        state.shipSystemsMap[value ?? ""]?.name ?? value,
+            state.shipSystemsMap[value ?? ""]?.name ?? value,
       ),
       GridFilter<Ship>(
         name: 'Defense Id',
         collapsedByDefault: true,
         valueGetter: (ship) => ship.defenseId ?? '',
         displayNameGetter: (value) =>
-        state.shipSystemsMap[value ?? ""]?.name ?? value,
+            state.shipSystemsMap[value ?? ""]?.name ?? value,
       ),
       GridFilter<Ship>(
         name: 'Tech/Manufacturer',
@@ -199,16 +203,16 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     final mods = ref.watch(AppState.mods);
     final isLoadingShips = ref.watch(isLoadingShipsList);
 
+    final hullmodsAsync = ref.watch(hullmodListNotifierProvider);
+
     final allShips = shipsAsync.value ?? [];
     final shipSystems = shipSystemsAsync.value ?? [];
     final shipSystemsMap = shipSystems.associateBy((e) => e.id);
+    final hullmodsMap = (hullmodsAsync.value ?? []).associateBy((e) => e.id);
 
-    // TODO for 1.3.x
-    if (false) {
-      final weaponsAsync = ref.watch(weaponListNotifierProvider);
-      final weapons = weaponsAsync.value ?? [];
-      final weaponsMap = weapons.associateBy((e) => e.id);
-    }
+    final weaponsAsync = ref.watch(weaponListNotifierProvider);
+    final weapons = weaponsAsync.value ?? [];
+    final weaponsMap = weapons.associateBy((e) => e.id);
 
     // Build search index from current ships (incremental update)
     Map<String, List<String>> shipSearchIndices = _updateSearchIndices(
@@ -232,8 +236,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
               filterCategories:
                   stateOrNull?.filterCategories ?? filterCategories,
               shipSystemsMap: shipSystemsMap,
-              // weaponsMap: weaponsMap,
-              weaponsMap: {},
+              weaponsMap: weaponsMap,
+              hullmodsMap: hullmodsMap,
               allShips: allShips,
               shipSearchIndices: shipSearchIndices,
               isLoading: isLoadingShips,
@@ -384,19 +388,14 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   /// Toggle image fit between scaleDown and contain
   void toggleUseContainFit() {
     final updatedState = state.copyWith(
-      persisted: state.persisted.copyWith(
-        useContainFit: !state.useContainFit,
-      ),
+      persisted: state.persisted.copyWith(useContainFit: !state.useContainFit),
     );
     state = updatedState;
     _persistState(state);
   }
 
   int get activeFilterCount =>
-      state.filterCategories.fold(
-        0,
-        (sum, f) => sum + f.filterStates.length,
-      ) +
+      state.filterCategories.fold(0, (sum, f) => sum + f.filterStates.length) +
       (state.showEnabled ? 1 : 0) +
       (state.spoilerLevelToShow != SpoilerLevel.showAllSpoilers ? 1 : 0);
 

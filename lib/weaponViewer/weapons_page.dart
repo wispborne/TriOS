@@ -8,9 +8,9 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/thirdparty/flutter_context_menu/components/menu_item.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
-import 'package:trios/thirdparty/flutter_context_menu/components/menu_item.dart';
 import 'package:trios/thirdparty/flutter_context_menu/widgets/context_menu_region.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/context_menu_items.dart';
@@ -423,7 +423,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
   }
 
   Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
-    final imagePaths = spritesForWeapon(w);
+    final imagePaths = w.spritesForWeapon;
 
     Widget section(String title) => Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
@@ -675,7 +675,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
   }
 
   Widget buildRowContextMenu(Weapon weapon, Widget child) {
-    final weaponSpritePath = spritesForWeapon(weapon).firstOrNull;
+    final weaponSpritePath = weapon.spritesForWeapon.firstOrNull;
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: <ContextMenuEntry>[
@@ -760,35 +760,6 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
 
     return [
       WispGridColumn(
-        key: 'info',
-        isSortable: false,
-        name: '',
-        itemCellBuilder: (item, _) => MovingTooltipWidget.framed(
-          tooltipWidget: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: CtrlSwappedTooltip(
-              ctrlBuilder: (ctx) => Padding(
-                padding: const EdgeInsets.all(8),
-                child: SingleChildScrollView(
-                  child: _buildInfoPane(item, theme, ctx),
-                ),
-              ),
-              defaultBuilder: (ctx) => Padding(
-                padding: const EdgeInsets.all(8),
-                child: IngameWeaponTooltip.buildWeaponContent(item, ctx),
-              ),
-            ),
-          ),
-          child: Icon(
-            Icons.info,
-            size: 24,
-            color: theme.iconTheme.color?.withAlpha(200),
-          ),
-        ),
-        csvValue: (weapon) => null,
-        defaultState: WispGridColumnState(position: position++, width: 32),
-      ),
-      WispGridColumn(
         key: 'modVariant',
         isSortable: true,
         name: 'Mod',
@@ -807,15 +778,40 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         isSortable: false,
         name: '',
         itemCellBuilder: (item, modifiers) => WeaponImageCell(
-          imagePaths: spritesForWeapon(item),
+          imagePaths: item.spritesForWeapon,
           fit: controllerState.useContainFit
               ? BoxFit.contain
               : BoxFit.scaleDown,
         ),
-        csvValue: (weapon) => spritesForWeapon(weapon).join(","),
+        csvValue: (weapon) => weapon.spritesForWeapon.join(","),
         defaultState: WispGridColumnState(position: position++, width: 40),
       ),
-      col('name', 'Name', (w) => w.name ?? w.id, width: 150),
+      WispGridColumn(
+        key: 'name',
+        isSortable: true,
+        name: 'Name',
+        getSortValue: (w) => w.name ?? w.id,
+        itemCellBuilder: (w, _) => MovingTooltipWidget.starsector(
+          tooltipWidget: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: IngameWeaponTooltip.buildWeaponContent(w, context),
+            ),
+          ),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.none,
+            child: Text(
+              w.name ?? w.id,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge,
+            ),
+          ),
+        ),
+        csvValue: (weapon) => weapon.modVariant?.modInfo.nameOrId ?? "Vanilla",
+        defaultState: WispGridColumnState(position: position++, width: 150),
+      ),
       col(
         'weaponType',
         'Weapon Type',
@@ -838,15 +834,6 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       col('turnRate', 'Turn Rate', (w) => w.turnRate, width: 90),
       col('tier', 'Tier', (w) => w.tier, width: 60),
     ];
-  }
-
-  List<String> spritesForWeapon(Weapon item) {
-    return [
-      item.hardpointGunSprite,
-      item.hardpointSprite,
-      item.turretGunSprite,
-      item.turretSprite,
-    ].whereType<String>().toList();
   }
 
   Widget _buildOverflowButton({

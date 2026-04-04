@@ -99,6 +99,12 @@ class Ship with ShipMappable implements WispGridItem {
   final double? minPieces;
   @MappableField(hook: SafeDoubleHook())
   final double? maxPieces;
+  @MappableField(key: 'sensor profile')
+  @MappableField(hook: SafeDoubleHook())
+  final double? sensorProfile;
+  @MappableField(key: 'sensor strength')
+  @MappableField(hook: SafeDoubleHook())
+  final double? sensorStrength;
   @MappableField(key: 'travel drive')
   final String? travelDrive;
   @MappableField(hook: SafeDoubleHook())
@@ -196,6 +202,8 @@ class Ship with ShipMappable implements WispGridItem {
     this.breakProb,
     this.minPieces,
     this.maxPieces,
+    this.sensorProfile,
+    this.sensorStrength,
     this.travelDrive,
     this.number,
     this.bounds,

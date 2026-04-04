@@ -21,7 +21,6 @@ import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/ingame_ship_tooltip.dart';
-import 'package:trios/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -33,8 +32,7 @@ import 'package:trios/widgets/viewer_toolbar.dart';
 import '../trios/navigation.dart';
 import '../widgets/multi_split_mixin_view.dart';
 import 'ship_module_resolver.dart';
-import 'widgets/ship_sprite_composite.dart';
-import 'widgets/ship_weapon_slot_overlay.dart';
+import 'widgets/ship_blueprint_view.dart';
 
 class ShipsPage extends ConsumerStatefulWidget {
   const ShipsPage({super.key});
@@ -52,9 +50,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 
   WispGridController<Ship>? _gridController;
   Widget? _cachedBuild;
-
-  /// Cache resolved modules per ship ID to avoid recomputing on every build.
-  final _resolvedModulesCache = <String, List<ResolvedModule>>{};
 
   @override
   List<Area> get areas {
@@ -467,43 +462,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 
     return [
       WispGridColumn(
-        key: 'info',
-        name: '',
-        isSortable: false,
-        itemCellBuilder: (item, _) => MovingTooltipWidget.framed(
-          tooltipWidget: CtrlSwappedTooltip(
-            ctrlBuilder: (ctx) => ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: SingleChildScrollView(
-                  child: _buildShipInfoPane(item, theme, controllerState),
-                ),
-              ),
-            ),
-            defaultBuilder: (ctx) => ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 700),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: IngameShipTooltip.buildShipContent(
-                  item,
-                  controllerState.shipSystemsMap,
-                  controllerState.weaponsMap,
-                  ctx,
-                ),
-              ),
-            ),
-          ),
-          child: Icon(
-            Icons.info,
-            size: 24,
-            color: theme.iconTheme.color?.withAlpha(200),
-          ),
-        ),
-        csvValue: (ship) => null,
-        defaultState: WispGridColumnState(position: position++, width: 32),
-      ),
-      WispGridColumn(
         key: 'modVariant',
         isSortable: true,
         name: 'Mod',
@@ -523,6 +481,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         isSortable: false,
         itemCellBuilder: (item, _) => ShipImageCell(
           imagePath: _getPathForSpriteName(item, gameCoreDir).path,
+          ship: item,
           fit: controllerState.useContainFit
               ? BoxFit.contain
               : BoxFit.scaleDown,
@@ -537,19 +496,37 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         getSortValue: (ship) => ship.hullNameForDisplay(),
         itemCellBuilder: (item, _) => Row(
           children: [
-            TextTriOS(
-              item.hullNameForDisplay(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            MovingTooltipWidget.starsector(
+              tooltipWidget: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: IngameShipTooltip.buildShipContent(
+                    item,
+                    controllerState.shipSystemsMap,
+                    controllerState.weaponsMap,
+                    context,
+                    hullmodsMap: controllerState.hullmodsMap,
+                    modules: ref.watch(resolvedModulesProvider(item.id)),
+                  ),
+                ),
+              ),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.none,
+                child: Flexible(
+                  child: Text(
+                    item.hullNameForDisplay(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
             ),
             if (item.isSkin)
               Padding(
                 padding: const .only(left: 8, top: 3),
                 child: Container(
-                  padding: const .symmetric(
-                    horizontal: 4,
-                    vertical: 1,
-                  ),
+                  padding: const .symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(4),
@@ -735,14 +712,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     final gameCoreDir = controller.getGameCoreDir();
     final spriteDir = _getPathForSpriteName(s, gameCoreDir);
 
-    // Resolve station modules for this ship (cached per ship ID).
-    final modules = _resolvedModulesCache.putIfAbsent(s.id, () {
-      final allShips = ref.read(shipListNotifierProvider).valueOrNull ?? [];
-      final variants = ref.read(moduleVariantsProvider);
-      final variantHullIds = ref.read(variantHullIdMapProvider);
-      return resolveModules(s, allShips, variants, variantHullIds);
-    });
-
     Widget section(String title) => Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 4),
       child: Text(
@@ -821,21 +790,25 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    MovingTooltipWidget.image(
-                      path: spriteDir.path,
+                    MovingTooltipWidget(
+                      tooltipWidget: Card(
+                        color: kDarkTooltipBackground,
+                        child: Padding(
+                          padding: .all(16),
+                          child: SizedBox(
+                            width: 300,
+                            height: 300,
+                            child: ShipBlueprintView.minimal(ship: s),
+                          ),
+                        ),
+                      ),
                       child: SizedBox(
                         width: 80,
                         height: 80,
-                        child: modules.isEmpty
-                            ? Image.file(
-                                File(spriteDir.path),
-                                fit: BoxFit.contain,
-                              )
-                            : ShipSpriteComposite(
-                                ship: s,
-                                modules: modules,
-                                fit: BoxFit.contain,
-                              ),
+                        child: ShipBlueprintView.minimal(
+                          ship: s,
+                          cacheWidth: 160,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -860,7 +833,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             s.spriteFile != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: ShipWeaponSlotOverlay(ship: s, modules: modules),
+            child: ShipBlueprintView(ship: s),
           ),
         Divider(color: Theme.of(context).colorScheme.outline),
         _kv(
@@ -1030,11 +1003,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
 // Ship image loader with basic caching
 class ShipImageCell extends StatefulWidget {
   final String? imagePath;
+  final Ship? ship;
   final BoxFit fit;
 
   const ShipImageCell({
     super.key,
     required this.imagePath,
+    this.ship,
     this.fit = BoxFit.scaleDown,
   });
 
@@ -1068,26 +1043,51 @@ class _ShipImageCellState extends State<ShipImageCell> {
 
   @override
   Widget build(BuildContext context) {
+    const size = 40.0;
+
     if (_extantPath == null) {
       return const SizedBox(
-        width: 40,
-        height: 40,
+        width: size,
+        height: size,
         child: Icon(Icons.image_not_supported),
       );
     }
-    return MovingTooltipWidget.image(
-      path: _extantPath!,
+    final tooltipWidget = Card(
+      color: kDarkTooltipBackground,
+      child: Padding(
+        padding: .all(16),
+        child: widget.ship != null
+            ? SizedBox(
+                width: 300,
+                height: 300,
+                child: ShipBlueprintView.minimal(ship: widget.ship!),
+              )
+            : Image.file(_extantPath!.toFile(), fit: BoxFit.contain),
+      ),
+    );
+
+    return MovingTooltipWidget(
+      tooltipWidget: tooltipWidget,
       child: InkWell(
         onTap: () {
           _extantPath?.toFile().showInExplorer();
         },
-        child: Image.file(
-          File(_extantPath!),
-          width: 40,
-          height: 40,
-          cacheWidth: 40,
-          fit: widget.fit,
-        ),
+        child: widget.ship != null
+            ? SizedBox(
+                width: size,
+                height: size,
+                child: ShipBlueprintView.minimal(
+                  ship: widget.ship!,
+                  cacheWidth: size.toInt(),
+                ),
+              )
+            : Image.file(
+                File(_extantPath!),
+                width: size,
+                height: size,
+                cacheWidth: size.toInt(),
+                fit: widget.fit,
+              ),
       ),
     );
   }

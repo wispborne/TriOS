@@ -51,9 +51,14 @@ class FullTopBar extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 Consumer(
                   builder: (context, ref, _) {
-                    if (ref.watch(appSettings.select((s) => s.showAprilFools2026)) != true) {
-                      return const SizedBox.shrink();
-                    }
+                    final settings = ref.watch(appSettings);
+                    final now = DateTime.now();
+                    final isAprilFools =
+                        now.month == 4 && now.day == 1 && now.year == 2026;
+                    final show =
+                        settings.forceShowAprilFools2026 == true ||
+                        (settings.showAprilFools2026 == true && isAprilFools);
+                    if (!show) return const SizedBox.shrink();
                     return const ChatbotButton(size: 40, iconSize: 18);
                   },
                 ),

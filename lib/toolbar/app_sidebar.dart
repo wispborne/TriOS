@@ -71,12 +71,13 @@ class AppSidebar extends StatelessWidget {
             const SizedBox(height: 16),
             Consumer(
               builder: (context, ref, _) {
-                if (ref.watch(
-                      appSettings.select((s) => s.showAprilFools2026),
-                    ) !=
-                    true) {
-                  return const SizedBox.shrink();
-                }
+                final settings = ref.watch(appSettings);
+                final now = DateTime.now();
+                final isAprilFools =
+                    now.month == 4 && now.day == 1 && now.year == 2026;
+                final show = settings.forceShowAprilFools2026 == true ||
+                    (settings.showAprilFools2026 == true && isAprilFools);
+                if (!show) return const SizedBox.shrink();
                 return const ChatbotButton(size: 40, iconSize: 16);
               },
             ),
@@ -324,7 +325,8 @@ class _SidebarRulesHotReload extends ConsumerWidget {
       icon: RulesHotReload(isEnabled: isEnabled, showText: false),
       label: "rules.csv",
       tooltip:
-          "rules.csv hot reload is ${isEnabled ? "enabled" : "disabled"}."
+          "When enabled, modifying a mod's rules.csv will\nreload in-game rules as long as dev mode is enabled."
+          "\n\nrules.csv hot reload is ${isEnabled ? "enabled" : "disabled"}."
           "\nClick to ${isEnabled ? "disable" : "enable"}.",
     );
   }

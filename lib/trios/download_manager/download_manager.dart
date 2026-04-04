@@ -255,14 +255,17 @@ extension DownloadVariantResolution on Download {
     if (!task.status.value.isCompleted) return null;
     if (this is ModDownload) {
       final modDownload = this as ModDownload;
-      return ref
+      // Prefer installedVariant.value (set by installModFromSourceWithDefaultUI
+      // to the newly installed variant) over the smolId search, which may match
+      // an older version that still exists on disk during an update.
+      return installedVariant.value ??
+          ref
               .read(AppState.modVariants)
               .value
               .orEmpty()
               .firstWhereOrNull(
                 (v) => v.smolId == modDownload.modInfo.smolId,
-              ) ??
-          installedVariant.value;
+              );
     }
     return installedVariant.value;
   }
@@ -272,14 +275,17 @@ extension DownloadVariantResolution on Download {
     if (!task.status.value.isCompleted) return null;
     if (this is ModDownload) {
       final modDownload = this as ModDownload;
-      return ref
+      // Prefer installedVariant.value (set by installModFromSourceWithDefaultUI
+      // to the newly installed variant) over the smolId search, which may match
+      // an older version that still exists on disk during an update.
+      return installedVariant.value ??
+          ref
               .watch(AppState.modVariants)
               .value
               .orEmpty()
               .firstWhereOrNull(
                 (v) => v.smolId == modDownload.modInfo.smolId,
-              ) ??
-          installedVariant.value;
+              );
     }
     return installedVariant.value;
   }

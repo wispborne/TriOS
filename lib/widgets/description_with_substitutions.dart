@@ -43,9 +43,7 @@ class DescriptionWithSubstitutions extends StatelessWidget {
             child: 'Values shown as %s are placeholders filled in by game code. Additional text may be entirely added by game code.'
                 .replaceSubstitutionsRich(
                   '%s',
-                  highlightColor: effectiveHighlightColor.withValues(
-                    alpha: 0.8,
-                  ),
+                  highlightColor: effectiveHighlightColor,
                   baseStyle: theme.textTheme.labelMedium?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),

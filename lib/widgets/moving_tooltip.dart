@@ -4,8 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
+import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
+
+/// Dark background color used for image/blueprint preview tooltip cards.
+const kDarkTooltipBackground = Color.from(
+  red: 0.05,
+  green: 0.05,
+  blue: 0.05,
+  alpha: 1,
+);
 
 enum TooltipPosition { topLeft, topRight, bottomLeft, bottomRight }
 
@@ -289,6 +298,42 @@ class MovingTooltipWidget extends StatefulWidget {
     );
   }
 
+  static Widget starsector({
+    Key? key,
+    required Widget? tooltipWidget,
+    TooltipWarningLevel? warningLevel,
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(8),
+    double windowEdgePadding = 10.0,
+    Size offset = const Size(5, 5),
+    TooltipPosition position = TooltipPosition.bottomRight,
+  }) {
+    if (tooltipWidget == null) return child;
+    return Builder(
+      builder: (context) {
+        return MovingTooltipWidget(
+          key: key,
+          tooltipWidget: TooltipFrame(
+            padding: padding,
+            borderColor: switch (warningLevel) {
+              null || TooltipWarningLevel.none => context.theme.colorScheme.secondary.withAlpha(150),
+              TooltipWarningLevel.warning ||
+              TooltipWarningLevel.error => Theme.of(
+                context,
+              ).colorScheme.onSecondaryContainer.withOpacity(0.5),
+            },
+            backgroundColor: Colors.black.withAlpha(100),
+            child: tooltipWidget,
+          ),
+          windowEdgePadding: windowEdgePadding,
+          offset: offset,
+          position: position,
+          child: child,
+        );
+      },
+    );
+  }
+
   static Widget image({
     Key? key,
     double padding = 16,
@@ -299,8 +344,7 @@ class MovingTooltipWidget extends StatefulWidget {
     return MovingTooltipWidget(
       tooltipWidget: Card(
         color:
-            backgroundColor ??
-            Color.from(red: 0.05, green: 0.05, blue: 0.05, alpha: 1),
+            backgroundColor ?? kDarkTooltipBackground,
         child: Padding(
           padding: EdgeInsets.all(padding),
           child: Image.file(path.toFile(), fit: BoxFit.contain),

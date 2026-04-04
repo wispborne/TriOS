@@ -476,49 +476,52 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
                                                           ),
                                                     ),
                                                   ),
-                                                  const SizedBox(width: 8),
-                                                  Builder(
-                                                    builder: (context) {
-                                                      final mod = installedMod
-                                                          .mod(
-                                                            ref.read(
-                                                              AppState.mods,
-                                                            ),
-                                                          );
-                                                      return ElevatedButton.icon(
-                                                        onPressed: () async {
-                                                          if (mod == null) {
-                                                            Fimber.w(
-                                                              "Cannot enable, mod not found for variant ${installedMod.smolId}",
+                                                  if (currentlyEnabled?.smolId !=
+                                                      installedMod.smolId) ...[
+                                                    const SizedBox(width: 8),
+                                                    Builder(
+                                                      builder: (context) {
+                                                        final mod = installedMod
+                                                            .mod(
+                                                              ref.read(
+                                                                AppState.mods,
+                                                              ),
                                                             );
-                                                            return;
-                                                          }
-                                                          await ref
-                                                              .read(
-                                                                modManager
-                                                                    .notifier,
-                                                              )
-                                                              .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
-                                                                mod,
-                                                                installedMod,
+                                                        return ElevatedButton.icon(
+                                                          onPressed: () async {
+                                                            if (mod == null) {
+                                                              Fimber.w(
+                                                                "Cannot enable, mod not found for variant ${installedMod.smolId}",
                                                               );
-                                                          toastification
-                                                              .dismiss(item);
-                                                        },
-                                                        icon: const SizedBox(
-                                                          width: 24,
-                                                          height: 24,
-                                                          child: Icon(
-                                                            Icons
-                                                                .power_settings_new,
+                                                              return;
+                                                            }
+                                                            await ref
+                                                                .read(
+                                                                  modManager
+                                                                      .notifier,
+                                                                )
+                                                                .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                                                                  mod,
+                                                                  installedMod,
+                                                                );
+                                                            toastification
+                                                                .dismiss(item);
+                                                          },
+                                                          icon: const SizedBox(
+                                                            width: 24,
+                                                            height: 24,
+                                                            child: Icon(
+                                                              Icons
+                                                                  .power_settings_new,
+                                                            ),
                                                           ),
-                                                        ),
-                                                        label: const Text(
-                                                          "Enable",
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
+                                                          label: const Text(
+                                                            "Enable",
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  ],
                                                 ],
                                               ),
                                             ),

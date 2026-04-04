@@ -447,9 +447,9 @@ class _ChatMessageViewState extends State<_ChatMessageView> {
             color: colorScheme.onPrimaryContainer,
           ),
         ),
-        Padding(
-          padding: const .only(top: 4),
-          child: Expanded(
+        Expanded(
+          child: Padding(
+            padding: const .only(top: 4),
             child: Column(
               crossAxisAlignment: .start,
               children: [

@@ -1,8 +1,16 @@
 # 1.4.1
 - Added
   - Ships Viewer: overlays for mounts, modules, and bounds.
-  - Ships Veiwer: filter by weapon slot parameters.
+  - Ships Viewer: new tooltip that matches in-game tooltip.
+  - Ships Viewer: filter by weapon slot parameters.
   - Weapons Viewer: filter by hint.
+  - Weapons Viewer: new tooltip that matches in-game tooltip.
+- Fixed
+  - Broken Delta Core joke is now hidden as it should have been.
+    - If you want to experience the non-broken version of it, you can enable it from Settings - Debug - April Fools 2026.
+  - Notification after updating a mod had button that'd enable the previous mod version.
+  - Missing tooltip on rules.csv widget of new layout.
+  - Ship names not wrapping.
 
 # 1.4.0
 - Added

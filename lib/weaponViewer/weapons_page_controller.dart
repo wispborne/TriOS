@@ -362,13 +362,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     if (showHidden) return weapons;
 
     return weapons
-        .where((weapon) => weapon.weaponType?.toLowerCase() != "decorative")
-        .where(
-          (weapon) =>
-              // If weapon has SYSTEM hint, hide unless SHOW_IN_CODEX tag is present
-              !weapon.hintsAsSet.contains("system") ||
-              weapon.tagsAsSet.contains("show_in_codex"),
-        )
+        .where((weapon) => !weapon.isHidden())
         .toList();
   }
 

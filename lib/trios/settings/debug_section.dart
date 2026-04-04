@@ -250,13 +250,13 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           label: const Text('Open ${Constants.appName} Settings Folder'),
         ),
         CheckboxWithLabel(
-          value: ref.watch(appSettings.select((s) => s.showAprilFools2026)) ?? false,
+          value: ref.watch(appSettings.select((s) => s.forceShowAprilFools2026)) ?? false,
           onChanged: (value) {
             ref.read(appSettings.notifier).update(
-              (state) => state.copyWith(showAprilFools2026: value ?? false),
+              (state) => state.copyWith(forceShowAprilFools2026: value ?? false),
             );
           },
-          label: "Enable April Fools 2026 (${Constants.chatbotName})",
+          label: "Force Enable April Fools 2026 (${Constants.chatbotName})",
         ),
         ElevatedButton.icon(
           icon: const Icon(Icons.restart_alt),

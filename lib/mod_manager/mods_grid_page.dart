@@ -60,7 +60,7 @@ import '../utils/search.dart';
 import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
 import 'homebrew_grid/wispgrid_header_row_view.dart';
-import 'vram_checker_explanation.dart';
+import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 
 final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
 final _vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);

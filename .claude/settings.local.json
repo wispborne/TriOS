@@ -26,7 +26,21 @@
       "Bash(where flutter:*)",
       "Bash(dir \"C:\\\\Users\\\\whitm\\\\AppData\\\\Local\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\" \")",
       "Bash(findstr toastification:*)",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(p[''''rootUri'''']\\) for p in d[''''packages''''] if ''''toastification'''' in p[''''name'''']]\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(p[''''rootUri'''']\\) for p in d[''''packages''''] if ''''toastification'''' in p[''''name'''']]\")",
+      "Bash(xargs sed:*)",
+      "Bash(sed -i \"s|part ''shipGpt.mapper.dart'';|part ''ship_gpt.mapper.dart'';|g\" lib/ship_viewer/models/ship_gpt.dart)",
+      "Bash(sed -i \"s|part of ''shipGpt.dart'';|part of ''ship_gpt.dart'';|g\" lib/ship_viewer/models/ship_gpt.mapper.dart)",
+      "Bash(sed -i \"s|part ''shipSkin.mapper.dart'';|part ''ship_skin.mapper.dart'';|g\" lib/ship_viewer/models/ship_skin.dart)",
+      "Bash(sed -i \"s|part of ''shipSkin.dart'';|part of ''ship_skin.dart'';|g\" lib/ship_viewer/models/ship_skin.mapper.dart)",
+      "Bash(sed -i 's|package:trios/widgets/ingame_ship_tooltip.dart|package:trios/ship_viewer/widgets/ingame_ship_tooltip.dart|g' lib/ship_viewer/ships_page.dart)",
+      "Bash(sed -i 's|package:trios/widgets/ingame_weapon_tooltip.dart|package:trios/weapon_viewer/widgets/ingame_weapon_tooltip.dart|g' lib/weapon_viewer/weapons_page.dart)",
+      "Bash(sed -i \"s|import ''vram_checker_explanation.dart'';|import ''package:trios/vram_estimator/vram_checker_explanation.dart'';|g\" lib/mod_manager/mods_grid_page.dart)",
+      "Bash(sed -i \"s|import ''package:trios/mod_manager/vram_checker_explanation.dart'';|import ''package:trios/vram_estimator/vram_checker_explanation.dart'';|g\" lib/vram_estimator/vram_estimator_page.dart)",
+      "Bash(sed -i \"s|package:trios/widgets/self_update_toast.dart|package:trios/trios/toasts/widgets/self_update_toast.dart|g\" lib/app_shell.dart)",
+      "Bash(sed -i \"s|package:trios/widgets/april_fools_2026_toast.dart|package:trios/trios/toasts/widgets/april_fools_2026_toast.dart|g\" lib/main.dart)",
+      "Bash(sed -i \"s|package:trios/widgets/post_update_toast.dart|package:trios/trios/toasts/widgets/post_update_toast.dart|g\" lib/main.dart)",
+      "Bash(sed -i \"s|package:trios/widgets/companion_mod_update_toast.dart|package:trios/trios/toasts/widgets/companion_mod_update_toast.dart|g\" lib/trios/toasts/toast_manager.dart)",
+      "Bash(sed -i \"s|../../widgets/self_update_toast.dart|../toasts/widgets/self_update_toast.dart|g\" lib/trios/settings/settings_page.dart)"
     ]
   }
 }

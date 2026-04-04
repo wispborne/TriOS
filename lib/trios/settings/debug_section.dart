@@ -14,7 +14,7 @@ import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
-import 'package:trios/shipViewer/ship_manager.dart';
+import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -23,14 +23,14 @@ import 'package:trios/utils/dialogs.dart' show showAlertDialog;
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/network_util.dart';
-import 'package:trios/weaponViewer/weapons_manager.dart';
+import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/restartable_app.dart';
 
 import '../../utils/util.dart';
-import '../../widgets/self_update_toast.dart';
+import '../toasts/widgets/self_update_toast.dart';
 import '../app_state.dart';
 import 'package:uuid/uuid.dart';
 

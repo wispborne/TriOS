@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
-import 'package:trios/hullmodViewer/hullmods_page_controller.dart';
-import 'package:trios/shipViewer/ships_page_controller.dart';
+import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
+import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
-import 'package:trios/weaponViewer/weapons_page_controller.dart';
+import 'package:trios/weapon_viewer/weapons_page_controller.dart';
 
 part 'settings.mapper.dart';
 

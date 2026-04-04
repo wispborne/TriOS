@@ -14,7 +14,7 @@ All-in-one Starsector launcher, mod manager, and toolkit. Desktop-only (Windows,
 - **Serialization**: dart_mappable (`@MappableClass`, `@MappableEnum`, `.mapper.dart` files). NOT freezed.
   - Custom hooks: `DirectoryHook()`, `VersionHook()`, `SafeDecodeHook()` in `lib/utils/dart_mappable_utils.dart`.
 - **Navigation**: Enum-based tabs via `TriOSTools` (`lib/trios/navigation.dart`). `AppShell` (`lib/app_shell.dart`) maps tab indices to tools. `LazyIndexedStack` for efficient tab switching.
-- **Organization**: Feature-folder structure under `lib/`. Each feature has its own directory (e.g., `mod_manager/`, `shipViewer/`, `weaponViewer/`).
+- **Organization**: Feature-folder structure under `lib/`. Each feature has its own directory (e.g., `mod_manager/`, `ship_viewer/`, `weapon_viewer/`). All directory and file names use `snake_case`.
 
 ## Viewer Page Pattern
 

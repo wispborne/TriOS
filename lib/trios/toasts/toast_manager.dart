@@ -13,7 +13,7 @@ import 'package:trios/trios/toasts/notification_group_manager.dart';
 import 'package:trios/trios/toasts/widgets/mod_download_group_toast.dart';
 import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/companion_mod_update_toast.dart';
+import 'package:trios/trios/toasts/widgets/companion_mod_update_toast.dart';
 
 import 'package:uuid/uuid.dart';
 

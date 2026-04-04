@@ -27,7 +27,7 @@ import '../../models/version.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
 import '../../widgets/restartable_app.dart';
-import '../../widgets/self_update_toast.dart';
+import '../toasts/widgets/self_update_toast.dart';
 import '../../widgets/trios_expansion_tile.dart';
 import '../app_state.dart';
 import '../constants.dart';

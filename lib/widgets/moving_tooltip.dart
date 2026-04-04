@@ -311,19 +311,37 @@ class MovingTooltipWidget extends StatefulWidget {
     if (tooltipWidget == null) return child;
     return Builder(
       builder: (context) {
+        final theme = Theme.of(context);
         return MovingTooltipWidget(
           key: key,
           tooltipWidget: TooltipFrame(
             padding: padding,
             borderColor: switch (warningLevel) {
-              null || TooltipWarningLevel.none => context.theme.colorScheme.secondary.withAlpha(150),
-              TooltipWarningLevel.warning ||
-              TooltipWarningLevel.error => Theme.of(
-                context,
-              ).colorScheme.onSecondaryContainer.withOpacity(0.5),
+              null || TooltipWarningLevel.none =>
+                context.theme.colorScheme.secondary.withAlpha(150),
+              TooltipWarningLevel.warning || TooltipWarningLevel.error =>
+                theme.colorScheme.onSecondaryContainer.withOpacity(0.5),
             },
-            backgroundColor: context.theme.colorScheme.surfaceContainerHighest.withAlpha(100),
-            child: tooltipWidget,
+            backgroundColor: theme.colorScheme.surfaceContainerLowest.withAlpha(
+              230,
+            ),
+            child: Theme(
+              data: theme.copyWith(
+                textTheme: theme.textTheme.copyWith(
+                  bodyMedium: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.brightness == .dark
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onInverseSurface,
+                  ),
+                  bodySmall: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.brightness == .dark
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onInverseSurface,
+                  ),
+                ),
+              ),
+              child: tooltipWidget,
+            ),
           ),
           windowEdgePadding: windowEdgePadding,
           offset: offset,
@@ -343,8 +361,7 @@ class MovingTooltipWidget extends StatefulWidget {
   }) {
     return MovingTooltipWidget(
       tooltipWidget: Card(
-        color:
-            backgroundColor ?? kDarkTooltipBackground,
+        color: backgroundColor ?? kDarkTooltipBackground,
         child: Padding(
           padding: EdgeInsets.all(padding),
           child: Image.file(path.toFile(), fit: BoxFit.contain),

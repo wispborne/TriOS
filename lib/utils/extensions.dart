@@ -508,6 +508,10 @@ extension FileExt on File {
     return utf8.decode(readAsBytesSync(), allowMalformed: true);
   }
 
+  Future<String> readAsStringAllowMalformed() async {
+    return utf8.decode(await readAsBytes(), allowMalformed: true);
+  }
+
   /// From https://stackoverflow.com/a/64569532/1622788
   Future<bool> isWritable() async {
     try {

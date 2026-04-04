@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/themes/theme_manager.dart';
 
 /// Rainbow pride colors shared across accent widgets.
 const rainbowColors = [
@@ -19,18 +20,21 @@ class RainbowAccentBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: axis == Axis.vertical ? thickness : double.infinity,
-      height: axis == Axis.horizontal ? thickness : double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: rainbowColors,
-          begin: axis == Axis.vertical
-              ? Alignment.topCenter
-              : Alignment.centerLeft,
-          end: axis == Axis.vertical
-              ? Alignment.bottomCenter
-              : Alignment.centerRight,
+    return Opacity(
+      opacity: 0.6,
+      child: Container(
+        width: axis == Axis.vertical ? thickness : double.infinity,
+        height: axis == Axis.horizontal ? thickness : double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: rainbowColors,
+            begin: axis == Axis.vertical
+                ? Alignment.topCenter
+                : Alignment.centerLeft,
+            end: axis == Axis.vertical
+                ? Alignment.bottomCenter
+                : Alignment.centerRight,
+          ),
         ),
       ),
     );
@@ -48,8 +52,8 @@ class RainbowBorder extends StatelessWidget {
     super.key,
     required this.child,
     this.borderWidth = 2.0,
-    this.borderRadius = 6.0,
-    this.alpha = 1.0,
+    this.borderRadius = ThemeManager.cornerRadius,
+    this.alpha = 0.7,
   });
 
   @override

@@ -8,6 +8,7 @@ class DescriptionWithSubstitutions extends StatelessWidget {
   final String? highlightValues;
   final TextStyle? baseStyle;
   final Color? highlightColor;
+  final bool biggerLineBreaks;
 
   const DescriptionWithSubstitutions({
     super.key,
@@ -15,6 +16,7 @@ class DescriptionWithSubstitutions extends StatelessWidget {
     this.highlightValues,
     this.baseStyle,
     this.highlightColor,
+    this.biggerLineBreaks = true,
   });
 
   @override
@@ -23,16 +25,19 @@ class DescriptionWithSubstitutions extends StatelessWidget {
     final effectiveHighlightColor =
         highlightColor ?? theme.colorScheme.secondary;
     final effectiveBaseStyle = baseStyle ?? theme.textTheme.bodySmall;
+    final desc = biggerLineBreaks
+        ? description.replaceAll('\n', '\n\n')
+        : description;
 
     // Check if there are unsubstituted %s remaining after applying replacements.
-    final substituted = description.replaceSubstitutions(highlightValues);
+    final substituted = desc.replaceSubstitutions(highlightValues);
     final hasRawPlaceholders = substituted.contains('%s');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        description.replaceSubstitutionsRich(
+        desc.replaceSubstitutionsRich(
           highlightValues,
           highlightColor: effectiveHighlightColor,
           baseStyle: effectiveBaseStyle,
@@ -40,16 +45,20 @@ class DescriptionWithSubstitutions extends StatelessWidget {
         if (hasRawPlaceholders)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: 'Values shown as %s are placeholders filled in by game code. Additional text may be entirely added by game code.'
-                .replaceSubstitutionsRich(
-                  '%s',
-                  highlightColor: effectiveHighlightColor,
-                  baseStyle: theme.textTheme.labelMedium?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    fontSize: (theme.textTheme.bodySmall?.fontSize ?? 12) - 1,
-                  ),
-                ),
+            child:
+                'Values shown as %s are placeholders filled in by game code. Additional text may be entirely added by game code.'
+                    .replaceSubstitutionsRich(
+                      '%s',
+                      highlightColor: effectiveHighlightColor,
+                      baseStyle: theme.textTheme.labelMedium?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
+                        fontSize:
+                            (theme.textTheme.bodySmall?.fontSize ?? 12) - 1,
+                      ),
+                    ),
           ),
       ],
     );

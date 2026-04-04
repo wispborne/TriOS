@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 
 import '../themes/theme_manager.dart';
 
@@ -19,10 +22,11 @@ class TooltipFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final resolvedBackgroundColor = backgroundColor ?? theme.cardColor;
     return Card(
       child: Container(
         decoration: BoxDecoration(
-          color: backgroundColor ?? theme.cardColor,
+          color: resolvedBackgroundColor,
           borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
           border: Border.all(color: borderColor ?? theme.colorScheme.secondary),
           boxShadow: [
@@ -38,7 +42,13 @@ class TooltipFrame extends StatelessWidget {
             ),
           ],
         ),
-        child: Padding(padding: padding, child: child),
+        child: ConditionalWrap(
+          condition: context.rainbowAccent,
+          wrapper: (child) => RainbowBorder(
+            child: Container(color: resolvedBackgroundColor, child: child),
+          ),
+          child: Padding(padding: padding, child: child),
+        ),
       ),
     );
   }

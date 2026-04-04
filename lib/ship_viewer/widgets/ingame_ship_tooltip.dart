@@ -11,6 +11,9 @@ import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
+import 'package:trios/descriptions/description_entry.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
+import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/ingame_tooltip_shared.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
@@ -32,24 +35,24 @@ class IngameShipTooltip {
     required Widget child,
     Map<String, Hullmod> hullmodsMap = const {},
   }) {
-    return Consumer(
-      builder: (context, ref, _) {
-        final modules = ref.watch(resolvedModulesProvider(ship.id));
-        return MovingTooltipWidget.framed(
-          tooltipWidget: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: _maxWidth),
-            child: buildShipContent(
-              ship,
-              shipSystemsMap,
-              weaponsMap,
-              context,
-              hullmodsMap: hullmodsMap,
-              modules: modules,
+    return MovingTooltipWidget.starsector(
+      tooltipWidget: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _maxWidth),
+        child: Consumer(
+          builder: (context, ref, _) => buildShipContent(
+            ship,
+            shipSystemsMap,
+            weaponsMap,
+            context,
+            hullmodsMap: hullmodsMap,
+            modules: ref.watch(resolvedModulesProvider(ship.id)),
+            description: ref.watch(
+              descriptionProvider((ship.id, DescriptionEntry.typeShip)),
             ),
           ),
-          child: child,
-        );
-      },
+        ),
+      ),
+      child: child,
     );
   }
 
@@ -62,6 +65,7 @@ class IngameShipTooltip {
     BuildContext context, {
     Map<String, Hullmod> hullmodsMap = const {},
     List<ResolvedModule> modules = const [],
+    DescriptionEntry? description,
   }) {
     final theme = Theme.of(context);
     final highlightColor = ThemeManager.vanillaCyanColor;
@@ -399,13 +403,29 @@ class IngameShipTooltip {
           ),
         ],
 
-        // ════════ Design type footer ════════
-        if (ship.techManufacturer != null) ...[
+        // ════════ Description ════════
+        if (description?.text1 != null) ...[
           const SizedBox(height: 8),
           tooltipHairline(theme),
           const SizedBox(height: 6),
-          tooltipDesignTypeRow(ship.techManufacturer!, theme),
+          Padding(
+            padding: const .symmetric(horizontal: 16.0, vertical: 8),
+            child: Column(
+              children: [
+                // ════════ Design type ════════
+                if (ship.techManufacturer != null) ...[
+                  tooltipDesignTypeRow(ship.techManufacturer!, theme),
+                  const SizedBox(height: 6),
+                ],
+                DescriptionWithSubstitutions(
+                  description: description!.text1!,
+                  baseStyle: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
         ],
+
       ],
     );
   }

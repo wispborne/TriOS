@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/models/mod.dart';
@@ -99,6 +100,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
 
     final saved = ref.read(appSettings).hullmodsPageState;
 
+    ref.watch(descriptionsNotifierProvider);
     final hullmodsAsync = ref.watch(hullmodListNotifierProvider);
     final mods = ref.watch(AppState.mods);
     final isLoadingHullmods = ref.watch(isLoadingHullmodsList);

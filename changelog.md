@@ -1,3 +1,9 @@
+# 1.4.2
+- Added
+  - Ships/Weapons Viewers: Added descriptions to the new tooltips.
+- Changed
+  - Cleaned up how a few themes look on the new ship/weapon tooltips.
+
 # 1.4.1
 - Added
   - Ships Viewer: overlays for mounts, modules, and bounds.

@@ -34,16 +34,20 @@ Widget tooltipTitleWithDesignType(
           child: Row(
             children: [
               if (showDesignTypeLabel)
-              Text(
-                'Design type: ',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.50),
+                Text(
+                  'Design type: ',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.50,
+                    ),
+                  ),
                 ),
-              ),
               Text(
                 designType,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.80),
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.80,
+                  ),
                 ),
               ),
             ],
@@ -61,7 +65,7 @@ Widget tooltipDesignTypeRow(String designType, ThemeData theme) {
       Text(
         'Design type:',
         style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurface,
+          color: theme.textTheme.bodySmall?.color?.withAlpha(200),
         ),
       ),
       Text(
@@ -80,9 +84,7 @@ Widget tooltipSectionHeader(
 ) {
   return Container(
     padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
-    decoration: BoxDecoration(
-      color: highlightColor.withValues(alpha: 0.10),
-    ),
+    decoration: BoxDecoration(color: highlightColor.withValues(alpha: 0.10)),
     child: Center(
       child: Text(
         text,
@@ -134,7 +136,7 @@ Widget tooltipStatsGrid(ThemeData theme, List<TooltipStatEntry> entries) {
             entry.value,
             textAlign: entry.rightAlign ? TextAlign.right : null,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.55),
               fontStyle: FontStyle.italic,
             ),
           ),

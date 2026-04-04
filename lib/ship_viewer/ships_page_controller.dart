@@ -12,6 +12,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
@@ -197,7 +198,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       ),
     ];
 
-    // Watch ship data, ship systems, and weapons
+    // Watch ship data, ship systems, weapons, and descriptions.
+    ref.watch(descriptionsNotifierProvider);
     final shipsAsync = ref.watch(shipListNotifierProvider);
     final shipSystemsAsync = ref.watch(shipSystemsStreamProvider);
     final mods = ref.watch(AppState.mods);

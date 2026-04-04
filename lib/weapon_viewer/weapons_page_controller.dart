@@ -6,6 +6,7 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/widgets/filter_widget.dart';
@@ -116,7 +117,8 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     // Restore saved state
     final saved = ref.read(appSettings).weaponsPageState;
 
-    // Watch weapon data
+    // Watch weapon data and descriptions.
+    ref.watch(descriptionsNotifierProvider);
     final weaponsAsync = ref.watch(weaponListNotifierProvider);
     final mods = ref.watch(AppState.mods);
     final isLoadingWeapons = ref.watch(isLoadingWeaponsList);

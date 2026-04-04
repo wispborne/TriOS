@@ -2,6 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/descriptions/description_entry.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
@@ -21,14 +24,20 @@ class IngameWeaponTooltip {
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows weapon stats on hover.
   static Widget weapon({required Weapon weapon, required Widget child}) {
-    return Builder(
-      builder: (context) => MovingTooltipWidget.framed(
-        tooltipWidget: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _maxWidth),
-          child: buildWeaponContent(weapon, context),
+    return MovingTooltipWidget.starsector(
+      tooltipWidget: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: _maxWidth),
+        child: Consumer(
+          builder: (context, ref, _) => buildWeaponContent(
+            weapon,
+            context,
+            description: ref.watch(
+              descriptionProvider((weapon.id, DescriptionEntry.typeWeapon)),
+            ),
+          ),
         ),
-        child: child,
       ),
+      child: child,
     );
   }
 
@@ -36,7 +45,11 @@ class IngameWeaponTooltip {
 
   /// Builds the weapon tooltip body, mimicking the game's weapon tooltip with
   /// Primary Data and Ancillary Data sections.
-  static Widget buildWeaponContent(Weapon weapon, BuildContext context) {
+  static Widget buildWeaponContent(
+    Weapon weapon,
+    BuildContext context, {
+    DescriptionEntry? description,
+  }) {
     final theme = Theme.of(context);
     final highlightColor = ThemeManager.vanillaCyanColor;
 
@@ -372,6 +385,17 @@ class IngameWeaponTooltip {
               baseStyle: theme.textTheme.bodySmall,
             ),
           ),
+
+        // ════════ Description from descriptions.csv ════════
+        if (description?.text1 != null) ...[
+          const SizedBox(height: 8),
+          tooltipHairline(theme),
+          const SizedBox(height: 6),
+          DescriptionWithSubstitutions(
+            description: description!.text1!,
+            baseStyle: theme.textTheme.bodySmall,
+          ),
+        ],
       ],
     );
   }

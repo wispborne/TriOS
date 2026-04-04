@@ -18,6 +18,8 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
+import 'package:trios/descriptions/description_entry.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
@@ -530,6 +532,21 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 ),
             ],
           ),
+        Builder(
+          builder: (context) {
+            final desc = ref.watch(
+              descriptionProvider((w.id, DescriptionEntry.typeWeapon)),
+            );
+            if (desc?.text1 == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: DescriptionWithSubstitutions(
+                description: desc!.text1!,
+                baseStyle: theme.textTheme.bodyMedium,
+              ),
+            );
+          },
+        ),
         Divider(color: Theme.of(context).colorScheme.outline),
         _kv(
           w.modVariant != null ? 'Mod' : null,
@@ -791,14 +808,8 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         isSortable: true,
         name: 'Name',
         getSortValue: (w) => w.name ?? w.id,
-        itemCellBuilder: (w, _) => MovingTooltipWidget.starsector(
-          tooltipWidget: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: IngameWeaponTooltip.buildWeaponContent(w, context),
-            ),
-          ),
+        itemCellBuilder: (w, _) => IngameWeaponTooltip.weapon(
+          weapon: w,
           child: MouseRegion(
             cursor: SystemMouseCursors.none,
             child: Text(

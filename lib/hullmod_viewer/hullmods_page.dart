@@ -2,31 +2,34 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:trios/descriptions/description_entry.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
-import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
 import 'package:trios/thirdparty/flutter_context_menu/widgets/context_menu_region.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
+import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/multi_split_mixin_view.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
@@ -81,14 +84,19 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
 
     // Apply pending mod filter from context menu navigation.
     final filterRequest = ref.watch(AppState.viewerFilterRequest);
-    if (filterRequest != null && filterRequest.destination == TriOSTools.hullmods) {
+    if (filterRequest != null &&
+        filterRequest.destination == TriOSTools.hullmods) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final modFilter = ref.read(hullmodsPageControllerProvider).filterCategories
+        final modFilter = ref
+            .read(hullmodsPageControllerProvider)
+            .filterCategories
             .firstWhereOrNull((f) => f.name == 'Mod');
         if (modFilter != null) {
-          ref.read(hullmodsPageControllerProvider.notifier)
-              .updateFilterStates(modFilter, {filterRequest.modName: true});
+          ref.read(hullmodsPageControllerProvider.notifier).updateFilterStates(
+            modFilter,
+            {filterRequest.modName: true},
+          );
         }
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
@@ -336,8 +344,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     bool isTop,
     ThemeData theme,
   ) {
-    final gridState =
-        ref.watch(appSettings.select((s) => s.hullmodsGridState));
+    final gridState = ref.watch(appSettings.select((s) => s.hullmodsGridState));
 
     return DefaultTextStyle.merge(
       style: theme.textTheme.labelLarge!.copyWith(fontSize: 14),
@@ -440,6 +447,15 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
       ),
     );
 
+    final fancyColor = theme.colorScheme.onSurface.mix(
+      theme.colorScheme.primary,
+      0.5,
+    );
+    final variableColor = theme.colorScheme.onSurface.mix(
+      theme.colorScheme.secondary,
+      0.3,
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,18 +505,32 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
           DescriptionWithSubstitutions(
             description: h.desc!,
             baseStyle: theme.textTheme.bodySmall,
+            highlightColor: fancyColor,
           ),
         ],
         if ((h.sModDesc ?? '').isNotEmpty) ...[
           const SizedBox(height: 4),
           DescriptionWithSubstitutions(
             description: 'S-Mod: ${h.sModDesc!}',
-            baseStyle: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.secondary,
-            ),
-            highlightColor: theme.colorScheme.secondary,
+            baseStyle: theme.textTheme.bodySmall?.copyWith(color: fancyColor),
+            highlightColor: variableColor,
           ),
         ],
+        Builder(
+          builder: (context) {
+            final desc = ref.watch(
+              descriptionProvider((h.id, DescriptionEntry.typeHullMod)),
+            );
+            if (desc?.text1 == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: DescriptionWithSubstitutions(
+                description: desc!.text1!,
+                baseStyle: theme.textTheme.bodySmall,
+              ),
+            );
+          },
+        ),
         Divider(color: theme.colorScheme.outline),
         _kv(
           h.modVariant != null ? 'Mod' : null,
@@ -718,7 +748,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
       col(
         'techManufacturer',
         'Tech/Manufacturer',
-            (h) => h.techManufacturer,
+        (h) => h.techManufacturer,
         width: 150,
       ),
       col('costFrigate', 'OP (Frig)', (h) => h.costFrigate, width: 80),

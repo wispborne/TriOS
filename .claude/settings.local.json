@@ -40,7 +40,8 @@
       "Bash(sed -i \"s|package:trios/widgets/april_fools_2026_toast.dart|package:trios/trios/toasts/widgets/april_fools_2026_toast.dart|g\" lib/main.dart)",
       "Bash(sed -i \"s|package:trios/widgets/post_update_toast.dart|package:trios/trios/toasts/widgets/post_update_toast.dart|g\" lib/main.dart)",
       "Bash(sed -i \"s|package:trios/widgets/companion_mod_update_toast.dart|package:trios/trios/toasts/widgets/companion_mod_update_toast.dart|g\" lib/trios/toasts/toast_manager.dart)",
-      "Bash(sed -i \"s|../../widgets/self_update_toast.dart|../toasts/widgets/self_update_toast.dart|g\" lib/trios/settings/settings_page.dart)"
+      "Bash(sed -i \"s|../../widgets/self_update_toast.dart|../toasts/widgets/self_update_toast.dart|g\" lib/trios/settings/settings_page.dart)",
+      "Bash(openspec instructions:*)"
     ]
   }
 }

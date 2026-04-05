@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_records/mod_record_sources_dialog.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
@@ -301,6 +302,15 @@ MenuItem buildMenuItemDebugging(
         label: "Show Raw Info",
         icon: Icons.info_outline,
         onSelected: () => showDebugViewDialog(context, mod),
+      ),
+      MenuItem(
+        label: "Mod Sources",
+        icon: Icons.source,
+        onSelected: () => showModRecordSourcesDialog(
+          context,
+          mod.id,
+          mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? mod.id,
+        ),
       ),
       if (!isGameRunning)
         MenuItem(

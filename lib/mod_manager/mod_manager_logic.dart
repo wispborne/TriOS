@@ -21,6 +21,9 @@ import 'package:trios/mod_manager/widgets/mod_installation_error_dialog.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/mod_records/mod_record.dart';
+import 'package:trios/mod_records/mod_record_source.dart';
+import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -125,6 +128,54 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             break;
           }
         }
+      }
+
+      // Update mod records with install info.
+      try {
+        for (final result in installModsResult.where((r) => r.err == null)) {
+          final modId = result.modInfo.id;
+          final now = DateTime.now();
+
+          // Check if a synthetic catalog record should be merged.
+          final syntheticKey = ModRecord.syntheticKey(
+            result.modInfo.nameOrId,
+          );
+          final store = ref.read(modRecordsStore.notifier);
+          if (store.lookupByModId(modId) == null &&
+              store.state.valueOrNull?.records.containsKey(syntheticKey) ==
+                  true) {
+            await store.mergeSyntheticIntoReal(syntheticKey, modId);
+          }
+
+          final variant = refreshedVariants.firstWhereOrNull(
+            (v) => v.smolId == result.modInfo.smolId,
+          );
+          await store.updateRecord(modId, (existing) {
+            final base = existing ?? ModRecord(
+              recordKey: modId,
+              modId: modId,
+              firstSeen: now,
+            );
+            final updatedSources = Map<String, ModRecordSource>.of(
+              base.sources,
+            );
+            updatedSources['installed'] = InstalledSource(
+              installPath: variant?.modFolder.path,
+              version: result.modInfo.version?.toString(),
+              lastSeen: now,
+            );
+            return base.copyWith(
+              modId: modId,
+              names: {
+                ...base.names,
+                if (result.modInfo.name != null) result.modInfo.name!,
+              },
+              sources: updatedSources,
+            );
+          });
+        }
+      } catch (e) {
+        Fimber.w("Failed to update mod records on install: $e");
       }
 
       if (!forceDontEnableModUpdates &&

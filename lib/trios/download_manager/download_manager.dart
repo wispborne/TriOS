@@ -16,6 +16,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../mod_manager/mod_install_source.dart';
 import '../../mod_manager/mod_manager_logic.dart';
+import '../../mod_records/mod_record.dart';
+import '../../mod_records/mod_record_source.dart';
+import '../../mod_records/mod_records_store.dart';
 import '../../models/mod_info.dart';
 import '../../models/mod_variant.dart';
 import '../constants.dart';
@@ -152,6 +155,29 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
         Fimber.d(
           "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...",
         );
+        // Record download source in mod records.
+        try {
+          final recordKey = modInfo?.id ?? displayName;
+          ref.read(modRecordsStore.notifier).updateRecord(recordKey, (existing) {
+            final now = DateTime.now();
+            final base = existing ?? ModRecord(
+              recordKey: recordKey,
+              modId: modInfo?.id,
+              firstSeen: now,
+            );
+            final updatedSources = Map<String, ModRecordSource>.of(
+              base.sources,
+            );
+            updatedSources['downloadHistory'] = DownloadHistorySource(
+              lastDownloadedFrom: uri,
+              lastDownloadedAt: now,
+              lastSeen: now,
+            );
+            return base.copyWith(sources: updatedSources);
+          });
+        } catch (e) {
+          Fimber.w("Failed to update mod record on download: $e");
+        }
         try {
           final downloadedFile = (await tempFolder.list().first).toFile();
           final installedVariants = await ref

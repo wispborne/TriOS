@@ -38,6 +38,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
+import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
@@ -60,7 +61,6 @@ import '../utils/search.dart';
 import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
 import 'homebrew_grid/wispgrid_header_row_view.dart';
-import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 
 final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
 final _vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
@@ -355,7 +355,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     ),
                     MenuDivider(),
                   ],
-                  scrollbarConfig: ScrollbarConfig(showLeftScrollbar: .never, showRightScrollbar: .always),
+                  scrollbarConfig: ScrollbarConfig(
+                    showLeftScrollbar: .never,
+                    showRightScrollbar: .always,
+                  ),
                   selectedItem: selectedMod,
                   defaultGrouping: EnabledStateModGridGroup(),
                   defaultSortField: ModGridSortField.name.name,
@@ -881,13 +884,16 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         if (selectedMod != null)
           Align(
             alignment: Alignment.topRight,
-            child: SizedBox(
-              width: 400,
-              child: ModSummaryPanel(selectedMod, () {
-                setState(() {
-                  selectedMod = null;
-                });
-              }),
+            child: Padding(
+              padding: const .only(top: 56.0),
+              child: SizedBox(
+                width: 400,
+                child: ModSummaryPanel(selectedMod, () {
+                  setState(() {
+                    selectedMod = null;
+                  });
+                }),
+              ),
             ),
           ),
       ],
@@ -1308,9 +1314,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               ),
             ],
             child: MovingTooltipWidget.text(
-              message: "Whether to show a section at the top of the page containing only mods with updates.",
+              message:
+                  "Whether to show a section at the top of the page containing only mods with updates.",
               child: Text(switch (modsGridUpdateVisibility) {
-                ModsGridUpdateVisibility.showUnmuted => "Showing Updates section",
+                ModsGridUpdateVisibility.showUnmuted =>
+                  "Showing Updates section",
                 ModsGridUpdateVisibility.showAll =>
                   "Showing Updates section (incl. muted)",
                 ModsGridUpdateVisibility.hide => "Not showing Update section",

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart'
     show WebViewEnvironment, WebViewEnvironmentSettings;
+import 'package:trios/trios/constants_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scaled_app/scaled_app.dart';
 import 'package:toastification/toastification.dart';
@@ -13,6 +14,7 @@ import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/portraits/portraits_page.dart';
 import 'package:trios/ship_viewer/ships_page.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/toolbar/app_sidebar.dart';
 import 'package:trios/widgets/rainbow_accent_bar.dart';
@@ -259,7 +261,7 @@ class _AppShellState extends ConsumerState<AppShell>
               Text(
                 loggingError.toString(),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: ThemeManager.vanillaErrorColor,
+                  color: TriOSThemeConstants.vanillaErrorColor,
                 ),
               ),
             Expanded(
@@ -288,14 +290,11 @@ class _AppShellState extends ConsumerState<AppShell>
   }
 
   /// Sidebar layout (new UI, default).
-  Widget _buildSidebarLayout(
-    BuildContext context,
-    Widget body,
-  ) {
+  Widget _buildSidebarLayout(BuildContext context, Widget body) {
     final isSidebarCollapsed = ref.watch(
       appSettings.select((value) => value.isSidebarCollapsed),
     );
-    final rainbowAccent = context.rainbowAccent;
+    final rainbowAccent = context.theme.rainbowAccent;
 
     return Row(
       children: [
@@ -304,12 +303,13 @@ class _AppShellState extends ConsumerState<AppShell>
           onTabChanged: _changeTab,
           isCollapsed: isSidebarCollapsed,
           showBorder: !rainbowAccent,
-          onToggleCollapsed: () => ref.read(appSettings.notifier).update(
-            (s) => s.copyWith(isSidebarCollapsed: !isSidebarCollapsed),
-          ),
+          onToggleCollapsed: () => ref
+              .read(appSettings.notifier)
+              .update(
+                (s) => s.copyWith(isSidebarCollapsed: !isSidebarCollapsed),
+              ),
         ),
-        if (rainbowAccent)
-          RainbowAccentBar(axis: Axis.vertical),
+        if (rainbowAccent) RainbowAccentBar(axis: Axis.vertical),
         Expanded(
           child: Scaffold(
             appBar: CompactTopBar(
@@ -323,11 +323,8 @@ class _AppShellState extends ConsumerState<AppShell>
   }
 
   /// Top toolbar layout (old UI).
-  Widget _buildTopToolbarLayout(
-    BuildContext context,
-    Widget body,
-  ) {
-    final rainbowAccent = context.rainbowAccent;
+  Widget _buildTopToolbarLayout(BuildContext context, Widget body) {
+    final rainbowAccent = context.theme.rainbowAccent;
 
     return Scaffold(
       appBar: FullTopBar(

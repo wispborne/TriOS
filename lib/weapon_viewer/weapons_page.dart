@@ -18,15 +18,13 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
-import 'package:trios/descriptions/description_entry.dart';
-import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
+import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_widget.dart';
-import 'package:trios/weapon_viewer/widgets/ingame_weapon_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -464,7 +462,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -532,21 +530,27 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 ),
             ],
           ),
-        Builder(
-          builder: (context) {
-            final desc = ref.watch(
-              descriptionProvider((w.id, DescriptionEntry.typeWeapon)),
-            );
-            if (desc?.text1 == null) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: DescriptionWithSubstitutions(
-                description: desc!.text1!,
-                baseStyle: theme.textTheme.bodyMedium,
-              ),
-            );
-          },
+        const SizedBox(height: 8),
+        WeaponCodexCard.create(
+          weapon: w,
+          showTitle: false,
+          useAbbreviations: false,
         ),
+        // Builder(
+        //   builder: (context) {
+        //     final desc = ref.watch(
+        //       descriptionProvider((w.id, DescriptionEntry.typeWeapon)),
+        //     );
+        //     if (desc?.text1 == null) return const SizedBox.shrink();
+        //     return Padding(
+        //       padding: const EdgeInsets.only(top: 8),
+        //       child: DescriptionWithSubstitutions(
+        //         description: desc!.text1!,
+        //         baseStyle: theme.textTheme.bodyMedium,
+        //       ),
+        //     );
+        //   },
+        // ),
         Divider(color: Theme.of(context).colorScheme.outline),
         _kv(
           w.modVariant != null ? 'Mod' : null,
@@ -808,7 +812,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         isSortable: true,
         name: 'Name',
         getSortValue: (w) => w.name ?? w.id,
-        itemCellBuilder: (w, _) => IngameWeaponTooltip.weapon(
+        itemCellBuilder: (w, _) => WeaponCodexCard.tooltip(
           weapon: w,
           child: MouseRegion(
             cursor: SystemMouseCursors.none,

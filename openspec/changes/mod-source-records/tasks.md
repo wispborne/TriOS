@@ -40,10 +40,29 @@
 - [x] 6.3 Lookup by Nexus mod ID (via convenience getter)
 - [x] 6.4 Lookup by catalog name
 
-## 7. Verification
+## 7. User Overrides Layer
 
-- [ ] 7.1 Manual test: install a mod with version checker info → verify record has installed + versionChecker + catalog sources
-- [ ] 7.2 Manual test: download a mod → verify downloadHistory source is added
-- [ ] 7.3 Manual test: verify catalog-only mods get a single record with catalog source
-- [ ] 7.4 Manual test: install a previously catalog-only mod → verify synthetic record merges into real-ID record
-- [ ] 7.5 Manual test: restart app → verify all records persist and reload correctly
+- [x] 7.1 Add `applyOverridesFrom()` method to each `ModRecordSource` subtype (field-level merge: override wins when non-null)
+- [x] 7.2 Add `userOverrides` field (`Map<String, ModRecordSource>`) to `ModRecord`
+- [x] 7.3 Add `resolvedSources` getter that merges `userOverrides` onto `sources` field-by-field via `applyOverridesFrom()`
+- [x] 7.4 Update typed getters (`installed`, `catalog`, `versionChecker`, `downloadHistory`) to read from `resolvedSources`
+- [x] 7.5 Update `merge()` to preserve `userOverrides` from both sides
+- [x] 7.6 Update dialog `_onSave()` to write sparse overrides to `userOverrides` (only fields differing from auto-populated source)
+- [x] 7.7 Regenerate mappers, verify `dart analyze` — zero errors/warnings
+
+## 8. UI: Mod Sources Dialog
+
+- [x] 8.1 Create `ModRecordSourcesDialog` (`ConsumerStatefulWidget`) with collapsible sections per source type
+- [x] 8.2 Editable `TextField`s for URLs/IDs, read-only `SimpleDataRow` for paths/timestamps
+- [x] 8.3 Dirty tracking and explicit Save button
+- [x] 8.4 Add "Mod Sources" `MenuItem` in `buildMenuItemDebugging()` (Troubleshoot context menu)
+
+## 9. Verification
+
+- [ ] 9.1 Manual test: install a mod with version checker info → verify record has installed + versionChecker + catalog sources
+- [ ] 9.2 Manual test: download a mod → verify downloadHistory source is added
+- [ ] 9.3 Manual test: verify catalog-only mods get a single record with catalog source
+- [ ] 9.4 Manual test: install a previously catalog-only mod → verify synthetic record merges into real-ID record
+- [ ] 9.5 Manual test: restart app → verify all records persist and reload correctly
+- [ ] 9.6 Manual test: edit a field via dialog → Save → trigger auto-population → verify user edit survives
+- [ ] 9.7 Manual test: verify JSON file contains both `sources` and `userOverrides` on edited records

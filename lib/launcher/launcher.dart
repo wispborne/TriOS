@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
@@ -161,7 +162,7 @@ class LauncherButton extends HookConsumerWidget {
                         "\nInvisible ships, zoomed-in combat,"
                         "\nand more may result.",
                         style: TextStyle(
-                          color: ThemeManager.vanillaWarningColor.withAlpha(
+                          color: TriOSThemeConstants.vanillaWarningColor.withAlpha(
                             200,
                           ),
                           fontStyle: FontStyle.italic,
@@ -177,7 +178,7 @@ class LauncherButton extends HookConsumerWidget {
             ? Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(
-                    ThemeManager.cornerRadius,
+                    TriOSThemeConstants.cornerRadius,
                   ),
                   border: Border.all(
                     color: Theme.of(context).colorScheme.secondary,
@@ -199,7 +200,7 @@ class LauncherButton extends HookConsumerWidget {
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
+                        TriOSThemeConstants.cornerRadius,
                       ),
                     ),
                   ),
@@ -757,7 +758,7 @@ class StarsectorIcon extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colorAnimation ?? theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         border: Border.all(
           color: theme.colorScheme.primary.darker(15),
           strokeAlign: BorderSide.strokeAlignOutside,

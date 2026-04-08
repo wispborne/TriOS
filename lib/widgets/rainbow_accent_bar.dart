@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 /// Rainbow pride colors shared across accent widgets.
 const rainbowColors = [
@@ -52,7 +53,7 @@ class RainbowBorder extends StatelessWidget {
     super.key,
     required this.child,
     this.borderWidth = 2.0,
-    this.borderRadius = ThemeManager.cornerRadius,
+    this.borderRadius = TriOSThemeConstants.cornerRadius,
     this.alpha = 0.7,
   });
 

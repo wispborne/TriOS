@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/rainbow_accent_bar.dart';
 
@@ -17,7 +18,7 @@ class TriOSAppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rainbowAccent = context.rainbowAccent;
+    final rainbowAccent = context.theme.rainbowAccent;
 
     final svg = SvgPicture.asset(
       "assets/images/telos_faction_crest.svg",

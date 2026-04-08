@@ -8,6 +8,7 @@ import 'package:trios/mod_tag_manager/category.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'wisp_grid_state.dart';
 
@@ -143,7 +144,7 @@ class _WispGridRowState<T extends WispGridItem>
         },
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Stack(
@@ -220,7 +221,7 @@ class _WispGridRowState<T extends WispGridItem>
         },
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
           child: Stack(

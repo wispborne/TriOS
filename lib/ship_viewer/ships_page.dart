@@ -4,15 +4,16 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:trios/descriptions/description_entry.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/ship_viewer/models/ship_gpt.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
-import 'package:trios/descriptions/description_entry.dart';
-import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
+import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/context_menu_items.dart';
@@ -23,7 +24,6 @@ import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_widget.dart';
-import 'package:trios/ship_viewer/widgets/ingame_ship_tooltip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -499,7 +499,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         itemCellBuilder: (item, _) => Row(
           children: [
             Flexible(
-              child: IngameShipTooltip.ship(
+              child: ShipCodexCard.tooltip(
                 ship: item,
                 shipSystemsMap: controllerState.shipSystemsMap,
                 weaponsMap: controllerState.weaponsMap,
@@ -777,21 +777,30 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             padding: const EdgeInsets.only(bottom: 8),
             child: ShipBlueprintView(ship: s),
           ),
-        Builder(
-          builder: (context) {
-            final desc = ref.watch(
-              descriptionProvider((s.id, DescriptionEntry.typeShip)),
-            );
-            if (desc?.text1 == null) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: DescriptionWithSubstitutions(
-                description: desc!.text1!,
-                baseStyle: theme.textTheme.bodyMedium,
-              ),
-            );
-          },
+        ShipCodexCard.create(
+          ship: s,
+          shipSystemsMap: controllerState.shipSystemsMap,
+          weaponsMap: controllerState.weaponsMap,
+          hullmodsMap: controllerState.hullmodsMap,
+          showTitle: false,
+          showSprite: false,
+          useAbbreviations: false,
         ),
+        // Builder(
+        //   builder: (context) {
+        //     final desc = ref.watch(
+        //       descriptionProvider((s.id, DescriptionEntry.typeShip)),
+        //     );
+        //     if (desc?.text1 == null) return const SizedBox.shrink();
+        //     return Padding(
+        //       padding: const EdgeInsets.only(bottom: 8),
+        //       child: DescriptionWithSubstitutions(
+        //         description: desc!.text1!,
+        //         baseStyle: theme.textTheme.bodyMedium,
+        //       ),
+        //     );
+        //   },
+        // ),
         Divider(color: Theme.of(context).colorScheme.outline),
         _kv(
           s.modVariant != null ? 'Mod' : null,
@@ -1017,7 +1026,10 @@ class _ShipImageCellState extends State<ShipImageCell> {
             ? SizedBox(
                 width: 300,
                 height: 300,
-                child: ShipBlueprintView.minimal(ship: widget.ship!),
+                child: ShipBlueprintView.minimal(
+                  ship: widget.ship!,
+                  fit: BoxFit.scaleDown,
+                ),
               )
             : Image.file(_extantPath!.toFile(), fit: BoxFit.contain),
       ),

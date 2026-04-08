@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -246,9 +247,9 @@ class MovingTooltipWidget extends StatefulWidget {
                             null => textStyle?.color,
                             TooltipWarningLevel.none => null,
                             TooltipWarningLevel.warning =>
-                              ThemeManager.vanillaWarningColor,
+                              TriOSThemeConstants.vanillaWarningColor,
                             TooltipWarningLevel.error =>
-                              ThemeManager.vanillaErrorColor,
+                              TriOSThemeConstants.vanillaErrorColor,
                           },
                         ),
                   ),

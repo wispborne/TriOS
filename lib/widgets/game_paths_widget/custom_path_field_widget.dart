@@ -6,6 +6,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 /// A reusable widget for custom path fields that can be wired to settings
 class CustomPathField extends ConsumerStatefulWidget {
@@ -199,13 +200,13 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
               ? widget.errorMessage
               : null,
           errorStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: ThemeManager.vanillaWarningColor,
+            color: TriOSThemeConstants.vanillaWarningColor,
           ),
           errorBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: ThemeManager.vanillaWarningColor),
+            borderSide: BorderSide(color: TriOSThemeConstants.vanillaWarningColor),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: ThemeManager.vanillaWarningColor),
+            borderSide: BorderSide(color: TriOSThemeConstants.vanillaWarningColor),
           ),
           labelText: widget.labelText,
           hintText: widget.hintText,

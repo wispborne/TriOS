@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
+import 'package:trios/widgets/inline_edit_text.dart';
 import 'package:trios/widgets/simple_data_row.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 
@@ -15,10 +16,8 @@ void showModRecordSourcesDialog(
 ) {
   showDialog(
     context: context,
-    builder: (context) => ModRecordSourcesDialog(
-      recordKey: recordKey,
-      displayName: displayName,
-    ),
+    builder: (context) =>
+        ModRecordSourcesDialog(recordKey: recordKey, displayName: displayName),
   );
 }
 
@@ -40,6 +39,7 @@ class ModRecordSourcesDialog extends ConsumerStatefulWidget {
 class _ModRecordSourcesDialogState
     extends ConsumerState<ModRecordSourcesDialog> {
   bool _isDirty = false;
+  bool _controllersInitialized = false;
 
   // Version Checker editable controllers
   final _vcForumThreadId = TextEditingController();
@@ -57,16 +57,10 @@ class _ModRecordSourcesDialogState
   final _catForumThreadId = TextEditingController();
   final _catNexusModsId = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    final record = ref
-        .read(modRecordsStore)
-        .valueOrNull
-        ?.records[widget.recordKey];
-    if (record != null) {
-      _initControllers(record);
-    }
+  void _initControllersIfNeeded(ModRecord record) {
+    if (_controllersInitialized) return;
+    _controllersInitialized = true;
+    _initControllers(record);
   }
 
   void _initControllers(ModRecord record) {
@@ -115,67 +109,100 @@ class _ModRecordSourcesDialogState
         ?.records[widget.recordKey];
     if (currentRecord == null) return;
 
-    final updatedSources = Map<String, ModRecordSource>.of(
-      currentRecord.sources,
+    final updatedOverrides = Map<String, ModRecordSource>.of(
+      currentRecord.userOverrides,
     );
 
-    // Update or create VersionCheckerSource.
-    final hasVcData = [
-      _vcForumThreadId,
-      _vcNexusModsId,
-      _vcDirectDownloadUrl,
-      _vcChangelogUrl,
-      _vcMasterVersionFileUrl,
-    ].any((c) => c.text.trim().isNotEmpty);
-
-    if (hasVcData) {
-      final existing = currentRecord.versionChecker;
-      updatedSources['versionChecker'] = VersionCheckerSource(
-        forumThreadId: _vcForumThreadId.text.trim().nullIfEmpty,
-        nexusModsId: _vcNexusModsId.text.trim().nullIfEmpty,
-        directDownloadUrl: _vcDirectDownloadUrl.text.trim().nullIfEmpty,
-        changelogUrl: _vcChangelogUrl.text.trim().nullIfEmpty,
-        masterVersionFileUrl:
-            _vcMasterVersionFileUrl.text.trim().nullIfEmpty,
-        lastSeen: existing?.lastSeen,
-      );
+    // Build a VersionCheckerSource override with only user-changed fields.
+    // null means "no override, use auto-populated value".
+    final autoVc =
+        currentRecord.sources['versionChecker'] as VersionCheckerSource?;
+    final vcOverride = VersionCheckerSource(
+      forumThreadId: _diffField(_vcForumThreadId, autoVc?.forumThreadId),
+      nexusModsId: _diffField(_vcNexusModsId, autoVc?.nexusModsId),
+      directDownloadUrl: _diffField(
+        _vcDirectDownloadUrl,
+        autoVc?.directDownloadUrl,
+      ),
+      changelogUrl: _diffField(_vcChangelogUrl, autoVc?.changelogUrl),
+      masterVersionFileUrl: _diffField(
+        _vcMasterVersionFileUrl,
+        autoVc?.masterVersionFileUrl,
+      ),
+    );
+    if (_hasAnyField(vcOverride)) {
+      updatedOverrides['versionChecker'] = vcOverride;
     } else {
-      updatedSources.remove('versionChecker');
+      updatedOverrides.remove('versionChecker');
     }
 
-    // Update or create CatalogSource.
-    final existingCat = currentRecord.catalog;
-    final hasCatEdits = [
-      _catForumUrl,
-      _catNexusUrl,
-      _catDiscordUrl,
-      _catDirectDownloadUrl,
-      _catDownloadPageUrl,
-      _catForumThreadId,
-      _catNexusModsId,
-    ].any((c) => c.text.trim().isNotEmpty);
-
-    if (hasCatEdits || existingCat != null) {
-      updatedSources['catalog'] = CatalogSource(
-        catalogName: existingCat?.catalogName,
-        forumUrl: _catForumUrl.text.trim().nullIfEmpty,
-        nexusUrl: _catNexusUrl.text.trim().nullIfEmpty,
-        discordUrl: _catDiscordUrl.text.trim().nullIfEmpty,
-        directDownloadUrl: _catDirectDownloadUrl.text.trim().nullIfEmpty,
-        downloadPageUrl: _catDownloadPageUrl.text.trim().nullIfEmpty,
-        forumThreadId: _catForumThreadId.text.trim().nullIfEmpty,
-        nexusModsId: _catNexusModsId.text.trim().nullIfEmpty,
-        categories: existingCat?.categories,
-        lastSeen: existingCat?.lastSeen,
-      );
-    }
-
-    ref.read(modRecordsStore.notifier).updateRecord(
-      widget.recordKey,
-      (_) => currentRecord.copyWith(sources: updatedSources),
+    // Build a CatalogSource override with only user-changed fields.
+    final autoCat = currentRecord.sources['catalog'] as CatalogSource?;
+    final catOverride = CatalogSource(
+      forumUrl: _diffField(_catForumUrl, autoCat?.forumUrl),
+      nexusUrl: _diffField(_catNexusUrl, autoCat?.nexusUrl),
+      discordUrl: _diffField(_catDiscordUrl, autoCat?.discordUrl),
+      directDownloadUrl: _diffField(
+        _catDirectDownloadUrl,
+        autoCat?.directDownloadUrl,
+      ),
+      downloadPageUrl: _diffField(
+        _catDownloadPageUrl,
+        autoCat?.downloadPageUrl,
+      ),
+      forumThreadId: _diffField(_catForumThreadId, autoCat?.forumThreadId),
+      nexusModsId: _diffField(_catNexusModsId, autoCat?.nexusModsId),
     );
+    if (_hasAnyField(catOverride)) {
+      updatedOverrides['catalog'] = catOverride;
+    } else {
+      updatedOverrides.remove('catalog');
+    }
+
+    ref
+        .read(modRecordsStore.notifier)
+        .updateRecord(
+          widget.recordKey,
+          (_) => currentRecord.copyWith(userOverrides: updatedOverrides),
+        );
     Navigator.of(context).pop();
   }
+
+  /// Returns the controller's trimmed value if it differs from the
+  /// auto-populated [autoValue], or null if unchanged (meaning no override).
+  String? _diffField(TextEditingController controller, String? autoValue) {
+    final userVal = controller.text.trim().nullIfEmpty;
+    final autoVal = autoValue?.trim().nullIfEmpty;
+    return userVal != autoVal ? userVal : null;
+  }
+
+  /// Returns true if any non-lastSeen field in the source is non-null.
+  bool _hasAnyField(ModRecordSource source) => switch (source) {
+    VersionCheckerSource s =>
+      s.forumThreadId != null ||
+          s.nexusModsId != null ||
+          s.directDownloadUrl != null ||
+          s.changelogUrl != null ||
+          s.masterVersionFileUrl != null,
+    CatalogSource s =>
+      s.name != null ||
+          s.authors != null ||
+          s.forumUrl != null ||
+          s.nexusUrl != null ||
+          s.discordUrl != null ||
+          s.directDownloadUrl != null ||
+          s.downloadPageUrl != null ||
+          s.forumThreadId != null ||
+          s.nexusModsId != null ||
+          s.categories != null,
+    InstalledSource s =>
+      s.name != null ||
+          s.author != null ||
+          s.installPath != null ||
+          s.version != null,
+    DownloadHistorySource s =>
+      s.lastDownloadedFrom != null || s.lastDownloadedAt != null,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +212,10 @@ class _ModRecordSourcesDialogState
         ?.records[widget.recordKey];
     final theme = Theme.of(context);
     final dateFmt = DateFormat.yMd().add_jm();
+
+    if (record != null) {
+      _initControllersIfNeeded(record);
+    }
 
     return AlertDialog(
       title: Text("Mod Sources: ${widget.displayName}"),
@@ -212,10 +243,7 @@ class _ModRecordSourcesDialogState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           spacing: 4,
                           children: [
-                            Text(
-                              "Identity",
-                              style: theme.textTheme.titleSmall,
-                            ),
+                            Text("Identity", style: theme.textTheme.titleSmall),
                             SimpleDataRow(
                               label: "Record Key: ",
                               value: record.recordKey,
@@ -226,14 +254,14 @@ class _ModRecordSourcesDialogState
                             ),
                             SimpleDataRow(
                               label: "Names: ",
-                              value: record.names.isNotEmpty
-                                  ? record.names.join(", ")
+                              value: record.allNames.isNotEmpty
+                                  ? record.allNames.join(", ")
                                   : "(none)",
                             ),
                             SimpleDataRow(
                               label: "Authors: ",
-                              value: record.authors.isNotEmpty
-                                  ? record.authors.join(", ")
+                              value: record.allAuthors.isNotEmpty
+                                  ? record.allAuthors.join(", ")
                                   : "(none)",
                             ),
                             if (record.firstSeen != null)
@@ -296,6 +324,14 @@ class _ModRecordSourcesDialogState
                   ]
                 : [
                     SimpleDataRow(
+                      label: "Name: ",
+                      value: source.name ?? "(unknown)",
+                    ),
+                    SimpleDataRow(
+                      label: "Author: ",
+                      value: source.author ?? "(unknown)",
+                    ),
+                    SimpleDataRow(
                       label: "Path: ",
                       value: source.installPath ?? "(unknown)",
                     ),
@@ -333,11 +369,31 @@ class _ModRecordSourcesDialogState
                   "(no version checker data — fill in fields to create)",
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-              _editField("Forum Thread ID", _vcForumThreadId),
-              _editField("Nexus Mods ID", _vcNexusModsId),
-              _editField("Direct Download URL", _vcDirectDownloadUrl),
-              _editField("Changelog URL", _vcChangelogUrl),
-              _editField("Master Version File URL", _vcMasterVersionFileUrl),
+              InlineEditText(
+                label: "Forum Thread ID: ",
+                controller: _vcForumThreadId,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Nexus Mods ID: ",
+                controller: _vcNexusModsId,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Direct Download URL: ",
+                controller: _vcDirectDownloadUrl,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Changelog URL: ",
+                controller: _vcChangelogUrl,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Master Version File URL: ",
+                controller: _vcMasterVersionFileUrl,
+                onChanged: _markDirty,
+              ),
               if (source?.lastSeen != null)
                 SimpleDataRow(
                   label: "Last Seen: ",
@@ -368,20 +424,44 @@ class _ModRecordSourcesDialogState
                   "(not found in catalog — fill in fields to create)",
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-              if (source?.catalogName != null)
-                SimpleDataRow(
-                  label: "Catalog Name: ",
-                  value: source!.catalogName!,
-                ),
-              _editField("Forum URL", _catForumUrl),
-              _editField("Nexus URL", _catNexusUrl),
-              _editField("Discord URL", _catDiscordUrl),
-              _editField("Direct Download URL", _catDirectDownloadUrl),
-              _editField("Download Page URL", _catDownloadPageUrl),
-              _editField("Forum Thread ID", _catForumThreadId),
-              _editField("Nexus Mods ID", _catNexusModsId),
-              if (source?.categories != null &&
-                  source!.categories!.isNotEmpty)
+              if (source?.name != null)
+                SimpleDataRow(label: "Catalog Name: ", value: source!.name!),
+              InlineEditText(
+                label: "Forum URL: ",
+                controller: _catForumUrl,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Nexus URL: ",
+                controller: _catNexusUrl,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Discord URL: ",
+                controller: _catDiscordUrl,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Direct Download URL: ",
+                controller: _catDirectDownloadUrl,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Download Page URL: ",
+                controller: _catDownloadPageUrl,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Forum Thread ID: ",
+                controller: _catForumThreadId,
+                onChanged: _markDirty,
+              ),
+              InlineEditText(
+                label: "Nexus Mods ID: ",
+                controller: _catNexusModsId,
+                onChanged: _markDirty,
+              ),
+              if (source?.categories != null && source!.categories!.isNotEmpty)
                 SimpleDataRow(
                   label: "Categories: ",
                   value: source.categories!.join(", "),
@@ -436,19 +516,6 @@ class _ModRecordSourcesDialogState
           ),
         ),
       ],
-    );
-  }
-
-  Widget _editField(String label, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        isDense: true,
-        border: const OutlineInputBorder(),
-      ),
-      style: Theme.of(context).textTheme.bodySmall,
-      onChanged: (_) => _markDirty(),
     );
   }
 }

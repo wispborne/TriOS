@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -77,12 +78,12 @@ class _FilePermissionShieldState extends ConsumerState<FilePermissionShield> {
         children: [
           SvgImageIcon(
             "assets/images/icon-admin-shield.svg",
-            color: ThemeManager.vanillaWarningColor,
+            color: TriOSThemeConstants.vanillaWarningColor,
           ),
           Text(
             isAlreadyAdmin ? "Warning" : "Must Run as Admin",
             style: TextStyle(
-              color: ThemeManager.vanillaWarningColor,
+              color: TriOSThemeConstants.vanillaWarningColor,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),

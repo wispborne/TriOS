@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -330,7 +331,7 @@ class RulesHotReloadButton extends ConsumerWidget {
           "\n\nrules.csv hot reload is ${isRulesHotReloadEnabled ? "enabled" : "disabled"}."
           "\nClick to ${isRulesHotReloadEnabled ? "disable" : "enable"}.",
       child: InkWell(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         onTap: () => ref
             .read(appSettings.notifier)
             .update(

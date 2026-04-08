@@ -2,17 +2,17 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/descriptions/description_entry.dart';
+import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_viewer/models/ship_gpt.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
-import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
-import 'package:trios/descriptions/description_entry.dart';
-import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/ingame_tooltip_shared.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -20,26 +20,30 @@ import 'package:trios/widgets/moving_tooltip.dart';
 /// Builds tooltip content for ships, replicating the layout of the game's
 /// ship codex panel: title, two-column stats with sprite, system, mounts,
 /// armaments, hull mods, and design-type footer.
-class IngameShipTooltip {
-  IngameShipTooltip._();
+class ShipCodexCard {
+  ShipCodexCard._();
 
-  static const _maxWidth = 720.0;
+  static const _maxWidth = 780.0;
 
   // ───────────────────────── Convenience wrapper ─────────────────────────
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows ship stats on hover.
-  static Widget ship({
+  static Widget tooltip({
     required Ship ship,
     required Map<String, ShipSystem> shipSystemsMap,
     required Map<String, Weapon> weaponsMap,
     required Widget child,
     Map<String, Hullmod> hullmodsMap = const {},
+    bool showTitle = true,
+    bool showSprite = true,
+    bool showDescription = true,
+    bool useAbbreviations = true,
   }) {
     return MovingTooltipWidget.starsector(
       tooltipWidget: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _maxWidth),
         child: Consumer(
-          builder: (context, ref, _) => buildShipContent(
+          builder: (context, ref, _) => _buildShipContent(
             ship,
             shipSystemsMap,
             weaponsMap,
@@ -49,6 +53,10 @@ class IngameShipTooltip {
             description: ref.watch(
               descriptionProvider((ship.id, DescriptionEntry.typeShip)),
             ),
+            showTitle: showTitle,
+            showSprite: showSprite,
+            showDescription: showDescription,
+            useAbbreviations: useAbbreviations,
           ),
         ),
       ),
@@ -56,9 +64,38 @@ class IngameShipTooltip {
     );
   }
 
+  static Widget create({
+    required Ship ship,
+    required Map<String, ShipSystem> shipSystemsMap,
+    required Map<String, Weapon> weaponsMap,
+    Map<String, Hullmod> hullmodsMap = const {},
+    bool showTitle = true,
+    bool showSprite = true,
+    bool showDescription = true,
+    bool useAbbreviations = true,
+  }) {
+    return Consumer(
+      builder: (context, ref, _) => _buildShipContent(
+        ship,
+        shipSystemsMap,
+        weaponsMap,
+        context,
+        hullmodsMap: hullmodsMap,
+        modules: ref.watch(resolvedModulesProvider(ship.id)),
+        description: ref.watch(
+          descriptionProvider((ship.id, DescriptionEntry.typeShip)),
+        ),
+        showTitle: showTitle,
+        showSprite: showSprite,
+        showDescription: showDescription,
+        useAbbreviations: useAbbreviations,
+      ),
+    );
+  }
+
   // ───────────────────────── Ship tooltip ─────────────────────────
 
-  static Widget buildShipContent(
+  static Widget _buildShipContent(
     Ship ship,
     Map<String, ShipSystem> shipSystemsMap,
     Map<String, Weapon> weaponsMap,
@@ -66,26 +103,38 @@ class IngameShipTooltip {
     Map<String, Hullmod> hullmodsMap = const {},
     List<ResolvedModule> modules = const [],
     DescriptionEntry? description,
+    bool showTitle = true,
+    bool showSprite = true,
+    bool showDescription = true,
+    bool useAbbreviations = false,
   }) {
     final theme = Theme.of(context);
-    final highlightColor = ThemeManager.vanillaCyanColor;
+    final highlightColor = TriOSThemeConstants.vanillaCyanColor;
 
     final shieldUpper = ship.shieldType?.toUpperCase();
     final hasShield =
         shieldUpper != null && shieldUpper != 'NONE' && shieldUpper != 'PHASE';
     final hasPhase = shieldUpper == 'PHASE';
-    final defenseLabel = hasPhase
+    final isTruePhaseShip = hasPhase && ship.defenseId == 'phasecloak';
+    final defenseLabel = isTruePhaseShip
         ? 'Phase cloak'
+        : hasPhase
+        ? shipSystemsMap[ship.defenseId ?? '']?.name ??
+              ship.defenseId ??
+              'Phase cloak'
         : hasShield
         ? '${ship.shieldType!.toTitleCase()} shield'
         : 'None';
+    final defenseRowLabel = hasPhase && !isTruePhaseShip
+        ? 'Special'
+        : 'Defense';
     const crColor = Color(0xFFa4b6ab);
     const crewColor = Color(0xFF40ab80);
     const fuelColor = Color(0xFFf58630);
     const dpColor = Color(0xFF4ca8bf);
     const cargoColor = Color(0xFFb2b082);
 
-    final sprite = _shipSprite(ship, modules);
+    final sprite = showSprite ? _shipSprite(ship, modules) : null;
     final mountGroups = _groupMounts(ship);
     final hasBays = (ship.fighterBays ?? 0) > 0;
     final armamentGroups = _groupArmaments(ship, weaponsMap);
@@ -96,16 +145,18 @@ class IngameShipTooltip {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Title ──
-        tooltipTitleWithDesignType(
-          ship.hullNameForDisplay(),
-          ship.designation != null &&
-                  ship.designation != ship.hullNameForDisplay()
-              ? ship.designation
-              : null,
-          false,
-          theme,
-        ),
-        const SizedBox(height: 8),
+        if (showTitle) ...[
+          tooltipTitleWithDesignType(
+            ship.hullNameForDisplay(),
+            ship.designation != null &&
+                    ship.designation != ship.hullNameForDisplay()
+                ? ship.designation
+                : null,
+            false,
+            theme,
+          ),
+          const SizedBox(height: 8),
+        ],
 
         // ════════ Three columns: Logistical (1+2) | Combat (3) + Sprite ════════
         Row(
@@ -182,7 +233,9 @@ class IngameShipTooltip {
                         child: tooltipStatsGrid(theme, [
                           if (ship.suppliesMo != null)
                             tooltipRow(
-                              'Maintenance (sup/mo)',
+                              useAbbreviations
+                                  ? 'Maintenance (sup/mo)'
+                                  : 'Maintenance (supplies/month)',
                               tooltipFmt(ship.suppliesMo),
                               color: crColor,
                             ),
@@ -255,7 +308,7 @@ class IngameShipTooltip {
                       tooltipRow('Hull integrity', tooltipFmt(ship.hitpoints)),
                     if (ship.armorRating != null)
                       tooltipRow('Armor rating', tooltipFmt(ship.armorRating)),
-                    tooltipRow('Defense', defenseLabel),
+                    tooltipRow(defenseRowLabel, defenseLabel),
                     if (hasShield) ...[
                       if (ship.shieldArc != null)
                         tooltipRow(
@@ -271,6 +324,18 @@ class IngameShipTooltip {
                         tooltipRow(
                           'Shield flux/damage',
                           tooltipFmt(ship.shieldEfficiency, forceDecimal: true),
+                        ),
+                    ],
+                    if (isTruePhaseShip) ...[
+                      if (ship.phaseCost != null)
+                        tooltipRow(
+                          'Cloak activation cost',
+                          tooltipFmt(ship.phaseCost),
+                        ),
+                      if (ship.phaseUpkeep != null)
+                        tooltipRow(
+                          'Cloak upkeep/sec',
+                          tooltipFmt(ship.phaseUpkeep),
                         ),
                     ],
                     if (ship.maxFlux != null)
@@ -325,7 +390,7 @@ class IngameShipTooltip {
                             ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: ThemeManager.vanillaYellowGoldColor,
+                              color: TriOSThemeConstants.vanillaYellowGoldColor,
                             ),
                           ),
                         ),
@@ -347,7 +412,7 @@ class IngameShipTooltip {
                             mountGroups,
                             ship.fighterBays,
                             theme,
-                            ThemeManager.vanillaYellowGoldColor,
+                            TriOSThemeConstants.vanillaYellowGoldColor,
                           ),
                         ),
                       ],
@@ -368,7 +433,7 @@ class IngameShipTooltip {
                             armamentGroups,
                             null,
                             theme,
-                            ThemeManager.vanillaYellowGoldColor,
+                            TriOSThemeConstants.vanillaYellowGoldColor,
                           ),
                         ),
                       ],
@@ -404,7 +469,7 @@ class IngameShipTooltip {
         ],
 
         // ════════ Description ════════
-        if (description?.text1 != null) ...[
+        if (showDescription && description?.text1 != null) ...[
           const SizedBox(height: 8),
           tooltipHairline(theme),
           const SizedBox(height: 6),
@@ -425,7 +490,6 @@ class IngameShipTooltip {
             ),
           ),
         ],
-
       ],
     );
   }

@@ -1,6 +1,8 @@
 # 1.4.2
 - Added
   - Ships/Weapons Viewers: Added descriptions to the new tooltips.
+  - **Catalog**: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
+    - Catalog cards now show installation status, available updates, and game version requirements.
 - Changed
   - Cleaned up how a few themes look on the new ship/weapon tooltips.
 

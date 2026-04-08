@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
@@ -22,14 +23,14 @@ class DragDropInstallModOverlay extends StatelessWidget {
     return Card(
       elevation: 4.0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       ),
       // color: const Color(0xFF34556D),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: DottedBorder(
           color: theme.colorScheme.onSurface.withOpacity(0.5),
-          radius: const Radius.circular(ThemeManager.cornerRadius),
+          radius: const Radius.circular(TriOSThemeConstants.cornerRadius),
           strokeWidth: 3,
           dashPattern: const [12, 8],
           stackFit: StackFit.loose,
@@ -51,7 +52,7 @@ class DragDropInstallModOverlay extends StatelessWidget {
                       'Add to Starsector',
                       style: TextStyle(
                         fontSize: 16.0,
-                        fontFamily: ThemeManager.orbitron,
+                        fontFamily: TriOSThemeConstants.orbitron,
                       ),
                     ),
                     const SizedBox(height: 16),

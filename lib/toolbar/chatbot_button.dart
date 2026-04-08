@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:trios/chatbot/chatbot_dialog.dart';
@@ -221,11 +222,11 @@ class _AnimatedGradientTooltip extends StatelessWidget {
     return Card(
       child: AnimatedGradientBorder(
         colors: colors,
-        borderRadius: ThemeManager.cornerRadius,
+        borderRadius: TriOSThemeConstants.cornerRadius,
         child: Container(
           decoration: BoxDecoration(
             color: theme.cardColor,
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+            borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           ),
           child: Padding(
             padding: const EdgeInsets.all(8),

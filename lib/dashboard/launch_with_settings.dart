@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -88,7 +89,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.error,
                       borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
+                        TriOSThemeConstants.cornerRadius,
                       ),
                     ),
                     child: Opacity(
@@ -150,7 +151,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                             : Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(
-                                    ThemeManager.cornerRadius,
+                                    TriOSThemeConstants.cornerRadius,
                                   ),
                                   border: Border.all(
                                     color: Theme.of(
@@ -176,7 +177,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                     ).colorScheme.secondary,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(
-                                        ThemeManager.cornerRadius,
+                                        TriOSThemeConstants.cornerRadius,
                                       ),
                                     ),
                                   ),
@@ -428,7 +429,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               "If you encounter strange issues in-game, disable Skip Launcher.",
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
-                                    color: ThemeManager.vanillaWarningColor
+                                    color: TriOSThemeConstants.vanillaWarningColor
                                         .withAlpha(200),
                                   ),
                             ),
@@ -436,7 +437,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               "Possible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
-                                    color: ThemeManager.vanillaWarningColor
+                                    color: TriOSThemeConstants.vanillaWarningColor
                                         .withAlpha(200),
                                   ),
                             ),

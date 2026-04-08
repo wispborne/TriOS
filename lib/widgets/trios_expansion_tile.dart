@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../themes/theme_manager.dart';
 
@@ -95,12 +96,12 @@ class TriOSExpansionTile extends StatelessWidget {
       shape:
           shape ??
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+            borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           ),
       collapsedShape:
           collapsedShape ??
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+            borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           ),
       clipBehavior: clipBehavior,
       controlAffinity: controlAffinity,

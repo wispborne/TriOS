@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
@@ -189,7 +191,7 @@ Future<void> showDeleteModFoldersConfirmationDialog(
                               "\n\nIf you've used ${Constants.appName} to import custom portraits, you'll need to re-import them if you want to use them again.",
                           child: Icon(
                             Icons.warning,
-                            color: ThemeManager.vanillaWarningColor,
+                            color: TriOSThemeConstants.vanillaWarningColor,
                           ),
                         ),
                       ),

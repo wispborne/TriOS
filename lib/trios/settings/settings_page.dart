@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1216,9 +1217,8 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
 
     final entries = availableThemes
         .map((entry) {
-          final themeData = ref
-              .read(AppState.themeData.notifier)
-              .convertToThemeData(entry.value);
+          final themeData =
+              ThemeManager.convertToThemeData(entry.value);
           return DropdownMenuEntry(
             value: entry.value,
             style: ButtonStyle(

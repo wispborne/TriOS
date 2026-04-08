@@ -34,20 +34,6 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
     _$modId,
     opt: true,
   );
-  static Set<String> _$names(ModRecord v) => v.names;
-  static const Field<ModRecord, Set<String>> _f$names = Field(
-    'names',
-    _$names,
-    opt: true,
-    def: const {},
-  );
-  static Set<String> _$authors(ModRecord v) => v.authors;
-  static const Field<ModRecord, Set<String>> _f$authors = Field(
-    'authors',
-    _$authors,
-    opt: true,
-    def: const {},
-  );
   static DateTime? _$firstSeen(ModRecord v) => v.firstSeen;
   static const Field<ModRecord, DateTime> _f$firstSeen = Field(
     'firstSeen',
@@ -57,25 +43,27 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
   static Map<String, ModRecordSource> _$sources(ModRecord v) => v.sources;
   static const Field<ModRecord, Map<String, ModRecordSource>> _f$sources =
       Field('sources', _$sources, opt: true, def: const {});
+  static Map<String, ModRecordSource> _$userOverrides(ModRecord v) =>
+      v.userOverrides;
+  static const Field<ModRecord, Map<String, ModRecordSource>> _f$userOverrides =
+      Field('userOverrides', _$userOverrides, opt: true, def: const {});
 
   @override
   final MappableFields<ModRecord> fields = const {
     #recordKey: _f$recordKey,
     #modId: _f$modId,
-    #names: _f$names,
-    #authors: _f$authors,
     #firstSeen: _f$firstSeen,
     #sources: _f$sources,
+    #userOverrides: _f$userOverrides,
   };
 
   static ModRecord _instantiate(DecodingData data) {
     return ModRecord(
       recordKey: data.dec(_f$recordKey),
       modId: data.dec(_f$modId),
-      names: data.dec(_f$names),
-      authors: data.dec(_f$authors),
       firstSeen: data.dec(_f$firstSeen),
       sources: data.dec(_f$sources),
+      userOverrides: data.dec(_f$userOverrides),
     );
   }
 
@@ -145,13 +133,19 @@ abstract class ModRecordCopyWith<$R, $In extends ModRecord, $Out>
     ModRecordSourceCopyWith<$R, ModRecordSource, ModRecordSource>
   >
   get sources;
+  MapCopyWith<
+    $R,
+    String,
+    ModRecordSource,
+    ModRecordSourceCopyWith<$R, ModRecordSource, ModRecordSource>
+  >
+  get userOverrides;
   $R call({
     String? recordKey,
     String? modId,
-    Set<String>? names,
-    Set<String>? authors,
     DateTime? firstSeen,
     Map<String, ModRecordSource>? sources,
+    Map<String, ModRecordSource>? userOverrides,
   });
   ModRecordCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -177,31 +171,40 @@ class _ModRecordCopyWithImpl<$R, $Out>
     (v) => call(sources: v),
   );
   @override
+  MapCopyWith<
+    $R,
+    String,
+    ModRecordSource,
+    ModRecordSourceCopyWith<$R, ModRecordSource, ModRecordSource>
+  >
+  get userOverrides => MapCopyWith(
+    $value.userOverrides,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(userOverrides: v),
+  );
+  @override
   $R call({
     String? recordKey,
     Object? modId = $none,
-    Set<String>? names,
-    Set<String>? authors,
     Object? firstSeen = $none,
     Map<String, ModRecordSource>? sources,
+    Map<String, ModRecordSource>? userOverrides,
   }) => $apply(
     FieldCopyWithData({
       if (recordKey != null) #recordKey: recordKey,
       if (modId != $none) #modId: modId,
-      if (names != null) #names: names,
-      if (authors != null) #authors: authors,
       if (firstSeen != $none) #firstSeen: firstSeen,
       if (sources != null) #sources: sources,
+      if (userOverrides != null) #userOverrides: userOverrides,
     }),
   );
   @override
   ModRecord $make(CopyWithData data) => ModRecord(
     recordKey: data.get(#recordKey, or: $value.recordKey),
     modId: data.get(#modId, or: $value.modId),
-    names: data.get(#names, or: $value.names),
-    authors: data.get(#authors, or: $value.authors),
     firstSeen: data.get(#firstSeen, or: $value.firstSeen),
     sources: data.get(#sources, or: $value.sources),
+    userOverrides: data.get(#userOverrides, or: $value.userOverrides),
   );
 
   @override

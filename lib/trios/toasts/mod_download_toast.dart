@@ -10,6 +10,7 @@ import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/toasts/toast_countdown_mixin.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
@@ -158,6 +159,8 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
     final timeElapsed = countdownStopwatch.elapsedMilliseconds;
     final timeTotal = widget.toastDurationMillis;
 
+    final paletteTriosTheme = palette.toTriOSTheme(context);
+
     return Padding(
       padding: const EdgeInsets.only(top: 4, right: 32),
       child: Container(
@@ -171,7 +174,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
           ],
         ),
         child: Theme(
-          data: palette.createPaletteTheme(context),
+          data: paletteTriosTheme != null
+              ? ThemeManager.convertToThemeData(paletteTriosTheme)
+              : Theme.of(context),
           child: Builder(
             builder: (context) {
               final theme = Theme.of(context);
@@ -268,8 +273,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
                                                           DownloadStatus
                                                               .completed &&
                                                       download.hasInstallError
-                                                  ? ThemeManager
-                                                        .vanillaErrorColor
+                                                  ? TriOSThemeConstants.vanillaErrorColor
                                                   : switch (status) {
                                                       DownloadStatus.queued =>
                                                         theme.iconTheme.color,
@@ -285,11 +289,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
                                                             .colorScheme
                                                             .secondary,
                                                       DownloadStatus.failed =>
-                                                        ThemeManager
-                                                            .vanillaErrorColor,
+                                                        TriOSThemeConstants.vanillaErrorColor,
                                                       DownloadStatus.canceled =>
-                                                        ThemeManager
-                                                            .vanillaErrorColor,
+                                                        TriOSThemeConstants.vanillaErrorColor,
                                                       _ =>
                                                         theme.iconTheme.color,
                                                     },
@@ -542,8 +544,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
                                                     .textTheme
                                                     .labelMedium
                                                     ?.copyWith(
-                                                      color: ThemeManager
-                                                          .vanillaErrorColor,
+                                                      color: TriOSThemeConstants.vanillaErrorColor,
                                                     ),
                                               ),
                                             ),
@@ -615,8 +616,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
                                                       .textTheme
                                                       .labelMedium
                                                       ?.copyWith(
-                                                        color: ThemeManager
-                                                            .vanillaErrorColor,
+                                                        color: TriOSThemeConstants.vanillaErrorColor,
                                                       ),
                                                 ),
                                               ),
@@ -640,8 +640,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
                                                         status ==
                                                             DownloadStatus
                                                                 .failed
-                                                        ? ThemeManager
-                                                              .vanillaErrorColor
+                                                        ? TriOSThemeConstants.vanillaErrorColor
                                                         : null,
                                                     value:
                                                         TriOSDownloadProgress(

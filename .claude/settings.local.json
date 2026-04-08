@@ -41,7 +41,25 @@
       "Bash(sed -i \"s|package:trios/widgets/post_update_toast.dart|package:trios/trios/toasts/widgets/post_update_toast.dart|g\" lib/main.dart)",
       "Bash(sed -i \"s|package:trios/widgets/companion_mod_update_toast.dart|package:trios/trios/toasts/widgets/companion_mod_update_toast.dart|g\" lib/trios/toasts/toast_manager.dart)",
       "Bash(sed -i \"s|../../widgets/self_update_toast.dart|../toasts/widgets/self_update_toast.dart|g\" lib/trios/settings/settings_page.dart)",
-      "Bash(openspec instructions:*)"
+      "Bash(openspec instructions:*)",
+      "Bash(openspec list:*)",
+      "Bash(openspec status:*)",
+      "Bash(openspec new:*)",
+      "Bash(mkdir -p openspec/changes/clean-up-theme-manager/specs/reusable-theme-manager)",
+      "Bash(mkdir -p openspec/changes/clean-up-theme-manager/specs/semantic-color-extension)",
+      "Bash(flutter run:*)",
+      "Bash(python3 -c \":*)",
+      "Bash(mkdir -p openspec/changes/archive)",
+      "Bash(mv openspec/changes/clean-up-theme-manager openspec/changes/archive/2026-04-06-clean-up-theme-manager)",
+      "Bash(find F:CodeStarsectorTriOS -type f \\\\\\(-name *.csv -o -name *test* -name *.json \\\\\\))",
+      "Bash(find /f/Code/Starsector -type f \\\\\\(-name *Codex* -o -name *codex* \\\\\\))",
+      "Bash(2)",
+      "Bash(npx openspec:*)",
+      "Bash(mkdir -p openspec/specs/phase-tooltip-stats)",
+      "Bash(cp openspec/changes/fix-phase-defense-tooltip/specs/phase-tooltip-stats/spec.md openspec/specs/phase-tooltip-stats/spec.md)",
+      "Bash(mv openspec/changes/fix-phase-defense-tooltip openspec/changes/archive/2026-04-07-fix-phase-defense-tooltip)",
+      "Bash(mkdir -p openspec/specs/inline-edit-widget)",
+      "Bash(cp openspec/changes/inline-edit-text-widget/specs/inline-edit-widget/spec.md openspec/specs/inline-edit-widget/spec.md)"
     ]
   }
 }

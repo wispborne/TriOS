@@ -34,6 +34,7 @@ dependencies:
   flutter_animate: ^4.5.2
   flutter_color: ^2.1.0
   google_fonts: ^7.0.0
+  material_color_utilities: ^0.11.1
   hooks_riverpod: ^2.6.1
   hashlib: ^2.3.0
   html: ^0.15.6

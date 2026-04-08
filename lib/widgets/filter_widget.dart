@@ -3,6 +3,7 @@ import 'package:trios/themes/theme_manager.dart' show ThemeManager;
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 class GridFilter<T> {
   final String name;
@@ -479,7 +480,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
                           child: InkWell(
                             onTap: widget.onHide,
                             borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
+                              TriOSThemeConstants.cornerRadius,
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(8),

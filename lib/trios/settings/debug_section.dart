@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
@@ -772,7 +774,7 @@ class DebugSettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+      borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       child: Container(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         padding: const EdgeInsets.all(8),

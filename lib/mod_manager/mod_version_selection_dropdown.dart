@@ -14,6 +14,7 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../models/mod.dart';
 import '../models/mod_variant.dart';
@@ -61,7 +62,7 @@ class _ModVersionSelectionDropdownState
     final modDependenciesSatisfied = mainDependencyCheck?.dependencyChecks;
     final useWarningUi =
         hasMultipleEnabled || hasMultipleSameVersionInModsFolder;
-    final rainbowAccent = context.rainbowAccent;
+    final rainbowAccent = theme.rainbowAccent;
 
     // TODO consolidate this logic with the logic in smol2.
     final areAllDependenciesSatisfied = modDependenciesSatisfied?.every(
@@ -96,9 +97,9 @@ class _ModVersionSelectionDropdownState
 
     final borderColor = (isButtonEnabled && !isButtonPseudoDisabled)
         ? (useWarningUi
-              ? ThemeManager.vanillaErrorColor.darker(20)
+              ? TriOSThemeConstants.vanillaErrorColor.darker(20)
               : theme.colorScheme.secondary.darker(20))
-        : ThemeManager.vanillaErrorColor.withOpacity(isEnabled ? 0.8 : 0.4);
+        : TriOSThemeConstants.vanillaErrorColor.withOpacity(isEnabled ? 0.8 : 0.4);
 
     Color? getGameCompatibilityTextColor(ModVariant variant) {
       // Special handling if background color is errorColor. GameCompat color is orange/red, which is too hard to see.
@@ -109,8 +110,8 @@ class _ModVersionSelectionDropdownState
     }
 
     final effectiveRadius = rainbowAccent
-        ? ThemeManager.cornerRadius - 2
-        : ThemeManager.cornerRadius;
+        ? TriOSThemeConstants.cornerRadius - 2
+        : TriOSThemeConstants.cornerRadius;
 
     const textStyle = TextStyle(
       fontWeight: FontWeight.w900,
@@ -187,7 +188,7 @@ class _ModVersionSelectionDropdownState
           width: buttonWidth,
           height: buttonHeight,
           child: RainbowBorder(
-            borderRadius: ThemeManager.cornerRadius,
+            borderRadius: TriOSThemeConstants.cornerRadius,
             alpha: 0.7,
             child: button,
           ),
@@ -260,7 +261,7 @@ class _ModVersionSelectionDropdownState
           child: ConditionalWrap(
             condition: rainbowAccent,
             wrapper: (child) => RainbowBorder(
-              borderRadius: ThemeManager.cornerRadius,
+              borderRadius: TriOSThemeConstants.cornerRadius,
               alpha: 0.7,
               child: child,
             ),

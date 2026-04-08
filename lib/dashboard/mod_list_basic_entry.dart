@@ -15,6 +15,7 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../mod_manager/version_checker.dart';
@@ -189,8 +190,11 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
         ? 0.55
         : 1.0;
 
-    final palette = isColorfulModeOn
-        ? paletteGenerator?.createPaletteTheme(context)
+    final paletteTriosTheme = isColorfulModeOn
+        ? paletteGenerator?.toTriOSTheme(context)
+        : null;
+    final palette = paletteTriosTheme != null
+        ? ThemeManager.convertToThemeData(paletteTriosTheme)
         : null;
     final paletteAccent = palette?.colorScheme.onSurface;
     final paletteBg = palette?.colorScheme.surface;

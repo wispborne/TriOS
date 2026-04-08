@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 /// A widget that styles its child like code, with monospaced font and background.
 /// Optionally adds a clipboard button to copy the text.

@@ -7,6 +7,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../mod_manager/version_checker.dart';
 
@@ -195,7 +196,7 @@ class _VersionCheckTextReadoutState
                   Text(
                     "Error checking for updates.",
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: ThemeManager.vanillaErrorColor,
+                      color: TriOSThemeConstants.vanillaErrorColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -204,7 +205,7 @@ class _VersionCheckTextReadoutState
                     child: Text(
                       "This is usually caused by the mod author or a network error. Please visit the mod page to manually find updates.",
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: ThemeManager.vanillaErrorColor,
+                        color: TriOSThemeConstants.vanillaErrorColor,
                       ),
                     ),
                   ),
@@ -226,7 +227,7 @@ class _VersionCheckTextReadoutState
                     child: Text(
                       "Message",
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: ThemeManager.vanillaErrorColor,
+                        color: TriOSThemeConstants.vanillaErrorColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

@@ -8,6 +8,7 @@ import 'package:trios/mod_profiles/models/shared_mod_list.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 /// Utilities for exporting mod lists to various formats (CSV, clipboard, shared format).
 ///

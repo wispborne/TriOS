@@ -60,6 +60,10 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
   /// Has no effect when null (images are decoded at full resolution).
   final int? cacheWidth;
 
+  /// How to fit the ship sprite within the available space when
+  /// non-interactive. Defaults to [BoxFit.contain].
+  final BoxFit fit;
+
   const ShipBlueprintView({
     super.key,
     required this.ship,
@@ -73,6 +77,7 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     this.showToolbar = true,
     this.interactive = true,
     this.cacheWidth,
+    this.fit = BoxFit.contain,
   });
 
   /// Creates a minimal, non-interactive view suitable for thumbnails.
@@ -93,6 +98,7 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     bool showToolbar = false,
     bool interactive = false,
     int? cacheWidth,
+    BoxFit fit = BoxFit.contain,
   }) {
     return ShipBlueprintView(
       key: key,
@@ -107,6 +113,7 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
       showToolbar: showToolbar,
       interactive: interactive,
       cacheWidth: cacheWidth,
+      fit: fit,
     );
   }
 
@@ -539,7 +546,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
       return RepaintBoundary(
         child: ClipRect(
           child: FittedBox(
-            fit: BoxFit.contain,
+            fit: widget.fit,
             child: _buildMinimalContent(imgW, imgH),
           ),
         ),

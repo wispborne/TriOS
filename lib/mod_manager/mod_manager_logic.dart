@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/mod_manager/audit_log.dart';
@@ -160,16 +161,14 @@ class ModManagerNotifier extends AsyncNotifier<void> {
               base.sources,
             );
             updatedSources['installed'] = InstalledSource(
+              name: result.modInfo.name,
+              author: result.modInfo.author,
               installPath: variant?.modFolder.path,
               version: result.modInfo.version?.toString(),
               lastSeen: now,
             );
             return base.copyWith(
               modId: modId,
-              names: {
-                ...base.names,
-                if (result.modInfo.name != null) result.modInfo.name!,
-              },
               sources: updatedSources,
             );
           });
@@ -1582,4 +1581,42 @@ class VersionWarning extends ModDependencySatisfiedState {
 
 class Satisfied extends ModDependencySatisfiedState {
   Satisfied(ModVariant modVariant) : super(modVariant: modVariant);
+}
+
+Color? getStateColorForDependencyText(
+  ModDependencySatisfiedState dependencyState,
+) {
+  return switch (dependencyState) {
+    Satisfied _ => null,
+    Missing _ => TriOSThemeConstants.vanillaErrorColor,
+    Disabled _ =>
+      TriOSThemeConstants
+          .vanillaWarningColor, // Disabled means it's present, so we can just enable it.
+    VersionInvalid _ => TriOSThemeConstants.vanillaErrorColor,
+    VersionWarning _ => TriOSThemeConstants.vanillaWarningColor,
+  };
+}
+
+extension GameCompatibilityExt on GameCompatibility {
+  Color? getGameCompatibilityColor() {
+    switch (this) {
+      case GameCompatibility.incompatible:
+        return TriOSThemeConstants.vanillaErrorColor;
+      case GameCompatibility.warning:
+        return TriOSThemeConstants.vanillaWarningColor;
+      case _:
+        return null;
+    }
+  }
+}
+
+extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
+  Color? getDependencySatisfiedColor() {
+    return switch (this) {
+      Satisfied _ => Colors.green,
+      Disabled _ => TriOSThemeConstants.vanillaWarningColor.withAlpha(200),
+      VersionWarning _ => TriOSThemeConstants.vanillaWarningColor.withAlpha(200),
+      _ => TriOSThemeConstants.vanillaErrorColor,
+    };
+  }
 }

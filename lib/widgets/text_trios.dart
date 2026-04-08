@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Shows a tooltip if the text is too long to fit in the available space.
-class TextTriOS extends StatelessWidget {
+///
+/// Unlike a [LayoutBuilder]-based approach, this supports intrinsic
+/// dimensions so it can be used inside [Row], [Column], etc.
+class TextTriOS extends StatefulWidget {
   final String text;
   final TextStyle? style;
   final TextAlign? textAlign;
@@ -21,32 +25,56 @@ class TextTriOS extends StatelessWidget {
   });
 
   @override
+  State<TextTriOS> createState() => _TextTriOSState();
+}
+
+class _TextTriOSState extends State<TextTriOS> {
+  final _textKey = GlobalKey();
+  bool _isOverflowing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkOverflow());
+  }
+
+  @override
+  void didUpdateWidget(covariant TextTriOS oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text ||
+        oldWidget.style != widget.style ||
+        oldWidget.maxLines != widget.maxLines) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _checkOverflow());
+    }
+  }
+
+  void _checkOverflow() {
+    final renderObject = _textKey.currentContext?.findRenderObject();
+    if (renderObject is RenderParagraph) {
+      final didOverflow = renderObject.didExceedMaxLines;
+      if (didOverflow != _isOverflowing) {
+        setState(() => _isOverflowing = didOverflow);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textWidget = Text(
-      text,
-      style: style,
-      textAlign: textAlign,
-      overflow: overflow,
-      maxLines: maxLines,
+      widget.text,
+      key: _textKey,
+      style: widget.style,
+      textAlign: widget.textAlign,
+      overflow: widget.overflow,
+      maxLines: widget.maxLines,
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final textPainter = TextPainter(
-          text: TextSpan(
-            text: text,
-            style: style ?? DefaultTextStyle.of(context).style,
-          ),
-          maxLines: maxLines,
-          textDirection: Directionality.of(context),
-        )..layout(maxWidth: constraints.maxWidth);
-
-        final isOverflowing = textPainter.didExceedMaxLines;
-
-        return isOverflowing
-            ? MovingTooltipWidget.text(message: text, child: textWidget, warningLevel: warningLevel)
-            : textWidget;
-      },
-    );
+    return _isOverflowing
+        ? MovingTooltipWidget.text(
+            message: widget.text,
+            child: textWidget,
+            warningLevel: widget.warningLevel,
+          )
+        : textWidget;
   }
 }

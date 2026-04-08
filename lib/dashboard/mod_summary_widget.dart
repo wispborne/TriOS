@@ -4,6 +4,7 @@ import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../themes/theme_manager.dart';
@@ -200,7 +201,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                     Text(
                       "Original game version",
                       style: theme.textTheme.labelMedium?.copyWith(
-                        color: ThemeManager.vanillaWarningColor.withOpacity(
+                        color: TriOSThemeConstants.vanillaWarningColor.withOpacity(
                           0.8,
                         ),
                       ),
@@ -210,7 +211,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                       child: Text(
                         modInfo.originalGameVersion ?? "",
                         style: theme.textTheme.labelMedium?.copyWith(
-                          color: ThemeManager.vanillaWarningColor,
+                          color: TriOSThemeConstants.vanillaWarningColor,
                         ),
                       ),
                     ),
@@ -275,7 +276,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                 Text(
                   "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: ThemeManager.vanillaErrorColor,
+                    color: TriOSThemeConstants.vanillaErrorColor,
                   ),
                 ),
               if (widget.showIconTip)

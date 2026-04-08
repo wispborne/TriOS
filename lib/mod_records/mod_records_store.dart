@@ -95,16 +95,13 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       final existing = records[modId];
       final vci = variant.versionCheckerInfo;
 
-      final names = <String>{};
-      if (variant.modInfo.name != null) names.add(variant.modInfo.name!);
-      final authors = <String>{};
-      if (variant.modInfo.author != null) authors.add(variant.modInfo.author!);
-
       // Build source sub-entries.
       final sourcesMap = <String, ModRecordSource>{};
 
       // 1. Installed source.
       sourcesMap['installed'] = InstalledSource(
+        name: variant.modInfo.name,
+        author: variant.modInfo.author,
         installPath: variant.modFolder.path,
         version: variant.bestVersion?.toString(),
         lastSeen: now,
@@ -156,17 +153,12 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
 
       if (matchedCatalog != null) {
         matchedCatalogNames.add(matchedCatalog.name);
-        if (matchedCatalog.getAuthors().isNotEmpty) {
-          authors.addAll(matchedCatalog.getAuthors());
-        }
         sourcesMap['catalog'] = _buildCatalogSource(matchedCatalog, now);
       }
 
       final newRecord = ModRecord(
         recordKey: modId,
         modId: modId,
-        names: names,
-        authors: authors,
         firstSeen: existing?.firstSeen ?? now,
         sources: sourcesMap,
       );
@@ -186,7 +178,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
 
       // Skip if already merged into a real-ID record.
       if (records.values.any(
-        (r) => r.catalog?.catalogName == scraped.name && r.modId != null,
+        (r) => r.catalog?.name == scraped.name && r.modId != null,
       )) {
         if (records.containsKey(syntheticKey)) {
           records.remove(syntheticKey);
@@ -200,8 +192,6 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
 
       final newRecord = ModRecord(
         recordKey: syntheticKey,
-        names: {scraped.name},
-        authors: scraped.getAuthors().toSet(),
         firstSeen: existing?.firstSeen ?? now,
         sources: {'catalog': catalogSource},
       );
@@ -228,7 +218,10 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     final forumUrl = urls[ModUrlType.Forum];
     final nexusUrl = urls[ModUrlType.NexusMods];
     return CatalogSource(
-      catalogName: scraped.name,
+      name: scraped.name,
+      authors: scraped.getAuthors().isNotEmpty
+          ? scraped.getAuthors()
+          : null,
       forumUrl: forumUrl,
       nexusUrl: nexusUrl,
       discordUrl: urls[ModUrlType.Discord],
@@ -295,7 +288,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
   ModRecord? lookupByCatalogName(String name) {
     final normalized = name.toLowerCase().trim();
     return state.valueOrNull?.records.values.cast<ModRecord?>().firstWhere(
-      (r) => r!.catalog?.catalogName?.toLowerCase().trim() == normalized,
+      (r) => r!.catalog?.name?.toLowerCase().trim() == normalized,
       orElse: () => null,
     );
   }

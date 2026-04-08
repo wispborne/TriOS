@@ -5,9 +5,11 @@ part 'mod_record.mapper.dart';
 
 /// A persistent record that links all known sources of information about a mod.
 ///
-/// Each record has a thin top level (identity + aggregated names/authors) and
-/// a [sources] map containing typed sub-entries for each place the mod was found
+/// Each record has a thin top level (identity only) and a [sources] map
+/// containing typed sub-entries for each place the mod was found
 /// (installed on disk, in the catalog, version checker, download history).
+/// Names and authors live within the source sub-entries; use [allNames] and
+/// [allAuthors] to aggregate across resolved sources.
 @MappableClass()
 class ModRecord with ModRecordMappable {
   /// Primary key: mod ID or `catalog:{normalized_name}`.
@@ -16,39 +18,100 @@ class ModRecord with ModRecordMappable {
   /// The canonical mod ID from mod_info.json, if known.
   final String? modId;
 
-  /// All known display names for this mod (unioned from all sources).
-  final Set<String> names;
-
-  /// All known authors for this mod (unioned from all sources).
-  final Set<String> authors;
-
   /// When this mod was first encountered by TriOS.
   final DateTime? firstSeen;
 
   /// Source-specific data, keyed by source type string
   /// ('installed', 'catalog', 'versionChecker', 'downloadHistory').
+  /// Written by auto-population only.
   final Map<String, ModRecordSource> sources;
+
+  /// User-edited overrides, keyed by the same source type strings.
+  /// Fields that are non-null here take priority over [sources].
+  /// Auto-population never touches this map.
+  final Map<String, ModRecordSource> userOverrides;
 
   ModRecord({
     required this.recordKey,
     this.modId,
-    this.names = const {},
-    this.authors = const {},
     this.firstSeen,
     this.sources = const {},
+    this.userOverrides = const {},
   });
 
-  // --- Typed source accessors ---
+  // --- Resolved sources (auto-populated + user overrides) ---
 
-  InstalledSource? get installed => sources['installed'] as InstalledSource?;
+  /// Merges [userOverrides] onto [sources] field-by-field.
+  /// For matching keys of the same runtime type, calls applyOverridesFrom.
+  /// If only one side has a key, uses it directly.
+  Map<String, ModRecordSource> get resolvedSources {
+    final allKeys = {...sources.keys, ...userOverrides.keys};
+    final resolved = <String, ModRecordSource>{};
+    for (final key in allKeys) {
+      final source = sources[key];
+      final override = userOverrides[key];
+      if (source != null && override != null) {
+        // Same-type merge via applyOverridesFrom.
+        resolved[key] = switch (source) {
+          InstalledSource s when override is InstalledSource =>
+            s.applyOverridesFrom(override),
+          VersionCheckerSource s when override is VersionCheckerSource =>
+            s.applyOverridesFrom(override),
+          CatalogSource s when override is CatalogSource =>
+            s.applyOverridesFrom(override),
+          DownloadHistorySource s when override is DownloadHistorySource =>
+            s.applyOverridesFrom(override),
+          // Different types: override wins entirely.
+          _ => override,
+        };
+      } else {
+        resolved[key] = override ?? source!;
+      }
+    }
+    return resolved;
+  }
 
-  CatalogSource? get catalog => sources['catalog'] as CatalogSource?;
+  // --- Typed source accessors (use resolved values) ---
+
+  InstalledSource? get installed =>
+      resolvedSources['installed'] as InstalledSource?;
+
+  CatalogSource? get catalog =>
+      resolvedSources['catalog'] as CatalogSource?;
 
   VersionCheckerSource? get versionChecker =>
-      sources['versionChecker'] as VersionCheckerSource?;
+      resolvedSources['versionChecker'] as VersionCheckerSource?;
 
   DownloadHistorySource? get downloadHistory =>
-      sources['downloadHistory'] as DownloadHistorySource?;
+      resolvedSources['downloadHistory'] as DownloadHistorySource?;
+
+  // --- Computed aggregation getters ---
+
+  /// All known display names aggregated from resolved sources.
+  Set<String> get allNames {
+    final names = <String>{};
+    final resolved = resolvedSources;
+    final inst = resolved['installed'];
+    if (inst is InstalledSource && inst.name != null) names.add(inst.name!);
+    final cat = resolved['catalog'];
+    if (cat is CatalogSource && cat.name != null) names.add(cat.name!);
+    return names;
+  }
+
+  /// All known authors aggregated from resolved sources.
+  Set<String> get allAuthors {
+    final authors = <String>{};
+    final resolved = resolvedSources;
+    final inst = resolved['installed'];
+    if (inst is InstalledSource && inst.author != null) {
+      authors.add(inst.author!);
+    }
+    final cat = resolved['catalog'];
+    if (cat is CatalogSource && cat.authors != null) {
+      authors.addAll(cat.authors!);
+    }
+    return authors;
+  }
 
   // --- Convenience getters that resolve across sources ---
 
@@ -82,7 +145,8 @@ class ModRecord with ModRecordMappable {
 
   /// Merges this record with [other], combining sources maps.
   /// For each source key, keeps the newer one (by lastSeen).
-  /// Unions names/authors. Keeps real mod ID over synthetic.
+  /// Keeps real mod ID over synthetic.
+  /// Preserves userOverrides from both sides (this side wins on conflicts).
   ModRecord merge(ModRecord other) {
     final mergedSources = Map<String, ModRecordSource>.of(sources);
     for (final entry in other.sources.entries) {
@@ -99,13 +163,19 @@ class ModRecord with ModRecordMappable {
         }
       }
     }
+
+    // Merge userOverrides: keep ours, add any from other that we don't have.
+    final mergedOverrides = Map<String, ModRecordSource>.of(userOverrides);
+    for (final entry in other.userOverrides.entries) {
+      mergedOverrides.putIfAbsent(entry.key, () => entry.value);
+    }
+
     return ModRecord(
       recordKey: modId ?? other.modId ?? recordKey,
       modId: modId ?? other.modId,
-      names: {...names, ...other.names},
-      authors: {...authors, ...other.authors},
       firstSeen: _earliest(firstSeen, other.firstSeen),
       sources: mergedSources,
+      userOverrides: mergedOverrides,
     );
   }
 

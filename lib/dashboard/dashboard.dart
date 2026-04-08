@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -86,7 +87,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                         Icons.warning_amber_rounded,
                                         size: 32,
                                         color:
-                                            ThemeManager.vanillaWarningColor,
+                                            TriOSThemeConstants.vanillaWarningColor,
                                       )
                                     : const Icon(Icons.speed, size: 32),
                                 subtitle: Text(

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:google_fonts/google_fonts.dart';
@@ -771,7 +773,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                         GameCompatibility.perfectMatch
                                     ? theme.textTheme.labelLarge
                                     : theme.textTheme.labelLarge?.copyWith(
-                                        color: ThemeManager.vanillaErrorColor,
+                                        color: TriOSThemeConstants.vanillaErrorColor,
                                       ),
                               ),
                             ),
@@ -1004,7 +1006,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 }
               },
               tooltip: "",
-              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+              borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
               initialValue: activeProfile,
               itemBuilder: (BuildContext context) =>
                   profiles?.modProfiles
@@ -1137,7 +1139,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             });
           },
           tooltip: "",
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           itemBuilder: (BuildContext context) => groups
               .map(
                 (g) => PopupMenuItem<WispGridGroup<Mod>>(
@@ -2175,7 +2177,7 @@ class MissingDependencyButton extends ConsumerWidget {
       minimumSize: const Size(60, 34),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(
-          ThemeManager.cornerRadius,
+          TriOSThemeConstants.cornerRadius,
         ), // Rounded corners
       ),
     );
@@ -2343,8 +2345,11 @@ class _ModGridRowState extends ConsumerState<_ModGridRow>
     final isColorfulModeOn = ref.watch(
       appSettings.select((s) => s.modsGridColorful),
     );
-    final paletteTheme = isColorfulModeOn
-        ? paletteGenerator?.createPaletteTheme(context)
+    final paletteTriosTheme = isColorfulModeOn
+        ? paletteGenerator?.toTriOSTheme(context)
+        : null;
+    final paletteTheme = paletteTriosTheme != null
+        ? ThemeManager.convertToThemeData(paletteTriosTheme)
         : null;
     final paletteBg = paletteTheme?.colorScheme.surfaceDim;
     final paletteAccent = paletteTheme?.colorScheme.onSurface;

@@ -11,6 +11,7 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_trios.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../vmparams/ram_changer.dart';
 import '../widgets/disable_if_cannot_write_game_folder.dart';
@@ -113,7 +114,7 @@ class ChangeRamWidget extends ConsumerWidget {
                         child: const Icon(
                           Icons.warning_amber_rounded,
                           size: 24,
-                          color: ThemeManager.vanillaWarningColor,
+                          color: TriOSThemeConstants.vanillaWarningColor,
                         ),
                       ),
                     MovingTooltipWidget.text(
@@ -263,7 +264,7 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(
                                     fontStyle: FontStyle.italic,
-                                    color: ThemeManager.vanillaWarningColor,
+                                    color: TriOSThemeConstants.vanillaWarningColor,
                                   ),
                             )
                           : Row(
@@ -328,7 +329,7 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(
                                     fontStyle: FontStyle.italic,
-                                    color: ThemeManager.vanillaWarningColor,
+                                    color: TriOSThemeConstants.vanillaWarningColor,
                                   ),
                             )
                           : MovingTooltipWidget.text(

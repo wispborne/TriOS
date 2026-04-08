@@ -5,6 +5,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/animated_gradient_border.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 class AprilFools2026Toast extends ConsumerStatefulWidget {
   const AprilFools2026Toast(this.item, {super.key});
@@ -32,17 +33,17 @@ class _AprilFools2026ToastState extends ConsumerState<AprilFools2026Toast> {
         elevation: 8,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         ),
         child: AnimatedGradientBorder(
           colors: gradientColors,
-          borderRadius: ThemeManager.cornerRadius,
+          borderRadius: TriOSThemeConstants.cornerRadius,
           duration: const Duration(milliseconds: 6000),
           child: Container(
             clipBehavior: Clip.antiAlias,
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+              borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
             ),
             child: Row(
               children: [

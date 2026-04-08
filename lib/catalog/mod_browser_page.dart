@@ -8,11 +8,18 @@ import 'package:multi_split_view/multi_split_view.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/catalog/scraped_mod_card.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/mod_records/mod_record.dart';
+import 'package:trios/mod_records/mod_records_store.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/drag_drop_handler.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/logging.dart';
@@ -20,7 +27,9 @@ import 'package:trios/utils/search.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/tristate_icon_button.dart';
+import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 
 import '../main.dart';
 import '../trios/download_manager/downloader.dart';
@@ -65,7 +74,15 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
   bool? filterDiscord;
   bool? filterIndex;
   bool? filterForumModding;
+  bool? filterInstalled;
+  bool? filterHasUpdate;
+  String selectedCategory = '';
+  String selectedVersion = '';
+  CatalogSortKey selectedSort = CatalogSortKey.nameAsc;
+  List<String> _categoryOptions = [];
+  Map<String, Set<String>> _versionGroupOptions = {};
   WebViewStatus _webViewStatus = WebViewStatus.loading;
+  Map<String, _CatalogEntryStatus> _catalogStatusMap = {};
   String? currentUrl;
 
   @override
@@ -146,6 +163,24 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     final theme = Theme.of(context);
     final weaponCount = allMods?.items.length;
 
+    // Rebuild dropdown options when mod data is available.
+    if (allMods?.items != null) {
+      _categoryOptions = extractCategories(allMods!.items);
+      _versionGroupOptions = extractVersionGroups(allMods.items);
+    }
+
+    // Build catalog status map from mod records.
+    final modRecords = ref.watch(modRecordsStore).valueOrNull;
+    final installedMods = ref.watch(AppState.mods);
+    final versionCheckState = ref
+        .watch(AppState.versionCheckResults)
+        .valueOrNull;
+    _catalogStatusMap = _buildCatalogStatusMap(
+      modRecords,
+      installedMods,
+      versionCheckState,
+    );
+
     return Column(
       children: [
         Expanded(
@@ -176,7 +211,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(
-                            height: 50,
+                            height: 80,
                             child: Card(
                               margin: const EdgeInsets.only(bottom: 4),
                               child: Padding(
@@ -184,103 +219,236 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                   left: 4,
                                   right: 4,
                                 ),
-                                child: Row(
+                                child: Column(
                                   children: [
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      "Filters  ",
-                                      style: theme.textTheme.labelLarge,
-                                    ),
                                     Row(
-                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        buildTristateTooltipIconButton(
-                                          icon: const Icon(
-                                            Icons.download_for_offline,
-                                          ),
-                                          filter: filterHasDownloadLink,
-                                          trueTooltip:
-                                              'Showing only mods with a download link',
-                                          falseTooltip:
-                                              'Hiding mods with a download link',
-                                          nullTooltip:
-                                              'Showing all mods incl. with a download link',
-                                          onChanged: (value) {
-                                            filterHasDownloadLink = value;
-                                            updateFilter();
-                                            setState(() {});
-                                          },
-                                        ),
-                                        buildTristateTooltipIconButton(
-                                          icon: const Icon(Icons.discord),
-                                          filter: filterDiscord,
-                                          trueTooltip:
-                                              'Showing only mods on Discord',
-                                          falseTooltip:
-                                              'Hiding mods on Discord',
-                                          nullTooltip:
-                                              'Showing all mods incl. Discord',
-                                          onChanged: (value) {
-                                            filterDiscord = value;
-                                            updateFilter();
-                                            setState(() {});
-                                          },
-                                        ),
-                                        buildTristateTooltipIconButton(
-                                          icon: const SvgImageIcon(
-                                            'assets/images/icon-podium-gold.svg',
-                                            width: 24,
-                                            height: 24,
-                                          ),
-                                          filter: filterIndex,
-                                          trueTooltip:
-                                              'Showing only mods on the Index',
-                                          falseTooltip:
-                                              'Hiding mods on the Index',
-                                          nullTooltip:
-                                              'Showing all mods incl. the Index',
-                                          onChanged: (value) {
-                                            filterIndex = value;
-                                            updateFilter();
-                                            setState(() {});
-                                          },
-                                        ),
-                                        buildTristateTooltipIconButton(
-                                          icon: const SvgImageIcon(
-                                            'assets/images/icon-podium-silver.svg',
-                                            width: 24,
-                                            height: 24,
-                                          ),
-                                          filter: filterForumModding,
-                                          trueTooltip:
-                                              "Showing only mods on the Forum (besides the Index)",
-                                          falseTooltip:
-                                              'Hiding mods on the Forum (besides the Index)',
-                                          nullTooltip:
-                                              'Showing all mods incl. Forum',
-                                          onChanged: (value) {
-                                            filterForumModding = value;
-                                            updateFilter();
-                                            setState(() {});
-                                          },
-                                        ),
-                                        // IconButton(
-                                        //   icon: const Icon(Icons.refresh),
-                                        //   tooltip: 'Redownload Catalog',
-                                        //   onPressed: () {
-                                        //     setState(() {});
-                                        //
-                                        //     ref.invalidate(
-                                        //         browseModsNotifierProvider);
-                                        //   },
+                                        const SizedBox(width: 4),
+                                        // Text(
+                                        //   "Filters  ",
+                                        //   style: theme.textTheme.labelLarge,
                                         // ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            buildTristateTooltipIconButton(
+                                              icon: const Icon(
+                                                Icons.download_for_offline,
+                                              ),
+                                              filter: filterHasDownloadLink,
+                                              trueTooltip:
+                                                  'Showing only mods with a download link',
+                                              falseTooltip:
+                                                  'Hiding mods with a download link',
+                                              nullTooltip:
+                                                  'Showing all mods incl. with a download link',
+                                              onChanged: (value) {
+                                                filterHasDownloadLink = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              },
+                                            ),
+                                            buildTristateTooltipIconButton(
+                                              icon: const Icon(Icons.discord),
+                                              filter: filterDiscord,
+                                              trueTooltip:
+                                                  'Showing only mods on Discord',
+                                              falseTooltip:
+                                                  'Hiding mods on Discord',
+                                              nullTooltip:
+                                                  'Showing all mods incl. Discord',
+                                              onChanged: (value) {
+                                                filterDiscord = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              },
+                                            ),
+                                            buildTristateTooltipIconButton(
+                                              icon: const SvgImageIcon(
+                                                'assets/images/icon-podium-gold.svg',
+                                                width: 24,
+                                                height: 24,
+                                              ),
+                                              filter: filterIndex,
+                                              trueTooltip:
+                                                  'Showing only mods on the Index',
+                                              falseTooltip:
+                                                  'Hiding mods on the Index',
+                                              nullTooltip:
+                                                  'Showing all mods incl. the Index',
+                                              onChanged: (value) {
+                                                filterIndex = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              },
+                                            ),
+                                            buildTristateTooltipIconButton(
+                                              icon: const SvgImageIcon(
+                                                'assets/images/icon-podium-silver.svg',
+                                                width: 24,
+                                                height: 24,
+                                              ),
+                                              filter: filterForumModding,
+                                              trueTooltip:
+                                                  "Showing only mods on the Forum (besides the Index)",
+                                              falseTooltip:
+                                                  'Hiding mods on the Forum (besides the Index)',
+                                              nullTooltip:
+                                                  'Showing all mods incl. Forum',
+                                              onChanged: (value) {
+                                                filterForumModding = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              },
+                                            ),
+                                            const SizedBox(width: 8),
+                                            buildTristateTooltipIconButton(
+                                              icon: const Icon(
+                                                Icons.check_circle_outline,
+                                              ),
+                                              filter: filterInstalled,
+                                              trueTooltip:
+                                                  'Showing only installed mods',
+                                              falseTooltip:
+                                                  'Hiding installed mods',
+                                              nullTooltip:
+                                                  'Showing all mods incl. installed',
+                                              onChanged: (value) {
+                                                filterInstalled = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              },
+                                            ),
+                                            buildTristateTooltipIconButton(
+                                              icon: const Icon(Icons.download),
+                                              filter: filterHasUpdate,
+                                              trueTooltip:
+                                                  'Showing only mods with updates',
+                                              falseTooltip:
+                                                  'Hiding mods with updates',
+                                              nullTooltip:
+                                                  'Showing all mods incl. with updates',
+                                              onChanged: (value) {
+                                                filterHasUpdate = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Align(
+                                            alignment: .centerRight,
+                                            child: SizedBox(
+                                              height: 30,
+                                              width: 200,
+                                              child: buildSearchBox(),
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
-                                    const Spacer(),
-                                    SizedBox(
-                                      height: 30,
-                                      width: 200,
-                                      child: buildSearchBox(),
+                                    // Category, Version, Sort dropdowns
+                                    Row(
+                                      spacing: 8,
+                                      children: [
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              maxWidth: 180,
+                                            ),
+                                            child: TriOSDropdownMenu<String>(
+                                              initialSelection:
+                                                  selectedCategory,
+                                              onSelected: (value) {
+                                                setState(() {
+                                                  selectedCategory =
+                                                      value ?? '';
+                                                  updateFilter();
+                                                });
+                                              },
+                                              dropdownMenuEntries: [
+                                                const DropdownMenuEntry(
+                                                  value: '',
+                                                  label: 'All Categories',
+                                                ),
+                                                ..._categoryOptions.map(
+                                                  (cat) => DropdownMenuEntry(
+                                                    value: cat,
+                                                    label: cat,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              maxWidth: 150,
+                                            ),
+                                            child: TriOSDropdownMenu<String>(
+                                              initialSelection: selectedVersion,
+                                              onSelected: (value) {
+                                                setState(() {
+                                                  selectedVersion = value ?? '';
+                                                  updateFilter();
+                                                });
+                                              },
+                                              dropdownMenuEntries: [
+                                                DropdownMenuEntry(
+                                                  value: '',
+                                                  label: 'All Versions',
+                                                ),
+                                                ..._versionGroupOptions.keys
+                                                    .map(
+                                                      (ver) =>
+                                                          DropdownMenuEntry(
+                                                            value: ver,
+                                                            label: ver,
+                                                          ),
+                                                    ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              maxWidth: 200,
+                                            ),
+                                            child:
+                                                TriOSDropdownMenu<
+                                                  CatalogSortKey
+                                                >(
+                                                  initialSelection:
+                                                      selectedSort,
+                                                  onSelected: (value) {
+                                                    setState(() {
+                                                      selectedSort =
+                                                          value ??
+                                                          CatalogSortKey
+                                                              .nameAsc;
+                                                      updateFilter();
+                                                    });
+                                                  },
+                                                  dropdownMenuEntries:
+                                                      CatalogSortKey.values
+                                                          .map(
+                                                            (key) =>
+                                                                DropdownMenuEntry(
+                                                                  value: key,
+                                                                  label:
+                                                                      key.label,
+                                                                ),
+                                                          )
+                                                          .toList(),
+                                                ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -306,43 +474,43 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       ),
                                     ),
                                   )
-                                : ListView.builder(
-                                    itemExtent: 200,
+                                : WispAdaptiveGridView<ScrapedMod>(
+                                    items: displayedMods ?? [],
+                                    minItemWidth: 390,
+                                    horizontalSpacing: 4,
+                                    verticalSpacing: 4,
                                     padding: EdgeInsets.only(
                                       bottom: widget.pagePadding,
                                     ),
-                                    itemCount: displayedMods?.length,
-                                    itemBuilder: (context, index) {
-                                      if (displayedMods == null) {
-                                        return const SizedBox();
-                                      }
-                                      final profile = displayedMods![index];
+                                    itemBuilder: (context, profile, index) {
+                                      final statusKey = profile.name
+                                          .toLowerCase()
+                                          .trim();
+                                      final status =
+                                          _catalogStatusMap[statusKey];
 
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 4,
-                                          bottom: 4,
-                                        ),
-                                        child: ScrapedModCard(
-                                          mod: profile,
-                                          linkLoader: (url) {
-                                            selectedModName = profile.name;
-                                            if (_webViewStatus ==
-                                                WebViewStatus.loaded) {
-                                              webViewController?.loadUrl(
-                                                urlRequest: URLRequest(
-                                                  url: WebUri(url),
-                                                ),
-                                              );
-                                            } else {
-                                              url.openAsUriInBrowser();
-                                            }
-                                            setState(() {});
-                                          },
-                                          isSelected:
-                                              currentUrl ==
-                                              profile.getBestWebsiteUrl(),
-                                        ),
+                                      return ScrapedModCard(
+                                        mod: profile,
+                                        installedMod: status?.mod,
+                                        versionCheckComparison:
+                                            status?.versionCheck,
+                                        linkLoader: (url) {
+                                          selectedModName = profile.name;
+                                          if (_webViewStatus ==
+                                              WebViewStatus.loaded) {
+                                            webViewController?.loadUrl(
+                                              urlRequest: URLRequest(
+                                                url: WebUri(url),
+                                              ),
+                                            );
+                                          } else {
+                                            url.openAsUriInBrowser();
+                                          }
+                                          setState(() {});
+                                        },
+                                        isSelected:
+                                            currentUrl ==
+                                            profile.getBestWebsiteUrl(),
                                       );
                                     },
                                   ),
@@ -660,9 +828,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                         if (!didPreviousSessionCrash)
                                           Text(
                                             "The web browser is disabled by default"
-                                                "\nto prevent crash looping on some systems."
-                                                "\n"
-                                                "\nClick Load Once, and, if it works, click Always Load next time.",
+                                            "\nto prevent crash looping on some systems."
+                                            "\n"
+                                            "\nClick Load Once, and, if it works, click Always Load next time.",
                                             textAlign: TextAlign.center,
                                             style: theme.textTheme.bodyMedium
                                                 ?.copyWith(
@@ -690,13 +858,15 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                                         .onErrorContainer,
                                                   ),
                                                   const SizedBox(width: 16),
-                                                  Text(
-                                                    "${Constants.appName} quit unexpectedly.\n"
-                                                    "The browser has been disabled as a precaution.",
-                                                    style: TextStyle(
-                                                      color: theme
-                                                          .colorScheme
-                                                          .onErrorContainer,
+                                                  Flexible(
+                                                    child: Text(
+                                                      "${Constants.appName} quit unexpectedly.\n"
+                                                      "The browser has been disabled as a precaution.",
+                                                      style: TextStyle(
+                                                        color: theme
+                                                            .colorScheme
+                                                            .onErrorContainer,
+                                                      ),
                                                     ),
                                                   ),
                                                 ],
@@ -705,22 +875,21 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                           ),
                                         ],
                                         const SizedBox(height: 24),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
+                                        Wrap(
                                           children: [
                                             MovingTooltipWidget.text(
-                                              message: "Browser will be loaded until ${Constants.appName} exits.",
+                                              message:
+                                                  "Browser will be loaded until ${Constants.appName} exits.",
                                               child: OutlinedButton.icon(
                                                 onPressed: _loadWebViewOnce,
                                                 icon: Icon(Icons.web),
-                                                label: const Text(
-                                                  "Load Once",
-                                                ),
+                                                label: const Text("Load Once"),
                                               ),
                                             ),
                                             const SizedBox(width: 12),
                                             MovingTooltipWidget.text(
-                                              message: "Browser will always load (unless ${Constants.appName} crashes).",
+                                              message:
+                                                  "Browser will always load (unless ${Constants.appName} crashes).",
                                               child: OutlinedButton.icon(
                                                 onPressed: _loadWebViewAlways,
                                                 icon: const Icon(Icons.web),
@@ -902,6 +1071,29 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
       displayedMods = allMods;
     }
 
+    // Category filter
+    if (selectedCategory.isNotEmpty) {
+      displayedMods = displayedMods
+          ?.where((mod) => (mod.categories ?? []).contains(selectedCategory))
+          .toList();
+    }
+
+    // Version filter
+    if (selectedVersion.isNotEmpty) {
+      final rawVersions = _versionGroupOptions[selectedVersion];
+      if (rawVersions != null) {
+        displayedMods = displayedMods
+            ?.where(
+              (mod) =>
+                  mod.gameVersionReq != null &&
+                  rawVersions.contains(mod.gameVersionReq),
+            )
+            .toList();
+      } else {
+        displayedMods = [];
+      }
+    }
+
     if (filterHasDownloadLink == true) {
       displayedMods = displayedMods
           ?.where(
@@ -948,6 +1140,39 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
             (mod) => mod.sources?.contains(ModSource.ModdingSubforum) != true,
           )
           .toList();
+    }
+
+    if (filterInstalled == true) {
+      displayedMods = displayedMods
+          ?.where(
+            (mod) =>
+                _catalogStatusMap.containsKey(mod.name.toLowerCase().trim()),
+          )
+          .toList();
+    } else if (filterInstalled == false) {
+      displayedMods = displayedMods
+          ?.where(
+            (mod) =>
+                !_catalogStatusMap.containsKey(mod.name.toLowerCase().trim()),
+          )
+          .toList();
+    }
+
+    if (filterHasUpdate == true) {
+      displayedMods = displayedMods?.where((mod) {
+        final status = _catalogStatusMap[mod.name.toLowerCase().trim()];
+        return status?.versionCheck?.hasUpdate == true;
+      }).toList();
+    } else if (filterHasUpdate == false) {
+      displayedMods = displayedMods?.where((mod) {
+        final status = _catalogStatusMap[mod.name.toLowerCase().trim()];
+        return status?.versionCheck?.hasUpdate != true;
+      }).toList();
+    }
+
+    // Sort (always applied last)
+    if (displayedMods != null) {
+      displayedMods = sortScrapedMods(displayedMods!, selectedSort);
     }
   }
 
@@ -1067,6 +1292,45 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
       },
     );
   }
+
+  Map<String, _CatalogEntryStatus> _buildCatalogStatusMap(
+    ModRecords? records,
+    List<Mod> installedMods,
+    VersionCheckerState? versionCheckState,
+  ) {
+    if (records == null) return {};
+    final modsByModId = {for (final mod in installedMods) mod.id: mod};
+    final map = <String, _CatalogEntryStatus>{};
+
+    for (final record in records.records.values) {
+      final catalogName = record.catalog?.name;
+      if (catalogName == null) continue;
+
+      final isInstalled = record.installed != null;
+      if (!isInstalled) continue;
+
+      final modId = record.modId;
+      if (modId == null) continue;
+
+      final mod = modsByModId[modId];
+      if (mod == null) continue;
+
+      final versionCheck = mod.updateCheck(versionCheckState);
+      map[catalogName.toLowerCase().trim()] = _CatalogEntryStatus(
+        mod: mod,
+        versionCheck: versionCheck,
+      );
+    }
+
+    return map;
+  }
+}
+
+class _CatalogEntryStatus {
+  final Mod mod;
+  final VersionCheckComparison? versionCheck;
+
+  const _CatalogEntryStatus({required this.mod, this.versionCheck});
 }
 
 // Custom widget for asynchronously checking file existence and displaying the image

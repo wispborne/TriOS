@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/text_trios.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared visual utilities for ingame-style tooltips (ship, weapon, etc.)
@@ -9,7 +11,7 @@ Widget tooltipTitle(String text, ThemeData theme) {
   return Text(
     text,
     style: theme.textTheme.titleMedium?.copyWith(
-      color: ThemeManager.vanillaCyanColor,
+      color: TriOSThemeConstants.vanillaCyanColor,
       fontWeight: FontWeight.bold,
       letterSpacing: 0.3,
     ),
@@ -233,12 +235,15 @@ class TooltipStatEntry {
         ),
         Padding(
           padding: const EdgeInsets.only(left: 16, top: 1, bottom: 1),
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: valueColor ?? ThemeManager.vanillaYellowGoldColor,
-              fontWeight: FontWeight.bold,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 70),
+            child: TextTriOS(
+              value,
+              textAlign: TextAlign.right,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: valueColor ?? TriOSThemeConstants.vanillaYellowGoldColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),

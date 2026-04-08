@@ -1,5 +1,19 @@
 {
   "themes": {
+    "HalloweenTriOSTheme": {
+      "isDark": true,
+      "primary": "#FF0000",
+      "secondary": "#FF671A",
+      "surface": "#272121",
+      "surfaceContainer": "#2F2929"
+    },
+    "XmasTriOSTheme": {
+      "isDark": true,
+      "primary": "#D81F28",
+      "secondary": "#8AD499",
+      "surface": "#0D2112",
+      "surfaceContainer": "#2B3227"
+    },
     "AlexAtheos, Creator of Starsector": {
       "isDark": true,
       "primary": "#00FF00",

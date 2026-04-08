@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
@@ -90,7 +91,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
         "Cannot write to vmparams file:\n${vmParamsFilesThatCannotBeWritten.join("\n")}."
         "\n\nMake sure it exists or try running ${Constants.appName} as an administrator.",
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: ThemeManager.vanillaWarningColor,
+          color: TriOSThemeConstants.vanillaWarningColor,
         ),
       );
     }
@@ -133,7 +134,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
+                        TriOSThemeConstants.cornerRadius,
                       ),
                       border: Border.all(width: 2, color: color),
                     ),
@@ -157,7 +158,7 @@ class _RamChangerState extends ConsumerState<RamChanger> {
           shape: isCustomRam
               ? RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(
-                    ThemeManager.cornerRadius,
+                    TriOSThemeConstants.cornerRadius,
                   ),
                   side: BorderSide(
                     color: theme.colorScheme.primary,

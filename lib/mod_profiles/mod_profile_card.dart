@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -158,7 +160,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                   : Colors.transparent,
               width: 2,
             ),
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+            borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           ),
           child: Stack(
             children: [
@@ -490,12 +492,12 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                     backgroundColor: theme.colorScheme.surfaceContainerLow,
                     collapsedShape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
+                        TriOSThemeConstants.cornerRadius,
                       ),
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
+                        TriOSThemeConstants.cornerRadius,
                       ),
                     ),
                     dense: true,

@@ -35,9 +35,9 @@ These are linked at runtime by mod ID when available, but there is no persistent
 **Rationale**: Mod ID is the canonical identifier across all systems. Synthetic keys allow tracking catalog mods before installation. Once a catalog mod is installed and its real ID discovered, the synthetic record is merged into the real-ID record.
 **Alternative considered**: Using name alone — rejected because names are not unique and change over time.
 
-### 3. Data model: `ModRecord` with nullable source fields
-**Choice**: A single `@MappableClass` with nullable fields for each source. Fields are filled as information is discovered.
-**Rationale**: Simple, flat structure. No need for separate "source" objects — a record grows richer over time as more sources are encountered.
+### 3. Data model: `ModRecord` with typed source sub-entries and user overrides
+**Choice**: A `@MappableClass` with a `sources` map (`Map<String, ModRecordSource>`) for auto-populated data and a `userOverrides` map (same type) for user-edited fields. A sealed `ModRecordSource` hierarchy provides typed subtypes (`InstalledSource`, `VersionCheckerSource`, `CatalogSource`, `DownloadHistorySource`). A `resolvedSources` getter merges overrides onto sources field-by-field.
+**Rationale**: Separating auto-populated data from user edits ensures auto-population never overwrites manual corrections. Each source subtype has an `applyOverridesFrom()` method for field-level merging (override wins when non-null). Overrides are sparse — only changed fields are stored.
 
 ### 4. Population strategy: startup scan + action enrichment
 **Choice**: On app startup (after mod variants are loaded and catalog is cached), run a cross-reference pass. Additionally, enrich records when the user downloads, installs, or browses a mod.
@@ -54,9 +54,15 @@ These are linked at runtime by mod ID when available, but there is no persistent
 **Choice**: `trios_mod_records-v1.json` in `Constants.configDataFolderPath` (the app support directory).
 **Rationale**: Consistent with `trios_mod_metadata-v1.json`, `trios_settings-v1.json`, etc.
 
+### 7. User overrides: separate layer from auto-populated data
+**Choice**: `ModRecord` has two parallel maps: `sources` (auto-populated) and `userOverrides` (user-edited via dialog). `resolvedSources` merges them with override fields winning when non-null.
+**Rationale**: Auto-population rebuilds sources with fresh `lastSeen` timestamps on every run, which would overwrite any user edits stored in `sources`. A separate override layer ensures user corrections persist across auto-population cycles. Overrides are sparse (only non-null fields differ from auto data), keeping the JSON clean.
+**Alternative considered**: (a) Field-level `userModified` flags — more complex, requires tracking per-field edit state. (b) Source-level replacement — user override replaces the entire source, which shadows future auto-discovered fields (e.g., a new changelog URL).
+
 ## Risks / Trade-offs
 
 - **Stale records** — A mod is uninstalled but its record persists. → Mitigation: Records are informational, not authoritative. Mark records with a `lastSeen` timestamp. The UI should always cross-check against live mod state.
 - **Synthetic key collisions** — Two catalog mods with similar names get the same synthetic key. → Mitigation: Normalize names aggressively (lowercase, strip special chars) and include author if available.
 - **Catalog matching accuracy** — Name/author fuzzy matching may produce false positives. → Mitigation: Prefer thread ID and Nexus ID matching; only use name matching when those are unavailable. Flag low-confidence matches.
 - **File size** — With hundreds of mods, the JSON file could grow. → Mitigation: At ~500 bytes per record and ~500 mods max, the file stays under 250KB. Well within acceptable bounds.
+- **Override null ambiguity** — `null` in an override field means "no override" (use auto value), so a user cannot explicitly blank a field that auto-population sets. → Mitigation: Acceptable edge case; in practice, users add information, not remove it.

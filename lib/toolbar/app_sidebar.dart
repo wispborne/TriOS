@@ -8,6 +8,7 @@ import 'package:trios/toolbar/chatbot_button.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 const _collapsedWidth = 56.0;
 const _expandedWidth = 200.0;
@@ -196,7 +197,7 @@ class _SidebarToggleButton extends StatelessWidget {
       child: MovingTooltipWidget.text(
         message: isCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
         child: InkWell(
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           onTap: onToggle,
           child: Center(
             child: Icon(
@@ -252,7 +253,7 @@ class _SidebarNavItem extends StatelessWidget {
     final content = SizedBox(
       height: 40,
       child: InkWell(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         onTap: onTap,
         child: Container(
           decoration: isSelected

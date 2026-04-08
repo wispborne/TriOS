@@ -9,6 +9,7 @@ import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/mod_tag_manager/category_store.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 /// Shows a popup for bulk management of all categories.
 /// Supports drag-to-reorder, inline rename, inline color/icon pickers,
@@ -108,7 +109,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
       clipBehavior: Clip.antiAlias,
       insetPadding: const .symmetric(horizontal: 48, vertical: 32),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -153,7 +154,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
                           return Material(
                             elevation: 4,
                             borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
+                              TriOSThemeConstants.cornerRadius,
                             ),
                             child: child,
                           );
@@ -325,7 +326,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
+                              TriOSThemeConstants.cornerRadius,
                             ),
                           ),
                         ),
@@ -506,7 +507,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
+                        TriOSThemeConstants.cornerRadius,
                       ),
                     ),
                   ),
@@ -672,14 +673,14 @@ class _IconIndicator extends StatelessWidget {
     return Tooltip(
       message: 'Change icon',
       child: InkWell(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         onTap: onTap,
         child: Container(
           width: 24,
           height: 24,
           decoration: BoxDecoration(
             color: isSelected ? colorScheme.surfaceContainer : null,
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+            borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
             border: Border.all(
               color: colorScheme.outlineVariant,
               width: isSelected ? 0 : 1,
@@ -920,7 +921,7 @@ class _InlineIconPicker extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(
-                    ThemeManager.cornerRadius,
+                    TriOSThemeConstants.cornerRadius,
                   ),
                   border: currentIcon == null
                       ? Border.all(color: iconColor, width: 2)
@@ -961,13 +962,13 @@ class _InlineIconPicker extends StatelessWidget {
   ) {
     final isSelected = currentIcon == icon;
     return InkWell(
-      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+      borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       onTap: () => onIconSelected(icon),
       child: Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           border: isSelected
               ? Border.all(color: iconColor, width: 2)
               : Border.all(color: theme.colorScheme.outlineVariant),

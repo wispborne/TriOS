@@ -8,6 +8,7 @@ import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_with_icon.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 /// Type alias for a mod installation candidate
 typedef ModInstallationCandidate = ({
@@ -92,7 +93,7 @@ class _ModInstallationDialogState
                 Text(
                   "Multiple mods have the same id and version. Only one of those may be selected.",
                   style: theme.textTheme.labelLarge?.copyWith(
-                    color: ThemeManager.vanillaWarningColor,
+                    color: TriOSThemeConstants.vanillaWarningColor,
                   ),
                 ),
             ],
@@ -215,7 +216,7 @@ class _ModInstallationDialogState
                     ? "(existing mod will be replaced)"
                     : "(already exists)",
                 style: TextStyle(
-                  color: ThemeManager.vanillaWarningColor,
+                  color: TriOSThemeConstants.vanillaWarningColor,
                   fontSize: 12,
                 ),
               ),

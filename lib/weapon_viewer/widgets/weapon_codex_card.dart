@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/descriptions/description_entry.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
-import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_mount_indicator.dart';
@@ -15,25 +15,36 @@ import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Builds tooltip content for weapons, replicating the layout and
 /// conditional logic of the game's `CargoTooltipFactory`.
-class IngameWeaponTooltip {
-  IngameWeaponTooltip._();
+class WeaponCodexCard {
+  WeaponCodexCard._();
 
   static const _maxWidth = 400.0;
 
   // ───────────────────────── Convenience wrapper ─────────────────────────
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows weapon stats on hover.
-  static Widget weapon({required Weapon weapon, required Widget child}) {
+  static Widget tooltip({
+    required Weapon weapon,
+    required Widget child,
+    bool showTitle = true,
+    bool showSprite = true,
+    bool showDescription = true,
+    bool useAbbreviations = false,
+  }) {
     return MovingTooltipWidget.starsector(
       tooltipWidget: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _maxWidth),
         child: Consumer(
-          builder: (context, ref, _) => buildWeaponContent(
+          builder: (context, ref, _) => _buildWeaponContent(
             weapon,
             context,
             description: ref.watch(
               descriptionProvider((weapon.id, DescriptionEntry.typeWeapon)),
             ),
+            showTitle: showTitle,
+            showSprite: showSprite,
+            showDescription: showDescription,
+            useAbbreviations: useAbbreviations,
           ),
         ),
       ),
@@ -41,17 +52,43 @@ class IngameWeaponTooltip {
     );
   }
 
+  static Widget create({
+    required Weapon weapon,
+    bool showTitle = true,
+    bool showSprite = true,
+    bool showDescription = true,
+    bool useAbbreviations = false,
+  }) {
+    return Consumer(
+      builder: (context, ref, _) => _buildWeaponContent(
+        weapon,
+        context,
+        description: ref.watch(
+          descriptionProvider((weapon.id, DescriptionEntry.typeWeapon)),
+        ),
+        showTitle: showTitle,
+        showSprite: showSprite,
+        showDescription: showDescription,
+        useAbbreviations: useAbbreviations,
+      ),
+    );
+  }
+
   // ───────────────────────── Weapon tooltip ─────────────────────────
 
   /// Builds the weapon tooltip body, mimicking the game's weapon tooltip with
   /// Primary Data and Ancillary Data sections.
-  static Widget buildWeaponContent(
+  static Widget _buildWeaponContent(
     Weapon weapon,
     BuildContext context, {
     DescriptionEntry? description,
+    bool showTitle = true,
+    bool showSprite = true,
+    bool showDescription = true,
+    bool useAbbreviations = false,
   }) {
     final theme = Theme.of(context);
-    final highlightColor = ThemeManager.vanillaCyanColor;
+    final highlightColor = TriOSThemeConstants.vanillaCyanColor;
 
     final isBeam = weapon.specClass?.toLowerCase().contains('beam') == true;
     final isMissile =
@@ -168,33 +205,35 @@ class IngameWeaponTooltip {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Title & manufacturer ──
-        tooltipTitleWithDesignType(
-          weapon.name ?? weapon.id,
-          weapon.techManufacturer,
-          true,
-          theme,
-        ),
-
-        // Optional description/tooltip override text (from "for weapon tooltip>>" CSV col).
-        if ((weapon.forWeaponTooltip ?? '').isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              weapon.forWeaponTooltip!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
+        if (showTitle) ...[
+          tooltipTitleWithDesignType(
+            weapon.name ?? weapon.id,
+            weapon.techManufacturer,
+            true,
+            theme,
           ),
 
-        const SizedBox(height: 8),
+          // Optional description/tooltip override text (from "for weapon tooltip>>" CSV col).
+          if ((weapon.forWeaponTooltip ?? '').isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                weapon.forWeaponTooltip!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 8),
+        ],
 
         // ════════════ Primary data ════════════
         tooltipSectionHeader('Primary data', theme, highlightColor),
         const SizedBox(height: 4),
         _iconRow(
-              icon: _weaponSprite(weapon),
+              icon: showSprite ? _weaponSprite(weapon) : null,
               child: tooltipStatsGrid(theme, [
                 if (weapon.primaryRoleStr != null)
                   tooltipRow('Primary role', weapon.primaryRoleStr!),
@@ -281,7 +320,7 @@ class IngameWeaponTooltip {
             child: DescriptionWithSubstitutions(
               description: weapon.customPrimary!,
               highlightValues: weapon.customPrimaryHL,
-              highlightColor: ThemeManager.vanillaYellowGoldColor,
+              highlightColor: TriOSThemeConstants.vanillaYellowGoldColor,
               baseStyle: theme.textTheme.bodySmall,
             ),
           ),
@@ -387,7 +426,7 @@ class IngameWeaponTooltip {
           ),
 
         // ════════ Description from descriptions.csv ════════
-        if (description?.text1 != null) ...[
+        if (showDescription && description?.text1 != null) ...[
           const SizedBox(height: 8),
           tooltipHairline(theme),
           const SizedBox(height: 6),

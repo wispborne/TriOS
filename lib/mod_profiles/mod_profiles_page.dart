@@ -15,6 +15,8 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:uuid/uuid.dart';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'mod_profile_card.dart';
 import 'mod_profiles_manager.dart';
@@ -245,7 +247,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                   // round edges
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(
-                      ThemeManager.cornerRadius,
+                      TriOSThemeConstants.cornerRadius,
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,

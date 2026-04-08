@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../themes/theme_manager.dart';
 
@@ -25,7 +26,10 @@ class _ModTooltipFancyTitleHeaderState extends State<ModTooltipFancyTitleHeader>
 
   @override
   Widget build(BuildContext context) {
-    final paletteTheme = paletteGenerator.createPaletteTheme(context);
+    final paletteTriosTheme = paletteGenerator.toTriOSTheme(context);
+    final paletteTheme = paletteTriosTheme != null
+        ? ThemeManager.convertToThemeData(paletteTriosTheme)
+        : Theme.of(context);
 
     return Theme(
       data: paletteTheme,
@@ -36,8 +40,8 @@ class _ModTooltipFancyTitleHeaderState extends State<ModTooltipFancyTitleHeader>
               ? paletteTheme.colorScheme.surface
               : paletteTheme.colorScheme.surfaceContainerLow,
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(ThemeManager.cornerRadius),
-            topRight: Radius.circular(ThemeManager.cornerRadius),
+            topLeft: Radius.circular(TriOSThemeConstants.cornerRadius),
+            topRight: Radius.circular(TriOSThemeConstants.cornerRadius),
           ),
           border: Border(
             top: BorderSide(

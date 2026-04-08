@@ -6,6 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 class CompanionModUpdateToast extends ConsumerStatefulWidget {
   const CompanionModUpdateToast(this.installedVersion, this.item, {super.key});
@@ -31,13 +32,13 @@ class _CompanionModUpdateToastState
         elevation: 8,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         ),
         child: Container(
           clipBehavior: Clip.antiAlias,
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+            borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
             border: Border.all(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
               width: 1,

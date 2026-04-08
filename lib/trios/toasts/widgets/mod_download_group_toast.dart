@@ -11,6 +11,7 @@ import 'package:trios/trios/toasts/toast_countdown_mixin.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../../download_manager/download_manager.dart';
 import '../../download_manager/download_status.dart';
@@ -210,6 +211,8 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
       }
     }
 
+    final paletteTriosTheme = palette.toTriOSTheme(context);
+
     return Padding(
       padding: const .only(top: 4, right: 24),
       child: Container(
@@ -223,7 +226,9 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
           ],
         ),
         child: Theme(
-          data: palette.createPaletteTheme(context),
+          data: paletteTriosTheme != null
+              ? ThemeManager.convertToThemeData(paletteTriosTheme)
+              : Theme.of(context),
           child: Builder(
             builder: (context) {
               final theme = Theme.of(context);
@@ -242,7 +247,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(
-                      ThemeManager.cornerRadius,
+                      TriOSThemeConstants.cornerRadius,
                     ),
                     boxShadow: const [
                       BoxShadow(
@@ -264,7 +269,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
                           });
                         },
                         borderRadius: BorderRadius.circular(
-                          ThemeManager.cornerRadius,
+                          TriOSThemeConstants.cornerRadius,
                         ),
                         child: Row(
                           children: [
@@ -443,7 +448,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
         padding: const .all(6),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           border: Border.all(
             color: theme.colorScheme.onSurface.withOpacity(0.1),
           ),
@@ -479,9 +484,9 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
                             },
                       color: switch (status) {
                         DownloadStatus.completed => theme.colorScheme.secondary,
-                        DownloadStatus.failed => ThemeManager.vanillaErrorColor,
+                        DownloadStatus.failed => TriOSThemeConstants.vanillaErrorColor,
                         DownloadStatus.canceled =>
-                          ThemeManager.vanillaErrorColor,
+                          TriOSThemeConstants.vanillaErrorColor,
                         _ => theme.iconTheme.color,
                       },
                     ),
@@ -503,7 +508,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
                         TextTriOS(
                           downloadTask.error.toString(),
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: ThemeManager.vanillaErrorColor,
+                            color: TriOSThemeConstants.vanillaErrorColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -559,7 +564,7 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
                         status == DownloadStatus.retrievingFileInfo;
                     return TriOSDownloadProgressIndicator(
                       color: status == DownloadStatus.failed
-                          ? ThemeManager.vanillaErrorColor
+                          ? TriOSThemeConstants.vanillaErrorColor
                           : null,
                       value: TriOSDownloadProgress(
                         downloaded.bytesReceived,

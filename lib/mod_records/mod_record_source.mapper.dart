@@ -86,6 +86,18 @@ class InstalledSourceMapper extends SubClassMapperBase<InstalledSource> {
   @override
   final String id = 'InstalledSource';
 
+  static String? _$name(InstalledSource v) => v.name;
+  static const Field<InstalledSource, String> _f$name = Field(
+    'name',
+    _$name,
+    opt: true,
+  );
+  static String? _$author(InstalledSource v) => v.author;
+  static const Field<InstalledSource, String> _f$author = Field(
+    'author',
+    _$author,
+    opt: true,
+  );
   static String? _$installPath(InstalledSource v) => v.installPath;
   static const Field<InstalledSource, String> _f$installPath = Field(
     'installPath',
@@ -107,6 +119,8 @@ class InstalledSourceMapper extends SubClassMapperBase<InstalledSource> {
 
   @override
   final MappableFields<InstalledSource> fields = const {
+    #name: _f$name,
+    #author: _f$author,
     #installPath: _f$installPath,
     #version: _f$version,
     #lastSeen: _f$lastSeen,
@@ -122,6 +136,8 @@ class InstalledSourceMapper extends SubClassMapperBase<InstalledSource> {
 
   static InstalledSource _instantiate(DecodingData data) {
     return InstalledSource(
+      name: data.dec(_f$name),
+      author: data.dec(_f$author),
       installPath: data.dec(_f$installPath),
       version: data.dec(_f$version),
       lastSeen: data.dec(_f$lastSeen),
@@ -191,7 +207,13 @@ extension InstalledSourceValueCopy<$R, $Out>
 abstract class InstalledSourceCopyWith<$R, $In extends InstalledSource, $Out>
     implements ModRecordSourceCopyWith<$R, $In, $Out> {
   @override
-  $R call({String? installPath, String? version, DateTime? lastSeen});
+  $R call({
+    String? name,
+    String? author,
+    String? installPath,
+    String? version,
+    DateTime? lastSeen,
+  });
   InstalledSourceCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -207,11 +229,15 @@ class _InstalledSourceCopyWithImpl<$R, $Out>
       InstalledSourceMapper.ensureInitialized();
   @override
   $R call({
+    Object? name = $none,
+    Object? author = $none,
     Object? installPath = $none,
     Object? version = $none,
     Object? lastSeen = $none,
   }) => $apply(
     FieldCopyWithData({
+      if (name != $none) #name: name,
+      if (author != $none) #author: author,
       if (installPath != $none) #installPath: installPath,
       if (version != $none) #version: version,
       if (lastSeen != $none) #lastSeen: lastSeen,
@@ -219,6 +245,8 @@ class _InstalledSourceCopyWithImpl<$R, $Out>
   );
   @override
   InstalledSource $make(CopyWithData data) => InstalledSource(
+    name: data.get(#name, or: $value.name),
+    author: data.get(#author, or: $value.author),
     installPath: data.get(#installPath, or: $value.installPath),
     version: data.get(#version, or: $value.version),
     lastSeen: data.get(#lastSeen, or: $value.lastSeen),
@@ -459,10 +487,16 @@ class CatalogSourceMapper extends SubClassMapperBase<CatalogSource> {
   @override
   final String id = 'CatalogSource';
 
-  static String? _$catalogName(CatalogSource v) => v.catalogName;
-  static const Field<CatalogSource, String> _f$catalogName = Field(
-    'catalogName',
-    _$catalogName,
+  static String? _$name(CatalogSource v) => v.name;
+  static const Field<CatalogSource, String> _f$name = Field(
+    'name',
+    _$name,
+    opt: true,
+  );
+  static List<String>? _$authors(CatalogSource v) => v.authors;
+  static const Field<CatalogSource, List<String>> _f$authors = Field(
+    'authors',
+    _$authors,
     opt: true,
   );
   static String? _$forumUrl(CatalogSource v) => v.forumUrl;
@@ -522,7 +556,8 @@ class CatalogSourceMapper extends SubClassMapperBase<CatalogSource> {
 
   @override
   final MappableFields<CatalogSource> fields = const {
-    #catalogName: _f$catalogName,
+    #name: _f$name,
+    #authors: _f$authors,
     #forumUrl: _f$forumUrl,
     #nexusUrl: _f$nexusUrl,
     #discordUrl: _f$discordUrl,
@@ -544,7 +579,8 @@ class CatalogSourceMapper extends SubClassMapperBase<CatalogSource> {
 
   static CatalogSource _instantiate(DecodingData data) {
     return CatalogSource(
-      catalogName: data.dec(_f$catalogName),
+      name: data.dec(_f$name),
+      authors: data.dec(_f$authors),
       forumUrl: data.dec(_f$forumUrl),
       nexusUrl: data.dec(_f$nexusUrl),
       discordUrl: data.dec(_f$discordUrl),
@@ -619,10 +655,12 @@ extension CatalogSourceValueCopy<$R, $Out>
 
 abstract class CatalogSourceCopyWith<$R, $In extends CatalogSource, $Out>
     implements ModRecordSourceCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get authors;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get categories;
   @override
   $R call({
-    String? catalogName,
+    String? name,
+    List<String>? authors,
     String? forumUrl,
     String? nexusUrl,
     String? discordUrl,
@@ -645,6 +683,15 @@ class _CatalogSourceCopyWithImpl<$R, $Out>
   late final ClassMapperBase<CatalogSource> $mapper =
       CatalogSourceMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get authors =>
+      $value.authors != null
+      ? ListCopyWith(
+          $value.authors!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(authors: v),
+        )
+      : null;
+  @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
   get categories => $value.categories != null
       ? ListCopyWith(
@@ -655,7 +702,8 @@ class _CatalogSourceCopyWithImpl<$R, $Out>
       : null;
   @override
   $R call({
-    Object? catalogName = $none,
+    Object? name = $none,
+    Object? authors = $none,
     Object? forumUrl = $none,
     Object? nexusUrl = $none,
     Object? discordUrl = $none,
@@ -667,7 +715,8 @@ class _CatalogSourceCopyWithImpl<$R, $Out>
     Object? lastSeen = $none,
   }) => $apply(
     FieldCopyWithData({
-      if (catalogName != $none) #catalogName: catalogName,
+      if (name != $none) #name: name,
+      if (authors != $none) #authors: authors,
       if (forumUrl != $none) #forumUrl: forumUrl,
       if (nexusUrl != $none) #nexusUrl: nexusUrl,
       if (discordUrl != $none) #discordUrl: discordUrl,
@@ -681,7 +730,8 @@ class _CatalogSourceCopyWithImpl<$R, $Out>
   );
   @override
   CatalogSource $make(CopyWithData data) => CatalogSource(
-    catalogName: data.get(#catalogName, or: $value.catalogName),
+    name: data.get(#name, or: $value.name),
+    authors: data.get(#authors, or: $value.authors),
     forumUrl: data.get(#forumUrl, or: $value.forumUrl),
     nexusUrl: data.get(#nexusUrl, or: $value.nexusUrl),
     discordUrl: data.get(#discordUrl, or: $value.discordUrl),

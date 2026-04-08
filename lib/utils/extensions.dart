@@ -1226,7 +1226,11 @@ extension ColorFromObject on Object {
   }
 }
 
-extension TriOSBuildContextTheme on BuildContext {
+extension TriOSBuildContextTheme on ThemeData {
   bool get rainbowAccent =>
-      Theme.of(this).extension<TriOSThemeExtension>()?.rainbowAccent ?? false;
+      extension<TriOSThemeExtension>()?.rainbowAccent ?? false;
+
+  /// Access semantic status colors from the current theme.
+  TriOSThemeExtension get statusColors =>
+      extension<TriOSThemeExtension>()!;
 }

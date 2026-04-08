@@ -17,6 +17,7 @@ import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 /// Grouping mode, like in your Kotlin code.
 enum TipsGrouping { none, mod }
@@ -606,7 +607,7 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                     : isHidden
                     ? theme.colorScheme.surfaceContainerLowest
                     : theme.colorScheme.surfaceContainer.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+                borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
               ),
               padding: const EdgeInsets.all(8.0),
               child: Column(

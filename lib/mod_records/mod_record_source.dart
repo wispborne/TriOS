@@ -137,3 +137,54 @@ class DownloadHistorySource extends ModRecordSource
         lastSeen: lastSeen,
       );
 }
+
+/// Source: forum data bundle (scraped forum stats).
+@MappableClass(discriminatorValue: 'forumData')
+class ForumDataSource extends ModRecordSource with ForumDataSourceMappable {
+  final int? topicId;
+  final int? views;
+  final int? replies;
+  final DateTime? lastPostDate;
+  final String? lastPostBy;
+  final DateTime? createdDate;
+  final bool? isWip;
+  final bool? isArchived;
+  final bool? inModIndex;
+  final String? category;
+  final String? gameVersion;
+  final String? thumbnailPath;
+
+  const ForumDataSource({
+    this.topicId,
+    this.views,
+    this.replies,
+    this.lastPostDate,
+    this.lastPostBy,
+    this.createdDate,
+    this.isWip,
+    this.isArchived,
+    this.inModIndex,
+    this.category,
+    this.gameVersion,
+    this.thumbnailPath,
+    super.lastSeen,
+  });
+
+  /// Returns a new [ForumDataSource] with override fields winning when non-null.
+  ForumDataSource applyOverridesFrom(ForumDataSource overrides) =>
+      ForumDataSource(
+        topicId: overrides.topicId ?? topicId,
+        views: overrides.views ?? views,
+        replies: overrides.replies ?? replies,
+        lastPostDate: overrides.lastPostDate ?? lastPostDate,
+        lastPostBy: overrides.lastPostBy ?? lastPostBy,
+        createdDate: overrides.createdDate ?? createdDate,
+        isWip: overrides.isWip ?? isWip,
+        isArchived: overrides.isArchived ?? isArchived,
+        inModIndex: overrides.inModIndex ?? inModIndex,
+        category: overrides.category ?? category,
+        gameVersion: overrides.gameVersion ?? gameVersion,
+        thumbnailPath: overrides.thumbnailPath ?? thumbnailPath,
+        lastSeen: lastSeen,
+      );
+}

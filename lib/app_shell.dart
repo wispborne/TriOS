@@ -11,6 +11,7 @@ import 'package:trios/chipper/chipper_app.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/hullmod_viewer/hullmods_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
+import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/portraits/portraits_page.dart';
 import 'package:trios/ship_viewer/ships_page.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -197,6 +198,10 @@ class _AppShellState extends ConsumerState<AppShell>
         ref.read(AppState.appContext.notifier).state = context;
       }
     });
+
+    // Eagerly initialize mod records (and its dependency, the catalog) so data
+    // is available for the mod-info dialog even before the Catalog page is opened.
+    ref.watch(modRecordsStore);
 
     ref.listen(appSettings.select((s) => s.windowScaleFactor), (_, newValue) {
       ScaledWidgetsFlutterBinding.instance.scaleFactor = (_) => newValue;

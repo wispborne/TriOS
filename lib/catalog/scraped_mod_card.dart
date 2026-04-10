@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
+import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
-import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
@@ -21,6 +24,7 @@ class ScrapedModCard extends StatefulWidget {
   final bool isSelected;
   final Mod? installedMod;
   final VersionCheckComparison? versionCheckComparison;
+  final ForumModIndex? forumModIndex;
 
   const ScrapedModCard({
     super.key,
@@ -29,6 +33,7 @@ class ScrapedModCard extends StatefulWidget {
     this.isSelected = false,
     this.installedMod,
     this.versionCheckComparison,
+    this.forumModIndex,
   });
 
   @override
@@ -71,124 +76,152 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
               websiteUrl != null ||
               urls?.containsKey(ModUrlType.DirectDownload) == true;
 
-          return Card(
-            margin: const EdgeInsets.all(0),
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
-              side: BorderSide(
-                color: theme.colorScheme.surface.withOpacity(0.5),
-              ),
+          final description =
+              (mod.summary ?? mod.description ?? 'No description...yet!');
+          return ContextMenuRegion(
+            contextMenu: ContextMenu(
+              entries: [
+                if (false)
+                MenuItem(
+                  label: 'View Mod Details...',
+                  icon: Icons.info_outline,
+                  onSelected: () => showModInfoDialog(
+                    context,
+                    mod: widget.installedMod,
+                    scrapedMod: mod,
+                    forumModIndex: widget.forumModIndex,
+                    versionCheckComparison: widget.versionCheckComparison,
+                  ),
+                ),
+                MenuItem(
+                  label: 'Debug Info',
+                  leading: const Icon(Icons.bug_report, size: 16),
+                  onSelected: () => _showDebugDialog(context, mod),
+                ),
+              ],
             ),
-            child: ConditionalWrap(
-              condition: hasClickableLink,
-              wrapper: (child) => InkWell(
-                onTap: () {
-                  if (urls == null) {
-                    return;
-                  }
-
-                  if (websiteUrl != null) {
-                    widget.linkLoader(websiteUrl);
-                  } else if (urls.containsKey(ModUrlType.DirectDownload)) {
-                    _showDirectDownloadDialog(
-                      context,
-                      mod.name,
-                      urls[ModUrlType.DirectDownload]!,
-                    );
-                  }
-                },
-                child: child,
+            child: Card(
+              margin: const EdgeInsets.all(0),
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                side: BorderSide(
+                  color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                ),
               ),
-              child: Stack(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12.0),
-                    decoration: BoxDecoration(
-                      color: widget.isSelected
-                          ? theme.cardColor.lighter(5)
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        Stack(
-                          children: [
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: 80.0,
-                                minWidth: 80.0,
-                                maxHeight: 80.0,
-                              ),
-                              child: ModImage(mod: mod),
-                            ),
-                          ],
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 16.0,
-                              right: 16.0,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  spacing: 4,
-                                  children: [
-                                    Flexible(
-                                      child: TextTriOS(
-                                        mod.name.isNotEmpty ? mod.name : '???',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14.0,
-                                          fontFamily:
-                                              TriOSThemeConstants.orbitron,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    if (widget
-                                            .versionCheckComparison
-                                            ?.hasUpdate ==
-                                        true)
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 6),
-                                        child: MovingTooltipWidget.text(
-                                          message: 'Update available',
-                                          child:
-                                              VersionCheckIcon.fromComparison(
-                                                comparison: widget
-                                                    .versionCheckComparison,
-                                                modId:
-                                                    widget.installedMod?.id ??
-                                                    '',
-                                                theme: theme,
-                                              ),
-                                        ),
-                                      ),
-                                  ],
+              child: ConditionalWrap(
+                condition: hasClickableLink,
+                wrapper: (child) => InkWell(
+                  onTap: () {
+                    if (urls == null) {
+                      return;
+                    }
+
+                    if (websiteUrl != null) {
+                      widget.linkLoader(websiteUrl);
+                    } else if (urls.containsKey(ModUrlType.DirectDownload)) {
+                      _showDirectDownloadDialog(
+                        context,
+                        mod.name,
+                        urls[ModUrlType.DirectDownload]!,
+                      );
+                    }
+                  },
+                  child: child,
+                ),
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: widget.isSelected
+                            ? theme.cardColor.lighter(5)
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Stack(
+                            children: [
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 80.0,
+                                  minWidth: 80.0,
+                                  maxHeight: 80.0,
                                 ),
-                                if (mod.authorsList?.isNotEmpty == true)
-                                  Text(
-                                    mod.authorsList!.join(', '),
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontSize: 10,
-                                      fontStyle: FontStyle.italic,
-                                    ),
+                                child: ModImage(mod: mod),
+                              ),
+                            ],
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 16.0,
+                                right: 16.0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    spacing: 4,
+                                    children: [
+                                      Flexible(
+                                        child: TextTriOS(
+                                          mod.name.isNotEmpty
+                                              ? mod.name
+                                              : '???',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.0,
+                                            // fontFamily:
+                                            //     TriOSThemeConstants.orbitron,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (widget
+                                              .versionCheckComparison
+                                              ?.hasUpdate ==
+                                          true)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 6,
+                                          ),
+                                          child: MovingTooltipWidget.text(
+                                            message: 'Update available',
+                                            child:
+                                                VersionCheckIcon.fromComparison(
+                                                  comparison: widget
+                                                      .versionCheckComparison,
+                                                  modId:
+                                                      widget.installedMod?.id ??
+                                                      '',
+                                                  theme: theme,
+                                                ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
-                                if ((mod.summary?.isNotEmpty ?? false) ||
-                                    (mod.description?.isNotEmpty ?? false))
+                                  if (mod.authorsList?.isNotEmpty == true)
+                                    Text(
+                                      mod.authorsList!.join(', '),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            fontSize: 10,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                    ),
+                                  Tags(mod: mod),
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4.0),
                                     child: ConditionalWrap(
                                       condition:
-                                          mod.description?.isNotEmpty == true,
+                                          description?.isNotEmpty == true,
                                       wrapper: (child) =>
                                           MovingTooltipWidget.framed(
                                             tooltipWidget: SizedBox(
                                               width: 400,
                                               child: Text(
-                                                mod.description ?? '',
+                                                description ?? '',
                                                 style:
                                                     theme.textTheme.bodySmall,
                                               ),
@@ -206,14 +239,14 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                                                     _showDescriptionDialog(
                                                       context,
                                                       mod.name,
-                                                      mod.description!,
+                                                      description!,
                                                     ),
                                                 child: child,
                                               ),
                                             ),
                                           ),
                                       child: Text(
-                                        (mod.summary ?? mod.description)!
+                                        description
                                             .split('\n')
                                             .where((line) => line.isNotEmpty)
                                             .take(2)
@@ -224,80 +257,114 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                                       ),
                                     ),
                                   ),
-                                const SizedBox(height: 8.0),
-                                Tags(mod: mod),
-                              ],
+                                  const Spacer(),
+                                  if (widget.forumModIndex != null)
+                                    _ForumStats(
+                                      forumModIndex: widget.forumModIndex!,
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        Builder(
-                          builder: (context) {
-                            const size = 14.0;
-                            return Column(
-                              mainAxisAlignment: .start,
-                              children: [
-                                BrowserIcon(
-                                  mod: mod,
-                                  iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                                  linkLoader: widget.linkLoader,
-                                  size: size,
-                                ),
-                                DiscordIcon(
-                                  mod: mod,
-                                  iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                                  size: size,
-                                ),
-                                NexusModsIcon(
-                                  mod: mod,
-                                  iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                                  size: size,
-                                ),
-                                DebugIcon(
-                                  mod: mod,
-                                  iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                                  size: size,
-                                ),
-                                CatalogDownloadButton(
-                                  mod: mod,
-                                  installedMod: widget.installedMod,
-                                  versionCheckComparison:
-                                      widget.versionCheckComparison,
-                                  linkLoader: widget.linkLoader,
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (mod.gameVersionReq?.isNotEmpty == true)
-                    Positioned(
-                      left: 8,
-                      top: 4,
-                      child: _ScrapedModGameVersionReq(theme: theme, mod: mod),
-                    ),
-                  if (widget.installedMod != null)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: MovingTooltipWidget.text(
-                        message: widget.installedMod!.isEnabledInGame
-                            ? 'Enabled'
-                            : 'Installed, disabled',
-                        child: Container(
-                          width: 4,
-                          color: _statusBarColor(theme),
-                        ),
+                          Builder(
+                            builder: (context) {
+                              const size = 14.0;
+                              return Column(
+                                mainAxisAlignment: .spaceBetween,
+                                crossAxisAlignment: .center,
+                                children: [
+                                  Column(
+                                    spacing: 4,
+                                    children: [
+                                      BrowserIcon(
+                                        mod: mod,
+                                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                                        linkLoader: widget.linkLoader,
+                                        size: size,
+                                      ),
+                                      DiscordIcon(
+                                        mod: mod,
+                                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                                        size: size,
+                                      ),
+                                      NexusModsIcon(
+                                        mod: mod,
+                                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
+                                        size: size,
+                                      ),
+                                    ],
+                                  ),
+                                  Opacity(
+                                    opacity: isBeingHovered ? 1.0 : 0.7,
+                                    child: CatalogDownloadButton(
+                                      mod: mod,
+                                      installedMod: widget.installedMod,
+                                      versionCheckComparison:
+                                          widget.versionCheckComparison,
+                                      linkLoader: widget.linkLoader,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                ],
+                    if (mod.gameVersionReq?.isNotEmpty == true)
+                      Positioned(
+                        left: 8,
+                        top: 4,
+                        child: _ScrapedModGameVersionReq(
+                          theme: theme,
+                          mod: mod,
+                        ),
+                      ),
+                    if (widget.installedMod != null)
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: MovingTooltipWidget.text(
+                          message: widget.installedMod!.isEnabledInGame
+                              ? 'Enabled'
+                              : 'Installed, disabled',
+                          child: Container(
+                            width: 4,
+                            color: _statusBarColor(theme),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           );
         },
       ),
+    );
+  }
+
+  void _showDebugDialog(BuildContext context, ScrapedMod mod) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(mod.name),
+          content: SingleChildScrollView(
+            child: SelectableText(
+              mod.toString(),
+              style: context.theme.textTheme.bodyMedium,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -315,16 +382,16 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
           actions: [
             TextButton(
               onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
                 widget.linkLoader(downloadUrl);
                 Navigator.of(context).pop();
               },
               child: const Text('Download'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
             ),
           ],
         );
@@ -379,7 +446,7 @@ class _ScrapedModGameVersionReq extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           decoration: BoxDecoration(
-            color: theme.cardColor.withOpacity(0.9),
+            color: theme.cardColor.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
@@ -469,7 +536,7 @@ class ModImage extends StatelessWidget {
       child: Icon(
         Icons.image_not_supported,
         size: 64.0,
-        color: Colors.grey.withOpacity(0.5),
+        color: Colors.grey.withValues(alpha: 0.5),
       ),
     );
   }
@@ -498,27 +565,29 @@ class Tags extends StatelessWidget {
       }),
     ];
 
-    if (tags.isNotEmpty) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Opacity(opacity: 0.5, child: Icon(Icons.tag, size: 12.0)),
-          const SizedBox(width: 6.0),
-          Expanded(
-            child: Text(
-              tags.join(', '),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(
-                  context,
-                ).textTheme.labelSmall?.color?.withOpacity(0.6),
-              ),
+    if (tags.isEmpty) return const SizedBox.shrink();
+    final labelStyle = Theme.of(context).textTheme.labelSmall;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.tag,
+          size: 12.0,
+          color: labelStyle?.color?.withValues(alpha: 0.5),
+        ),
+        const SizedBox(width: 2.0),
+        Expanded(
+          child: TextTriOS(
+            tags.join(', '),
+            maxLines: 1,
+            overflow: .ellipsis,
+            style: labelStyle?.copyWith(
+              color: labelStyle.color?.withValues(alpha: 0.6),
             ),
           ),
-        ],
-      );
-    } else {
-      return const SizedBox.shrink();
-    }
+        ),
+      ],
+    );
   }
 }
 
@@ -546,10 +615,11 @@ class BrowserIcon extends StatelessWidget {
         child: Opacity(
           opacity: iconOpacity,
           child: SizedBox(
-            width: size * 2,
-            height: size * 2,
+            height: size + 8,
+            width: size + 8,
             child: IconButton(
               icon: Icon(Icons.public, size: size),
+              padding: .zero,
               onPressed: () {
                 forumUrl.openAsUriInBrowser();
               },
@@ -581,23 +651,24 @@ class DiscordIcon extends StatelessWidget {
 
     if (discordUrl != null && discordUrl.isNotEmpty) {
       return MovingTooltipWidget.text(
-        message: 'Open in Discord.\n$discordUrl\nRight-click to copy.',
+        message: 'Open in Discord.\nRight-click to copy Discord link.',
         child: Opacity(
           opacity: iconOpacity,
-          child: SizedBox(
-            width: size * 2,
-            height: size * 2,
-            child: GestureDetector(
-              onSecondaryTap: () {
-                // Copy to clipboard
-                Clipboard.setData(ClipboardData(text: discordUrl));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Discord URL copied to clipboard'),
-                  ),
-                );
-              },
+          child: GestureDetector(
+            onSecondaryTap: () {
+              // Copy to clipboard
+              Clipboard.setData(ClipboardData(text: discordUrl));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Discord URL copied to clipboard'),
+                ),
+              );
+            },
+            child: SizedBox(
+              height: size + 8,
+              width: size + 8,
               child: IconButton(
+                padding: .zero,
                 onPressed: () {
                   discordUrl
                       .toString()
@@ -639,12 +710,13 @@ class NexusModsIcon extends StatelessWidget {
         child: Opacity(
           opacity: iconOpacity,
           child: SizedBox(
-            width: size * 2,
-            height: size * 2,
+            height: size + 8,
+            width: size + 8,
             child: IconButton(
               icon: Icon(Icons.extension, size: size),
+              padding: .zero,
               onPressed: () {
-                // Implement opening NexusMods URL
+                nexusModsUrl.openAsUriInBrowser();
               },
             ),
           ),
@@ -773,19 +845,14 @@ class CatalogDownloadButton extends ConsumerWidget {
 
     return MovingTooltipWidget.text(
       message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: Ink(
-          decoration: BoxDecoration(color: backgroundColor, shape: .circle),
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(80),
-            child: SizedBox(
-              width: 28,
-              height: 28,
-              child: Icon(icon, size: 18, color: foregroundColor),
-            ),
-          ),
+      child: SizedBox(
+        width: 32,
+        height: 32,
+        child: FloatingActionButton.small(
+          heroTag: null,
+          onPressed: onPressed,
+          backgroundColor: backgroundColor,
+          child: Icon(icon, size: 18, color: foregroundColor),
         ),
       ),
     );
@@ -804,6 +871,10 @@ class CatalogDownloadButton extends ConsumerWidget {
         content: Text("Do you want to download '$modName'?"),
         actions: [
           TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
             onPressed: () {
               Navigator.of(context).pop();
               ref
@@ -815,10 +886,6 @@ class CatalogDownloadButton extends ConsumerWidget {
                   );
             },
             child: const Text('Download'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -839,55 +906,50 @@ class CatalogDownloadButton extends ConsumerWidget {
   }
 }
 
-class DebugIcon extends StatelessWidget {
-  final ScrapedMod mod;
-  final double iconOpacity;
-  final double size;
+class _ForumStats extends StatelessWidget {
+  final ForumModIndex forumModIndex;
+  static final _decimalFormat = NumberFormat.decimalPattern();
+  static final _compactFormat = NumberFormat.compact();
 
-  const DebugIcon({
-    super.key,
-    required this.mod,
-    required this.iconOpacity,
-    required this.size,
-  });
+  const _ForumStats({required this.forumModIndex});
 
   @override
   Widget build(BuildContext context) {
-    return MovingTooltipWidget.text(
-      message: 'Display all info (debug)',
-      child: Opacity(
-        opacity: iconOpacity,
-        child: SizedBox(
-          width: size * 2,
-          height: size * 2,
-          child: IconButton(
-            icon: Icon(Icons.bug_report, size: size),
-            onPressed: () {
-              _showDebugDialog(context, mod);
-            },
+    final theme = Theme.of(context);
+    final baseColor = theme.textTheme.labelSmall?.color;
+    final style = theme.textTheme.labelSmall?.copyWith(
+      color: baseColor?.withValues(alpha: 0.6),
+      fontSize: 10,
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 8,
+      children: [
+        MovingTooltipWidget.text(
+          message: '${_decimalFormat.format(forumModIndex.views)} forum views',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 2,
+            children: [
+              Icon(Icons.visibility, size: 11, color: style?.color),
+              Text(_compactFormat.format(forumModIndex.views), style: style),
+            ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showDebugDialog(BuildContext context, ScrapedMod mod) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(mod.name),
-          content: SingleChildScrollView(child: SelectableText(mod.toString())),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
+        MovingTooltipWidget.text(
+          message:
+              '${_decimalFormat.format(forumModIndex.replies)} forum replies',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 2,
+            children: [
+              Icon(Icons.forum, size: 11, color: style?.color),
+              Text(_compactFormat.format(forumModIndex.replies), style: style),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

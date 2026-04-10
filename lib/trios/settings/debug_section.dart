@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:toastification/toastification.dart';
+import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
@@ -31,6 +32,7 @@ import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/restartable_app.dart';
 
+import '../../mod_records/mod_records_store.dart';
 import '../../utils/util.dart';
 import '../toasts/widgets/self_update_toast.dart';
 import '../app_state.dart';
@@ -601,6 +603,159 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               );
             }
           },
+        ),
+        DebugSettingsGroup(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              Text(
+                "Forum Data",
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              Builder(
+                builder: (context) {
+                  final cacheTime = getForumDataCacheTimestamp();
+                  final forumBundle =
+                      ref.watch(forumDataProvider).valueOrNull;
+                  final entryCount = forumBundle?.index.length;
+                  final String status;
+                  if (cacheTime != null) {
+                    final age = DateTime.now().difference(cacheTime);
+                    final ageStr = age.inHours > 0
+                        ? '${age.inHours}h ago'
+                        : '${age.inMinutes}m ago';
+                    status = entryCount != null
+                        ? 'Cached $ageStr, $entryCount entries'
+                        : 'Cached $ageStr';
+                  } else {
+                    status = 'Not cached';
+                  }
+                  return Text(status,
+                      style: Theme.of(context).textTheme.bodySmall);
+                },
+              ),
+              Row(
+                spacing: 8,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Force Refresh'),
+                    onPressed: () async {
+                      try {
+                        await forceRefreshForumData();
+                        ref.invalidate(forumDataProvider);
+                        if (context.mounted) {
+                          showSnackBar(
+                            context: context,
+                            content: const Text(
+                              'Forum data refreshed.',
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          showSnackBar(
+                            context: context,
+                            content: Text('Refresh failed: $e'),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Clear Cache'),
+                    onPressed: () {
+                      clearForumDataCache();
+                      ref.invalidate(forumDataProvider);
+                      showSnackBar(
+                        context: context,
+                        content: const Text('Forum data cache cleared.'),
+                      );
+                    },
+                  ),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.info_outline),
+                    label: const Text('Show Forum Data'),
+                    onPressed: () {
+                      final bundle =
+                          ref.read(forumDataProvider).valueOrNull;
+                      final records =
+                          ref.read(modRecordsStore).valueOrNull;
+                      final matchedCount = records?.records.values
+                              .where(
+                                (r) => r.forumData != null,
+                              )
+                              .length ??
+                          0;
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Forum Data'),
+                          content: SizedBox(
+                            width: 600,
+                            height: 500,
+                            child: bundle == null
+                                ? const Center(
+                                    child: Text('No forum data loaded.'),
+                                  )
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Updated: ${bundle.updatedAt.toIso8601String()}',
+                                      ),
+                                      Text(
+                                        'Total entries: ${bundle.index.length}',
+                                      ),
+                                      Text(
+                                        'Matched to ModRecords: $matchedCount',
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: bundle.index.length,
+                                          itemBuilder: (context, index) {
+                                            final entry =
+                                                bundle.index[index];
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 1,
+                                              ),
+                                              child: SelectableText(
+                                                '#${entry.topicId}  '
+                                                '${entry.title}  '
+                                                '(${entry.views} views, '
+                                                '${entry.replies} replies)',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(context).pop(),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         Card(
           child: Padding(

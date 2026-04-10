@@ -3,10 +3,12 @@ import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
 
+import '../catalog/forum_data_manager.dart';
 import '../catalog/mod_browser_manager.dart';
 
 /// Riverpod provider for the mod records store.
@@ -46,6 +48,14 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       }
     });
 
+    // Re-populate whenever forum data is refreshed.
+    ref.listen(forumDataProvider, (prev, next) {
+      final current = state.valueOrNull;
+      if (current != null && next.hasValue) {
+        _autoPopulate(current);
+      }
+    });
+
     return records;
   }
 
@@ -55,6 +65,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     final modVariants = ref.read(AppState.modVariants).value ?? [];
     final catalogAsync = ref.read(browseModsNotifierProvider);
     final catalog = catalogAsync.valueOrNull?.items ?? [];
+    final forumIndex = ref.read(forumDataByTopicId);
     final now = DateTime.now();
     bool isDirty = false;
 
@@ -69,20 +80,14 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     final matchedCatalogNames = <String>{};
 
     for (final scraped in catalog) {
-      final forumUrl = scraped.urls?[ModUrlType.Forum];
-      if (forumUrl != null) {
-        final threadId = _extractForumThreadId(forumUrl);
-        if (threadId != null) {
-          catalogByForumThreadId[threadId] = scraped;
-        }
+      final threadId = extractForumThreadId(scraped.urls?[ModUrlType.Forum]);
+      if (threadId != null) {
+        catalogByForumThreadId[threadId] = scraped;
       }
 
-      final nexusUrl = scraped.urls?[ModUrlType.NexusMods];
-      if (nexusUrl != null) {
-        final nexusId = _extractNexusModId(nexusUrl);
-        if (nexusId != null) {
-          catalogByNexusId[nexusId] = scraped;
-        }
+      final nexusId = extractNexusModId(scraped.urls?[ModUrlType.NexusMods]);
+      if (nexusId != null) {
+        catalogByNexusId[nexusId] = scraped;
       }
 
       catalogByNormalizedName[scraped.name.toLowerCase().trim()] = scraped;
@@ -203,6 +208,48 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       }
     }
 
+    // Attach forum data to records that have a matching forumThreadId.
+    if (forumIndex.isNotEmpty) {
+      for (final entry in records.entries) {
+        final record = entry.value;
+        final threadId = record.forumThreadId;
+        if (threadId == null) continue;
+        final topicId = int.tryParse(threadId);
+        if (topicId == null) continue;
+        final forumEntry = forumIndex[topicId];
+        if (forumEntry == null) continue;
+
+        final forumSource = ForumDataSource(
+          topicId: forumEntry.topicId,
+          views: forumEntry.views,
+          replies: forumEntry.replies,
+          lastPostDate: forumEntry.lastPostDate,
+          lastPostBy: forumEntry.lastPostBy,
+          createdDate: forumEntry.createdDate,
+          isWip: forumEntry.isWip,
+          isArchived: forumEntry.isArchivedModIndex,
+          inModIndex: forumEntry.inModIndex,
+          category: forumEntry.category,
+          gameVersion: forumEntry.gameVersion,
+          thumbnailPath: forumEntry.thumbnailPath,
+          lastSeen: now,
+        );
+
+        final existingForum = record.sources['forumData'];
+        if (existingForum is ForumDataSource &&
+            existingForum.topicId == forumSource.topicId &&
+            existingForum.views == forumSource.views &&
+            existingForum.replies == forumSource.replies) {
+          continue; // No change.
+        }
+
+        final updatedSources = Map<String, ModRecordSource>.of(record.sources);
+        updatedSources['forumData'] = forumSource;
+        records[entry.key] = record.copyWith(sources: updatedSources);
+        isDirty = true;
+      }
+    }
+
     if (isDirty) {
       Fimber.i(
         "ModRecords auto-populated: ${records.length} records "
@@ -227,9 +274,8 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       discordUrl: urls[ModUrlType.Discord],
       directDownloadUrl: urls[ModUrlType.DirectDownload],
       downloadPageUrl: urls[ModUrlType.DownloadPage],
-      forumThreadId:
-          forumUrl != null ? _extractForumThreadId(forumUrl) : null,
-      nexusModsId: nexusUrl != null ? _extractNexusModId(nexusUrl) : null,
+      forumThreadId: extractForumThreadId(forumUrl),
+      nexusModsId: extractNexusModId(nexusUrl),
       categories: scraped.getCategories(),
       lastSeen: now,
     );
@@ -291,18 +337,6 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       (r) => r!.catalog?.name?.toLowerCase().trim() == normalized,
       orElse: () => null,
     );
-  }
-
-  // --- URL extraction helpers ---
-
-  static String? _extractForumThreadId(String url) {
-    final match = RegExp(r'topic=(\d+)').firstMatch(url);
-    return match?.group(1);
-  }
-
-  static String? _extractNexusModId(String url) {
-    final match = RegExp(r'/mods/(\d+)').firstMatch(url);
-    return match?.group(1);
   }
 
   /// Strips all non-alphanumeric characters and lowercases for fuzzy matching.

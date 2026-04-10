@@ -202,6 +202,13 @@ class _ModRecordSourcesDialogState
           s.version != null,
     DownloadHistorySource s =>
       s.lastDownloadedFrom != null || s.lastDownloadedAt != null,
+    ForumDataSource s =>
+      s.topicId != null ||
+          s.views != null ||
+          s.replies != null ||
+          s.lastPostDate != null ||
+          s.isWip != null ||
+          s.isArchived != null,
   };
 
   @override

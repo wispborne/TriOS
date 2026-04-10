@@ -35,6 +35,7 @@ import '../main.dart';
 import '../trios/download_manager/downloader.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/multi_split_mixin_view.dart';
+import 'forum_data_manager.dart';
 import 'mod_browser_manager.dart';
 
 class CatalogPage extends ConsumerStatefulWidget {
@@ -76,9 +77,12 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
   bool? filterForumModding;
   bool? filterInstalled;
   bool? filterHasUpdate;
+  bool? filterWip;
+  bool? filterArchived;
   String selectedCategory = '';
   String selectedVersion = '';
-  CatalogSortKey selectedSort = CatalogSortKey.nameAsc;
+  CatalogSortKey selectedSort = CatalogSortKey.mostViewed;
+  bool _hasAppliedInitialDefaults = false;
   List<String> _categoryOptions = [];
   Map<String, Set<String>> _versionGroupOptions = {};
   WebViewStatus _webViewStatus = WebViewStatus.loading;
@@ -166,8 +170,28 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     // Rebuild dropdown options when mod data is available.
     if (allMods?.items != null) {
       _categoryOptions = extractCategories(allMods!.items);
+      final prevVersionOptions = _versionGroupOptions;
       _versionGroupOptions = extractVersionGroups(allMods.items);
+
+      // Default to the highest (newest) version on first load.
+      if (selectedVersion.isEmpty &&
+          prevVersionOptions.isEmpty &&
+          _versionGroupOptions.isNotEmpty) {
+        selectedVersion = _versionGroupOptions.keys.first;
+      }
+
+      // Apply default filters/sort on initial data load.
+      if (!_hasAppliedInitialDefaults && allMods.items.isNotEmpty) {
+        _hasAppliedInitialDefaults = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          updateFilter();
+          setState(() {});
+        });
+      }
     }
+
+    // Forum data lookup by topic ID.
+    final forumLookup = ref.watch(forumDataByTopicId);
 
     // Build catalog status map from mod records.
     final modRecords = ref.watch(modRecordsStore).valueOrNull;
@@ -194,7 +218,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
               data: MultiSplitViewThemeData(
                 dividerThickness: 16,
                 dividerPainter: DividerPainters.dashed(
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   highlightedColor: theme.colorScheme.onSurface,
                   highlightedThickness: 2,
                   gap: 1,
@@ -330,6 +354,39 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                                   'Showing all mods incl. with updates',
                                               onChanged: (value) {
                                                 filterHasUpdate = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              },
+                                            ),
+                                            const SizedBox(width: 8),
+                                            buildTristateTooltipIconButton(
+                                              icon: const Icon(
+                                                Icons.construction,
+                                              ),
+                                              filter: filterWip,
+                                              trueTooltip:
+                                                  'Showing only work-in-progress mods',
+                                              falseTooltip:
+                                                  'Hiding work-in-progress mods',
+                                              nullTooltip:
+                                                  'Showing all mods incl. WIP',
+                                              onChanged: (value) {
+                                                filterWip = value;
+                                                updateFilter();
+                                                setState(() {});
+                                              },
+                                            ),
+                                            buildTristateTooltipIconButton(
+                                              icon: const Icon(Icons.archive),
+                                              filter: filterArchived,
+                                              trueTooltip:
+                                                  'Showing only archived mods',
+                                              falseTooltip:
+                                                  'Hiding archived mods',
+                                              nullTooltip:
+                                                  'Showing all mods incl. archived',
+                                              onChanged: (value) {
+                                                filterArchived = value;
                                                 updateFilter();
                                                 setState(() {});
                                               },
@@ -489,28 +546,41 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       final status =
                                           _catalogStatusMap[statusKey];
 
-                                      return ScrapedModCard(
-                                        mod: profile,
-                                        installedMod: status?.mod,
-                                        versionCheckComparison:
-                                            status?.versionCheck,
-                                        linkLoader: (url) {
-                                          selectedModName = profile.name;
-                                          if (_webViewStatus ==
-                                              WebViewStatus.loaded) {
-                                            webViewController?.loadUrl(
-                                              urlRequest: URLRequest(
-                                                url: WebUri(url),
-                                              ),
-                                            );
-                                          } else {
-                                            url.openAsUriInBrowser();
-                                          }
-                                          setState(() {});
-                                        },
-                                        isSelected:
-                                            currentUrl ==
-                                            profile.getBestWebsiteUrl(),
+                                      final forumThreadId =
+                                          extractForumTopicId(
+                                            profile.urls?[ModUrlType.Forum],
+                                          );
+                                      final forumEntry = forumThreadId != null
+                                          ? forumLookup[forumThreadId]
+                                          : null;
+
+                                      return SizedBox(
+                                        height: 140,
+                                        child: ScrapedModCard(
+                                          mod: profile,
+                                          installedMod: status?.mod,
+                                          versionCheckComparison:
+                                              status?.versionCheck,
+                                          forumModIndex: forumEntry,
+                                          linkLoader: (url) {
+                                            selectedModName = profile.name;
+                                            if (_webViewStatus ==
+                                                WebViewStatus.loaded) {
+                                              webViewController?.loadUrl(
+                                                urlRequest: URLRequest(
+                                                  url: WebUri(url),
+                                                ),
+                                              );
+                                            } else {
+                                              url.openAsUriInBrowser();
+                                            }
+                                            setState(() {});
+                                          },
+                                          isSelected:
+                                              currentUrl != null &&
+                                              currentUrl ==
+                                                  profile.getBestWebsiteUrl(),
+                                        ),
                                       );
                                     },
                                   ),
@@ -1170,9 +1240,31 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
       }).toList();
     }
 
+    // Forum-data-backed filters (WIP, Archived) — single pass and lookup.
+    if (filterWip != null || filterArchived != null) {
+      final lookup = ref.read(forumDataByTopicId);
+      displayedMods = displayedMods?.where((mod) {
+        final topicId = extractForumTopicId(mod.urls?[ModUrlType.Forum]);
+        final forum = topicId != null ? lookup[topicId] : null;
+        if (filterWip != null) {
+          final isWip = forum?.isWip ?? false;
+          if ((filterWip == true) != isWip) return false;
+        }
+        if (filterArchived != null) {
+          final isArchived = forum?.isArchivedModIndex ?? false;
+          if ((filterArchived == true) != isArchived) return false;
+        }
+        return true;
+      }).toList();
+    }
+
     // Sort (always applied last)
     if (displayedMods != null) {
-      displayedMods = sortScrapedMods(displayedMods!, selectedSort);
+      displayedMods = sortScrapedMods(
+        displayedMods!,
+        selectedSort,
+        forumLookup: ref.read(forumDataByTopicId),
+      );
     }
   }
 
@@ -1397,3 +1489,4 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
     }
   }
 }
+

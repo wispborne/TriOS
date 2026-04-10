@@ -61,6 +61,8 @@ class ModRecord with ModRecordMappable {
             s.applyOverridesFrom(override),
           DownloadHistorySource s when override is DownloadHistorySource =>
             s.applyOverridesFrom(override),
+          ForumDataSource s when override is ForumDataSource =>
+            s.applyOverridesFrom(override),
           // Different types: override wins entirely.
           _ => override,
         };
@@ -84,6 +86,9 @@ class ModRecord with ModRecordMappable {
 
   DownloadHistorySource? get downloadHistory =>
       resolvedSources['downloadHistory'] as DownloadHistorySource?;
+
+  ForumDataSource? get forumData =>
+      resolvedSources['forumData'] as ForumDataSource?;
 
   // --- Computed aggregation getters ---
 

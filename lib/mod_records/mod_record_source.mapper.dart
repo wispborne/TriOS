@@ -19,6 +19,7 @@ class ModRecordSourceMapper extends ClassMapperBase<ModRecordSource> {
       VersionCheckerSourceMapper.ensureInitialized();
       CatalogSourceMapper.ensureInitialized();
       DownloadHistorySourceMapper.ensureInitialized();
+      ForumDataSourceMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -921,5 +922,288 @@ class _DownloadHistorySourceCopyWithImpl<$R, $Out>
   DownloadHistorySourceCopyWith<$R2, DownloadHistorySource, $Out2>
   $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
       _DownloadHistorySourceCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumDataSourceMapper extends SubClassMapperBase<ForumDataSource> {
+  ForumDataSourceMapper._();
+
+  static ForumDataSourceMapper? _instance;
+  static ForumDataSourceMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumDataSourceMapper._());
+      ModRecordSourceMapper.ensureInitialized().addSubMapper(_instance!);
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumDataSource';
+
+  static int? _$topicId(ForumDataSource v) => v.topicId;
+  static const Field<ForumDataSource, int> _f$topicId = Field(
+    'topicId',
+    _$topicId,
+    opt: true,
+  );
+  static int? _$views(ForumDataSource v) => v.views;
+  static const Field<ForumDataSource, int> _f$views = Field(
+    'views',
+    _$views,
+    opt: true,
+  );
+  static int? _$replies(ForumDataSource v) => v.replies;
+  static const Field<ForumDataSource, int> _f$replies = Field(
+    'replies',
+    _$replies,
+    opt: true,
+  );
+  static DateTime? _$lastPostDate(ForumDataSource v) => v.lastPostDate;
+  static const Field<ForumDataSource, DateTime> _f$lastPostDate = Field(
+    'lastPostDate',
+    _$lastPostDate,
+    opt: true,
+  );
+  static String? _$lastPostBy(ForumDataSource v) => v.lastPostBy;
+  static const Field<ForumDataSource, String> _f$lastPostBy = Field(
+    'lastPostBy',
+    _$lastPostBy,
+    opt: true,
+  );
+  static DateTime? _$createdDate(ForumDataSource v) => v.createdDate;
+  static const Field<ForumDataSource, DateTime> _f$createdDate = Field(
+    'createdDate',
+    _$createdDate,
+    opt: true,
+  );
+  static bool? _$isWip(ForumDataSource v) => v.isWip;
+  static const Field<ForumDataSource, bool> _f$isWip = Field(
+    'isWip',
+    _$isWip,
+    opt: true,
+  );
+  static bool? _$isArchived(ForumDataSource v) => v.isArchived;
+  static const Field<ForumDataSource, bool> _f$isArchived = Field(
+    'isArchived',
+    _$isArchived,
+    opt: true,
+  );
+  static bool? _$inModIndex(ForumDataSource v) => v.inModIndex;
+  static const Field<ForumDataSource, bool> _f$inModIndex = Field(
+    'inModIndex',
+    _$inModIndex,
+    opt: true,
+  );
+  static String? _$category(ForumDataSource v) => v.category;
+  static const Field<ForumDataSource, String> _f$category = Field(
+    'category',
+    _$category,
+    opt: true,
+  );
+  static String? _$gameVersion(ForumDataSource v) => v.gameVersion;
+  static const Field<ForumDataSource, String> _f$gameVersion = Field(
+    'gameVersion',
+    _$gameVersion,
+    opt: true,
+  );
+  static String? _$thumbnailPath(ForumDataSource v) => v.thumbnailPath;
+  static const Field<ForumDataSource, String> _f$thumbnailPath = Field(
+    'thumbnailPath',
+    _$thumbnailPath,
+    opt: true,
+  );
+  static DateTime? _$lastSeen(ForumDataSource v) => v.lastSeen;
+  static const Field<ForumDataSource, DateTime> _f$lastSeen = Field(
+    'lastSeen',
+    _$lastSeen,
+    opt: true,
+  );
+
+  @override
+  final MappableFields<ForumDataSource> fields = const {
+    #topicId: _f$topicId,
+    #views: _f$views,
+    #replies: _f$replies,
+    #lastPostDate: _f$lastPostDate,
+    #lastPostBy: _f$lastPostBy,
+    #createdDate: _f$createdDate,
+    #isWip: _f$isWip,
+    #isArchived: _f$isArchived,
+    #inModIndex: _f$inModIndex,
+    #category: _f$category,
+    #gameVersion: _f$gameVersion,
+    #thumbnailPath: _f$thumbnailPath,
+    #lastSeen: _f$lastSeen,
+  };
+
+  @override
+  final String discriminatorKey = 'sourceType';
+  @override
+  final dynamic discriminatorValue = 'forumData';
+  @override
+  late final ClassMapperBase superMapper =
+      ModRecordSourceMapper.ensureInitialized();
+
+  static ForumDataSource _instantiate(DecodingData data) {
+    return ForumDataSource(
+      topicId: data.dec(_f$topicId),
+      views: data.dec(_f$views),
+      replies: data.dec(_f$replies),
+      lastPostDate: data.dec(_f$lastPostDate),
+      lastPostBy: data.dec(_f$lastPostBy),
+      createdDate: data.dec(_f$createdDate),
+      isWip: data.dec(_f$isWip),
+      isArchived: data.dec(_f$isArchived),
+      inModIndex: data.dec(_f$inModIndex),
+      category: data.dec(_f$category),
+      gameVersion: data.dec(_f$gameVersion),
+      thumbnailPath: data.dec(_f$thumbnailPath),
+      lastSeen: data.dec(_f$lastSeen),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumDataSource fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumDataSource>(map);
+  }
+
+  static ForumDataSource fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumDataSource>(json);
+  }
+}
+
+mixin ForumDataSourceMappable {
+  String toJson() {
+    return ForumDataSourceMapper.ensureInitialized()
+        .encodeJson<ForumDataSource>(this as ForumDataSource);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumDataSourceMapper.ensureInitialized().encodeMap<ForumDataSource>(
+      this as ForumDataSource,
+    );
+  }
+
+  ForumDataSourceCopyWith<ForumDataSource, ForumDataSource, ForumDataSource>
+  get copyWith =>
+      _ForumDataSourceCopyWithImpl<ForumDataSource, ForumDataSource>(
+        this as ForumDataSource,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return ForumDataSourceMapper.ensureInitialized().stringifyValue(
+      this as ForumDataSource,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumDataSourceMapper.ensureInitialized().equalsValue(
+      this as ForumDataSource,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumDataSourceMapper.ensureInitialized().hashValue(
+      this as ForumDataSource,
+    );
+  }
+}
+
+extension ForumDataSourceValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumDataSource, $Out> {
+  ForumDataSourceCopyWith<$R, ForumDataSource, $Out> get $asForumDataSource =>
+      $base.as((v, t, t2) => _ForumDataSourceCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class ForumDataSourceCopyWith<$R, $In extends ForumDataSource, $Out>
+    implements ModRecordSourceCopyWith<$R, $In, $Out> {
+  @override
+  $R call({
+    int? topicId,
+    int? views,
+    int? replies,
+    DateTime? lastPostDate,
+    String? lastPostBy,
+    DateTime? createdDate,
+    bool? isWip,
+    bool? isArchived,
+    bool? inModIndex,
+    String? category,
+    String? gameVersion,
+    String? thumbnailPath,
+    DateTime? lastSeen,
+  });
+  ForumDataSourceCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumDataSourceCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumDataSource, $Out>
+    implements ForumDataSourceCopyWith<$R, ForumDataSource, $Out> {
+  _ForumDataSourceCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumDataSource> $mapper =
+      ForumDataSourceMapper.ensureInitialized();
+  @override
+  $R call({
+    Object? topicId = $none,
+    Object? views = $none,
+    Object? replies = $none,
+    Object? lastPostDate = $none,
+    Object? lastPostBy = $none,
+    Object? createdDate = $none,
+    Object? isWip = $none,
+    Object? isArchived = $none,
+    Object? inModIndex = $none,
+    Object? category = $none,
+    Object? gameVersion = $none,
+    Object? thumbnailPath = $none,
+    Object? lastSeen = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (topicId != $none) #topicId: topicId,
+      if (views != $none) #views: views,
+      if (replies != $none) #replies: replies,
+      if (lastPostDate != $none) #lastPostDate: lastPostDate,
+      if (lastPostBy != $none) #lastPostBy: lastPostBy,
+      if (createdDate != $none) #createdDate: createdDate,
+      if (isWip != $none) #isWip: isWip,
+      if (isArchived != $none) #isArchived: isArchived,
+      if (inModIndex != $none) #inModIndex: inModIndex,
+      if (category != $none) #category: category,
+      if (gameVersion != $none) #gameVersion: gameVersion,
+      if (thumbnailPath != $none) #thumbnailPath: thumbnailPath,
+      if (lastSeen != $none) #lastSeen: lastSeen,
+    }),
+  );
+  @override
+  ForumDataSource $make(CopyWithData data) => ForumDataSource(
+    topicId: data.get(#topicId, or: $value.topicId),
+    views: data.get(#views, or: $value.views),
+    replies: data.get(#replies, or: $value.replies),
+    lastPostDate: data.get(#lastPostDate, or: $value.lastPostDate),
+    lastPostBy: data.get(#lastPostBy, or: $value.lastPostBy),
+    createdDate: data.get(#createdDate, or: $value.createdDate),
+    isWip: data.get(#isWip, or: $value.isWip),
+    isArchived: data.get(#isArchived, or: $value.isArchived),
+    inModIndex: data.get(#inModIndex, or: $value.inModIndex),
+    category: data.get(#category, or: $value.category),
+    gameVersion: data.get(#gameVersion, or: $value.gameVersion),
+    thumbnailPath: data.get(#thumbnailPath, or: $value.thumbnailPath),
+    lastSeen: data.get(#lastSeen, or: $value.lastSeen),
+  );
+
+  @override
+  ForumDataSourceCopyWith<$R2, ForumDataSource, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _ForumDataSourceCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

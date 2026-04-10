@@ -1,4 +1,7 @@
+import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/models/version.dart';
+import 'package:trios/thirdparty/dartx/map.dart';
 
 // ===== Version Comparison (ported from Starmodder3) =====
 
@@ -33,8 +36,7 @@ String _normalizeSeparators(String s) {
 ) {
   final aResult = <String>[];
   final bResult = <String>[];
-  final len =
-      aTokens.length > bTokens.length ? aTokens.length : bTokens.length;
+  final len = aTokens.length > bTokens.length ? aTokens.length : bTokens.length;
 
   for (var i = 0; i < len; i++) {
     var aPart = i < aTokens.length ? aTokens[i] : '';
@@ -137,9 +139,7 @@ int compareVersions(String? a, String? b) {
 
 // ===== Version Normalization =====
 
-const _versionAliases = {
-  '0.9.5': '0.95',
-};
+const _versionAliases = {'0.9.5': '0.95'};
 
 /// Normalizes a raw game version string to a base version for grouping.
 /// e.g. "0.97a-RC11" → "0.97", "0.9.5a" → "0.95"
@@ -155,6 +155,33 @@ String normalizeBaseVersion(String? rawVersion) {
   // Apply hardcoded equivalences
   if (_versionAliases.containsKey(base)) base = _versionAliases[base]!;
   return base;
+}
+
+// ===== URL Extraction =====
+
+final _forumTopicIdRegex = RegExp(r'topic=(\d+)');
+final _nexusModIdRegex = RegExp(r'/mods/(\d+)');
+
+/// Extracts the numeric topic ID from a forum URL like
+/// `https://fractalsoftworks.com/forum/index.php?topic=25658.0`.
+int? extractForumTopicId(String? url) {
+  if (url == null) return null;
+  final match = _forumTopicIdRegex.firstMatch(url);
+  if (match == null) return null;
+  return int.tryParse(match.group(1)!);
+}
+
+/// Like [extractForumTopicId] but returns the raw string ID (no parse).
+String? extractForumThreadId(String? url) {
+  if (url == null) return null;
+  return _forumTopicIdRegex.firstMatch(url)?.group(1);
+}
+
+/// Extracts the numeric mod ID from a NexusMods URL like
+/// `https://www.nexusmods.com/starsector/mods/123`.
+String? extractNexusModId(String? url) {
+  if (url == null) return null;
+  return _nexusModIdRegex.firstMatch(url)?.group(1);
 }
 
 // ===== Name Comparison =====
@@ -191,7 +218,7 @@ List<String> extractCategories(List<ScrapedMod> mods) {
 /// Returns a map of base version → set of raw version strings,
 /// filtered to groups with 3+ mods, sorted newest-first.
 Map<String, Set<String>> extractVersionGroups(List<ScrapedMod> mods) {
-  final versionMap = <String, Set<String>>{};
+  var versionMap = <String, Set<String>>{};
   final versionModCount = <String, int>{};
 
   for (final mod in mods) {
@@ -206,9 +233,7 @@ Map<String, Set<String>> extractVersionGroups(List<ScrapedMod> mods) {
 
   // Filter to 3+ mods and sort newest-first
   final filtered = Map.fromEntries(
-    versionMap.entries
-        .where((e) => (versionModCount[e.key] ?? 0) >= 3)
-        .toList()
+    versionMap.entries.where((e) => (versionModCount[e.key] ?? 0) >= 3).toList()
       ..sort((a, b) => compareVersions(b.key, a.key)),
   );
 
@@ -223,14 +248,29 @@ enum CatalogSortKey {
   nameDesc('Name Z\u2013A'),
   dateDesc('Newest'),
   dateAsc('Oldest'),
-  versionDesc('Game Version');
+  versionDesc('Game Version'),
+  mostViewed('Most Viewed'),
+  lastActivity('Last Activity');
 
   final String label;
+
   const CatalogSortKey(this.label);
 }
 
+/// Looks up the [ForumModIndex] for a [ScrapedMod] using the forum URL.
+ForumModIndex? _forumFor(ScrapedMod mod, Map<int, ForumModIndex> forumLookup) {
+  final id = extractForumTopicId(mod.urls?[ModUrlType.Forum]);
+  return id != null ? forumLookup[id] : null;
+}
+
 /// Sorts a list of scraped mods by the given sort key. Returns a new list.
-List<ScrapedMod> sortScrapedMods(List<ScrapedMod> mods, CatalogSortKey sortKey) {
+/// [forumLookup] is needed for [CatalogSortKey.mostViewed] and
+/// [CatalogSortKey.lastActivity]; mods without forum data sort last.
+List<ScrapedMod> sortScrapedMods(
+  List<ScrapedMod> mods,
+  CatalogSortKey sortKey, {
+  Map<int, ForumModIndex> forumLookup = const {},
+}) {
   final sorted = List<ScrapedMod>.from(mods);
   switch (sortKey) {
     case CatalogSortKey.nameAsc:
@@ -259,6 +299,26 @@ List<ScrapedMod> sortScrapedMods(List<ScrapedMod> mods, CatalogSortKey sortKey) 
         final cmp = compareVersions(aVer, bVer);
         if (cmp != 0) return -cmp; // newest first
         return nameCompare(a, b);
+      });
+    case CatalogSortKey.mostViewed:
+      sorted.sort((a, b) {
+        final af = _forumFor(a, forumLookup);
+        final bf = _forumFor(b, forumLookup);
+        if (af == null && bf == null) return nameCompare(a, b);
+        if (af == null) return 1;
+        if (bf == null) return -1;
+        final cmp = bf.views.compareTo(af.views); // descending
+        return cmp != 0 ? cmp : nameCompare(a, b);
+      });
+    case CatalogSortKey.lastActivity:
+      sorted.sort((a, b) {
+        final af = _forumFor(a, forumLookup)?.lastPostDate;
+        final bf = _forumFor(b, forumLookup)?.lastPostDate;
+        if (af == null && bf == null) return nameCompare(a, b);
+        if (af == null) return 1;
+        if (bf == null) return -1;
+        final cmp = bf.compareTo(af); // most recent first
+        return cmp != 0 ? cmp : nameCompare(a, b);
       });
   }
   return sorted;

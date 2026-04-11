@@ -408,6 +408,7 @@ class AppState {
 
 class _GameRunningChecker extends AsyncNotifier<Result> {
   Timer? _timer;
+  bool _isPolling = false;
   static const int period = 1500;
   List<File?> _gameExecutables = [];
 
@@ -441,70 +442,63 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
 
     // Set up periodic checking every x milliseconds
     const duration = Duration(milliseconds: period);
-    final isWindowFocused = ref.watch(AppState.isWindowFocused);
+    // Keep the reactive rebuild when focus changes, but read the live value
+    // inside the callback rather than closing over a snapshot. A snapshot
+    // captured here becomes stale if build() is re-entered concurrently,
+    // which can leave orphaned timers that poll even when TriOS is unfocused.
+    ref.watch(AppState.isWindowFocused);
 
     _timer?.cancel();
+    _isPolling = false;
     _timer = Timer.periodic(duration, (timer) async {
-      if (!isWindowFocused) {
-        return;
-      } else {
-        Result result = await _checkIfStarsectorIsRunning(executableNames);
-        bool isGameRunning = result.wasSuccessful;
+      if (!ref.read(AppState.isWindowFocused)) return;
+      // Guard against concurrent callbacks: Timer.periodic fires at wall-clock
+      // intervals regardless of whether the previous callback has finished.
+      // Without this, slow WMIC queries cause callbacks to queue up and drain
+      // in bursts, spawning multiple JpsAtHome processes simultaneously.
+      if (_isPolling) return;
+      _isPolling = true;
+      try {
+        final result = await _checkIfStarsectorIsRunning(executableNames);
         state = AsyncValue.data(result);
+      } finally {
+        _isPolling = false;
       }
     });
 
     // Clean up the timer when the notifier is disposed
     ref.onDispose(() {
       _timer?.cancel();
+      _isPolling = false;
     });
 
     return result;
   }
 
   /// Check if Starsector is running.
-  /// First, try using system Java to run homebrew JPS.
-  /// If that doesn't work, try using (Windows) WMIC or (Unix) `ps aux`.
+  /// On Windows: use WMIC directly — safe, reads the process list without
+  /// touching any running JVM.
+  /// On other platforms: try JpsAtHome (JVM Attach API), then fall back to
+  /// `ps aux`. JpsAtHome is intentionally skipped on Windows because it forces
+  /// Starsector's JVM to a safepoint and being SIGKILL'd mid-attach can block
+  /// the rendering thread long enough to trigger a GPU driver TDR and hard-freeze.
   Future<Result> _checkIfStarsectorIsRunning(List<String> processNames) async {
     List<Exception> errors = [];
-    // First try using homebrew JPS to get Java processes
-    // Requires Java JDK on the host machine, or Java 17.
 
-    //// This uses the game's own JRE to run JpsAtHome, but `java.lang.noclassdeffounderror: com/sun/tools/attach/virtualmachine`
-    //// `tools.jar` isn't bundled with the game's JRE.
-    // try {
-    //   final jreFolder = ref
-    //       .read(AppState.activeJre)
-    //       .value
-    //       ?.jreAbsolutePath;
-    //   if (jreFolder != null) {
-    //     final starsectorJavaExecutablePath = getJavaExecutable(jreFolder).path;
-    //     final result = await _checkIfAnyProcessIsRunningUsingGivenJre(
-    //       starsectorJavaExecutablePath,
-    //     );
-    //     if (result != null) {
-    //       Fimber.v(
-    //         () =>
-    //             "Checked if game is running using JPS running on game's JRE $starsectorJavaExecutablePath. Is game running? ${result.wasSuccessful}",
-    //       );
-    //       return result;
-    //     }
-    //   }
-    // } on Exception catch (e) {
-    //   // ignored, probably can't run due to no java/jdk installed
-    //   errors.add(e);
-    // }
+    if (Platform.isWindows) {
+      // WMIC is safe and accurate — reads process metadata without touching JVMs.
+      final wmicResult = await _checkIfAnyProcessIsRunningUsingWmic(errors);
+      if (wmicResult != null) return wmicResult;
+      return Result.unmitigatedFailure(errors);
+    }
 
-    // Try using the system's java executable to run JpsAtHome (requires JDK)
+    // Non-Windows: try JpsAtHome (requires JDK on the host machine, or Java 17)
     try {
-      final javaExecutablePath = 'java';
-      final result = await _checkIfAnyProcessIsRunningUsingGivenJre(
-        javaExecutablePath,
-      );
+      final result = await _checkIfAnyProcessIsRunningUsingGivenJre('java');
       if (result != null) {
         Fimber.v(
           () =>
-              "Checked if game is running using JPS running on system's JRE $javaExecutablePath. Is game running? ${result.wasSuccessful}",
+              "Checked if game is running using JPS. Is game running? ${result.wasSuccessful}",
         );
         return result;
       }
@@ -513,17 +507,9 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
       errors.add(e);
     }
 
-    // Fall back to using platform-specific commands to check process names.
+    // Fall back to ps aux on macOS/Linux.
     try {
-      // Check the titles of all windows
-      if (Platform.isWindows) {
-        final wmicResult =
-            await _checkIfAnyProcessIsRunningUsingWmic(errors);
-        if (wmicResult != null) {
-          return wmicResult;
-        }
-        // _checkIfAnyProcessIsRunningUsingPowershell(errors);
-      } else if (Platform.isMacOS || Platform.isLinux) {
+      if (Platform.isMacOS || Platform.isLinux) {
         // Use 'ps aux' command to get processes with command line
         ProcessResult result = await Process.run('ps', ['aux']);
         String output = result.stdout.toString().toLowerCase();
@@ -541,17 +527,11 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
         return Result.unmitigatedFailure(
           errors..add(Exception("Game not found using fallback `ps` method.")),
         );
-      } else {
-        // Unsupported platform
-        return Result.unmitigatedFailure(
-          errors..add(Exception("No fallback method for this platform.")),
-        );
       }
     } catch (e) {
       // ignored - this is running every second while in focus, don't spam logs
     }
 
-    // Handle any exceptions
     return Result.unmitigatedFailure(errors);
   }
 

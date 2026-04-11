@@ -91,7 +91,7 @@ class Constants {
   static const companionModFolderName = "TriOS-Mod";
   static const companionModId = "wisp_trios_companion";
   static const gargoyleCharId = "gargoyle";
-  static const companionModVersion = "1.0.1";
+  static const companionModVersion = "1.0.2";
 
   static const String modRepoUrl =
       "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";

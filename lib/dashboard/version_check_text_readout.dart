@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/version_checker_info.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
-import 'package:trios/trios/constants_theme.dart';
 
 import '../mod_manager/version_checker.dart';
 

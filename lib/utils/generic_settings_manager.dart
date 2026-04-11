@@ -23,6 +23,13 @@ final Duration _debounceDuration = Duration(milliseconds: 300);
 
 /// Handles reading/writing settings from/to disk, and schedules those writes.
 abstract class GenericAsyncSettingsManager<T> {
+  /// Backoff schedule for retrying transient Windows file-lock errors.
+  static const List<int> _retryDelaysMs = [50, 100, 200, 400, 800];
+
+  /// Windows sharing-violation error codes worth briefly retrying.
+  static const int _errSharingViolation = 32; // ERROR_SHARING_VIOLATION
+  static const int _errLockViolation = 33; // ERROR_LOCK_VIOLATION
+
   File settingsFile = File("");
 
   /// Updated whenever the state is read from or written to file.
@@ -109,14 +116,49 @@ abstract class GenericAsyncSettingsManager<T> {
     return _writeCompleter!.future;
   }
 
-  /// Performs the actual write to disk.
+  /// Writes atomically via a sibling `.tmp` file + rename, and retries on
+  /// transient Windows sharing-violation errors (AV scans, Search indexer,
+  /// etc.) so a flaky file lock doesn't drop settings changes.
   Future<void> _performWriteSettingsToDisk(T stateToWrite) async {
     await _mutex.protect(() async {
-      final serializedData = await serialize(stateToWrite);
-      await settingsFile.writeAsBytes(serializedData);
-      lastKnownValue = stateToWrite;
-      Fimber.v(() => "$fileName successfully written to disk.");
+      final current = lastKnownValue ?? stateToWrite;
+      final bytes = await serialize(current);
+
+      final tempFile = File('${settingsFile.path}.tmp');
+      var attempt = 0;
+      while (true) {
+        try {
+          await tempFile.writeAsBytes(bytes, flush: true);
+          await tempFile.rename(settingsFile.path);
+          lastKnownValue = current;
+          Fimber.v(() => "$fileName successfully written to disk.");
+          return;
+        } catch (e) {
+          if (!_isTransientLockError(e) || attempt >= _retryDelaysMs.length) {
+            try {
+              await tempFile.delete();
+            } catch (_) {}
+            rethrow;
+          }
+          Fimber.w(
+            "Transient lock writing $fileName (attempt ${attempt + 1}): $e. "
+            "Retrying in ${_retryDelaysMs[attempt]}ms.",
+          );
+          await Future.delayed(
+            Duration(milliseconds: _retryDelaysMs[attempt]),
+          );
+          attempt++;
+        }
+      }
     });
+  }
+
+  /// Returns `true` for Windows sharing-violation errors that are worth
+  /// retrying briefly (another process holds the file open).
+  bool _isTransientLockError(Object e) {
+    if (e is! FileSystemException) return false;
+    final code = e.osError?.errorCode;
+    return code == _errSharingViolation || code == _errLockViolation;
   }
 
   /// Override to do custom serialization

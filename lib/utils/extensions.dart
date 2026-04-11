@@ -1029,6 +1029,14 @@ extension IntExt on int {
 
   String bytesAsReadableKB() => "${(this / 1000).toStringAsFixed(2)} KB";
 
+  /// Compact human-readable byte count: "B" below 1 KB, "KB" below 1 MB,
+  /// "MB" otherwise.
+  String bytesAsReadable() {
+    if (this >= 1000 * 1000) return bytesAsReadableMB();
+    if (this >= 1000) return bytesAsReadableKB();
+    return "$this B";
+  }
+
   /// From Java
   int numberOfLeadingZeros() {
     // HD, Count leading 0's

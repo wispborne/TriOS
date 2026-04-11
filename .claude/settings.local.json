@@ -59,7 +59,14 @@
       "Bash(cp openspec/changes/fix-phase-defense-tooltip/specs/phase-tooltip-stats/spec.md openspec/specs/phase-tooltip-stats/spec.md)",
       "Bash(mv openspec/changes/fix-phase-defense-tooltip openspec/changes/archive/2026-04-07-fix-phase-defense-tooltip)",
       "Bash(mkdir -p openspec/specs/inline-edit-widget)",
-      "Bash(cp openspec/changes/inline-edit-text-widget/specs/inline-edit-widget/spec.md openspec/specs/inline-edit-widget/spec.md)"
+      "Bash(cp openspec/changes/inline-edit-text-widget/specs/inline-edit-widget/spec.md openspec/specs/inline-edit-widget/spec.md)",
+      "Bash(openspec validate:*)",
+      "Read(//tmp/**)",
+      "Bash(unzip -o -q \"/c/Program Files \\(x86\\)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/starfarer.api.jar\" \"com/fs/starfarer/api/graphics/SpriteAPI.class\")",
+      "Bash(javap com/fs/starfarer/api/graphics/SpriteAPI.class)",
+      "Bash(javac -version)",
+      "Bash(jar cf:*)",
+      "Bash(jar tf:*)"
     ]
   }
 }

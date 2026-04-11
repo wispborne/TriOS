@@ -4,8 +4,8 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
+import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
-import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
@@ -13,6 +13,7 @@ import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
@@ -82,17 +83,17 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
             contextMenu: ContextMenu(
               entries: [
                 if (false)
-                MenuItem(
-                  label: 'View Mod Details...',
-                  icon: Icons.info_outline,
-                  onSelected: () => showModInfoDialog(
-                    context,
-                    mod: widget.installedMod,
-                    scrapedMod: mod,
-                    forumModIndex: widget.forumModIndex,
-                    versionCheckComparison: widget.versionCheckComparison,
+                  MenuItem(
+                    label: 'View Mod Details...',
+                    icon: Icons.info_outline,
+                    onSelected: () => showModInfoDialog(
+                      context,
+                      mod: widget.installedMod,
+                      scrapedMod: mod,
+                      forumModIndex: widget.forumModIndex,
+                      versionCheckComparison: widget.versionCheckComparison,
+                    ),
                   ),
-                ),
                 MenuItem(
                   label: 'Debug Info',
                   leading: const Icon(Icons.bug_report, size: 16),
@@ -178,27 +179,6 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      if (widget
-                                              .versionCheckComparison
-                                              ?.hasUpdate ==
-                                          true)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 6,
-                                          ),
-                                          child: MovingTooltipWidget.text(
-                                            message: 'Update available',
-                                            child:
-                                                VersionCheckIcon.fromComparison(
-                                                  comparison: widget
-                                                      .versionCheckComparison,
-                                                  modId:
-                                                      widget.installedMod?.id ??
-                                                      '',
-                                                  theme: theme,
-                                                ),
-                                          ),
-                                        ),
                                     ],
                                   ),
                                   if (mod.authorsList?.isNotEmpty == true)
@@ -785,12 +765,15 @@ class CatalogDownloadButton extends ConsumerWidget {
     final Color foregroundColor;
     final String tooltip;
     final VoidCallback? onPressed;
+    final hasUpdate =
+        state == _CatalogDownloadState.updateDirectDownload ||
+        state == _CatalogDownloadState.updateWebsite;
 
     switch (state) {
       case _CatalogDownloadState.updateDirectDownload:
         icon = Icons.download;
-        backgroundColor = theme.statusColors.info;
-        foregroundColor = theme.statusColors.onInfo;
+        backgroundColor = theme.colorScheme.primary;
+        foregroundColor = theme.colorScheme.onPrimary;
         tooltip = 'Update available';
         onPressed = () => _confirmAndDownload(
           context,
@@ -800,21 +783,21 @@ class CatalogDownloadButton extends ConsumerWidget {
         );
       case _CatalogDownloadState.updateWebsite:
         icon = Icons.open_in_browser;
-        backgroundColor = theme.statusColors.info;
-        foregroundColor = theme.statusColors.onInfo;
-        tooltip = 'Update available — open download page';
+        backgroundColor = theme.colorScheme.primary;
+        foregroundColor = theme.colorScheme.onPrimary;
+        tooltip = 'Update available.\nOpen download page';
         onPressed = () => linkLoader(mod.getBestWebsiteUrl()!);
       case _CatalogDownloadState.installedEnabled:
         icon = Icons.check;
         backgroundColor = theme.statusColors.success.withValues(alpha: 0.85);
         foregroundColor = theme.statusColors.onSuccess;
-        tooltip = 'Enabled — click to disable';
+        tooltip = 'Installed and enabled.\nClick to disable';
         onPressed = () => _toggleMod(ref, enabled: false);
       case _CatalogDownloadState.installedDisabled:
         icon = Icons.check;
         backgroundColor = theme.statusColors.neutral.withValues(alpha: 0.7);
         foregroundColor = theme.statusColors.onNeutral;
-        tooltip = 'Installed, disabled — click to enable';
+        tooltip = 'Installed but disabled.\nClick to enable';
         onPressed = () => _toggleMod(ref, enabled: true);
       case _CatalogDownloadState.notInstalledDirectDownload:
         icon = Icons.download;
@@ -843,8 +826,9 @@ class CatalogDownloadButton extends ConsumerWidget {
         onPressed = null;
     }
 
-    return MovingTooltipWidget.text(
-      message: tooltip,
+    final buttonChild = ConditionalWrap(
+      condition: hasUpdate,
+      wrapper: (child) => Blur(child: child),
       child: SizedBox(
         width: 32,
         height: 32,
@@ -856,6 +840,26 @@ class CatalogDownloadButton extends ConsumerWidget {
         ),
       ),
     );
+
+    if (hasUpdate && installedMod != null && versionCheckComparison != null) {
+      final comparison = versionCheckComparison!;
+      return MovingTooltipWidget.framed(
+        tooltipWidget: SizedBox(
+          width: 400,
+          child: VersionCheckTextReadout(
+            comparison.comparisonInt,
+            comparison.variant.versionCheckerInfo,
+            comparison.remoteVersionCheck,
+            installedMod!,
+            true,
+            false,
+          ),
+        ),
+        child: buttonChild,
+      );
+    }
+
+    return MovingTooltipWidget.text(message: tooltip, child: buttonChild);
   }
 
   void _confirmAndDownload(
@@ -919,7 +923,7 @@ class _ForumStats extends StatelessWidget {
     final baseColor = theme.textTheme.labelSmall?.color;
     final style = theme.textTheme.labelSmall?.copyWith(
       color: baseColor?.withValues(alpha: 0.6),
-      fontSize: 10,
+      fontSize: 11,
     );
 
     return Row(
@@ -930,9 +934,9 @@ class _ForumStats extends StatelessWidget {
           message: '${_decimalFormat.format(forumModIndex.views)} forum views',
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            spacing: 2,
+            spacing: 4,
             children: [
-              Icon(Icons.visibility, size: 11, color: style?.color),
+              Icon(Icons.visibility, size: 12, color: style?.color),
               Text(_compactFormat.format(forumModIndex.views), style: style),
             ],
           ),
@@ -942,9 +946,9 @@ class _ForumStats extends StatelessWidget {
               '${_decimalFormat.format(forumModIndex.replies)} forum replies',
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            spacing: 2,
+            spacing: 4,
             children: [
-              Icon(Icons.forum, size: 11, color: style?.color),
+              Icon(Icons.forum, size: 12, color: style?.color),
               Text(_compactFormat.format(forumModIndex.replies), style: style),
             ],
           ),

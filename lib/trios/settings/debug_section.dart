@@ -615,7 +615,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               ),
               Builder(
                 builder: (context) {
-                  final cacheTime = getForumDataCacheTimestamp();
+                  final cacheTime = forumDataFetcher.getCacheTimestamp();
                   final forumBundle =
                       ref.watch(forumDataProvider).valueOrNull;
                   final entryCount = forumBundle?.index.length;
@@ -643,7 +643,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     label: const Text('Force Refresh'),
                     onPressed: () async {
                       try {
-                        await forceRefreshForumData();
+                        await forumDataFetcher.fetch(bypassCache: true);
                         ref.invalidate(forumDataProvider);
                         if (context.mounted) {
                           showSnackBar(
@@ -667,7 +667,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     icon: const Icon(Icons.delete_outline),
                     label: const Text('Clear Cache'),
                     onPressed: () {
-                      clearForumDataCache();
+                      forumDataFetcher.clearCache();
                       ref.invalidate(forumDataProvider);
                       showSnackBar(
                         context: context,

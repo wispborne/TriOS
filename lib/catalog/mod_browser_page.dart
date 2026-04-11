@@ -26,6 +26,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/popup_style_menu_anchor.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/tristate_icon_button.dart';
@@ -35,6 +36,7 @@ import '../main.dart';
 import '../trios/download_manager/downloader.dart';
 import '../widgets/moving_tooltip.dart';
 import '../widgets/multi_split_mixin_view.dart';
+import 'catalog_data_sources_dialog.dart';
 import 'forum_data_manager.dart';
 import 'mod_browser_manager.dart';
 
@@ -404,6 +406,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                             ),
                                           ),
                                         ),
+                                        buildCatalogOverflowButton(),
                                       ],
                                     ),
                                     // Category, Version, Sort dropdowns
@@ -1382,6 +1385,38 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
       suggestionsBuilder: (BuildContext context, SearchController controller) {
         return [];
       },
+    );
+  }
+
+  Widget buildCatalogOverflowButton() {
+    return MovingTooltipWidget.text(
+      message: 'More options',
+      child: PopupStyleMenuAnchor(
+        builder: (context, menuController, child) {
+          return IconButton(
+            icon: const Icon(Icons.more_vert),
+            tooltip: '',
+            onPressed: () {
+              if (menuController.isOpen) {
+                menuController.close();
+              } else {
+                menuController.open();
+              }
+            },
+          );
+        },
+        menuChildren: [
+          MenuItemButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+              const Icon(Icons.storage),
+            ),
+            onPressed: () {
+              showCatalogDataSourcesDialog(context);
+            },
+            child: const Text('Data sources…'),
+          ),
+        ],
+      ),
     );
   }
 

@@ -38,4 +38,25 @@ extension RelativeTimeExtension on DateTime {
 
     return isPast ? '$timeString ago' : 'in $timeString';
   }
+
+  /// Compact age string relative to now: `"5s"`, `"3m"`, `"2h"`, `"4d"`.
+  /// Always uses the largest unit that fits, no sign.
+  String ageCompact() {
+    final diff = DateTime.now().difference(this);
+    if (diff.inMinutes < 1) return '${diff.inSeconds}s';
+    if (diff.inHours < 1) return '${diff.inMinutes}m';
+    if (diff.inDays < 1) return '${diff.inHours}h';
+    return '${diff.inDays}d';
+  }
+}
+
+extension CompactDurationExtension on Duration {
+  /// Compact duration string: `"5s"`, `"3m"`, `"2h"`, `"4d"`.
+  /// Always uses the largest unit that fits.
+  String toCompactString() {
+    if (inDays >= 1) return '${inDays}d';
+    if (inHours >= 1) return '${inHours}h';
+    if (inMinutes >= 1) return '${inMinutes}m';
+    return '${inSeconds}s';
+  }
 }

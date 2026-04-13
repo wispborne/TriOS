@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:trios/catalog/forum_data_manager.dart';
+import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
@@ -19,7 +21,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/text_trios.dart';
 
-class ScrapedModCard extends StatefulWidget {
+class ScrapedModCard extends ConsumerStatefulWidget {
   final ScrapedMod mod;
   final void Function(String) linkLoader;
   final bool isSelected;
@@ -38,10 +40,10 @@ class ScrapedModCard extends StatefulWidget {
   });
 
   @override
-  State<ScrapedModCard> createState() => _ScrapedModCardState();
+  ConsumerState<ScrapedModCard> createState() => _ScrapedModCardState();
 }
 
-class _ScrapedModCardState extends State<ScrapedModCard> {
+class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   bool isBeingHovered = false;
 
   Color _statusBarColor(ThemeData theme) {
@@ -73,7 +75,14 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
       child: Builder(
         builder: (context) {
           final websiteUrl = mod.getBestWebsiteUrl();
+          final topicId = widget.forumModIndex?.topicId;
+          final forumDetails = topicId == null
+              ? null
+              : ref.watch(forumDetailsForTopic(topicId));
+          final hasForumDetails =
+              forumDetails != null && !forumDetails.isPlaceholderDetail;
           final hasClickableLink =
+              hasForumDetails ||
               websiteUrl != null ||
               urls?.containsKey(ModUrlType.DirectDownload) == true;
 
@@ -114,10 +123,18 @@ class _ScrapedModCardState extends State<ScrapedModCard> {
                 condition: hasClickableLink,
                 wrapper: (child) => InkWell(
                   onTap: () {
+                    if (hasForumDetails) {
+                      showForumPostDialog(
+                        context,
+                        details: forumDetails,
+                        index: widget.forumModIndex,
+                        linkLoader: widget.linkLoader,
+                      );
+                      return;
+                    }
                     if (urls == null) {
                       return;
                     }
-
                     if (websiteUrl != null) {
                       widget.linkLoader(websiteUrl);
                     } else if (urls.containsKey(ModUrlType.DirectDownload)) {

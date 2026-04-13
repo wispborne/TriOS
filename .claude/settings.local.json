@@ -66,7 +66,9 @@
       "Bash(javap com/fs/starfarer/api/graphics/SpriteAPI.class)",
       "Bash(javac -version)",
       "Bash(jar cf:*)",
-      "Bash(jar tf:*)"
+      "Bash(jar tf:*)",
+      "Bash(python -c ':*)",
+      "Bash(mv openspec/changes/saved-mod-card-forum-dialog openspec/changes/archive/2026-04-12-saved-mod-card-forum-dialog)"
     ]
   }
 }

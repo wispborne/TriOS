@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:trios/trios/constants_theme.dart';
@@ -25,6 +26,8 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:win32_registry/win32_registry.dart';
+
+import 'package:window_manager/window_manager.dart';
 
 import '../themes/theme_manager.dart';
 
@@ -312,14 +315,29 @@ class LauncherButton extends HookConsumerWidget {
     }
   }
 
-  static void _launchGameWithoutPrecheck(WidgetRef ref) {
+  static Future<void> _launchGameWithoutPrecheck(WidgetRef ref) async {
+    // Minimize TriOS before launching Starsector on Windows.
+    // When a fullscreen Direct3D/OpenGL app takes over the display, Windows sends a
+    // rapid burst of window messages (WM_NCACTIVATE, WM_DISPLAYCHANGE, etc.) to all
+    // open windows. flutter_windows.dll has a deterministic ACCESS VIOLATION bug
+    // (offset 0x1cce0) that is triggered by this message sequence. By minimizing
+    // first, TriOS is already in a quiet state when Starsector takes the display —
+    // it receives far fewer messages and doesn't compete with the compositor.
+    if (Platform.isWindows) {
+      try {
+        await windowManager.minimize();
+      } catch (e) {
+        Fimber.w("Failed to minimize window before game launch: $e");
+      }
+    }
+
     if (ref.read(appSettings.select((s) => s.useCustomGameExePath))) {
       launchGameUsingLauncher(
         ref.read(AppState.gameFolder).value!,
         customExePath: ref.read(AppState.gameExecutable).value,
       );
     } else {
-      launchGameVanilla(ref);
+      unawaited(launchGameVanilla(ref));
     }
   }
 

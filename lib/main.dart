@@ -297,9 +297,15 @@ void main() async {
       () async {
         await windowManager.setPreventClose(true);
         await windowManager.show();
-        await windowManager.focus();
+        // Do NOT call windowManager.focus() here. WindowManager.Show() already
+        // calls SetForegroundWindow() internally. Calling focus() immediately
+        // after causes a second SetForegroundWindow(), which sends WM_NCACTIVATE
+        // synchronously while flutter_windows.dll is still on the call stack
+        // from the "show" method handler. This triggers _EmitEvent("focus") →
+        // channel->InvokeMethod() re-entering flutter_windows.dll's internal
+        // state, causing a deterministic ACCESS VIOLATION at offset 0x1cce0.
         if (settings?.isMaximized ?? false) {
-          windowManager.maximize();
+          await windowManager.maximize();
         }
       },
     );
@@ -517,19 +523,24 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
   }
 
   void _saveWindowPosition() async {
-    if (!_startupComplete) return;
+    if (!_startupComplete || !mounted) return;
+
+    // Check minimized first to avoid unnecessary platform channel calls.
+    if (await windowManager.isMinimized()) return;
+    if (!mounted) return;
 
     final windowFrame = await windowManager.getBounds();
+    if (!mounted) return;
+
     final isMaximized = await windowManager.isMaximized();
+    if (!mounted) return;
 
     // Don't save window size if minimized, we want to restore to the previous size.
-    if (!await windowManager.isMinimized()) {
-      ref
-          .read(appSettings.notifier)
-          .update(
-            (state) => _applyWindowFrame(state, windowFrame, isMaximized),
-          );
-    }
+    ref
+        .read(appSettings.notifier)
+        .update(
+          (state) => _applyWindowFrame(state, windowFrame, isMaximized),
+        );
 
     // try {
     //   final config = ConfigManager("TriOS-config.json");
@@ -569,20 +580,29 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   void onWindowEvent(String eventName) {
-    if (Platform.isLinux && eventName == "focus") {
-      // Linux doesn't have a "moved" event like Windows and MacOS.
-      _saveWindowPosition();
-    } else if (eventName != "blur" &&
-        eventName != "focus" &&
-        eventName != "move" &&
-        eventName != "resize") {
-      _saveWindowPosition();
-    }
+    if (!mounted) return;
+    try {
+      if (Platform.isLinux && eventName == "focus") {
+        // Linux doesn't have a "moved" event like Windows and MacOS.
+        _saveWindowPosition();
+      } else if (eventName != "blur" &&
+          eventName != "focus" &&
+          eventName != "move" &&
+          eventName != "resize") {
+        _saveWindowPosition();
+      }
 
-    if (eventName == "focus") {
-      ref.read(AppState.isWindowFocused.notifier).update((state) => true);
-    } else if (eventName == "blur") {
-      ref.read(AppState.isWindowFocused.notifier).update((state) => false);
+      if (eventName == "focus") {
+        ref.read(AppState.isWindowFocused.notifier).update((state) => true);
+      } else if (eventName == "blur") {
+        ref.read(AppState.isWindowFocused.notifier).update((state) => false);
+      }
+    } catch (e, st) {
+      Fimber.e(
+        "Error handling window event '$eventName'",
+        ex: e,
+        stacktrace: st,
+      );
     }
   }
 }

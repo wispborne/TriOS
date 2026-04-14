@@ -2,11 +2,11 @@ name: trios
 description: "Starsector mod manager, launcher, and toolkit."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.0+1
+version: 1.4.4+1
 
 environment:
-  sdk: 3.10.7
-  flutter: '3.38.6'
+  sdk: '>=3.11.4 <4.0.0'
+  flutter: '>=3.41.6'
 
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -29,23 +29,23 @@ dependencies:
   dropdown_button2: ^3.0.0-beta.22
   dynamic_library: ^0.9.0
   ffi: ^2.1.5
-  file_picker: ^10.3.8
+  file_picker: ^10.3.10
   fl_chart: ^1.1.1
   flutter_animate: ^4.5.2
   flutter_color: ^2.1.0
-  google_fonts: ^7.0.0
-  material_color_utilities: ^0.11.1
+  google_fonts: ^8.0.2
+  material_color_utilities: ^0.13.0
   hooks_riverpod: ^2.6.1
   hashlib: ^2.3.0
   html: ^0.15.6
   image: ^4.7.2
-  flutter_inappwebview: 6.1.5
+  flutter_inappwebview: ^6.1.5
   intl: ^0.20.2
   json_annotation: ^4.9.0
   ktx: ^1.1.6
   flutter_linkify: ^6.0.0
   logger: ^2.5.0
-  flutter_markdown: ^0.7.7+1
+  flutter_markdown_plus: ^1.0.3
   msgpack_dart: ^1.0.1
   multi_split_view: ^3.6.0
   mutex: ^3.1.0
@@ -53,6 +53,7 @@ dependencies:
     git: # Fork that fixes build warnings, original package seems abandoned.
       url: https://github.com/xvrh/open_file
       ref: 3ed35135c0e2c0e4b75f16fb462be362a0423e71
+  # TODO(flutter-upgrade): palette_generator is discontinued; migrate when replacement is stable.
   palette_generator: ^0.3.3+3
   path_drawing: ^1.0.1
   path_provider: ^2.0.11
@@ -89,10 +90,6 @@ dependencies:
   windows_system_info: ^0.0.4
   xml: ^6.6.1
 #  yaml: ^3.1.3
-
-dependency_overrides:
-  device_info_plus: '>=11.0.0 <12.0.0'
-
 
 dev_dependencies:
   # dart run build_runner watch --delete-conflicting-outputs

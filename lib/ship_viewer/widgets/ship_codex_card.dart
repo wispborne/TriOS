@@ -201,10 +201,10 @@ class ShipCodexCard {
                               tooltipFmt(ship.suppliesRec),
                               color: crColor,
                             ),
-                          if (ship.fleetPts != null)
+                          if (ship.deploymentPoints != null)
                             tooltipRow(
                               'Deployment points',
-                              tooltipFmt(ship.fleetPts),
+                              tooltipFmt(ship.deploymentPoints),
                               color: dpColor,
                             ),
                           if (ship.peakCrSec != null)

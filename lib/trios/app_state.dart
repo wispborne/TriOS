@@ -27,6 +27,12 @@ import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/trios/process_detection/jps_process_detector.dart';
+import 'package:trios/trios/process_detection/process_detection_diagnostics.dart';
+import 'package:trios/trios/process_detection/process_detector.dart';
+import 'package:trios/trios/process_detection/unix_process_detector.dart';
+import 'package:trios/trios/process_detection/win32_process_detector.dart';
+import 'package:trios/trios/process_detection/wmic_process_detector.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
@@ -403,13 +409,19 @@ class AppState {
         _GameRunningChecker.new,
       );
 
+  static final processDetectionDiagnostics =
+      StateProvider<ProcessDetectionDiagnostics?>((ref) => null);
+
   static final ignoringDrop = StateProvider<bool>((ref) => false);
 }
 
 class _GameRunningChecker extends AsyncNotifier<Result> {
-  Timer? _timer;
   static const int period = 1500;
-  List<File?> _gameExecutables = [];
+  int _generation = 0;
+  late final List<ProcessDetector> _detectors;
+  String? _lastMatchedDetectorName;
+  List<String> _lastUsedDetectorNames = [];
+  DateTime? _previousRunTime;
 
   @override
   Future<Result> build() async {
@@ -420,246 +432,108 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
       return Result.unmitigatedFailure([]);
     }
 
-    // Retrieve the list of executable files
-    _gameExecutables = [ref.watch(AppState.gameExecutable).value];
+    // Retrieve executable names for detectors that need them.
+    final gameExecutables = [ref.watch(AppState.gameExecutable).value];
+    final List<String> executableNames =
+        gameExecutables
+            .whereType<File>()
+            .map((file) => file.path.split(Platform.pathSeparator).last)
+            .toList();
 
-    // Extract executable names from file paths
-    final List<String> executableNames = _gameExecutables
-        .whereType<File>()
-        .map((file) => file.path.split(Platform.pathSeparator).last)
-        .toList();
+    // Build the platform-specific detector chain.
+    _detectors = _buildDetectorChain();
 
-    // Perform an initial check
-    // final stopwatch = Stopwatch()..start();
-    Result result = (await _checkIfStarsectorIsRunning(executableNames));
-    // Fimber.d(
-    //   "Checked if game is running in ${(stopwatch..stop()).elapsedMilliseconds}ms",
-    // );
-
-    // Update the state with the initial value
+    // Perform an initial check.
+    final stopwatch = Stopwatch()..start();
+    final result = await _runDetectors(executableNames);
+    stopwatch.stop();
     state = AsyncValue.data(result);
+    _updateDiagnostics(result, stopwatch.elapsed);
 
-    // Set up periodic checking every x milliseconds
-    const duration = Duration(milliseconds: period);
-    final isWindowFocused = ref.watch(AppState.isWindowFocused);
+    // Start the sequential polling loop.
+    // Increment generation so any prior loop from a previous build() exits.
+    final gen = ++_generation;
+    _poll(executableNames, gen);
 
-    _timer?.cancel();
-    _timer = Timer.periodic(duration, (timer) async {
-      if (!isWindowFocused) {
-        return;
-      } else {
-        Result result = await _checkIfStarsectorIsRunning(executableNames);
-        bool isGameRunning = result.wasSuccessful;
-        state = AsyncValue.data(result);
-      }
-    });
-
-    // Clean up the timer when the notifier is disposed
     ref.onDispose(() {
-      _timer?.cancel();
+      _generation++;
     });
 
     return result;
   }
 
-  /// Check if Starsector is running.
-  /// First, try using system Java to run homebrew JPS.
-  /// If that doesn't work, try using (Windows) WMIC or (Unix) `ps aux`.
-  Future<Result> _checkIfStarsectorIsRunning(List<String> processNames) async {
-    List<Exception> errors = [];
-    // First try using homebrew JPS to get Java processes
-    // Requires Java JDK on the host machine, or Java 17.
-
-    //// This uses the game's own JRE to run JpsAtHome, but `java.lang.noclassdeffounderror: com/sun/tools/attach/virtualmachine`
-    //// `tools.jar` isn't bundled with the game's JRE.
-    // try {
-    //   final jreFolder = ref
-    //       .read(AppState.activeJre)
-    //       .value
-    //       ?.jreAbsolutePath;
-    //   if (jreFolder != null) {
-    //     final starsectorJavaExecutablePath = getJavaExecutable(jreFolder).path;
-    //     final result = await _checkIfAnyProcessIsRunningUsingGivenJre(
-    //       starsectorJavaExecutablePath,
-    //     );
-    //     if (result != null) {
-    //       Fimber.v(
-    //         () =>
-    //             "Checked if game is running using JPS running on game's JRE $starsectorJavaExecutablePath. Is game running? ${result.wasSuccessful}",
-    //       );
-    //       return result;
-    //     }
-    //   }
-    // } on Exception catch (e) {
-    //   // ignored, probably can't run due to no java/jdk installed
-    //   errors.add(e);
-    // }
-
-    // Try using the system's java executable to run JpsAtHome (requires JDK)
-    try {
-      final javaExecutablePath = 'java';
-      final result = await _checkIfAnyProcessIsRunningUsingGivenJre(
-        javaExecutablePath,
-      );
-      if (result != null) {
-        Fimber.v(
-          () =>
-              "Checked if game is running using JPS running on system's JRE $javaExecutablePath. Is game running? ${result.wasSuccessful}",
-        );
-        return result;
-      }
-    } on Exception catch (e) {
-      // ignored, probably can't run due to no java/jdk installed
-      errors.add(e);
+  List<ProcessDetector> _buildDetectorChain() {
+    if (Platform.isWindows) {
+      final gamePath = ref.read(AppState.gameFolder).value;
+      return [
+        if (gamePath != null)
+          Win32ProcessDetector(getJreDir(gamePath)),
+        WmicProcessDetector(),
+      ];
+    } else {
+      return [
+        UnixProcessDetector(),
+        JpsProcessDetector('java'),
+      ];
     }
+  }
 
-    // Fall back to using platform-specific commands to check process names.
-    try {
-      // Check the titles of all windows
-      if (Platform.isWindows) {
-        final wmicResult =
-            await _checkIfAnyProcessIsRunningUsingWmic(errors);
-        if (wmicResult != null) {
-          return wmicResult;
+  Future<Result> _runDetectors(List<String> executableNames) async {
+    final errors = <Exception>[];
+    final usedNames = <String>[];
+    _lastMatchedDetectorName = null;
+    for (final detector in _detectors) {
+      usedNames.add(detector.name);
+      try {
+        final result = await detector.isStarsectorRunning(executableNames);
+        if (result != null) {
+          _lastMatchedDetectorName = detector.name;
+          _lastUsedDetectorNames = usedNames;
+          return result;
         }
-        // _checkIfAnyProcessIsRunningUsingPowershell(errors);
-      } else if (Platform.isMacOS || Platform.isLinux) {
-        // Use 'ps aux' command to get processes with command line
-        ProcessResult result = await Process.run('ps', ['aux']);
-        String output = result.stdout.toString().toLowerCase();
-        for (String identifier in processNames) {
-          // Check for e.g. `starsector.app` but not `starsector.app/`
-          if (output.contains(identifier.toLowerCase()) &&
-              !output.contains("${identifier.toLowerCase()}/")) {
-            Fimber.v(
-              () =>
-                  "Checked if game is running using ps aux. Is game running? true",
-            );
-            return Result.partialSuccess(errors);
-          }
-        }
-        return Result.unmitigatedFailure(
-          errors..add(Exception("Game not found using fallback `ps` method.")),
-        );
-      } else {
-        // Unsupported platform
-        return Result.unmitigatedFailure(
-          errors..add(Exception("No fallback method for this platform.")),
-        );
+      } on Exception catch (e) {
+        errors.add(e);
       }
-    } catch (e) {
-      // ignored - this is running every second while in focus, don't spam logs
     }
-
-    // Handle any exceptions
+    _lastUsedDetectorNames = usedNames;
     return Result.unmitigatedFailure(errors);
   }
 
-  Future<Result?> _checkIfAnyProcessIsRunningUsingGivenJre(
-    String javaExecutablePath,
-  ) async {
-    final jpsAtHomePath = getAssetsPath().toFile().resolve(
-      "common/JpsAtHome.jar",
-    );
-    final process = await Process.start(javaExecutablePath, [
-      '-jar',
-      jpsAtHomePath.path,
-    ]);
-
-    final outputBuffer = StringBuffer();
-    process.stdout.transform(systemEncoding.decoder).listen(outputBuffer.write);
-    process.stderr.transform(systemEncoding.decoder).listen(outputBuffer.write);
-
-    final exitCodeFuture = process.exitCode;
-    const jpsRunMaxDuration = Duration(milliseconds: 750);
-    final result = await Future.any<int>([
-      exitCodeFuture,
-      Future.delayed(jpsRunMaxDuration, () => -1),
-    ]);
-
-    if (result == -1) {
-      process.kill(ProcessSignal.sigkill);
-      Fimber.w(
-        "Killed java process after $jpsRunMaxDuration because it has a result of -1.",
-      );
-    } else {
-      final output = outputBuffer.toString().toLowerCase();
-      Fimber.v(() => "JPS output: $output");
-      if (output.contains("com.fs.starfarer.starfarerlauncher".toLowerCase())) {
-        return Result.unmitigatedSuccess();
-      }
-    }
-
-    return null;
-  }
-
-  Future<Result?> _checkIfAnyProcessIsRunningUsingWmic(
-    List<Exception> errors,
-  ) async {
+  void _updateDiagnostics(Result result, Duration elapsed) {
     try {
-      final process = await Process.run('wmic', [
-        'process',
-        'where',
-        "name='java.exe'",
-        'get',
-        'ProcessId,CommandLine',
-      ], runInShell: true);
-
-      if (process.exitCode != 0) return null;
-
-      final output = process.stdout is String
-          ? process.stdout as String
-          : String.fromCharCodes(process.stdout as List<int>);
-
-      final lines = output
-          .split(RegExp(r'\r?\r?\n'))
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty && !e.startsWith('CommandLine'))
-          .toList();
-
-      final isStarsectorRunning = lines.any(
-        (line) => line.contains('com.fs.starfarer.StarfarerLauncher'),
-      );
-
-      Fimber.v(
-        () =>
-            'Checked if game is running using wmic. Is game running? $isStarsectorRunning',
-      );
-
-      return Result(isStarsectorRunning, errors);
-    } catch (e, st) {
-      Fimber.w('Error checking JVM processes', ex: e, stacktrace: st);
-      errors.add(Exception('WMIC check failed: $e'));
-      return null;
+      final now = DateTime.now();
+      final interval = _previousRunTime != null
+          ? now.difference(_previousRunTime!)
+          : null;
+      _previousRunTime = now;
+      ref.read(AppState.processDetectionDiagnostics.notifier).state =
+          ProcessDetectionDiagnostics(
+            detectorNames: _lastUsedDetectorNames,
+            matchedDetectorName: _lastMatchedDetectorName,
+            wasGameRunning: result.wasSuccessful,
+            checkDuration: elapsed,
+            timestamp: now,
+            runInterval: interval,
+            errors: result.errors,
+          );
+    } catch (e) {
+      // Don't let diagnostics tracking break process detection.
+      Fimber.w('Failed to update process detection diagnostics: $e');
     }
   }
 
-  Future<Result?> _checkIfAnyProcessIsRunningUsingPowershell(
-    List<Exception> errors,
-  ) async {
-    final process = await Process.run('powershell', [
-      '-Command',
-      'Get-Process | Where-Object { \$_.MainWindowTitle } | Select-Object -ExpandProperty MainWindowTitle',
-    ]);
-    if (process.exitCode == 0) {
-      final output = process.stdout as String;
-      final windowTitles = output
-          .split('\n')
-          .map((line) => line.trim())
-          .toList();
-      final isStarsectorRunning = windowTitles.any(
-        (title) => title.contains(
-          'Starsector ${ref.watch(appSettings).lastStarsectorVersion}',
-        ),
-      );
-      Fimber.v(
-        () =>
-            "Checked if game is running using window titles. Is game running? $isStarsectorRunning",
-      );
-      return Result(isStarsectorRunning, errors);
-    }
+  Future<void> _poll(List<String> executableNames, int gen) async {
+    while (_generation == gen) {
+      await Future.delayed(const Duration(milliseconds: period));
+      if (_generation != gen) break;
+      if (!ref.read(AppState.isWindowFocused)) continue;
 
-    return null;
+      final stopwatch = Stopwatch()..start();
+      final result = await _runDetectors(executableNames);
+      stopwatch.stop();
+      state = AsyncValue.data(result);
+      _updateDiagnostics(result, stopwatch.elapsed);
+    }
   }
 }
 

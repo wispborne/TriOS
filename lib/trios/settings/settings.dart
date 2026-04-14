@@ -129,6 +129,8 @@ class Settings with SettingsMappable {
   final bool? showAprilFools2026;
   final bool? forceShowAprilFools2026;
 
+  final bool debugMode;
+
   Settings({
     this.gameDir,
     this.gameCoreDir,
@@ -213,6 +215,7 @@ class Settings with SettingsMappable {
     this.shouldLoadWebView = false,
     this.showAprilFools2026,
     this.forceShowAprilFools2026,
+    this.debugMode = false,
   });
 }
 

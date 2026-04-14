@@ -16,6 +16,7 @@ class ShipSkin with ShipSkinMappable {
   final String? descriptionPrefix;
   final num? fleetPoints;
   final num? ordnancePoints;
+  final num? suppliesToRecover;
   final num? baseValue;
   final double? baseValueMult;
   final num? fighterBays;
@@ -48,6 +49,7 @@ class ShipSkin with ShipSkinMappable {
     this.descriptionPrefix,
     this.fleetPoints,
     this.ordnancePoints,
+    this.suppliesToRecover,
     this.baseValue,
     this.baseValueMult,
     this.fighterBays,

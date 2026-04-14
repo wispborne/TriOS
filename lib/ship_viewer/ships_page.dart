@@ -678,6 +678,39 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                     const SizedBox(height: 12),
                     Row(
                       children: [
+                        Wrap(
+                          spacing: 4,
+                          children: [
+                            if (s.dataFile != null)
+                              IconButton(
+                                tooltip:
+                                    'Open ${s.isSkin ? '.skin' : '.ship'} file',
+                                icon: const Icon(Icons.edit_note),
+                                onPressed: () =>
+                                    s.dataFile!.absolute.showInExplorer(),
+                              ),
+                            IconButton(
+                              tooltip: 'Open ship_data.csv',
+                              icon: const Icon(Icons.edit_note),
+                              onPressed: () =>
+                                  s.csvFile.absolute.showInExplorer(),
+                            ),
+                            IconButton(
+                              tooltip: 'Open Folder',
+                              icon: const Icon(Icons.folder),
+                              onPressed: () {
+                                final controller = ref.read(
+                                  shipsPageControllerProvider.notifier,
+                                );
+                                final gameCoreDir = controller.getGameCoreDir();
+                                _getPathForSpriteName(s, gameCoreDir)
+                                    .parent
+                                    .path
+                                    .openAsUriInBrowser();
+                              },
+                            ),
+                          ],
+                        ),
                         const Spacer(),
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),

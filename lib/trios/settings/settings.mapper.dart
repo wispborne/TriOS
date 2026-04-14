@@ -841,6 +841,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$forceShowAprilFools2026,
     opt: true,
   );
+  static bool _$debugMode(Settings v) => v.debugMode;
+  static const Field<Settings, bool> _f$debugMode = Field(
+    'debugMode',
+    _$debugMode,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -911,6 +918,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #shouldLoadWebView: _f$shouldLoadWebView,
     #showAprilFools2026: _f$showAprilFools2026,
     #forceShowAprilFools2026: _f$forceShowAprilFools2026,
+    #debugMode: _f$debugMode,
   };
   @override
   final bool ignoreNull = true;
@@ -993,6 +1001,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       shouldLoadWebView: data.dec(_f$shouldLoadWebView),
       showAprilFools2026: data.dec(_f$showAprilFools2026),
       forceShowAprilFools2026: data.dec(_f$forceShowAprilFools2026),
+      debugMode: data.dec(_f$debugMode),
     );
   }
 
@@ -1145,6 +1154,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? shouldLoadWebView,
     bool? showAprilFools2026,
     bool? forceShowAprilFools2026,
+    bool? debugMode,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1277,6 +1287,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? shouldLoadWebView,
     Object? showAprilFools2026 = $none,
     Object? forceShowAprilFools2026 = $none,
+    bool? debugMode,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1375,6 +1386,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (showAprilFools2026 != $none) #showAprilFools2026: showAprilFools2026,
       if (forceShowAprilFools2026 != $none)
         #forceShowAprilFools2026: forceShowAprilFools2026,
+      if (debugMode != null) #debugMode: debugMode,
     }),
   );
   @override
@@ -1574,6 +1586,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       #forceShowAprilFools2026,
       or: $value.forceShowAprilFools2026,
     ),
+    debugMode: data.get(#debugMode, or: $value.debugMode),
   );
 
   @override

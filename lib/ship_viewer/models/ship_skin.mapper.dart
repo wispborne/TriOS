@@ -92,6 +92,12 @@ class ShipSkinMapper extends ClassMapperBase<ShipSkin> {
     _$ordnancePoints,
     opt: true,
   );
+  static num? _$suppliesToRecover(ShipSkin v) => v.suppliesToRecover;
+  static const Field<ShipSkin, num> _f$suppliesToRecover = Field(
+    'suppliesToRecover',
+    _$suppliesToRecover,
+    opt: true,
+  );
   static num? _$baseValue(ShipSkin v) => v.baseValue;
   static const Field<ShipSkin, num> _f$baseValue = Field(
     'baseValue',
@@ -212,6 +218,7 @@ class ShipSkinMapper extends ClassMapperBase<ShipSkin> {
     #descriptionPrefix: _f$descriptionPrefix,
     #fleetPoints: _f$fleetPoints,
     #ordnancePoints: _f$ordnancePoints,
+    #suppliesToRecover: _f$suppliesToRecover,
     #baseValue: _f$baseValue,
     #baseValueMult: _f$baseValueMult,
     #fighterBays: _f$fighterBays,
@@ -246,6 +253,7 @@ class ShipSkinMapper extends ClassMapperBase<ShipSkin> {
       descriptionPrefix: data.dec(_f$descriptionPrefix),
       fleetPoints: data.dec(_f$fleetPoints),
       ordnancePoints: data.dec(_f$ordnancePoints),
+      suppliesToRecover: data.dec(_f$suppliesToRecover),
       baseValue: data.dec(_f$baseValue),
       baseValueMult: data.dec(_f$baseValueMult),
       fighterBays: data.dec(_f$fighterBays),
@@ -357,6 +365,7 @@ abstract class ShipSkinCopyWith<$R, $In extends ShipSkin, $Out>
     String? descriptionPrefix,
     num? fleetPoints,
     num? ordnancePoints,
+    num? suppliesToRecover,
     num? baseValue,
     double? baseValueMult,
     num? fighterBays,
@@ -518,6 +527,7 @@ class _ShipSkinCopyWithImpl<$R, $Out>
     Object? descriptionPrefix = $none,
     Object? fleetPoints = $none,
     Object? ordnancePoints = $none,
+    Object? suppliesToRecover = $none,
     Object? baseValue = $none,
     Object? baseValueMult = $none,
     Object? fighterBays = $none,
@@ -550,6 +560,7 @@ class _ShipSkinCopyWithImpl<$R, $Out>
       if (descriptionPrefix != $none) #descriptionPrefix: descriptionPrefix,
       if (fleetPoints != $none) #fleetPoints: fleetPoints,
       if (ordnancePoints != $none) #ordnancePoints: ordnancePoints,
+      if (suppliesToRecover != $none) #suppliesToRecover: suppliesToRecover,
       if (baseValue != $none) #baseValue: baseValue,
       if (baseValueMult != $none) #baseValueMult: baseValueMult,
       if (fighterBays != $none) #fighterBays: fighterBays,
@@ -588,6 +599,10 @@ class _ShipSkinCopyWithImpl<$R, $Out>
     ),
     fleetPoints: data.get(#fleetPoints, or: $value.fleetPoints),
     ordnancePoints: data.get(#ordnancePoints, or: $value.ordnancePoints),
+    suppliesToRecover: data.get(
+      #suppliesToRecover,
+      or: $value.suppliesToRecover,
+    ),
     baseValue: data.get(#baseValue, or: $value.baseValue),
     baseValueMult: data.get(#baseValueMult, or: $value.baseValueMult),
     fighterBays: data.get(#fighterBays, or: $value.fighterBays),

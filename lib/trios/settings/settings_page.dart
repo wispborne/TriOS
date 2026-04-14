@@ -978,6 +978,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                     Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: MovingTooltipWidget.text(
+                        message:
+                            "Shows internal diagnostics in the toolbar, including"
+                            "\nprocess detection status and cache statistics.",
+                        child: CheckboxWithLabel(
+                          value: ref.watch(
+                            appSettings.select((value) => value.debugMode),
+                          ),
+                          onChanged: (value) {
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    debugMode: value ?? false,
+                                  ),
+                                );
+                          },
+                          label: "Debug mode",
+                        ),
+                      ),
+                    ),
+                    Padding(
                       padding: const EdgeInsets.only(top: 24),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,

@@ -7,6 +7,7 @@ import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_systems_manager/ship_systems_manager.dart';
 import 'package:trios/ship_viewer/models/ship_gpt.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
+import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -33,6 +34,7 @@ class ShipsPageState with ShipsPageStateMappable {
   final Map<String, ShipSystem> shipSystemsMap;
   final Map<String, Weapon> weaponsMap;
   final Map<String, Hullmod> hullmodsMap;
+  final Set<String> shipsWithModuleIds;
   final List<Ship> allShips;
   final List<Ship> filteredShips;
   final List<Ship> shipsBeforeGridFilter;
@@ -57,6 +59,7 @@ class ShipsPageState with ShipsPageStateMappable {
     this.shipSystemsMap = const {},
     this.weaponsMap = const {},
     this.hullmodsMap = const {},
+    this.shipsWithModuleIds = const {},
     this.allShips = const [],
     this.filteredShips = const [],
     this.shipsBeforeGridFilter = const [],
@@ -100,6 +103,35 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     // Try restore saved state from Settings
     final saved = ref.read(appSettings).shipsPageState;
 
+    // Watch ship data, ship systems, weapons, and descriptions.
+    ref.watch(descriptionsNotifierProvider);
+    final shipsAsync = ref.watch(shipListNotifierProvider);
+    final shipSystemsAsync = ref.watch(shipSystemsStreamProvider);
+    final mods = ref.watch(AppState.mods);
+    final isLoadingShips = ref.watch(isLoadingShipsList);
+
+    final hullmodsAsync = ref.watch(hullmodListNotifierProvider);
+
+    final allShips = shipsAsync.value ?? [];
+    final moduleVariants = ref.watch(moduleVariantsProvider);
+    final variantHullIdMap = ref.watch(variantHullIdMapProvider);
+    final shipSystems = shipSystemsAsync.value ?? [];
+    final shipSystemsMap = shipSystems.associateBy((e) => e.id);
+    final hullmodsMap = (hullmodsAsync.value ?? []).associateBy((e) => e.id);
+
+    final weaponsAsync = ref.watch(weaponListNotifierProvider);
+    final weapons = weaponsAsync.value ?? [];
+    final weaponsMap = weapons.associateBy((e) => e.id);
+
+    // Pre-compute which ships have resolved modules so the filter closure
+    // doesn't capture build-scoped data that goes stale on subsequent rebuilds.
+    final shipsWithModuleIds = <String>{
+      for (final ship in allShips)
+        if (resolveModules(ship, allShips, moduleVariants, variantHullIdMap)
+            .isNotEmpty)
+          ship.id,
+    };
+
     // Initialize filter categories
     final filterCategories = [
       GridFilter<Ship>(
@@ -107,12 +139,13 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         valueGetter: (ship) => ship.isSkin ? 'Skin' : 'Base Hull',
         valuesGetter: (ship) => [
           ship.isSkin ? 'Skin' : 'Base Hull',
-          if (ship.hasStationSlots) 'Has Modules',
+          if (shipsWithModuleIds.contains(ship.id)) 'Has Modules',
         ],
       ),
       GridFilter<Ship>(
         name: 'Hull Size',
-        valueGetter: (ship) => ship.hullSizeForDisplay(),
+        valueGetter: (ship) =>
+            ship.isStation ? 'Station' : ship.hullSizeForDisplay(),
         useDefaultSort: true, // Sorts by hull size by default
       ),
       GridFilter<Ship>(
@@ -198,24 +231,6 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       ),
     ];
 
-    // Watch ship data, ship systems, weapons, and descriptions.
-    ref.watch(descriptionsNotifierProvider);
-    final shipsAsync = ref.watch(shipListNotifierProvider);
-    final shipSystemsAsync = ref.watch(shipSystemsStreamProvider);
-    final mods = ref.watch(AppState.mods);
-    final isLoadingShips = ref.watch(isLoadingShipsList);
-
-    final hullmodsAsync = ref.watch(hullmodListNotifierProvider);
-
-    final allShips = shipsAsync.value ?? [];
-    final shipSystems = shipSystemsAsync.value ?? [];
-    final shipSystemsMap = shipSystems.associateBy((e) => e.id);
-    final hullmodsMap = (hullmodsAsync.value ?? []).associateBy((e) => e.id);
-
-    final weaponsAsync = ref.watch(weaponListNotifierProvider);
-    final weapons = weaponsAsync.value ?? [];
-    final weaponsMap = weapons.associateBy((e) => e.id);
-
     // Build search index from current ships (incremental update)
     Map<String, List<String>> shipSearchIndices = _updateSearchIndices(
       allShips,
@@ -240,6 +255,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
               shipSystemsMap: shipSystemsMap,
               weaponsMap: weaponsMap,
               hullmodsMap: hullmodsMap,
+              shipsWithModuleIds: shipsWithModuleIds,
               allShips: allShips,
               shipSearchIndices: shipSearchIndices,
               isLoading: isLoadingShips,

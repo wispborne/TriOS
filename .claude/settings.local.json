@@ -68,7 +68,18 @@
       "Bash(jar cf:*)",
       "Bash(jar tf:*)",
       "Bash(python -c ':*)",
-      "Bash(mv openspec/changes/saved-mod-card-forum-dialog openspec/changes/archive/2026-04-12-saved-mod-card-forum-dialog)"
+      "Bash(mv openspec/changes/saved-mod-card-forum-dialog openspec/changes/archive/2026-04-12-saved-mod-card-forum-dialog)",
+      "Bash(openspec --help)",
+      "Bash(xargs basename:*)",
+      "Bash([ -d \"openspec/changes/archive/2026-04-13-mod-source-records\" ])",
+      "Bash([ -d \"openspec/changes/archive/2026-04-13-debug-mode-toolbar\" ])",
+      "Bash([ -d \"openspec/changes/archive/2026-04-13-ship-viewer-station-filter\" ])",
+      "Bash(timeout 15 ./build/windows/x64/runner/Release/TriOS.exe)",
+      "Bash(mkdir -p openspec/specs/win32-process-detection)",
+      "Bash(cp openspec/changes/refactor-game-running-detection/specs/win32-process-detection/spec.md openspec/specs/win32-process-detection/spec.md)",
+      "Bash(mkdir -p openspec/specs/game-running-check)",
+      "Bash(cp openspec/changes/refactor-game-running-detection/specs/game-running-check/spec.md openspec/specs/game-running-check/spec.md)",
+      "Bash(mv openspec/changes/refactor-game-running-detection openspec/changes/archive/2026-04-13-refactor-game-running-detection)"
     ]
   }
 }

@@ -91,6 +91,7 @@ class FullTopBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
           const SizedBox(width: 8),
+          const DebugToolbarButton(),
           const GameFolderButton(),
           const LogFileButton(),
           const BugReportButton(),

@@ -405,6 +405,37 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                     const SizedBox(height: 12),
                     Row(
                       children: [
+                        Wrap(
+                          spacing: 4,
+                          children: [
+                            if (w.wpnFile != null)
+                              IconButton(
+                                tooltip: 'Open .wpn file',
+                                icon: const Icon(Icons.edit_note),
+                                onPressed: () =>
+                                    w.wpnFile!.absolute.showInExplorer(),
+                              ),
+                            IconButton(
+                              tooltip: 'Open weapon_data.csv',
+                              icon: const Icon(Icons.edit_note),
+                              onPressed: () =>
+                                  w.csvFile.absolute.showInExplorer(),
+                            ),
+                            if (w.spritesForWeapon.isNotEmpty)
+                              IconButton(
+                                tooltip: 'Open weapon data folder(s)',
+                                icon: const Icon(Icons.folder),
+                                onPressed: () {
+                                  w.csvFile.parent.path.openAsUriInBrowser();
+                                  final wpnParent = w.wpnFile?.parent;
+                                  if (wpnParent != null &&
+                                      wpnParent.path != w.csvFile.parent.path) {
+                                    wpnParent.path.openAsUriInBrowser();
+                                  }
+                                },
+                              ),
+                          ],
+                        ),
                         const Spacer(),
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),

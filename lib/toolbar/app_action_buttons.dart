@@ -350,3 +350,89 @@ class RulesHotReloadButton extends ConsumerWidget {
     );
   }
 }
+
+/// Debug toolbar icon. Only visible when debug mode is enabled.
+/// Shows process detection diagnostics and cache stats in a tooltip.
+class DebugToolbarButton extends ConsumerWidget {
+  const DebugToolbarButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDebugMode = ref.watch(appSettings.select((s) => s.debugMode));
+    if (!isDebugMode) return const SizedBox.shrink();
+
+    return MovingTooltipWidget.framed(
+      tooltipWidget: _DebugTooltipContent(),
+      child: IconButton(
+        icon: const Icon(Icons.bug_report_outlined),
+        color: Theme.of(context).colorScheme.tertiary,
+        onPressed: () {},
+      ),
+    );
+  }
+}
+
+class _DebugTooltipContent extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final labelStyle = theme.textTheme.bodySmall;
+    final valueStyle = theme.textTheme.bodySmall?.copyWith(
+      fontWeight: FontWeight.bold,
+    );
+
+    final diagnostics = ref.watch(AppState.processDetectionDiagnostics);
+    final isDetectionEnabled = ref.watch(
+      appSettings.select((s) => s.checkIfGameIsRunning),
+    );
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Debug Info", style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Text(
+            "Game Detection",
+            style: labelStyle?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          if (!isDetectionEnabled)
+            Text("Disabled", style: labelStyle)
+          else if (diagnostics == null)
+            Text("Not yet detecting", style: labelStyle)
+          else ...[
+            _row("Starsector", diagnostics.wasGameRunning ? "Running" : "Not running", labelStyle, valueStyle),
+            _row("Matched by", diagnostics.matchedDetectorName ?? "None", labelStyle, valueStyle),
+            _row("Detectors", diagnostics.detectorNames.join(", "), labelStyle, valueStyle),
+            _row("Check Duration", "${diagnostics.checkDuration.inMilliseconds} ms", labelStyle, valueStyle),
+            if (diagnostics.runInterval != null)
+              _row("Period", "${diagnostics.runInterval!.inMilliseconds} ms (${(60000 / diagnostics.runInterval!.inMilliseconds).toStringAsFixed(1)}/min)", labelStyle, valueStyle),
+            if (diagnostics.errors.isNotEmpty)
+              _row("Errors", diagnostics.errors.map((e) => e.toString()).join("; "), labelStyle, valueStyle?.copyWith(color: theme.colorScheme.error)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _row(
+    String label,
+    String value,
+    TextStyle? labelStyle,
+    TextStyle? valueStyle,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 120, child: Text("$label:", style: labelStyle)),
+          Flexible(child: Text(value, style: valueStyle)),
+        ],
+      ),
+    );
+  }
+}

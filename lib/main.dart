@@ -480,22 +480,16 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   void onWindowClose() async {
-    // Flush window position to disk immediately, bypassing the debounce timer.
-    // The debounced write in _saveWindowPosition() may not complete before
-    // destroy() exits the app.
+    // Use the already-cached window state from settings instead of querying
+    // native window properties. On Linux/GTK, the underlying widget may already
+    // be partially destroyed by the time onWindowClose fires, causing
+    // gtk_window_is_maximized() to segfault (GTK_IS_WIDGET assertion failure).
+    // The state is kept current by _saveWindowPosition() which runs on every
+    // relevant window event (move, resize, maximize, etc.).
     try {
-      final isMinimized = await windowManager.isMinimized();
-      if (!isMinimized) {
-        final windowFrame = await windowManager.getBounds();
-        final isMaximized = await windowManager.isMaximized();
-        final updatedSettings = _applyWindowFrame(
-          ref.read(appSettings),
-          windowFrame,
-          isMaximized,
-        );
-        SettingsFileManager().writeSync(updatedSettings);
-        Fimber.i("Window position flushed to disk on close.");
-      }
+      final currentSettings = ref.read(appSettings);
+      SettingsFileManager().writeSync(currentSettings);
+      Fimber.i("Window position flushed to disk on close.");
     } catch (e) {
       Fimber.w("Error saving window position on close: $e");
     }

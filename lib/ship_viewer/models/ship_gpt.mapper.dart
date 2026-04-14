@@ -310,20 +310,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     opt: true,
     hook: SafeDoubleHook(),
   );
-  static double? _$sensorProfile(Ship v) => v.sensorProfile;
-  static const Field<Ship, double> _f$sensorProfile = Field(
-    'sensorProfile',
-    _$sensorProfile,
-    key: r'sensor profile',
-    opt: true,
-  );
-  static double? _$sensorStrength(Ship v) => v.sensorStrength;
-  static const Field<Ship, double> _f$sensorStrength = Field(
-    'sensorStrength',
-    _$sensorStrength,
-    key: r'sensor strength',
-    opt: true,
-  );
   static String? _$travelDrive(Ship v) => v.travelDrive;
   static const Field<Ship, String> _f$travelDrive = Field(
     'travelDrive',
@@ -545,8 +531,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #breakProb: _f$breakProb,
     #minPieces: _f$minPieces,
     #maxPieces: _f$maxPieces,
-    #sensorProfile: _f$sensorProfile,
-    #sensorStrength: _f$sensorStrength,
     #travelDrive: _f$travelDrive,
     #number: _f$number,
     #bounds: _f$bounds,
@@ -625,8 +609,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
       breakProb: data.dec(_f$breakProb),
       minPieces: data.dec(_f$minPieces),
       maxPieces: data.dec(_f$maxPieces),
-      sensorProfile: data.dec(_f$sensorProfile),
-      sensorStrength: data.dec(_f$sensorStrength),
       travelDrive: data.dec(_f$travelDrive),
       number: data.dec(_f$number),
       bounds: data.dec(_f$bounds),
@@ -768,8 +750,6 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
     String? breakProb,
     double? minPieces,
     double? maxPieces,
-    double? sensorProfile,
-    double? sensorStrength,
     String? travelDrive,
     double? number,
     List<double>? bounds,
@@ -955,8 +935,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     Object? breakProb = $none,
     Object? minPieces = $none,
     Object? maxPieces = $none,
-    Object? sensorProfile = $none,
-    Object? sensorStrength = $none,
     Object? travelDrive = $none,
     Object? number = $none,
     Object? bounds = $none,
@@ -1029,8 +1007,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
       if (breakProb != $none) #breakProb: breakProb,
       if (minPieces != $none) #minPieces: minPieces,
       if (maxPieces != $none) #maxPieces: maxPieces,
-      if (sensorProfile != $none) #sensorProfile: sensorProfile,
-      if (sensorStrength != $none) #sensorStrength: sensorStrength,
       if (travelDrive != $none) #travelDrive: travelDrive,
       if (number != $none) #number: number,
       if (bounds != $none) #bounds: bounds,
@@ -1105,8 +1081,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     breakProb: data.get(#breakProb, or: $value.breakProb),
     minPieces: data.get(#minPieces, or: $value.minPieces),
     maxPieces: data.get(#maxPieces, or: $value.maxPieces),
-    sensorProfile: data.get(#sensorProfile, or: $value.sensorProfile),
-    sensorStrength: data.get(#sensorStrength, or: $value.sensorStrength),
     travelDrive: data.get(#travelDrive, or: $value.travelDrive),
     number: data.get(#number, or: $value.number),
     bounds: data.get(#bounds, or: $value.bounds),

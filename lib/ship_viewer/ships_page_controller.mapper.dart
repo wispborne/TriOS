@@ -122,6 +122,14 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
   static Map<String, Hullmod> _$hullmodsMap(ShipsPageState v) => v.hullmodsMap;
   static const Field<ShipsPageState, Map<String, Hullmod>> _f$hullmodsMap =
       Field('hullmodsMap', _$hullmodsMap, opt: true, def: const {});
+  static Set<String> _$shipsWithModuleIds(ShipsPageState v) =>
+      v.shipsWithModuleIds;
+  static const Field<ShipsPageState, Set<String>> _f$shipsWithModuleIds = Field(
+    'shipsWithModuleIds',
+    _$shipsWithModuleIds,
+    opt: true,
+    def: const {},
+  );
   static List<Ship> _$allShips(ShipsPageState v) => v.allShips;
   static const Field<ShipsPageState, List<Ship>> _f$allShips = Field(
     'allShips',
@@ -168,6 +176,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
     #shipSystemsMap: _f$shipSystemsMap,
     #weaponsMap: _f$weaponsMap,
     #hullmodsMap: _f$hullmodsMap,
+    #shipsWithModuleIds: _f$shipsWithModuleIds,
     #allShips: _f$allShips,
     #filteredShips: _f$filteredShips,
     #shipsBeforeGridFilter: _f$shipsBeforeGridFilter,
@@ -183,6 +192,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
       shipSystemsMap: data.dec(_f$shipSystemsMap),
       weaponsMap: data.dec(_f$weaponsMap),
       hullmodsMap: data.dec(_f$hullmodsMap),
+      shipsWithModuleIds: data.dec(_f$shipsWithModuleIds),
       allShips: data.dec(_f$allShips),
       filteredShips: data.dec(_f$filteredShips),
       shipsBeforeGridFilter: data.dec(_f$shipsBeforeGridFilter),
@@ -294,6 +304,7 @@ abstract class ShipsPageStateCopyWith<$R, $In extends ShipsPageState, $Out>
     Map<String, ShipSystem>? shipSystemsMap,
     Map<String, Weapon>? weaponsMap,
     Map<String, Hullmod>? hullmodsMap,
+    Set<String>? shipsWithModuleIds,
     List<Ship>? allShips,
     List<Ship>? filteredShips,
     List<Ship>? shipsBeforeGridFilter,
@@ -398,6 +409,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
     Map<String, ShipSystem>? shipSystemsMap,
     Map<String, Weapon>? weaponsMap,
     Map<String, Hullmod>? hullmodsMap,
+    Set<String>? shipsWithModuleIds,
     List<Ship>? allShips,
     List<Ship>? filteredShips,
     List<Ship>? shipsBeforeGridFilter,
@@ -411,6 +423,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
       if (shipSystemsMap != null) #shipSystemsMap: shipSystemsMap,
       if (weaponsMap != null) #weaponsMap: weaponsMap,
       if (hullmodsMap != null) #hullmodsMap: hullmodsMap,
+      if (shipsWithModuleIds != null) #shipsWithModuleIds: shipsWithModuleIds,
       if (allShips != null) #allShips: allShips,
       if (filteredShips != null) #filteredShips: filteredShips,
       if (shipsBeforeGridFilter != null)
@@ -430,6 +443,10 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
     shipSystemsMap: data.get(#shipSystemsMap, or: $value.shipSystemsMap),
     weaponsMap: data.get(#weaponsMap, or: $value.weaponsMap),
     hullmodsMap: data.get(#hullmodsMap, or: $value.hullmodsMap),
+    shipsWithModuleIds: data.get(
+      #shipsWithModuleIds,
+      or: $value.shipsWithModuleIds,
+    ),
     allShips: data.get(#allShips, or: $value.allShips),
     filteredShips: data.get(#filteredShips, or: $value.filteredShips),
     shipsBeforeGridFilter: data.get(

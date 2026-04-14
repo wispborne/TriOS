@@ -3,10 +3,14 @@
   - Ships/Weapons Viewers: Added descriptions to the new tooltips.
   - **Catalog**: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
     - Catalog cards now show installation status, available updates, and game version requirements.
+  - Ships Viewer: filter by stations.
+  - Ships Viewer: sensor stats now shown on tooltip.
 - Fixed
-  - Portrait Replacer crashing Starsector if some cases where a portrait and its replacement were different sizes. 
+  - Portrait Replacer crashing Starsector if some cases where a portrait and its replacement were different sizes.
+  - Ships Viewer: DP is now calculated correctly.
 - Changed
   - Cleaned up how a few themes look on the new ship/weapon tooltips.
+  - Refactored game detection and added a new default detection method on Windows that should be faster.
 
 # 1.4.1
 - Added

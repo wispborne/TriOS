@@ -99,12 +99,6 @@ class Ship with ShipMappable implements WispGridItem {
   final double? minPieces;
   @MappableField(hook: SafeDoubleHook())
   final double? maxPieces;
-  @MappableField(key: 'sensor profile')
-  @MappableField(hook: SafeDoubleHook())
-  final double? sensorProfile;
-  @MappableField(key: 'sensor strength')
-  @MappableField(hook: SafeDoubleHook())
-  final double? sensorStrength;
   @MappableField(key: 'travel drive')
   final String? travelDrive;
   @MappableField(hook: SafeDoubleHook())
@@ -202,8 +196,6 @@ class Ship with ShipMappable implements WispGridItem {
     this.breakProb,
     this.minPieces,
     this.maxPieces,
-    this.sensorProfile,
-    this.sensorStrength,
     this.travelDrive,
     this.number,
     this.bounds,
@@ -251,7 +243,46 @@ class Ship with ShipMappable implements WispGridItem {
   int get mountableWeaponSlotCount =>
       weaponSlots?.where((s) => s.isMountable).length ?? 0;
 
+  /// Whether this hull is a station (orbital station, battlestation, etc.).
+  bool get isStation => hints?.contains('STATION') ?? false;
+
   /// Whether this ship has any STATION-type weapon slots (i.e., docks modules).
   bool get hasStationSlots =>
       weaponSlots?.any((s) => s.isStationModule) ?? false;
+
+  double? get deploymentPoints => suppliesRec;
+
+  /// Base sensor value for this hull size (same for profile and strength).
+  int? get _baseSensorValue => switch (hullSize?.toLowerCase()) {
+    'frigate' => 30,
+    'destroyer' => 60,
+    'cruiser' => 90,
+    'capital_ship' => 150,
+    _ => null,
+  };
+
+  /// Sensor profile, adjusted for built-in hullmods.
+  double? get sensorProfile {
+    final base = _baseSensorValue;
+    if (base == null) return null;
+    var value = base.toDouble();
+    final mods = builtInMods ?? [];
+    if (mods.contains('civgrade')) value *= 2.0;
+    if (mods.contains('degraded_engines')) value *= 1.5;
+    if (mods.contains('faulty_grid')) value *= 1.5;
+    if (mods.contains('insulatedengine')) value *= 0.5;
+    return value;
+  }
+
+  /// Sensor strength, adjusted for built-in hullmods.
+  double? get sensorStrength {
+    final base = _baseSensorValue;
+    if (base == null) return null;
+    var value = base.toDouble();
+    final mods = builtInMods ?? [];
+    if (mods.contains('civgrade')) value *= 0.5;
+    if (mods.contains('glitched_sensors')) value *= 0.5;
+    // if (mods.contains('hiressensors')) value += base; // Applies to whole fleet, not individual ships
+    return value;
+  }
 }

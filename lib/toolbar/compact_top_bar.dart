@@ -42,6 +42,7 @@ class CompactTopBar extends StatelessWidget implements PreferredSizeWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        const DebugToolbarButton(),
                         const GameFolderButton(),
                         const LogFileButton(),
                         const BugReportButton(),

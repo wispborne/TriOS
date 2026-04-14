@@ -481,7 +481,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       designation: skin.hullDesignation ?? baseHull.designation,
       techManufacturer: skin.manufacturer ?? skin.tech ?? baseHull.techManufacturer,
       systemId: skin.systemId ?? baseHull.systemId,
-      fleetPts: skin.fleetPoints?.toDouble() ?? baseHull.fleetPts,
+      fleetPts: _resolveFleetPts(baseHull.fleetPts, skin.fleetPoints, skin.fpMod),
       hitpoints: baseHull.hitpoints,
       armorRating: baseHull.armorRating,
       maxFlux: baseHull.maxFlux,
@@ -513,7 +513,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       crToDeploy: baseHull.crToDeploy,
       peakCrSec: baseHull.peakCrSec,
       crLossPerSec: baseHull.crLossPerSec,
-      suppliesRec: baseHull.suppliesRec,
+      suppliesRec: skin.suppliesToRecover?.toDouble() ?? baseHull.suppliesRec,
       suppliesMo: baseHull.suppliesMo,
       hints: hints,
       tags: tags,
@@ -542,6 +542,18 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       builtInWings: skin.builtInWings ?? baseHull.builtInWings,
       moduleAnchor: baseHull.moduleAnchor,
     )..modVariant = modVariant ?? baseHull.modVariant;
+  }
+
+  /// Resolves fleet points from skin overrides.
+  /// [fleetPoints] replaces the base value outright; [fpMod] is additive.
+  static double? _resolveFleetPts(
+    double? baseFp,
+    num? fleetPoints,
+    num? fpMod,
+  ) {
+    final fp = fleetPoints?.toDouble() ?? baseFp;
+    if (fp == null) return null;
+    return fpMod != null ? fp + fpMod.toDouble() : fp;
   }
 
   /// Parse `.variant` files from `data/variants/`.

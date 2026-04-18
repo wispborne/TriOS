@@ -111,7 +111,11 @@ Widget tooltipHairline(ThemeData theme) => Divider(
 /// Note entries (isNote=true) are rendered as full-width widgets outside any
 /// [Table], since Flutter's Table has no colspan support. Regular and gap
 /// entries are grouped into contiguous [Table] blocks.
-Widget tooltipStatsGrid(ThemeData theme, List<TooltipStatEntry> entries) {
+Widget tooltipStatsGrid(
+  ThemeData theme,
+  List<TooltipStatEntry> entries, {
+  double? valueColumnWidth,
+}) {
   final segments = <Widget>[];
   final tableBuffer = <TooltipStatEntry>[];
 
@@ -119,10 +123,17 @@ Widget tooltipStatsGrid(ThemeData theme, List<TooltipStatEntry> entries) {
     if (tableBuffer.isEmpty) return;
     segments.add(
       Table(
-        columnWidths: const {0: FlexColumnWidth(), 1: IntrinsicColumnWidth()},
+        columnWidths: {
+          0: const FlexColumnWidth(),
+          1: valueColumnWidth != null
+              ? FixedColumnWidth(valueColumnWidth)
+              : const IntrinsicColumnWidth(),
+        },
         defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
-        children: tableBuffer.map((e) => e.build(theme)).toList(),
+        children: tableBuffer
+            .map((e) => e.build(theme, valueColumnWidth: valueColumnWidth))
+            .toList(),
       ),
     );
     tableBuffer.clear();
@@ -158,8 +169,8 @@ Widget tooltipStatsGrid(ThemeData theme, List<TooltipStatEntry> entries) {
 }
 
 /// A label–value stat row.
-TooltipStatEntry tooltipRow(String label, String value, {Color? color}) =>
-    TooltipStatEntry(label: label, value: value, valueColor: color);
+TooltipStatEntry tooltipRow(String label, String value, {Color? color, int indentLevel = 0}) =>
+    TooltipStatEntry(label: label, value: value, valueColor: color, indentLevel: indentLevel);
 
 /// A full-width informational note (empty label, dimmer italic text).
 TooltipStatEntry tooltipNote(String text) =>
@@ -202,6 +213,7 @@ class TooltipStatEntry {
   final Color? valueColor;
   final bool isNote;
   final bool rightAlign;
+  final int indentLevel;
   final bool _isGap;
 
   const TooltipStatEntry({
@@ -210,6 +222,7 @@ class TooltipStatEntry {
     this.valueColor,
     this.isNote = false,
     this.rightAlign = false,
+    this.indentLevel = 0,
   }) : _isGap = false;
 
   const TooltipStatEntry.gap()
@@ -218,34 +231,45 @@ class TooltipStatEntry {
       valueColor = null,
       isNote = false,
       rightAlign = false,
+      indentLevel = 0,
       _isGap = true;
 
-  TableRow build(ThemeData theme) {
+  TableRow build(ThemeData theme, {double? valueColumnWidth}) {
     if (_isGap) {
       return const TableRow(
         children: [SizedBox(height: 5), SizedBox(height: 5)],
       );
     }
 
+    final valueText = TextTriOS(
+      value,
+      textAlign: TextAlign.right,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: valueColor ?? TriOSThemeConstants.vanillaYellowGoldColor,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+
     return TableRow(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 1),
+          padding: EdgeInsets.only(
+            left: indentLevel * 8.0,
+            top: 1,
+            bottom: 1,
+          ),
           child: Text(label, style: theme.textTheme.bodySmall),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 16, top: 1, bottom: 1),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 70),
-            child: TextTriOS(
-              value,
-              textAlign: TextAlign.right,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: valueColor ?? TriOSThemeConstants.vanillaYellowGoldColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          // When valueColumnWidth is set, the Table's FixedColumnWidth
+          // already constrains this cell — no extra wrapper needed.
+          child: valueColumnWidth != null
+              ? valueText
+              : ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 70),
+                  child: valueText,
+                ),
         ),
       ],
     );

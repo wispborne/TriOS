@@ -45,7 +45,7 @@ dependencies:
   ktx: ^1.1.6
   flutter_linkify: ^6.0.0
   logger: ^2.5.0
-  flutter_markdown: ^0.7.7+1
+  flutter_markdown_plus: ^1.0.7
   msgpack_dart: ^1.0.1
   multi_split_view: ^3.6.0
   mutex: ^3.1.0

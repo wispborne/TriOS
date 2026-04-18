@@ -103,6 +103,26 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                       versionCheckComparison: widget.versionCheckComparison,
                     ),
                   ),
+                if (mod.urls?[ModUrlType.DirectDownload]?.isNotEmpty ==
+                        true ||
+                    mod.getBestWebsiteUrl() != null)
+                  MenuItem(
+                    label: 'Copy Download URL',
+                    leading: const Icon(Icons.copy, size: 16),
+                    onSelected: () {
+                      final url =
+                          mod.urls?[ModUrlType.DirectDownload] ??
+                          mod.getBestWebsiteUrl();
+                      if (url != null) {
+                        Clipboard.setData(ClipboardData(text: url));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Download URL copied to clipboard'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 MenuItem(
                   label: 'Debug Info',
                   leading: const Icon(Icons.bug_report, size: 16),

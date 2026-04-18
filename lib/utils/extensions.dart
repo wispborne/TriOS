@@ -512,6 +512,22 @@ extension FileExt on File {
     return utf8.decode(await readAsBytes(), allowMalformed: true);
   }
 
+  /// Reads a file as UTF-8, falling back to Latin-1 on decode failure.
+  ///
+  /// Latin-1 accepts any byte sequence, so this never throws on encoding
+  /// issues. Prefer this over [readAsStringAllowMalformed] for text content
+  /// that may contain Windows-1252 bytes (e.g. Starsector `.csv` files
+  /// written from a non-UTF-8 editor): malformed-UTF-8 mode replaces invalid
+  /// bytes with U+FFFD and loses data, while Latin-1 round-trips every byte.
+  Future<String> readAsStringUtf8OrLatin1() async {
+    final bytes = await readAsBytes();
+    try {
+      return utf8.decode(bytes);
+    } catch (_) {
+      return latin1.decode(bytes);
+    }
+  }
+
   /// From https://stackoverflow.com/a/64569532/1622788
   Future<bool> isWritable() async {
     try {

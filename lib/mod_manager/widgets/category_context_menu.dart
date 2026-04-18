@@ -127,10 +127,27 @@ ContextMenu buildCategoryBatchContextMenu({
   required WidgetRef ref,
   required BuildContext context,
 }) {
+  return ContextMenu(
+    maxHeight: MediaQuery.of(context).size.height * 0.8,
+    entries: buildCategoryBatchMenuEntries(
+      modIds: modIds,
+      ref: ref,
+      context: context,
+    ),
+    padding: const EdgeInsets.all(8.0),
+  );
+}
+
+/// Returns the list of entries for batch category operations on multiple mods.
+/// Can be embedded as submenu items in another menu (e.g. the bulk action menu).
+List<ContextMenuEntry> buildCategoryBatchMenuEntries({
+  required Set<String> modIds,
+  required WidgetRef ref,
+  required BuildContext context,
+  bool includeHeader = true,
+}) {
   final store = ref.read(categoryManagerProvider).value;
-  if (store == null) {
-    return ContextMenu(entries: []);
-  }
+  if (store == null) return [];
 
   final notifier = ref.read(categoryManagerProvider.notifier);
   final allCategories = notifier.getAllCategories();
@@ -146,51 +163,49 @@ ContextMenu buildCategoryBatchContextMenu({
 
   final commonIds = assignedToAllIds();
 
-  return ContextMenu(
-    maxHeight: MediaQuery.of(context).size.height * 0.8,
-    entries: [
+  return [
+    if (includeHeader) ...[
       MenuHeader(text: '${modIds.length} mods selected'),
       const MenuDivider(),
-      MenuHeader(text: 'Set Primary Category'),
-      ...allCategories.map(
-        (category) => MenuItem(
-          label: category.name,
-          leading: _buildCategoryLeading(category),
-          onSelected: () {
-            notifier.moveModsToCategory(modIds.toList(), category.id);
-          },
-        ),
-      ),
-      const MenuDivider(),
-      MenuItem(
-        label: 'Manage Categories...',
-        icon: Icons.settings,
+    ],
+    MenuHeader(text: 'Set Primary Category'),
+    ...allCategories.map(
+      (category) => MenuItem(
+        label: category.name,
+        leading: _buildCategoryLeading(category),
         onSelected: () {
-          showCategoryManagementPopup(context: context, ref: ref);
+          notifier.moveModsToCategory(modIds.toList(), category.id);
         },
       ),
-      const MenuDivider(),
-      MenuHeader(text: 'Choose Categories'),
-      ...allCategories.map((category) {
-        final isAssigned = commonIds.contains(category.id);
-        return CheckableMenuItem(
-          label: category.name,
-          leading: _buildCategoryLeading(category),
-          isChecked: isAssigned,
-          onSelected: () {
-            for (final modId in modIds) {
-              if (isAssigned) {
-                notifier.removeCategoryFromMod(modId, category.id);
-              } else {
-                notifier.addCategoryToMod(modId, category.id);
-              }
+    ),
+    const MenuDivider(),
+    MenuItem(
+      label: 'Manage Categories...',
+      icon: Icons.settings,
+      onSelected: () {
+        showCategoryManagementPopup(context: context, ref: ref);
+      },
+    ),
+    const MenuDivider(),
+    MenuHeader(text: 'Choose Categories'),
+    ...allCategories.map((category) {
+      final isAssigned = commonIds.contains(category.id);
+      return CheckableMenuItem(
+        label: category.name,
+        leading: _buildCategoryLeading(category),
+        isChecked: isAssigned,
+        onSelected: () {
+          for (final modId in modIds) {
+            if (isAssigned) {
+              notifier.removeCategoryFromMod(modId, category.id);
+            } else {
+              notifier.addCategoryToMod(modId, category.id);
             }
-          },
-        );
-      }),
-    ],
-    padding: const EdgeInsets.all(8.0),
-  );
+          }
+        },
+      );
+    }),
+  ];
 }
 
 List<ContextMenuEntry> _buildPrimaryManagementItems({

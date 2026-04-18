@@ -549,10 +549,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       final status =
                                           _catalogStatusMap[statusKey];
 
-                                      final forumThreadId =
-                                          extractForumTopicId(
-                                            profile.urls?[ModUrlType.Forum],
-                                          );
+                                      final forumThreadId = extractForumTopicId(
+                                        profile.urls?[ModUrlType.Forum],
+                                      );
                                       final forumEntry = forumThreadId != null
                                           ? forumLookup[forumThreadId]
                                           : null;
@@ -1524,4 +1523,3 @@ class _WeaponImageCellState extends State<WeaponImageCell> {
     }
   }
 }
-

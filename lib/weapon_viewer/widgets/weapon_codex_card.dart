@@ -20,6 +20,11 @@ class WeaponCodexCard {
 
   static const _maxWidth = 400.0;
 
+  /// Fixed width of the values column in the weapon tooltip stats grid.
+  /// Keeps Primary / Ancillary sections vertically aligned regardless of
+  /// whether a row shows a plain number or a composite like "120 (85)".
+  static const _statsValueColumnWidth = 160.0;
+
   // ───────────────────────── Convenience wrapper ─────────────────────────
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows weapon stats on hover.
@@ -309,7 +314,7 @@ class WeaponCodexCard {
                 ] else ...[
                   tooltipNote('No flux cost to fire'),
                 ],
-              ]),
+              ], valueColumnWidth: _statsValueColumnWidth),
             ) ??
             const SizedBox(),
 
@@ -409,7 +414,7 @@ class WeaponCodexCard {
                     'Refire delay (seconds)',
                     tooltipFmt(refireDelaySeconds),
                   ),
-              ]),
+              ], valueColumnWidth: _statsValueColumnWidth),
             ) ??
             const SizedBox(),
 

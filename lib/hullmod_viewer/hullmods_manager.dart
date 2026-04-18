@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:csv/csv.dart';
@@ -56,6 +55,7 @@ class HullmodListNotifier extends StreamNotifier<List<Hullmod>> {
         .toList();
 
     final allErrors = <String>[];
+    final allInfos = <String>[];
     List<Hullmod> allHullmods = <Hullmod>[];
     const yieldInterval = Duration(milliseconds: 500);
     var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
@@ -70,6 +70,10 @@ class HullmodListNotifier extends StreamNotifier<List<Hullmod>> {
       allErrors.addAll(coreResult.errors);
     }
 
+    if (coreResult.infos.isNotEmpty) {
+      allInfos.addAll(coreResult.infos);
+    }
+
     // Parse each mod's hullmods individually
     for (final variant in variants) {
       final modResult = await _parseHullmodsCsv(variant.modFolder, variant);
@@ -79,6 +83,10 @@ class HullmodListNotifier extends StreamNotifier<List<Hullmod>> {
 
       if (modResult.errors.isNotEmpty) {
         allErrors.addAll(modResult.errors);
+      }
+
+      if (modResult.infos.isNotEmpty) {
+        allInfos.addAll(modResult.infos);
       }
 
       final now = DateTime.now();
@@ -92,7 +100,10 @@ class HullmodListNotifier extends StreamNotifier<List<Hullmod>> {
     yield allHullmods;
 
     if (allErrors.isNotEmpty) {
-      Fimber.w('Errors encountered during parsing:\n${allErrors.join('\n')}');
+      Fimber.w('Errors encountered parsing hullmods:\n${allErrors.join('\n')}');
+    }
+    if (allInfos.isNotEmpty) {
+      Fimber.i('Info messages parsing hullmods:\n${allInfos.join('\n')}');
     }
 
     ref.read(isLoadingHullmodsList.notifier).state = false;
@@ -138,45 +149,32 @@ Future<HullmodParseResult> _parseHullmodsCsv(
 
   final hullmods = <Hullmod>[];
   final errors = <String>[];
+  final infos = <String>[];
   final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
   if (!await hullmodsCsvFile.exists()) {
-    errors.add('[$modName] Hullmods CSV file not found at $hullmodsCsvFile');
-    return HullmodParseResult(hullmods, errors, filesProcessed);
+    infos.add('[$modName] Hullmods CSV file not found at $hullmodsCsvFile');
+    return HullmodParseResult(hullmods, errors, infos, filesProcessed);
   }
 
   String content;
   try {
     filesProcessed++;
-    content = await hullmodsCsvFile.readAsString(encoding: utf8);
+    content = await hullmodsCsvFile.readAsStringUtf8OrLatin1();
   } on FileSystemException catch (e) {
     errors.add('[$modName] Failed to read file at $hullmodsCsvFile: $e');
-    return HullmodParseResult(hullmods, errors, filesProcessed);
+    return HullmodParseResult(hullmods, errors, infos, filesProcessed);
   } catch (e) {
     errors.add(
       '[$modName] Unexpected error reading file at $hullmodsCsvFile: $e',
     );
-    return HullmodParseResult(hullmods, errors, filesProcessed);
+    return HullmodParseResult(hullmods, errors, infos, filesProcessed);
   }
 
-  // Preprocess the content to handle comments
-  final lines = content.split('\n');
-  final processedLines = <String>[];
-  final lineNumberMapping = <int>[];
-
-  for (int index = 0; index < lines.length; index++) {
-    String line = lines[index];
-    String processedLine = line.removeCsvLineComments();
-
-    if (processedLine.trim().isEmpty) {
-      continue;
-    }
-
-    processedLines.add(processedLine);
-    lineNumberMapping.add(index + 1);
-  }
-
-  final processedContent = processedLines.join('\n');
+  // Strip `#` comments (quote-aware, multi-line safe) and track source lines.
+  final stripped = content.stripCsvCommentsAndTrackLines();
+  final processedContent = stripped.cleanContent;
+  final lineNumberMapping = stripped.lineNumberMap;
 
   List<List<dynamic>> rows;
   try {
@@ -188,16 +186,18 @@ Future<HullmodParseResult> _parseHullmodsCsv(
     errors.add(
       '[$modName] Failed to parse CSV content in file $hullmodsCsvFile: $e',
     );
-    return HullmodParseResult(hullmods, errors, filesProcessed);
+    return HullmodParseResult(hullmods, errors, infos, filesProcessed);
   }
 
   if (rows.isEmpty) {
     errors.add('[$modName] Empty hullmods CSV file at $hullmodsCsvFile');
-    return HullmodParseResult(hullmods, errors, filesProcessed);
+    return HullmodParseResult(hullmods, errors, infos, filesProcessed);
   }
 
   // Extract headers from the first row
-  final headers = rows.first.map((e) => e.toString().trim()).toList();
+  final headers = rows.first
+      .map((e) => e.toString().trim().toLowerCase())
+      .toList();
 
   for (var i = 1; i < rows.length; i++) {
     final row = rows[i];
@@ -251,13 +251,19 @@ Future<HullmodParseResult> _parseHullmodsCsv(
     }
   }
 
-  return HullmodParseResult(hullmods, errors, filesProcessed);
+  return HullmodParseResult(hullmods, errors, infos, filesProcessed);
 }
 
 class HullmodParseResult {
   final List<Hullmod> hullmods;
   final List<String> errors;
+  final List<String> infos;
   final int filesProcessed;
 
-  HullmodParseResult(this.hullmods, this.errors, this.filesProcessed);
+  HullmodParseResult(
+    this.hullmods,
+    this.errors,
+    this.infos,
+    this.filesProcessed,
+  );
 }

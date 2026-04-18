@@ -9,6 +9,7 @@ class DescriptionWithSubstitutions extends StatelessWidget {
   final TextStyle? baseStyle;
   final Color? highlightColor;
   final bool biggerLineBreaks;
+  final bool showPlaceholderHintText;
 
   const DescriptionWithSubstitutions({
     super.key,
@@ -17,6 +18,7 @@ class DescriptionWithSubstitutions extends StatelessWidget {
     this.baseStyle,
     this.highlightColor,
     this.biggerLineBreaks = true,
+    this.showPlaceholderHintText = true,
   });
 
   @override
@@ -42,9 +44,9 @@ class DescriptionWithSubstitutions extends StatelessWidget {
           highlightColor: effectiveHighlightColor,
           baseStyle: effectiveBaseStyle,
         ),
-        if (hasRawPlaceholders)
+        if (showPlaceholderHintText && hasRawPlaceholders)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: 8),
             child:
                 'Values shown as %s are placeholders filled in by game code. Additional text may be entirely added by game code.'
                     .replaceSubstitutionsRich(

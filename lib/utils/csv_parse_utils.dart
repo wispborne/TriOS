@@ -69,20 +69,123 @@ class CsvJsonParsingUtils {
   }
 
   /// Removes comment lines, tracks original line numbers, returns clean content.
+  ///
+  /// Walks the content character-by-character with a global `inQuotes` state
+  /// that persists across physical newlines, so that:
+  ///
+  /// - A `#` outside of a quoted field comments out the rest of the logical
+  ///   row (end of row = next unquoted `\n`).
+  /// - A commented row whose quoted fields contain literal newlines is
+  ///   dropped in its entirety — the embedded newlines do not terminate
+  ///   the commented row, so continuation lines are not misread as new rows.
+  /// - A `#` inside a quoted field is treated as data, not a comment.
+  /// - Escaped `""` inside a quoted field is preserved.
+  ///
+  /// Each entry in the returned `lineNumberMap` is the 1-indexed source line
+  /// where the corresponding emitted logical row began.
   static ({String cleanContent, List<int> lineNumberMap})
   stripCsvCommentsAndTrackLines(String content) {
-    final lines = content.split('\n');
-    final strippedLines = <String>[];
+    final outRows = <String>[];
     final lineMap = <int>[];
+    final currentRow = StringBuffer();
 
-    for (int i = 0; i < lines.length; i++) {
-      final clean = removeCsvLineComments(lines[i]);
-      if (clean.trim().isEmpty) continue;
-      strippedLines.add(clean);
-      lineMap.add(i + 1);
+    bool inQuotes = false;
+    bool inComment = false;
+    int sourceLine = 1;
+    int? rowStartLine;
+
+    void flushRow() {
+      if (!inComment) {
+        final rowStr = currentRow.toString();
+        if (rowStr.trim().isNotEmpty) {
+          outRows.add(rowStr);
+          lineMap.add(rowStartLine ?? sourceLine);
+        }
+      }
+      currentRow.clear();
+      inComment = false;
+      rowStartLine = null;
     }
 
-    return (cleanContent: strippedLines.join('\n'), lineNumberMap: lineMap);
+    void markRowStart() {
+      rowStartLine ??= sourceLine;
+    }
+
+    for (int i = 0; i < content.length; i++) {
+      final c = content[i];
+
+      // Skip \r in CRLF sequences — treat \n as the sole line terminator.
+      if (c == '\r' && i + 1 < content.length && content[i + 1] == '\n') {
+        continue;
+      }
+
+      if (inQuotes) {
+        if (c == '"') {
+          // Escaped "" inside a quoted field.
+          if (i + 1 < content.length && content[i + 1] == '"') {
+            if (!inComment) {
+              markRowStart();
+              currentRow.write('""');
+            }
+            i += 1;
+            continue;
+          }
+          inQuotes = false;
+          if (!inComment) {
+            markRowStart();
+            currentRow.write('"');
+          }
+          continue;
+        }
+        if (c == '\n') {
+          // Literal newline inside a quoted field — preserve and keep row open.
+          sourceLine++;
+          if (!inComment) {
+            markRowStart();
+            currentRow.write('\n');
+          }
+          continue;
+        }
+        if (!inComment) {
+          markRowStart();
+          currentRow.write(c);
+        }
+        continue;
+      }
+
+      // Not in quotes.
+      if (c == '\n') {
+        flushRow();
+        sourceLine++;
+        continue;
+      }
+      if (inComment) {
+        // Still need to track quote state so a commented row's multi-line
+        // quoted field doesn't terminate the row prematurely.
+        if (c == '"') inQuotes = true;
+        continue;
+      }
+      if (c == '"') {
+        inQuotes = true;
+        markRowStart();
+        currentRow.write('"');
+        continue;
+      }
+      if (c == '#') {
+        inComment = true;
+        continue;
+      }
+      // Ordinary character outside quotes and outside comments.
+      if (c != ' ' && c != '\t') {
+        markRowStart();
+      }
+      currentRow.write(c);
+    }
+
+    // Flush the final row (no trailing newline in the input).
+    flushRow();
+
+    return (cleanContent: outRows.join('\n'), lineNumberMap: lineMap);
   }
 }
 

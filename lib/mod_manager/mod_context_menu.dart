@@ -6,6 +6,7 @@ import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_manager/widgets/category_context_menu.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/models/mod.dart';
@@ -174,6 +175,16 @@ ContextMenu buildModBulkActionContextMenu(
       ),
 
       _buildBulkColorSubmenu(selectedMods, ref),
+      MenuItem.submenu(
+        label: 'Change Category',
+        icon: Icons.category,
+        items: buildCategoryBatchMenuEntries(
+          modIds: selectedMods.map((m) => m.id).toSet(),
+          ref: ref,
+          context: context,
+          includeHeader: false,
+        ),
+      ),
       menuItemDeleteMultipleMods(selectedMods, context, ref),
 
       if (selectedMods.any(

@@ -834,7 +834,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         //     );
         //   },
         // ),
-        Divider(color: Theme.of(context).colorScheme.outline),
+        const SizedBox(height: 16),
         _kv(
           s.modVariant != null ? 'Mod' : null,
           s.modVariant?.modInfo.nameOrId ?? 'Vanilla',

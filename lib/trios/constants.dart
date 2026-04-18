@@ -6,7 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.4.2-preview02";
+  static const version = "1.4.2-preview03";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -96,7 +96,8 @@ class Constants {
   static const String modRepoUrl =
       "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";
   static const String forumDataBundleUrl =
-      "https://raw.githubusercontent.com/theRoastSuckling/QBForumModData/refs/heads/main/forum-data-bundle.json";
+  "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/forum-data-bundle.json";
+      // "https://raw.githubusercontent.com/theRoastSuckling/QBForumModData/refs/heads/main/forum-data-bundle.json";
   static const String patreonUrl = "https://www.patreon.com/wispborne";
   static const String kofiUrl = "https://ko-fi.com/wispborne";
 
@@ -106,6 +107,9 @@ class Constants {
   /// Hardcoded per_page.
   static const String githubLatestRelease =
       "$githubBase/repos/wispborne/trios/releases?per_page=100";
+
+  static const String githubReleasesUrl =
+      "https://github.com/wispborne/trios/releases";
 
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.

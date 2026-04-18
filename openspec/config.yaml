@@ -1,13 +1,12 @@
 schema: spec-driven
 
 # Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Tech stack: Flutter/Dart, Riverpod (state management), dart_mappable (serialization)
+  Platform: Desktop-only (Windows, macOS, Linux)
+  Domain: Starsector game launcher, mod manager, and toolkit
+  UI: Material Design, 8dp grid alignment, WispGrid for data grids
+  
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.

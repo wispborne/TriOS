@@ -80,6 +80,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
         .toList();
 
     final allErrors = <String>[];
+    final allInfos = <String>[];
     List<Ship> allShips = <Ship>[];
     // Throttle UI rebuilds during loading: yield at most once per 500ms.
     const yieldInterval = Duration(milliseconds: 500);
@@ -99,6 +100,10 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       allErrors.addAll(coreResult.errors);
     }
 
+    if (coreResult.infos.isNotEmpty) {
+      allInfos.addAll(coreResult.infos);
+    }
+
     for (final variant in variants) {
       if (_buildToken != myToken) return;
       final modResult = await _parseShips(variant.modFolder, variant, allShips);
@@ -109,6 +114,10 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
 
       if (modResult.errors.isNotEmpty) {
         allErrors.addAll(modResult.errors);
+      }
+
+      if (modResult.infos.isNotEmpty) {
+        allInfos.addAll(modResult.infos);
       }
 
       final now = DateTime.now();
@@ -140,6 +149,9 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
 
     if (allErrors.isNotEmpty) {
       Fimber.w('Ship parsing errors:\n${allErrors.join('\n')}');
+    }
+    if (allInfos.isNotEmpty) {
+      Fimber.i('Info messages parsing ships:\n${allInfos.join('\n')}');
     }
 
     ref.read(isLoadingShipsList.notifier).state = false;
@@ -183,9 +195,11 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
         .toFile();
     final ships = <Ship>[];
     final errors = <String>[];
+    final infos = <String>[];
     final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
     if (!await shipsCsvFile.exists()) {
+      infos.add('[$modName] Ship CSV file not found at $shipsCsvFile');
       // Still check for skins even if no CSV exists (mod may only add skins).
       final skinShips = await _parseSkins(
         folder,
@@ -195,7 +209,13 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       );
       ships.addAll(skinShips.ships);
       errors.addAll(skinShips.errors);
-      return ShipParseResult(ships, errors, filesProcessed + skinShips.filesProcessed);
+      infos.addAll(skinShips.infos);
+      return ShipParseResult(
+        ships,
+        errors,
+        infos,
+        filesProcessed + skinShips.filesProcessed,
+      );
     }
 
     // Load and index .ship files
@@ -236,40 +256,33 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     String content;
     try {
       filesProcessed++;
-      content = await shipsCsvFile.readAsString(encoding: utf8);
+      content = await shipsCsvFile.readAsStringUtf8OrLatin1();
     } catch (e) {
       errors.add('[$modName] Failed to read ship_data.csv: $e');
-      return ShipParseResult(ships, errors, filesProcessed);
+      return ShipParseResult(ships, errors, infos, filesProcessed);
     }
 
-    final lines = content.split('\n');
-    final processedLines = <String>[];
-    final lineNumberMap = <int>[];
-
-    for (int i = 0; i < lines.length; i++) {
-      final line = lines[i].removeCsvLineComments();
-      if (line.trim().isEmpty) continue;
-      processedLines.add(line);
-      lineNumberMap.add(i);
-    }
+    // Strip `#` comments (quote-aware, multi-line safe) and track source lines.
+    final stripped = content.stripCsvCommentsAndTrackLines();
+    final lineNumberMap = stripped.lineNumberMap;
 
     List<List<dynamic>> rows;
     try {
       rows = const CsvToListConverter(
         eol: '\n',
         shouldParseNumbers: false,
-      ).convert(processedLines.join('\n'));
+      ).convert(stripped.cleanContent);
     } catch (e) {
       errors.add('[$modName] Failed to parse CSV: $e');
-      return ShipParseResult(ships, errors, filesProcessed);
+      return ShipParseResult(ships, errors, infos, filesProcessed);
     }
 
     if (rows.isEmpty) {
       errors.add('[$modName] Empty ship_data.csv');
-      return ShipParseResult(ships, errors, filesProcessed);
+      return ShipParseResult(ships, errors, infos, filesProcessed);
     }
 
-    final headers = rows.first.map((e) => e.toString().trim()).toList();
+    final headers = rows.first.map((e) => e.toString().trim().toLowerCase()).toList();
 
     for (var i = 1; i < rows.length; i++) {
       final row = rows[i];
@@ -340,9 +353,10 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     );
     ships.addAll(skinResult.ships);
     errors.addAll(skinResult.errors);
+    infos.addAll(skinResult.infos);
     filesProcessed += skinResult.filesProcessed;
 
-    return ShipParseResult(ships, errors, filesProcessed);
+    return ShipParseResult(ships, errors, infos, filesProcessed);
   }
 
   /// Parse `.skin` files from `data/hulls/skins/` and resolve each against
@@ -356,11 +370,12 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
     final skinsDir = Directory(p.join(folder.path, 'data/hulls/skins'));
     final ships = <Ship>[];
     final errors = <String>[];
+    final infos = <String>[];
     int filesProcessed = 0;
     final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
     if (!await skinsDir.exists()) {
-      return ShipParseResult(ships, errors, filesProcessed);
+      return ShipParseResult(ships, errors, infos, filesProcessed);
     }
 
     final skinFiles = skinsDir
@@ -407,7 +422,7 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
       }
     }
 
-    return ShipParseResult(ships, errors, filesProcessed);
+    return ShipParseResult(ships, errors, infos, filesProcessed);
   }
 
   /// Resolve a [ShipSkin] against its [baseHull] to produce a complete [Ship].
@@ -632,9 +647,10 @@ class ShipListNotifier extends StreamNotifier<List<Ship>> {
 class ShipParseResult {
   final List<Ship> ships;
   final List<String> errors;
+  final List<String> infos;
   final int filesProcessed;
 
-  ShipParseResult(this.ships, this.errors, this.filesProcessed);
+  ShipParseResult(this.ships, this.errors, this.infos, this.filesProcessed);
 }
 
 class _VariantParseResult {

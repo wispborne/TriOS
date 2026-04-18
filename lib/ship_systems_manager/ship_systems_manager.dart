@@ -1,7 +1,6 @@
 // lib/ship_systems_manager.dart
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:csv/csv.dart';
@@ -98,27 +97,21 @@ Future<_SystemParseResult> _parseShipSystems(
   String content;
   try {
     filesProcessed++;
-    content = await systemsCsv.readAsString(encoding: utf8);
+    content = await systemsCsv.readAsStringUtf8OrLatin1();
   } catch (e) {
     errors.add('[$modName] Failed to read ship_systems.csv: $e');
     return _SystemParseResult(systems, errors, filesProcessed);
   }
 
-  // Strip comments and blank lines
-  final lines = content.split('\n');
-  final processed = <String>[];
-  for (var line in lines) {
-    final cleaned = line.removeCsvLineComments();
-    if (cleaned.trim().isEmpty) continue;
-    processed.add(cleaned);
-  }
+  // Strip `#` comments (quote-aware, multi-line safe).
+  final stripped = content.stripCsvCommentsAndTrackLines();
 
   List<List<dynamic>> rows;
   try {
     rows = const CsvToListConverter(
       eol: '\n',
       shouldParseNumbers: false,
-    ).convert(processed.join('\n'));
+    ).convert(stripped.cleanContent);
   } catch (e) {
     errors.add('[$modName] Failed to parse CSV: $e');
     return _SystemParseResult(systems, errors, filesProcessed);

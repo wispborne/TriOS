@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:trios/widgets/snackbar.dart';
 
 import 'package:flutter/material.dart';
@@ -60,6 +61,44 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         .toStringAsFixed(1);
   }
 
+  Widget _showChangelogButton(BuildContext context, WidgetRef ref) {
+    return ElevatedButton(
+      child: const Text("Show Changelog"),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              content: SizedBox(
+                width: 600,
+                height: 1200,
+                child: TriOSChangelogViewer(
+                  lastestVersionToShow:
+                      ref.read(
+                            appSettings.select(
+                              (value) => value.updateToPrereleases,
+                            ),
+                          ) ==
+                          true
+                      ? null
+                      : Constants.currentVersion,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Close"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -92,123 +131,86 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 SettingsGroup(
                   name: "${Constants.appName} Updates",
                   children: [
-                    // CheckboxWithLabel(
-                    //   value: ref.watch(appSettings.select(
-                    //       (value) => value.shouldAutoUpdateOnLaunch)),
-                    //   onChanged: (value) {
-                    //     ref.read(appSettings.notifier).update((state) =>
-                    //         state.copyWith(
-                    //             shouldAutoUpdateOnLaunch: value ?? false));
-                    //   },
-                    //   label: "Auto-update ${Constants.appName} on launch",
-                    // ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: MovingTooltipWidget.text(
-                        message:
-                            "Play with fire."
-                            "\n"
-                            "\nEnabling this will include Previews when checking for updates."
-                            "\nPreviews are *usually* stable, but no guarantees. They contain bugfixes and often add a feature or two that may not be totally finished.",
-                        child: CheckboxWithLabel(
-                          value: ref.watch(
-                            appSettings.select(
-                              (value) => value.updateToPrereleases,
+                    if (Platform.isMacOS) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "Self-update is not available on macOS. Please download new versions from the Releases page.",
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.open_in_new, size: 18),
+                            label: const Text("Open Releases Page"),
+                            onPressed: () => launchUrlString(
+                              Constants.githubReleasesUrl,
                             ),
                           ),
-                          onChanged: (value) {
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (state) => state.copyWith(
-                                    updateToPrereleases: value ?? false,
-                                  ),
-                                );
-                          },
-                          labelWidget: TextWithIcon(
-                            text:
-                                "Enable ${Constants.appName} preview releases",
-                            trailing: Transform.rotate(
-                              angle: 0.8,
-                              child: SvgImageIcon(
-                                "assets/images/icon-experimental.svg",
-                                width: 20,
-                                color: iconColor,
+                          const SizedBox(width: 8),
+                          _showChangelogButton(context, ref),
+                        ],
+                      ),
+                    ] else ...[
+                      // CheckboxWithLabel(
+                      //   value: ref.watch(appSettings.select(
+                      //       (value) => value.shouldAutoUpdateOnLaunch)),
+                      //   onChanged: (value) {
+                      //     ref.read(appSettings.notifier).update((state) =>
+                      //         state.copyWith(
+                      //             shouldAutoUpdateOnLaunch: value ?? false));
+                      //   },
+                      //   label: "Auto-update ${Constants.appName} on launch",
+                      // ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: MovingTooltipWidget.text(
+                          message:
+                              "Play with fire."
+                              "\n"
+                              "\nEnabling this will include Previews when checking for updates."
+                              "\nPreviews are *usually* stable, but no guarantees. They contain bugfixes and often add a feature or two that may not be totally finished.",
+                          child: CheckboxWithLabel(
+                            value: ref.watch(
+                              appSettings.select(
+                                (value) => value.updateToPrereleases,
                               ),
                             ),
-                            // Stack(
-                            //   children: [
-                            //     Transform.rotate(
-                            //       angle: 1.2,
-                            //       child: SvgImageIcon(
-                            //         "assets/images/icon-experimental.svg",
-                            //         width: 24,
-                            //         color: iconColor,
-                            //       ),
-                            //     ),
-                            //     Padding(
-                            //       padding: const EdgeInsets.only(
-                            //         left: 12,
-                            //         top: 12,
-                            //       ),
-                            //       child: Transform.scale(
-                            //         scaleX: 0.8,
-                            //         scaleY: 1.2,
-                            //         child: TriOSAppIcon(
-                            //           height: 24,
-                            //           color: iconColor,
-                            //         ),
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
+                            onChanged: (value) {
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      updateToPrereleases: value ?? false,
+                                    ),
+                                  );
+                            },
+                            labelWidget: TextWithIcon(
+                              text:
+                                  "Enable ${Constants.appName} preview releases",
+                              trailing: Transform.rotate(
+                                angle: 0.8,
+                                child: SvgImageIcon(
+                                  "assets/images/icon-experimental.svg",
+                                  width: 20,
+                                  color: iconColor,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        CheckForUpdatesButton(),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          child: const Text("Show Changelog"),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  content: SizedBox(
-                                    width: 600,
-                                    height: 1200,
-                                    child: TriOSChangelogViewer(
-                                      lastestVersionToShow:
-                                          ref.read(
-                                                appSettings.select(
-                                                  (value) =>
-                                                      value.updateToPrereleases,
-                                                ),
-                                              ) ==
-                                              true
-                                          ? null
-                                          : Constants.currentVersion,
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text("Close"),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          CheckForUpdatesButton(),
+                          const SizedBox(width: 8),
+                          _showChangelogButton(context, ref),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
                 SettingsGroup(

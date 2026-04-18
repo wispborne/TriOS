@@ -506,6 +506,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             description: h.desc!,
             baseStyle: theme.textTheme.bodySmall,
             highlightColor: fancyColor,
+            showPlaceholderHintText: (h.sModDesc ?? '').isEmpty, // Show if it won't be shown on Smod text.
           ),
         ],
         if ((h.sModDesc ?? '').isNotEmpty) ...[

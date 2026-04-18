@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart'
@@ -131,45 +132,48 @@ class _AppShellState extends ConsumerState<AppShell>
     }
 
     // Check for updates on launch and show toast if available.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
-          latestRelease,
-        ) {
-          try {
-            if (latestRelease != null) {
-              final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
-              if (hasNewVersion) {
-                Fimber.i("New version available: ${latestRelease.tagName}");
-                final updateInfo = SelfUpdateInfo(
-                  version: latestRelease.tagName,
-                  url: latestRelease.assets.first.browserDownloadUrl,
-                  releaseNote: latestRelease.body,
-                );
-                Fimber.i("Update info: $updateInfo");
+    // Self-update is disabled on macOS due to Gatekeeper/code signing issues.
+    if (!Platform.isMacOS) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
+            latestRelease,
+          ) {
+            try {
+              if (latestRelease != null) {
+                final hasNewVersion = SelfUpdater.hasNewVersion(latestRelease);
+                if (hasNewVersion) {
+                  Fimber.i("New version available: ${latestRelease.tagName}");
+                  final updateInfo = SelfUpdateInfo(
+                    version: latestRelease.tagName,
+                    url: latestRelease.assets.first.browserDownloadUrl,
+                    releaseNote: latestRelease.body,
+                  );
+                  Fimber.i("Update info: $updateInfo");
 
-                toastification.showCustom(
-                  context: ref.read(AppState.appContext),
-                  builder: (context, item) =>
-                      SelfUpdateToast(latestRelease, item),
-                );
+                  toastification.showCustom(
+                    context: ref.read(AppState.appContext),
+                    builder: (context, item) =>
+                        SelfUpdateToast(latestRelease, item),
+                  );
 
-                // if (ref.read(appSettings
-                //     .select((value) => value.shouldAutoUpdateOnLaunch))) {
-                //   ref
-                //       .read(AppState.selfUpdate.notifier)
-                //       .updateSelf(latestRelease);
-                // }
+                  // if (ref.read(appSettings
+                  //     .select((value) => value.shouldAutoUpdateOnLaunch))) {
+                  //   ref
+                  //       .read(AppState.selfUpdate.notifier)
+                  //       .updateSelf(latestRelease);
+                  // }
+                }
               }
+            } catch (e, s) {
+              Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
             }
-          } catch (e, s) {
-            Fimber.e("Error checking for updates: $e", ex: e, stacktrace: s);
-          }
-        });
-      } catch (e, st) {
-        Fimber.e("Error checking for updates: $e", ex: e, stacktrace: st);
-      }
-    });
+          });
+        } catch (e, st) {
+          Fimber.e("Error checking for updates: $e", ex: e, stacktrace: st);
+        }
+      });
+    }
 
     // Execute all actions that were added while the app was loading
     WidgetsBinding.instance.addPostFrameCallback((_) async {

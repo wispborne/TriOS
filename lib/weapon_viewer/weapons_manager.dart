@@ -60,6 +60,7 @@ class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
         .toList();
 
     final allErrors = <String>[]; // To store all error messages
+    final allInfos = <String>[];
     List<Weapon> allWeapons = <Weapon>[]; // To store all parsed weapons
     // Throttle UI rebuilds during loading: yield at most once per 500ms.
     const yieldInterval = Duration(milliseconds: 500);
@@ -76,6 +77,10 @@ class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
       allErrors.addAll(coreResult.errors);
     }
 
+    if (coreResult.infos.isNotEmpty) {
+      allInfos.addAll(coreResult.infos);
+    }
+
     // Parse each mod's weapons individually
     for (final variant in variants) {
       final modResult = await _parseWeaponsCsv(variant.modFolder, variant);
@@ -85,6 +90,10 @@ class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
 
       if (modResult.errors.isNotEmpty) {
         allErrors.addAll(modResult.errors);
+      }
+
+      if (modResult.infos.isNotEmpty) {
+        allInfos.addAll(modResult.infos);
       }
 
       final now = DateTime.now();
@@ -97,9 +106,11 @@ class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
     // Always yield the final complete list.
     yield allWeapons;
 
-    // Print out all collected errors at the end
     if (allErrors.isNotEmpty) {
-      Fimber.w('Errors encountered during parsing:\n${allErrors.join('\n')}');
+      Fimber.w('Errors encountered parsing weapons:\n${allErrors.join('\n')}');
+    }
+    if (allInfos.isNotEmpty) {
+      Fimber.i('Info messages parsing weapons:\n${allInfos.join('\n')}');
     }
 
     ref.read(isLoadingWeaponsList.notifier).state = false;
@@ -150,11 +161,12 @@ Future<ParseResult> _parseWeaponsCsv(
 
   final weapons = <Weapon>[];
   final errors = <String>[];
+  final infos = <String>[];
   final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
   if (!await weaponsCsvFile.exists()) {
-    errors.add('[$modName] Weapons CSV file not found at $weaponsCsvFile');
-    return ParseResult(weapons, errors, filesProcessed);
+    infos.add('[$modName] Weapons CSV file not found at $weaponsCsvFile');
+    return ParseResult(weapons, errors, infos, filesProcessed);
   }
 
   // Read and parse the .wpn files
@@ -217,35 +229,21 @@ Future<ParseResult> _parseWeaponsCsv(
   String content;
   try {
     filesProcessed++;
-    content = await weaponsCsvFile.readAsString(encoding: utf8);
+    content = await weaponsCsvFile.readAsStringUtf8OrLatin1();
   } on FileSystemException catch (e) {
     errors.add('[$modName] Failed to read file at $weaponsCsvFile: $e');
-    return ParseResult(weapons, errors, filesProcessed);
+    return ParseResult(weapons, errors, infos, filesProcessed);
   } catch (e) {
     errors.add(
       '[$modName] Unexpected error reading file at $weaponsCsvFile: $e',
     );
-    return ParseResult(weapons, errors, filesProcessed);
+    return ParseResult(weapons, errors, infos, filesProcessed);
   }
 
-  // Preprocess the content to handle comments
-  final lines = content.split('\n');
-  final processedLines = <String>[];
-  final lineNumberMapping = <int>[];
-
-  for (int index = 0; index < lines.length; index++) {
-    String line = lines[index];
-    String processedLine = line.removeCsvLineComments();
-
-    if (processedLine.trim().isEmpty) {
-      continue;
-    }
-
-    processedLines.add(processedLine);
-    lineNumberMapping.add(index + 1); // Original line number in the file
-  }
-
-  final processedContent = processedLines.join('\n');
+  // Strip `#` comments (quote-aware, multi-line safe) and track source lines.
+  final stripped = content.stripCsvCommentsAndTrackLines();
+  final processedContent = stripped.cleanContent;
+  final lineNumberMapping = stripped.lineNumberMap;
 
   List<List<dynamic>> rows;
   try {
@@ -257,16 +255,16 @@ Future<ParseResult> _parseWeaponsCsv(
     errors.add(
       '[$modName] Failed to parse CSV content in file $weaponsCsvFile: $e',
     );
-    return ParseResult(weapons, errors, filesProcessed);
+    return ParseResult(weapons, errors, infos, filesProcessed);
   }
 
   if (rows.isEmpty) {
     errors.add('[$modName] Empty weapons CSV file at $weaponsCsvFile');
-    return ParseResult(weapons, errors, filesProcessed);
+    return ParseResult(weapons, errors, infos, filesProcessed);
   }
 
   // Extract headers from the first row
-  final headers = rows.first.map((e) => e.toString().trim()).toList();
+  final headers = rows.first.map((e) => e.toString().trim().toLowerCase()).toList();
 
   for (var i = 1; i < rows.length; i++) {
     final row = rows[i];
@@ -328,14 +326,15 @@ Future<ParseResult> _parseWeaponsCsv(
     }
   }
 
-  return ParseResult(weapons, errors, filesProcessed);
+  return ParseResult(weapons, errors, infos, filesProcessed);
 }
 
 // Helper class to hold parsing results
 class ParseResult {
   final List<Weapon> weapons;
   final List<String> errors;
+  final List<String> infos;
   final int filesProcessed;
 
-  ParseResult(this.weapons, this.errors, this.filesProcessed);
+  ParseResult(this.weapons, this.errors, this.infos, this.filesProcessed);
 }

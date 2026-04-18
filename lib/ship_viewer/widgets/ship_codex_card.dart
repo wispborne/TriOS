@@ -53,6 +53,14 @@ class ShipCodexCard {
             description: ref.watch(
               descriptionProvider((ship.id, DescriptionEntry.typeShip)),
             ),
+            systemDescription: ship.systemId == null
+                ? null
+                : ref.watch(
+                    descriptionProvider((
+                      ship.systemId!,
+                      DescriptionEntry.typeShipSystem,
+                    )),
+                  ),
             showTitle: showTitle,
             showSprite: showSprite,
             showDescription: showDescription,
@@ -85,6 +93,14 @@ class ShipCodexCard {
         description: ref.watch(
           descriptionProvider((ship.id, DescriptionEntry.typeShip)),
         ),
+        systemDescription: ship.systemId == null
+            ? null
+            : ref.watch(
+                descriptionProvider((
+                  ship.systemId!,
+                  DescriptionEntry.typeShipSystem,
+                )),
+              ),
         showTitle: showTitle,
         showSprite: showSprite,
         showDescription: showDescription,
@@ -103,6 +119,7 @@ class ShipCodexCard {
     Map<String, Hullmod> hullmodsMap = const {},
     List<ResolvedModule> modules = const [],
     DescriptionEntry? description,
+    DescriptionEntry? systemDescription,
     bool showTitle = true,
     bool showSprite = true,
     bool showDescription = true,
@@ -194,31 +211,34 @@ class ShipCodexCard {
                               'Recovery (/day)',
                               '${tooltipFmt(ship.crPercentPerDay)}%',
                               color: crColor,
+                              indentLevel: 1,
                             ),
                           if (ship.suppliesRec != null)
                             tooltipRow(
                               'Recovery (supplies)',
                               tooltipFmt(ship.suppliesRec),
                               color: crColor,
+                              indentLevel: 1,
                             ),
                           if (ship.deploymentPoints != null)
                             tooltipRow(
                               'Deployment points',
                               tooltipFmt(ship.deploymentPoints),
                               color: dpColor,
+                              indentLevel: 1,
                             ),
                           if (ship.peakCrSec != null)
                             tooltipRow(
-                              'Peak performance',
+                              'Peak performance (sec)',
                               _peakTime(ship.peakCrSec!),
                               color: crColor,
                             ),
-                          if (ship.minCrew != null || ship.maxCrew != null)
-                            tooltipRow(
-                              'Crew complement',
-                              '${tooltipFmt(ship.minCrew)} / ${tooltipFmt(ship.maxCrew)}',
-                              color: crewColor,
-                            ),
+                          // if (ship.minCrew != null || ship.maxCrew != null)
+                          //   tooltipRow(
+                          //     'Crew complement',
+                          //     '${tooltipFmt(ship.minCrew)} / ${tooltipFmt(ship.min)}',
+                          //     color: crewColor,
+                          //   ),
                           tooltipGap,
                           tooltipRow('Hull size', ship.hullSizeForDisplay()),
                           if (ship.ordnancePoints != null)
@@ -318,7 +338,10 @@ class ShipCodexCard {
                       if (ship.shieldUpkeep != null)
                         tooltipRow(
                           'Shield upkeep/sec',
-                          tooltipFmt(ship.shieldUpkeep),
+                          tooltipFmt(
+                            (ship.shieldUpkeep ?? 1.0) *
+                                (ship.fluxDissipation ?? 1.0),
+                          ),
                         ),
                       if (ship.shieldEfficiency != null)
                         tooltipRow(
@@ -369,6 +392,7 @@ class ShipCodexCard {
               final labelWidth = 70.0;
               return Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: .start,
                 spacing: 4,
                 children: [
                   if (ship.systemId != null)
@@ -395,6 +419,19 @@ class ShipCodexCard {
                           ),
                         ),
                       ],
+                    ),
+                  if (ship.systemId != null && systemDescription != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 78),
+                      child: Text(
+                        (systemDescription.text3 ?? systemDescription.text1 ?? '').trim(),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
                     ),
                   if (mountGroups.isNotEmpty || hasBays)
                     Row(
@@ -472,23 +509,43 @@ class ShipCodexCard {
         if (showDescription && description?.text1 != null) ...[
           const SizedBox(height: 8),
           tooltipHairline(theme),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const .symmetric(horizontal: 16.0, vertical: 8),
-            child: Column(
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ════════ Design type ════════
-                if (ship.techManufacturer != null) ...[
-                  tooltipDesignTypeRow(ship.techManufacturer!, theme),
-                  const SizedBox(height: 6),
-                ],
-                DescriptionWithSubstitutions(
-                  description: description!.text1!,
-                  baseStyle: theme.textTheme.bodySmall,
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.10),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const .symmetric(horizontal: 8.0, vertical: 8),
+                    child: Column(
+                      children: [
+                        // ════════ Design type ════════
+                        if (ship.techManufacturer != null) ...[
+                          tooltipDesignTypeRow(ship.techManufacturer!, theme),
+                          const SizedBox(height: 6),
+                        ],
+                        DescriptionWithSubstitutions(
+                          description: description!.text1!,
+                          baseStyle: theme.textTheme.bodySmall,
+                          biggerLineBreaks: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.10),
                 ),
               ],
             ),
           ),
+          tooltipHairline(theme),
         ],
       ],
     );
@@ -636,5 +693,5 @@ String _toDisplay(String id) =>
     id.replaceAll('_', ' ').replaceAll('-', ' ').toTitleCase();
 
 /// Converts peak CR seconds to a human-readable duration string.
-String _peakTime(double secs) =>
-    secs >= 60 ? '${tooltipFmt(secs / 60)} min' : '${tooltipFmt(secs)} s';
+String _peakTime(double secs) => tooltipFmt(secs);
+// secs >= 60 ? '${tooltipFmt(secs / 60)} min' : '${tooltipFmt(secs)} s';

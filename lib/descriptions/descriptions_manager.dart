@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -117,7 +116,7 @@ Future<_DescriptionParseResult> _parseDescriptionsCsv(
   String content;
   try {
     filesProcessed++;
-    content = await csvFile.readAsStringAllowMalformed();
+    content = await csvFile.readAsStringUtf8OrLatin1();
   } on FileSystemException catch (e) {
     errors.add('[$modName] Failed to read $csvFile: $e');
     return _DescriptionParseResult(descriptions, errors, filesProcessed);

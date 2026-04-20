@@ -12,7 +12,10 @@ part 'portrait_model.mapper.dart';
 /// Represents a portrait image found in a mod
 @MappableClass()
 class Portrait with PortraitMappable {
-  final ModVariant? modVariant;
+  /// Back-reference to the source mod variant. Mutable so the viewer cache
+  /// can null it out before encoding (variant data is not worth serializing —
+  /// it's rehydrated from the current mod list on decode).
+  ModVariant? modVariant;
   @MappableField(hook: FileHook())
   final File imageFile;
 

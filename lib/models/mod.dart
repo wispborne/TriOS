@@ -26,10 +26,19 @@ class Mod with ModMappable implements Comparable<Mod>, WispGridItem {
   bool isEnabledInGameSync(List<String> enabledModIds) =>
       enabledModIds.contains(id);
 
-  List<ModVariant> get enabledVariants =>
-      modVariants.where((variant) => isEnabled(variant)).toList();
+  // Computed values below are `late final`: cached on first access per
+  // instance. `Mod` is immutable (all fields final), so new values only
+  // arrive via fresh instances and the caches stay correct for life.
+  // dart_mappable serializes only constructor-declared fields, so these
+  // extras don't affect serialization, ==, or hashCode.
 
-  ModVariant? get findFirstEnabled {
+  late final List<ModVariant> enabledVariants = modVariants
+      .where((variant) => isEnabled(variant))
+      .toList();
+
+  late final ModVariant? findFirstEnabled = _findFirstEnabled();
+
+  ModVariant? _findFirstEnabled() {
     for (var variant in modVariants) {
       if (isEnabled(variant)) {
         return variant;
@@ -40,23 +49,22 @@ class Mod with ModMappable implements Comparable<Mod>, WispGridItem {
 
   bool get isEnabledOnUi => findFirstEnabled != null;
 
-  ModVariant? get findFirstDisabled =>
-      modVariants.firstWhereOrNull((variant) => !isEnabled(variant));
+  late final ModVariant? findFirstDisabled = modVariants.firstWhereOrNull(
+    (variant) => !isEnabled(variant),
+  );
 
-  ModVariant? get findHighestVersion => modVariants.findHighestVersion;
+  late final ModVariant? findHighestVersion = modVariants.findHighestVersion;
 
-  ModVariant? get findFirstEnabledOrHighestVersion =>
+  late final ModVariant? findFirstEnabledOrHighestVersion =
       findFirstEnabled ?? findHighestVersion;
 
-  ModVariant? get findHighestEnabledVersion {
-    return modVariants
-        .where((v) => v.isModInfoEnabled)
-        .maxByOrNull((variant) => variant);
-  }
+  late final ModVariant? findHighestEnabledVersion = modVariants
+      .where((v) => v.isModInfoEnabled)
+      .maxByOrNull((variant) => variant);
 
-  bool get hasEnabledVariant => (findFirstEnabled) != null;
+  bool get hasEnabledVariant => findFirstEnabled != null;
 
-  bool get hasDisabledVariant => (findFirstDisabled) != null;
+  bool get hasDisabledVariant => findFirstDisabled != null;
 
   @override
   int compareTo(Mod other) =>

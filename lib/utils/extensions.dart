@@ -99,26 +99,10 @@ extension StringExt on String {
     return this;
   }
 
-  /// Warning: probably not fast.
-  String fixJson() {
-    // Replace \# with # because some mod did that and it broke things.
-    var fixed = replaceAll(r"\#", "#").trim();
-    // Replace tabs with spaces because yaml is picky. Thank you VIC.
-    fixed = fixed.replaceAll("\t", "  ");
-    // Add space after colon before quote for unquoted keys
-    // (e.g. WS0001:"value" → WS0001: "value"). Thank you Shadowyards.
-    fixed = fixed.replaceAllMapped(RegExp(r'(\w):"'), (m) => '${m[1]}: "');
-    // Remove trailing commas. Thank you SkillExtra.
-    fixed = fixed.trimEnd(",");
-    // Replace semicolons used as value separators.
-    fixed = fixed.replaceAll(RegExp(r';$', multiLine: true), ',');
-    // Removes lines starting with //, which are not valid json or yaml comments.
-    // Thank you Epitaph Frost.
-    fixed = fixed
-        .split("\n")
-        .where((it) => !it.trim().startsWith("//"))
-        .join("\n");
-
+  /// YAML-parse an already-fixed string and re-encode as JSON. Slow path
+  /// fallback. Lives as a method so callers that have already run
+  /// [_applyJsonFixups] don't run it again.
+  String _fixJsonViaYaml(String fixed) {
     try {
       return json.encode(loadYamlValue(fixed));
     } catch (e) {
@@ -127,12 +111,57 @@ extension StringExt on String {
     }
   }
 
+  /// Cheap string-level fixups for near-JSON Starsector mod files:
+  /// tabs, escaped `#`, unquoted-key-before-quote, trailing commas, trailing
+  /// semicolons, `//` line comments.
+  String _applyJsonFixups() {
+    var fixed = replaceAll(r"\#", "#").trim();
+    fixed = fixed.replaceAll("\t", "  ");
+    fixed = fixed.replaceAllMapped(RegExp(r'(\w):"'), (m) => '${m[1]}: "');
+    fixed = fixed.trimEnd(",");
+    fixed = fixed.replaceAll(RegExp(r';$', multiLine: true), ',');
+    fixed = fixed
+        .split("\n")
+        .where((it) => !it.trim().startsWith("//"))
+        .join("\n");
+    return fixed;
+  }
+
+  /// Warning: probably not fast. Runs the full fixup pipeline through the
+  /// YAML parser; only used as a last-resort fallback in [parseJsonToMap].
+  String fixJson() => _fixJsonViaYaml(_applyJsonFixups());
+
   Future<String> fixJsonAsync() {
     return Future.microtask(() => fixJson());
   }
 
+  /// Parse a JSON-ish Starsector file into a map.
+  ///
+  /// Tries three strategies in order of cost:
+  ///   1. `jsonDecode` on the raw input.
+  ///   2. `jsonDecode` after cheap string-level fixups (tabs, trailing commas,
+  ///      `//` comments, etc.).
+  ///   3. YAML parse + re-encode as a last resort (handles anything else).
+  ///
+  /// Most vanilla files take path 1; most modded files take path 2. Path 3
+  /// is the slow one that used to dominate cold-load profiles.
   Map<String, dynamic> parseJsonToMap() {
-    return jsonDecode(fixJson());
+    try {
+      final decoded = jsonDecode(this);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } on FormatException {
+      // Fall through to fixup pass.
+    }
+
+    final fixed = _applyJsonFixups();
+    try {
+      final decoded = jsonDecode(fixed);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } on FormatException {
+      // Fall through to YAML.
+    }
+
+    return jsonDecode(_fixJsonViaYaml(fixed));
   }
 
   Future<Map<String, dynamic>> parseJsonToMapAsync() {

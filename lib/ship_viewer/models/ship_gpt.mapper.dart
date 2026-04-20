@@ -463,24 +463,54 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, ModVariant> _f$modVariant = Field(
     'modVariant',
     _$modVariant,
-    mode: FieldMode.member,
+    hook: SkipSerializationHook(),
   );
   static File _$csvFile(Ship v) => v.csvFile;
   static const Field<Ship, File> _f$csvFile = Field(
     'csvFile',
     _$csvFile,
-    mode: FieldMode.member,
+    hook: FileHook(),
   );
   static File? _$dataFile(Ship v) => v.dataFile;
   static const Field<Ship, File> _f$dataFile = Field(
     'dataFile',
     _$dataFile,
-    mode: FieldMode.member,
+    hook: FileHook(),
   );
   static Map<String, String> _$shipSizesMap(Ship v) => v.shipSizesMap;
   static const Field<Ship, Map<String, String>> _f$shipSizesMap = Field(
     'shipSizesMap',
     _$shipSizesMap,
+    mode: FieldMode.member,
+  );
+  static int _$mountableWeaponSlotCount(Ship v) => v.mountableWeaponSlotCount;
+  static const Field<Ship, int> _f$mountableWeaponSlotCount = Field(
+    'mountableWeaponSlotCount',
+    _$mountableWeaponSlotCount,
+    mode: FieldMode.member,
+  );
+  static bool _$isStation(Ship v) => v.isStation;
+  static const Field<Ship, bool> _f$isStation = Field(
+    'isStation',
+    _$isStation,
+    mode: FieldMode.member,
+  );
+  static bool _$hasStationSlots(Ship v) => v.hasStationSlots;
+  static const Field<Ship, bool> _f$hasStationSlots = Field(
+    'hasStationSlots',
+    _$hasStationSlots,
+    mode: FieldMode.member,
+  );
+  static double? _$sensorProfile(Ship v) => v.sensorProfile;
+  static const Field<Ship, double> _f$sensorProfile = Field(
+    'sensorProfile',
+    _$sensorProfile,
+    mode: FieldMode.member,
+  );
+  static double? _$sensorStrength(Ship v) => v.sensorStrength;
+  static const Field<Ship, double> _f$sensorStrength = Field(
+    'sensorStrength',
+    _$sensorStrength,
     mode: FieldMode.member,
   );
 
@@ -560,6 +590,11 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #csvFile: _f$csvFile,
     #dataFile: _f$dataFile,
     #shipSizesMap: _f$shipSizesMap,
+    #mountableWeaponSlotCount: _f$mountableWeaponSlotCount,
+    #isStation: _f$isStation,
+    #hasStationSlots: _f$hasStationSlots,
+    #sensorProfile: _f$sensorProfile,
+    #sensorStrength: _f$sensorStrength,
   };
 
   static Ship _instantiate(DecodingData data) {

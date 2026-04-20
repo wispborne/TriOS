@@ -1,16 +1,21 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
+import 'package:trios/hullmod_viewer/models/hullmods_cache_payload.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
+import 'package:trios/viewer_cache/cached_variant_store.dart';
 
 final isLoadingHullmodsList = StateProvider<bool>((ref) => false);
 final isHullmodsListDirty = StateProvider<bool>((ref) => false);
@@ -20,97 +25,133 @@ final hullmodListNotifierProvider =
       HullmodListNotifier.new,
     );
 
-class HullmodListNotifier extends StreamNotifier<List<Hullmod>> {
+class HullmodListNotifier
+    extends CachedStreamListNotifier<Hullmod, HullmodsCachePayload> {
   @override
-  Stream<List<Hullmod>> build() async* {
-    int filesProcessed = 0;
+  String get domain => 'hullmods';
 
-    final currentTime = DateTime.now();
-    ref.read(isLoadingHullmodsList.notifier).state = true;
-    filesProcessed = 0;
-    final gameCorePath = ref.watch(AppState.gameCoreFolder).value?.path;
+  @override
+  int get schemaVersion => 1;
 
-    if (gameCorePath == null || gameCorePath.isEmpty) {
-      ref.read(isLoadingHullmodsList.notifier).state = false;
-      return;
-    }
+  @override
+  late final CachedVariantStore store =
+      CachedVariantStore(domain, Constants.viewerCacheDirPath);
 
-    // Watch modVariants so we rebuild once it resolves on startup.
-    final modVariantsAsync = ref.watch(AppState.modVariants);
-    if (!modVariantsAsync.hasValue) {
-      ref.read(isLoadingHullmodsList.notifier).state = false;
-      return;
-    }
+  @override
+  String itemId(Hullmod item) => item.id;
 
-    ref.listen(AppState.smolIds, (previous, next) {
-      ref.read(isHullmodsListDirty.notifier).state = true;
-    });
+  @override
+  List<Hullmod> itemsFromPayload(HullmodsCachePayload payload) =>
+      payload.hullmods;
 
-    // Don't watch for mod changes, the background processing is too expensive.
-    // User has to manually refresh hullmods viewer.
-    final variants = ref
+  @override
+  Directory? get gameCorePath {
+    final path = ref.watch(AppState.gameCoreFolder).value?.path;
+    return (path == null || path.isEmpty) ? null : Directory(path);
+  }
+
+  @override
+  String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
+
+  @override
+  List<ModVariant> resolveEnabledVariants() {
+    return ref
         .read(AppState.mods)
         .map((mod) => mod.findFirstEnabledOrHighestVersion)
         .nonNulls
         .toList();
+  }
 
-    final allErrors = <String>[];
-    final allInfos = <String>[];
-    List<Hullmod> allHullmods = <Hullmod>[];
-    const yieldInterval = Duration(milliseconds: 500);
-    var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
+  @override
+  Future<bool> awaitReadiness() async {
+    return ref.watch(AppState.modVariants).hasValue;
+  }
 
-    // Parse the core game hullmods
-    final coreResult = await _parseHullmodsCsv(Directory(gameCorePath), null);
-    filesProcessed += coreResult.filesProcessed;
-    allHullmods.addAll(coreResult.hullmods);
-    allHullmods = allHullmods.distinctBy((e) => e.id).toList();
+  @override
+  void onBuildStart() {
+    ref.read(isLoadingHullmodsList.notifier).state = true;
+    ref.listen(AppState.smolIds, (previous, next) {
+      ref.read(isHullmodsListDirty.notifier).state = true;
+    });
+  }
 
-    if (coreResult.errors.isNotEmpty) {
-      allErrors.addAll(coreResult.errors);
-    }
-
-    if (coreResult.infos.isNotEmpty) {
-      allInfos.addAll(coreResult.infos);
-    }
-
-    // Parse each mod's hullmods individually
-    for (final variant in variants) {
-      final modResult = await _parseHullmodsCsv(variant.modFolder, variant);
-      filesProcessed += modResult.filesProcessed;
-      allHullmods.addAll(modResult.hullmods);
-      allHullmods = allHullmods.distinctBy((e) => e.id).toList();
-
-      if (modResult.errors.isNotEmpty) {
-        allErrors.addAll(modResult.errors);
-      }
-
-      if (modResult.infos.isNotEmpty) {
-        allInfos.addAll(modResult.infos);
-      }
-
-      final now = DateTime.now();
-      if (now.difference(lastYieldTime) >= yieldInterval) {
-        yield allHullmods;
-        lastYieldTime = now;
-      }
-    }
-
-    // Always yield the final complete list.
-    yield allHullmods;
-
-    if (allErrors.isNotEmpty) {
-      Fimber.w('Errors encountered parsing hullmods:\n${allErrors.join('\n')}');
-    }
-    if (allInfos.isNotEmpty) {
-      Fimber.i('Info messages parsing hullmods:\n${allInfos.join('\n')}');
-    }
-
+  @override
+  void onBuildComplete({required bool fullScanCompleted}) {
     ref.read(isLoadingHullmodsList.notifier).state = false;
-    ref.read(isHullmodsListDirty.notifier).state = false;
-    Fimber.i(
-      'Parsed ${allHullmods.length} hullmods from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
-    );
+    if (fullScanCompleted) {
+      ref.read(isHullmodsListDirty.notifier).state = false;
+    }
+    super.onBuildComplete(fullScanCompleted: fullScanCompleted);
+  }
+
+  @override
+  void rehydratePayload(
+    HullmodsCachePayload payload,
+    ModVariant? sourceVariant,
+  ) {
+    for (final hullmod in payload.hullmods) {
+      hullmod.modVariant = sourceVariant;
+    }
+  }
+
+  @override
+  Future<HullmodsCachePayload?> parseVanilla(
+    Directory gameCore,
+    List<Hullmod> allItemsSoFar,
+  ) {
+    return _parseOneFolder(gameCore, null);
+  }
+
+  @override
+  Future<HullmodsCachePayload?> parseVariant(
+    ModVariant variant,
+    List<Hullmod> allItemsSoFar,
+  ) {
+    return _parseOneFolder(variant.modFolder, variant);
+  }
+
+  Future<HullmodsCachePayload?> _parseOneFolder(
+    Directory folder,
+    ModVariant? modVariant,
+  ) async {
+    try {
+      final result = await _parseHullmodsCsv(folder, modVariant);
+      result.errors.forEach(addError);
+      result.infos.forEach(addInfo);
+      return HullmodsCachePayload(hullmods: result.hullmods);
+    } catch (e, st) {
+      Fimber.w(
+        'Hullmod parse failed for ${modVariant?.modInfo.nameOrId ?? 'Vanilla'}: $e',
+        ex: e,
+        stacktrace: st,
+      );
+      return null;
+    }
+  }
+
+  @override
+  Uint8List encodePayload(HullmodsCachePayload payload) {
+    final map = <String, dynamic>{
+      'hullmods': payload.hullmods.map((h) => h.toMap()).toList(),
+    };
+    return msgpack.serialize(map);
+  }
+
+  @override
+  HullmodsCachePayload decodePayload(Uint8List bytes) {
+    final raw = CachedStreamListNotifier.normalizeForMapper(
+      msgpack.deserialize(bytes),
+    ) as Map<String, dynamic>;
+    final hullmodMaps = (raw['hullmods'] as List).cast<Map<String, dynamic>>();
+    final hullmods = <Hullmod>[];
+    for (final map in hullmodMaps) {
+      final hullmod = HullmodMapper.fromMap(map);
+      final csvPath = map['csvFile'];
+      if (csvPath is String) hullmod.csvFile = File(csvPath);
+      hullmod.modVariant = null;
+      hullmods.add(hullmod);
+    }
+    return HullmodsCachePayload(hullmods: hullmods);
   }
 
   String allHullmodsAsCsv() {

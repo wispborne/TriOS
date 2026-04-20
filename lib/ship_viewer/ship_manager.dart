@@ -1,22 +1,25 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/ship_viewer/models/ship_gpt.dart';
 import 'package:trios/ship_viewer/models/ship_skin.dart';
 import 'package:trios/ship_viewer/models/ship_variant.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
+import 'package:trios/ship_viewer/models/ships_cache_payload.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
+import 'package:trios/viewer_cache/cached_variant_store.dart';
 
 final isLoadingShipsList = StateProvider<bool>((ref) => false);
 final isShipsListDirty = StateProvider<bool>((ref) => false);
@@ -34,130 +37,206 @@ final variantHullIdMapProvider =
 final shipListNotifierProvider =
     StreamNotifierProvider<ShipListNotifier, List<Ship>>(ShipListNotifier.new);
 
-class ShipListNotifier extends StreamNotifier<List<Ship>> {
-  /// Incremented each time build() starts. Stale builds compare against this
-  /// and return early, preventing cascading widget rebuilds.
-  var _buildToken = 0;
+class ShipListNotifier
+    extends CachedStreamListNotifier<Ship, ShipsCachePayload> {
+  @override
+  String get domain => 'ships';
 
   @override
-  Stream<List<Ship>> build() async* {
-    final myToken = ++_buildToken;
-    int filesProcessed = 0;
+  int get schemaVersion => 1;
 
-    final currentTime = DateTime.now();
+  @override
+  late final CachedVariantStore store =
+      CachedVariantStore(domain, Constants.viewerCacheDirPath);
+
+  @override
+  String itemId(Ship item) => item.id;
+
+  @override
+  List<Ship> itemsFromPayload(ShipsCachePayload payload) => payload.ships;
+
+  @override
+  bool get providesItemContext => true;
+
+  /// `.variant` files are parsed in a distinct pass from `.ship`/`.skin`
+  /// files; their errors get their own log group so they're easier to spot.
+  final List<String> _pendingVariantErrors = [];
+
+  @override
+  Directory? get gameCorePath {
+    final path = ref.watch(AppState.gameCoreFolder).value?.path;
+    return (path == null || path.isEmpty) ? null : Directory(path);
+  }
+
+  @override
+  String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
+
+  @override
+  List<ModVariant> resolveEnabledVariants() {
+    return ref
+        .read(AppState.mods)
+        .map((mod) => mod.findFirstEnabledOrHighestVersion)
+        .nonNulls
+        .toList();
+  }
+
+  @override
+  void onBuildStart() {
     ref.read(isLoadingShipsList.notifier).state = true;
-    filesProcessed = 0;
-    final gameCorePath = ref.watch(AppState.gameCoreFolder).value?.path;
+    ref.listen(AppState.smolIds, (previous, next) {
+      ref.read(isShipsListDirty.notifier).state = true;
+    });
+    _pendingVariantErrors.clear();
+  }
 
-    if (gameCorePath == null || gameCorePath.isEmpty) {
-      ref.read(isLoadingShipsList.notifier).state = false;
-      return;
+  @override
+  void onBuildComplete({required bool fullScanCompleted}) {
+    ref.read(isLoadingShipsList.notifier).state = false;
+    if (fullScanCompleted) {
+      ref.read(isShipsListDirty.notifier).state = false;
     }
+    super.onBuildComplete(fullScanCompleted: fullScanCompleted);
+    if (_pendingVariantErrors.isNotEmpty) {
+      Fimber.w(
+        '[ships] .variant parsing errors:\n${_pendingVariantErrors.join('\n')}',
+      );
+    }
+  }
 
-    // Wait for modVariants to resolve on startup without watching it.
-    // Using ref.read + ref.listen instead of ref.watch avoids re-triggering
-    // this entire stream on every mod version switch, which was causing
-    // cascading widget rebuilds.
+  @override
+  Future<bool> awaitReadiness() async {
+    // Wait for modVariants to resolve on startup without watching it to avoid
+    // re-triggering this entire stream on every mod version switch, which
+    // caused cascading widget rebuilds in the pre-cache implementation.
     if (!ref.read(AppState.modVariants).hasValue) {
       final completer = Completer<void>();
       ref.listen(AppState.modVariants, (prev, next) {
         if (next.hasValue && !completer.isCompleted) completer.complete();
       });
       await completer.future;
-      if (_buildToken != myToken) return;
     }
+    return true;
+  }
 
-    ref.listen(AppState.smolIds, (previous, next) {
-      ref.read(isShipsListDirty.notifier).state = true;
-    });
-
-    // Don't watch for mod changes, the background processing is too expensive.
-    // User has to manually refresh ships viewer.
-    final variants = ref
-        .read(AppState.mods)
-        .map((mod) => mod.findFirstEnabledOrHighestVersion)
-        .nonNulls
-        .toList();
-
-    final allErrors = <String>[];
-    final allInfos = <String>[];
-    List<Ship> allShips = <Ship>[];
-    // Throttle UI rebuilds during loading: yield at most once per 500ms.
-    const yieldInterval = Duration(milliseconds: 500);
-    var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
-
-    final coreResult = await _parseShips(
-      Directory(gameCorePath),
-      null,
-      allShips,
-    );
-    if (_buildToken != myToken) return;
-    filesProcessed += coreResult.filesProcessed;
-    allShips.addAll(coreResult.ships);
-    allShips = allShips.distinctBy((e) => e.id).toList();
-
-    if (coreResult.errors.isNotEmpty) {
-      allErrors.addAll(coreResult.errors);
+  @override
+  void rehydratePayload(
+    ShipsCachePayload payload,
+    ModVariant? sourceVariant,
+  ) {
+    for (final ship in payload.ships) {
+      ship.modVariant = sourceVariant;
     }
+  }
 
-    if (coreResult.infos.isNotEmpty) {
-      allInfos.addAll(coreResult.infos);
-    }
-
-    for (final variant in variants) {
-      if (_buildToken != myToken) return;
-      final modResult = await _parseShips(variant.modFolder, variant, allShips);
-      if (_buildToken != myToken) return;
-      filesProcessed += modResult.filesProcessed;
-      allShips.addAll(modResult.ships);
-      allShips = allShips.distinctBy((e) => e.id).toList();
-
-      if (modResult.errors.isNotEmpty) {
-        allErrors.addAll(modResult.errors);
-      }
-
-      if (modResult.infos.isNotEmpty) {
-        allInfos.addAll(modResult.infos);
-      }
-
-      final now = DateTime.now();
-      if (now.difference(lastYieldTime) >= yieldInterval) {
-        yield allShips;
-        lastYieldTime = now;
-      }
-    }
-
-    // Always yield the final complete list.
-    yield allShips;
-
-    // Parse .variant files for module mappings (runs after ship list is
-    // complete so it doesn't slow down the main loading).
+  @override
+  void onFullScanComplete(Map<String, ShipsCachePayload> allPayloads) {
     final allModuleVariants = <String, ShipVariant>{};
     final allHullIdMap = <String, String>{};
-    final coreVariants =
-        await _parseVariants(Directory(gameCorePath), null, allErrors);
-    allModuleVariants.addAll(coreVariants.moduleVariants);
-    allHullIdMap.addAll(coreVariants.hullIdMap);
-    for (final variant in variants) {
-      final modVariants =
-          await _parseVariants(variant.modFolder, variant, allErrors);
-      allModuleVariants.addAll(modVariants.moduleVariants);
-      allHullIdMap.addAll(modVariants.hullIdMap);
+    for (final payload in allPayloads.values) {
+      allModuleVariants.addAll(payload.moduleVariants);
+      allHullIdMap.addAll(payload.hullIdMap);
     }
     ref.read(moduleVariantsProvider.notifier).state = allModuleVariants;
     ref.read(variantHullIdMapProvider.notifier).state = allHullIdMap;
+  }
 
-    if (allErrors.isNotEmpty) {
-      Fimber.w('Ship parsing errors:\n${allErrors.join('\n')}');
+  @override
+  Future<ShipsCachePayload?> parseVanilla(
+    Directory gameCore,
+    List<Ship> allItemsSoFar,
+  ) async {
+    return _parseOneFolder(gameCore, null, allItemsSoFar);
+  }
+
+  @override
+  Future<ShipsCachePayload?> parseVariant(
+    ModVariant variant,
+    List<Ship> allItemsSoFar,
+  ) async {
+    return _parseOneFolder(variant.modFolder, variant, allItemsSoFar);
+  }
+
+  Future<ShipsCachePayload?> _parseOneFolder(
+    Directory folder,
+    ModVariant? modVariant,
+    List<Ship> allItemsSoFar,
+  ) async {
+    try {
+      final shipResult = await _parseShips(folder, modVariant, allItemsSoFar);
+      shipResult.errors.forEach(addError);
+      shipResult.infos.forEach(addInfo);
+
+      final variantErrors = <String>[];
+      final variantResult = await _parseVariants(
+        folder,
+        modVariant,
+        variantErrors,
+      );
+      _pendingVariantErrors.addAll(variantErrors);
+
+      return ShipsCachePayload(
+        ships: shipResult.ships,
+        moduleVariants: variantResult.moduleVariants,
+        hullIdMap: variantResult.hullIdMap,
+      );
+    } catch (e, st) {
+      Fimber.w(
+        'Ship parse failed for ${modVariant?.modInfo.nameOrId ?? 'Vanilla'}: $e',
+        ex: e,
+        stacktrace: st,
+      );
+      return null;
     }
-    if (allInfos.isNotEmpty) {
-      Fimber.i('Info messages parsing ships:\n${allInfos.join('\n')}');
+  }
+
+  @override
+  Uint8List encodePayload(ShipsCachePayload payload) {
+    final map = <String, dynamic>{
+      'ships': payload.ships.map((s) => s.toMap()).toList(),
+      'moduleVariants': payload.moduleVariants.map(
+        (k, v) => MapEntry(k, v.toMap()),
+      ),
+      'hullIdMap': payload.hullIdMap,
+    };
+    return msgpack.serialize(map);
+  }
+
+  @override
+  ShipsCachePayload decodePayload(Uint8List bytes) {
+    final raw = CachedStreamListNotifier.normalizeForMapper(
+      msgpack.deserialize(bytes),
+    ) as Map<String, dynamic>;
+
+    final shipMaps = (raw['ships'] as List).cast<Map<String, dynamic>>();
+    final ships = <Ship>[];
+    for (final map in shipMaps) {
+      final ship = ShipMapper.fromMap(map);
+      final csvPath = map['csvFile'];
+      if (csvPath is String) ship.csvFile = File(csvPath);
+      final dataPath = map['dataFile'];
+      if (dataPath is String) ship.dataFile = File(dataPath);
+      ship.modVariant = null; // reattached by rehydratePayload.
+      ships.add(ship);
     }
 
-    ref.read(isLoadingShipsList.notifier).state = false;
-    ref.read(isShipsListDirty.notifier).state = false;
-    Fimber.i(
-      'Parsed ${allShips.length} ships and ${allModuleVariants.length} module variants from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
+    final moduleVariants = <String, ShipVariant>{};
+    final moduleVariantsRaw = raw['moduleVariants'] as Map<String, dynamic>;
+    moduleVariantsRaw.forEach((k, v) {
+      moduleVariants[k] = ShipVariantMapper.fromMap(
+        v as Map<String, dynamic>,
+      );
+    });
+
+    final hullIdMap = <String, String>{};
+    final hullIdMapRaw = raw['hullIdMap'] as Map<String, dynamic>;
+    hullIdMapRaw.forEach((k, v) {
+      hullIdMap[k] = v.toString();
+    });
+
+    return ShipsCachePayload(
+      ships: ships,
+      moduleVariants: moduleVariants,
+      hullIdMap: hullIdMap,
     );
   }
 

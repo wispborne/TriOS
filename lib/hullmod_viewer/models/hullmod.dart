@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/utils/dart_mappable_utils.dart';
 
 part 'hullmod.mapper.dart';
 
@@ -39,7 +40,9 @@ class Hullmod with HullmodMappable implements WispGridItem {
   final String? sModDesc;
   final String? sprite;
 
+  @MappableField(hook: SkipSerializationHook())
   late ModVariant? modVariant;
+  @MappableField(hook: FileHook())
   late File csvFile;
 
   Hullmod({

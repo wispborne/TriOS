@@ -1,0 +1,26 @@
+{
+  "hullName": "Large Armor Plate",
+  "hullId": "armor_big",
+  "hullSize": "FRIGATE",
+  "spriteName": "graphics/ships/StationAssembly/armor_big.png",
+  "style": "LOW_TECH",
+  "height": 87,
+  "width": 218,
+  "center": [108, 12],
+  "collisionRadius": 284.5,
+  "shieldCenter": [31.5, -1],
+  "shieldRadius": 0,
+  "viewOffset": 0,
+  "builtInMods": [
+    "disgusting_resilience2"
+  ],
+  "weaponSlots": [],
+  "engineSlots": [],
+  "bounds": [
+    44.5, 104,
+    16, 104.5,
+    16, -104.5,
+    44.5, -104,
+    74, 0.5
+  ]
+}

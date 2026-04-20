@@ -1,0 +1,30 @@
+{
+	"id":"A_S-F_akvavit",
+	"specClass":"projectile",
+	"type":"MISSILE",
+	"size":"MEDIUM",
+	"turretSprite":"graphics/weapons/A_S-F_akvavit_turret.png",
+	"hardpointSprite":"graphics/weapons/A_S-F_akvavit_hardpoint.png",
+
+	"hardpointOffsets":[8,-5, 8,0, 8,5, 5,5, 5,0, 5,5],
+	"turretOffsets":[5,-5, 5,0, 5,5, 2,-5, 2,0, 2,5],
+	"hardpointAngleOffsets":[0, 4, 8, 2, 6, 10],
+	"turretAngleOffsets":[0, 4, 8, 2, 6, 10],
+
+	"barrelMode":"ALTERNATING",
+	"animationType":"SMOKE",
+	"interruptibleBurst":false,
+	"separateRecoilForLinkedBarrels":true,
+	"smokeSpec":{"particleSizeMin":9.0,
+							 "particleSizeRange":13.0,
+							 "cloudParticleCount":1,
+							 "cloudDuration":1.0,
+							 "cloudRadius":12.0;
+							 "blowbackParticleCount":1,
+							 "blowbackDuration":1.25,
+							 "blowbackLength":20.0,
+							 "blowbackSpread":8.0,
+							 "particleColor":[165,160,185,95]},
+	"projectileSpecId":"A_S-F_akvavit_srm",
+	"fireSoundTwo":"swarmer_fire",
+}

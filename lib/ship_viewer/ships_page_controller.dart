@@ -7,6 +7,7 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_systems_manager/ship_systems_manager.dart';
 import 'package:trios/ship_viewer/models/ship_gpt.dart';
+import 'package:trios/ship_viewer/models/ship_variant.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -95,6 +96,14 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
   late final FilterScopeController<Ship> _filters;
 
+  // Memoization for shipsWithModuleIds, keyed by input identity so we skip
+  // the O(N²) recompute on rebuilds where ship/variant references haven't
+  // actually changed (e.g. an unrelated watched provider ticked).
+  List<Ship>? _lastShips;
+  Map<String, ShipVariant>? _lastModuleVariants;
+  Map<String, String>? _lastVariantHullIdMap;
+  Set<String>? _cachedShipsWithModuleIds;
+
   FilterScope get scope => _scope;
 
   List<FilterGroup<Ship>> get filterGroups => _filters.groups;
@@ -112,6 +121,35 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   bool get showEnabled => _showEnabledField.value;
 
   SpoilerLevel get spoilerLevelToShow => _spoilerField.selected;
+
+  /// Returns `shipsWithModuleIds`, recomputing only if any of the three
+  /// inputs has a different identity than the last call. Riverpod's
+  /// providers return the same list/map instance until the underlying data
+  /// actually changes, so `identical` is the right equality here.
+  Set<String> _computeShipsWithModuleIdsMemo(
+    List<Ship> allShips,
+    Map<String, ShipVariant> moduleVariants,
+    Map<String, String> variantHullIdMap,
+  ) {
+    final cached = _cachedShipsWithModuleIds;
+    if (cached != null &&
+        identical(_lastShips, allShips) &&
+        identical(_lastModuleVariants, moduleVariants) &&
+        identical(_lastVariantHullIdMap, variantHullIdMap)) {
+      return cached;
+    }
+
+    final result = computeShipsWithModuleIds(
+      allShips,
+      moduleVariants,
+      variantHullIdMap,
+    );
+    _lastShips = allShips;
+    _lastModuleVariants = moduleVariants;
+    _lastVariantHullIdMap = variantHullIdMap;
+    _cachedShipsWithModuleIds = result;
+    return result;
+  }
 
   @override
   ShipsPageState build() {
@@ -135,12 +173,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     final weapons = weaponsAsync.value ?? [];
     final weaponsMap = weapons.associateBy((e) => e.id);
 
-    final shipsWithModuleIds = <String>{
-      for (final ship in allShips)
-        if (resolveModules(ship, allShips, moduleVariants, variantHullIdMap)
-            .isNotEmpty)
-          ship.id,
-    };
+    final shipsWithModuleIds = _computeShipsWithModuleIdsMemo(
+      allShips,
+      moduleVariants,
+      variantHullIdMap,
+    );
 
     // Build filter scope controller only once; reuse the same groups across
     // rebuilds so live filter state persists across them.
@@ -238,7 +275,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         valuesGetter: (ship) =>
             ship.weaponSlots
                 ?.where((s) => s.isMountable)
-                .map((s) => s.type.toUpperCase())
+                .map((s) => s.typeUppercase)
                 .toSet()
                 .toList() ??
             [],
@@ -251,7 +288,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         valuesGetter: (ship) =>
             ship.weaponSlots
                 ?.where((s) => s.isMountable)
-                .map((s) => s.size.toUpperCase())
+                .map((s) => s.sizeUppercase)
                 .toSet()
                 .toList() ??
             [],

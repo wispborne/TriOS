@@ -40,11 +40,23 @@ class ModRecord with ModRecordMappable {
   });
 
   // --- Resolved sources (auto-populated + user overrides) ---
+  //
+  // All computed values below are `late final`: cached on first access per
+  // instance. `ModRecord` is immutable — new values only arrive via copyWith
+  // or merge, which build fresh instances — so these caches never go stale.
+  // dart_mappable only looks at constructor-declared fields, so these extras
+  // don't affect serialization, ==, or hashCode.
 
   /// Merges [userOverrides] onto [sources] field-by-field.
   /// For matching keys of the same runtime type, calls applyOverridesFrom.
   /// If only one side has a key, uses it directly.
-  Map<String, ModRecordSource> get resolvedSources {
+  late final Map<String, ModRecordSource> resolvedSources =
+      _computeResolvedSources();
+
+  Map<String, ModRecordSource> _computeResolvedSources() {
+    if (userOverrides.isEmpty) return sources;
+    if (sources.isEmpty) return userOverrides;
+
     final allKeys = {...sources.keys, ...userOverrides.keys};
     final resolved = <String, ModRecordSource>{};
     for (final key in allKeys) {
@@ -75,57 +87,55 @@ class ModRecord with ModRecordMappable {
 
   // --- Typed source accessors (use resolved values) ---
 
-  InstalledSource? get installed =>
+  late final InstalledSource? installed =
       resolvedSources['installed'] as InstalledSource?;
 
-  CatalogSource? get catalog =>
+  late final CatalogSource? catalog =
       resolvedSources['catalog'] as CatalogSource?;
 
-  VersionCheckerSource? get versionChecker =>
+  late final VersionCheckerSource? versionChecker =
       resolvedSources['versionChecker'] as VersionCheckerSource?;
 
-  DownloadHistorySource? get downloadHistory =>
+  late final DownloadHistorySource? downloadHistory =
       resolvedSources['downloadHistory'] as DownloadHistorySource?;
 
-  ForumDataSource? get forumData =>
+  late final ForumDataSource? forumData =
       resolvedSources['forumData'] as ForumDataSource?;
 
   // --- Computed aggregation getters ---
 
   /// All known display names aggregated from resolved sources.
-  Set<String> get allNames {
+  late final Set<String> allNames = _computeAllNames();
+
+  Set<String> _computeAllNames() {
     final names = <String>{};
-    final resolved = resolvedSources;
-    final inst = resolved['installed'];
-    if (inst is InstalledSource && inst.name != null) names.add(inst.name!);
-    final cat = resolved['catalog'];
-    if (cat is CatalogSource && cat.name != null) names.add(cat.name!);
+    final instName = installed?.name;
+    if (instName != null) names.add(instName);
+    final catName = catalog?.name;
+    if (catName != null) names.add(catName);
     return names;
   }
 
   /// All known authors aggregated from resolved sources.
-  Set<String> get allAuthors {
+  late final Set<String> allAuthors = _computeAllAuthors();
+
+  Set<String> _computeAllAuthors() {
     final authors = <String>{};
-    final resolved = resolvedSources;
-    final inst = resolved['installed'];
-    if (inst is InstalledSource && inst.author != null) {
-      authors.add(inst.author!);
-    }
-    final cat = resolved['catalog'];
-    if (cat is CatalogSource && cat.authors != null) {
-      authors.addAll(cat.authors!);
-    }
+    final instAuthor = installed?.author;
+    if (instAuthor != null) authors.add(instAuthor);
+    final catAuthors = catalog?.authors;
+    if (catAuthors != null) authors.addAll(catAuthors);
     return authors;
   }
 
   // --- Convenience getters that resolve across sources ---
 
   /// Forum thread ID from version checker or catalog.
-  String? get forumThreadId =>
+  late final String? forumThreadId =
       versionChecker?.forumThreadId ?? catalog?.forumThreadId;
 
   /// NexusMods mod ID from version checker or catalog.
-  String? get nexusModsId =>
+  late final String? nexusModsId =
       versionChecker?.nexusModsId ?? catalog?.nexusModsId;
 
   // --- Static helpers ---

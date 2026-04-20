@@ -47,6 +47,67 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
       v.userOverrides;
   static const Field<ModRecord, Map<String, ModRecordSource>> _f$userOverrides =
       Field('userOverrides', _$userOverrides, opt: true, def: const {});
+  static Map<String, ModRecordSource> _$resolvedSources(ModRecord v) =>
+      v.resolvedSources;
+  static const Field<ModRecord, Map<String, ModRecordSource>>
+  _f$resolvedSources = Field(
+    'resolvedSources',
+    _$resolvedSources,
+    mode: FieldMode.member,
+  );
+  static InstalledSource? _$installed(ModRecord v) => v.installed;
+  static const Field<ModRecord, InstalledSource> _f$installed = Field(
+    'installed',
+    _$installed,
+    mode: FieldMode.member,
+  );
+  static CatalogSource? _$catalog(ModRecord v) => v.catalog;
+  static const Field<ModRecord, CatalogSource> _f$catalog = Field(
+    'catalog',
+    _$catalog,
+    mode: FieldMode.member,
+  );
+  static VersionCheckerSource? _$versionChecker(ModRecord v) =>
+      v.versionChecker;
+  static const Field<ModRecord, VersionCheckerSource> _f$versionChecker = Field(
+    'versionChecker',
+    _$versionChecker,
+    mode: FieldMode.member,
+  );
+  static DownloadHistorySource? _$downloadHistory(ModRecord v) =>
+      v.downloadHistory;
+  static const Field<ModRecord, DownloadHistorySource> _f$downloadHistory =
+      Field('downloadHistory', _$downloadHistory, mode: FieldMode.member);
+  static ForumDataSource? _$forumData(ModRecord v) => v.forumData;
+  static const Field<ModRecord, ForumDataSource> _f$forumData = Field(
+    'forumData',
+    _$forumData,
+    mode: FieldMode.member,
+  );
+  static Set<String> _$allNames(ModRecord v) => v.allNames;
+  static const Field<ModRecord, Set<String>> _f$allNames = Field(
+    'allNames',
+    _$allNames,
+    mode: FieldMode.member,
+  );
+  static Set<String> _$allAuthors(ModRecord v) => v.allAuthors;
+  static const Field<ModRecord, Set<String>> _f$allAuthors = Field(
+    'allAuthors',
+    _$allAuthors,
+    mode: FieldMode.member,
+  );
+  static String? _$forumThreadId(ModRecord v) => v.forumThreadId;
+  static const Field<ModRecord, String> _f$forumThreadId = Field(
+    'forumThreadId',
+    _$forumThreadId,
+    mode: FieldMode.member,
+  );
+  static String? _$nexusModsId(ModRecord v) => v.nexusModsId;
+  static const Field<ModRecord, String> _f$nexusModsId = Field(
+    'nexusModsId',
+    _$nexusModsId,
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<ModRecord> fields = const {
@@ -55,6 +116,16 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
     #firstSeen: _f$firstSeen,
     #sources: _f$sources,
     #userOverrides: _f$userOverrides,
+    #resolvedSources: _f$resolvedSources,
+    #installed: _f$installed,
+    #catalog: _f$catalog,
+    #versionChecker: _f$versionChecker,
+    #downloadHistory: _f$downloadHistory,
+    #forumData: _f$forumData,
+    #allNames: _f$allNames,
+    #allAuthors: _f$allAuthors,
+    #forumThreadId: _f$forumThreadId,
+    #nexusModsId: _f$nexusModsId,
   };
 
   static ModRecord _instantiate(DecodingData data) {

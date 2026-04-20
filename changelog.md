@@ -1,4 +1,4 @@
-# 1.4.2
+# 1.5.0
 - Added
   - Mod Catalog: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
     - Catalog cards now show installation status, available updates, and game version requirements.
@@ -14,6 +14,10 @@
   - Cleaned up how a few themes look on the new ship/weapon tooltips.
   - Refactored game detection and added a new default detection method on Windows that should be faster.
   - MacOS: No longer appears to support self-update when it actually doesn't.
+  - Improved json parsing speed by ~60%.
+    - If a file is *valid* json, it will parse much faster than before.
+    - If it is ""Starsector json"" (has comments, unquoted strings, other invalid syntax) then it will parse at the same slow speed as before.
+  - Minor overall performance improvement by avoiding recalculation of computed values (e.g. enabled mod versions, ship mounts, etc).
 
 # 1.4.1
 - Added

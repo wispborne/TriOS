@@ -1,0 +1,122 @@
+{
+  "hullName": "Artillery Station",
+  "hullId": "IndEvo_artilleryStation_base",
+  "hullSize": "CAPITAL_SHIP",
+  "spriteName": "graphics/ships/artillery_base_module.png",
+  "style": "HIGH_TECH",
+  "height": 304,
+  "width": 304,
+  "center": [152, 152],
+  "collisionRadius": 214.5,
+  "shieldCenter": [0, 0],
+  "shieldRadius": 197,
+  "viewOffset": 0,
+  "builtInMods": [
+    "vastbulk",
+    "axialrotation",
+    "supercomputer",
+    "shared_flux_sink"
+  ],
+    "builtInWeapons": {
+      "WS0005": "IndEvo_artillery_mortar"
+    },
+  "weaponSlots": [
+    {
+      "id": "WS0001",
+      "size": "LARGE",
+      "type": "STATION_MODULE",
+      "mount": "HARDPOINT",
+      "arc": 0,
+      "angle": 90,
+      "locations": [-1, 125]
+    },
+    {
+      "id": "WS0002",
+      "size": "LARGE",
+      "type": "STATION_MODULE",
+      "mount": "HARDPOINT",
+      "arc": 0,
+      "angle": 180,
+      "locations": [-125, -1]
+    },
+    {
+      "id": "WS0003",
+      "size": "LARGE",
+      "type": "STATION_MODULE",
+      "mount": "HARDPOINT",
+      "arc": 0,
+      "angle": -90,
+      "locations": [1, -125]
+    },
+    {
+      "id": "WS0004",
+      "size": "LARGE",
+      "type": "STATION_MODULE",
+      "mount": "HARDPOINT",
+      "arc": 0,
+      "angle": 0,
+      "locations": [125, 1]
+    },
+    {
+      "id": "WS0005",
+      "size": "LARGE",
+      "type": "BUILT_IN",
+      "mount": "TURRET",
+      "arc": 360,
+      "angle": 0,
+      "locations": [0, -0]
+    },
+    {
+      "id": "WS0006",
+      "size": "LARGE",
+      "type": "STATION_MODULE",
+      "mount": "TURRET",
+      "arc": 0,
+      "angle": 0,
+      "locations": [0, -0]
+    }
+  ],
+  "engineSlots": [],
+  "bounds": [
+    79.5, 15.5,
+    69.5, 43,
+    91.5, 78.5,
+    98.5, 81.5,
+    132.5, 128,
+    128.5, 131.5,
+    82.5, 99,
+    80.5, 91,
+    42.5, 70,
+    15.5, 80,
+    -14, 79.5,
+    -44.5, 68,
+    -80, 89.5,
+    -82.5, 97.5,
+    -128, 131.5,
+    -132.5, 126.5,
+    -98.5, 81,
+    -91, 78,
+    -71, 43,
+    -79.5, 16,
+    -79.5, -16,
+    -71, -43,
+    -91, -78,
+    -98.5, -81,
+    -132.5, -126.5,
+    -128, -131.5,
+    -82.5, -97.5,
+    -80, -89.5,
+    -44.5, -68,
+    -14, -79.5,
+    15.5, -80,
+    42.5, -70,
+    80.5, -91,
+    82.5, -99,
+    128.5, -131.5,
+    132.5, -128,
+    98.5, -81.5,
+    91.5, -78.5,
+    69.5, -43,
+    79.5, -15.5
+  ]
+}

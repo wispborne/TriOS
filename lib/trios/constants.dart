@@ -6,7 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.4.2-preview03";
+  static const version = "1.5.0-preview01";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -126,6 +126,11 @@ class Constants {
   /// Subdirectory under [configDataFolderPath] used for cached network data.
   static Directory get cacheDirPath =>
       Directory(p.join(configDataFolderPath.path, 'cache'));
+
+  /// Root directory for viewer per-variant caches (ships, weapons, hullmods).
+  /// Created lazily on first write — do NOT create at startup.
+  static Directory get viewerCacheDirPath =>
+      Directory(p.join(configDataFolderPath.path, 'cache', 'viewer'));
 
   static final portraitsSupportedImageFileExtensions = [
     'jpg',

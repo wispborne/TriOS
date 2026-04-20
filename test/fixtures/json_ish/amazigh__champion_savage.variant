@@ -1,0 +1,58 @@
+{
+  "variantId": "A_S-F_champion_savage",
+  "hullId": "champion",
+  "displayName": "Savage",
+  "goalVariant": false,
+  "fluxCapacitors": 23,
+  "fluxVents": 30,
+  "quality": 1,
+  "permaMods": [],
+  "hullMods": [
+    "targetingunit",
+    "autorepair"
+  ],
+  "weaponGroups": [
+    {
+      "autofire": false,
+      "mode": "ALTERNATING",
+      "weapons": {
+        "WS 009": "hydra"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS 008": "hil"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS 000": "taclaser",
+        "WS 001": "taclaser",
+        "WS 010": "taclaser",
+        "WS 011": "taclaser"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS 006": "A_S-F_quicksand",
+        "WS 007": "A_S-F_quicksand"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS 004": "pdburst",
+        "WS 005": "pdburst"
+      }
+    }
+  ],
+  "modules": [],
+  "wings": []
+}

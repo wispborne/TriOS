@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/utils/dart_mappable_utils.dart';
 
 part 'weapon.mapper.dart';
 
@@ -101,8 +102,11 @@ class Weapon with WeaponMappable implements WispGridItem {
   /// Use this wherever mount type display or slot compatibility is needed.
   String? get effectiveMountType => mountTypeOverride ?? type;
 
+  @MappableField(hook: SkipSerializationHook())
   late ModVariant? modVariant;
+  @MappableField(hook: FileHook())
   late File csvFile;
+  @MappableField(hook: FileHook())
   File? wpnFile;
 
   Weapon({
@@ -168,11 +172,11 @@ class Weapon with WeaponMappable implements WispGridItem {
   });
 
   /// Returns the hints as a set of strings, with each hint trimmed and lowercased.
-  late Set<String> hintsAsSet =
+  late final Set<String> hintsAsSet =
       hints?.split(',').map((hint) => hint.trim().toLowerCase()).toSet() ?? {};
 
   /// Returns the tags as a set of strings, with each tag trimmed and lowercased.
-  late Set<String> tagsAsSet =
+  late final Set<String> tagsAsSet =
       tags?.split(',').map((tag) => tag.trim().toLowerCase()).toSet() ?? {};
 
   bool isHidden() {
@@ -182,7 +186,7 @@ class Weapon with WeaponMappable implements WispGridItem {
     return false;
   }
 
-  List<String> get spritesForWeapon => [
+  late final List<String> spritesForWeapon = [
     hardpointGunSprite,
     hardpointSprite,
     turretGunSprite,

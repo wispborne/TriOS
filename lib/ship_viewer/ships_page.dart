@@ -85,9 +85,10 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         filterRequest.destination == TriOSTools.ships) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ref
-            .read(shipsPageControllerProvider.notifier)
-            .setChipSelections('mod', {filterRequest.modName: true});
+        ref.read(shipsPageControllerProvider.notifier).setChipSelections(
+          'mod',
+          {filterRequest.modName: true},
+        );
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
     }
@@ -613,10 +614,10 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                                   shipsPageControllerProvider.notifier,
                                 );
                                 final gameCoreDir = controller.getGameCoreDir();
-                                _getPathForSpriteName(s, gameCoreDir)
-                                    .parent
-                                    .path
-                                    .openAsUriInBrowser();
+                                _getPathForSpriteName(
+                                  s,
+                                  gameCoreDir,
+                                ).parent.path.openAsUriInBrowser();
                               },
                             ),
                           ],
@@ -718,7 +719,15 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             s.spriteFile != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: ShipBlueprintView(ship: s),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 140),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ShipBlueprintView(ship: s),
+                ),
+              ),
+            ),
           ),
         ShipCodexCard.create(
           ship: s,

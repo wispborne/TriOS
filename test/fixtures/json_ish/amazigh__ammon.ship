@@ -1,0 +1,56 @@
+{
+  "hullName": "Coruscate",
+  "hullId": "A_S-F_ammon",
+  "hullSize": "FIGHTER",
+  "spriteName": "graphics/ships/A_S-F_ammon.png",
+  "style": "HIGH_TECH",
+  "height": 20,
+  "width": 18,
+  "center": [9, 10],
+  "collisionRadius": 13,
+  "shieldCenter": [0, -0],
+  "shieldRadius": 12,
+  "viewOffset": 0,
+  "builtInMods": [
+    "no_weapon_flux",
+    "A_S-F_ammonHullmod"
+  ],
+  "builtInWeapons": {
+    "WS0001": "A_S-F_micropulser_ammon"
+  },
+  "weaponSlots": [
+    {
+      "id": "WS0001",
+      "size": "SMALL",
+      "type": "BUILT_IN",
+      "mount": "HIDDEN",
+      "arc": 30,
+      "angle": 0,
+      "locations": [3, -0]
+    }
+  ],
+  "engineSlots": [
+    {
+      "location": [-9, 3],
+      "length": 12,
+      "width": 4,
+      "angle": 177,
+      "contrailSize": 6,
+      "style": "HIGH_TECH"
+    },
+    {
+      "location": [-9, -3],
+      "length": 12,
+      "width": 4,
+      "angle": -177,
+      "contrailSize": 6,
+      "style": "HIGH_TECH"
+    }
+  ],
+  "bounds": [
+    7, -5,
+    -8, -4,
+    -8, 4,
+    7, 5
+  ]
+}

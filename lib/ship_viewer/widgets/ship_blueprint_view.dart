@@ -163,7 +163,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
   };
 
   Color _colorForType(String type) =>
-      _slotColors[type.toUpperCase()] ?? Colors.white;
+      _slotColors[type] ?? Colors.white;
 
   double _radiusForSize(String size) =>
       _slotBaseRadius[size.toUpperCase()] ?? 5.0;
@@ -967,7 +967,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
             Text('Module: $moduleName', style: theme.textTheme.bodySmall),
         ] else ...[
           Text(
-            '${slot.size.toUpperCase()} $mountLabel',
+            '${slot.sizeUppercase} $mountLabel',
             style: theme.textTheme.bodySmall,
           ),
           Text('Type: ${slot.type}', style: theme.textTheme.bodySmall),
@@ -1023,7 +1023,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
   ) {
     final theme = Theme.of(context);
     final slot = ts.slot;
-    final color = _colorForType(slot.type);
+    final color = _colorForType(slot.typeUppercase);
     final mountLabel = slot.mount.toUpperCase() == 'HARDPOINT'
         ? 'Hardpoint'
         : 'Turret';
@@ -1062,7 +1062,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
           ),
         ),
         Text(
-          '${slot.size.toUpperCase()} $mountLabel',
+          '${slot.sizeUppercase} $mountLabel',
           style: theme.textTheme.bodySmall,
         ),
         Text('Type: ${slot.type}', style: theme.textTheme.bodySmall),

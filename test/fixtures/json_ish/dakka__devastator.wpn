@@ -1,0 +1,9 @@
+{
+	"muzzleFlashSpec":{"length":45.0,   # only used if animationType = MUZZLE_FLASH
+					   "spread":20,
+					   "particleSizeMin":15.0,
+					   "particleSizeRange":30.0,
+					   "particleDuration":0.1,
+					   "particleCount":15,
+					   "particleColor":[255,215,145,80]},
+}

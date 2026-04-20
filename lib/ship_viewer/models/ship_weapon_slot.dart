@@ -14,7 +14,7 @@ class ShipWeaponSlot with ShipWeaponSlotMappable {
   final String type;
   final double? renderOrderMod;
 
-  const ShipWeaponSlot({
+  ShipWeaponSlot({
     this.angle = 0,
     this.arc = 0,
     this.id = '',
@@ -36,10 +36,14 @@ class ShipWeaponSlot with ShipWeaponSlotMappable {
     'UNIVERSAL',
   };
 
+  late final String typeUppercase = type.toUpperCase();
+  late final String sizeUppercase = size.toUpperCase();
+
   /// Whether this slot is an actual mountable weapon slot (not decorative,
   /// system, built-in, launch bay, or station module).
-  bool get isMountable => _mountableTypes.contains(type.toUpperCase());
+  late final bool isMountable = _mountableTypes.contains(typeUppercase);
 
   /// Whether this slot is a station module docking point.
-  bool get isStationModule => type.toUpperCase() == 'STATION_MODULE';
+  late final bool isStationModule = typeUppercase == 'STATION_MODULE';
+
 }

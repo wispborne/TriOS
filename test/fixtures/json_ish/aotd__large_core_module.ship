@@ -1,0 +1,163 @@
+{
+  "hullName": "Large Core Module",
+  "hullId": "large_core_module",
+  "hullSize": "CRUISER",
+  "spriteName": "graphics/ships/StationAssembly/second_l_module.png",
+  "style": "LOW_TECH",
+  "height": 133,
+  "width": 306,
+  "center": [153, 18.5],
+  "collisionRadius": 202.5,
+  "shieldCenter": [0, -0],
+  "shieldRadius": 191,
+  "viewOffset": 0,
+  "builtInMods": [
+    "shield_always_on",
+    "supercomputer",
+    "reduced_explosion"
+  ],
+  "weaponSlots": [
+    {
+      "id": "WS0001",
+      "size": "LARGE",
+      "type": "UNIVERSAL",
+      "mount": "TURRET",
+      "arc": 120,
+      "angle": 0,
+      "locations": [50, 35]
+    },
+    {
+      "id": "WS0002",
+      "size": "LARGE",
+      "type": "UNIVERSAL",
+      "mount": "TURRET",
+      "arc": 120,
+      "angle": -0,
+      "locations": [50, -35]
+    },
+    {
+      "id": "WS0003",
+      "size": "LARGE",
+      "type": "UNIVERSAL",
+      "mount": "TURRET",
+      "arc": 120,
+      "angle": 33,
+      "locations": [23, 111]
+    },
+    {
+      "id": "WS0004",
+      "size": "LARGE",
+      "type": "UNIVERSAL",
+      "mount": "TURRET",
+      "arc": 120,
+      "angle": -33,
+      "locations": [23, -111]
+    },
+    {
+      "id": "WS0005",
+      "size": "SMALL",
+      "type": "HYBRID",
+      "mount": "TURRET",
+      "arc": 120,
+      "angle": 29,
+      "locations": [29, 140]
+    },
+    {
+      "id": "WS0006",
+      "size": "SMALL",
+      "type": "HYBRID",
+      "mount": "TURRET",
+      "arc": 120,
+      "angle": -29,
+      "locations": [29, -140]
+    },
+    {
+      "id": "WS0007",
+      "size": "SMALL",
+      "type": "HYBRID",
+      "mount": "TURRET",
+      "arc": 120,
+      "angle": 17.5,
+      "locations": [55, 109.5]
+    },
+    {
+      "id": "WS0008",
+      "size": "SMALL",
+      "type": "HYBRID",
+      "mount": "TURRET",
+      "arc": 120,
+      "angle": -17.5,
+      "locations": [55, -109.5]
+    },
+    {
+      "id": "WS0009",
+      "size": "SMALL",
+      "type": "HYBRID",
+      "mount": "TURRET",
+      "arc": 30,
+      "angle": 0,
+      "locations": [83, 36]
+    },
+    {
+      "id": "WS0010",
+      "size": "SMALL",
+      "type": "HYBRID",
+      "mount": "TURRET",
+      "arc": 30,
+      "angle": -0,
+      "locations": [83, -36]
+    },
+    {
+      "id": "WS0011",
+      "size": "MEDIUM",
+      "type": "HYBRID",
+      "mount": "TURRET",
+      "arc": 60,
+      "angle": 0,
+      "locations": [87, -0]
+    },
+    {
+      "id": "LB 1",
+      "size": "LARGE",
+      "type": "LAUNCH_BAY",
+      "mount": "HIDDEN",
+      "arc": 360,
+      "angle": 0,
+      "locations": [53.5, 89]
+    },
+    {
+      "id": "LB 2",
+      "size": "LARGE",
+      "type": "LAUNCH_BAY",
+      "mount": "HIDDEN",
+      "arc": 360,
+      "angle": 0,
+      "locations": [
+        53.5, 69.5,
+        53, -71
+      ]
+    },
+    {
+      "id": "LB 3",
+      "size": "LARGE",
+      "type": "LAUNCH_BAY",
+      "mount": "HIDDEN",
+      "arc": 360,
+      "angle": 0,
+      "locations": [52.5, -88.5]
+    }
+  ],
+  "engineSlots": [],
+  "bounds": [
+    114.5, -9.5,
+    84, -64.5,
+    78.5, -109.5,
+    32.5, -151.5,
+    11, -145.5,
+    11, 145.5,
+    32.5, 151.5,
+    78.5, 109.5,
+    84, 64.5,
+    114.5, 9.5
+  ]
+}

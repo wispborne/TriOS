@@ -142,12 +142,15 @@ class Ship with ShipMappable implements WispGridItem {
   // Derived UI property
   final Color? color;
 
+  @MappableField(hook: SkipSerializationHook())
   late ModVariant? modVariant;
 
   /// The ship_data.csv file this ship was loaded from.
+  @MappableField(hook: FileHook())
   late File csvFile;
 
   /// The .ship or .skin file for this hull (null if not found during parsing).
+  @MappableField(hook: FileHook())
   File? dataFile;
 
   Ship({
@@ -240,20 +243,20 @@ class Ship with ShipMappable implements WispGridItem {
 
   /// Number of weapon slots that accept mountable weapons (excludes
   /// decorative, system, built-in, launch bay, and station module slots).
-  int get mountableWeaponSlotCount =>
+  late final int mountableWeaponSlotCount =
       weaponSlots?.where((s) => s.isMountable).length ?? 0;
 
   /// Whether this hull is a station (orbital station, battlestation, etc.).
-  bool get isStation => hints?.contains('STATION') ?? false;
+  late final bool isStation = hints?.contains('STATION') ?? false;
 
   /// Whether this ship has any STATION-type weapon slots (i.e., docks modules).
-  bool get hasStationSlots =>
+  late final bool hasStationSlots =
       weaponSlots?.any((s) => s.isStationModule) ?? false;
 
   double? get deploymentPoints => suppliesRec;
 
   /// Base sensor value for this hull size (same for profile and strength).
-  int? get _baseSensorValue => switch (hullSize?.toLowerCase()) {
+  late final int? _baseSensorValue = switch (hullSize?.toLowerCase()) {
     'frigate' => 30,
     'destroyer' => 60,
     'cruiser' => 90,
@@ -262,7 +265,9 @@ class Ship with ShipMappable implements WispGridItem {
   };
 
   /// Sensor profile, adjusted for built-in hullmods.
-  double? get sensorProfile {
+  late final double? sensorProfile = _computeSensorProfile();
+
+  double? _computeSensorProfile() {
     final base = _baseSensorValue;
     if (base == null) return null;
     var value = base.toDouble();
@@ -275,7 +280,9 @@ class Ship with ShipMappable implements WispGridItem {
   }
 
   /// Sensor strength, adjusted for built-in hullmods.
-  double? get sensorStrength {
+  late final double? sensorStrength = _computeSensorStrength();
+
+  double? _computeSensorStrength() {
     final base = _baseSensorValue;
     if (base == null) return null;
     var value = base.toDouble();

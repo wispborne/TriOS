@@ -1,0 +1,35 @@
+{
+    "center": [
+        2,
+        2
+    ],
+    "collisionRadius": 2,
+    "coversColor": "",
+    "height": 4,
+    "hullId": "beam_redirection_drone",
+    "hullName": "Beam Redirection Drone",
+    "hullSize": "FIGHTER",
+    "shieldCenter": [
+        0,
+        0
+    ],
+    "shieldRadius": 2,
+    "spriteName": "graphics/fx/empty.png",
+    "style": "LOW_TECH",
+    "viewOffset": 0,
+    "weaponSlots": [
+        {
+            "angle": -90,
+            "arc": 360,
+            "id": "WS 000",
+            "locations": [
+                0,
+                0
+            ],
+            "mount": "HIDDEN",
+            "size": "SMALL",
+            "type": "UNIVERSAL"
+        },
+    ],
+    "width": 4
+}

@@ -84,6 +84,30 @@ class ShipWeaponSlotMapper extends ClassMapperBase<ShipWeaponSlot> {
     _$renderOrderMod,
     opt: true,
   );
+  static String _$typeUppercase(ShipWeaponSlot v) => v.typeUppercase;
+  static const Field<ShipWeaponSlot, String> _f$typeUppercase = Field(
+    'typeUppercase',
+    _$typeUppercase,
+    mode: FieldMode.member,
+  );
+  static String _$sizeUppercase(ShipWeaponSlot v) => v.sizeUppercase;
+  static const Field<ShipWeaponSlot, String> _f$sizeUppercase = Field(
+    'sizeUppercase',
+    _$sizeUppercase,
+    mode: FieldMode.member,
+  );
+  static bool _$isMountable(ShipWeaponSlot v) => v.isMountable;
+  static const Field<ShipWeaponSlot, bool> _f$isMountable = Field(
+    'isMountable',
+    _$isMountable,
+    mode: FieldMode.member,
+  );
+  static bool _$isStationModule(ShipWeaponSlot v) => v.isStationModule;
+  static const Field<ShipWeaponSlot, bool> _f$isStationModule = Field(
+    'isStationModule',
+    _$isStationModule,
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<ShipWeaponSlot> fields = const {
@@ -96,6 +120,10 @@ class ShipWeaponSlotMapper extends ClassMapperBase<ShipWeaponSlot> {
     #size: _f$size,
     #type: _f$type,
     #renderOrderMod: _f$renderOrderMod,
+    #typeUppercase: _f$typeUppercase,
+    #sizeUppercase: _f$sizeUppercase,
+    #isMountable: _f$isMountable,
+    #isStationModule: _f$isStationModule,
   };
 
   static ShipWeaponSlot _instantiate(DecodingData data) {

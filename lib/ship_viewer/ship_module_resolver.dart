@@ -48,6 +48,30 @@ List<ResolvedModule> resolveModules(
 ) {
   if (!parentShip.hasStationSlots) return const [];
 
+  // Index ships by ID for fast lookup.
+  final shipById = <String, Ship>{};
+  for (final s in allShips) {
+    shipById[s.id] = s;
+  }
+
+  return _resolveModulesWithIndex(
+    parentShip,
+    shipById,
+    moduleVariants,
+    variantHullIdMap,
+  );
+}
+
+/// Variant of [resolveModules] that accepts a pre-built `shipById` index and
+/// avoids rebuilding it per call. Intended for batch/set-building loops.
+List<ResolvedModule> _resolveModulesWithIndex(
+  Ship parentShip,
+  Map<String, Ship> shipById,
+  Map<String, ShipVariant> moduleVariants,
+  Map<String, String> variantHullIdMap,
+) {
+  if (!parentShip.hasStationSlots) return const [];
+
   final stationSlots =
       parentShip.weaponSlots!.where((s) => s.isStationModule).toList();
 
@@ -64,18 +88,11 @@ List<ResolvedModule> resolveModules(
 
   if (matchedVariant == null) return const [];
 
-  // Index ships by ID for fast lookup.
-  final shipById = <String, Ship>{};
-  for (final s in allShips) {
-    shipById[s.id] = s;
-  }
-
   final resolved = <ResolvedModule>[];
   for (final slot in stationSlots) {
     final moduleVariantId = matchedVariant.modules![slot.id];
     if (moduleVariantId == null) continue;
 
-    // Look up the module variant's hullId from the full variant→hull map.
     final moduleHullId = variantHullIdMap[moduleVariantId];
     if (moduleHullId == null) continue;
 
@@ -86,4 +103,31 @@ List<ResolvedModule> resolveModules(
   }
 
   return resolved;
+}
+
+/// Compute the set of ship IDs that have at least one resolvable station
+/// module. Builds `shipById` once and reuses it across all ships, so the
+/// inner loop is O(1) map lookups per ship instead of O(N) inserts.
+Set<String> computeShipsWithModuleIds(
+  List<Ship> allShips,
+  Map<String, ShipVariant> moduleVariants,
+  Map<String, String> variantHullIdMap,
+) {
+  final shipById = <String, Ship>{};
+  for (final s in allShips) {
+    shipById[s.id] = s;
+  }
+
+  final result = <String>{};
+  for (final ship in allShips) {
+    if (_resolveModulesWithIndex(
+      ship,
+      shipById,
+      moduleVariants,
+      variantHullIdMap,
+    ).isNotEmpty) {
+      result.add(ship.id);
+    }
+  }
+  return result;
 }

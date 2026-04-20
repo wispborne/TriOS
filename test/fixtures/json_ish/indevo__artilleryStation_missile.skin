@@ -1,0 +1,19 @@
+{
+    "baseHullId":"IndEvo_artilleryStation_base",
+    "skinHullId":"IndEvo_artilleryStation_missile",
+    "hullName":"Missile Artillery",
+    "descriptionId":"IndEvo_artilleryStation_base",
+    "descriptionPrefix":"This station boasts a massive, destroyer-sized missile array launching ECM torpedos that scatter drive-field disrupting chaff in a large area. These missiles are a menace to ships that rely on speed to dodge projectiles, and have caused thousands of spacers to experience a cold, slow death in the embrace of space after their drives gave out under the constant disruption. Their explosion interdicts and overloads any nearby ships.",
+    "tags":["IndEvo_Artillery"],
+    "tech":"DSD",
+    "spriteName":"graphics/ships/artillery_base_module.png",
+    "baseValueMult":1.0,
+    "removeWeaponSlots":[],         # ids
+    "removeEngineSlots":[],         # indices, as engine slots have no id in the .ship file
+    "removeBuiltInMods":[],         # hullmod ids
+    "removeBuiltInWeapons":["WS0005"],      # weapon slot ids
+    "builtInMods":["solar_shielding"],
+    "builtInWeapons":{
+        "WS0005": "IndEvo_artillery_missile"
+    },
+}

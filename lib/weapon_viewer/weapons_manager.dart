@@ -1,19 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
+import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
+import 'package:trios/weapon_viewer/models/weapons_cache_payload.dart';
 
 final isLoadingWeaponsList = StateProvider<bool>((ref) => false);
 final isWeaponsListDirty = StateProvider<bool>((ref) => false);
@@ -23,103 +26,135 @@ final weaponListNotifierProvider =
       WeaponListNotifier.new,
     );
 
-class WeaponListNotifier extends StreamNotifier<List<Weapon>> {
+class WeaponListNotifier
+    extends CachedStreamListNotifier<Weapon, WeaponsCachePayload> {
   @override
-  Stream<List<Weapon>> build() async* {
-    int filesProcessed = 0;
+  String get domain => 'weapons';
 
-    final currentTime = DateTime.now();
-    ref.read(isLoadingWeaponsList.notifier).state = true;
-    filesProcessed = 0;
-    final gameCorePath = ref.watch(AppState.gameCoreFolder).value?.path;
+  @override
+  int get schemaVersion => 1;
 
-    if (gameCorePath == null || gameCorePath.isEmpty) {
-      ref.read(isLoadingWeaponsList.notifier).state = false;
-      return;
-    }
+  @override
+  late final CachedVariantStore store =
+      CachedVariantStore(domain, Constants.viewerCacheDirPath);
 
-    // Watch modVariants so we rebuild once it resolves on startup.
-    // We still use ref.read(AppState.mods) below to avoid re-loading every
-    // time mod state changes (e.g. enable/disable).
-    final modVariantsAsync = ref.watch(AppState.modVariants);
-    if (!modVariantsAsync.hasValue) {
-      ref.read(isLoadingWeaponsList.notifier).state = false;
-      return;
-    }
+  @override
+  String itemId(Weapon item) => item.id;
 
-    ref.listen(AppState.smolIds, (previous, next) {
-      ref.read(isWeaponsListDirty.notifier).state = true;
-    });
+  @override
+  List<Weapon> itemsFromPayload(WeaponsCachePayload payload) => payload.weapons;
 
-    // Don't watch for mod changes, the background processing is too expensive.
-    // User has to manually refresh weapons viewer.
-    final variants = ref
+  @override
+  Directory? get gameCorePath {
+    final path = ref.watch(AppState.gameCoreFolder).value?.path;
+    return (path == null || path.isEmpty) ? null : Directory(path);
+  }
+
+  @override
+  String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
+
+  @override
+  List<ModVariant> resolveEnabledVariants() {
+    return ref
         .read(AppState.mods)
         .map((mod) => mod.findFirstEnabledOrHighestVersion)
         .nonNulls
         .toList();
+  }
 
-    final allErrors = <String>[]; // To store all error messages
-    final allInfos = <String>[];
-    List<Weapon> allWeapons = <Weapon>[]; // To store all parsed weapons
-    // Throttle UI rebuilds during loading: yield at most once per 500ms.
-    const yieldInterval = Duration(milliseconds: 500);
-    var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
+  @override
+  Future<bool> awaitReadiness() async {
+    // Watch modVariants so this rebuilds once the initial scan resolves.
+    return ref.watch(AppState.modVariants).hasValue;
+  }
 
-    // Parse the core game weapons
-    final coreResult = await _parseWeaponsCsv(Directory(gameCorePath), null);
-    filesProcessed += coreResult.filesProcessed;
-    // only add non-duplicate weapons
-    allWeapons.addAll(coreResult.weapons);
-    allWeapons = allWeapons.distinctBy((e) => e.id).toList();
+  @override
+  void onBuildStart() {
+    ref.read(isLoadingWeaponsList.notifier).state = true;
+    ref.listen(AppState.smolIds, (previous, next) {
+      ref.read(isWeaponsListDirty.notifier).state = true;
+    });
+  }
 
-    if (coreResult.errors.isNotEmpty) {
-      allErrors.addAll(coreResult.errors);
-    }
-
-    if (coreResult.infos.isNotEmpty) {
-      allInfos.addAll(coreResult.infos);
-    }
-
-    // Parse each mod's weapons individually
-    for (final variant in variants) {
-      final modResult = await _parseWeaponsCsv(variant.modFolder, variant);
-      filesProcessed += modResult.filesProcessed;
-      allWeapons.addAll(modResult.weapons);
-      allWeapons = allWeapons.distinctBy((e) => e.id).toList();
-
-      if (modResult.errors.isNotEmpty) {
-        allErrors.addAll(modResult.errors);
-      }
-
-      if (modResult.infos.isNotEmpty) {
-        allInfos.addAll(modResult.infos);
-      }
-
-      final now = DateTime.now();
-      if (now.difference(lastYieldTime) >= yieldInterval) {
-        yield allWeapons;
-        lastYieldTime = now;
-      }
-    }
-
-    // Always yield the final complete list.
-    yield allWeapons;
-
-    if (allErrors.isNotEmpty) {
-      Fimber.w('Errors encountered parsing weapons:\n${allErrors.join('\n')}');
-    }
-    if (allInfos.isNotEmpty) {
-      Fimber.i('Info messages parsing weapons:\n${allInfos.join('\n')}');
-    }
-
+  @override
+  void onBuildComplete({required bool fullScanCompleted}) {
     ref.read(isLoadingWeaponsList.notifier).state = false;
-    ref.read(isWeaponsListDirty.notifier).state = false;
-    Fimber.i(
-      'Parsed ${allWeapons.length} weapons from ${variants.length + 1} mods and $filesProcessed files in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
-    );
+    if (fullScanCompleted) {
+      ref.read(isWeaponsListDirty.notifier).state = false;
+    }
+    super.onBuildComplete(fullScanCompleted: fullScanCompleted);
+  }
 
-    // yield weapons;
+  @override
+  void rehydratePayload(
+    WeaponsCachePayload payload,
+    ModVariant? sourceVariant,
+  ) {
+    for (final weapon in payload.weapons) {
+      weapon.modVariant = sourceVariant;
+    }
+  }
+
+  @override
+  Future<WeaponsCachePayload?> parseVanilla(
+    Directory gameCore,
+    List<Weapon> allItemsSoFar,
+  ) {
+    return _parseOneFolder(gameCore, null);
+  }
+
+  @override
+  Future<WeaponsCachePayload?> parseVariant(
+    ModVariant variant,
+    List<Weapon> allItemsSoFar,
+  ) {
+    return _parseOneFolder(variant.modFolder, variant);
+  }
+
+  Future<WeaponsCachePayload?> _parseOneFolder(
+    Directory folder,
+    ModVariant? modVariant,
+  ) async {
+    try {
+      final result = await _parseWeaponsCsv(folder, modVariant);
+      result.errors.forEach(addError);
+      result.infos.forEach(addInfo);
+      return WeaponsCachePayload(weapons: result.weapons);
+    } catch (e, st) {
+      Fimber.w(
+        'Weapon parse failed for ${modVariant?.modInfo.nameOrId ?? 'Vanilla'}: $e',
+        ex: e,
+        stacktrace: st,
+      );
+      return null;
+    }
+  }
+
+  @override
+  Uint8List encodePayload(WeaponsCachePayload payload) {
+    final map = <String, dynamic>{
+      'weapons': payload.weapons.map((w) => w.toMap()).toList(),
+    };
+    return msgpack.serialize(map);
+  }
+
+  @override
+  WeaponsCachePayload decodePayload(Uint8List bytes) {
+    final raw = CachedStreamListNotifier.normalizeForMapper(
+      msgpack.deserialize(bytes),
+    ) as Map<String, dynamic>;
+    final weaponMaps = (raw['weapons'] as List).cast<Map<String, dynamic>>();
+    final weapons = <Weapon>[];
+    for (final map in weaponMaps) {
+      final weapon = WeaponMapper.fromMap(map);
+      final csvPath = map['csvFile'];
+      if (csvPath is String) weapon.csvFile = File(csvPath);
+      final wpnPath = map['wpnFile'];
+      if (wpnPath is String) weapon.wpnFile = File(wpnPath);
+      weapon.modVariant = null;
+      weapons.add(weapon);
+    }
+    return WeaponsCachePayload(weapons: weapons);
   }
 
   String allWeaponsAsCsv() {

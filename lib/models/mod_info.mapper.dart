@@ -84,6 +84,12 @@ class ModInfoMapper extends ClassMapperBase<ModInfo> {
     opt: true,
     def: false,
   );
+  static List<ModType> _$modTypes(ModInfo v) => v.modTypes;
+  static const Field<ModInfo, List<ModType>> _f$modTypes = Field(
+    'modTypes',
+    _$modTypes,
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<ModInfo> fields = const {
@@ -97,6 +103,7 @@ class ModInfoMapper extends ClassMapperBase<ModInfo> {
     #originalGameVersion: _f$originalGameVersion,
     #isUtility: _f$isUtility,
     #isTotalConversion: _f$isTotalConversion,
+    #modTypes: _f$modTypes,
   };
 
   static ModInfo _instantiate(DecodingData data) {

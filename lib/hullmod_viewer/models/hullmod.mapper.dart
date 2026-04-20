@@ -145,13 +145,13 @@ class HullmodMapper extends ClassMapperBase<Hullmod> {
   static const Field<Hullmod, ModVariant> _f$modVariant = Field(
     'modVariant',
     _$modVariant,
-    mode: FieldMode.member,
+    hook: SkipSerializationHook(),
   );
   static File _$csvFile(Hullmod v) => v.csvFile;
   static const Field<Hullmod, File> _f$csvFile = Field(
     'csvFile',
     _$csvFile,
-    mode: FieldMode.member,
+    hook: FileHook(),
   );
   static Set<String> _$tagsAsSet(Hullmod v) => v.tagsAsSet;
   static const Field<Hullmod, Set<String>> _f$tagsAsSet = Field(

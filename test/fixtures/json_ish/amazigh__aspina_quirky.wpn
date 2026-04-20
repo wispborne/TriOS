@@ -1,0 +1,30 @@
+{
+	"id":"A_S-F_aspina",
+	"specClass":"projectile",
+	"type":"MISSILE",
+	"size":"SMALL",
+	"turretSprite":"graphics/weapons/A_S-F_aspina.png",
+	"hardpointSprite":"",
+
+	"hardpointOffsets":[0,9, 0,-9],
+	"turretOffsets":[0,9, 0,-9],
+	"hardpointAngleOffsets":[80, -80],
+	"turretAngleOffsets":[80, -80],
+
+	"barrelMode":"DUAL",
+	"animationType":"SMOKE",
+	"interruptibleBurst":false,
+	"separateRecoilForLinkedBarrels":true,
+	"smokeSpec":{"particleSizeMin":8.0,
+							 "particleSizeRange":11.5,
+							 "cloudParticleCount":1,
+							 "cloudDuration":0.9,
+							 "cloudRadius":11.0;
+							 "blowbackParticleCount":1,
+							 "blowbackDuration":1.1,
+							 "blowbackLength":18.0,
+							 "blowbackSpread":8.0,
+							 "particleColor":[185,165,160,95]},
+	"projectileSpecId":"A_S-F_aspina_srm",
+	"fireSoundTwo":"swarmer_fire",
+}

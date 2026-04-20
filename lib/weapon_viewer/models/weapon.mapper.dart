@@ -365,19 +365,19 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static const Field<Weapon, ModVariant> _f$modVariant = Field(
     'modVariant',
     _$modVariant,
-    mode: FieldMode.member,
+    hook: SkipSerializationHook(),
   );
   static File _$csvFile(Weapon v) => v.csvFile;
   static const Field<Weapon, File> _f$csvFile = Field(
     'csvFile',
     _$csvFile,
-    mode: FieldMode.member,
+    hook: FileHook(),
   );
   static File? _$wpnFile(Weapon v) => v.wpnFile;
   static const Field<Weapon, File> _f$wpnFile = Field(
     'wpnFile',
     _$wpnFile,
-    mode: FieldMode.member,
+    hook: FileHook(),
   );
   static Set<String> _$hintsAsSet(Weapon v) => v.hintsAsSet;
   static const Field<Weapon, Set<String>> _f$hintsAsSet = Field(
@@ -389,6 +389,12 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static const Field<Weapon, Set<String>> _f$tagsAsSet = Field(
     'tagsAsSet',
     _$tagsAsSet,
+    mode: FieldMode.member,
+  );
+  static List<String> _$spritesForWeapon(Weapon v) => v.spritesForWeapon;
+  static const Field<Weapon, List<String>> _f$spritesForWeapon = Field(
+    'spritesForWeapon',
+    _$spritesForWeapon,
     mode: FieldMode.member,
   );
 
@@ -457,6 +463,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #wpnFile: _f$wpnFile,
     #hintsAsSet: _f$hintsAsSet,
     #tagsAsSet: _f$tagsAsSet,
+    #spritesForWeapon: _f$spritesForWeapon,
   };
 
   static Weapon _instantiate(DecodingData data) {

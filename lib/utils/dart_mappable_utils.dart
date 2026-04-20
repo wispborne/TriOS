@@ -107,6 +107,20 @@ class FileHook extends MappingHook {
   }
 }
 
+/// Drops the field's value on encode and always decodes to null. Used for
+/// `@MappableField(mode: FieldMode.member)` fields that should be excluded
+/// from serialization (e.g. back-references to `ModVariant` that are
+/// reattached by the cache layer after decode).
+class SkipSerializationHook extends MappingHook {
+  const SkipSerializationHook();
+
+  @override
+  dynamic beforeEncode(dynamic value) => null;
+
+  @override
+  dynamic beforeDecode(dynamic value) => null;
+}
+
 class SafeDoubleHook extends MappingHook {
   const SafeDoubleHook();
 

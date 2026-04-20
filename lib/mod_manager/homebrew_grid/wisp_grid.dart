@@ -1,9 +1,7 @@
 import 'package:collection/collection.dart';
-import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ktx/collections.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group_row.dart';
@@ -37,6 +35,60 @@ class _WispGridDragData {
 
   _WispGridDragData({required this.itemKeys, required this.dragDataType});
 }
+
+/// Key for tracking collapse state across primary + secondary group levels.
+/// [secondary] is null when the key refers to a primary group header.
+class _CollapseKey {
+  final Comparable? primary;
+  final Comparable? secondary;
+
+  const _CollapseKey(this.primary, [this.secondary]);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is _CollapseKey &&
+          other.primary == primary &&
+          other.secondary == secondary);
+
+  @override
+  int get hashCode => Object.hash(primary, secondary);
+}
+
+/// A rendered primary group containing one or more secondary subgroups.
+/// When secondary grouping is inactive, [subgroups] has one synthetic entry.
+class _RenderedGroup<T extends WispGridItem> {
+  final WispGridGroup<T>? grouping;
+  final Comparable? sortValue;
+  final List<_RenderedSubgroup<T>> subgroups;
+  final bool isPinned;
+
+  const _RenderedGroup({
+    required this.grouping,
+    required this.sortValue,
+    required this.subgroups,
+    this.isPinned = false,
+  });
+
+  List<T> get allItems =>
+      subgroups.expand((s) => s.items).toList(growable: false);
+}
+
+class _RenderedSubgroup<T extends WispGridItem> {
+  final WispGridGroup<T>? grouping;
+  final Comparable? sortValue;
+  final List<T> items;
+
+  const _RenderedSubgroup({
+    required this.grouping,
+    required this.sortValue,
+    required this.items,
+  });
+}
+
+/// Sentinel sort value used to identify the synthetic pinned group at the top
+/// of the grid in collapse-state keys.
+const String _pinnedSortValue = '__pinned__';
 
 class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   static const gridRowSpacing = 8.0;
@@ -159,7 +211,7 @@ class _WispGridState<T extends WispGridItem>
     extends ConsumerState<WispGrid<T>> {
   final ScrollController _gridScrollControllerVertical = ScrollController();
   final ScrollController _gridScrollControllerHorizontal = ScrollController();
-  final Map<Object?, bool> collapseStates = {};
+  final Map<_CollapseKey, bool> collapseStates = {};
   final Set<String> _checkedItemIds = {};
 
   List<WispGridColumn<T>> get columns => widget.columns;
@@ -171,7 +223,7 @@ class _WispGridState<T extends WispGridItem>
 
   // Exposed to public, and used for selecting/checking rows.
   List<T> _lastDisplayedItems = [];
-  List<MapEntry<WispGridGroup<T>?, List<T>>> _lastDisplayedItemsInGroups = [];
+  List<_RenderedGroup<T>> _lastRenderedGroups = const [];
 
   /// Updated by DragTargets to change drag feedback text.
   final ValueNotifier<String?> _dragTargetGroupName = ValueNotifier(null);
@@ -198,13 +250,20 @@ class _WispGridState<T extends WispGridItem>
   Widget build(BuildContext context) {
     final groupingSetting = gridState.groupingSetting;
 
-    final grouping = widget.groups.firstWhereOrNull(
+    final primaryGrouping = widget.groups.firstWhereOrNull(
       (grp) => grp.key == groupingSetting?.currentGroupedByKey,
     );
+    final secondaryKey = groupingSetting?.secondaryGroupedByKey;
+    final WispGridGroup<T>? secondaryGrouping = (primaryGrouping == null ||
+            secondaryKey == null ||
+            secondaryKey == primaryGrouping.key)
+        ? null
+        : widget.groups.firstWhereOrNull((g) => g.key == secondaryKey);
+
     final defaultSortField = widget.defaultSortField ?? columns.first.key;
     final activeSortField = gridState.sortedColumnKey ?? defaultSortField;
 
-    final items = widget.items
+    final sortedItems = widget.items
         .whereType<T>()
         // Sort by favorites first, then by the active sort field
         .sorted((left, right) {
@@ -250,241 +309,332 @@ class _WispGridState<T extends WispGridItem>
               ? sortResult * -1
               : sortResult;
         })
-        .let((sortedItems) {
-          // Build groups, allowing items to appear in multiple groups
-          // when getAllGroupSortValues returns more than one value.
-          final Map<Comparable?, List<T>> grouped = {};
-          for (final item in sortedItems) {
-            final sortValues = grouping?.getAllGroupSortValues(item) ??
-                [grouping?.getGroupSortValue(item)];
-            for (final sv in sortValues) {
-              (grouped[sv] ??= []).add(item);
-            }
-          }
-          return grouped;
-        })
-        .entries
-        .let(
-          (entries) => groupingSetting?.isSortDescending ?? false
-              ? entries.sortedByDescending((entry) => entry.key)
-              : entries.sortedByDescending((entry) => entry.key).reversed,
-        )
         .toList();
 
-    // Prepend pinned items as a synthetic group at the top.
-    const pinnedSentinel = '__pinned__';
+    // Primary-level grouping.
+    final Map<Comparable?, List<T>> primaryGrouped = {};
+    for (final item in sortedItems) {
+      final sortValues = primaryGrouping?.getAllGroupSortValues(item) ??
+          [primaryGrouping?.getGroupSortValue(item)];
+      for (final sv in sortValues) {
+        (primaryGrouped[sv] ??= []).add(item);
+      }
+    }
+    final primaryEntries = (groupingSetting?.isSortDescending ?? false)
+        ? primaryGrouped.entries.sortedByDescending((e) => e.key).toList()
+        : primaryGrouped.entries
+            .sortedByDescending((e) => e.key)
+            .reversed
+            .toList();
+
+    final renderedGroups = <_RenderedGroup<T>>[];
+
+    // Pinned group at the top, rendered single-level regardless of secondary.
     if (widget.pinnedItems.isNotEmpty) {
-      items.insert(0, MapEntry(pinnedSentinel, widget.pinnedItems));
+      renderedGroups.add(
+        _RenderedGroup<T>(
+          grouping: null,
+          sortValue: _pinnedSortValue,
+          subgroups: [
+            _RenderedSubgroup<T>(
+              grouping: null,
+              sortValue: null,
+              items: widget.pinnedItems,
+            ),
+          ],
+          isPinned: true,
+        ),
+      );
     }
 
-    _lastDisplayedItems = items.flatMap((entry) => entry.value).toList();
-    _lastDisplayedItemsInGroups = items
-        .map(
-          (entry) => MapEntry(
-            entry.key == null
-                ? null
-                : widget.groups.firstWhereOrNull((g) => g.key == entry.key),
-            entry.value,
+    for (final entry in primaryEntries) {
+      final primaryBucket = entry.value;
+      List<_RenderedSubgroup<T>> subgroups;
+
+      if (secondaryGrouping != null) {
+        final Map<Comparable?, List<T>> secondaryGrouped = {};
+        for (final item in primaryBucket) {
+          final svs = secondaryGrouping.getAllGroupSortValues(item);
+          for (final sv in svs) {
+            (secondaryGrouped[sv] ??= []).add(item);
+          }
+        }
+        // Secondary always sorts ascending (design: no secondary sort toggle).
+        subgroups = secondaryGrouped.entries
+            .sortedByDescending((e) => e.key)
+            .reversed
+            .map(
+              (sEntry) => _RenderedSubgroup<T>(
+                grouping: secondaryGrouping,
+                sortValue: sEntry.key,
+                items: sEntry.value,
+              ),
+            )
+            .toList();
+      } else {
+        subgroups = [
+          _RenderedSubgroup<T>(
+            grouping: null,
+            sortValue: null,
+            items: primaryBucket,
           ),
-        )
+        ];
+      }
+
+      renderedGroups.add(
+        _RenderedGroup<T>(
+          grouping: primaryGrouping,
+          sortValue: entry.key,
+          subgroups: subgroups,
+        ),
+      );
+    }
+
+    _lastRenderedGroups = renderedGroups;
+    _lastDisplayedItems = renderedGroups
+        .expand((g) => g.subgroups.expand((s) => s.items))
         .toList();
 
     int index = 0;
+    final displayedMods = <Widget>[];
 
-    final displayedMods = items
-        .flatMap((entry) {
-          final groupSortValue = entry.key;
-          final itemsInGroup = entry.value;
-          final isCollapsed = collapseStates[groupSortValue] == true;
-
-          // Render pinned group with the same header widget as normal groups.
-          if (groupSortValue == pinnedSentinel) {
-            final info =
-                widget.pinnedGroupInfo ?? const PinnedGroupInfo(name: 'Pinned');
-            final pinnedWidgets = <Widget>[];
-            pinnedWidgets.add(
-              WispGridGroupRowView<T>(
-                grouping: _PinnedWispGridGroup<T>(info),
-                itemsInGroup: itemsInGroup,
-                isCollapsed: isCollapsed,
-                setCollapsed: (collapsed) {
-                  setState(() {
-                    collapseStates[pinnedSentinel] = collapsed;
-                  });
-                },
-                shownIndex: index++,
-                columns: widget.columns,
-                groups: const [],
+    for (final group in renderedGroups) {
+      if (group.isPinned) {
+        final info =
+            widget.pinnedGroupInfo ?? const PinnedGroupInfo(name: 'Pinned');
+        final pinnedCollapseKey = const _CollapseKey(_pinnedSortValue);
+        final isPinnedCollapsed = collapseStates[pinnedCollapseKey] == true;
+        final pinnedItems = group.subgroups.first.items;
+        displayedMods.add(
+          WispGridGroupRowView<T>(
+            grouping: _PinnedWispGridGroup<T>(info),
+            itemsInGroup: pinnedItems,
+            isCollapsed: isPinnedCollapsed,
+            setCollapsed: (c) {
+              setState(() {
+                collapseStates[pinnedCollapseKey] = c;
+              });
+            },
+            shownIndex: index++,
+            columns: widget.columns,
+            groups: const [],
+            gridState: gridState,
+            updateGridState: widget.updateGridState,
+            additionalContextMenuEntries: widget.pinnedGroupContextMenuEntries,
+          ),
+        );
+        if (!isPinnedCollapsed) {
+          for (final item in pinnedItems) {
+            displayedMods.add(
+              WispGridRowView<T>(
+                key: ValueKey('pinned_${item.key}'),
+                item: item,
                 gridState: gridState,
-                updateGridState: widget.updateGridState,
-                additionalContextMenuEntries:
-                    widget.pinnedGroupContextMenuEntries,
+                columns: widget.columns,
+                rowBuilder: widget.rowBuilder,
+                onTapped: () {
+                  widget.onRowSelected?.call(item);
+                },
+                onDoubleTapped: () {
+                  widget.onRowSelected?.call(item);
+                },
+                isRowChecked: _checkedItemIds.contains(item.key),
               ),
             );
-            if (!isCollapsed) {
-              for (final item in itemsInGroup) {
-                pinnedWidgets.add(
-                  WispGridRowView<T>(
-                    key: ValueKey('pinned_${item.key}'),
-                    item: item,
-                    gridState: gridState,
-                    columns: widget.columns,
-                    rowBuilder: widget.rowBuilder,
-                    onTapped: () {
-                      widget.onRowSelected?.call(item);
-                    },
-                    onDoubleTapped: () {
-                      widget.onRowSelected?.call(item);
-                    },
-                    isRowChecked: _checkedItemIds.contains(item.key),
-                  ),
+          }
+        }
+        continue;
+      }
+
+      final primaryGroupingLocal = group.grouping;
+      final hasPrimaryHeader =
+          primaryGroupingLocal != null && primaryGroupingLocal.isGroupVisible;
+      final primaryCollapseKey = _CollapseKey(group.sortValue);
+      final isPrimaryCollapsed =
+          hasPrimaryHeader && collapseStates[primaryCollapseKey] == true;
+
+      if (hasPrimaryHeader) {
+        final primaryBucketItems = group.allItems;
+        Widget primaryHeader = WispGridGroupRowView<T>(
+          grouping: primaryGroupingLocal,
+          itemsInGroup: primaryBucketItems,
+          isCollapsed: isPrimaryCollapsed,
+          setCollapsed: (c) {
+            setState(() {
+              collapseStates[primaryCollapseKey] = c;
+            });
+          },
+          shownIndex: index++,
+          columns: widget.columns,
+          groups: widget.groups,
+          gridState: gridState,
+          updateGridState: widget.updateGridState,
+          groupSortValue:
+              group.sortValue is Comparable ? group.sortValue : null,
+        );
+        if (primaryGroupingLocal.supportsDragAndDrop) {
+          primaryHeader = _DragTargetGroupHeader<T>(
+            grouping: primaryGroupingLocal,
+            itemsInGroup: primaryBucketItems,
+            hoverGroupName: _dragTargetGroupName,
+            child: primaryHeader,
+          );
+        }
+        displayedMods.add(primaryHeader);
+      }
+
+      if (isPrimaryCollapsed) continue;
+
+      // Per-row DragTarget is wired to the primary grouping only.
+      final rowDragGrouping = primaryGroupingLocal;
+      final isRowDragEnabled = rowDragGrouping?.supportsDragAndDrop == true;
+      final rowDragBucketItems = group.allItems;
+
+      for (final sub in group.subgroups) {
+        final hasSecondaryHeader =
+            secondaryGrouping != null && sub.grouping != null;
+        bool isSecondaryCollapsed = false;
+
+        if (hasSecondaryHeader) {
+          final secondaryCollapseKey =
+              _CollapseKey(group.sortValue, sub.sortValue);
+          isSecondaryCollapsed = collapseStates[secondaryCollapseKey] == true;
+
+          Widget secondaryHeader = WispGridGroupRowView<T>(
+            grouping: sub.grouping!,
+            itemsInGroup: sub.items,
+            isCollapsed: isSecondaryCollapsed,
+            setCollapsed: (c) {
+              setState(() {
+                collapseStates[secondaryCollapseKey] = c;
+              });
+            },
+            shownIndex: index++,
+            columns: widget.columns,
+            groups: widget.groups,
+            gridState: gridState,
+            updateGridState: widget.updateGridState,
+            groupSortValue:
+                sub.sortValue is Comparable ? sub.sortValue : null,
+            headerStyleOverride: GroupHeaderStyle.small,
+          );
+          if (sub.grouping!.supportsDragAndDrop) {
+            secondaryHeader = _DragTargetGroupHeader<T>(
+              grouping: sub.grouping!,
+              itemsInGroup: sub.items,
+              hoverGroupName: _dragTargetGroupName,
+              child: secondaryHeader,
+            );
+          }
+          displayedMods.add(secondaryHeader);
+          if (isSecondaryCollapsed) continue;
+        }
+
+        for (final item in sub.items) {
+          Widget rowWidget = WispGridRowView<T>(
+            key: ValueKey(item.key),
+            item: item,
+            gridState: gridState,
+            columns: widget.columns,
+            rowBuilder: widget.rowBuilder,
+            onTapped: () {
+              if (HardwareKeyboard.instance.isShiftPressed) {
+                _onRowCheck(
+                  modId: item.key,
+                  shiftPressed: true,
+                  ctrlPressed: false,
+                );
+              } else if (HardwareKeyboard.instance.isControlPressed) {
+                _onRowCheck(
+                  modId: item.key,
+                  shiftPressed: false,
+                  ctrlPressed: true,
+                );
+              } else {
+                if (widget.selectedItem != null) {
+                  widget.onRowSelected?.call(item);
+                }
+                _onRowCheck(
+                  modId: item.key,
+                  shiftPressed: false,
+                  ctrlPressed: false,
                 );
               }
-            }
-            return pinnedWidgets;
-          }
+            },
+            onDoubleTapped: () {
+              widget.onRowSelected?.call(item);
+            },
+            isRowChecked: _checkedItemIds.contains(item.key),
+          );
 
-          final widgets = <Widget>[];
+          if (isRowDragEnabled) {
+            final draggedKeys = _checkedItemIds.contains(item.key) &&
+                    _checkedItemIds.length > 1
+                ? _checkedItemIds.toList()
+                : [item.key];
 
-          if (grouping != null && grouping.isGroupVisible) {
-            Widget header = WispGridGroupRowView(
-              grouping: grouping,
-              itemsInGroup: itemsInGroup,
-              isCollapsed: isCollapsed,
-              setCollapsed: (isCollapsed) {
-                setState(() {
-                  collapseStates[groupSortValue] = isCollapsed;
-                });
+            final baseRowWidget = rowWidget;
+            rowWidget = DragTarget<_WispGridDragData>(
+              onWillAcceptWithDetails: (details) =>
+                  details.data.dragDataType ==
+                      rowDragGrouping!.dragDataType &&
+                  !details.data.itemKeys.contains(item.key),
+              onAcceptWithDetails: (details) {
+                _dragTargetGroupName.value = null;
+                rowDragGrouping!.onItemsDropped(
+                  details.data.itemKeys,
+                  rowDragBucketItems,
+                  ref,
+                );
               },
-              shownIndex: index++,
-              columns: widget.columns,
-              groups: widget.groups,
-              gridState: gridState,
-              updateGridState: widget.updateGridState,
-              groupSortValue: groupSortValue is Comparable ? groupSortValue : null,
+              onMove: (details) {
+                final targetName = rowDragGrouping!.getGroupName(
+                  rowDragBucketItems.first,
+                );
+                _dragTargetGroupName.value = targetName == null
+                    ? null
+                    : rowDragGrouping.dragHoverLabel(
+                        targetName,
+                        details.data.itemKeys,
+                      );
+              },
+              onLeave: (_) {
+                _dragTargetGroupName.value = null;
+              },
+              builder: (context, candidateData, rejectedData) {
+                return LongPressDraggable<_WispGridDragData>(
+                  delay: const Duration(milliseconds: 200),
+                  data: _WispGridDragData(
+                    itemKeys: draggedKeys,
+                    dragDataType: rowDragGrouping!.dragDataType,
+                  ),
+                  onDragEnd: (_) {
+                    _dragTargetGroupName.value = null;
+                  },
+                  dragAnchorStrategy: (draggable, context, position) =>
+                      const Offset(16, 16),
+                  feedback: _DragFeedbackBadge(
+                    label: rowDragGrouping.dragFeedbackLabel(
+                      draggedKeys,
+                      widget.items.nonNulls.toList(),
+                    ),
+                    hoverGroupName: _dragTargetGroupName,
+                  ),
+                  childWhenDragging: Opacity(
+                    opacity: 0.4,
+                    child: baseRowWidget,
+                  ),
+                  child: baseRowWidget,
+                );
+              },
             );
-
-            if (grouping.supportsDragAndDrop) {
-              header = _DragTargetGroupHeader<T>(
-                grouping: grouping,
-                itemsInGroup: itemsInGroup,
-                hoverGroupName: _dragTargetGroupName,
-                child: header,
-              );
-            }
-            widgets.add(header);
           }
-          final isDragEnabled = grouping?.supportsDragAndDrop == true;
-          final items = !isCollapsed
-              ? itemsInGroup.map((item) {
-                  Widget rowWidget = WispGridRowView<T>(
-                    key: ValueKey(item.key),
-                    item: item,
-                    gridState: gridState,
-                    columns: widget.columns,
-                    rowBuilder: widget.rowBuilder,
-                    onTapped: () {
-                      if (HardwareKeyboard.instance.isShiftPressed) {
-                        _onRowCheck(
-                          modId: item.key,
-                          shiftPressed: true,
-                          ctrlPressed: false,
-                        );
-                      } else if (HardwareKeyboard.instance.isControlPressed) {
-                        _onRowCheck(
-                          modId: item.key,
-                          shiftPressed: false,
-                          ctrlPressed: true,
-                        );
-                      } else {
-                        if (widget.selectedItem != null) {
-                          widget.onRowSelected?.call(item);
-                        }
-                        _onRowCheck(
-                          modId: item.key,
-                          shiftPressed: false,
-                          ctrlPressed: false,
-                        );
-                      }
-                    },
-                    onDoubleTapped: () {
-                      widget.onRowSelected?.call(item);
-                    },
-                    isRowChecked: _checkedItemIds.contains(item.key),
-                  );
 
-                  if (isDragEnabled) {
-                    final draggedKeys =
-                        _checkedItemIds.contains(item.key) &&
-                            _checkedItemIds.length > 1
-                        ? _checkedItemIds.toList()
-                        : [item.key];
+          displayedMods.add(rowWidget);
+        }
+      }
+    }
 
-                    final baseRowWidget = rowWidget;
-                    rowWidget = DragTarget<_WispGridDragData>(
-                      onWillAcceptWithDetails: (details) =>
-                          details.data.dragDataType == grouping!.dragDataType &&
-                          !details.data.itemKeys.contains(item.key),
-                      onAcceptWithDetails: (details) {
-                        _dragTargetGroupName.value = null;
-                        grouping!.onItemsDropped(
-                          details.data.itemKeys,
-                          itemsInGroup,
-                          ref,
-                        );
-                      },
-                      onMove: (details) {
-                        final targetName = grouping!.getGroupName(
-                          itemsInGroup.first,
-                        );
-                        _dragTargetGroupName.value = targetName == null
-                            ? null
-                            : grouping!.dragHoverLabel(
-                                targetName,
-                                details.data.itemKeys,
-                              );
-                      },
-                      onLeave: (_) {
-                        _dragTargetGroupName.value = null;
-                      },
-                      builder: (context, candidateData, rejectedData) {
-                        return LongPressDraggable<_WispGridDragData>(
-                          delay: const Duration(milliseconds: 200),
-                          data: _WispGridDragData(
-                            itemKeys: draggedKeys,
-                            dragDataType: grouping!.dragDataType,
-                          ),
-                          onDragEnd: (_) {
-                            _dragTargetGroupName.value = null;
-                          },
-                          dragAnchorStrategy: (draggable, context, position) =>
-                              const Offset(16, 16),
-                          feedback: _DragFeedbackBadge(
-                            label: grouping.dragFeedbackLabel(
-                              draggedKeys,
-                              widget.items.nonNulls.toList(),
-                            ),
-                            hoverGroupName: _dragTargetGroupName,
-                          ),
-                          childWhenDragging: Opacity(
-                            opacity: 0.4,
-                            child: baseRowWidget,
-                          ),
-                          child: baseRowWidget,
-                        );
-                      },
-                    );
-                  }
-
-                  return rowWidget;
-                }).toList()
-              : <Widget>[];
-          widgets.addAll(items);
-
-          return widgets;
-        })
-        .nonNulls
-        .toList();
     final totalRowWidth = gridState
         .sortedVisibleColumns(widget.columns)
         .map((e) => e.value.width + WispGrid.gridRowSpacing)
@@ -636,6 +786,27 @@ class _WispGridState<T extends WispGridItem>
   bool _isGroupHeader(Widget w) =>
       w is WispGridGroupRowView || w is _DragTargetGroupHeader;
 
+  /// Resolves the effective [GroupHeaderStyle] for a group-header widget,
+  /// unwrapping any [_DragTargetGroupHeader] wrapper to read the underlying
+  /// [WispGridGroupRowView.headerStyleOverride] when present.
+  GroupHeaderStyle _headerStyleFor(Widget w) {
+    if (w is WispGridGroupRowView) {
+      return w.headerStyleOverride ??
+          gridState.groupingSetting?.headerStyle ??
+          GroupHeaderStyle.small;
+    }
+    if (w is _DragTargetGroupHeader) {
+      return _headerStyleFor(w.child);
+    }
+    return gridState.groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
+  }
+
+  double _headerHeightFor(Widget w) => switch (_headerStyleFor(w)) {
+        GroupHeaderStyle.small => 28.0,
+        GroupHeaderStyle.medium => 32.0,
+        GroupHeaderStyle.large => 44.0,
+      };
+
   Widget _buildItemSliver(
     List<Widget> displayedMods,
     SliverChildBuilderDelegate delegate,
@@ -652,17 +823,10 @@ class _WispGridState<T extends WispGridItem>
       );
     }
 
-    final groupHeaderHeight = switch (gridState.groupingSetting?.headerStyle ??
-        GroupHeaderStyle.small) {
-      GroupHeaderStyle.small => 28.0,
-      GroupHeaderStyle.medium => 32.0,
-      GroupHeaderStyle.large => 44.0,
-    };
-
     return SliverVariedExtentList(
       delegate: delegate,
       itemExtentBuilder: (i, _) => _isGroupHeader(displayedMods[i])
-          ? groupHeaderHeight
+          ? _headerHeightFor(displayedMods[i])
           : widget.itemExtent!,
     );
   }
@@ -788,7 +952,10 @@ class _PinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
 
 extension WispGridCsvExport<T extends WispGridItem> on _WispGridState<T> {
   /// Converts the currently visible grid data to CSV format.
-  /// Returns a CSV string with headers and data formatted as displayed in the grid.
+  /// Returns a CSV string with headers and data formatted as displayed in the
+  /// grid. When secondary grouping is active, emits a `## Subgroup: <name>`
+  /// line before each secondary bucket's rows; otherwise only `# Group:`
+  /// lines appear.
   String toCsv({bool includeHeaders = true}) {
     final visibleColumns = gridState.sortedVisibleColumns(widget.columns);
     final csvRows = <List<String>>[];
@@ -796,7 +963,6 @@ extension WispGridCsvExport<T extends WispGridItem> on _WispGridState<T> {
     WispGridColumn<T> columnForColumnKey(String columnKey) =>
         widget.columns.firstWhere((c) => c.key == columnKey);
 
-    // Add headers if requested
     if (includeHeaders) {
       final headers = visibleColumns
           .map((entry) => columnForColumnKey(entry.key).name)
@@ -804,21 +970,52 @@ extension WispGridCsvExport<T extends WispGridItem> on _WispGridState<T> {
       csvRows.add(headers);
     }
 
-    // Process each item from the last displayed items
-    for (final item in _lastDisplayedItemsInGroups) {
-      if (item.key != null) {
-        csvRows.add(["# Group: ${item.key?.displayName}"]);
-      }
-
-      final itemsInGroup = item.value;
-
-      for (final item in itemsInGroup) {
+    void appendItems(List<T> items) {
+      for (final item in items) {
         final row = <String>[];
         for (final columnEntry in visibleColumns) {
           final column = columnForColumnKey(columnEntry.key);
           row.add(column.csvValue?.call(item) ?? "");
         }
         csvRows.add(row);
+      }
+    }
+
+    for (final group in _lastRenderedGroups) {
+      String? primaryName;
+      if (group.isPinned) {
+        primaryName = widget.pinnedGroupInfo?.name ?? 'Pinned';
+      } else if (group.grouping != null && group.grouping!.isGroupVisible) {
+        final firstItem = group.allItems.firstOrNull;
+        if (firstItem != null) {
+          primaryName = group.grouping!.getGroupName(
+                firstItem,
+                groupSortValue: group.sortValue,
+              ) ??
+              group.grouping!.displayName;
+        }
+      }
+      if (primaryName != null) {
+        csvRows.add(["# Group: $primaryName"]);
+      }
+
+      // Pinned groups and single-level groupings render as one flat list.
+      final emitSubgroupMarkers =
+          !group.isPinned && group.subgroups.any((s) => s.grouping != null);
+
+      for (final sub in group.subgroups) {
+        if (emitSubgroupMarkers && sub.grouping != null) {
+          final firstItem = sub.items.firstOrNull;
+          final subName = firstItem == null
+              ? sub.grouping!.displayName
+              : (sub.grouping!.getGroupName(
+                    firstItem,
+                    groupSortValue: sub.sortValue,
+                  ) ??
+                  sub.grouping!.displayName);
+          csvRows.add(["## Subgroup: $subName"]);
+        }
+        appendItems(sub.items);
       }
     }
 

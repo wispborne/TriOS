@@ -29,6 +29,12 @@ class WispGridGroupRowView<T extends WispGridItem>
   /// so multi-group items resolve the correct group identity.
   final Comparable? groupSortValue;
 
+  /// Overrides the resolved header style. When null, falls back to
+  /// `gridState.groupingSetting?.headerStyle`. Used to force secondary group
+  /// headers to render in [GroupHeaderStyle.small] regardless of user
+  /// preference.
+  final GroupHeaderStyle? headerStyleOverride;
+
   const WispGridGroupRowView({
     super.key,
     required this.grouping,
@@ -42,6 +48,7 @@ class WispGridGroupRowView<T extends WispGridItem>
     required this.updateGridState,
     this.additionalContextMenuEntries = const [],
     this.groupSortValue,
+    this.headerStyleOverride,
   });
 
   @override
@@ -74,8 +81,9 @@ class _WispGridRowState<T extends WispGridItem>
       ),
     );
 
-    final headerStyle =
-        widget.gridState.groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
+    final headerStyle = widget.headerStyleOverride ??
+        widget.gridState.groupingSetting?.headerStyle ??
+        GroupHeaderStyle.small;
 
     final overlayData = widget.grouping.overlayWidget(
       context,
@@ -86,6 +94,7 @@ class _WispGridRowState<T extends WispGridItem>
       horizontalPaddingOffset: headerStyle == GroupHeaderStyle.small
           ? 16.0
           : 0.0,
+      isSecondaryHeader: widget.headerStyleOverride != null,
     );
 
     final headerContent = switch (headerStyle) {
@@ -381,6 +390,13 @@ class _WispGridRowState<T extends WispGridItem>
     final groupingSetting = widget.gridState.groupingSetting;
     final currentStyle =
         groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
+    final currentPrimaryKey = groupingSetting?.currentGroupedByKey;
+    final currentSecondaryKey = groupingSetting?.secondaryGroupedByKey;
+    final thenByCandidates = widget.groups
+        .where((g) => g.key != currentPrimaryKey)
+        .toList();
+    final showThenBy =
+        widget.groups.length > 1 && thenByCandidates.isNotEmpty;
 
     return ContextMenu(
       entries: [
@@ -397,18 +413,70 @@ class _WispGridRowState<T extends WispGridItem>
                         : null,
                     onSelected: () {
                       widget.updateGridState(
-                        (WispGridState state) => state.copyWith(
-                          groupingSetting: (state.groupingSetting ??
-                                  GroupingSetting(
-                                    currentGroupedByKey: group.key,
-                                  ))
-                              .copyWith(currentGroupedByKey: group.key),
-                        ),
+                        (WispGridState state) {
+                          final existing = state.groupingSetting ??
+                              GroupingSetting(
+                                currentGroupedByKey: group.key,
+                              );
+                          // Clear secondary when primary collides with it.
+                          final clearSecondary =
+                              existing.secondaryGroupedByKey == group.key;
+                          return state.copyWith(
+                            groupingSetting: existing.copyWith(
+                              currentGroupedByKey: group.key,
+                              secondaryGroupedByKey: clearSecondary
+                                  ? null
+                                  : existing.secondaryGroupedByKey,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
                 )
                 .toList(),
+          ),
+        if (showThenBy)
+          MenuItem.submenu(
+            label: 'Then By',
+            icon: Icons.subdirectory_arrow_right,
+            items: [
+              MenuItem(
+                label: 'None',
+                icon: currentSecondaryKey == null ? Icons.check : null,
+                onSelected: () {
+                  widget.updateGridState(
+                    (WispGridState state) {
+                      final existing = state.groupingSetting;
+                      if (existing == null) return state;
+                      return state.copyWith(
+                        groupingSetting:
+                            existing.copyWith(secondaryGroupedByKey: null),
+                      );
+                    },
+                  );
+                },
+              ),
+              ...thenByCandidates.map(
+                (group) => MenuItem(
+                  label: group.displayName,
+                  icon: currentSecondaryKey == group.key ? Icons.check : null,
+                  onSelected: () {
+                    widget.updateGridState(
+                      (WispGridState state) {
+                        final existing = state.groupingSetting;
+                        if (existing == null) return state;
+                        return state.copyWith(
+                          groupingSetting: existing.copyWith(
+                            secondaryGroupedByKey: group.key,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         MenuItem.submenu(
           label: 'Header Style',

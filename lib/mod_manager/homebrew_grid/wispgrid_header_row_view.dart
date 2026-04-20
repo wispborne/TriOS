@@ -236,6 +236,13 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
 
   ContextMenu buildHeaderContextMenu(WispGridState gridState) {
     final groupingSetting = gridState.groupingSetting;
+    final currentPrimaryKey = groupingSetting?.currentGroupedByKey;
+    final currentSecondaryKey = groupingSetting?.secondaryGroupedByKey;
+    final thenByCandidates = widget.groups
+        .where((g) => g.key != currentPrimaryKey)
+        .toList();
+    final showThenBy =
+        widget.groups.length > 1 && thenByCandidates.isNotEmpty;
     var sortedColumns = gridState.sortedColumns(columns);
     return ContextMenu(
       entries: [
@@ -259,18 +266,65 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                         : null,
                     onSelected: () {
                       updateGridState(
-                        (WispGridState state) => state.copyWith(
-                          groupingSetting: (state.groupingSetting ??
-                                  GroupingSetting(
-                                    currentGroupedByKey: group.key,
-                                  ))
-                              .copyWith(currentGroupedByKey: group.key),
-                        ),
+                        (WispGridState state) {
+                          final existing = state.groupingSetting ??
+                              GroupingSetting(
+                                currentGroupedByKey: group.key,
+                              );
+                          final clearSecondary =
+                              existing.secondaryGroupedByKey == group.key;
+                          return state.copyWith(
+                            groupingSetting: existing.copyWith(
+                              currentGroupedByKey: group.key,
+                              secondaryGroupedByKey: clearSecondary
+                                  ? null
+                                  : existing.secondaryGroupedByKey,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
                 )
                 .toList(),
+          ),
+        if (showThenBy)
+          MenuItem.submenu(
+            label: "Then By",
+            icon: Icons.subdirectory_arrow_right,
+            items: [
+              MenuItem(
+                label: 'None',
+                icon: currentSecondaryKey == null ? Icons.check : null,
+                onSelected: () {
+                  updateGridState((WispGridState state) {
+                    final existing = state.groupingSetting;
+                    if (existing == null) return state;
+                    return state.copyWith(
+                      groupingSetting:
+                          existing.copyWith(secondaryGroupedByKey: null),
+                    );
+                  });
+                },
+              ),
+              ...thenByCandidates.map(
+                (group) => MenuItem(
+                  label: group.displayName,
+                  icon: currentSecondaryKey == group.key ? Icons.check : null,
+                  onSelected: () {
+                    updateGridState((WispGridState state) {
+                      final existing = state.groupingSetting;
+                      if (existing == null) return state;
+                      return state.copyWith(
+                        groupingSetting: existing.copyWith(
+                          secondaryGroupedByKey: group.key,
+                        ),
+                      );
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
         MenuDivider(),
         MenuHeader(text: "Hide/Show Columns", disableUppercase: true),

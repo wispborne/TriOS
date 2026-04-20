@@ -38,6 +38,8 @@ All viewer pages (ships, weapons, hullmods, portraits) follow this template:
 
 Custom grid component in `lib/mod_manager/homebrew_grid/`. Used for all data grids. Supports grouped rows, sortable columns, state persistence, and multiple layout modes.
 
+Two-level grouping: `GroupingSetting.secondaryGroupedByKey` is nullable; when set, each primary bucket is subdivided using that grouping. Secondary headers always render in `GroupHeaderStyle.small` regardless of the user's `headerStyle`. Drag-and-drop targets the level the user drops on (a drop on a secondary header fires that grouping's `onItemsDropped`); per-row drag targets remain wired to the primary grouping only. Collapse state is keyed per `(primary, secondary)` pair.
+
 ### Three-state filters
 
 Filter values: `null` (indifferent), `true` (include), `false` (exclude). If any `true` values exist for a filter, items must match one; `false` values exclude regardless.

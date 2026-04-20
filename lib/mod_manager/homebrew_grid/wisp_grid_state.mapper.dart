@@ -1584,6 +1584,13 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
     'currentGroupedByKey',
     _$currentGroupedByKey,
   );
+  static String? _$secondaryGroupedByKey(GroupingSetting v) =>
+      v.secondaryGroupedByKey;
+  static const Field<GroupingSetting, String> _f$secondaryGroupedByKey = Field(
+    'secondaryGroupedByKey',
+    _$secondaryGroupedByKey,
+    opt: true,
+  );
   static bool _$isSortDescending(GroupingSetting v) => v.isSortDescending;
   static const Field<GroupingSetting, bool> _f$isSortDescending = Field(
     'isSortDescending',
@@ -1602,6 +1609,7 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
   @override
   final MappableFields<GroupingSetting> fields = const {
     #currentGroupedByKey: _f$currentGroupedByKey,
+    #secondaryGroupedByKey: _f$secondaryGroupedByKey,
     #isSortDescending: _f$isSortDescending,
     #headerStyle: _f$headerStyle,
   };
@@ -1609,6 +1617,7 @@ class GroupingSettingMapper extends ClassMapperBase<GroupingSetting> {
   static GroupingSetting _instantiate(DecodingData data) {
     return GroupingSetting(
       currentGroupedByKey: data.dec(_f$currentGroupedByKey),
+      secondaryGroupedByKey: data.dec(_f$secondaryGroupedByKey),
       isSortDescending: data.dec(_f$isSortDescending),
       headerStyle: data.dec(_f$headerStyle),
     );
@@ -1678,6 +1687,7 @@ abstract class GroupingSettingCopyWith<$R, $In extends GroupingSetting, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   $R call({
     String? currentGroupedByKey,
+    String? secondaryGroupedByKey,
     bool? isSortDescending,
     GroupHeaderStyle? headerStyle,
   });
@@ -1697,12 +1707,15 @@ class _GroupingSettingCopyWithImpl<$R, $Out>
   @override
   $R call({
     String? currentGroupedByKey,
+    Object? secondaryGroupedByKey = $none,
     bool? isSortDescending,
     GroupHeaderStyle? headerStyle,
   }) => $apply(
     FieldCopyWithData({
       if (currentGroupedByKey != null)
         #currentGroupedByKey: currentGroupedByKey,
+      if (secondaryGroupedByKey != $none)
+        #secondaryGroupedByKey: secondaryGroupedByKey,
       if (isSortDescending != null) #isSortDescending: isSortDescending,
       if (headerStyle != null) #headerStyle: headerStyle,
     }),
@@ -1712,6 +1725,10 @@ class _GroupingSettingCopyWithImpl<$R, $Out>
     currentGroupedByKey: data.get(
       #currentGroupedByKey,
       or: $value.currentGroupedByKey,
+    ),
+    secondaryGroupedByKey: data.get(
+      #secondaryGroupedByKey,
+      or: $value.secondaryGroupedByKey,
     ),
     isSortDescending: data.get(#isSortDescending, or: $value.isSortDescending),
     headerStyle: data.get(#headerStyle, or: $value.headerStyle),

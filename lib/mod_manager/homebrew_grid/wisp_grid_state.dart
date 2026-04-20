@@ -134,11 +134,13 @@ class WispGridState with WispGridStateMappable {
 @MappableClass()
 class GroupingSetting with GroupingSettingMappable {
   final String currentGroupedByKey;
+  final String? secondaryGroupedByKey;
   final bool isSortDescending;
   final GroupHeaderStyle headerStyle;
 
   const GroupingSetting({
     required this.currentGroupedByKey,
+    this.secondaryGroupedByKey,
     this.isSortDescending = false,
     this.headerStyle = GroupHeaderStyle.medium,
   });

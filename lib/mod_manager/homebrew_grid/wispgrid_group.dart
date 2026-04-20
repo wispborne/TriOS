@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/mod_context_menu.dart';
+import 'package:trios/mod_manager/mods_grid_page.dart' show vramColumnHovered;
 import 'package:trios/mod_manager/widgets/category_context_menu.dart';
 import 'package:trios/mod_manager/widgets/category_management_popup.dart';
 import 'package:trios/mod_tag_manager/category.dart';
@@ -43,6 +44,7 @@ abstract class WispGridGroup<T extends WispGridItem> {
     int shownIndex,
     List<WispGridColumn<T>> columns, {
     double horizontalPaddingOffset = 0,
+    bool isSecondaryHeader = false,
   }) => null;
 
   Widget wrapGroupWidget(
@@ -167,6 +169,7 @@ class EnabledStateModGridGroup extends WispGridGroup<Mod> {
     int shownIndex,
     List<WispGridColumn<Mod>> columns, {
     double horizontalPaddingOffset = 0,
+    bool isSecondaryHeader = false,
   }) => _vramSummaryOverlayWidget(
     context,
     itemsInGroup,
@@ -175,6 +178,7 @@ class EnabledStateModGridGroup extends WispGridGroup<Mod> {
     columns,
     getGroupName(itemsInGroup.first),
     horizontalPaddingOffset: horizontalPaddingOffset,
+    isSecondaryHeader: isSecondaryHeader,
   );
 }
 
@@ -373,6 +377,7 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
     int shownIndex,
     List<WispGridColumn<Mod>> columns, {
     double horizontalPaddingOffset = 0,
+    bool isSecondaryHeader = false,
   }) => _vramSummaryOverlayWidget(
     context,
     itemsInGroup,
@@ -381,6 +386,7 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
     columns,
     getGroupName(itemsInGroup.first),
     horizontalPaddingOffset: horizontalPaddingOffset,
+    isSecondaryHeader: isSecondaryHeader,
   );
 }
 
@@ -425,6 +431,7 @@ class AuthorModGridGroup extends WispGridGroup<Mod> {
     int shownIndex,
     List<WispGridColumn<Mod>> columns, {
     double horizontalPaddingOffset = 0,
+    bool isSecondaryHeader = false,
   }) => _vramSummaryOverlayWidget(
     context,
     itemsInGroup,
@@ -433,6 +440,7 @@ class AuthorModGridGroup extends WispGridGroup<Mod> {
     columns,
     getGroupName(itemsInGroup.first),
     horizontalPaddingOffset: horizontalPaddingOffset,
+    isSecondaryHeader: isSecondaryHeader,
   );
 }
 
@@ -493,6 +501,7 @@ class ModTypeModGridGroup extends WispGridGroup<Mod> {
     int shownIndex,
     List<WispGridColumn<Mod>> columns, {
     double horizontalPaddingOffset = 0,
+    bool isSecondaryHeader = false,
   }) => _vramSummaryOverlayWidget(
     context,
     itemsInGroup,
@@ -501,6 +510,7 @@ class ModTypeModGridGroup extends WispGridGroup<Mod> {
     columns,
     getGroupName(itemsInGroup.first),
     horizontalPaddingOffset: horizontalPaddingOffset,
+    isSecondaryHeader: isSecondaryHeader,
   );
 }
 
@@ -544,6 +554,7 @@ class GameVersionModGridGroup extends WispGridGroup<Mod> {
     int shownIndex,
     List<WispGridColumn<Mod>> columns, {
     double horizontalPaddingOffset = 0,
+    bool isSecondaryHeader = false,
   }) => _vramSummaryOverlayWidget(
     context,
     itemsInGroup,
@@ -552,6 +563,7 @@ class GameVersionModGridGroup extends WispGridGroup<Mod> {
     columns,
     getGroupName(itemsInGroup.first),
     horizontalPaddingOffset: horizontalPaddingOffset,
+    isSecondaryHeader: isSecondaryHeader,
   );
 }
 
@@ -563,6 +575,7 @@ OverlayWidgetData? _vramSummaryOverlayWidget(
   List<WispGridColumn<Mod>> columns,
   String groupName, {
   double horizontalPaddingOffset = 0,
+  bool isSecondaryHeader = false,
 }) {
   final vramProvider = ref.watch(AppState.vramEstimatorProvider);
   final vramMap = vramProvider.value?.modVramInfo ?? {};
@@ -608,14 +621,7 @@ OverlayWidgetData? _vramSummaryOverlayWidget(
     columns,
   );
 
-  return OverlayWidgetData(
-    // Subtract padding added to group that isn't present on the mod row
-    left:
-        cellWidthBeforeVramColumn -
-        6 +
-        WispGrid.gridRowSpacing +
-        horizontalPaddingOffset,
-    child: Padding(
+  final overlayBody = Padding(
       padding: EdgeInsets.only(right: 8, left: 0),
       child: MovingTooltipWidget.framed(
         tooltipWidget: Column(
@@ -714,6 +720,28 @@ OverlayWidgetData? _vramSummaryOverlayWidget(
           ),
         ),
       ),
-    ),
+    );
+
+  final child = isSecondaryHeader
+      ? MouseRegion(
+          onEnter: (_) =>
+              ref.read(vramColumnHovered.notifier).state = true,
+          onExit: (_) =>
+              ref.read(vramColumnHovered.notifier).state = false,
+          child: Consumer(
+            builder: (context, ref, _) => ref.watch(vramColumnHovered)
+                ? overlayBody
+                : const SizedBox.shrink(),
+          ),
+        )
+      : overlayBody;
+
+  return OverlayWidgetData(
+    // Subtract padding added to group that isn't present on the mod row
+    left: cellWidthBeforeVramColumn -
+        6 +
+        WispGrid.gridRowSpacing +
+        horizontalPaddingOffset,
+    child: child,
   );
 }

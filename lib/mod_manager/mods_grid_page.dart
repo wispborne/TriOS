@@ -65,7 +65,7 @@ import 'homebrew_grid/wispgrid_group.dart';
 import 'homebrew_grid/wispgrid_header_row_view.dart';
 
 final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
-final _vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
+final vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
 
 class ModsGridPage extends ConsumerStatefulWidget {
   const ModsGridPage({super.key});
@@ -181,6 +181,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               buildProfileSelector(isGameRunning),
                               const SizedBox(width: 8),
                               buildGroupBySelector(gridState),
+                              const SizedBox(width: 8),
+                              buildThenBySelector(gridState),
                               const SizedBox(width: 8),
                               // Removing Est. VRAM button because it's on the mod groups now.
                               // Maybe should add it to an overflow menu, though.
@@ -1182,6 +1184,107 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     );
   }
 
+  Widget buildThenBySelector(WispGridState gridState) {
+    final groups = _allGroupOptions;
+    final currentPrimaryKey =
+        gridState.groupingSetting?.currentGroupedByKey ??
+        EnabledStateModGridGroup().key;
+    final currentSecondaryKey = gridState.groupingSetting?.secondaryGroupedByKey;
+    final candidates = groups
+        .where((g) => g.key != currentPrimaryKey)
+        .toList();
+
+    // Hide the selector entirely when "Then By" would be meaningless.
+    if (groups.length <= 1 || candidates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final currentSecondary =
+        candidates.firstWhereOrNull((g) => g.key == currentSecondaryKey);
+
+    void updateSecondary(String? newKey) {
+      ref.read(appSettings.notifier).update((state) {
+        final existing = state.modsGridState.groupingSetting;
+        if (existing == null) return state;
+        return state.copyWith(
+          modsGridState: state.modsGridState.copyWith(
+            groupingSetting: existing.copyWith(secondaryGroupedByKey: newKey),
+          ),
+        );
+      });
+    }
+
+    return SizedBox(
+      height: 36,
+      child: MovingTooltipWidget.text(
+        message: "Add a second level of grouping under the primary group.",
+        child: PopupMenuButton<Object>(
+          onSelected: (value) {
+            if (value is WispGridGroup<Mod>) {
+              updateSecondary(value.key);
+            } else {
+              updateSecondary(null);
+            }
+          },
+          tooltip: "",
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+          itemBuilder: (BuildContext context) => [
+            PopupMenuItem<Object>(
+              value: 'none',
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    child: currentSecondaryKey == null
+                        ? const Icon(Icons.check, size: 16)
+                        : null,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('None', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+            ),
+            ...candidates.map(
+              (g) => PopupMenuItem<Object>(
+                value: g,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      child: g.key == currentSecondaryKey
+                          ? const Icon(Icons.check, size: 16)
+                          : null,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(g.displayName, style: const TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Then By",
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                Text(
+                  currentSecondary?.displayName ?? 'None',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontSize: 8),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildOverflowButton(List<Mod> allMods) {
     final theme = Theme.of(context);
     final modsGridUpdateVisibility = ref.watch(
@@ -1637,9 +1740,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     : null,
                 child: MouseRegion(
                   onEnter: (_) =>
-                      ref.read(_vramColumnHovered.notifier).state = true,
+                      ref.read(vramColumnHovered.notifier).state = true,
                   onExit: (_) =>
-                      ref.read(_vramColumnHovered.notifier).state = false,
+                      ref.read(vramColumnHovered.notifier).state = false,
                   child: Align(
                     alignment: .centerLeft,
                     child: Stack(
@@ -1662,7 +1765,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           ),
                         if (vramEstimate?.imagesNotIncludingGraphicsLib() !=
                                 null &&
-                            ref.watch(_vramColumnHovered))
+                            ref.watch(vramColumnHovered))
                           Align(
                             alignment: .topLeft,
                             child: Padding(

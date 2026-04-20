@@ -6,6 +6,7 @@
   - Ships/Weapons Viewers: Added descriptions to the new tooltips.
   - Ships Viewer: filter by stations.
   - Ships Viewer: sensor stats now shown on tooltip.
+  - WispGrid: two-level grouping via a new "Then By" context-menu entry. Secondary subgroups render as thin line headers under each primary group, collapse independently, and export as `## Subgroup:` markers in CSV.
 - Fixed
   - Portrait Replacer crashing Starsector if some cases where a portrait and its replacement were different sizes.
   - Ships Viewer: DP is now calculated correctly.

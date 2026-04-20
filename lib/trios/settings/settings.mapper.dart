@@ -343,6 +343,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       ShipsPageStatePersistedMapper.ensureInitialized();
       WeaponsPageStatePersistedMapper.ensureInitialized();
       HullmodsPageStatePersistedMapper.ensureInitialized();
+      PortraitsPageStatePersistedMapper.ensureInitialized();
+      PersistedFilterGroupMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
       DashboardModListSortMapper.ensureInitialized();
@@ -567,6 +569,26 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'hullmodsPageState',
     _$hullmodsPageState,
     opt: true,
+    hook: SafeDecodeHook(),
+  );
+  static PortraitsPageStatePersisted? _$portraitsPageState(Settings v) =>
+      v.portraitsPageState;
+  static const Field<Settings, PortraitsPageStatePersisted>
+  _f$portraitsPageState = Field(
+    'portraitsPageState',
+    _$portraitsPageState,
+    opt: true,
+    hook: SafeDecodeHook(),
+  );
+  static Map<String, PersistedFilterGroup> _$persistedFilterGroups(
+    Settings v,
+  ) => v.persistedFilterGroups;
+  static const Field<Settings, Map<String, PersistedFilterGroup>>
+  _f$persistedFilterGroups = Field(
+    'persistedFilterGroups',
+    _$persistedFilterGroups,
+    opt: true,
+    def: const {},
     hook: SafeDecodeHook(),
   );
   static String? _$customGameExePath(Settings v) => v.customGameExePath;
@@ -880,6 +902,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #weaponsPageState: _f$weaponsPageState,
     #hullmodsGridState: _f$hullmodsGridState,
     #hullmodsPageState: _f$hullmodsPageState,
+    #portraitsPageState: _f$portraitsPageState,
+    #persistedFilterGroups: _f$persistedFilterGroups,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
     #customSavesPath: _f$customSavesPath,
@@ -956,6 +980,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       weaponsPageState: data.dec(_f$weaponsPageState),
       hullmodsGridState: data.dec(_f$hullmodsGridState),
       hullmodsPageState: data.dec(_f$hullmodsPageState),
+      portraitsPageState: data.dec(_f$portraitsPageState),
+      persistedFilterGroups: data.dec(_f$persistedFilterGroups),
       customGameExePath: data.dec(_f$customGameExePath),
       useCustomGameExePath: data.dec(_f$useCustomGameExePath),
       customSavesPath: data.dec(_f$customSavesPath),
@@ -1087,6 +1113,19 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     HullmodsPageStatePersisted
   >?
   get hullmodsPageState;
+  PortraitsPageStatePersistedCopyWith<
+    $R,
+    PortraitsPageStatePersisted,
+    PortraitsPageStatePersisted
+  >?
+  get portraitsPageState;
+  MapCopyWith<
+    $R,
+    String,
+    PersistedFilterGroup,
+    PersistedFilterGroupCopyWith<$R, PersistedFilterGroup, PersistedFilterGroup>
+  >
+  get persistedFilterGroups;
   $R call({
     Directory? gameDir,
     Directory? gameCoreDir,
@@ -1117,6 +1156,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     WeaponsPageStatePersisted? weaponsPageState,
     WispGridState? hullmodsGridState,
     HullmodsPageStatePersisted? hullmodsPageState,
+    PortraitsPageStatePersisted? portraitsPageState,
+    Map<String, PersistedFilterGroup>? persistedFilterGroups,
     String? customGameExePath,
     bool? useCustomGameExePath,
     Directory? customSavesPath,
@@ -1220,6 +1261,27 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(hullmodsPageState: v),
   );
   @override
+  PortraitsPageStatePersistedCopyWith<
+    $R,
+    PortraitsPageStatePersisted,
+    PortraitsPageStatePersisted
+  >?
+  get portraitsPageState => $value.portraitsPageState?.copyWith.$chain(
+    (v) => call(portraitsPageState: v),
+  );
+  @override
+  MapCopyWith<
+    $R,
+    String,
+    PersistedFilterGroup,
+    PersistedFilterGroupCopyWith<$R, PersistedFilterGroup, PersistedFilterGroup>
+  >
+  get persistedFilterGroups => MapCopyWith(
+    $value.persistedFilterGroups,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(persistedFilterGroups: v),
+  );
+  @override
   $R call({
     Object? gameDir = $none,
     Object? gameCoreDir = $none,
@@ -1250,6 +1312,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? weaponsPageState = $none,
     WispGridState? hullmodsGridState,
     Object? hullmodsPageState = $none,
+    Object? portraitsPageState = $none,
+    Map<String, PersistedFilterGroup>? persistedFilterGroups,
     Object? customGameExePath = $none,
     bool? useCustomGameExePath,
     Object? customSavesPath = $none,
@@ -1324,6 +1388,9 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (weaponsPageState != $none) #weaponsPageState: weaponsPageState,
       if (hullmodsGridState != null) #hullmodsGridState: hullmodsGridState,
       if (hullmodsPageState != $none) #hullmodsPageState: hullmodsPageState,
+      if (portraitsPageState != $none) #portraitsPageState: portraitsPageState,
+      if (persistedFilterGroups != null)
+        #persistedFilterGroups: persistedFilterGroups,
       if (customGameExePath != $none) #customGameExePath: customGameExePath,
       if (useCustomGameExePath != null)
         #useCustomGameExePath: useCustomGameExePath,
@@ -1449,6 +1516,14 @@ class _SettingsCopyWithImpl<$R, $Out>
     hullmodsPageState: data.get(
       #hullmodsPageState,
       or: $value.hullmodsPageState,
+    ),
+    portraitsPageState: data.get(
+      #portraitsPageState,
+      or: $value.portraitsPageState,
+    ),
+    persistedFilterGroups: data.get(
+      #persistedFilterGroups,
+      or: $value.persistedFilterGroups,
     ),
     customGameExePath: data.get(
       #customGameExePath,

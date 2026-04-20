@@ -24,11 +24,11 @@ import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
 import 'package:trios/widgets/viewer_split_pane.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
@@ -88,16 +88,9 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         filterRequest.destination == TriOSTools.weapons) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final modFilter = ref
-            .read(weaponsPageControllerProvider)
-            .filterCategories
-            .firstWhereOrNull((f) => f.name == 'Mod');
-        if (modFilter != null) {
-          ref.read(weaponsPageControllerProvider.notifier).updateFilterStates(
-            modFilter,
-            {filterRequest.modName: true},
-          );
-        }
+        ref
+            .read(weaponsPageControllerProvider.notifier)
+            .setChipSelections('mod', {filterRequest.modName: true});
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
     }
@@ -238,100 +231,17 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       onHide: controller.toggleShowFilters,
       scrollController: _filterScrollController,
       activeFilterCount: controller.activeFilterCount,
-      showClearAll: controllerState.filterCategories.any(
-        (f) => f.hasActiveFilters,
-      ),
+      showClearAll: controller.filterGroups.any((g) => g.isActive),
       onClearAll: controller.clearAllFilters,
       filterWidgets: [
-        _buildCheckboxFilters(theme, controllerState, controller),
-        const SizedBox(height: 8),
-        ...controllerState.filterCategories.map((filter) {
-          return GridFilterWidget<Weapon>(
-            filter: filter,
+        for (final g in controller.filterGroups)
+          FilterGroupRenderer<Weapon>(
+            group: g,
+            scope: controller.scope,
             items: displayedWeapons,
-            filterStates: filter.filterStates,
-            onSelectionChanged: (states) {
-              controller.updateFilterStates(filter, states);
-            },
-          );
-        }),
+            onChanged: () => controller.onGroupChanged(g.id),
+          ),
       ],
-    );
-  }
-
-  Widget _buildCheckboxFilters(
-    ThemeData theme,
-    WeaponsPageState controllerState,
-    WeaponsPageController controller,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      color: theme.colorScheme.surfaceContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MovingTooltipWidget.text(
-              message: "Only weapons from enabled mods.",
-              child: CheckboxListTile(
-                title: const Text('Only Enabled Mods'),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: .only(left: 8),
-                value: controllerState.showEnabled,
-                onChanged: (value) => controller.toggleShowEnabled(),
-              ),
-            ),
-            MovingTooltipWidget.text(
-              message:
-                  "Show hidden weapons (deco weapons, system weapons without SHOW_IN_CODEX tag).",
-              child: CheckboxListTile(
-                title: const Text('Show Hidden Weapons'),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: .only(left: 8),
-                value: controllerState.showHidden,
-                onChanged: (value) => controller.toggleShowHidden(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TriOSDropdownMenu<WeaponSpoilerLevel>(
-              initialSelection: controllerState.weaponSpoilerLevel,
-              onSelected: (level) {
-                if (level == null) return;
-                controller.setWeaponSpoilerLevel(level);
-              },
-              highlightOutlineColor:
-                  controllerState.weaponSpoilerLevel !=
-                      WeaponSpoilerLevel.showAllSpoilers
-                  ? theme.colorScheme.primary
-                  : null,
-              dropdownMenuEntries: [
-                DropdownMenuEntry(
-                  value: WeaponSpoilerLevel.noSpoilers,
-                  label: "No spoilers",
-                  labelWidget: MovingTooltipWidget.text(
-                    message: "Hides weapons tagged CODEX_UNLOCKABLE.",
-                    child: Text("No spoilers"),
-                  ),
-                  leadingIcon: const Icon(Icons.visibility_off, size: 20),
-                ),
-                DropdownMenuEntry(
-                  value: WeaponSpoilerLevel.showAllSpoilers,
-                  label: "Show all spoilers",
-                  labelWidget: MovingTooltipWidget.text(
-                    warningLevel: TooltipWarningLevel.warning,
-                    message: "Shows weapons tagged CODEX_UNLOCKABLE.",
-                    child: Text("Show all spoilers"),
-                  ),
-                  leadingIcon: const Icon(Icons.visibility_outlined, size: 20),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 

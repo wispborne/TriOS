@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
@@ -9,94 +10,195 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
-import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/filter_engine/filter_engine.dart';
+import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 
 part 'weapons_page_controller.mapper.dart';
 
+/// Stable page identifier for persistence keying.
+const String kWeaponsPageId = 'weapons';
+
 @MappableClass()
 class WeaponsPageStatePersisted with WeaponsPageStatePersistedMappable {
-  final bool showEnabled;
-  final bool showHidden;
   final bool splitPane;
   final bool useContainFit;
+  final bool showFilters;
 
   const WeaponsPageStatePersisted({
-    this.showEnabled = false,
-    this.showHidden = false,
     this.splitPane = false,
     this.useContainFit = false,
+    this.showFilters = false,
   });
 }
 
 @MappableClass()
 class WeaponsPageState with WeaponsPageStateMappable {
   final WeaponsPageStatePersisted persisted;
-  final List<GridFilter<Weapon>> filterCategories;
   final List<Weapon> allWeapons;
   final List<Weapon> filteredWeapons;
   final List<Weapon> weaponsBeforeGridFilter;
   final Map<String, List<String>> weaponSearchIndices;
   final String currentSearchQuery;
-  final bool showFilters;
   final bool isLoading;
-  final WeaponSpoilerLevel weaponSpoilerLevel;
-
-  // Backwards-compatible getters
-  bool get showEnabled => persisted.showEnabled;
-
-  bool get showHidden => persisted.showHidden;
 
   bool get splitPane => persisted.splitPane;
 
   bool get useContainFit => persisted.useContainFit;
 
+  bool get showFilters => persisted.showFilters;
+
   const WeaponsPageState({
     this.persisted = const WeaponsPageStatePersisted(),
-    this.filterCategories = const [],
     this.allWeapons = const [],
     this.filteredWeapons = const [],
     this.weaponsBeforeGridFilter = const [],
     this.weaponSearchIndices = const {},
     this.currentSearchQuery = '',
-    this.showFilters = false,
     this.isLoading = false,
-    this.weaponSpoilerLevel = WeaponSpoilerLevel.noSpoilers,
   });
 }
 
 @MappableEnum()
 enum WeaponSpoilerLevel { noSpoilers, showAllSpoilers }
 
-// Provider for the weapons page controller
 final weaponsPageControllerProvider =
     NotifierProvider<WeaponsPageController, WeaponsPageState>(
       () => WeaponsPageController(),
     );
 
 class WeaponsPageController extends Notifier<WeaponsPageState> {
+  static final _scope = const FilterScope(kWeaponsPageId);
+
+  late final FilterScopeController<Weapon> _filters;
+
+  final vanillaName = 'Vanilla';
+
+  FilterScope get scope => _scope;
+
+  List<FilterGroup<Weapon>> get filterGroups => _filters.groups;
+
+  CompositeFilterGroup<Weapon> get _general =>
+      _filters.findGroup('general') as CompositeFilterGroup<Weapon>;
+
+  BoolField<Weapon> get _showEnabledField =>
+      _general.fieldById('showEnabled') as BoolField<Weapon>;
+
+  BoolField<Weapon> get _showHiddenField =>
+      _general.fieldById('showHidden') as BoolField<Weapon>;
+
+  EnumField<Weapon, WeaponSpoilerLevel> get _spoilerField =>
+      _general.fieldById('spoiler') as EnumField<Weapon, WeaponSpoilerLevel>;
+
+  bool get showEnabled => _showEnabledField.value;
+
+  bool get showHidden => _showHiddenField.value;
+
+  WeaponSpoilerLevel get weaponSpoilerLevel => _spoilerField.selected;
+
   @override
   WeaponsPageState build() {
-    final vanillaName = 'Vanilla';
+    if (stateOrNull == null) {
+      _filters = _buildFilters();
+      final persistence = ref.read(filterGroupPersistenceProvider);
+      _filters.loadPersisted(persistence);
+    }
 
-    // Initialize filter categories
-    final filterCategories = [
-      GridFilter<Weapon>(
+    final saved = ref.read(appSettings).weaponsPageState;
+
+    ref.watch(descriptionsNotifierProvider);
+    final weaponsAsync = ref.watch(weaponListNotifierProvider);
+    final mods = ref.watch(AppState.mods);
+    final isLoadingWeapons = ref.watch(isLoadingWeaponsList);
+
+    final allWeapons = weaponsAsync.value ?? [];
+
+    _filters.applyPendingChipMerge(allWeapons);
+
+    Map<String, List<String>> weaponValuesByWeaponId = _updateSearchIndices(
+      allWeapons,
+    );
+
+    final initialState =
+        (stateOrNull ??
+                WeaponsPageState(
+                  persisted: WeaponsPageStatePersisted(
+                    splitPane: saved?.splitPane ?? false,
+                    useContainFit: saved?.useContainFit ?? false,
+                    showFilters: saved?.showFilters ?? false,
+                  ),
+                ))
+            .copyWith(
+              allWeapons: allWeapons,
+              weaponSearchIndices: weaponValuesByWeaponId,
+              isLoading: isLoadingWeapons,
+            );
+
+    return _processAllFilters(initialState, mods);
+  }
+
+  FilterScopeController<Weapon> _buildFilters() {
+    final groups = <FilterGroup<Weapon>>[
+      CompositeFilterGroup<Weapon>(
+        id: 'general',
+        name: 'General',
+        fields: [
+          BoolField<Weapon>(
+            id: 'showEnabled',
+            label: 'Only Enabled Mods',
+            tooltip: 'Only show weapons from enabled mods.',
+            predicate: (weapon) {
+              final mods = ref.read(AppState.mods);
+              return weapon.modVariant == null ||
+                  weapon.modVariant?.mod(mods)?.hasEnabledVariant == true;
+            },
+          ),
+          BoolField<Weapon>(
+            id: 'showHidden',
+            label: 'Show Hidden Weapons',
+            tooltip: 'Show hidden weapons (built-in, internal).',
+            // When showHidden=true, include all → predicate always true.
+            // When false, exclude hidden → matches only non-hidden.
+            // We implement this with an inverted semantic: the field becomes
+            // "inactive" at its default (false), so when false it filters to
+            // non-hidden. When true it's active but passes everything.
+            predicate: (_) => true,
+          ),
+          EnumField<Weapon, WeaponSpoilerLevel>(
+            id: 'spoiler',
+            label: 'Spoilers',
+            defaultValue: WeaponSpoilerLevel.noSpoilers,
+            options: WeaponSpoilerLevel.values,
+            predicate: _spoilerMatches,
+            optionLabel: _spoilerLabel,
+            optionTooltip: _spoilerTooltip,
+            optionIcon: (e) => switch (e) {
+              WeaponSpoilerLevel.noSpoilers => Icons.visibility_off,
+              WeaponSpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
+            },
+          ),
+        ],
+      ),
+      ChipFilterGroup<Weapon>(
+        id: 'weaponType',
         name: 'Weapon Type',
         valueGetter: (weapon) => weapon.weaponType ?? '',
         displayNameGetter: (name) => name.toTitleCase(),
       ),
-      GridFilter<Weapon>(
+      ChipFilterGroup<Weapon>(
+        id: 'size',
         name: 'Size',
         valueGetter: (weapon) => weapon.size ?? '',
         displayNameGetter: (name) => name.toTitleCase(),
       ),
-      GridFilter<Weapon>(
+      ChipFilterGroup<Weapon>(
+        id: 'hint',
         name: 'Hint',
         valueGetter: (weapon) => weapon.hints ?? "",
         valuesGetter: (weapon) => weapon.hintsAsSet.toList(),
         displayNameGetter: (hint) => hint.toTitleCase(),
       ),
-      GridFilter<Weapon>(
+      ChipFilterGroup<Weapon>(
+        id: 'mod',
         name: 'Mod',
         collapsedByDefault: true,
         valueGetter: (weapon) =>
@@ -107,53 +209,34 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
             ? 1
             : a.compareTo(b),
       ),
-      GridFilter<Weapon>(
+      ChipFilterGroup<Weapon>(
+        id: 'techManufacturer',
         name: 'Tech/Manufacturer',
         collapsedByDefault: true,
         valueGetter: (weapon) => weapon.techManufacturer ?? '',
       ),
     ];
-
-    // Restore saved state
-    final saved = ref.read(appSettings).weaponsPageState;
-
-    // Watch weapon data and descriptions.
-    ref.watch(descriptionsNotifierProvider);
-    final weaponsAsync = ref.watch(weaponListNotifierProvider);
-    final mods = ref.watch(AppState.mods);
-    final isLoadingWeapons = ref.watch(isLoadingWeaponsList);
-
-    final allWeapons = weaponsAsync.value ?? [];
-
-    // Build search index from current weapons (incremental update)
-    Map<String, List<String>> weaponValuesByWeaponId = _updateSearchIndices(
-      allWeapons,
-    );
-
-    // Build initial state; prefer persisted when available
-    var initialState =
-        (stateOrNull ??
-                WeaponsPageState(
-                  persisted: WeaponsPageStatePersisted(
-                    showEnabled: saved?.showEnabled ?? false,
-                    showHidden: saved?.showHidden ?? false,
-                    splitPane: saved?.splitPane ?? false,
-                    useContainFit: saved?.useContainFit ?? false,
-                  ),
-                ))
-            .copyWith(
-              filterCategories:
-                  stateOrNull?.filterCategories ?? filterCategories,
-              allWeapons: allWeapons,
-              weaponSearchIndices: weaponValuesByWeaponId,
-              isLoading: isLoadingWeapons,
-            );
-
-    // Process filters to get final weapon lists
-    final processedState = _processAllFilters(initialState, mods);
-
-    return processedState;
+    return FilterScopeController<Weapon>(scope: _scope, groups: groups);
   }
+
+  bool _spoilerMatches(Weapon weapon, WeaponSpoilerLevel level) {
+    if (level == WeaponSpoilerLevel.showAllSpoilers) return true;
+    final tags =
+        weapon.tags?.split(',').map((t) => t.trim().toLowerCase()) ?? const [];
+    return !tags.contains('codex_unlockable');
+  }
+
+  String _spoilerLabel(WeaponSpoilerLevel e) => switch (e) {
+    WeaponSpoilerLevel.noSpoilers => 'No spoilers',
+    WeaponSpoilerLevel.showAllSpoilers => 'Show all spoilers',
+  };
+
+  String _spoilerTooltip(WeaponSpoilerLevel e) => switch (e) {
+    WeaponSpoilerLevel.noSpoilers =>
+      'Hides weapons tagged CODEX_UNLOCKABLE.',
+    WeaponSpoilerLevel.showAllSpoilers =>
+      'Shows weapons tagged CODEX_UNLOCKABLE.',
+  };
 
   void _persistState(WeaponsPageState newState) {
     try {
@@ -161,25 +244,20 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
         final current = s.weaponsPageState ?? const WeaponsPageStatePersisted();
         return s.copyWith(
           weaponsPageState: current.copyWith(
-            showEnabled: newState.showEnabled,
-            showHidden: newState.showHidden,
             splitPane: newState.splitPane,
             useContainFit: newState.useContainFit,
+            showFilters: newState.showFilters,
           ),
         );
       });
-    } catch (_) {
-      // swallow; persistence failures shouldn't break UX
-    }
+    } catch (_) {}
   }
 
   Map<String, List<String>> _updateSearchIndices(List<Weapon> allWeapons) {
-    // Build search index from current weapons (incremental update)
     final currentIndices = stateOrNull?.weaponSearchIndices ?? {};
     final currentWeaponIds = allWeapons.map((weapon) => weapon.id).toSet();
     final cachedWeaponIds = currentIndices.keys.toSet();
 
-    // Remove indices for weapons that are no longer present
     final indicesToRemove = cachedWeaponIds.difference(currentWeaponIds);
     final weaponValuesByWeaponId = Map<String, List<String>>.from(
       currentIndices,
@@ -188,7 +266,6 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
       weaponValuesByWeaponId.remove(weaponId);
     }
 
-    // Add indices only for new weapons that don't already have them
     final newWeapons = allWeapons.where(
       (weapon) => !cachedWeaponIds.contains(weapon.id),
     );
@@ -203,24 +280,16 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     return weaponValuesByWeaponId;
   }
 
-  /// Process all filters and return updated state
   WeaponsPageState _processAllFilters(
     WeaponsPageState currentState,
     List<Mod> mods,
   ) {
-    var weapons = currentState.allWeapons.toList();
+    var weapons = _applyEnabledAndHidden(currentState.allWeapons.toList());
+    weapons = _applySpoilers(weapons);
 
-    weapons = _filterByEnabled(weapons, mods, currentState.showEnabled);
-
-    weapons = _filterByHidden(weapons, currentState.showHidden);
-
-    weapons = _filterByWeaponSpoilers(weapons, currentState.weaponSpoilerLevel);
-
-    // Store weapons before grid filters for filter panel
     final weaponsBeforeGridFilter = weapons.toList();
 
-    // Apply grid filters
-    weapons = _applyFilters(weapons, currentState.filterCategories);
+    weapons = _filters.applyChipFilters(weapons);
 
     weapons = _filterBySearch(
       weapons,
@@ -234,49 +303,53 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     );
   }
 
-  /// Update search query and reprocess filters
+  /// Composite fields don't map cleanly to "show X unless flag" semantics for
+  /// showHidden (the *inactive* state is the one that filters). Apply these
+  /// rules directly here instead of via the composite's AND.
+  List<Weapon> _applyEnabledAndHidden(List<Weapon> weapons) {
+    if (showEnabled) {
+      final mods = ref.read(AppState.mods);
+      weapons = weapons.where((weapon) {
+        return weapon.modVariant == null ||
+            weapon.modVariant?.mod(mods)?.hasEnabledVariant == true;
+      }).toList();
+    }
+    if (!showHidden) {
+      weapons = weapons.where((weapon) => !weapon.isHidden()).toList();
+    }
+    return weapons;
+  }
+
+  List<Weapon> _applySpoilers(List<Weapon> weapons) {
+    final level = weaponSpoilerLevel;
+    if (level == WeaponSpoilerLevel.showAllSpoilers) return weapons;
+    return weapons.where((w) => _spoilerMatches(w, level)).toList();
+  }
+
   void updateSearchQuery(String query) {
     final mods = ref.read(AppState.mods);
     final updatedState = state.copyWith(currentSearchQuery: query);
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
+    state = _processAllFilters(updatedState, mods);
   }
 
-  /// Toggle show enabled filter
   void toggleShowEnabled() {
-    final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(
-      persisted: state.persisted.copyWith(showEnabled: !state.showEnabled),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
-    _persistState(state);
+    _showEnabledField.value = !_showEnabledField.value;
+    _emitAfterFilterMutation();
+    _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
   }
 
-  /// Toggle show hidden weapons filter
   void toggleShowHidden() {
-    final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(
-      persisted: state.persisted.copyWith(showHidden: !state.showHidden),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
-    _persistState(state);
+    _showHiddenField.value = !_showHiddenField.value;
+    _emitAfterFilterMutation();
+    _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
   }
 
-  /// Set spoiler level for weapons
   void setWeaponSpoilerLevel(WeaponSpoilerLevel level) {
-    final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(weaponSpoilerLevel: level);
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
+    _spoilerField.setSelected(level);
+    _emitAfterFilterMutation();
+    _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
   }
 
-  /// Toggle split pane view
   void toggleSplitPane() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(splitPane: !state.splitPane),
@@ -285,13 +358,14 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     _persistState(state);
   }
 
-  /// Toggle filters panel visibility
   void toggleShowFilters() {
-    final updatedState = state.copyWith(showFilters: !state.showFilters);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(showFilters: !state.showFilters),
+    );
     state = updatedState;
+    _persistState(state);
   }
 
-  /// Toggle image fit between scaleDown and contain
   void toggleUseContainFit() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(useContainFit: !state.useContainFit),
@@ -300,122 +374,32 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     _persistState(state);
   }
 
-  int get activeFilterCount =>
-      state.filterCategories.fold(0, (sum, f) => sum + f.filterStates.length) +
-      (state.showEnabled ? 1 : 0) +
-      (state.showHidden ? 1 : 0) +
-      (state.weaponSpoilerLevel != WeaponSpoilerLevel.showAllSpoilers ? 1 : 0);
+  int get activeFilterCount => _filters.activeCount;
 
-  /// Get game core directory
   Directory getGameCoreDir() {
     return Directory(ref.read(AppState.gameCoreFolder).value?.path ?? '');
   }
 
-  /// Clear all active filters
   void clearAllFilters() {
+    _filters.clearAll();
+    _emitAfterFilterMutation();
+  }
+
+  void onGroupChanged(String groupId) {
+    _emitAfterFilterMutation();
+    _filters.maybePersist(groupId, ref.read(filterGroupPersistenceProvider));
+  }
+
+  void setChipSelections(String groupId, Map<String, bool?> selections) {
+    _filters.setChipSelections(groupId, selections);
+    _emitAfterFilterMutation();
+  }
+
+  void _emitAfterFilterMutation() {
     final mods = ref.read(AppState.mods);
-
-    // Clear all filter states
-    for (final filter in state.filterCategories) {
-      filter.filterStates.clear();
-    }
-
-    // Create new state with cleared filters
-    final updatedState = state.copyWith(
-      filterCategories: List.from(state.filterCategories),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
+    state = _processAllFilters(state, mods);
   }
 
-  /// Update filter states for a specific filter
-  void updateFilterStates(GridFilter filter, Map<String, bool?> states) {
-    final mods = ref.read(AppState.mods);
-
-    filter.filterStates.clear();
-    filter.filterStates.addAll(states);
-
-    // Create new state with updated filters
-    final updatedState = state.copyWith(
-      filterCategories: List.from(state.filterCategories),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
-  }
-
-  /// Filter weapons based on enabled status
-  List<Weapon> _filterByEnabled(
-    List<Weapon> weapons,
-    List<Mod> mods,
-    bool showEnabled,
-  ) {
-    if (!showEnabled) return weapons;
-
-    return weapons.where((weapon) {
-      return weapon.modVariant == null ||
-          weapon.modVariant?.mod(mods)?.hasEnabledVariant == true;
-    }).toList();
-  }
-
-  /// Filter weapons based on hidden status
-  List<Weapon> _filterByHidden(List<Weapon> weapons, bool showHidden) {
-    if (showHidden) return weapons;
-
-    return weapons
-        .where((weapon) => !weapon.isHidden())
-        .toList();
-  }
-
-  /// Filter weapons by spoiler level (hide codex_unlockable when No spoilers)
-  List<Weapon> _filterByWeaponSpoilers(
-    List<Weapon> weapons,
-    WeaponSpoilerLevel level,
-  ) {
-    if (level == WeaponSpoilerLevel.showAllSpoilers) return weapons;
-
-    return weapons.where((weapon) {
-      final tags =
-          weapon.tags?.split(',').map((t) => t.trim().toLowerCase()) ?? [];
-      final isCodexUnlockable = tags.contains('codex_unlockable');
-      return !isCodexUnlockable;
-    }).toList();
-  }
-
-  /// Apply grid filters to weapons
-  List<Weapon> _applyFilters(
-    List<Weapon> weapons,
-    List<GridFilter<Weapon>> filterCategories,
-  ) {
-    for (final filter in filterCategories) {
-      if (filter.hasActiveFilters) {
-        weapons = weapons.where((weapon) {
-          final values = filter.valuesGetter != null
-              ? filter.valuesGetter!(weapon)
-              : [filter.valueGetter(weapon)];
-
-          // If any value is explicitly excluded, exclude the item
-          if (values.any((v) => filter.filterStates[v] == false)) {
-            return false;
-          }
-
-          // If there are any explicitly included values
-          final hasIncludedValues = filter.filterStates.values.contains(true);
-          if (hasIncludedValues) {
-            // Must have at least one included value
-            return values.any((v) => filter.filterStates[v] == true);
-          }
-
-          // Only exclusions active — allow anything not excluded
-          return true;
-        }).toList();
-      }
-    }
-    return weapons;
-  }
-
-  /// Filter weapons by search query
   List<Weapon> _filterBySearch(
     List<Weapon> weapons,
     String query,

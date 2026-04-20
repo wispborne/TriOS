@@ -14,6 +14,7 @@ import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/map_diff.dart';
 import 'package:trios/utils/util.dart';
+import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.dart';
 
 /// Settings State Provider
 final appSettings = NotifierProvider<AppSettingNotifier, Settings>(
@@ -206,7 +207,8 @@ class SettingsFileManager {
               //     :
               jsonDecode(contents) as Map<String, dynamic>;
           Fimber.i("$_fileName successfully loaded from disk.");
-          return SettingsMapper.fromMap(map);
+          final loaded = SettingsMapper.fromMap(map);
+          return _dropStalePersistedFilterGroups(loaded);
         } catch (e, stackTrace) {
           Fimber.e(
             "Error reading from disk, creating backup: $e",
@@ -242,6 +244,27 @@ class SettingsFileManager {
       rethrow;
     }
   }
+}
+
+/// Drops any [PersistedFilterGroup] entries whose schemaVersion is not the
+/// current version. v1 was unreleased — migration is a silent drop.
+Settings _dropStalePersistedFilterGroups(Settings settings) {
+  final kept = <String, PersistedFilterGroup>{};
+  var dropped = 0;
+  for (final e in settings.persistedFilterGroups.entries) {
+    if (e.value.schemaVersion == PersistedFilterGroup.currentSchemaVersion) {
+      kept[e.key] = e.value;
+    } else {
+      dropped++;
+    }
+  }
+  if (dropped > 0) {
+    Fimber.i(
+      "Dropped $dropped pre-v2 persisted filter group entries on load.",
+    );
+  }
+  if (dropped == 0) return settings;
+  return settings.copyWith(persistedFilterGroups: kept);
 }
 
 /// Mutex, but synchronous.

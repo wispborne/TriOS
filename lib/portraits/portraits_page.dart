@@ -14,6 +14,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portraits_gridview.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
+import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -126,13 +127,9 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     required bool showOnlyYourChangesFilter,
   }) {
     final controllerState = ref.watch(portraitsPageControllerProvider);
+    final notifier = ref.read(portraitsPageControllerProvider.notifier);
     final paneState = controllerState.getPaneState(pane);
-    final filterCategories = controllerState.getFilterCategories(pane);
-    final activeFilterCount = filterCategories
-            .fold(0, (sum, f) => sum + f.filterStates.length) +
-        (paneState.showOnlyWithMetadata ? 1 : 0) +
-        (showOnlyYourChangesFilter && paneState.showOnlyReplaced ? 1 : 0) +
-        (paneState.showOnlyEnabledMods ? 1 : 0);
+    final activeFilterCount = notifier.activeFilterCountFor(pane);
 
     if (!paneState.showFilters) {
       return Padding(
@@ -181,102 +178,27 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     required bool showOnlyYourChangesFilter,
     required int activeFilterCount,
   }) {
-    final controllerState = ref.watch(portraitsPageControllerProvider);
-    final filterCategories = controllerState.getFilterCategories(pane);
     final scrollController = _getFilterScrollController(pane);
     final notifier = ref.read(portraitsPageControllerProvider.notifier);
+    final scope = notifier.scopeFor(pane);
+    final groups = notifier.filterGroupsFor(pane);
 
     return FiltersPanel(
       onHide: () => notifier.setShowFilters(pane, false),
       scrollController: scrollController,
       width: 200,
       activeFilterCount: activeFilterCount,
-      showClearAll: filterCategories.any((f) => f.hasActiveFilters),
+      showClearAll: groups.any((g) => g.isActive),
       onClearAll: () => notifier.clearAllFilters(pane),
       filterWidgets: [
-        _buildCheckboxFilters(
-          theme,
-          pane: pane,
-          showOnlyYourChangesFilter: showOnlyYourChangesFilter,
-        ),
-        const SizedBox(height: 8),
-        ...filterCategories.map((filter) {
-          return GridFilterWidget<PortraitFilterItem>(
-            filter: filter,
+        for (final g in groups)
+          FilterGroupRenderer<PortraitFilterItem>(
+            group: g,
+            scope: scope,
             items: filterItems,
-            filterStates: filter.filterStates,
-            onSelectionChanged: (states) {
-              notifier.updateFilterStates(filter, states);
-            },
-          );
-        }),
+            onChanged: () => notifier.onGroupChanged(pane, g.id),
+          ),
       ],
-    );
-  }
-
-  Widget _buildCheckboxFilters(
-    ThemeData theme, {
-    FilterPane pane = FilterPane.main,
-    required bool showOnlyYourChangesFilter,
-  }) {
-    final paneState =
-        ref.watch(portraitsPageControllerProvider).getPaneState(pane);
-    final notifier = ref.read(portraitsPageControllerProvider.notifier);
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      color: theme.colorScheme.surfaceContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // "Confirmed Portraits" checkbox
-            MovingTooltipWidget.text(
-              message:
-                  "Only show images that are confirmed portraits."
-                  "\n\nPortraits defined in .faction files have genders."
-                  "\nPortraits from settings.json files do not.",
-              child: CheckboxListTile(
-                title: const Text('Confirmed Portraits'),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: EdgeInsets.zero,
-                value: paneState.showOnlyWithMetadata,
-                onChanged: (value) =>
-                    notifier.setShowOnlyWithMetadata(pane, value ?? true),
-              ),
-            ),
-            // "View Replaced" checkbox
-            if (showOnlyYourChangesFilter)
-              MovingTooltipWidget.text(
-                message: "Only show images that have replacements",
-                child: CheckboxListTile(
-                  title: const Text('Only Your Changes'),
-                  dense: true,
-                  visualDensity: VisualDensity.compact,
-                  contentPadding: EdgeInsets.zero,
-                  value: paneState.showOnlyReplaced,
-                  onChanged: (value) =>
-                      notifier.setShowOnlyReplaced(pane, value ?? false),
-                ),
-              ),
-            // "Only Enabled" checkbox
-            MovingTooltipWidget.text(
-              message: "Only show images from enabled mods",
-              child: CheckboxListTile(
-                title: const Text('Only Enabled Mods'),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: EdgeInsets.zero,
-                value: paneState.showOnlyEnabledMods,
-                onChanged: (value) =>
-                    notifier.setShowOnlyEnabledMods(pane, value ?? false),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -396,17 +318,13 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
         filterRequest.destination == TriOSTools.portraits) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final notifier = ref.read(portraitsPageControllerProvider.notifier);
-        final modFilter = ref
-            .read(portraitsPageControllerProvider)
-            .mainFilterCategories
-            .firstWhereOrNull((f) => f.name == 'Mod');
-        if (modFilter != null) {
-          notifier.updateFilterStates(
-            modFilter,
-            {filterRequest.modName: true},
-          );
-        }
+        ref
+            .read(portraitsPageControllerProvider.notifier)
+            .setChipSelections(
+              FilterPane.main,
+              'mod',
+              {filterRequest.modName: true},
+            );
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
     }

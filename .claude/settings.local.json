@@ -79,7 +79,10 @@
       "Bash(cp openspec/changes/refactor-game-running-detection/specs/win32-process-detection/spec.md openspec/specs/win32-process-detection/spec.md)",
       "Bash(mkdir -p openspec/specs/game-running-check)",
       "Bash(cp openspec/changes/refactor-game-running-detection/specs/game-running-check/spec.md openspec/specs/game-running-check/spec.md)",
-      "Bash(mv openspec/changes/refactor-game-running-detection openspec/changes/archive/2026-04-13-refactor-game-running-detection)"
+      "Bash(mv openspec/changes/refactor-game-running-detection openspec/changes/archive/2026-04-13-refactor-game-running-detection)",
+      "Bash(cygpath -w /tmp/simplify_diff.txt)",
+      "Read(//f/tmp/**)",
+      "Read(//f//**)"
     ]
   }
 }

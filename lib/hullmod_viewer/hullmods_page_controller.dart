@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
@@ -8,53 +9,49 @@ import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/filter_engine/filter_engine.dart';
+import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 
 part 'hullmods_page_controller.mapper.dart';
 
+/// Stable page identifier for persistence keying.
+const String kHullmodsPageId = 'hullmods';
+
 @MappableClass()
 class HullmodsPageStatePersisted with HullmodsPageStatePersistedMappable {
-  final bool showEnabled;
   final bool splitPane;
   final bool useContainFit;
+  final bool showFilters;
 
   const HullmodsPageStatePersisted({
-    this.showEnabled = false,
     this.splitPane = false,
     this.useContainFit = false,
+    this.showFilters = false,
   });
 }
 
 @MappableClass()
 class HullmodsPageState with HullmodsPageStateMappable {
   final HullmodsPageStatePersisted persisted;
-  final List<GridFilter<Hullmod>> filterCategories;
   final List<Hullmod> allHullmods;
   final List<Hullmod> filteredHullmods;
   final List<Hullmod> hullmodsBeforeGridFilter;
   final Map<String, List<String>> hullmodSearchIndices;
   final String currentSearchQuery;
-  final bool showFilters;
   final bool isLoading;
-  final bool showHidden;
-  final HullmodSpoilerLevel hullmodSpoilerLevel;
 
-  bool get showEnabled => persisted.showEnabled;
   bool get splitPane => persisted.splitPane;
   bool get useContainFit => persisted.useContainFit;
+  bool get showFilters => persisted.showFilters;
 
   const HullmodsPageState({
     this.persisted = const HullmodsPageStatePersisted(),
-    this.filterCategories = const [],
     this.allHullmods = const [],
     this.filteredHullmods = const [],
     this.hullmodsBeforeGridFilter = const [],
     this.hullmodSearchIndices = const {},
     this.currentSearchQuery = '',
-    this.showFilters = false,
     this.isLoading = false,
-    this.showHidden = false,
-    this.hullmodSpoilerLevel = HullmodSpoilerLevel.noSpoilers,
   });
 }
 
@@ -67,36 +64,41 @@ final hullmodsPageControllerProvider =
     );
 
 class HullmodsPageController extends Notifier<HullmodsPageState> {
+  static final _scope = const FilterScope(kHullmodsPageId);
+
+  late final FilterScopeController<Hullmod> _filters;
+
+  final vanillaName = 'Vanilla';
+
+  FilterScope get scope => _scope;
+
+  List<FilterGroup<Hullmod>> get filterGroups => _filters.groups;
+
+  CompositeFilterGroup<Hullmod> get _general =>
+      _filters.findGroup('general') as CompositeFilterGroup<Hullmod>;
+
+  BoolField<Hullmod> get _showEnabledField =>
+      _general.fieldById('showEnabled') as BoolField<Hullmod>;
+
+  BoolField<Hullmod> get _showHiddenField =>
+      _general.fieldById('showHidden') as BoolField<Hullmod>;
+
+  EnumField<Hullmod, HullmodSpoilerLevel> get _spoilerField =>
+      _general.fieldById('spoiler') as EnumField<Hullmod, HullmodSpoilerLevel>;
+
+  bool get showEnabled => _showEnabledField.value;
+
+  bool get showHidden => _showHiddenField.value;
+
+  HullmodSpoilerLevel get hullmodSpoilerLevel => _spoilerField.selected;
+
   @override
   HullmodsPageState build() {
-    final vanillaName = 'Vanilla';
-
-    final filterCategories = [
-      GridFilter<Hullmod>(
-        name: 'Mod',
-        valueGetter: (hullmod) =>
-            hullmod.modVariant?.modInfo.nameOrId ?? vanillaName,
-        sortComparator: (a, b) => a == vanillaName
-            ? -1
-            : b == vanillaName
-            ? 1
-            : a.compareTo(b),
-      ),
-      GridFilter<Hullmod>(
-        name: 'Tech/Manufacturer',
-        valueGetter: (hullmod) => hullmod.techManufacturer ?? '',
-      ),
-      GridFilter<Hullmod>(
-        name: 'UI Tags',
-        valueGetter: (hullmod) => hullmod.uiTags ?? '',
-        valuesGetter: (hullmod) => hullmod.uiTags
-                ?.split(',')
-                .map((tag) => tag.trim())
-                .where((tag) => tag.isNotEmpty)
-                .toList() ??
-            [],
-      ),
-    ];
+    if (stateOrNull == null) {
+      _filters = _buildFilters();
+      final persistence = ref.read(filterGroupPersistenceProvider);
+      _filters.loadPersisted(persistence);
+    }
 
     final saved = ref.read(appSettings).hullmodsPageState;
 
@@ -107,6 +109,8 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
 
     final allHullmods = hullmodsAsync.value ?? [];
 
+    _filters.applyPendingChipMerge(allHullmods);
+
     Map<String, List<String>> hullmodValuesByHullmodId = _updateSearchIndices(
       allHullmods,
     );
@@ -115,23 +119,107 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
         (stateOrNull ??
                 HullmodsPageState(
                   persisted: HullmodsPageStatePersisted(
-                    showEnabled: saved?.showEnabled ?? false,
                     splitPane: saved?.splitPane ?? false,
                     useContainFit: saved?.useContainFit ?? false,
+                    showFilters: saved?.showFilters ?? false,
                   ),
                 ))
             .copyWith(
-              filterCategories:
-                  stateOrNull?.filterCategories ?? filterCategories,
               allHullmods: allHullmods,
               hullmodSearchIndices: hullmodValuesByHullmodId,
               isLoading: isLoadingHullmods,
             );
 
-    final processedState = _processAllFilters(initialState, mods);
-
-    return processedState;
+    return _processAllFilters(initialState, mods);
   }
+
+  FilterScopeController<Hullmod> _buildFilters() {
+    final groups = <FilterGroup<Hullmod>>[
+      CompositeFilterGroup<Hullmod>(
+        id: 'general',
+        name: 'General',
+        fields: [
+          BoolField<Hullmod>(
+            id: 'showEnabled',
+            label: 'Only Enabled Mods',
+            tooltip: 'Only hullmods from enabled mods.',
+            predicate: (hullmod) {
+              final mods = ref.read(AppState.mods);
+              return hullmod.modVariant == null ||
+                  hullmod.modVariant?.mod(mods)?.hasEnabledVariant == true;
+            },
+          ),
+          BoolField<Hullmod>(
+            id: 'showHidden',
+            label: 'Show Hidden Hullmods',
+            tooltip: 'Show hidden hullmods (built-in, internal).',
+            predicate: (_) => true, // manual application (inverted default).
+          ),
+          EnumField<Hullmod, HullmodSpoilerLevel>(
+            id: 'spoiler',
+            label: 'Spoilers',
+            defaultValue: HullmodSpoilerLevel.noSpoilers,
+            options: HullmodSpoilerLevel.values,
+            predicate: _spoilerMatches,
+            optionLabel: _spoilerLabel,
+            optionTooltip: _spoilerTooltip,
+            optionIcon: (e) => switch (e) {
+              HullmodSpoilerLevel.noSpoilers => Icons.visibility_off,
+              HullmodSpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
+            },
+          ),
+        ],
+      ),
+      ChipFilterGroup<Hullmod>(
+        id: 'mod',
+        name: 'Mod',
+        valueGetter: (hullmod) =>
+            hullmod.modVariant?.modInfo.nameOrId ?? vanillaName,
+        sortComparator: (a, b) => a == vanillaName
+            ? -1
+            : b == vanillaName
+            ? 1
+            : a.compareTo(b),
+      ),
+      ChipFilterGroup<Hullmod>(
+        id: 'techManufacturer',
+        name: 'Tech/Manufacturer',
+        valueGetter: (hullmod) => hullmod.techManufacturer ?? '',
+      ),
+      ChipFilterGroup<Hullmod>(
+        id: 'uiTags',
+        name: 'UI Tags',
+        valueGetter: (hullmod) => hullmod.uiTags ?? '',
+        valuesGetter: (hullmod) => hullmod.uiTags
+                ?.split(',')
+                .map((tag) => tag.trim())
+                .where((tag) => tag.isNotEmpty)
+                .toList() ??
+            [],
+      ),
+    ];
+    return FilterScopeController<Hullmod>(scope: _scope, groups: groups);
+  }
+
+  bool _spoilerMatches(Hullmod hullmod, HullmodSpoilerLevel level) {
+    if (level == HullmodSpoilerLevel.showAllSpoilers) return true;
+    final isCodexUnlockable = hullmod.tagsAsSet.contains('codex_unlockable');
+    final isCodexRequireRelated =
+        hullmod.tagsAsSet.contains('codex_require_related');
+    return !isCodexUnlockable && !isCodexRequireRelated;
+  }
+
+  String _spoilerLabel(HullmodSpoilerLevel e) => switch (e) {
+    HullmodSpoilerLevel.noSpoilers => 'No spoilers',
+    HullmodSpoilerLevel.showAllSpoilers => 'Show all spoilers',
+  };
+
+  String _spoilerTooltip(HullmodSpoilerLevel e) => switch (e) {
+    HullmodSpoilerLevel.noSpoilers =>
+      'Hides hullmods tagged CODEX_UNLOCKABLE or CODEX_REQUIRE_RELATED.',
+    HullmodSpoilerLevel.showAllSpoilers =>
+      'Shows hullmods tagged CODEX_UNLOCKABLE or CODEX_REQUIRE_RELATED.',
+  };
 
   void _persistState(HullmodsPageState newState) {
     try {
@@ -140,15 +228,13 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
             s.hullmodsPageState ?? const HullmodsPageStatePersisted();
         return s.copyWith(
           hullmodsPageState: current.copyWith(
-            showEnabled: newState.showEnabled,
             splitPane: newState.splitPane,
             useContainFit: newState.useContainFit,
+            showFilters: newState.showFilters,
           ),
         );
       });
-    } catch (_) {
-      // swallow; persistence failures shouldn't break UX
-    }
+    } catch (_) {}
   }
 
   Map<String, List<String>> _updateSearchIndices(List<Hullmod> allHullmods) {
@@ -182,18 +268,12 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
     HullmodsPageState currentState,
     List<Mod> mods,
   ) {
-    var hullmods = currentState.allHullmods.toList();
-
-    hullmods = _filterByEnabled(hullmods, mods, currentState.showEnabled);
-    hullmods = _filterByHidden(hullmods, currentState.showHidden);
-    hullmods = _filterByHullmodSpoilers(
-      hullmods,
-      currentState.hullmodSpoilerLevel,
-    );
+    var hullmods = _applyEnabledAndHidden(currentState.allHullmods.toList());
+    hullmods = _applySpoilers(hullmods);
 
     final hullmodsBeforeGridFilter = hullmods.toList();
 
-    hullmods = _applyFilters(hullmods, currentState.filterCategories);
+    hullmods = _filters.applyChipFilters(hullmods);
 
     hullmods = _filterBySearch(
       hullmods,
@@ -207,39 +287,50 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
     );
   }
 
+  List<Hullmod> _applyEnabledAndHidden(List<Hullmod> hullmods) {
+    if (showEnabled) {
+      final mods = ref.read(AppState.mods);
+      hullmods = hullmods.where((h) {
+        return h.modVariant == null ||
+            h.modVariant?.mod(mods)?.hasEnabledVariant == true;
+      }).toList();
+    }
+    if (!showHidden) {
+      hullmods = hullmods
+          .where((h) => h.hidden != true && h.hiddenEverywhere != true)
+          .toList();
+    }
+    return hullmods;
+  }
+
+  List<Hullmod> _applySpoilers(List<Hullmod> hullmods) {
+    final level = hullmodSpoilerLevel;
+    if (level == HullmodSpoilerLevel.showAllSpoilers) return hullmods;
+    return hullmods.where((h) => _spoilerMatches(h, level)).toList();
+  }
+
   void updateSearchQuery(String query) {
     final mods = ref.read(AppState.mods);
     final updatedState = state.copyWith(currentSearchQuery: query);
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
+    state = _processAllFilters(updatedState, mods);
   }
 
   void toggleShowEnabled() {
-    final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(
-      persisted: state.persisted.copyWith(showEnabled: !state.showEnabled),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
-    _persistState(state);
+    _showEnabledField.value = !_showEnabledField.value;
+    _emitAfterFilterMutation();
+    _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
   }
 
   void toggleShowHidden() {
-    final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(showHidden: !state.showHidden);
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
+    _showHiddenField.value = !_showHiddenField.value;
+    _emitAfterFilterMutation();
+    _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
   }
 
   void setHullmodSpoilerLevel(HullmodSpoilerLevel level) {
-    final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(hullmodSpoilerLevel: level);
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
+    _spoilerField.setSelected(level);
+    _emitAfterFilterMutation();
+    _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
   }
 
   void toggleSplitPane() {
@@ -251,11 +342,13 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
   }
 
   void toggleShowFilters() {
-    final updatedState = state.copyWith(showFilters: !state.showFilters);
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(showFilters: !state.showFilters),
+    );
     state = updatedState;
+    _persistState(state);
   }
 
-  /// Toggle image fit between scaleDown and contain
   void toggleUseContainFit() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(
@@ -266,132 +359,30 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
     _persistState(state);
   }
 
-  int get activeFilterCount =>
-      state.filterCategories.fold(
-        0,
-        (sum, f) => sum + f.filterStates.length,
-      ) +
-      (state.showEnabled ? 1 : 0) +
-      (state.showHidden ? 1 : 0) +
-      (state.hullmodSpoilerLevel != HullmodSpoilerLevel.showAllSpoilers
-          ? 1
-          : 0);
+  int get activeFilterCount => _filters.activeCount;
 
   Directory getGameCoreDir() {
     return Directory(ref.read(AppState.gameCoreFolder).value?.path ?? '');
   }
 
   void clearAllFilters() {
+    _filters.clearAll();
+    _emitAfterFilterMutation();
+  }
+
+  void onGroupChanged(String groupId) {
+    _emitAfterFilterMutation();
+    _filters.maybePersist(groupId, ref.read(filterGroupPersistenceProvider));
+  }
+
+  void setChipSelections(String groupId, Map<String, bool?> selections) {
+    _filters.setChipSelections(groupId, selections);
+    _emitAfterFilterMutation();
+  }
+
+  void _emitAfterFilterMutation() {
     final mods = ref.read(AppState.mods);
-
-    for (final filter in state.filterCategories) {
-      filter.filterStates.clear();
-    }
-
-    final updatedState = state.copyWith(
-      filterCategories: List.from(state.filterCategories),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
-  }
-
-  void updateFilterStates(GridFilter filter, Map<String, bool?> states) {
-    final mods = ref.read(AppState.mods);
-
-    filter.filterStates.clear();
-    filter.filterStates.addAll(states);
-
-    final updatedState = state.copyWith(
-      filterCategories: List.from(state.filterCategories),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
-  }
-
-  List<Hullmod> _filterByEnabled(
-    List<Hullmod> hullmods,
-    List<Mod> mods,
-    bool showEnabled,
-  ) {
-    if (!showEnabled) return hullmods;
-
-    return hullmods.where((hullmod) {
-      return hullmod.modVariant == null ||
-          hullmod.modVariant?.mod(mods)?.hasEnabledVariant == true;
-    }).toList();
-  }
-
-  List<Hullmod> _filterByHidden(List<Hullmod> hullmods, bool showHidden) {
-    if (showHidden) return hullmods;
-
-    return hullmods
-        .where(
-          (hullmod) =>
-              hullmod.hidden != true && hullmod.hiddenEverywhere != true,
-        )
-        .toList();
-  }
-
-  List<Hullmod> _filterByHullmodSpoilers(
-    List<Hullmod> hullmods,
-    HullmodSpoilerLevel level,
-  ) {
-    if (level == HullmodSpoilerLevel.showAllSpoilers) return hullmods;
-
-    return hullmods.where((hullmod) {
-      final isCodexUnlockable = hullmod.tagsAsSet.contains('codex_unlockable');
-      final isCodexRequireRelated =
-          hullmod.tagsAsSet.contains('codex_require_related');
-      return !isCodexUnlockable && !isCodexRequireRelated;
-    }).toList();
-  }
-
-  List<Hullmod> _applyFilters(
-    List<Hullmod> hullmods,
-    List<GridFilter<Hullmod>> filterCategories,
-  ) {
-    for (final filter in filterCategories) {
-      if (filter.hasActiveFilters) {
-        hullmods = hullmods.where((hullmod) {
-          // Multi-value filter (e.g. UI Tags split by comma).
-          if (filter.valuesGetter != null) {
-            final values = filter.valuesGetter!(hullmod);
-            final hasIncludedValues =
-                filter.filterStates.values.contains(true);
-
-            // Exclude if any of the item's values are explicitly excluded.
-            if (values.any((v) => filter.filterStates[v] == false)) {
-              return false;
-            }
-
-            // If there are included values, at least one must match.
-            if (hasIncludedValues) {
-              return values.any((v) => filter.filterStates[v] == true);
-            }
-
-            return true;
-          }
-
-          // Single-value filter.
-          final value = filter.valueGetter(hullmod);
-          final filterState = filter.filterStates[value];
-
-          if (filterState == false) {
-            return false;
-          }
-
-          final hasIncludedValues = filter.filterStates.values.contains(true);
-          if (hasIncludedValues) {
-            return filterState == true;
-          }
-
-          return true;
-        }).toList();
-      }
-    }
-    return hullmods;
+    state = _processAllFilters(state, mods);
   }
 
   List<Hullmod> _filterBySearch(

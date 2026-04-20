@@ -42,6 +42,23 @@ Custom grid component in `lib/mod_manager/homebrew_grid/`. Used for all data gri
 
 Filter values: `null` (indifferent), `true` (include), `false` (exclude). If any `true` values exist for a filter, items must match one; `false` values exclude regardless.
 
+### Filter engine
+
+All viewer filters use `lib/widgets/filter_engine/`. A sealed `FilterGroup<T>` has four variants:
+
+- `ChipFilterGroup<T>` — tri-state multi-value chips (the former `GridFilter`)
+- `BoolFilterGroup<T>` — standalone checkbox (no lock — persist via composite)
+- `EnumFilterGroup<T, E>` — standalone dropdown (no lock — persist via composite)
+- `CompositeFilterGroup<T>` — heterogeneous fields (`BoolField`, `EnumField`) under one lock
+
+Each page owns a `FilterScopeController<T>(scope, groups, persistenceEnabled)`. Scope is `FilterScope(pageId, scopeId)`; single-scope pages use the default `scopeId = 'main'`. Portraits declares `main`, `left`, `right`.
+
+The controller is a **toolkit**, not a framework: pages compose it into their own pipeline via `applyChipFilters(iter)`, `applyNonChipFilters(iter)`, `activeCount`, `clearAll`, `setChipSelections`, `loadPersisted`, `maybePersist`. The renderer `FilterGroupRenderer<T>` dispatches per-type; page filter panels iterate `controller.filterGroups` and wrap each in the renderer. Lock buttons appear on chip and composite groups only.
+
+### Filter group persistence
+
+Lock icon persists a group's state across sessions. Keyed by `(pageId, scopeId, groupId)`. `PersistedFilterGroup.selections: Map<String, Object?>` (schema v2) carries both chip tri-state maps and composite field values (bool / enum `.name`). Entries with non-v2 schema are silently dropped on load. Standalone bool/enum groups don't show a lock — wrap them in a `CompositeFilterGroup` to persist.
+
 ## Key Entry Points
 
 - `lib/main.dart` — App bootstrap, window setup, crash detection, Sentry init

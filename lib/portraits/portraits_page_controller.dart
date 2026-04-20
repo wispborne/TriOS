@@ -17,16 +17,31 @@ import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portrait_scanner.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/search.dart';
-import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/filter_engine/filter_engine.dart';
+import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 part 'portraits_page_controller.mapper.dart';
+
+/// Stable page identifier for persistence keying (main pane only — the left
+/// and right replacer panes are transient and intentionally not persisted).
+const String kPortraitsPageId = 'portraits';
+
+/// Subset of portraits page state that's persisted across app sessions.
+/// Only fields shared by the primary view (main pane) are here; replacer
+/// panes are intentionally transient.
+@MappableClass()
+class PortraitsPageStatePersisted with PortraitsPageStatePersistedMappable {
+  final bool mainShowFilters;
+
+  const PortraitsPageStatePersisted({this.mainShowFilters = true});
+}
 
 /// Mode for the portraits page.
 @MappableEnum()
@@ -54,18 +69,16 @@ class PortraitFilterItem {
 }
 
 /// State for a single filter pane (main, left, or right).
+///
+/// Filter-adjacent booleans (`showOnlyWithMetadata`, `showOnlyReplaced`,
+/// `showOnlyEnabledMods`) have moved into each scope's `general` composite
+/// group. Only non-filter UI state remains here.
 @MappableClass()
 class FilterPaneState with FilterPaneStateMappable {
-  final bool showOnlyWithMetadata;
-  final bool showOnlyReplaced;
-  final bool showOnlyEnabledMods;
   final bool showFilters;
   final String searchQuery;
 
   const FilterPaneState({
-    this.showOnlyWithMetadata = true,
-    this.showOnlyReplaced = false,
-    this.showOnlyEnabledMods = false,
     this.showFilters = true,
     this.searchQuery = '',
   });
@@ -85,15 +98,6 @@ class PortraitsPageState with PortraitsPageStateMappable {
 
   /// Filter state for right pane (Replacer mode).
   final FilterPaneState rightPaneState;
-
-  /// Grid filter categories for main pane.
-  final List<GridFilter<PortraitFilterItem>> mainFilterCategories;
-
-  /// Grid filter categories for left pane.
-  final List<GridFilter<PortraitFilterItem>> leftFilterCategories;
-
-  /// Grid filter categories for right pane.
-  final List<GridFilter<PortraitFilterItem>> rightFilterCategories;
 
   /// All portraits mapped by variant.
   final Map<ModVariant?, List<Portrait>> allPortraits;
@@ -119,9 +123,6 @@ class PortraitsPageState with PortraitsPageStateMappable {
     this.mainPaneState = const FilterPaneState(),
     this.leftPaneState = const FilterPaneState(),
     this.rightPaneState = const FilterPaneState(),
-    this.mainFilterCategories = const [],
-    this.leftFilterCategories = const [],
-    this.rightFilterCategories = const [],
     this.allPortraits = const {},
     this.metadata = const {},
     this.replacements = const {},
@@ -136,27 +137,64 @@ class PortraitsPageState with PortraitsPageStateMappable {
       FilterPane.right => rightPaneState,
     };
   }
-
-  /// Get the filter categories for the specified pane.
-  List<GridFilter<PortraitFilterItem>> getFilterCategories(FilterPane pane) {
-    return switch (pane) {
-      FilterPane.main => mainFilterCategories,
-      FilterPane.left => leftFilterCategories,
-      FilterPane.right => rightFilterCategories,
-    };
-  }
 }
 
 /// Controller for the portraits page using Notifier.
 class PortraitsPageController extends Notifier<PortraitsPageState> {
+  static final _mainScope = const FilterScope(kPortraitsPageId, scopeId: 'main');
+  static final _leftScope = const FilterScope(kPortraitsPageId, scopeId: 'left');
+  static final _rightScope =
+      const FilterScope(kPortraitsPageId, scopeId: 'right');
+
+  late final FilterScopeController<PortraitFilterItem> _mainFilters;
+  late final FilterScopeController<PortraitFilterItem> _leftFilters;
+  late final FilterScopeController<PortraitFilterItem> _rightFilters;
+
+  FilterScope scopeFor(FilterPane pane) => switch (pane) {
+    FilterPane.main => _mainScope,
+    FilterPane.left => _leftScope,
+    FilterPane.right => _rightScope,
+  };
+
+  FilterScopeController<PortraitFilterItem> filtersFor(FilterPane pane) =>
+      switch (pane) {
+        FilterPane.main => _mainFilters,
+        FilterPane.left => _leftFilters,
+        FilterPane.right => _rightFilters,
+      };
+
+  List<FilterGroup<PortraitFilterItem>> filterGroupsFor(FilterPane pane) =>
+      filtersFor(pane).groups;
+
+  int activeFilterCountFor(FilterPane pane) => filtersFor(pane).activeCount;
+
+  CompositeFilterGroup<PortraitFilterItem> _generalFor(FilterPane pane) =>
+      filtersFor(pane).findGroup('general')
+          as CompositeFilterGroup<PortraitFilterItem>;
+
+  BoolField<PortraitFilterItem> _fieldFor(FilterPane pane, String id) =>
+      _generalFor(pane).fieldById(id) as BoolField<PortraitFilterItem>;
+
+  bool showOnlyWithMetadata(FilterPane pane) =>
+      _fieldFor(pane, 'showOnlyWithMetadata').value;
+
+  bool showOnlyReplaced(FilterPane pane) =>
+      _fieldFor(pane, 'showOnlyReplaced').value;
+
+  bool showOnlyEnabledMods(FilterPane pane) =>
+      _fieldFor(pane, 'showOnlyEnabledMods').value;
+
   @override
   PortraitsPageState build() {
-    // Initialize filter categories for each pane
-    final mainFilterCategories = _createFilterCategories();
-    final leftFilterCategories = _createFilterCategories();
-    final rightFilterCategories = _createFilterCategories();
+    final existingState = stateOrNull;
+    if (existingState == null) {
+      _mainFilters = _buildFilters(_mainScope, persistenceEnabled: true);
+      _leftFilters = _buildFilters(_leftScope, persistenceEnabled: false);
+      _rightFilters = _buildFilters(_rightScope, persistenceEnabled: false);
+      final persistence = ref.read(filterGroupPersistenceProvider);
+      _mainFilters.loadPersisted(persistence);
+    }
 
-    // Watch portrait data
     final portraitsAsync = ref.watch(AppState.portraits);
     final metadataAsync = ref.watch(AppState.portraitMetadata);
     final replacementsAsync = ref.watch(AppState.portraitReplacementsManager);
@@ -166,7 +204,6 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
     final allPortraits = portraitsAsync.value ?? {};
     final metadata = metadataAsync.value ?? {};
 
-    // Hydrate replacements
     final loadedReplacements = replacementsAsync.value ?? {};
     final replacements = loadedReplacements
         .hydrateToPortraitMap(
@@ -178,13 +215,18 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
         .toMap()
         .cast<String, Portrait>();
 
-    // Preserve existing state if available
-    final existingState = stateOrNull;
+    if (_mainFilters.hasPendingChipSelections) {
+      _mainFilters.applyPendingChipMerge(
+        _buildFilterItems(allPortraits, metadata),
+      );
+    }
+
+    final savedPersisted = ref.read(appSettings).portraitsPageState;
+    final mainPaneState = existingState?.mainPaneState ??
+        FilterPaneState(showFilters: savedPersisted?.mainShowFilters ?? true);
 
     return (existingState ?? const PortraitsPageState()).copyWith(
-      mainFilterCategories: existingState?.mainFilterCategories ?? mainFilterCategories,
-      leftFilterCategories: existingState?.leftFilterCategories ?? leftFilterCategories,
-      rightFilterCategories: existingState?.rightFilterCategories ?? rightFilterCategories,
+      mainPaneState: mainPaneState,
       allPortraits: allPortraits,
       metadata: metadata,
       replacements: replacements,
@@ -192,9 +234,69 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
     );
   }
 
-  List<GridFilter<PortraitFilterItem>> _createFilterCategories() {
+  FilterScopeController<PortraitFilterItem> _buildFilters(
+    FilterScope scope, {
+    required bool persistenceEnabled,
+  }) {
+    final groups = <FilterGroup<PortraitFilterItem>>[
+      CompositeFilterGroup<PortraitFilterItem>(
+        id: 'general',
+        name: 'General',
+        fields: [
+          BoolField<PortraitFilterItem>(
+            id: 'showOnlyWithMetadata',
+            label: 'Confirmed Portraits',
+            defaultValue: true,
+            tooltip:
+                "Only show images that are confirmed portraits."
+                "\n\nPortraits defined in .faction files have genders."
+                "\nPortraits from settings.json files do not.",
+            predicate: (item) => item.metadata != null,
+          ),
+          BoolField<PortraitFilterItem>(
+            id: 'showOnlyReplaced',
+            label: 'Only Your Changes',
+            tooltip: 'Only show images that have replacements.',
+            // predicate cannot see state.replacements here; applied page-locally.
+            predicate: (_) => true,
+          ),
+          BoolField<PortraitFilterItem>(
+            id: 'showOnlyEnabledMods',
+            label: 'Only Enabled Mods',
+            tooltip: 'Only show images from enabled mods.',
+            predicate: (item) {
+              final mods = ref.read(AppState.mods);
+              return item.variant == null ||
+                  item.variant?.mod(mods)?.hasEnabledVariant == true;
+            },
+          ),
+        ],
+      ),
+      ..._createChipFilterGroups(),
+    ];
+    return FilterScopeController<PortraitFilterItem>(
+      scope: scope,
+      groups: groups,
+      persistenceEnabled: persistenceEnabled,
+    );
+  }
+
+  /// Persist the main pane's [showFilters] to app settings. Replacer panes
+  /// are intentionally not persisted.
+  void _persistMainShowFilters(bool value) {
+    ref.read(appSettings.notifier).update((s) {
+      final current =
+          s.portraitsPageState ?? const PortraitsPageStatePersisted();
+      return s.copyWith(
+        portraitsPageState: current.copyWith(mainShowFilters: value),
+      );
+    });
+  }
+
+  List<ChipFilterGroup<PortraitFilterItem>> _createChipFilterGroups() {
     return [
-      GridFilter<PortraitFilterItem>(
+      ChipFilterGroup<PortraitFilterItem>(
+        id: 'mod',
         name: 'Mod',
         valueGetter: (item) => item.modName,
         sortComparator: (a, b) => a == 'Vanilla'
@@ -203,7 +305,8 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
             ? 1
             : a.compareTo(b),
       ),
-      GridFilter<PortraitFilterItem>(
+      ChipFilterGroup<PortraitFilterItem>(
+        id: 'gender',
         name: 'Gender',
         valueGetter: (item) => item.genderString,
       ),
@@ -239,32 +342,14 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
     );
   }
 
-  /// Toggle the "Confirmed Portraits" filter for a specific pane.
-  void toggleShowOnlyWithMetadata(FilterPane pane) {
-    state = _updatePaneState(
-      pane,
-      (paneState) =>
-          paneState.copyWith(showOnlyWithMetadata: !paneState.showOnlyWithMetadata),
-    );
-  }
+  void toggleShowOnlyWithMetadata(FilterPane pane) =>
+      setShowOnlyWithMetadata(pane, !showOnlyWithMetadata(pane));
 
-  /// Toggle the "Only Your Changes" filter for a specific pane.
-  void toggleShowOnlyReplaced(FilterPane pane) {
-    state = _updatePaneState(
-      pane,
-      (paneState) =>
-          paneState.copyWith(showOnlyReplaced: !paneState.showOnlyReplaced),
-    );
-  }
+  void toggleShowOnlyReplaced(FilterPane pane) =>
+      setShowOnlyReplaced(pane, !showOnlyReplaced(pane));
 
-  /// Toggle the "Only Enabled Mods" filter for a specific pane.
-  void toggleShowOnlyEnabledMods(FilterPane pane) {
-    state = _updatePaneState(
-      pane,
-      (paneState) =>
-          paneState.copyWith(showOnlyEnabledMods: !paneState.showOnlyEnabledMods),
-    );
-  }
+  void toggleShowOnlyEnabledMods(FilterPane pane) =>
+      setShowOnlyEnabledMods(pane, !showOnlyEnabledMods(pane));
 
   /// Toggle filters visibility for a specific pane.
   void toggleShowFilters(FilterPane pane) {
@@ -272,6 +357,9 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
       pane,
       (paneState) => paneState.copyWith(showFilters: !paneState.showFilters),
     );
+    if (pane == FilterPane.main) {
+      _persistMainShowFilters(state.mainPaneState.showFilters);
+    }
   }
 
   /// Set show filters visibility for a specific pane.
@@ -280,52 +368,70 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
       pane,
       (paneState) => paneState.copyWith(showFilters: value),
     );
+    if (pane == FilterPane.main) {
+      _persistMainShowFilters(value);
+    }
   }
 
-  /// Set the "Confirmed Portraits" filter value for a specific pane.
   void setShowOnlyWithMetadata(FilterPane pane, bool value) {
-    state = _updatePaneState(
-      pane,
-      (paneState) => paneState.copyWith(showOnlyWithMetadata: value),
-    );
+    _fieldFor(pane, 'showOnlyWithMetadata').value = value;
+    _emitAfterFilterMutation();
+    if (pane == FilterPane.main) {
+      filtersFor(pane).maybePersist(
+        'general',
+        ref.read(filterGroupPersistenceProvider),
+      );
+    }
   }
 
-  /// Set the "Only Your Changes" filter value for a specific pane.
   void setShowOnlyReplaced(FilterPane pane, bool value) {
-    state = _updatePaneState(
-      pane,
-      (paneState) => paneState.copyWith(showOnlyReplaced: value),
-    );
+    _fieldFor(pane, 'showOnlyReplaced').value = value;
+    _emitAfterFilterMutation();
+    if (pane == FilterPane.main) {
+      filtersFor(pane).maybePersist(
+        'general',
+        ref.read(filterGroupPersistenceProvider),
+      );
+    }
   }
 
-  /// Set the "Only Enabled Mods" filter value for a specific pane.
   void setShowOnlyEnabledMods(FilterPane pane, bool value) {
-    state = _updatePaneState(
-      pane,
-      (paneState) => paneState.copyWith(showOnlyEnabledMods: value),
-    );
+    _fieldFor(pane, 'showOnlyEnabledMods').value = value;
+    _emitAfterFilterMutation();
+    if (pane == FilterPane.main) {
+      filtersFor(pane).maybePersist(
+        'general',
+        ref.read(filterGroupPersistenceProvider),
+      );
+    }
   }
 
   /// Clear all filters for a specific pane.
   void clearAllFilters(FilterPane pane) {
-    final filterCategories = state.getFilterCategories(pane);
-    for (final filter in filterCategories) {
-      filter.filterStates.clear();
-    }
-
-    // Trigger state update
-    state = state.copyWith();
+    filtersFor(pane).clearAll();
+    _emitAfterFilterMutation();
   }
 
-  /// Update filter states for a specific filter.
-  void updateFilterStates(
-    GridFilter<PortraitFilterItem> filter,
-    Map<String, bool?> states,
-  ) {
-    filter.filterStates.clear();
-    filter.filterStates.addAll(states);
+  void onGroupChanged(FilterPane pane, String groupId) {
+    _emitAfterFilterMutation();
+    filtersFor(pane).maybePersist(
+      groupId,
+      ref.read(filterGroupPersistenceProvider),
+    );
+  }
 
-    // Trigger state update
+  /// Imperatively replace chip selections on a named group.
+  /// Used by context-menu navigation (e.g. "show this mod only") on the main pane.
+  void setChipSelections(
+    FilterPane pane,
+    String groupId,
+    Map<String, bool?> selections,
+  ) {
+    filtersFor(pane).setChipSelections(groupId, selections);
+    _emitAfterFilterMutation();
+  }
+
+  void _emitAfterFilterMutation() {
     state = state.copyWith();
   }
 
@@ -520,47 +626,40 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
     }
   }
 
-  /// Get filtered and sorted images for a specific pane.
+  /// Get filtered and sorted images for a specific pane. Pipeline order:
+  /// `enabled → metadata → chips → replaced → search`.
   List<({Portrait image, ModVariant? variant})> getFilteredImages(
     FilterPane pane,
     List<Mod> allMods,
   ) {
     final paneState = state.getPaneState(pane);
-    final filterCategories = state.getFilterCategories(pane);
+    final filters = filtersFor(pane);
 
-    // Convert all portraits to list format
-    List<({Portrait image, ModVariant? variant})> images = state.allPortraits
-        .entries
-        .expand(
-          (element) => element.value.map((e) => (variant: element.key, image: e)),
+    var items = _buildFilterItems(state.allPortraits, state.metadata);
+
+    // showOnlyReplaced's predicate is a no-op (`_ => true`) because it needs
+    // state.replacements, which isn't available to field predicates; applied below.
+    items = filters.applyNonChipFilters(items);
+
+    // Apply chip filters.
+    items = filters.applyChipFilters(items);
+
+    // Apply `Only Your Changes` — requires state.replacements, so done here.
+    if (showOnlyReplaced(pane)) {
+      items = items
+          .where((item) => state.replacements.containsKey(item.portrait.hash))
+          .toList();
+    }
+
+    // Convert back to the original ({image, variant}) tuple shape.
+    var images = items
+        .map<({Portrait image, ModVariant? variant})>(
+          (item) => (image: item.portrait, variant: item.variant),
         )
         .toList();
 
-    // Sort images
     images = _sortModsAndImages(images, r'graphics\\.*portraits\\');
 
-    // Apply "Only Enabled Mods" filter
-    if (paneState.showOnlyEnabledMods) {
-      images = _filterToOnlyEnabledMods(images, allMods);
-    }
-
-    // Apply "Confirmed Portraits" filter
-    if (paneState.showOnlyWithMetadata) {
-      images = images.where((item) {
-        final meta = state.metadata.getMetadataFor(item.image.relativePath);
-        return meta.hasMetadata;
-      }).toList();
-    }
-
-    // Apply grid filters
-    images = _applyGridFilters(images, filterCategories);
-
-    // Apply "Only Your Changes" filter
-    if (paneState.showOnlyReplaced) {
-      images = _filterToOnlyReplacedImages(images);
-    }
-
-    // Apply search filter
     if (paneState.searchQuery.isNotEmpty) {
       images = _filterImages(images, paneState.searchQuery);
     }
@@ -578,15 +677,27 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
   }
 
   /// Get filter items for the filter panel.
-  List<PortraitFilterItem> getFilterItems() {
-    return getAllImages().map((item) {
-      final meta = state.metadata.getMetadataFor(item.image.relativePath);
-      return PortraitFilterItem(
-        portrait: item.image,
-        variant: item.variant,
-        metadata: meta.hasMetadata ? meta : null,
-      );
-    }).toList();
+  List<PortraitFilterItem> getFilterItems() =>
+      _buildFilterItems(state.allPortraits, state.metadata);
+
+  /// Build `PortraitFilterItem`s from a portrait map + metadata map with a
+  /// single `getMetadataFor` call per portrait.
+  static List<PortraitFilterItem> _buildFilterItems(
+    Map<ModVariant?, List<Portrait>> allPortraits,
+    Map<String, PortraitMetadata> metadata,
+  ) {
+    final result = <PortraitFilterItem>[];
+    for (final entry in allPortraits.entries) {
+      for (final portrait in entry.value) {
+        final meta = metadata.getMetadataFor(portrait.relativePath);
+        result.add(PortraitFilterItem(
+          portrait: portrait,
+          variant: entry.key,
+          metadata: meta.hasMetadata ? meta : null,
+        ));
+      }
+    }
+    return result;
   }
 
   // Private helper methods
@@ -629,67 +740,6 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
 
         return a.image.imageFile.path.compareTo(b.image.imageFile.path);
       });
-  }
-
-  List<({Portrait image, ModVariant? variant})> _filterToOnlyEnabledMods(
-    List<({Portrait image, ModVariant? variant})> images,
-    List<Mod> allMods,
-  ) {
-    return images
-        .where(
-          (element) =>
-              element.variant == null ||
-              element.variant?.mod(allMods)?.hasEnabledVariant == true,
-        )
-        .toList();
-  }
-
-  List<({Portrait image, ModVariant? variant})> _filterToOnlyReplacedImages(
-    List<({Portrait image, ModVariant? variant})> images,
-  ) {
-    return images
-        .where((element) => state.replacements.containsKey(element.image.hash))
-        .toList();
-  }
-
-  List<({Portrait image, ModVariant? variant})> _applyGridFilters(
-    List<({Portrait image, ModVariant? variant})> images,
-    List<GridFilter<PortraitFilterItem>> filterCategories,
-  ) {
-    // Convert to filter items for processing
-    var items = images.map((item) {
-      final portraitMetadata =
-          state.metadata.getMetadataFor(item.image.relativePath);
-      return PortraitFilterItem(
-        portrait: item.image,
-        variant: item.variant,
-        metadata: portraitMetadata.hasMetadata ? portraitMetadata : null,
-      );
-    }).toList();
-
-    // Apply each filter category
-    for (final filter in filterCategories) {
-      if (filter.hasActiveFilters) {
-        items = items.where((item) {
-          final value = filter.valueGetter(item);
-          final filterState = filter.filterStates[value];
-
-          if (filterState == false) return false; // Explicitly excluded
-
-          final hasIncludedValues = filter.filterStates.values.contains(true);
-          if (hasIncludedValues) {
-            return filterState == true; // Must be explicitly included
-          }
-
-          return true; // Only exclusions, allow anything not excluded
-        }).toList();
-      }
-    }
-
-    // Convert back to the original format
-    return items
-        .map((item) => (image: item.portrait, variant: item.variant))
-        .toList();
   }
 
   List<({Portrait image, ModVariant? variant})> _filterImages(

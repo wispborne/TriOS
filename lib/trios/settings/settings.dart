@@ -5,9 +5,11 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
+import 'package:trios/portraits/portraits_page_controller.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
+import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.dart';
 
 part 'settings.mapper.dart';
 
@@ -84,6 +86,13 @@ class Settings with SettingsMappable {
   final WispGridState hullmodsGridState;
   @MappableField(hook: SafeDecodeHook())
   final HullmodsPageStatePersisted? hullmodsPageState;
+  @MappableField(hook: SafeDecodeHook())
+  final PortraitsPageStatePersisted? portraitsPageState;
+
+  /// Per-filter-group persisted selections, keyed by
+  /// `"{pageId}::{filterGroupId}"`.
+  @MappableField(hook: SafeDecodeHook())
+  final Map<String, PersistedFilterGroup> persistedFilterGroups;
 
   // Mods Page
   final bool doubleClickForModsPanel;
@@ -178,6 +187,8 @@ class Settings with SettingsMappable {
       columnsState: {},
     ),
     this.hullmodsPageState,
+    this.portraitsPageState,
+    this.persistedFilterGroups = const {},
     this.customGameExePath,
     this.useCustomGameExePath = false,
     this.customSavesPath,

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,12 +25,12 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
 import 'package:trios/widgets/viewer_split_pane.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
@@ -88,16 +87,9 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         filterRequest.destination == TriOSTools.hullmods) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final modFilter = ref
-            .read(hullmodsPageControllerProvider)
-            .filterCategories
-            .firstWhereOrNull((f) => f.name == 'Mod');
-        if (modFilter != null) {
-          ref.read(hullmodsPageControllerProvider.notifier).updateFilterStates(
-            modFilter,
-            {filterRequest.modName: true},
-          );
-        }
+        ref
+            .read(hullmodsPageControllerProvider.notifier)
+            .setChipSelections('mod', {filterRequest.modName: true});
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
     }
@@ -238,102 +230,17 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
       onHide: controller.toggleShowFilters,
       scrollController: _filterScrollController,
       activeFilterCount: controller.activeFilterCount,
-      showClearAll: controllerState.filterCategories.any(
-        (f) => f.hasActiveFilters,
-      ),
+      showClearAll: controller.filterGroups.any((g) => g.isActive),
       onClearAll: controller.clearAllFilters,
       filterWidgets: [
-        _buildCheckboxFilters(theme, controllerState, controller),
-        const SizedBox(height: 8),
-        ...controllerState.filterCategories.map((filter) {
-          return GridFilterWidget<Hullmod>(
-            filter: filter,
+        for (final g in controller.filterGroups)
+          FilterGroupRenderer<Hullmod>(
+            group: g,
+            scope: controller.scope,
             items: displayedHullmods,
-            filterStates: filter.filterStates,
-            onSelectionChanged: (states) {
-              controller.updateFilterStates(filter, states);
-            },
-          );
-        }),
+            onChanged: () => controller.onGroupChanged(g.id),
+          ),
       ],
-    );
-  }
-
-  Widget _buildCheckboxFilters(
-    ThemeData theme,
-    HullmodsPageState controllerState,
-    HullmodsPageController controller,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      color: theme.colorScheme.surfaceContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MovingTooltipWidget.text(
-              message: "Only hullmods from enabled mods.",
-              child: CheckboxListTile(
-                title: const Text('Only Enabled Mods'),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: .only(left: 8),
-                value: controllerState.showEnabled,
-                onChanged: (value) => controller.toggleShowEnabled(),
-              ),
-            ),
-            MovingTooltipWidget.text(
-              message:
-                  "Show hidden hullmods (built-in hullmods, internal hullmods).",
-              child: CheckboxListTile(
-                title: const Text('Show Hidden Hullmods'),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: .only(left: 8),
-                value: controllerState.showHidden,
-                onChanged: (value) => controller.toggleShowHidden(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TriOSDropdownMenu<HullmodSpoilerLevel>(
-              initialSelection: controllerState.hullmodSpoilerLevel,
-              onSelected: (level) {
-                if (level == null) return;
-                controller.setHullmodSpoilerLevel(level);
-              },
-              highlightOutlineColor:
-                  controllerState.hullmodSpoilerLevel !=
-                      HullmodSpoilerLevel.showAllSpoilers
-                  ? theme.colorScheme.primary
-                  : null,
-              dropdownMenuEntries: [
-                DropdownMenuEntry(
-                  value: HullmodSpoilerLevel.noSpoilers,
-                  label: "No spoilers",
-                  labelWidget: MovingTooltipWidget.text(
-                    message:
-                        "Hides hullmods tagged CODEX_UNLOCKABLE or CODEX_REQUIRE_RELATED.",
-                    child: Text("No spoilers"),
-                  ),
-                  leadingIcon: const Icon(Icons.visibility_off, size: 20),
-                ),
-                DropdownMenuEntry(
-                  value: HullmodSpoilerLevel.showAllSpoilers,
-                  label: "Show all spoilers",
-                  labelWidget: MovingTooltipWidget.text(
-                    warningLevel: TooltipWarningLevel.warning,
-                    message:
-                        "Shows hullmods tagged CODEX_UNLOCKABLE or CODEX_REQUIRE_RELATED.",
-                    child: Text("Show all spoilers"),
-                  ),
-                  leadingIcon: const Icon(Icons.visibility_outlined, size: 20),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 

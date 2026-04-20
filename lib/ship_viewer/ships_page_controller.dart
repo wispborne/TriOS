@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
@@ -18,16 +19,18 @@ import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
-import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/filter_engine/filter_engine.dart';
+import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 
 part 'ships_page_controller.mapper.dart';
+
+/// Stable page identifier for persistence keying.
+const String kShipsPageId = 'ships';
 
 /// State class for the ships page controller
 @MappableClass()
 class ShipsPageState with ShipsPageStateMappable {
   final ShipsPageStatePersisted persisted;
-
-  final List<GridFilter<Ship>> filterCategories;
 
   /// Ship properties, lowercase, by ship id.
   final Map<String, List<String>> shipSearchIndices;
@@ -41,11 +44,6 @@ class ShipsPageState with ShipsPageStateMappable {
   final String currentSearchQuery;
   final bool isLoading;
 
-  // Backward-compatible passthroughs (API unchanged)
-  bool get showEnabled => persisted.showEnabled;
-
-  SpoilerLevel get spoilerLevelToShow => persisted.spoilerLevelToShow;
-
   bool get splitPane => persisted.splitPane;
 
   bool get showFilters => persisted.showFilters;
@@ -54,7 +52,6 @@ class ShipsPageState with ShipsPageStateMappable {
 
   const ShipsPageState({
     this.persisted = const ShipsPageStatePersisted(),
-    this.filterCategories = const [],
     this.shipSearchIndices = const {},
     this.shipSystemsMap = const {},
     this.weaponsMap = const {},
@@ -74,15 +71,11 @@ class ShipsPageState with ShipsPageStateMappable {
 
 @MappableClass()
 class ShipsPageStatePersisted with ShipsPageStatePersistedMappable {
-  final bool showEnabled;
-  final SpoilerLevel spoilerLevelToShow;
   final bool splitPane;
   final bool showFilters;
   final bool useContainFit;
 
   const ShipsPageStatePersisted({
-    this.showEnabled = false,
-    this.spoilerLevelToShow = SpoilerLevel.showNone,
     this.splitPane = false,
     this.showFilters = false,
     this.useContainFit = false,
@@ -98,11 +91,30 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   final spoilerTags = ["threat", "dweller"];
   final vanillaName = 'Vanilla';
 
+  static final _scope = const FilterScope(kShipsPageId);
+
+  late final FilterScopeController<Ship> _filters;
+
+  FilterScope get scope => _scope;
+
+  List<FilterGroup<Ship>> get filterGroups => _filters.groups;
+
+  /// Find the composite general group (showEnabled + spoiler).
+  CompositeFilterGroup<Ship> get _general =>
+      _filters.findGroup('general') as CompositeFilterGroup<Ship>;
+
+  BoolField<Ship> get _showEnabledField =>
+      _general.fieldById('showEnabled') as BoolField<Ship>;
+
+  EnumField<Ship, SpoilerLevel> get _spoilerField =>
+      _general.fieldById('spoiler') as EnumField<Ship, SpoilerLevel>;
+
+  bool get showEnabled => _showEnabledField.value;
+
+  SpoilerLevel get spoilerLevelToShow => _spoilerField.selected;
+
   @override
   ShipsPageState build() {
-    // Try restore saved state from Settings
-    final saved = ref.read(appSettings).shipsPageState;
-
     // Watch ship data, ship systems, weapons, and descriptions.
     ref.watch(descriptionsNotifierProvider);
     final shipsAsync = ref.watch(shipListNotifierProvider);
@@ -123,8 +135,6 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     final weapons = weaponsAsync.value ?? [];
     final weaponsMap = weapons.associateBy((e) => e.id);
 
-    // Pre-compute which ships have resolved modules so the filter closure
-    // doesn't capture build-scoped data that goes stale on subsequent rebuilds.
     final shipsWithModuleIds = <String>{
       for (final ship in allShips)
         if (resolveModules(ship, allShips, moduleVariants, variantHullIdMap)
@@ -132,23 +142,97 @@ class ShipsPageController extends Notifier<ShipsPageState> {
           ship.id,
     };
 
-    // Initialize filter categories
-    final filterCategories = [
-      GridFilter<Ship>(
+    // Build filter scope controller only once; reuse the same groups across
+    // rebuilds so live filter state persists across them.
+    if (stateOrNull == null) {
+      _filters = _buildFilters();
+      final persistence = ref.read(filterGroupPersistenceProvider);
+      _filters.loadPersisted(persistence);
+    }
+
+    // Apply staged chip selections against the current data.
+    _filters.applyPendingChipMerge(allShips);
+
+    // Initialize saved settings (non-filter UI).
+    final saved = ref.read(appSettings).shipsPageState;
+
+    Map<String, List<String>> shipSearchIndices = _updateSearchIndices(
+      allShips,
+    );
+
+    final initialState =
+        (stateOrNull ??
+                ShipsPageState(
+                  persisted: ShipsPageStatePersisted(
+                    splitPane: saved?.splitPane ?? false,
+                    showFilters: saved?.showFilters ?? false,
+                    useContainFit: saved?.useContainFit ?? false,
+                  ),
+                ))
+            .copyWith(
+              shipSystemsMap: shipSystemsMap,
+              weaponsMap: weaponsMap,
+              hullmodsMap: hullmodsMap,
+              shipsWithModuleIds: shipsWithModuleIds,
+              allShips: allShips,
+              shipSearchIndices: shipSearchIndices,
+              isLoading: isLoadingShips,
+            );
+
+    return _processAllFilters(initialState, mods);
+  }
+
+  FilterScopeController<Ship> _buildFilters() {
+    final groups = <FilterGroup<Ship>>[
+      CompositeFilterGroup<Ship>(
+        id: 'general',
+        name: 'General',
+        fields: [
+          BoolField<Ship>(
+            id: 'showEnabled',
+            label: 'Only Enabled Mods',
+            tooltip: 'Only show ships from enabled mods.',
+            predicate: (ship) {
+              final mods = ref.read(AppState.mods);
+              return ship.modVariant == null ||
+                  ship.modVariant?.mod(mods)?.hasEnabledVariant == true;
+            },
+          ),
+          EnumField<Ship, SpoilerLevel>(
+            id: 'spoiler',
+            label: 'Spoilers',
+            defaultValue: SpoilerLevel.showNone,
+            options: SpoilerLevel.values,
+            predicate: _spoilerMatches,
+            optionLabel: _spoilerLabel,
+            optionTooltip: _spoilerTooltip,
+            optionIcon: (e) => switch (e) {
+              SpoilerLevel.showNone => Icons.visibility_off,
+              SpoilerLevel.showSlightSpoilers => Icons.visibility,
+              SpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
+            },
+          ),
+        ],
+      ),
+      ChipFilterGroup<Ship>(
+        id: 'type',
         name: 'Type',
         valueGetter: (ship) => ship.isSkin ? 'Skin' : 'Base Hull',
         valuesGetter: (ship) => [
           ship.isSkin ? 'Skin' : 'Base Hull',
-          if (shipsWithModuleIds.contains(ship.id)) 'Has Modules',
+          if (stateOrNull?.shipsWithModuleIds.contains(ship.id) ?? false)
+            'Has Modules',
         ],
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'hullSize',
         name: 'Hull Size',
         valueGetter: (ship) =>
             ship.isStation ? 'Station' : ship.hullSizeForDisplay(),
-        useDefaultSort: true, // Sorts by hull size by default
+        useDefaultSort: true,
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'weaponSlotType',
         name: 'Weapon Slot Type',
         valueGetter: (ship) => '',
         valuesGetter: (ship) =>
@@ -160,7 +244,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             [],
         displayNameGetter: (value) => value.toTitleCase(),
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'weaponSize',
         name: 'Weapon Size',
         valueGetter: (ship) => '',
         valuesGetter: (ship) =>
@@ -176,7 +261,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
           return order.indexOf(a).compareTo(order.indexOf(b));
         },
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'mountType',
         name: 'Mount Type',
         valueGetter: (ship) => '',
         valuesGetter: (ship) =>
@@ -188,84 +274,80 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             [],
         displayNameGetter: (value) => value.toTitleCase(),
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'shieldType',
         name: 'Shield Type',
         valueGetter: (ship) => ship.shieldType ?? '',
         displayNameGetter: (value) => value.toTitleCase(),
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'mod',
         name: 'Mod',
         collapsedByDefault: true,
-        valueGetter: (ship) {
-          return ship.modVariant?.modInfo.nameOrId ?? vanillaName;
-        },
+        valueGetter: (ship) => ship.modVariant?.modInfo.nameOrId ?? vanillaName,
         sortComparator: (a, b) => a == vanillaName
             ? -1
             : b == vanillaName
             ? 1
             : a.compareTo(b),
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'system',
         name: 'System',
         collapsedByDefault: true,
         valueGetter: (ship) => ship.systemId ?? '',
         displayNameGetter: (value) =>
-            state.shipSystemsMap[value ?? ""]?.name ?? value,
+            stateOrNull?.shipSystemsMap[value]?.name ?? value,
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'defenseId',
         name: 'Defense Id',
         collapsedByDefault: true,
         valueGetter: (ship) => ship.defenseId ?? '',
         displayNameGetter: (value) =>
-            state.shipSystemsMap[value ?? ""]?.name ?? value,
+            stateOrNull?.shipSystemsMap[value]?.name ?? value,
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'techManufacturer',
         name: 'Tech/Manufacturer',
         collapsedByDefault: true,
         valueGetter: (ship) => ship.techManufacturer ?? '',
       ),
-      GridFilter<Ship>(
+      ChipFilterGroup<Ship>(
+        id: 'designation',
         name: 'Designation',
         collapsedByDefault: true,
         valueGetter: (ship) => ship.designation ?? '',
       ),
     ];
-
-    // Build search index from current ships (incremental update)
-    Map<String, List<String>> shipSearchIndices = _updateSearchIndices(
-      allShips,
-    );
-
-    // Build initial state (prefer saved state when available)
-    final initialState =
-        (stateOrNull ??
-                ShipsPageState(
-                  persisted: ShipsPageStatePersisted(
-                    showEnabled: saved?.showEnabled ?? false,
-                    spoilerLevelToShow:
-                        saved?.spoilerLevelToShow ?? SpoilerLevel.showNone,
-                    splitPane: saved?.splitPane ?? false,
-                    showFilters: saved?.showFilters ?? false,
-                    useContainFit: saved?.useContainFit ?? false,
-                  ),
-                ))
-            .copyWith(
-              filterCategories:
-                  stateOrNull?.filterCategories ?? filterCategories,
-              shipSystemsMap: shipSystemsMap,
-              weaponsMap: weaponsMap,
-              hullmodsMap: hullmodsMap,
-              shipsWithModuleIds: shipsWithModuleIds,
-              allShips: allShips,
-              shipSearchIndices: shipSearchIndices,
-              isLoading: isLoadingShips,
-            );
-
-    // Process filters to get final ship lists
-    final processedState = _processAllFilters(initialState, mods);
-
-    return processedState;
+    return FilterScopeController<Ship>(scope: _scope, groups: groups);
   }
+
+  bool _spoilerMatches(Ship ship, SpoilerLevel level) {
+    if (level == SpoilerLevel.showAllSpoilers) return true;
+    final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
+    final tags = ship.tags.orEmpty().map((t) => t.toLowerCase());
+    final hidden = hints.contains('hide_in_codex');
+    final isSlightSpoiler = tags.any(slightSpoilerTags.contains);
+    final isSpoiler = tags.any(spoilerTags.contains);
+    if (level == SpoilerLevel.showSlightSpoilers) {
+      return !hidden && !isSpoiler;
+    }
+    return !hidden && !isSlightSpoiler && !isSpoiler;
+  }
+
+  String _spoilerLabel(SpoilerLevel e) => switch (e) {
+    SpoilerLevel.showNone => 'No Spoilers',
+    SpoilerLevel.showSlightSpoilers => 'Show slight spoilers',
+    SpoilerLevel.showAllSpoilers => 'Show all spoilers',
+  };
+
+  String _spoilerTooltip(SpoilerLevel e) => switch (e) {
+    SpoilerLevel.showNone => 'No spoilers shown at all.',
+    SpoilerLevel.showSlightSpoilers => 'Shows CODEX_UNLOCKABLE ships.',
+    SpoilerLevel.showAllSpoilers =>
+      'Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships',
+  };
 
   void _persistState(ShipsPageState newState) {
     try {
@@ -275,8 +357,6 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             (s) => s.copyWith(
               shipsPageState: (s.shipsPageState ?? ShipsPageStatePersisted())
                   .copyWith(
-                    showEnabled: newState.showEnabled,
-                    spoilerLevelToShow: newState.spoilerLevelToShow,
                     splitPane: newState.splitPane,
                     showFilters: newState.showFilters,
                     useContainFit: newState.useContainFit,
@@ -293,19 +373,16 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   }
 
   Map<String, List<String>> _updateSearchIndices(List<Ship> allShips) {
-    // Build search index from current ships (incremental update)
     final currentIndices = stateOrNull?.shipSearchIndices ?? {};
     final currentShipIds = allShips.map((ship) => ship.id).toSet();
     final cachedShipIds = currentIndices.keys.toSet();
 
-    // Remove indices for ships that are no longer present
     final indicesToRemove = cachedShipIds.difference(currentShipIds);
     final shipValuesByShipId = Map<String, List<String>>.from(currentIndices);
     for (final shipId in indicesToRemove) {
       shipValuesByShipId.remove(shipId);
     }
 
-    // Add indices only for new ships that don't already have them
     final newShips = allShips.where((ship) => !cachedShipIds.contains(ship.id));
     for (final ship in newShips) {
       final searchValues = ship
@@ -318,26 +395,16 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     return shipValuesByShipId;
   }
 
-  /// Process all filters and return updated state
   ShipsPageState _processAllFilters(
     ShipsPageState currentState,
     List<Mod> mods,
   ) {
-    var ships = currentState.allShips.toList();
+    var ships = _filters.applyNonChipFilters(currentState.allShips);
 
-    // Apply enabled filter
-    ships = _filterByEnabled(ships, mods, currentState.showEnabled);
-
-    // Apply spoiler filter
-    ships = _filterBySpoilers(ships, currentState.spoilerLevelToShow);
-
-    // Store ships before grid filters for filter panel
     final shipsBeforeGridFilter = ships.toList();
 
-    // Apply grid filters
-    ships = _applyFilters(ships, currentState.filterCategories);
+    ships = _filters.applyChipFilters(ships);
 
-    // Apply search filter
     ships = _filterBySearch(
       ships,
       currentState.currentSearchQuery,
@@ -350,42 +417,24 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     );
   }
 
-  /// Update search query and reprocess filters
   void updateSearchQuery(String query) {
     final mods = ref.read(AppState.mods);
     final updatedState = state.copyWith(currentSearchQuery: query);
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
+    state = _processAllFilters(updatedState, mods);
   }
 
-  /// Toggle show enabled filter
   void toggleShowEnabled() {
-    final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(
-      persisted: state.persisted.copyWith(showEnabled: !state.showEnabled),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    _persistState(processedState);
-    state = processedState;
+    _showEnabledField.value = !_showEnabledField.value;
+    _emitAfterFilterMutation();
+    _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
   }
 
-  /// Toggle show spoilers filter
   void setShowSpoilers(SpoilerLevel spoilerLevelToShow) {
-    final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(
-      persisted: state.persisted.copyWith(
-        spoilerLevelToShow: spoilerLevelToShow,
-      ),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
-    _persistState(state);
+    _spoilerField.setSelected(spoilerLevelToShow);
+    _emitAfterFilterMutation();
+    _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
   }
 
-  /// Toggle split pane view
   void toggleSplitPane() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(splitPane: !state.splitPane),
@@ -394,7 +443,6 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     _persistState(state);
   }
 
-  /// Toggle filters panel visibility
   void toggleShowFilters() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(showFilters: !state.showFilters),
@@ -403,7 +451,6 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     _persistState(state);
   }
 
-  /// Toggle image fit between scaleDown and contain
   void toggleUseContainFit() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(useContainFit: !state.useContainFit),
@@ -412,121 +459,34 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     _persistState(state);
   }
 
-  int get activeFilterCount =>
-      state.filterCategories.fold(0, (sum, f) => sum + f.filterStates.length) +
-      (state.showEnabled ? 1 : 0) +
-      (state.spoilerLevelToShow != SpoilerLevel.showAllSpoilers ? 1 : 0);
+  int get activeFilterCount => _filters.activeCount;
 
-  /// Get game core directory
   Directory getGameCoreDir() {
     return Directory(ref.read(AppState.gameCoreFolder).value?.path ?? '');
   }
 
-  /// Clear all active filters
   void clearAllFilters() {
+    _filters.clearAll();
+    _emitAfterFilterMutation();
+  }
+
+  /// Called after a user mutates a filter group's state via the renderer.
+  void onGroupChanged(String groupId) {
+    _emitAfterFilterMutation();
+    _filters.maybePersist(groupId, ref.read(filterGroupPersistenceProvider));
+  }
+
+  /// Replace chip selections on a named group (context-menu navigation).
+  void setChipSelections(String groupId, Map<String, bool?> selections) {
+    _filters.setChipSelections(groupId, selections);
+    _emitAfterFilterMutation();
+  }
+
+  void _emitAfterFilterMutation() {
     final mods = ref.read(AppState.mods);
-
-    // Clear all filter states
-    for (final filter in state.filterCategories) {
-      filter.filterStates.clear();
-    }
-
-    // Create new state with cleared filters
-    final updatedState = state.copyWith(
-      filterCategories: List.from(state.filterCategories),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
+    state = _processAllFilters(state, mods);
   }
 
-  /// Update filter states for a specific filter
-  void updateFilterStates(GridFilter filter, Map<String, bool?> states) {
-    final mods = ref.read(AppState.mods);
-
-    filter.filterStates.clear();
-    filter.filterStates.addAll(states);
-
-    // Create new state with updated filters
-    final updatedState = state.copyWith(
-      filterCategories: List.from(state.filterCategories),
-    );
-    final processedState = _processAllFilters(updatedState, mods);
-
-    state = processedState;
-  }
-
-  /// Filter ships based on enabled status
-  List<Ship> _filterByEnabled(
-    List<Ship> ships,
-    List<Mod> mods,
-    bool showEnabled,
-  ) {
-    if (!showEnabled) return ships;
-
-    return ships.where((ship) {
-      return ship.modVariant == null ||
-          ship.modVariant?.mod(mods)?.hasEnabledVariant == true;
-    }).toList();
-  }
-
-  /// Filter ships based on spoiler settings
-  List<Ship> _filterBySpoilers(
-    List<Ship> ships,
-    SpoilerLevel spoilerLevelToShow,
-  ) {
-    if (spoilerLevelToShow == SpoilerLevel.showAllSpoilers) return ships;
-
-    return ships.where((ship) {
-      final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
-      final tags = ship.tags.orEmpty().map((t) => t.toLowerCase());
-
-      final hidden = hints.contains('hide_in_codex');
-      final isSlightSpoiler = tags.any(slightSpoilerTags.contains);
-      final isSpoiler = tags.any(spoilerTags.contains);
-
-      if (spoilerLevelToShow == SpoilerLevel.showSlightSpoilers) {
-        return !hidden && !isSpoiler;
-      }
-
-      // Show no spoilers
-      return !hidden && !isSlightSpoiler && !isSpoiler;
-    }).toList();
-  }
-
-  /// Apply grid filters to ships
-  List<Ship> _applyFilters(
-    List<Ship> ships,
-    List<GridFilter<Ship>> filterCategories,
-  ) {
-    for (final filter in filterCategories) {
-      if (filter.hasActiveFilters) {
-        ships = ships.where((ship) {
-          final values = filter.valuesGetter != null
-              ? filter.valuesGetter!(ship)
-              : [filter.valueGetter(ship)];
-
-          // If any value is explicitly excluded, exclude the item
-          if (values.any((v) => filter.filterStates[v] == false)) {
-            return false;
-          }
-
-          // If there are any explicitly included values
-          final hasIncludedValues = filter.filterStates.values.contains(true);
-          if (hasIncludedValues) {
-            // Must have at least one included value
-            return values.any((v) => filter.filterStates[v] == true);
-          }
-
-          // Only exclusions active — allow anything not excluded
-          return true;
-        }).toList();
-      }
-    }
-    return ships;
-  }
-
-  /// Filter ships by search query
   List<Ship> _filterBySearch(
     List<Ship> ships,
     String query,
@@ -545,7 +505,6 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   }
 }
 
-/// Provider for the ships page controller
 final shipsPageControllerProvider =
     NotifierProvider<ShipsPageController, ShipsPageState>(() {
       return ShipsPageController();

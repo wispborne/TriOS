@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -23,11 +22,11 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
+import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
 import 'package:trios/widgets/viewer_split_pane.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
@@ -86,16 +85,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         filterRequest.destination == TriOSTools.ships) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final modFilter = ref
-            .read(shipsPageControllerProvider)
-            .filterCategories
-            .firstWhereOrNull((f) => f.name == 'Mod');
-        if (modFilter != null) {
-          ref.read(shipsPageControllerProvider.notifier).updateFilterStates(
-            modFilter,
-            {filterRequest.modName: true},
-          );
-        }
+        ref
+            .read(shipsPageControllerProvider.notifier)
+            .setChipSelections('mod', {filterRequest.modName: true});
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
     }
@@ -235,99 +227,17 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     return FiltersPanel(
       onHide: controller.toggleShowFilters,
       activeFilterCount: controller.activeFilterCount,
-      showClearAll: controllerState.filterCategories.any(
-        (f) => f.hasActiveFilters,
-      ),
+      showClearAll: controller.filterGroups.any((g) => g.isActive),
       onClearAll: controller.clearAllFilters,
       filterWidgets: [
-        _buildCheckboxFilters(theme, controllerState, controller),
-        const SizedBox(height: 8),
-        ...controllerState.filterCategories.map((filter) {
-          return GridFilterWidget(
-            filter: filter,
+        for (final g in controller.filterGroups)
+          FilterGroupRenderer<Ship>(
+            group: g,
+            scope: controller.scope,
             items: displayedShips,
-            filterStates: filter.filterStates,
-            onSelectionChanged: (states) {
-              controller.updateFilterStates(filter, states);
-            },
-          );
-        }),
+            onChanged: () => controller.onGroupChanged(g.id),
+          ),
       ],
-    );
-  }
-
-  Widget _buildCheckboxFilters(
-    ThemeData theme,
-    ShipsPageState controllerState,
-    ShipsPageController controller,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      color: theme.colorScheme.surfaceContainer,
-      child: Padding(
-        padding: const .all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MovingTooltipWidget.text(
-              message: "Only show ships from enabled mods.",
-              child: CheckboxListTile(
-                title: const Text('Only Enabled Mods'),
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                contentPadding: .only(left: 8),
-                value: controllerState.showEnabled,
-                onChanged: (value) => controller.toggleShowEnabled(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TriOSDropdownMenu<SpoilerLevel>(
-              initialSelection: controllerState.spoilerLevelToShow,
-              onSelected: (level) {
-                if (level == null) return;
-                controller.setShowSpoilers(level);
-              },
-              highlightOutlineColor:
-                  controllerState.spoilerLevelToShow !=
-                      SpoilerLevel.showAllSpoilers
-                  ? theme.colorScheme.primary
-                  : null,
-              dropdownMenuEntries: [
-                DropdownMenuEntry(
-                  value: SpoilerLevel.showNone,
-                  label: "No Spoilers",
-                  labelWidget: MovingTooltipWidget.text(
-                    message: "No spoilers shown at all.",
-                    child: Text("No Spoilers"),
-                  ),
-                  leadingIcon: const Icon(Icons.visibility_off, size: 20),
-                ),
-                DropdownMenuEntry(
-                  value: SpoilerLevel.showSlightSpoilers,
-                  label: "Show slight spoilers",
-                  labelWidget: MovingTooltipWidget.text(
-                    warningLevel: TooltipWarningLevel.warning,
-                    message: "Shows CODEX_UNLOCKABLE ships.",
-                    child: Text("Show slight spoilers"),
-                  ),
-                  leadingIcon: const Icon(Icons.visibility, size: 20),
-                ),
-                DropdownMenuEntry(
-                  value: SpoilerLevel.showAllSpoilers,
-                  label: "Show all spoilers",
-                  labelWidget: MovingTooltipWidget.text(
-                    warningLevel: TooltipWarningLevel.error,
-                    message:
-                        "Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships",
-                    child: Text("Show all spoilers"),
-                  ),
-                  leadingIcon: const Icon(Icons.visibility_outlined, size: 20),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 

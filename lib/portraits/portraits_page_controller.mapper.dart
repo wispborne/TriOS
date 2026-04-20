@@ -104,6 +104,154 @@ extension FilterPaneMapperExtension on FilterPane {
   }
 }
 
+class PortraitsPageStatePersistedMapper
+    extends ClassMapperBase<PortraitsPageStatePersisted> {
+  PortraitsPageStatePersistedMapper._();
+
+  static PortraitsPageStatePersistedMapper? _instance;
+  static PortraitsPageStatePersistedMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(
+        _instance = PortraitsPageStatePersistedMapper._(),
+      );
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'PortraitsPageStatePersisted';
+
+  static bool _$mainShowFilters(PortraitsPageStatePersisted v) =>
+      v.mainShowFilters;
+  static const Field<PortraitsPageStatePersisted, bool> _f$mainShowFilters =
+      Field('mainShowFilters', _$mainShowFilters, opt: true, def: true);
+
+  @override
+  final MappableFields<PortraitsPageStatePersisted> fields = const {
+    #mainShowFilters: _f$mainShowFilters,
+  };
+
+  static PortraitsPageStatePersisted _instantiate(DecodingData data) {
+    return PortraitsPageStatePersisted(
+      mainShowFilters: data.dec(_f$mainShowFilters),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static PortraitsPageStatePersisted fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<PortraitsPageStatePersisted>(map);
+  }
+
+  static PortraitsPageStatePersisted fromJson(String json) {
+    return ensureInitialized().decodeJson<PortraitsPageStatePersisted>(json);
+  }
+}
+
+mixin PortraitsPageStatePersistedMappable {
+  String toJson() {
+    return PortraitsPageStatePersistedMapper.ensureInitialized()
+        .encodeJson<PortraitsPageStatePersisted>(
+          this as PortraitsPageStatePersisted,
+        );
+  }
+
+  Map<String, dynamic> toMap() {
+    return PortraitsPageStatePersistedMapper.ensureInitialized()
+        .encodeMap<PortraitsPageStatePersisted>(
+          this as PortraitsPageStatePersisted,
+        );
+  }
+
+  PortraitsPageStatePersistedCopyWith<
+    PortraitsPageStatePersisted,
+    PortraitsPageStatePersisted,
+    PortraitsPageStatePersisted
+  >
+  get copyWith =>
+      _PortraitsPageStatePersistedCopyWithImpl<
+        PortraitsPageStatePersisted,
+        PortraitsPageStatePersisted
+      >(this as PortraitsPageStatePersisted, $identity, $identity);
+  @override
+  String toString() {
+    return PortraitsPageStatePersistedMapper.ensureInitialized().stringifyValue(
+      this as PortraitsPageStatePersisted,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return PortraitsPageStatePersistedMapper.ensureInitialized().equalsValue(
+      this as PortraitsPageStatePersisted,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return PortraitsPageStatePersistedMapper.ensureInitialized().hashValue(
+      this as PortraitsPageStatePersisted,
+    );
+  }
+}
+
+extension PortraitsPageStatePersistedValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, PortraitsPageStatePersisted, $Out> {
+  PortraitsPageStatePersistedCopyWith<$R, PortraitsPageStatePersisted, $Out>
+  get $asPortraitsPageStatePersisted => $base.as(
+    (v, t, t2) => _PortraitsPageStatePersistedCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class PortraitsPageStatePersistedCopyWith<
+  $R,
+  $In extends PortraitsPageStatePersisted,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({bool? mainShowFilters});
+  PortraitsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _PortraitsPageStatePersistedCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, PortraitsPageStatePersisted, $Out>
+    implements
+        PortraitsPageStatePersistedCopyWith<
+          $R,
+          PortraitsPageStatePersisted,
+          $Out
+        > {
+  _PortraitsPageStatePersistedCopyWithImpl(
+    super.value,
+    super.then,
+    super.then2,
+  );
+
+  @override
+  late final ClassMapperBase<PortraitsPageStatePersisted> $mapper =
+      PortraitsPageStatePersistedMapper.ensureInitialized();
+  @override
+  $R call({bool? mainShowFilters}) => $apply(
+    FieldCopyWithData({
+      if (mainShowFilters != null) #mainShowFilters: mainShowFilters,
+    }),
+  );
+  @override
+  PortraitsPageStatePersisted $make(CopyWithData data) =>
+      PortraitsPageStatePersisted(
+        mainShowFilters: data.get(#mainShowFilters, or: $value.mainShowFilters),
+      );
+
+  @override
+  PortraitsPageStatePersistedCopyWith<$R2, PortraitsPageStatePersisted, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _PortraitsPageStatePersistedCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
 class FilterPaneStateMapper extends ClassMapperBase<FilterPaneState> {
   FilterPaneStateMapper._();
 
@@ -118,28 +266,6 @@ class FilterPaneStateMapper extends ClassMapperBase<FilterPaneState> {
   @override
   final String id = 'FilterPaneState';
 
-  static bool _$showOnlyWithMetadata(FilterPaneState v) =>
-      v.showOnlyWithMetadata;
-  static const Field<FilterPaneState, bool> _f$showOnlyWithMetadata = Field(
-    'showOnlyWithMetadata',
-    _$showOnlyWithMetadata,
-    opt: true,
-    def: true,
-  );
-  static bool _$showOnlyReplaced(FilterPaneState v) => v.showOnlyReplaced;
-  static const Field<FilterPaneState, bool> _f$showOnlyReplaced = Field(
-    'showOnlyReplaced',
-    _$showOnlyReplaced,
-    opt: true,
-    def: false,
-  );
-  static bool _$showOnlyEnabledMods(FilterPaneState v) => v.showOnlyEnabledMods;
-  static const Field<FilterPaneState, bool> _f$showOnlyEnabledMods = Field(
-    'showOnlyEnabledMods',
-    _$showOnlyEnabledMods,
-    opt: true,
-    def: false,
-  );
   static bool _$showFilters(FilterPaneState v) => v.showFilters;
   static const Field<FilterPaneState, bool> _f$showFilters = Field(
     'showFilters',
@@ -157,18 +283,12 @@ class FilterPaneStateMapper extends ClassMapperBase<FilterPaneState> {
 
   @override
   final MappableFields<FilterPaneState> fields = const {
-    #showOnlyWithMetadata: _f$showOnlyWithMetadata,
-    #showOnlyReplaced: _f$showOnlyReplaced,
-    #showOnlyEnabledMods: _f$showOnlyEnabledMods,
     #showFilters: _f$showFilters,
     #searchQuery: _f$searchQuery,
   };
 
   static FilterPaneState _instantiate(DecodingData data) {
     return FilterPaneState(
-      showOnlyWithMetadata: data.dec(_f$showOnlyWithMetadata),
-      showOnlyReplaced: data.dec(_f$showOnlyReplaced),
-      showOnlyEnabledMods: data.dec(_f$showOnlyEnabledMods),
       showFilters: data.dec(_f$showFilters),
       searchQuery: data.dec(_f$searchQuery),
     );
@@ -236,13 +356,7 @@ extension FilterPaneStateValueCopy<$R, $Out>
 
 abstract class FilterPaneStateCopyWith<$R, $In extends FilterPaneState, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({
-    bool? showOnlyWithMetadata,
-    bool? showOnlyReplaced,
-    bool? showOnlyEnabledMods,
-    bool? showFilters,
-    String? searchQuery,
-  });
+  $R call({bool? showFilters, String? searchQuery});
   FilterPaneStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -257,34 +371,14 @@ class _FilterPaneStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<FilterPaneState> $mapper =
       FilterPaneStateMapper.ensureInitialized();
   @override
-  $R call({
-    bool? showOnlyWithMetadata,
-    bool? showOnlyReplaced,
-    bool? showOnlyEnabledMods,
-    bool? showFilters,
-    String? searchQuery,
-  }) => $apply(
+  $R call({bool? showFilters, String? searchQuery}) => $apply(
     FieldCopyWithData({
-      if (showOnlyWithMetadata != null)
-        #showOnlyWithMetadata: showOnlyWithMetadata,
-      if (showOnlyReplaced != null) #showOnlyReplaced: showOnlyReplaced,
-      if (showOnlyEnabledMods != null)
-        #showOnlyEnabledMods: showOnlyEnabledMods,
       if (showFilters != null) #showFilters: showFilters,
       if (searchQuery != null) #searchQuery: searchQuery,
     }),
   );
   @override
   FilterPaneState $make(CopyWithData data) => FilterPaneState(
-    showOnlyWithMetadata: data.get(
-      #showOnlyWithMetadata,
-      or: $value.showOnlyWithMetadata,
-    ),
-    showOnlyReplaced: data.get(#showOnlyReplaced, or: $value.showOnlyReplaced),
-    showOnlyEnabledMods: data.get(
-      #showOnlyEnabledMods,
-      or: $value.showOnlyEnabledMods,
-    ),
     showFilters: data.get(#showFilters, or: $value.showFilters),
     searchQuery: data.get(#searchQuery, or: $value.searchQuery),
   );
@@ -355,36 +449,6 @@ class PortraitsPageStateMapper extends ClassMapperBase<PortraitsPageState> {
         opt: true,
         def: const FilterPaneState(),
       );
-  static List<GridFilter<PortraitFilterItem>> _$mainFilterCategories(
-    PortraitsPageState v,
-  ) => v.mainFilterCategories;
-  static const Field<PortraitsPageState, List<GridFilter<PortraitFilterItem>>>
-  _f$mainFilterCategories = Field(
-    'mainFilterCategories',
-    _$mainFilterCategories,
-    opt: true,
-    def: const [],
-  );
-  static List<GridFilter<PortraitFilterItem>> _$leftFilterCategories(
-    PortraitsPageState v,
-  ) => v.leftFilterCategories;
-  static const Field<PortraitsPageState, List<GridFilter<PortraitFilterItem>>>
-  _f$leftFilterCategories = Field(
-    'leftFilterCategories',
-    _$leftFilterCategories,
-    opt: true,
-    def: const [],
-  );
-  static List<GridFilter<PortraitFilterItem>> _$rightFilterCategories(
-    PortraitsPageState v,
-  ) => v.rightFilterCategories;
-  static const Field<PortraitsPageState, List<GridFilter<PortraitFilterItem>>>
-  _f$rightFilterCategories = Field(
-    'rightFilterCategories',
-    _$rightFilterCategories,
-    opt: true,
-    def: const [],
-  );
   static Map<ModVariant?, List<Portrait>> _$allPortraits(
     PortraitsPageState v,
   ) => v.allPortraits;
@@ -423,9 +487,6 @@ class PortraitsPageStateMapper extends ClassMapperBase<PortraitsPageState> {
     #mainPaneState: _f$mainPaneState,
     #leftPaneState: _f$leftPaneState,
     #rightPaneState: _f$rightPaneState,
-    #mainFilterCategories: _f$mainFilterCategories,
-    #leftFilterCategories: _f$leftFilterCategories,
-    #rightFilterCategories: _f$rightFilterCategories,
     #allPortraits: _f$allPortraits,
     #metadata: _f$metadata,
     #replacements: _f$replacements,
@@ -439,9 +500,6 @@ class PortraitsPageStateMapper extends ClassMapperBase<PortraitsPageState> {
       mainPaneState: data.dec(_f$mainPaneState),
       leftPaneState: data.dec(_f$leftPaneState),
       rightPaneState: data.dec(_f$rightPaneState),
-      mainFilterCategories: data.dec(_f$mainFilterCategories),
-      leftFilterCategories: data.dec(_f$leftFilterCategories),
-      rightFilterCategories: data.dec(_f$rightFilterCategories),
       allPortraits: data.dec(_f$allPortraits),
       metadata: data.dec(_f$metadata),
       replacements: data.dec(_f$replacements),
@@ -526,36 +584,6 @@ abstract class PortraitsPageStateCopyWith<
   get leftPaneState;
   FilterPaneStateCopyWith<$R, FilterPaneState, FilterPaneState>
   get rightPaneState;
-  ListCopyWith<
-    $R,
-    GridFilter<PortraitFilterItem>,
-    ObjectCopyWith<
-      $R,
-      GridFilter<PortraitFilterItem>,
-      GridFilter<PortraitFilterItem>
-    >
-  >
-  get mainFilterCategories;
-  ListCopyWith<
-    $R,
-    GridFilter<PortraitFilterItem>,
-    ObjectCopyWith<
-      $R,
-      GridFilter<PortraitFilterItem>,
-      GridFilter<PortraitFilterItem>
-    >
-  >
-  get leftFilterCategories;
-  ListCopyWith<
-    $R,
-    GridFilter<PortraitFilterItem>,
-    ObjectCopyWith<
-      $R,
-      GridFilter<PortraitFilterItem>,
-      GridFilter<PortraitFilterItem>
-    >
-  >
-  get rightFilterCategories;
   MapCopyWith<
     $R,
     ModVariant?,
@@ -578,9 +606,6 @@ abstract class PortraitsPageStateCopyWith<
     FilterPaneState? mainPaneState,
     FilterPaneState? leftPaneState,
     FilterPaneState? rightPaneState,
-    List<GridFilter<PortraitFilterItem>>? mainFilterCategories,
-    List<GridFilter<PortraitFilterItem>>? leftFilterCategories,
-    List<GridFilter<PortraitFilterItem>>? rightFilterCategories,
     Map<ModVariant?, List<Portrait>>? allPortraits,
     Map<String, PortraitMetadata>? metadata,
     Map<String, Portrait>? replacements,
@@ -611,51 +636,6 @@ class _PortraitsPageStateCopyWithImpl<$R, $Out>
   FilterPaneStateCopyWith<$R, FilterPaneState, FilterPaneState>
   get rightPaneState =>
       $value.rightPaneState.copyWith.$chain((v) => call(rightPaneState: v));
-  @override
-  ListCopyWith<
-    $R,
-    GridFilter<PortraitFilterItem>,
-    ObjectCopyWith<
-      $R,
-      GridFilter<PortraitFilterItem>,
-      GridFilter<PortraitFilterItem>
-    >
-  >
-  get mainFilterCategories => ListCopyWith(
-    $value.mainFilterCategories,
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(mainFilterCategories: v),
-  );
-  @override
-  ListCopyWith<
-    $R,
-    GridFilter<PortraitFilterItem>,
-    ObjectCopyWith<
-      $R,
-      GridFilter<PortraitFilterItem>,
-      GridFilter<PortraitFilterItem>
-    >
-  >
-  get leftFilterCategories => ListCopyWith(
-    $value.leftFilterCategories,
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(leftFilterCategories: v),
-  );
-  @override
-  ListCopyWith<
-    $R,
-    GridFilter<PortraitFilterItem>,
-    ObjectCopyWith<
-      $R,
-      GridFilter<PortraitFilterItem>,
-      GridFilter<PortraitFilterItem>
-    >
-  >
-  get rightFilterCategories => ListCopyWith(
-    $value.rightFilterCategories,
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(rightFilterCategories: v),
-  );
   @override
   MapCopyWith<
     $R,
@@ -694,9 +674,6 @@ class _PortraitsPageStateCopyWithImpl<$R, $Out>
     FilterPaneState? mainPaneState,
     FilterPaneState? leftPaneState,
     FilterPaneState? rightPaneState,
-    List<GridFilter<PortraitFilterItem>>? mainFilterCategories,
-    List<GridFilter<PortraitFilterItem>>? leftFilterCategories,
-    List<GridFilter<PortraitFilterItem>>? rightFilterCategories,
     Map<ModVariant?, List<Portrait>>? allPortraits,
     Map<String, PortraitMetadata>? metadata,
     Map<String, Portrait>? replacements,
@@ -708,12 +685,6 @@ class _PortraitsPageStateCopyWithImpl<$R, $Out>
       if (mainPaneState != null) #mainPaneState: mainPaneState,
       if (leftPaneState != null) #leftPaneState: leftPaneState,
       if (rightPaneState != null) #rightPaneState: rightPaneState,
-      if (mainFilterCategories != null)
-        #mainFilterCategories: mainFilterCategories,
-      if (leftFilterCategories != null)
-        #leftFilterCategories: leftFilterCategories,
-      if (rightFilterCategories != null)
-        #rightFilterCategories: rightFilterCategories,
       if (allPortraits != null) #allPortraits: allPortraits,
       if (metadata != null) #metadata: metadata,
       if (replacements != null) #replacements: replacements,
@@ -727,18 +698,6 @@ class _PortraitsPageStateCopyWithImpl<$R, $Out>
     mainPaneState: data.get(#mainPaneState, or: $value.mainPaneState),
     leftPaneState: data.get(#leftPaneState, or: $value.leftPaneState),
     rightPaneState: data.get(#rightPaneState, or: $value.rightPaneState),
-    mainFilterCategories: data.get(
-      #mainFilterCategories,
-      or: $value.mainFilterCategories,
-    ),
-    leftFilterCategories: data.get(
-      #leftFilterCategories,
-      or: $value.leftFilterCategories,
-    ),
-    rightFilterCategories: data.get(
-      #rightFilterCategories,
-      or: $value.rightFilterCategories,
-    ),
     allPortraits: data.get(#allPortraits, or: $value.allPortraits),
     metadata: data.get(#metadata, or: $value.metadata),
     replacements: data.get(#replacements, or: $value.replacements),

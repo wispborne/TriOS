@@ -71,13 +71,6 @@ class HullmodsPageStatePersistedMapper
   @override
   final String id = 'HullmodsPageStatePersisted';
 
-  static bool _$showEnabled(HullmodsPageStatePersisted v) => v.showEnabled;
-  static const Field<HullmodsPageStatePersisted, bool> _f$showEnabled = Field(
-    'showEnabled',
-    _$showEnabled,
-    opt: true,
-    def: false,
-  );
   static bool _$splitPane(HullmodsPageStatePersisted v) => v.splitPane;
   static const Field<HullmodsPageStatePersisted, bool> _f$splitPane = Field(
     'splitPane',
@@ -92,19 +85,26 @@ class HullmodsPageStatePersistedMapper
     opt: true,
     def: false,
   );
+  static bool _$showFilters(HullmodsPageStatePersisted v) => v.showFilters;
+  static const Field<HullmodsPageStatePersisted, bool> _f$showFilters = Field(
+    'showFilters',
+    _$showFilters,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<HullmodsPageStatePersisted> fields = const {
-    #showEnabled: _f$showEnabled,
     #splitPane: _f$splitPane,
     #useContainFit: _f$useContainFit,
+    #showFilters: _f$showFilters,
   };
 
   static HullmodsPageStatePersisted _instantiate(DecodingData data) {
     return HullmodsPageStatePersisted(
-      showEnabled: data.dec(_f$showEnabled),
       splitPane: data.dec(_f$splitPane),
       useContainFit: data.dec(_f$useContainFit),
+      showFilters: data.dec(_f$showFilters),
     );
   }
 
@@ -182,7 +182,7 @@ abstract class HullmodsPageStatePersistedCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? showEnabled, bool? splitPane, bool? useContainFit});
+  $R call({bool? splitPane, bool? useContainFit, bool? showFilters});
   HullmodsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -202,19 +202,19 @@ class _HullmodsPageStatePersistedCopyWithImpl<$R, $Out>
   late final ClassMapperBase<HullmodsPageStatePersisted> $mapper =
       HullmodsPageStatePersistedMapper.ensureInitialized();
   @override
-  $R call({bool? showEnabled, bool? splitPane, bool? useContainFit}) => $apply(
+  $R call({bool? splitPane, bool? useContainFit, bool? showFilters}) => $apply(
     FieldCopyWithData({
-      if (showEnabled != null) #showEnabled: showEnabled,
       if (splitPane != null) #splitPane: splitPane,
       if (useContainFit != null) #useContainFit: useContainFit,
+      if (showFilters != null) #showFilters: showFilters,
     }),
   );
   @override
   HullmodsPageStatePersisted $make(CopyWithData data) =>
       HullmodsPageStatePersisted(
-        showEnabled: data.get(#showEnabled, or: $value.showEnabled),
         splitPane: data.get(#splitPane, or: $value.splitPane),
         useContainFit: data.get(#useContainFit, or: $value.useContainFit),
+        showFilters: data.get(#showFilters, or: $value.showFilters),
       );
 
   @override
@@ -232,7 +232,6 @@ class HullmodsPageStateMapper extends ClassMapperBase<HullmodsPageState> {
       MapperContainer.globals.use(_instance = HullmodsPageStateMapper._());
       HullmodsPageStatePersistedMapper.ensureInitialized();
       HullmodMapper.ensureInitialized();
-      HullmodSpoilerLevelMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -248,15 +247,6 @@ class HullmodsPageStateMapper extends ClassMapperBase<HullmodsPageState> {
     _$persisted,
     opt: true,
     def: const HullmodsPageStatePersisted(),
-  );
-  static List<GridFilter<Hullmod>> _$filterCategories(HullmodsPageState v) =>
-      v.filterCategories;
-  static const Field<HullmodsPageState, List<GridFilter<Hullmod>>>
-  _f$filterCategories = Field(
-    'filterCategories',
-    _$filterCategories,
-    opt: true,
-    def: const [],
   );
   static List<Hullmod> _$allHullmods(HullmodsPageState v) => v.allHullmods;
   static const Field<HullmodsPageState, List<Hullmod>> _f$allHullmods = Field(
@@ -296,13 +286,6 @@ class HullmodsPageStateMapper extends ClassMapperBase<HullmodsPageState> {
     opt: true,
     def: '',
   );
-  static bool _$showFilters(HullmodsPageState v) => v.showFilters;
-  static const Field<HullmodsPageState, bool> _f$showFilters = Field(
-    'showFilters',
-    _$showFilters,
-    opt: true,
-    def: false,
-  );
   static bool _$isLoading(HullmodsPageState v) => v.isLoading;
   static const Field<HullmodsPageState, bool> _f$isLoading = Field(
     'isLoading',
@@ -310,51 +293,27 @@ class HullmodsPageStateMapper extends ClassMapperBase<HullmodsPageState> {
     opt: true,
     def: false,
   );
-  static bool _$showHidden(HullmodsPageState v) => v.showHidden;
-  static const Field<HullmodsPageState, bool> _f$showHidden = Field(
-    'showHidden',
-    _$showHidden,
-    opt: true,
-    def: false,
-  );
-  static HullmodSpoilerLevel _$hullmodSpoilerLevel(HullmodsPageState v) =>
-      v.hullmodSpoilerLevel;
-  static const Field<HullmodsPageState, HullmodSpoilerLevel>
-  _f$hullmodSpoilerLevel = Field(
-    'hullmodSpoilerLevel',
-    _$hullmodSpoilerLevel,
-    opt: true,
-    def: HullmodSpoilerLevel.noSpoilers,
-  );
 
   @override
   final MappableFields<HullmodsPageState> fields = const {
     #persisted: _f$persisted,
-    #filterCategories: _f$filterCategories,
     #allHullmods: _f$allHullmods,
     #filteredHullmods: _f$filteredHullmods,
     #hullmodsBeforeGridFilter: _f$hullmodsBeforeGridFilter,
     #hullmodSearchIndices: _f$hullmodSearchIndices,
     #currentSearchQuery: _f$currentSearchQuery,
-    #showFilters: _f$showFilters,
     #isLoading: _f$isLoading,
-    #showHidden: _f$showHidden,
-    #hullmodSpoilerLevel: _f$hullmodSpoilerLevel,
   };
 
   static HullmodsPageState _instantiate(DecodingData data) {
     return HullmodsPageState(
       persisted: data.dec(_f$persisted),
-      filterCategories: data.dec(_f$filterCategories),
       allHullmods: data.dec(_f$allHullmods),
       filteredHullmods: data.dec(_f$filteredHullmods),
       hullmodsBeforeGridFilter: data.dec(_f$hullmodsBeforeGridFilter),
       hullmodSearchIndices: data.dec(_f$hullmodSearchIndices),
       currentSearchQuery: data.dec(_f$currentSearchQuery),
-      showFilters: data.dec(_f$showFilters),
       isLoading: data.dec(_f$isLoading),
-      showHidden: data.dec(_f$showHidden),
-      hullmodSpoilerLevel: data.dec(_f$hullmodSpoilerLevel),
     );
   }
 
@@ -435,12 +394,6 @@ abstract class HullmodsPageStateCopyWith<
     HullmodsPageStatePersisted
   >
   get persisted;
-  ListCopyWith<
-    $R,
-    GridFilter<Hullmod>,
-    ObjectCopyWith<$R, GridFilter<Hullmod>, GridFilter<Hullmod>>
-  >
-  get filterCategories;
   ListCopyWith<$R, Hullmod, HullmodCopyWith<$R, Hullmod, Hullmod>>
   get allHullmods;
   ListCopyWith<$R, Hullmod, HullmodCopyWith<$R, Hullmod, Hullmod>>
@@ -456,16 +409,12 @@ abstract class HullmodsPageStateCopyWith<
   get hullmodSearchIndices;
   $R call({
     HullmodsPageStatePersisted? persisted,
-    List<GridFilter<Hullmod>>? filterCategories,
     List<Hullmod>? allHullmods,
     List<Hullmod>? filteredHullmods,
     List<Hullmod>? hullmodsBeforeGridFilter,
     Map<String, List<String>>? hullmodSearchIndices,
     String? currentSearchQuery,
-    bool? showFilters,
     bool? isLoading,
-    bool? showHidden,
-    HullmodSpoilerLevel? hullmodSpoilerLevel,
   });
   HullmodsPageStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -487,17 +436,6 @@ class _HullmodsPageStateCopyWithImpl<$R, $Out>
     HullmodsPageStatePersisted
   >
   get persisted => $value.persisted.copyWith.$chain((v) => call(persisted: v));
-  @override
-  ListCopyWith<
-    $R,
-    GridFilter<Hullmod>,
-    ObjectCopyWith<$R, GridFilter<Hullmod>, GridFilter<Hullmod>>
-  >
-  get filterCategories => ListCopyWith(
-    $value.filterCategories,
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(filterCategories: v),
-  );
   @override
   ListCopyWith<$R, Hullmod, HullmodCopyWith<$R, Hullmod, Hullmod>>
   get allHullmods => ListCopyWith(
@@ -534,20 +472,15 @@ class _HullmodsPageStateCopyWithImpl<$R, $Out>
   @override
   $R call({
     HullmodsPageStatePersisted? persisted,
-    List<GridFilter<Hullmod>>? filterCategories,
     List<Hullmod>? allHullmods,
     List<Hullmod>? filteredHullmods,
     List<Hullmod>? hullmodsBeforeGridFilter,
     Map<String, List<String>>? hullmodSearchIndices,
     String? currentSearchQuery,
-    bool? showFilters,
     bool? isLoading,
-    bool? showHidden,
-    HullmodSpoilerLevel? hullmodSpoilerLevel,
   }) => $apply(
     FieldCopyWithData({
       if (persisted != null) #persisted: persisted,
-      if (filterCategories != null) #filterCategories: filterCategories,
       if (allHullmods != null) #allHullmods: allHullmods,
       if (filteredHullmods != null) #filteredHullmods: filteredHullmods,
       if (hullmodsBeforeGridFilter != null)
@@ -555,17 +488,12 @@ class _HullmodsPageStateCopyWithImpl<$R, $Out>
       if (hullmodSearchIndices != null)
         #hullmodSearchIndices: hullmodSearchIndices,
       if (currentSearchQuery != null) #currentSearchQuery: currentSearchQuery,
-      if (showFilters != null) #showFilters: showFilters,
       if (isLoading != null) #isLoading: isLoading,
-      if (showHidden != null) #showHidden: showHidden,
-      if (hullmodSpoilerLevel != null)
-        #hullmodSpoilerLevel: hullmodSpoilerLevel,
     }),
   );
   @override
   HullmodsPageState $make(CopyWithData data) => HullmodsPageState(
     persisted: data.get(#persisted, or: $value.persisted),
-    filterCategories: data.get(#filterCategories, or: $value.filterCategories),
     allHullmods: data.get(#allHullmods, or: $value.allHullmods),
     filteredHullmods: data.get(#filteredHullmods, or: $value.filteredHullmods),
     hullmodsBeforeGridFilter: data.get(
@@ -580,13 +508,7 @@ class _HullmodsPageStateCopyWithImpl<$R, $Out>
       #currentSearchQuery,
       or: $value.currentSearchQuery,
     ),
-    showFilters: data.get(#showFilters, or: $value.showFilters),
     isLoading: data.get(#isLoading, or: $value.isLoading),
-    showHidden: data.get(#showHidden, or: $value.showHidden),
-    hullmodSpoilerLevel: data.get(
-      #hullmodSpoilerLevel,
-      or: $value.hullmodSpoilerLevel,
-    ),
   );
 
   @override

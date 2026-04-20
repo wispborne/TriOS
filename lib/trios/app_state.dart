@@ -422,6 +422,7 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
   String? _lastMatchedDetectorName;
   List<String> _lastUsedDetectorNames = [];
   DateTime? _previousRunTime;
+  StateController<ProcessDetectionDiagnostics?>? _diagnosticsController;
 
   @override
   Future<Result> build() async {
@@ -443,11 +444,17 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
     // Build the platform-specific detector chain.
     _detectors = _buildDetectorChain();
 
+    // Cache the diagnostics controller before any async gap so that
+    // _updateDiagnostics doesn't touch ref after an await — watched deps
+    // could change mid-flight and invalidate the ref.
+    _diagnosticsController = ref.read(
+      AppState.processDetectionDiagnostics.notifier,
+    );
+
     // Perform an initial check.
     final stopwatch = Stopwatch()..start();
     final result = await _runDetectors(executableNames);
     stopwatch.stop();
-    state = AsyncValue.data(result);
     _updateDiagnostics(result, stopwatch.elapsed);
 
     // Start the sequential polling loop.
@@ -500,22 +507,23 @@ class _GameRunningChecker extends AsyncNotifier<Result> {
   }
 
   void _updateDiagnostics(Result result, Duration elapsed) {
+    final controller = _diagnosticsController;
+    if (controller == null) return;
     try {
       final now = DateTime.now();
       final interval = _previousRunTime != null
           ? now.difference(_previousRunTime!)
           : null;
       _previousRunTime = now;
-      ref.read(AppState.processDetectionDiagnostics.notifier).state =
-          ProcessDetectionDiagnostics(
-            detectorNames: _lastUsedDetectorNames,
-            matchedDetectorName: _lastMatchedDetectorName,
-            wasGameRunning: result.wasSuccessful,
-            checkDuration: elapsed,
-            timestamp: now,
-            runInterval: interval,
-            errors: result.errors,
-          );
+      controller.state = ProcessDetectionDiagnostics(
+        detectorNames: _lastUsedDetectorNames,
+        matchedDetectorName: _lastMatchedDetectorName,
+        wasGameRunning: result.wasSuccessful,
+        checkDuration: elapsed,
+        timestamp: now,
+        runInterval: interval,
+        errors: result.errors,
+      );
     } catch (e) {
       // Don't let diagnostics tracking break process detection.
       Fimber.w('Failed to update process detection diagnostics: $e');

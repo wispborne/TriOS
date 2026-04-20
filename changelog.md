@@ -1,9 +1,9 @@
 # 1.4.2
 - Added
-  - 
-  - Ships/Weapons Viewers: Added descriptions to the new tooltips.
-  - **Catalog**: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
+  - Mod Catalog: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
     - Catalog cards now show installation status, available updates, and game version requirements.
+  - Ship/Weapon/Hullmod Filters may now be remembered across app restarts (click save icon).
+  - Ships/Weapons Viewers: Added descriptions to the new tooltips.
   - Ships Viewer: filter by stations.
   - Ships Viewer: sensor stats now shown on tooltip.
 - Fixed

@@ -15,6 +15,7 @@ class ForumModDetailsMapper extends ClassMapperBase<ForumModDetails> {
   static ForumModDetailsMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ForumModDetailsMapper._());
+      ForumLinkMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -92,8 +93,8 @@ class ForumModDetailsMapper extends ClassMapperBase<ForumModDetails> {
     _$images,
     opt: true,
   );
-  static List<String>? _$links(ForumModDetails v) => v.links;
-  static const Field<ForumModDetails, List<String>> _f$links = Field(
+  static List<ForumLink>? _$links(ForumModDetails v) => v.links;
+  static const Field<ForumModDetails, List<ForumLink>> _f$links = Field(
     'links',
     _$links,
     opt: true,
@@ -212,7 +213,8 @@ extension ForumModDetailsValueCopy<$R, $Out>
 abstract class ForumModDetailsCopyWith<$R, $In extends ForumModDetails, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get images;
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get links;
+  ListCopyWith<$R, ForumLink, ForumLinkCopyWith<$R, ForumLink, ForumLink>>?
+  get links;
   $R call({
     int? topicId,
     String? title,
@@ -226,7 +228,7 @@ abstract class ForumModDetailsCopyWith<$R, $In extends ForumModDetails, $Out>
     DateTime? lastEditDate,
     String? contentHtml,
     List<String>? images,
-    List<String>? links,
+    List<ForumLink>? links,
     DateTime? scrapedAt,
     bool? isPlaceholderDetail,
   });
@@ -253,11 +255,11 @@ class _ForumModDetailsCopyWithImpl<$R, $Out>
         )
       : null;
   @override
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get links =>
-      $value.links != null
+  ListCopyWith<$R, ForumLink, ForumLinkCopyWith<$R, ForumLink, ForumLink>>?
+  get links => $value.links != null
       ? ListCopyWith(
           $value.links!,
-          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v, t) => v.copyWith.$chain(t),
           (v) => call(links: v),
         )
       : null;

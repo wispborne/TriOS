@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:trios/catalog/models/forum_link.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/text_trios.dart';
 
 /// Header bar for the Forum Post Dialog. Shows mod title, author (with
 /// avatar when available), post/last-edit dates, compact forum stats (from
@@ -15,6 +16,7 @@ class ForumPostHeader extends StatelessWidget {
   final VoidCallback? onToggleFullScreen;
   final bool isFullScreen;
   final VoidCallback? onClose;
+  final void Function(String url)? onLinkTap;
 
   static final _dateFormat = DateFormat.yMMMMd().add_jm();
   static final _decimalFormat = NumberFormat.decimalPattern();
@@ -28,7 +30,18 @@ class ForumPostHeader extends StatelessWidget {
     this.onToggleFullScreen,
     this.isFullScreen = false,
     this.onClose,
+    this.onLinkTap,
   });
+
+  static String _labelFor(ForumLink link) {
+    if (link.text.isNotEmpty) return link.text;
+    final parsed = Uri.tryParse(link.url);
+    final segs = parsed?.pathSegments;
+    if (segs != null && segs.isNotEmpty && segs.last.isNotEmpty) {
+      return segs.last;
+    }
+    return link.url;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,169 +51,223 @@ class ForumPostHeader extends StatelessWidget {
     final showLastEdit = lastEdit != null && lastEdit != postDate;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.6),
         border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: .start,
+            spacing: 16,
             children: [
-              Expanded(
-                child: Text(
-                  details.title.isNotEmpty ? details.title : '???',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Card(
+                  margin: .zero,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Padding(
+                    padding: const .symmetric(vertical: 8.0, horizontal: 12),
+                    child: MovingTooltipWidget.text(
+                      message:
+                          '${_decimalFormat.format(details.authorPostCount)} posts',
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: .min,
+                        children: [
+                          _Avatar(path: details.authorAvatarPath),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: .start,
+                            children: [
+                              Text(
+                                details.author,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (details.authorTitle != null &&
+                                  details.authorTitle!.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  details.authorTitle!,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    color: theme.textTheme.labelSmall?.color
+                                        ?.withValues(alpha: 0.7),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-              if (onOpenInBrowser != null)
-                Tooltip(
-                  message: 'Open in browser',
-                  child: IconButton(
-                    icon: const Icon(Icons.open_in_browser),
-                    onPressed: onOpenInBrowser,
-                  ),
-                ),
-              if (onToggleFullScreen != null)
-                Tooltip(
-                  message: isFullScreen ? 'Exit full screen' : 'Full screen',
-                  child: IconButton(
-                    icon: Icon(
-                      isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
-                    ),
-                    onPressed: onToggleFullScreen,
-                  ),
-                ),
-              if (onClose != null)
-                Tooltip(
-                  message: 'Close',
-                  child: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: onClose,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            spacing: 16,
-            children: [
-              Card(
-                margin: .zero,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
+              Expanded(
                 child: Padding(
-                  padding: const .symmetric(vertical: 8.0, horizontal: 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: .min,
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Column(
+                    crossAxisAlignment: .start,
+                    mainAxisSize: .max,
                     children: [
-                      _Avatar(path: details.authorAvatarPath),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: .start,
-                        children: [
-                          Text(
-                            details.author,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (details.authorTitle != null &&
-                              details.authorTitle!.isNotEmpty) ...[
-                            const SizedBox(width: 6),
-                            Text(
-                              details.authorTitle!,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontStyle: FontStyle.italic,
-                                color: theme.textTheme.labelSmall?.color
-                                    ?.withValues(alpha: 0.7),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                          if (details.authorPostCount != null) ...[
-                            const SizedBox(width: 6),
-                            Text(
-                              '${_decimalFormat.format(details.authorPostCount)} posts',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.textTheme.labelSmall?.color
-                                    ?.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ],
-                        ],
+                      TextTriOS(
+                        details.title.isNotEmpty ? details.title : '???',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+                      if (postDate != null || showLastEdit)
+                        Row(
+                          children: [
+                            if (postDate != null)
+                              Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'Posted ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: _dateFormat.format(postDate),
+                                    ),
+                                  ],
+                                ),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.textTheme.labelSmall?.color
+                                      ?.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            if (showLastEdit)
+                              Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: "  •  ",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'Edited ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: _dateFormat.format(lastEdit),
+                                    ),
+                                  ],
+                                ),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.textTheme.labelSmall?.color
+                                      ?.withValues(alpha: 0.6),
+                                ),
+                              ),
+                          ],
+                        ),
+                      if (index != null)
+                        _Stats(
+                          index: index!,
+                          compact: _compactFormat,
+                          decimal: _decimalFormat,
+                        ),
                     ],
                   ),
                 ),
               ),
-              Column(
+              Row(
                 crossAxisAlignment: .start,
-                spacing: 8,
                 children: [
-                  if (postDate != null || showLastEdit)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2.0),
-                      child: Column(
-                        crossAxisAlignment: .start,
-                        children: [
-                          if (postDate != null)
-                            Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'Posted ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  TextSpan(text: _dateFormat.format(postDate)),
-                                ],
-                              ),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.textTheme.labelSmall?.color
-                                    ?.withValues(alpha: 0.6),
-                              ),
-                            ),
-                          if (showLastEdit)
-                            Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'Edited ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  TextSpan(text: _dateFormat.format(lastEdit)),
-                                ],
-                              ),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.textTheme.labelSmall?.color
-                                    ?.withValues(alpha: 0.6),
-                              ),
-                            ),
-                        ],
+                  if (onOpenInBrowser != null)
+                    Tooltip(
+                      message: 'Open in browser',
+                      child: IconButton(
+                        icon: const Icon(Icons.open_in_browser),
+                        onPressed: onOpenInBrowser,
                       ),
                     ),
-                  if (index != null)
-                    _Stats(
-                      index: index!,
-                      compact: _compactFormat,
-                      decimal: _decimalFormat,
+                  if (onToggleFullScreen != null)
+                    Tooltip(
+                      message: isFullScreen
+                          ? 'Exit full screen'
+                          : 'Full screen',
+                      child: IconButton(
+                        icon: Icon(
+                          isFullScreen
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                        ),
+                        onPressed: onToggleFullScreen,
+                      ),
+                    ),
+                  if (onClose != null)
+                    Tooltip(
+                      message: 'Close',
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: onClose,
+                      ),
                     ),
                 ],
               ),
             ],
           ),
+          if (onLinkTap != null)
+            Builder(
+              builder: (context) {
+                final links = [
+                  for (final link
+                      in details.links ?? const <ForumLink>[])
+                    if (link.isDownloadable) (link: link, label: _labelFor(link)),
+                ];
+                if (links.isEmpty) return const SizedBox.shrink();
+                return Padding(
+                  padding: const .only(top: 8),
+                  child: Row(
+                    mainAxisAlignment: .end,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: .center,
+                        children: [
+                          for (final entry in links)
+                            MovingTooltipWidget.text(
+                              message: "${entry.label}\n${entry.link.url}",
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 200,
+                                ),
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.download, size: 16),
+                                  label: Text(
+                                    entry.label,
+                                    style: theme.textTheme.labelMedium,
+                                  ),
+                                  onPressed: () => onLinkTap!(entry.link.url),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );

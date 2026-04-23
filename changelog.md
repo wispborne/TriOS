@@ -2,6 +2,8 @@
 - Added
   - Mod Catalog: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
     - Catalog cards now show installation status, available updates, and game version requirements.
+  - VRAM Estimator: new intelligent mode that tries to only include images that are actually used.
+    - Also added more detailed per-image breakdown on the VRAM estimator page.
   - Ship/Weapon/Hullmod Filters may now be remembered across app restarts (click save icon).
   - Ships/Weapons Viewers: Added descriptions to the new tooltips.
   - Ships Viewer: filter by stations.

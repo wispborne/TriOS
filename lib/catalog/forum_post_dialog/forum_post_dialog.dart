@@ -97,6 +97,7 @@ class _ForumPostDialogState extends State<_ForumPostDialog> {
               },
               isFullScreen: _isFullScreen,
               onClose: () => Navigator.of(context).pop(),
+              onLinkTap: widget.linkLoader,
             ),
             Flexible(
               child: SingleChildScrollView(

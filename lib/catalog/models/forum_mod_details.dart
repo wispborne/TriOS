@@ -1,4 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/catalog/models/forum_link.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 
 part 'forum_mod_details.mapper.dart';
@@ -21,7 +22,7 @@ class ForumModDetails with ForumModDetailsMappable {
   final DateTime? lastEditDate;
   final String contentHtml;
   final List<String>? images;
-  final List<String>? links;
+  final List<ForumLink>? links;
   final DateTime? scrapedAt;
   final bool isPlaceholderDetail;
 

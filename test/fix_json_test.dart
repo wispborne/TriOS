@@ -1,13 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/utils/extensions.dart';
 
 void main() {
-  group('fixJson', () {
+  group('parseJsonToMap', () {
     test('valid JSON passes through unchanged', () {
       const input = '{"key": "value", "num": 42}';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['key'], 'value');
       expect(result['num'], 42);
     });
@@ -19,7 +17,7 @@ void main() {
   "type": "BALLISTIC";
   "size": "LARGE"
 }''';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['id'], 'test_wpn');
       expect(result['type'], 'BALLISTIC');
       expect(result['size'], 'LARGE');
@@ -31,19 +29,19 @@ void main() {
   "desc": "hello; world",
   "type": "BALLISTIC"
 }''';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['desc'], 'hello; world');
     });
 
     test('removes trailing commas', () {
       const input = '{"key": "value"},';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['key'], 'value');
     });
 
     test('replaces tabs with spaces', () {
       const input = '{\t"key":\t"value"}';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['key'], 'value');
     });
 
@@ -53,13 +51,13 @@ void main() {
   // this is a comment
   "key": "value"
 }''';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['key'], 'value');
     });
 
     test('replaces escaped hashes', () {
       const input = r'{"key": "color\#ff0000"}';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['key'], 'color#ff0000');
     });
 
@@ -72,7 +70,7 @@ void main() {
   "size": "LARGE";
   "turretOffsets": [10, 0]
 }''';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['id'], 'ork_rightarm_wpn');
       expect(result['type'], 'BALLISTIC');
       expect(result['size'], 'LARGE');
@@ -92,7 +90,7 @@ void main() {
     "no_weapon_flux"
   ]
 }''';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['hullId'], 'ms_kobold');
       expect(result['builtInWeapons'], {
         'WS0001': 'ms_splinterKol',
@@ -108,7 +106,7 @@ void main() {
   "removeBuiltInMods": [""],
   "emptyList": []
 }''';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['tags'], ['']);
       expect(result['removeBuiltInMods'], ['']);
       expect(result['emptyList'], []);
@@ -141,7 +139,7 @@ void main() {
   "projectileSpecId":"bt_invis",
   "fireSoundTwo":"bt_mech_punch"
 }''';
-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
+      final result = input.parseJsonToMap();
       expect(result['id'], 'ork_rightarm_wpn');
       expect(result['everyFrameEffect'],
           'data.scripts.weapons.bt_arm_everyframe');

@@ -76,13 +76,51 @@ class _VramCheckerExplanationDialogState
                           Text("About this tool", style: titleStyle),
                           const SizedBox(height: 8),
                           const Text(
-                            'This tool estimates the amount of VRAM used by a mod, based on the images in the mod folder.'
-                            '\nIt has no way of reliably telling whether the mod actually uses the image in-game, which means'
-                            ' that unused images will still be counted against it.',
+                            'This tool estimates the amount of VRAM used by a mod, based on the images in the mod folder.',
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'A few mods, such as Illustrated Entities, load images only when needed, so their real VRAM use will be much lower than estimated.',
+                          ),
+                          const SizedBox(height: 16),
+                          Text('Selectors', style: titleStyle),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Pick how the tool decides which images to count, using the dropdown on the VRAM page toolbar:',
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            '• Folder scan — counts every image in the mod folder (minus a few filename markers). Matches the tool\'s original behavior. May over-count when mods ship unused assets.',
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            '• Referenced only — parses .ship, .wpn, .proj, ship_data.csv, weapon_data.csv, .faction, portraits.csv, settings.json, the GraphicsLib CSV, .jar string literals, and loose .java sources to identify only images that are actually referenced. Images found on disk but not referenced are shown separately as "Unreferenced" (advisory — they may be dev leftovers or may be loaded via dynamic paths).',
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Known imprecisions in reference mode:',
+                          ),
+                          const Text(
+                            '• Asset paths constructed dynamically in Java (string concatenation) may not be detected. The debug panel\'s "Track attribution" toggle and the Unreferenced bucket make gaps visible.',
+                          ),
+                          const Text(
+                            '• Obfuscated or packed jars may defeat string extraction.',
+                          ),
+                          const Text(
+                            '• GraphicsLib normal/material/surface maps are kept whenever their CSV entry exists, regardless of whether their base sprite is referenced — matches how GraphicsLib loads maps in practice.',
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Debug panel toggles (visible only in Referenced mode):',
+                          ),
+                          const Text(
+                            '• Per-source chips — turn individual reference parsers on/off to bisect false positives.',
+                          ),
+                          const Text(
+                            '• Suppress unreferenced — hide the unreferenced bucket entirely for a clean comparison against folder-scan totals.',
+                          ),
+                          const Text(
+                            '• Track attribution — record which parser(s) flagged each file, surfaced in the per-file detail view.',
                           ),
                           const SizedBox(height: 8),
                           Text(

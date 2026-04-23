@@ -29,6 +29,11 @@ class ModImageTable {
   final List<ImageType> imageTypes;
   final List<MapType?> graphicsLibTypes;
 
+  /// Per-row list of parser ids that referenced the file. Null entries are
+  /// normal — folder-scan assets don't have attribution, and (in reference
+  /// mode) the unreferenced bucket has no referrers by definition.
+  final List<List<String>?> referencedBys;
+
   ModImageTable._(
     this.filePaths,
     this.textureHeights,
@@ -36,6 +41,7 @@ class ModImageTable {
     this.bitsInAllChannelsSums,
     this.imageTypes,
     this.graphicsLibTypes,
+    this.referencedBys,
   );
 
   /// Constructs a [ModImageTable] from a list of maps (typically parsed from JSON).
@@ -51,6 +57,7 @@ class ModImageTable {
       growable: false,
     );
     final gfxTypes = List<MapType?>.filled(length, null, growable: false);
+    final refBys = List<List<String>?>.filled(length, null, growable: false);
 
     for (int i = 0; i < length; i++) {
       final row = rows[i];
@@ -75,9 +82,23 @@ class ModImageTable {
           (m) => m.name == gfxTypeStr,
         );
       }
+
+      // Optional per-row attribution (parser ids that referenced this file).
+      final refByRaw = row['referencedBy'];
+      if (refByRaw is List && refByRaw.isNotEmpty) {
+        refBys[i] = List<String>.unmodifiable(refByRaw.cast<String>());
+      }
     }
 
-    return ModImageTable._(filePaths, heights, widths, bits, types, gfxTypes);
+    return ModImageTable._(
+      filePaths,
+      heights,
+      widths,
+      bits,
+      types,
+      gfxTypes,
+      refBys,
+    );
   }
 
   /// Converts the columnar data back into a list of maps for JSON serialization.
@@ -91,6 +112,7 @@ class ModImageTable {
         'bitsInAllChannelsSum': bitsInAllChannelsSums[i],
         'imageType': imageTypes[i].name,
         'graphicsLibType': graphicsLibTypes[i]?.name,
+        if (referencedBys[i] != null) 'referencedBy': referencedBys[i],
       });
     }
     return rows;
@@ -122,6 +144,11 @@ class ModImageView {
 
   MapType? get graphicsLibType => table.graphicsLibTypes[index];
 
+  /// Parser ids that referenced this image (reference mode, with
+  /// attribution tracking). Null for folder-scan rows and unreferenced-
+  /// bucket rows.
+  List<String>? get referencedBy => table.referencedBys[index];
+
   File get file => File(filePath);
 
   /// Returns the memory multiplier (125% for mipmaps; 100% for backgrounds).
@@ -143,6 +170,10 @@ class ModImageView {
   }
 
   /// Determines if the image is used based on the provided graphics library configuration.
+  ///
+  /// `preloadAllMaps` must be true for maps to count toward VRAM. When
+  /// false, GraphicsLib streams maps in and out dynamically, so they do
+  /// not contribute meaningfully to steady-state VRAM usage.
   bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? cfg) {
     if (cfg == null) {
       return graphicsLibType == null;
@@ -172,6 +203,7 @@ class ModImageTableHook extends MappingHook {
 
   @override
   dynamic beforeDecode(dynamic value) {
+    if (value == null) return null;
     if (value is List) {
       return ModImageTable.fromRows(value.cast<Map<String, dynamic>>());
     }
@@ -180,6 +212,7 @@ class ModImageTableHook extends MappingHook {
 
   @override
   dynamic beforeEncode(dynamic value) {
+    if (value == null) return null;
     if (value is ModImageTable) {
       return value.toRows();
     }
@@ -216,7 +249,25 @@ class VramMod with VramModMappable {
   @MappableField(hook: ModImageTableHook())
   final ModImageTable images;
 
-  VramMod(this.info, this.isEnabled, this.images, this.graphicsLibEntries);
+  /// Images the selector saw but did not count. Populated only by
+  /// reference-based selectors; always null for folder-scan output and for
+  /// reference-mode scans where `suppressUnreferenced` is enabled.
+  /// Advisory — never summed into headline totals.
+  @MappableField(hook: ModImageTableHook())
+  final ModImageTable? unreferencedImages;
+
+  /// When this mod was last scanned. Null for entries loaded from a
+  /// pre-`scannedAt` cache.
+  final DateTime? scannedAt;
+
+  VramMod(
+    this.info,
+    this.isEnabled,
+    this.images,
+    this.graphicsLibEntries, {
+    this.unreferencedImages,
+    this.scannedAt,
+  });
 
   ModImageView getModViewForIndex(int index) => ModImageView(index, images);
 
@@ -238,4 +289,18 @@ class VramMod with VramModMappable {
   }
 
   int bytesNotIncludingGraphicsLib() => imagesNotIncludingGraphicsLib().sum();
+
+  /// Sum of bytes for the unreferenced bucket, excluding GraphicsLib-tagged
+  /// images (same rule as [bytesNotIncludingGraphicsLib]). Returns 0 when
+  /// [unreferencedImages] is null (folder-scan mode) or empty.
+  int unreferencedBytesNotIncludingGraphicsLib() {
+    final table = unreferencedImages;
+    if (table == null || table.length == 0) return 0;
+    var sum = 0;
+    for (int i = 0; i < table.length; i++) {
+      final view = ModImageView(i, table);
+      if (view.graphicsLibType == null) sum += view.bytesUsed;
+    }
+    return sum;
+  }
 }

@@ -301,10 +301,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         try {
           ExtractedModInfo modInfo = (
             extractedFile: modInfoFile,
-            modInfo: ModInfoMapper.fromJson(
+            modInfo: ModInfoMapper.fromMap(
               modInfoFile.extractedFile
                   .readAsStringSyncAllowingMalformed()
-                  .fixJson(),
+                  .parseJsonToMap(),
             ),
           );
           return modInfo;

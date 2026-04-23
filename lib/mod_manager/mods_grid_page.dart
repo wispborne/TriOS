@@ -44,6 +44,7 @@ import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
@@ -179,7 +180,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               ),
                               const SizedBox(width: 8),
                               buildProfileSelector(isGameRunning),
-                              const SizedBox(width: 8),
+                              Padding(
+                                padding: const .symmetric(vertical: 8),
+                                child: VerticalDivider(color: theme.dividerColor.withAlpha(150)),
+                              ),
                               buildGroupBySelector(gridState),
                               const SizedBox(width: 8),
                               buildThenBySelector(gridState),
@@ -1059,7 +1063,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   width: 175,
                   child: Builder(
                     builder: (context) {
-                      return DropdownButton(
+                      return TriOSDropdownButton(
                         value: profiles?.modProfiles.firstWhereOrNull(
                           (p) => p.id == activeProfileId,
                         ),
@@ -2460,7 +2464,7 @@ class _ModGridRowState extends ConsumerState<_ModGridRow>
     final backgroundBaseColor = isColorfulModeOn
         ? (paletteBg?.withValues(alpha: 0.3) ?? Colors.transparent)
         : widget.isFavorited
-        ? theme.colorScheme.primary.withValues(alpha: 0.3)
+        ? theme.colorScheme.primary.withValues(alpha: 0.08)
         : Colors.transparent;
 
     // Mix in any hover/checked overlay color, but only when there is one.

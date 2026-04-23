@@ -142,8 +142,8 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
     Directory modsFolder, {
     List<Mod>? allMods,
   }) async {
-    return EnabledModsMapper.fromJson(
-      (await _getEnabledModsFile(modsFolder).readAsString()).fixJson(),
+    return EnabledModsMapper.fromMap(
+      (await _getEnabledModsFile(modsFolder).readAsString()).parseJsonToMap(),
     );
   }
 }

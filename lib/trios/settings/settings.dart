@@ -8,6 +8,7 @@ import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
+import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
 import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.dart';
 
@@ -140,6 +141,10 @@ class Settings with SettingsMappable {
 
   final bool debugMode;
 
+  /// Unknown ids fall back to folder-scan.
+  final String vramEstimatorSelectorId;
+  final ReferencedAssetsSelectorConfig referencedAssetsSelectorConfig;
+
   Settings({
     this.gameDir,
     this.gameCoreDir,
@@ -227,6 +232,9 @@ class Settings with SettingsMappable {
     this.showAprilFools2026,
     this.forceShowAprilFools2026,
     this.debugMode = false,
+    this.vramEstimatorSelectorId = 'folder-scan',
+    this.referencedAssetsSelectorConfig =
+        ReferencedAssetsSelectorConfig.allEnabled,
   });
 }
 

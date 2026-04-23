@@ -7,6 +7,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
+import 'package:trios/vram_estimator/widgets/vram_mod_breakdown_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
@@ -34,6 +35,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
     final theme = Theme.of(context);
     graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
     final realMods = ref.watch(AppState.mods);
+    final realModsById = {for (final m in realMods) m.id: m};
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,11 +66,10 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                       itemBuilder: (context, index) {
                         if (index > mods.length - 1) return const SizedBox();
                         final mod = mods[index];
-                        final realMod = realMods.firstWhereOrNull(
-                          (vramMod) => vramMod.id == mod.info.modInfo.id,
-                        );
-                        final percentOfMax =
-                            mod.bytesNotIncludingGraphicsLib() / maxVramUsed;
+                        final realMod = realModsById[mod.info.modInfo.id];
+                        final percentOfMax = maxVramUsed > 0
+                            ? mod.bytesNotIncludingGraphicsLib() / maxVramUsed
+                            : 0.0;
                         final width = layoutConstraints.maxWidth * percentOfMax;
 
                         final iconFilePath = realMod
@@ -84,7 +85,12 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                               ),
                           child: Card(
                             clipBehavior: Clip.antiAlias,
-                            child: Padding(
+                            child: InkWell(
+                              onTap: () => VramModBreakdownDialog.show(
+                                context,
+                                mod,
+                              ),
+                              child: Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,12 +124,9 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 8.0,
                                             ),
-                                            child: Text(
-                                              mod
-                                                  .bytesNotIncludingGraphicsLib()
-                                                  .bytesAsReadableMB(),
-                                              style:
-                                                  theme.textTheme.labelMedium,
+                                            child: _ModBytesLabel(
+                                              mod: mod,
+                                              theme: theme,
                                             ),
                                           ),
                                         ],
@@ -141,8 +144,15 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                                       ).createMaterialColor().shade700,
                                     ),
                                   ),
+                                  if (mod.unreferencedImages != null)
+                                    _UnreferencedBar(
+                                      mod: mod,
+                                      maxVramUsed: maxVramUsed,
+                                      layoutConstraints: layoutConstraints,
+                                    ),
                                 ],
                               ),
+                            ),
                             ),
                           ),
                         );
@@ -212,5 +222,79 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
           ),
         )
         .toList();
+  }
+}
+
+/// Displays a mod's referenced bytes and, in reference mode, a secondary
+/// advisory line for the unreferenced bucket.
+class _ModBytesLabel extends StatelessWidget {
+  final VramMod mod;
+  final ThemeData theme;
+  const _ModBytesLabel({required this.mod, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    final refBytes = mod.bytesNotIncludingGraphicsLib();
+    final hasUnref = mod.unreferencedImages != null;
+    final unrefBytes = mod.unreferencedBytesNotIncludingGraphicsLib();
+    final mutedColor =
+        theme.textTheme.labelMedium?.color?.withValues(alpha: 0.6);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          refBytes.bytesAsReadableMB(),
+          style: theme.textTheme.labelMedium,
+        ),
+        if (hasUnref)
+          MovingTooltipWidget.text(
+            message:
+                'Advisory — images on disk that no parsed reference points to. '
+                'May be dev leftovers, or loaded via dynamic paths the parsers '
+                "can't detect.",
+            child: Text(
+              '+${unrefBytes.bytesAsReadableMB()} unreferenced',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: mutedColor,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// A secondary, muted bar alongside the primary referenced bar, drawn
+/// proportionally so the unreferenced figure is visible at a glance.
+class _UnreferencedBar extends StatelessWidget {
+  final VramMod mod;
+  final double maxVramUsed;
+  final BoxConstraints layoutConstraints;
+
+  const _UnreferencedBar({
+    required this.mod,
+    required this.maxVramUsed,
+    required this.layoutConstraints,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final unref = mod.unreferencedBytesNotIncludingGraphicsLib();
+    if (unref <= 0) return const SizedBox.shrink();
+    final percent = maxVramUsed > 0 ? unref / maxVramUsed : 0.0;
+    final width = layoutConstraints.maxWidth * percent;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2.0),
+      child: Opacity(
+        opacity: 0.35,
+        child: Container(
+          width: width,
+          height: 6,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+    );
   }
 }

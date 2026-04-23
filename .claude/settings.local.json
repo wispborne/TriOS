@@ -82,7 +82,9 @@
       "Bash(mv openspec/changes/refactor-game-running-detection openspec/changes/archive/2026-04-13-refactor-game-running-detection)",
       "Bash(cygpath -w /tmp/simplify_diff.txt)",
       "Read(//f/tmp/**)",
-      "Read(//f//**)"
+      "Read(//f//**)",
+      "Bash(openspec archive *)",
+      "Bash(git -C \"F:/Code/Starsector/TriOS\" log -p --follow -- lib/mod_manager/utils/mod_file_utils.dart)"
     ]
   }
 }

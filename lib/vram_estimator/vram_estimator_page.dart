@@ -2,16 +2,23 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/vram_estimator/selectors/selector_registry.dart';
+import 'package:trios/vram_estimator/vram_checker_explanation.dart';
+import 'package:trios/vram_estimator/vram_estimator_manager.dart';
+import 'package:trios/vram_estimator/widgets/reference_scan_debug_panel.dart';
+import 'package:trios/vram_estimator/widgets/scan_progress_panel.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/spinning_refresh_button.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
+import 'package:trios/widgets/viewer_search_box.dart';
 
 import 'charts/bar_chart.dart';
 import 'charts/pie_chart.dart';
@@ -134,6 +141,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
   GraphType graphType = GraphType.bar;
   RangeValues? selectedSliderValues;
   bool _onlyEnabled = false;
+  final SearchController _searchController = SearchController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +165,8 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         .map((mod) => mod.smolId)
         .toList();
 
+    final searchQuery = _searchQuery.trim().toLowerCase();
+
     // Display only the highest version of each mod.
     final groupedModVramInfo = vramState.modVramInfo.values
         .where(
@@ -157,6 +174,12 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
               // If only showing enabled, filter to only the enabled *variants*.
               _onlyEnabled ? enabledSmolIds.contains(mod.info.smolId) : true,
         )
+        .where((mod) {
+          if (searchQuery.isEmpty) return true;
+          final name = mod.info.name?.toLowerCase() ?? '';
+          final id = mod.info.modInfo.id.toLowerCase();
+          return name.contains(searchQuery) || id.contains(searchQuery);
+        })
         .groupBy((mod) => mod.info.modInfo.id)
         .values
         .map(
@@ -223,32 +246,11 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                           }
                         },
                         isScanning: isScanning,
-                        tooltip: 'Estimate VRAM',
+                        tooltip: _buildRefreshTooltip(vramState),
                       ),
                     ),
-                    if (isScanning)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: OutlinedButton.icon(
-                          onPressed: () => ref
-                              .read(AppState.vramEstimatorProvider.notifier)
-                              .cancelEstimation(),
-                          label: Text(
-                            vramState.isCancelled ? 'Canceling...' : 'Cancel',
-                          ),
-                          icon: const Icon(Icons.cancel),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Disable(
-                        isEnabled: modVramInfoToShow.isNotEmpty,
-                        child: Text(
-                          '${modVramInfo.length} mods scanned',
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                      ),
-                    ),
+                    const SizedBox(width: 16),
+                    _buildSelectorDropdown(ref),
                     Padding(
                       padding: const EdgeInsets.only(left: 32.0),
                       child: Disable(
@@ -267,6 +269,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                         ),
                       ),
                     ),
+                    const SizedBox(width: 16),
+                    ViewerSearchBox(
+                      searchController: _searchController,
+                      hintText: 'Filter mods...',
+                      onChanged: (query) =>
+                          setState(() => _searchQuery = query),
+                      onClear: () => setState(() => _searchQuery = ''),
+                    ),
                     Spacer(),
                     TriOSToolbarCheckboxButton(
                       onChanged: (newValue) =>
@@ -279,6 +289,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
               ),
             ),
           ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: ScanProgressPanel(),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: ReferenceScanDebugPanel(),
         ),
         if (modVramInfo.isNotEmpty)
           Expanded(
@@ -353,6 +371,54 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         )
         .sortedByDescending<num>((mod) => mod.bytesNotIncludingGraphicsLib())
         .toList();
+  }
+
+  String _buildRefreshTooltip(VramEstimatorManagerState state) {
+    if (!state.isScanning) {
+      return state.modVramInfo.isEmpty ? 'Estimate VRAM' : 'Re-estimate VRAM';
+    }
+    final done = state.modsScannedThisRun;
+    final total = state.totalModsToScan;
+    final progress = total > 0 ? ' ($done/$total)' : '';
+    final current = state.currentlyScanningModName;
+    if (current != null && current.isNotEmpty) {
+      return 'Scanning: $current$progress';
+    }
+    return 'Scanning$progress';
+  }
+
+  Widget _buildSelectorDropdown(WidgetRef ref) {
+    final settings = ref.watch(appSettings);
+    final activeId = settings.vramEstimatorSelectorId;
+    final options = allSelectorOptions();
+    final theme = Theme.of(context);
+    return MovingTooltipWidget.text(
+      message: options
+          .firstWhere((o) => o.id == activeId, orElse: () => options.first)
+          .description,
+      child: TriOSDropdownButton<String>(
+        value: options.any((o) => o.id == activeId)
+            ? activeId
+            : options.first.id,
+        underline: const SizedBox.shrink(),
+        items: [
+          for (final opt in options)
+            DropdownMenuItem<String>(
+              value: opt.id,
+              child: Text(opt.displayName, style: theme.textTheme.labelMedium),
+            ),
+        ],
+        onChanged: (newId) {
+          if (newId == null) return;
+          ref
+              .read(appSettings.notifier)
+              .update((s) => s.copyWith(vramEstimatorSelectorId: newId));
+          ref
+              .read(AppState.vramEstimatorProvider.notifier)
+              .onSelectorOrConfigChanged();
+        },
+      ),
+    );
   }
 
   double _maxRange(

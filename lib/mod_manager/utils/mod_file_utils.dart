@@ -35,10 +35,10 @@ Future<ModInfo?> getModInfo(
       var rawString = await withFileHandleLimit(
         () => modInfoFile.readAsString(),
       );
-      var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJson();
+      var jsonEncodedYaml = await rawString.parseJsonToMapAsync();
 
       final model = ModInfo.fromJsonModel(
-        ModInfoJsonMapper.fromJson(jsonEncodedYaml),
+        ModInfoJsonMapper.fromMap(jsonEncodedYaml),
         modFolder,
       );
 
@@ -107,8 +107,8 @@ File? getVersionFile(Directory modFolder) {
 VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
   if (!versionFile.existsSync()) return null;
   try {
-    var info = VersionCheckerInfoMapper.fromJson(
-      versionFile.readAsStringSync().fixJson(),
+    var info = VersionCheckerInfoMapper.fromMap(
+      versionFile.readAsStringSync().parseJsonToMap(),
     );
 
     if (info.modThreadId != null) {

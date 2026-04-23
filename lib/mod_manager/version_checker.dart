@@ -306,7 +306,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
     if (response.statusCode == 200) {
       return RemoteVersionCheckResult(
         modVariant.versionCheckerInfo,
-        VersionCheckerInfoMapper.fromJson(body.fixJson()),
+        VersionCheckerInfoMapper.fromMap(await body.parseJsonToMapAsync()),
         remoteVersionUrl,
       )..smolId = modVariant.smolId;
     } else {

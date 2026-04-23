@@ -7,10 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show NumberFormat;
 import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/thirdparty/yaml/yaml.dart';
 
 // import 'package:toml/toml.dart';
 import 'package:trios/themes/theme.dart';
+import 'package:trios/thirdparty/yaml/yaml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
@@ -125,14 +125,6 @@ extension StringExt on String {
         .where((it) => !it.trim().startsWith("//"))
         .join("\n");
     return fixed;
-  }
-
-  /// Warning: probably not fast. Runs the full fixup pipeline through the
-  /// YAML parser; only used as a last-resort fallback in [parseJsonToMap].
-  String fixJson() => _fixJsonViaYaml(_applyJsonFixups());
-
-  Future<String> fixJsonAsync() {
-    return Future.microtask(() => fixJson());
   }
 
   /// Parse a JSON-ish Starsector file into a map.
@@ -340,8 +332,8 @@ List<_SubstitutionPart> _parseStarsectorSubstitutions({
 }) {
   final parts = <_SubstitutionPart>[];
 
-  final replacementValues = (replacementValuesString == null ||
-          replacementValuesString.isEmpty)
+  final replacementValues =
+      (replacementValuesString == null || replacementValuesString.isEmpty)
       ? <String>[]
       : replacementValuesString.split('|').map((it) => it.trim()).toList();
 
@@ -1284,6 +1276,5 @@ extension TriOSBuildContextTheme on ThemeData {
       extension<TriOSThemeExtension>()?.rainbowAccent ?? false;
 
   /// Access semantic status colors from the current theme.
-  TriOSThemeExtension get statusColors =>
-      extension<TriOSThemeExtension>()!;
+  TriOSThemeExtension get statusColors => extension<TriOSThemeExtension>()!;
 }

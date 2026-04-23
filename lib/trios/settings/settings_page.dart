@@ -24,6 +24,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/settings_group.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
 
 import '../../models/version.dart';
 import '../../themes/theme.dart';
@@ -461,7 +462,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
                                         ),
-                                        child: DropdownButton<int>(
+                                        child: TriOSDropdownButton<int>(
                                           value: lastNVersionsSetting,
                                           items: [
                                             for (int i = 1; i <= 10; i++)

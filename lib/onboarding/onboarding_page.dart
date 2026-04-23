@@ -15,6 +15,7 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
 
 import '../widgets/svg_image_icon.dart';
 
@@ -233,7 +234,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                       const Text(" (up to "),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: DropdownButton<int>(
+                        child: TriOSDropdownButton<int>(
                           value: lastNVersionsSetting,
                           items: [
                             for (int i = 2; i <= 10; i++)

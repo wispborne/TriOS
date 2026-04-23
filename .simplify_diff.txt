@@ -1,0 +1,2756 @@
+diff --git a/lib/catalog/forum_post_dialog/forum_post_dialog.dart b/lib/catalog/forum_post_dialog/forum_post_dialog.dart
+index 3d01501d..21b85040 100644
+--- a/lib/catalog/forum_post_dialog/forum_post_dialog.dart
++++ b/lib/catalog/forum_post_dialog/forum_post_dialog.dart
+@@ -97,6 +97,7 @@ class _ForumPostDialogState extends State<_ForumPostDialog> {
+               },
+               isFullScreen: _isFullScreen,
+               onClose: () => Navigator.of(context).pop(),
++              onLinkTap: widget.linkLoader,
+             ),
+             Flexible(
+               child: SingleChildScrollView(
+diff --git a/lib/catalog/forum_post_dialog/forum_post_header.dart b/lib/catalog/forum_post_dialog/forum_post_header.dart
+index 3cb60c46..70b7538f 100644
+--- a/lib/catalog/forum_post_dialog/forum_post_header.dart
++++ b/lib/catalog/forum_post_dialog/forum_post_header.dart
+@@ -1,9 +1,10 @@
+ import 'package:flutter/material.dart';
+ import 'package:intl/intl.dart';
++import 'package:trios/catalog/models/forum_link.dart';
+ import 'package:trios/catalog/models/forum_mod_details.dart';
+ import 'package:trios/catalog/models/forum_mod_index.dart';
+-import 'package:trios/trios/constants_theme.dart';
+ import 'package:trios/widgets/moving_tooltip.dart';
++import 'package:trios/widgets/text_trios.dart';
+ 
+ /// Header bar for the Forum Post Dialog. Shows mod title, author (with
+ /// avatar when available), post/last-edit dates, compact forum stats (from
+@@ -15,6 +16,7 @@ class ForumPostHeader extends StatelessWidget {
+   final VoidCallback? onToggleFullScreen;
+   final bool isFullScreen;
+   final VoidCallback? onClose;
++  final void Function(String url)? onLinkTap;
+ 
+   static final _dateFormat = DateFormat.yMMMMd().add_jm();
+   static final _decimalFormat = NumberFormat.decimalPattern();
+@@ -28,8 +30,19 @@ class ForumPostHeader extends StatelessWidget {
+     this.onToggleFullScreen,
+     this.isFullScreen = false,
+     this.onClose,
++    this.onLinkTap,
+   });
+ 
++  static String _labelFor(ForumLink link) {
++    if (link.text.isNotEmpty) return link.text;
++    final parsed = Uri.tryParse(link.url);
++    final segs = parsed?.pathSegments;
++    if (segs != null && segs.isNotEmpty && segs.last.isNotEmpty) {
++      return segs.last;
++    }
++    return link.url;
++  }
++
+   @override
+   Widget build(BuildContext context) {
+     final theme = Theme.of(context);
+@@ -38,169 +51,226 @@ class ForumPostHeader extends StatelessWidget {
+     final showLastEdit = lastEdit != null && lastEdit != postDate;
+ 
+     return Container(
+-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
++      padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
+       decoration: BoxDecoration(
+         color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.6),
+         border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
+       ),
+       child: Column(
+-        crossAxisAlignment: CrossAxisAlignment.start,
++        crossAxisAlignment: .start,
+         children: [
+           Row(
+-            crossAxisAlignment: CrossAxisAlignment.start,
++            crossAxisAlignment: .start,
++            spacing: 16,
+             children: [
+-              Expanded(
+-                child: Text(
+-                  details.title.isNotEmpty ? details.title : '???',
+-                  style: theme.textTheme.titleLarge?.copyWith(
+-                    fontWeight: FontWeight.bold,
++              Padding(
++                padding: const EdgeInsets.only(top: 8),
++                child: Card(
++                  margin: .zero,
++                  elevation: 0,
++                  shape: RoundedRectangleBorder(
++                    borderRadius: BorderRadius.circular(24),
+                   ),
+-                ),
+-              ),
+-              if (onOpenInBrowser != null)
+-                Tooltip(
+-                  message: 'Open in browser',
+-                  child: IconButton(
+-                    icon: const Icon(Icons.open_in_browser),
+-                    onPressed: onOpenInBrowser,
+-                  ),
+-                ),
+-              if (onToggleFullScreen != null)
+-                Tooltip(
+-                  message: isFullScreen ? 'Exit full screen' : 'Full screen',
+-                  child: IconButton(
+-                    icon: Icon(
+-                      isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
++                  child: Padding(
++                    padding: const .symmetric(vertical: 8.0, horizontal: 12),
++                    child: MovingTooltipWidget.text(
++                      message:
++                          '${_decimalFormat.format(details.authorPostCount)} posts',
++                      child: Row(
++                        crossAxisAlignment: CrossAxisAlignment.center,
++                        mainAxisSize: .min,
++                        children: [
++                          _Avatar(path: details.authorAvatarPath),
++                          const SizedBox(width: 8),
++                          Column(
++                            crossAxisAlignment: .start,
++                            children: [
++                              Text(
++                                details.author,
++                                style: theme.textTheme.titleSmall?.copyWith(
++                                  fontWeight: FontWeight.bold,
++                                ),
++                                overflow: TextOverflow.ellipsis,
++                              ),
++                              if (details.authorTitle != null &&
++                                  details.authorTitle!.isNotEmpty) ...[
++                                const SizedBox(width: 6),
++                                Text(
++                                  details.authorTitle!,
++                                  style: theme.textTheme.labelSmall?.copyWith(
++                                    fontStyle: FontStyle.italic,
++                                    color: theme.textTheme.labelSmall?.color
++                                        ?.withValues(alpha: 0.7),
++                                  ),
++                                  overflow: TextOverflow.ellipsis,
++                                ),
++                              ],
++                            ],
++                          ),
++                          const SizedBox(width: 8),
++                        ],
++                      ),
+                     ),
+-                    onPressed: onToggleFullScreen,
+-                  ),
+-                ),
+-              if (onClose != null)
+-                Tooltip(
+-                  message: 'Close',
+-                  child: IconButton(
+-                    icon: const Icon(Icons.close),
+-                    onPressed: onClose,
+                   ),
+                 ),
+-            ],
+-          ),
+-          const SizedBox(height: 8),
+-          Row(
+-            spacing: 16,
+-            children: [
+-              Card(
+-                margin: .zero,
+-                elevation: 0,
+-                shape: RoundedRectangleBorder(
+-                  borderRadius: BorderRadius.circular(24),
+-                ),
++              ),
++              Expanded(
+                 child: Padding(
+-                  padding: const .symmetric(vertical: 8.0, horizontal: 12),
+-                  child: Row(
+-                    crossAxisAlignment: CrossAxisAlignment.center,
+-                    mainAxisSize: .min,
++                  padding: const EdgeInsets.only(top: 8),
++                  child: Column(
++                    crossAxisAlignment: .start,
++                    mainAxisSize: .max,
+                     children: [
+-                      _Avatar(path: details.authorAvatarPath),
+-                      const SizedBox(width: 8),
+-                      Column(
+-                        crossAxisAlignment: .start,
+-                        children: [
+-                          Text(
+-                            details.author,
+-                            style: theme.textTheme.titleSmall?.copyWith(
+-                              fontWeight: FontWeight.bold,
+-                            ),
+-                            overflow: TextOverflow.ellipsis,
+-                          ),
+-                          if (details.authorTitle != null &&
+-                              details.authorTitle!.isNotEmpty) ...[
+-                            const SizedBox(width: 6),
+-                            Text(
+-                              details.authorTitle!,
+-                              style: theme.textTheme.labelSmall?.copyWith(
+-                                fontStyle: FontStyle.italic,
+-                                color: theme.textTheme.labelSmall?.color
+-                                    ?.withValues(alpha: 0.7),
++                      TextTriOS(
++                        details.title.isNotEmpty ? details.title : '???',
++                        style: theme.textTheme.titleMedium?.copyWith(
++                          fontWeight: FontWeight.bold,
++                        ),
++                      ),
++                      if (postDate != null || showLastEdit)
++                        Row(
++                          children: [
++                            if (postDate != null)
++                              Text.rich(
++                                TextSpan(
++                                  children: [
++                                    TextSpan(
++                                      text: 'Posted ',
++                                      style: TextStyle(
++                                        fontWeight: FontWeight.bold,
++                                      ),
++                                    ),
++                                    TextSpan(
++                                      text: _dateFormat.format(postDate),
++                                    ),
++                                  ],
++                                ),
++                                style: theme.textTheme.labelSmall?.copyWith(
++                                  color: theme.textTheme.labelSmall?.color
++                                      ?.withValues(alpha: 0.6),
++                                ),
+                               ),
+-                              overflow: TextOverflow.ellipsis,
+-                            ),
+-                          ],
+-                          if (details.authorPostCount != null) ...[
+-                            const SizedBox(width: 6),
+-                            Text(
+-                              '${_decimalFormat.format(details.authorPostCount)} posts',
+-                              style: theme.textTheme.labelSmall?.copyWith(
+-                                color: theme.textTheme.labelSmall?.color
+-                                    ?.withValues(alpha: 0.7),
++                            if (showLastEdit)
++                              Text.rich(
++                                TextSpan(
++                                  children: [
++                                    TextSpan(
++                                      text: "  •  ",
++                                      style: TextStyle(
++                                        fontWeight: FontWeight.bold,
++                                      ),
++                                    ),
++                                    TextSpan(
++                                      text: 'Edited ',
++                                      style: TextStyle(
++                                        fontWeight: FontWeight.bold,
++                                      ),
++                                    ),
++                                    TextSpan(
++                                      text: _dateFormat.format(lastEdit),
++                                    ),
++                                  ],
++                                ),
++                                style: theme.textTheme.labelSmall?.copyWith(
++                                  color: theme.textTheme.labelSmall?.color
++                                      ?.withValues(alpha: 0.6),
++                                ),
+                               ),
+-                            ),
+                           ],
+-                        ],
+-                      ),
++                        ),
++                      if (index != null)
++                        _Stats(
++                          index: index!,
++                          compact: _compactFormat,
++                          decimal: _decimalFormat,
++                        ),
+                     ],
+                   ),
+                 ),
+               ),
+-              Column(
++              Row(
+                 crossAxisAlignment: .start,
+-                spacing: 8,
+                 children: [
+-                  if (postDate != null || showLastEdit)
+-                    Padding(
+-                      padding: const EdgeInsets.only(top: 2.0),
+-                      child: Column(
+-                        crossAxisAlignment: .start,
+-                        children: [
+-                          if (postDate != null)
+-                            Text.rich(
+-                              TextSpan(
+-                                children: [
+-                                  TextSpan(
+-                                    text: 'Posted ',
+-                                    style: TextStyle(
+-                                      fontWeight: FontWeight.bold,
+-                                    ),
+-                                  ),
+-                                  TextSpan(text: _dateFormat.format(postDate)),
+-                                ],
+-                              ),
+-                              style: theme.textTheme.labelSmall?.copyWith(
+-                                color: theme.textTheme.labelSmall?.color
+-                                    ?.withValues(alpha: 0.6),
+-                              ),
+-                            ),
+-                          if (showLastEdit)
+-                            Text.rich(
+-                              TextSpan(
+-                                children: [
+-                                  TextSpan(
+-                                    text: 'Edited ',
+-                                    style: TextStyle(
+-                                      fontWeight: FontWeight.bold,
+-                                    ),
+-                                  ),
+-                                  TextSpan(text: _dateFormat.format(lastEdit)),
+-                                ],
+-                              ),
+-                              style: theme.textTheme.labelSmall?.copyWith(
+-                                color: theme.textTheme.labelSmall?.color
+-                                    ?.withValues(alpha: 0.6),
+-                              ),
+-                            ),
+-                        ],
++                  if (onOpenInBrowser != null)
++                    Tooltip(
++                      message: 'Open in browser',
++                      child: IconButton(
++                        icon: const Icon(Icons.open_in_browser),
++                        onPressed: onOpenInBrowser,
++                      ),
++                    ),
++                  if (onToggleFullScreen != null)
++                    Tooltip(
++                      message: isFullScreen
++                          ? 'Exit full screen'
++                          : 'Full screen',
++                      child: IconButton(
++                        icon: Icon(
++                          isFullScreen
++                              ? Icons.fullscreen_exit
++                              : Icons.fullscreen,
++                        ),
++                        onPressed: onToggleFullScreen,
+                       ),
+                     ),
+-                  if (index != null)
+-                    _Stats(
+-                      index: index!,
+-                      compact: _compactFormat,
+-                      decimal: _decimalFormat,
++                  if (onClose != null)
++                    Tooltip(
++                      message: 'Close',
++                      child: IconButton(
++                        icon: const Icon(Icons.close),
++                        onPressed: onClose,
++                      ),
+                     ),
+                 ],
+               ),
+             ],
+           ),
++          if (onLinkTap != null)
++            Builder(
++              builder: (context) {
++                final links =
++                    details.links?.where((link) => link.isDownloadable) ??
++                    const <ForumLink>[];
++                if (links.isEmpty) return const SizedBox.shrink();
++                return Padding(
++                  padding: const .only(top: 8),
++                  child: Row(
++                    mainAxisAlignment: .end,
++                    children: [
++                      Wrap(
++                        spacing: 8,
++                        runSpacing: 8,
++                        crossAxisAlignment: .center,
++                        children: [
++                          for (final link in links)
++                            MovingTooltipWidget.text(
++                              message: "${_labelFor(link)}\n${link.url}",
++                              child: ConstrainedBox(
++                                constraints: const BoxConstraints(
++                                  maxWidth: 200,
++                                ),
++                                child: ElevatedButton.icon(
++                                  icon: Icon(
++                                    link.isDownloadable
++                                        ? Icons.download
++                                        : Icons.open_in_new,
++                                    size: 16,
++                                  ),
++                                  label: Text(
++                                    _labelFor(link),
++                                    style: theme.textTheme.labelMedium,
++                                  ),
++                                  onPressed: () => onLinkTap!(link.url),
++                                ),
++                              ),
++                            ),
++                        ],
++                      ),
++                    ],
++                  ),
++                );
++              },
++            ),
+         ],
+       ),
+     );
+diff --git a/lib/catalog/models/forum_mod_details.dart b/lib/catalog/models/forum_mod_details.dart
+index aef604a9..4e7c64ca 100644
+--- a/lib/catalog/models/forum_mod_details.dart
++++ b/lib/catalog/models/forum_mod_details.dart
+@@ -1,4 +1,5 @@
+ import 'package:dart_mappable/dart_mappable.dart';
++import 'package:trios/catalog/models/forum_link.dart';
+ import 'package:trios/catalog/models/forum_mod_index.dart';
+ 
+ part 'forum_mod_details.mapper.dart';
+@@ -21,7 +22,7 @@ class ForumModDetails with ForumModDetailsMappable {
+   final DateTime? lastEditDate;
+   final String contentHtml;
+   final List<String>? images;
+-  final List<String>? links;
++  final List<ForumLink>? links;
+   final DateTime? scrapedAt;
+   final bool isPlaceholderDetail;
+ 
+diff --git a/lib/catalog/models/forum_mod_details.mapper.dart b/lib/catalog/models/forum_mod_details.mapper.dart
+index b9e127da..d608020e 100644
+--- a/lib/catalog/models/forum_mod_details.mapper.dart
++++ b/lib/catalog/models/forum_mod_details.mapper.dart
+@@ -15,6 +15,7 @@ class ForumModDetailsMapper extends ClassMapperBase<ForumModDetails> {
+   static ForumModDetailsMapper ensureInitialized() {
+     if (_instance == null) {
+       MapperContainer.globals.use(_instance = ForumModDetailsMapper._());
++      ForumLinkMapper.ensureInitialized();
+     }
+     return _instance!;
+   }
+@@ -92,8 +93,8 @@ class ForumModDetailsMapper extends ClassMapperBase<ForumModDetails> {
+     _$images,
+     opt: true,
+   );
+-  static List<String>? _$links(ForumModDetails v) => v.links;
+-  static const Field<ForumModDetails, List<String>> _f$links = Field(
++  static List<ForumLink>? _$links(ForumModDetails v) => v.links;
++  static const Field<ForumModDetails, List<ForumLink>> _f$links = Field(
+     'links',
+     _$links,
+     opt: true,
+@@ -212,7 +213,8 @@ extension ForumModDetailsValueCopy<$R, $Out>
+ abstract class ForumModDetailsCopyWith<$R, $In extends ForumModDetails, $Out>
+     implements ClassCopyWith<$R, $In, $Out> {
+   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get images;
+-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get links;
++  ListCopyWith<$R, ForumLink, ForumLinkCopyWith<$R, ForumLink, ForumLink>>?
++  get links;
+   $R call({
+     int? topicId,
+     String? title,
+@@ -226,7 +228,7 @@ abstract class ForumModDetailsCopyWith<$R, $In extends ForumModDetails, $Out>
+     DateTime? lastEditDate,
+     String? contentHtml,
+     List<String>? images,
+-    List<String>? links,
++    List<ForumLink>? links,
+     DateTime? scrapedAt,
+     bool? isPlaceholderDetail,
+   });
+@@ -253,11 +255,11 @@ class _ForumModDetailsCopyWithImpl<$R, $Out>
+         )
+       : null;
+   @override
+-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get links =>
+-      $value.links != null
++  ListCopyWith<$R, ForumLink, ForumLinkCopyWith<$R, ForumLink, ForumLink>>?
++  get links => $value.links != null
+       ? ListCopyWith(
+           $value.links!,
+-          (v, t) => ObjectCopyWith(v, $identity, t),
++          (v, t) => v.copyWith.$chain(t),
+           (v) => call(links: v),
+         )
+       : null;
+diff --git a/lib/mod_manager/mod_manager_logic.dart b/lib/mod_manager/mod_manager_logic.dart
+index 94fb52a5..bbe5b446 100644
+--- a/lib/mod_manager/mod_manager_logic.dart
++++ b/lib/mod_manager/mod_manager_logic.dart
+@@ -301,10 +301,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
+         try {
+           ExtractedModInfo modInfo = (
+             extractedFile: modInfoFile,
+-            modInfo: ModInfoMapper.fromJson(
++            modInfo: ModInfoMapper.fromMap(
+               modInfoFile.extractedFile
+                   .readAsStringSyncAllowingMalformed()
+-                  .fixJson(),
++                  .parseJsonToMap(),
+             ),
+           );
+           return modInfo;
+diff --git a/lib/mod_manager/mods_grid_page.dart b/lib/mod_manager/mods_grid_page.dart
+index 62cf95bb..0d2f38a1 100644
+--- a/lib/mod_manager/mods_grid_page.dart
++++ b/lib/mod_manager/mods_grid_page.dart
+@@ -44,6 +44,7 @@ import 'package:trios/vram_estimator/vram_checker_explanation.dart';
+ import 'package:trios/vram_estimator/vram_estimator_page.dart';
+ import 'package:trios/widgets/add_new_mods_button.dart';
+ import 'package:trios/widgets/disable.dart';
++import 'package:trios/widgets/trios_dropdown_button.dart';
+ import 'package:trios/widgets/export_to_csv_dialog.dart';
+ import 'package:trios/widgets/mod_icon.dart';
+ import 'package:trios/widgets/mod_type_icon.dart';
+@@ -179,7 +180,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
+                               ),
+                               const SizedBox(width: 8),
+                               buildProfileSelector(isGameRunning),
+-                              const SizedBox(width: 8),
++                              Padding(
++                                padding: const .symmetric(vertical: 8),
++                                child: VerticalDivider(color: theme.dividerColor.withAlpha(150)),
++                              ),
+                               buildGroupBySelector(gridState),
+                               const SizedBox(width: 8),
+                               buildThenBySelector(gridState),
+@@ -1059,7 +1063,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
+                   width: 175,
+                   child: Builder(
+                     builder: (context) {
+-                      return DropdownButton(
++                      return TriOSDropdownButton(
+                         value: profiles?.modProfiles.firstWhereOrNull(
+                           (p) => p.id == activeProfileId,
+                         ),
+@@ -2460,7 +2464,7 @@ class _ModGridRowState extends ConsumerState<_ModGridRow>
+     final backgroundBaseColor = isColorfulModeOn
+         ? (paletteBg?.withValues(alpha: 0.3) ?? Colors.transparent)
+         : widget.isFavorited
+-        ? theme.colorScheme.primary.withValues(alpha: 0.3)
++        ? theme.colorScheme.primary.withValues(alpha: 0.08)
+         : Colors.transparent;
+ 
+     // Mix in any hover/checked overlay color, but only when there is one.
+diff --git a/lib/mod_manager/utils/mod_file_utils.dart b/lib/mod_manager/utils/mod_file_utils.dart
+index ddfe1b66..76ef4cd4 100644
+--- a/lib/mod_manager/utils/mod_file_utils.dart
++++ b/lib/mod_manager/utils/mod_file_utils.dart
+@@ -35,10 +35,10 @@ Future<ModInfo?> getModInfo(
+       var rawString = await withFileHandleLimit(
+         () => modInfoFile.readAsString(),
+       );
+-      var jsonEncodedYaml = (rawString).replaceAll("\t", "  ").fixJson();
++      var jsonEncodedYaml = await rawString.parseJsonToMapAsync();
+ 
+       final model = ModInfo.fromJsonModel(
+-        ModInfoJsonMapper.fromJson(jsonEncodedYaml),
++        ModInfoJsonMapper.fromMap(jsonEncodedYaml),
+         modFolder,
+       );
+ 
+@@ -107,8 +107,8 @@ File? getVersionFile(Directory modFolder) {
+ VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
+   if (!versionFile.existsSync()) return null;
+   try {
+-    var info = VersionCheckerInfoMapper.fromJson(
+-      versionFile.readAsStringSync().fixJson(),
++    var info = VersionCheckerInfoMapper.fromMap(
++      versionFile.readAsStringSync().parseJsonToMap(),
+     );
+ 
+     if (info.modThreadId != null) {
+diff --git a/lib/mod_manager/version_checker.dart b/lib/mod_manager/version_checker.dart
+index 46526be6..7af3af6a 100644
+--- a/lib/mod_manager/version_checker.dart
++++ b/lib/mod_manager/version_checker.dart
+@@ -306,7 +306,7 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
+     if (response.statusCode == 200) {
+       return RemoteVersionCheckResult(
+         modVariant.versionCheckerInfo,
+-        VersionCheckerInfoMapper.fromJson(body.fixJson()),
++        VersionCheckerInfoMapper.fromMap(await body.parseJsonToMapAsync()),
+         remoteVersionUrl,
+       )..smolId = modVariant.smolId;
+     } else {
+diff --git a/lib/onboarding/onboarding_page.dart b/lib/onboarding/onboarding_page.dart
+index f732613c..bf82aff6 100644
+--- a/lib/onboarding/onboarding_page.dart
++++ b/lib/onboarding/onboarding_page.dart
+@@ -15,6 +15,7 @@ import 'package:trios/widgets/disable.dart';
+ import 'package:trios/widgets/moving_tooltip.dart';
+ import 'package:trios/widgets/restartable_app.dart';
+ import 'package:trios/widgets/trios_app_icon.dart';
++import 'package:trios/widgets/trios_dropdown_button.dart';
+ 
+ import '../widgets/svg_image_icon.dart';
+ 
+@@ -233,7 +234,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
+                       const Text(" (up to "),
+                       Padding(
+                         padding: const EdgeInsets.symmetric(horizontal: 8),
+-                        child: DropdownButton<int>(
++                        child: TriOSDropdownButton<int>(
+                           value: lastNVersionsSetting,
+                           items: [
+                             for (int i = 2; i <= 10; i++)
+diff --git a/lib/trios/data_cache/enabled_mods.dart b/lib/trios/data_cache/enabled_mods.dart
+index c9767d03..30912004 100644
+--- a/lib/trios/data_cache/enabled_mods.dart
++++ b/lib/trios/data_cache/enabled_mods.dart
+@@ -142,8 +142,8 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
+     Directory modsFolder, {
+     List<Mod>? allMods,
+   }) async {
+-    return EnabledModsMapper.fromJson(
+-      (await _getEnabledModsFile(modsFolder).readAsString()).fixJson(),
++    return EnabledModsMapper.fromMap(
++      (await _getEnabledModsFile(modsFolder).readAsString()).parseJsonToMap(),
+     );
+   }
+ }
+diff --git a/lib/trios/settings/app_settings_logic.dart b/lib/trios/settings/app_settings_logic.dart
+index d2fefe8b..d0e68488 100644
+--- a/lib/trios/settings/app_settings_logic.dart
++++ b/lib/trios/settings/app_settings_logic.dart
+@@ -14,6 +14,7 @@ import 'package:trios/utils/generic_settings_manager.dart';
+ import 'package:trios/utils/logging.dart';
+ import 'package:trios/utils/map_diff.dart';
+ import 'package:trios/utils/util.dart';
++import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
+ import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.dart';
+ 
+ /// Settings State Provider
+@@ -208,7 +209,9 @@ class SettingsFileManager {
+               jsonDecode(contents) as Map<String, dynamic>;
+           Fimber.i("$_fileName successfully loaded from disk.");
+           final loaded = SettingsMapper.fromMap(map);
+-          return _dropStalePersistedFilterGroups(loaded);
++          return _upgradeReferencedAssetsSelectorConfig(
++            _dropStalePersistedFilterGroups(loaded),
++          );
+         } catch (e, stackTrace) {
+           Fimber.e(
+             "Error reading from disk, creating backup: $e",
+@@ -267,6 +270,28 @@ Settings _dropStalePersistedFilterGroups(Settings settings) {
+   return settings.copyWith(persistedFilterGroups: kept);
+ }
+ 
++/// Unions any newly-registered reference parser ids into the user's
++/// persisted set so parsers added after their config was written become
++/// active on next launch. Ids the user explicitly disabled stay missing
++/// only if they aren't in the current default set — once a parser ships
++/// as default, it's treated as "on unless the user turns it off again
++/// post-upgrade", which matches the debug panel's opt-out mental model.
++Settings _upgradeReferencedAssetsSelectorConfig(Settings settings) {
++  final persisted = settings.referencedAssetsSelectorConfig;
++  final defaults = ReferencedAssetsSelectorConfig.allEnabled.enabledParserIds;
++  final missing = defaults.difference(persisted.enabledParserIds);
++  if (missing.isEmpty) return settings;
++  Fimber.i(
++    "Adding ${missing.length} newly-registered reference parser id(s) "
++    "to persisted config: $missing",
++  );
++  return settings.copyWith(
++    referencedAssetsSelectorConfig: persisted.copyWith(
++      enabledParserIds: {...persisted.enabledParserIds, ...missing},
++    ),
++  );
++}
++
+ /// Mutex, but synchronous.
+ class SyncLock {
+   bool _locked = false;
+diff --git a/lib/trios/settings/settings.dart b/lib/trios/settings/settings.dart
+index 634f2723..a006cadd 100644
+--- a/lib/trios/settings/settings.dart
++++ b/lib/trios/settings/settings.dart
+@@ -8,6 +8,7 @@ import 'package:trios/ship_viewer/ships_page_controller.dart';
+ import 'package:trios/portraits/portraits_page_controller.dart';
+ import 'package:trios/trios/navigation.dart';
+ import 'package:trios/utils/dart_mappable_utils.dart';
++import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
+ import 'package:trios/weapon_viewer/weapons_page_controller.dart';
+ import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.dart';
+ 
+@@ -140,6 +141,12 @@ class Settings with SettingsMappable {
+ 
+   final bool debugMode;
+ 
++  // VRAM Estimator
++  /// Active selector id for the VRAM estimator. See registered selectors
++  /// in `vram_estimator_manager.dart`. Unknown ids fall back to folder-scan.
++  final String vramEstimatorSelectorId;
++  final ReferencedAssetsSelectorConfig referencedAssetsSelectorConfig;
++
+   Settings({
+     this.gameDir,
+     this.gameCoreDir,
+@@ -227,6 +234,9 @@ class Settings with SettingsMappable {
+     this.showAprilFools2026,
+     this.forceShowAprilFools2026,
+     this.debugMode = false,
++    this.vramEstimatorSelectorId = 'folder-scan',
++    this.referencedAssetsSelectorConfig =
++        ReferencedAssetsSelectorConfig.allEnabled,
+   });
+ }
+ 
+diff --git a/lib/trios/settings/settings.mapper.dart b/lib/trios/settings/settings.mapper.dart
+index 88d41c5c..e98d6c15 100644
+--- a/lib/trios/settings/settings.mapper.dart
++++ b/lib/trios/settings/settings.mapper.dart
+@@ -349,6 +349,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
+       ModUpdateBehaviorMapper.ensureInitialized();
+       DashboardModListSortMapper.ensureInitialized();
+       CompressionLibMapper.ensureInitialized();
++      ReferencedAssetsSelectorConfigMapper.ensureInitialized();
+     }
+     return _instance!;
+   }
+@@ -870,6 +871,24 @@ class SettingsMapper extends ClassMapperBase<Settings> {
+     opt: true,
+     def: false,
+   );
++  static String _$vramEstimatorSelectorId(Settings v) =>
++      v.vramEstimatorSelectorId;
++  static const Field<Settings, String> _f$vramEstimatorSelectorId = Field(
++    'vramEstimatorSelectorId',
++    _$vramEstimatorSelectorId,
++    opt: true,
++    def: 'folder-scan',
++  );
++  static ReferencedAssetsSelectorConfig _$referencedAssetsSelectorConfig(
++    Settings v,
++  ) => v.referencedAssetsSelectorConfig;
++  static const Field<Settings, ReferencedAssetsSelectorConfig>
++  _f$referencedAssetsSelectorConfig = Field(
++    'referencedAssetsSelectorConfig',
++    _$referencedAssetsSelectorConfig,
++    opt: true,
++    def: ReferencedAssetsSelectorConfig.allEnabled,
++  );
+ 
+   @override
+   final MappableFields<Settings> fields = const {
+@@ -943,6 +962,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
+     #showAprilFools2026: _f$showAprilFools2026,
+     #forceShowAprilFools2026: _f$forceShowAprilFools2026,
+     #debugMode: _f$debugMode,
++    #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
++    #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
+   };
+   @override
+   final bool ignoreNull = true;
+@@ -1028,6 +1049,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
+       showAprilFools2026: data.dec(_f$showAprilFools2026),
+       forceShowAprilFools2026: data.dec(_f$forceShowAprilFools2026),
+       debugMode: data.dec(_f$debugMode),
++      vramEstimatorSelectorId: data.dec(_f$vramEstimatorSelectorId),
++      referencedAssetsSelectorConfig: data.dec(
++        _f$referencedAssetsSelectorConfig,
++      ),
+     );
+   }
+ 
+@@ -1126,6 +1151,12 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
+     PersistedFilterGroupCopyWith<$R, PersistedFilterGroup, PersistedFilterGroup>
+   >
+   get persistedFilterGroups;
++  ReferencedAssetsSelectorConfigCopyWith<
++    $R,
++    ReferencedAssetsSelectorConfig,
++    ReferencedAssetsSelectorConfig
++  >
++  get referencedAssetsSelectorConfig;
+   $R call({
+     Directory? gameDir,
+     Directory? gameCoreDir,
+@@ -1196,6 +1227,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
+     bool? showAprilFools2026,
+     bool? forceShowAprilFools2026,
+     bool? debugMode,
++    String? vramEstimatorSelectorId,
++    ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
+   });
+   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+ }
+@@ -1282,6 +1315,16 @@ class _SettingsCopyWithImpl<$R, $Out>
+     (v) => call(persistedFilterGroups: v),
+   );
+   @override
++  ReferencedAssetsSelectorConfigCopyWith<
++    $R,
++    ReferencedAssetsSelectorConfig,
++    ReferencedAssetsSelectorConfig
++  >
++  get referencedAssetsSelectorConfig => $value
++      .referencedAssetsSelectorConfig
++      .copyWith
++      .$chain((v) => call(referencedAssetsSelectorConfig: v));
++  @override
+   $R call({
+     Object? gameDir = $none,
+     Object? gameCoreDir = $none,
+@@ -1352,6 +1395,8 @@ class _SettingsCopyWithImpl<$R, $Out>
+     Object? showAprilFools2026 = $none,
+     Object? forceShowAprilFools2026 = $none,
+     bool? debugMode,
++    String? vramEstimatorSelectorId,
++    ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
+   }) => $apply(
+     FieldCopyWithData({
+       if (gameDir != $none) #gameDir: gameDir,
+@@ -1454,6 +1499,10 @@ class _SettingsCopyWithImpl<$R, $Out>
+       if (forceShowAprilFools2026 != $none)
+         #forceShowAprilFools2026: forceShowAprilFools2026,
+       if (debugMode != null) #debugMode: debugMode,
++      if (vramEstimatorSelectorId != null)
++        #vramEstimatorSelectorId: vramEstimatorSelectorId,
++      if (referencedAssetsSelectorConfig != null)
++        #referencedAssetsSelectorConfig: referencedAssetsSelectorConfig,
+     }),
+   );
+   @override
+@@ -1662,6 +1711,14 @@ class _SettingsCopyWithImpl<$R, $Out>
+       or: $value.forceShowAprilFools2026,
+     ),
+     debugMode: data.get(#debugMode, or: $value.debugMode),
++    vramEstimatorSelectorId: data.get(
++      #vramEstimatorSelectorId,
++      or: $value.vramEstimatorSelectorId,
++    ),
++    referencedAssetsSelectorConfig: data.get(
++      #referencedAssetsSelectorConfig,
++      or: $value.referencedAssetsSelectorConfig,
++    ),
+   );
+ 
+   @override
+diff --git a/lib/trios/settings/settings_page.dart b/lib/trios/settings/settings_page.dart
+index 266b003f..a562fe24 100644
+--- a/lib/trios/settings/settings_page.dart
++++ b/lib/trios/settings/settings_page.dart
+@@ -24,6 +24,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
+ import 'package:trios/widgets/settings_group.dart';
+ import 'package:trios/widgets/svg_image_icon.dart';
+ import 'package:trios/widgets/text_with_icon.dart';
++import 'package:trios/widgets/trios_dropdown_button.dart';
+ 
+ import '../../models/version.dart';
+ import '../../themes/theme.dart';
+@@ -461,7 +462,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
+                                         padding: const EdgeInsets.symmetric(
+                                           horizontal: 8,
+                                         ),
+-                                        child: DropdownButton<int>(
++                                        child: TriOSDropdownButton<int>(
+                                           value: lastNVersionsSetting,
+                                           items: [
+                                             for (int i = 1; i <= 10; i++)
+diff --git a/lib/utils/extensions.dart b/lib/utils/extensions.dart
+index 8d14d22b..440bfb2a 100644
+--- a/lib/utils/extensions.dart
++++ b/lib/utils/extensions.dart
+@@ -7,10 +7,10 @@ import 'package:flutter/material.dart';
+ import 'package:intl/intl.dart' show NumberFormat;
+ import 'package:open_filex/open_filex.dart';
+ import 'package:path/path.dart' as p;
+-import 'package:trios/thirdparty/yaml/yaml.dart';
+ 
+ // import 'package:toml/toml.dart';
+ import 'package:trios/themes/theme.dart';
++import 'package:trios/thirdparty/yaml/yaml.dart';
+ import 'package:trios/utils/logging.dart';
+ import 'package:trios/utils/util.dart';
+ 
+@@ -127,14 +127,6 @@ extension StringExt on String {
+     return fixed;
+   }
+ 
+-  /// Warning: probably not fast. Runs the full fixup pipeline through the
+-  /// YAML parser; only used as a last-resort fallback in [parseJsonToMap].
+-  String fixJson() => _fixJsonViaYaml(_applyJsonFixups());
+-
+-  Future<String> fixJsonAsync() {
+-    return Future.microtask(() => fixJson());
+-  }
+-
+   /// Parse a JSON-ish Starsector file into a map.
+   ///
+   /// Tries three strategies in order of cost:
+@@ -340,8 +332,8 @@ List<_SubstitutionPart> _parseStarsectorSubstitutions({
+ }) {
+   final parts = <_SubstitutionPart>[];
+ 
+-  final replacementValues = (replacementValuesString == null ||
+-          replacementValuesString.isEmpty)
++  final replacementValues =
++      (replacementValuesString == null || replacementValuesString.isEmpty)
+       ? <String>[]
+       : replacementValuesString.split('|').map((it) => it.trim()).toList();
+ 
+@@ -1284,6 +1276,5 @@ extension TriOSBuildContextTheme on ThemeData {
+       extension<TriOSThemeExtension>()?.rainbowAccent ?? false;
+ 
+   /// Access semantic status colors from the current theme.
+-  TriOSThemeExtension get statusColors =>
+-      extension<TriOSThemeExtension>()!;
++  TriOSThemeExtension get statusColors => extension<TriOSThemeExtension>()!;
+ }
+diff --git a/lib/vram_estimator/charts/bar_chart.dart b/lib/vram_estimator/charts/bar_chart.dart
+index 34f62d13..7b20c486 100644
+--- a/lib/vram_estimator/charts/bar_chart.dart
++++ b/lib/vram_estimator/charts/bar_chart.dart
+@@ -7,6 +7,7 @@ import 'package:trios/utils/extensions.dart';
+ import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
+ import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
+ import 'package:trios/vram_estimator/vram_estimator_page.dart';
++import 'package:trios/vram_estimator/widgets/vram_mod_breakdown_dialog.dart';
+ import 'package:trios/widgets/mod_icon.dart';
+ import 'package:trios/widgets/moving_tooltip.dart';
+ 
+@@ -67,8 +68,9 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
+                         final realMod = realMods.firstWhereOrNull(
+                           (vramMod) => vramMod.id == mod.info.modInfo.id,
+                         );
+-                        final percentOfMax =
+-                            mod.bytesNotIncludingGraphicsLib() / maxVramUsed;
++                        final percentOfMax = maxVramUsed > 0
++                            ? mod.bytesNotIncludingGraphicsLib() / maxVramUsed
++                            : 0.0;
+                         final width = layoutConstraints.maxWidth * percentOfMax;
+ 
+                         final iconFilePath = realMod
+@@ -84,7 +86,12 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
+                               ),
+                           child: Card(
+                             clipBehavior: Clip.antiAlias,
+-                            child: Padding(
++                            child: InkWell(
++                              onTap: () => VramModBreakdownDialog.show(
++                                context,
++                                mod,
++                              ),
++                              child: Padding(
+                               padding: const EdgeInsets.only(top: 8.0),
+                               child: Column(
+                                 crossAxisAlignment: CrossAxisAlignment.start,
+@@ -118,12 +125,9 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
+                                             padding: const EdgeInsets.symmetric(
+                                               horizontal: 8.0,
+                                             ),
+-                                            child: Text(
+-                                              mod
+-                                                  .bytesNotIncludingGraphicsLib()
+-                                                  .bytesAsReadableMB(),
+-                                              style:
+-                                                  theme.textTheme.labelMedium,
++                                            child: _ModBytesLabel(
++                                              mod: mod,
++                                              theme: theme,
+                                             ),
+                                           ),
+                                         ],
+@@ -141,9 +145,16 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
+                                       ).createMaterialColor().shade700,
+                                     ),
+                                   ),
++                                  if (mod.unreferencedImages != null)
++                                    _UnreferencedBar(
++                                      mod: mod,
++                                      maxVramUsed: maxVramUsed,
++                                      layoutConstraints: layoutConstraints,
++                                    ),
+                                 ],
+                               ),
+                             ),
++                            ),
+                           ),
+                         );
+                       },
+@@ -214,3 +225,77 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
+         .toList();
+   }
+ }
++
++/// Displays a mod's referenced bytes and, in reference mode, a secondary
++/// advisory line for the unreferenced bucket.
++class _ModBytesLabel extends StatelessWidget {
++  final VramMod mod;
++  final ThemeData theme;
++  const _ModBytesLabel({required this.mod, required this.theme});
++
++  @override
++  Widget build(BuildContext context) {
++    final refBytes = mod.bytesNotIncludingGraphicsLib();
++    final hasUnref = mod.unreferencedImages != null;
++    final unrefBytes = mod.unreferencedBytesNotIncludingGraphicsLib();
++    final mutedColor =
++        theme.textTheme.labelMedium?.color?.withOpacity(0.6);
++
++    return Column(
++      crossAxisAlignment: CrossAxisAlignment.start,
++      children: [
++        Text(
++          refBytes.bytesAsReadableMB(),
++          style: theme.textTheme.labelMedium,
++        ),
++        if (hasUnref)
++          MovingTooltipWidget.text(
++            message:
++                'Advisory — images on disk that no parsed reference points to. '
++                'May be dev leftovers, or loaded via dynamic paths the parsers '
++                "can't detect.",
++            child: Text(
++              '+${unrefBytes.bytesAsReadableMB()} unreferenced',
++              style: theme.textTheme.labelSmall?.copyWith(
++                color: mutedColor,
++                fontStyle: FontStyle.italic,
++              ),
++            ),
++          ),
++      ],
++    );
++  }
++}
++
++/// A secondary, muted bar alongside the primary referenced bar, drawn
++/// proportionally so the unreferenced figure is visible at a glance.
++class _UnreferencedBar extends StatelessWidget {
++  final VramMod mod;
++  final double maxVramUsed;
++  final BoxConstraints layoutConstraints;
++
++  const _UnreferencedBar({
++    required this.mod,
++    required this.maxVramUsed,
++    required this.layoutConstraints,
++  });
++
++  @override
++  Widget build(BuildContext context) {
++    final unref = mod.unreferencedBytesNotIncludingGraphicsLib();
++    if (unref <= 0) return const SizedBox.shrink();
++    final percent = maxVramUsed > 0 ? unref / maxVramUsed : 0.0;
++    final width = layoutConstraints.maxWidth * percent;
++    return Padding(
++      padding: const EdgeInsets.only(top: 2.0),
++      child: Opacity(
++        opacity: 0.35,
++        child: Container(
++          width: width,
++          height: 6,
++          color: Theme.of(context).colorScheme.onSurface,
++        ),
++      ),
++    );
++  }
++}
+diff --git a/lib/vram_estimator/graphics_lib_config_provider.dart b/lib/vram_estimator/graphics_lib_config_provider.dart
+index ee98a121..9ac5aa73 100644
+--- a/lib/vram_estimator/graphics_lib_config_provider.dart
++++ b/lib/vram_estimator/graphics_lib_config_provider.dart
+@@ -64,8 +64,8 @@ GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref ref) {
+     if (lunalibGraphicsLibConfigFile != null &&
+         lunalibGraphicsLibConfigFile.existsSync()) {
+       try {
+-        final config = GraphicsLibLunaConfigMapper.fromJson(
+-          lunalibGraphicsLibConfigFile.readAsStringSync().fixJson(),
++        final config = GraphicsLibLunaConfigMapper.fromMap(
++          lunalibGraphicsLibConfigFile.readAsStringSync().parseJsonToMap(),
+         );
+         Fimber.d("Lunalib config for GraphicsLib: $config");
+ 
+@@ -84,8 +84,8 @@ GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref ref) {
+     }
+ 
+     try {
+-      graphicsLibConfig = GraphicsLibConfigMapper.fromJson(
+-        configFile.readAsStringSync().fixJson(),
++      graphicsLibConfig = GraphicsLibConfigMapper.fromMap(
++        configFile.readAsStringSync().parseJsonToMap(),
+       );
+       Fimber.d("GraphicsLib config: $graphicsLibConfig");
+     } catch (e) {
+diff --git a/lib/vram_estimator/models/vram_checker_models.dart b/lib/vram_estimator/models/vram_checker_models.dart
+index 71593477..195bfdfc 100644
+--- a/lib/vram_estimator/models/vram_checker_models.dart
++++ b/lib/vram_estimator/models/vram_checker_models.dart
+@@ -29,6 +29,11 @@ class ModImageTable {
+   final List<ImageType> imageTypes;
+   final List<MapType?> graphicsLibTypes;
+ 
++  /// Per-row list of parser ids that referenced the file. Null entries are
++  /// normal — folder-scan assets don't have attribution, and (in reference
++  /// mode) the unreferenced bucket has no referrers by definition.
++  final List<List<String>?> referencedBys;
++
+   ModImageTable._(
+     this.filePaths,
+     this.textureHeights,
+@@ -36,6 +41,7 @@ class ModImageTable {
+     this.bitsInAllChannelsSums,
+     this.imageTypes,
+     this.graphicsLibTypes,
++    this.referencedBys,
+   );
+ 
+   /// Constructs a [ModImageTable] from a list of maps (typically parsed from JSON).
+@@ -51,6 +57,7 @@ class ModImageTable {
+       growable: false,
+     );
+     final gfxTypes = List<MapType?>.filled(length, null, growable: false);
++    final refBys = List<List<String>?>.filled(length, null, growable: false);
+ 
+     for (int i = 0; i < length; i++) {
+       final row = rows[i];
+@@ -75,9 +82,23 @@ class ModImageTable {
+           (m) => m.name == gfxTypeStr,
+         );
+       }
++
++      // Optional per-row attribution (parser ids that referenced this file).
++      final refByRaw = row['referencedBy'];
++      if (refByRaw is List && refByRaw.isNotEmpty) {
++        refBys[i] = List<String>.unmodifiable(refByRaw.cast<String>());
++      }
+     }
+ 
+-    return ModImageTable._(filePaths, heights, widths, bits, types, gfxTypes);
++    return ModImageTable._(
++      filePaths,
++      heights,
++      widths,
++      bits,
++      types,
++      gfxTypes,
++      refBys,
++    );
+   }
+ 
+   /// Converts the columnar data back into a list of maps for JSON serialization.
+@@ -91,6 +112,7 @@ class ModImageTable {
+         'bitsInAllChannelsSum': bitsInAllChannelsSums[i],
+         'imageType': imageTypes[i].name,
+         'graphicsLibType': graphicsLibTypes[i]?.name,
++        if (referencedBys[i] != null) 'referencedBy': referencedBys[i],
+       });
+     }
+     return rows;
+@@ -122,6 +144,11 @@ class ModImageView {
+ 
+   MapType? get graphicsLibType => table.graphicsLibTypes[index];
+ 
++  /// Parser ids that referenced this image (reference mode, with
++  /// attribution tracking). Null for folder-scan rows and unreferenced-
++  /// bucket rows.
++  List<String>? get referencedBy => table.referencedBys[index];
++
+   File get file => File(filePath);
+ 
+   /// Returns the memory multiplier (125% for mipmaps; 100% for backgrounds).
+@@ -143,6 +170,10 @@ class ModImageView {
+   }
+ 
+   /// Determines if the image is used based on the provided graphics library configuration.
++  ///
++  /// `preloadAllMaps` must be true for maps to count toward VRAM. When
++  /// false, GraphicsLib streams maps in and out dynamically, so they do
++  /// not contribute meaningfully to steady-state VRAM usage.
+   bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? cfg) {
+     if (cfg == null) {
+       return graphicsLibType == null;
+@@ -172,6 +203,7 @@ class ModImageTableHook extends MappingHook {
+ 
+   @override
+   dynamic beforeDecode(dynamic value) {
++    if (value == null) return null;
+     if (value is List) {
+       return ModImageTable.fromRows(value.cast<Map<String, dynamic>>());
+     }
+@@ -180,6 +212,7 @@ class ModImageTableHook extends MappingHook {
+ 
+   @override
+   dynamic beforeEncode(dynamic value) {
++    if (value == null) return null;
+     if (value is ModImageTable) {
+       return value.toRows();
+     }
+@@ -216,7 +249,25 @@ class VramMod with VramModMappable {
+   @MappableField(hook: ModImageTableHook())
+   final ModImageTable images;
+ 
+-  VramMod(this.info, this.isEnabled, this.images, this.graphicsLibEntries);
++  /// Images the selector saw but did not count. Populated only by
++  /// reference-based selectors; always null for folder-scan output and for
++  /// reference-mode scans where `suppressUnreferenced` is enabled.
++  /// Advisory — never summed into headline totals.
++  @MappableField(hook: ModImageTableHook())
++  final ModImageTable? unreferencedImages;
++
++  /// When this mod was last scanned. Null for entries loaded from a
++  /// pre-`scannedAt` cache.
++  final DateTime? scannedAt;
++
++  VramMod(
++    this.info,
++    this.isEnabled,
++    this.images,
++    this.graphicsLibEntries, {
++    this.unreferencedImages,
++    this.scannedAt,
++  });
+ 
+   ModImageView getModViewForIndex(int index) => ModImageView(index, images);
+ 
+@@ -238,4 +289,18 @@ class VramMod with VramModMappable {
+   }
+ 
+   int bytesNotIncludingGraphicsLib() => imagesNotIncludingGraphicsLib().sum();
++
++  /// Sum of bytes for the unreferenced bucket, excluding GraphicsLib-tagged
++  /// images (same rule as [bytesNotIncludingGraphicsLib]). Returns 0 when
++  /// [unreferencedImages] is null (folder-scan mode) or empty.
++  int unreferencedBytesNotIncludingGraphicsLib() {
++    final table = unreferencedImages;
++    if (table == null || table.length == 0) return 0;
++    var sum = 0;
++    for (int i = 0; i < table.length; i++) {
++      final view = ModImageView(i, table);
++      if (view.graphicsLibType == null) sum += view.bytesUsed;
++    }
++    return sum;
++  }
+ }
+diff --git a/lib/vram_estimator/models/vram_checker_models.mapper.dart b/lib/vram_estimator/models/vram_checker_models.mapper.dart
+index af6092fb..3b2742bd 100644
+--- a/lib/vram_estimator/models/vram_checker_models.mapper.dart
++++ b/lib/vram_estimator/models/vram_checker_models.mapper.dart
+@@ -226,6 +226,19 @@ class VramModMapper extends ClassMapperBase<VramMod> {
+       v.graphicsLibEntries;
+   static const Field<VramMod, List<GraphicsLibInfo>> _f$graphicsLibEntries =
+       Field('graphicsLibEntries', _$graphicsLibEntries);
++  static ModImageTable? _$unreferencedImages(VramMod v) => v.unreferencedImages;
++  static const Field<VramMod, ModImageTable> _f$unreferencedImages = Field(
++    'unreferencedImages',
++    _$unreferencedImages,
++    opt: true,
++    hook: ModImageTableHook(),
++  );
++  static DateTime? _$scannedAt(VramMod v) => v.scannedAt;
++  static const Field<VramMod, DateTime> _f$scannedAt = Field(
++    'scannedAt',
++    _$scannedAt,
++    opt: true,
++  );
+ 
+   @override
+   final MappableFields<VramMod> fields = const {
+@@ -233,6 +246,8 @@ class VramModMapper extends ClassMapperBase<VramMod> {
+     #isEnabled: _f$isEnabled,
+     #images: _f$images,
+     #graphicsLibEntries: _f$graphicsLibEntries,
++    #unreferencedImages: _f$unreferencedImages,
++    #scannedAt: _f$scannedAt,
+   };
+ 
+   static VramMod _instantiate(DecodingData data) {
+@@ -241,6 +256,8 @@ class VramModMapper extends ClassMapperBase<VramMod> {
+       data.dec(_f$isEnabled),
+       data.dec(_f$images),
+       data.dec(_f$graphicsLibEntries),
++      unreferencedImages: data.dec(_f$unreferencedImages),
++      scannedAt: data.dec(_f$scannedAt),
+     );
+   }
+ 
+@@ -313,6 +330,8 @@ abstract class VramModCopyWith<$R, $In extends VramMod, $Out>
+     bool? isEnabled,
+     ModImageTable? images,
+     List<GraphicsLibInfo>? graphicsLibEntries,
++    ModImageTable? unreferencedImages,
++    DateTime? scannedAt,
+   });
+   VramModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+ }
+@@ -347,12 +366,16 @@ class _VramModCopyWithImpl<$R, $Out>
+     bool? isEnabled,
+     ModImageTable? images,
+     Object? graphicsLibEntries = $none,
++    Object? unreferencedImages = $none,
++    Object? scannedAt = $none,
+   }) => $apply(
+     FieldCopyWithData({
+       if (info != null) #info: info,
+       if (isEnabled != null) #isEnabled: isEnabled,
+       if (images != null) #images: images,
+       if (graphicsLibEntries != $none) #graphicsLibEntries: graphicsLibEntries,
++      if (unreferencedImages != $none) #unreferencedImages: unreferencedImages,
++      if (scannedAt != $none) #scannedAt: scannedAt,
+     }),
+   );
+   @override
+@@ -361,6 +384,11 @@ class _VramModCopyWithImpl<$R, $Out>
+     data.get(#isEnabled, or: $value.isEnabled),
+     data.get(#images, or: $value.images),
+     data.get(#graphicsLibEntries, or: $value.graphicsLibEntries),
++    unreferencedImages: data.get(
++      #unreferencedImages,
++      or: $value.unreferencedImages,
++    ),
++    scannedAt: data.get(#scannedAt, or: $value.scannedAt),
+   );
+ 
+   @override
+diff --git a/lib/vram_estimator/vram_checker_explanation.dart b/lib/vram_estimator/vram_checker_explanation.dart
+index eeb7ca49..c0d3d920 100644
+--- a/lib/vram_estimator/vram_checker_explanation.dart
++++ b/lib/vram_estimator/vram_checker_explanation.dart
+@@ -76,14 +76,52 @@ class _VramCheckerExplanationDialogState
+                           Text("About this tool", style: titleStyle),
+                           const SizedBox(height: 8),
+                           const Text(
+-                            'This tool estimates the amount of VRAM used by a mod, based on the images in the mod folder.'
+-                            '\nIt has no way of reliably telling whether the mod actually uses the image in-game, which means'
+-                            ' that unused images will still be counted against it.',
++                            'This tool estimates the amount of VRAM used by a mod, based on the images in the mod folder.',
+                           ),
+                           const SizedBox(height: 8),
+                           Text(
+                             'A few mods, such as Illustrated Entities, load images only when needed, so their real VRAM use will be much lower than estimated.',
+                           ),
++                          const SizedBox(height: 16),
++                          Text('Selectors', style: titleStyle),
++                          const SizedBox(height: 8),
++                          const Text(
++                            'Pick how the tool decides which images to count, using the dropdown on the VRAM page toolbar:',
++                          ),
++                          const SizedBox(height: 4),
++                          const Text(
++                            '• Folder scan — counts every image in the mod folder (minus a few filename markers). Matches the tool\'s original behavior. May over-count when mods ship unused assets.',
++                          ),
++                          const SizedBox(height: 4),
++                          const Text(
++                            '• Referenced only — parses .ship, .wpn, .proj, ship_data.csv, weapon_data.csv, .faction, portraits.csv, settings.json, the GraphicsLib CSV, .jar string literals, and loose .java sources to identify only images that are actually referenced. Images found on disk but not referenced are shown separately as "Unreferenced" (advisory — they may be dev leftovers or may be loaded via dynamic paths).',
++                          ),
++                          const SizedBox(height: 8),
++                          const Text(
++                            'Known imprecisions in reference mode:',
++                          ),
++                          const Text(
++                            '• Asset paths constructed dynamically in Java (string concatenation) may not be detected. The debug panel\'s "Track attribution" toggle and the Unreferenced bucket make gaps visible.',
++                          ),
++                          const Text(
++                            '• Obfuscated or packed jars may defeat string extraction.',
++                          ),
++                          const Text(
++                            '• GraphicsLib normal/material/surface maps are kept whenever their CSV entry exists, regardless of whether their base sprite is referenced — matches how GraphicsLib loads maps in practice.',
++                          ),
++                          const SizedBox(height: 8),
++                          const Text(
++                            'Debug panel toggles (visible only in Referenced mode):',
++                          ),
++                          const Text(
++                            '• Per-source chips — turn individual reference parsers on/off to bisect false positives.',
++                          ),
++                          const Text(
++                            '• Suppress unreferenced — hide the unreferenced bucket entirely for a clean comparison against folder-scan totals.',
++                          ),
++                          const Text(
++                            '• Track attribution — record which parser(s) flagged each file, surfaced in the per-file detail view.',
++                          ),
+                           const SizedBox(height: 8),
+                           Text(
+                             "To see true VRAM usage, enable the Console Commands mod and open it in-game. The amount of free VRAM will be shown in the top-left corner.",
+diff --git a/lib/vram_estimator/vram_checker_logic.dart b/lib/vram_estimator/vram_checker_logic.dart
+index ae8f886e..12886660 100644
+--- a/lib/vram_estimator/vram_checker_logic.dart
++++ b/lib/vram_estimator/vram_checker_logic.dart
+@@ -1,20 +1,20 @@
+ import 'dart:core';
+ import 'dart:io';
+ 
+-import 'package:collection/collection.dart';
+-import 'package:csv/csv.dart';
+ import 'package:path/path.dart' as p;
+ import 'package:trios/trios/constants.dart';
+ import 'package:trios/utils/extensions.dart';
+ 
+ import '../models/mod_variant.dart';
++import '../utils/logging.dart';
+ import '../utils/util.dart';
+ import 'image_reader/image_reader_async.dart';
+-import 'image_reader/png_chatgpt.dart';
+ import 'models/gpu_info.dart';
+ import 'models/graphics_lib_config.dart';
+-import 'models/graphics_lib_info.dart';
+ import 'models/vram_checker_models.dart';
++import 'selectors/folder_scan_selector.dart';
++import 'selectors/references/graphicslib_references.dart';
++import 'selectors/vram_asset_selector.dart';
+ 
+ class VramChecker {
+   List<String>? enabledModIds;
+@@ -25,10 +25,16 @@ class VramChecker {
+   bool showCountedFiles;
+   GraphicsLibConfig graphicsLibConfig;
+   Function(VramMod) modProgressOut = (it) => (it);
++  Function(VramCheckerMod) onModStart = (it) => (it);
+   Function(String) verboseOut = (it) => (it);
+   Function(String) debugOut = (it) => (it);
+   bool Function() isCancelled;
+ 
++  /// Selector that decides which image files a mod contributes. Defaults to
++  /// [FolderScanSelector] (the behavior this class had before selectors
++  /// existed) so existing callers need no changes.
++  VramAssetSelector selector;
++
+   int maxFileHandles;
+ 
+   /// [modProgressOut] is called with each mod as it is processed.
+@@ -41,11 +47,13 @@ class VramChecker {
+     required this.showCountedFiles,
+     required this.graphicsLibConfig,
+     this.maxFileHandles = 2000,
++    VramAssetSelector? selector,
+     Function(VramMod)? modProgressOut,
++    Function(VramCheckerMod)? onModStart,
+     Function(String)? verboseOut,
+     Function(String)? debugOut,
+     required this.isCancelled,
+-  }) {
++  }) : selector = selector ?? FolderScanSelector() {
+     if (verboseOut != null) {
+       this.verboseOut = verboseOut;
+     }
+@@ -55,6 +63,9 @@ class VramChecker {
+     if (modProgressOut != null) {
+       this.modProgressOut = modProgressOut;
+     }
++    if (onModStart != null) {
++      this.onModStart = onModStart;
++    }
+   }
+ 
+   static const VANILLA_BACKGROUND_WIDTH = 2048;
+@@ -63,8 +74,6 @@ class VramChecker {
+       433586176.0; // 0.9.1a, per https://fractalsoftworks.com/forum/index.php?topic=8726.0
+   static const OUTPUT_LABEL_WIDTH = 38;
+ 
+-  /// If one of these strings is in the filename, the file is skipped *
+-  static const UNUSED_INDICATOR = ["CURRENTLY_UNUSED", "DO_NOT_USE"];
+   static const BACKGROUND_FOLDER_NAME = "backgrounds";
+   var currentFileHandles = 0;
+ 
+@@ -79,15 +88,14 @@ class VramChecker {
+     summaryText = StringBuffer();
+     startTime = DateTime.timestamp().millisecondsSinceEpoch;
+ 
+-    const csvReader = CsvToListConverter(
+-      allowInvalid: true,
+-      convertEmptyTo: null,
+-    );
+-
+     progressText.appendAndPrint(
+       "GraphicsLib Config: $graphicsLibConfig",
+       debugOut,
+     );
++    progressText.appendAndPrint(
++      "Selector: ${selector.id} (${selector.displayName})",
++      debugOut,
++    );
+ 
+     if (enabledModIds != null) {
+       progressText.appendAndPrint(
+@@ -103,6 +111,7 @@ class VramChecker {
+       modInfo,
+     ) async {
+       progressText.appendAndPrint("\nFolder: ${modInfo.name}", verboseOut);
++      onModStart(modInfo);
+       if (isCancelled()) {
+         throw Exception("Cancelled");
+       }
+@@ -116,24 +125,29 @@ class VramChecker {
+         maxImages = 20;
+       }
+ 
+-      // Gather all file data for this mod.
+-      final filesInMod = modInfo.modFolder
+-          .toDirectory()
+-          .listSync(recursive: true)
+-          .whereType<File>()
+-          .take(maxImages ?? intMaxValue)
+-          .map((file) {
+-            return _FileData(
+-              file: file,
+-              relativePath: file.relativePath(modInfo.modFolder.toDirectory()),
+-            );
+-          })
+-          .toList();
+-
+-      // Get GraphicsLib settings from CSV files.
+-      final List<GraphicsLibInfo> graphicsLibEntries =
+-          _getGraphicsLibSettingsForMod(filesInMod, csvReader, progressText) ??
+-          [];
++      // Enumerate every file in the mod folder once. Selectors consume this
++      // pre-enumerated list so listing only happens per mod, not per selector.
++      // Async listing so the UI thread isn't blocked on large mods.
++      final modFolderDir = modInfo.modFolder.toDirectory();
++      final maxLimit = maxImages ?? intMaxValue;
++      final filesInMod = <VramModFile>[];
++      await for (final entity in modFolderDir.list(recursive: true)) {
++        if (entity is! File) continue;
++        filesInMod.add(
++          VramModFile(
++            file: entity,
++            relativePath: entity.relativePath(modFolderDir),
++          ),
++        );
++        if (filesInMod.length >= maxLimit) break;
++      }
++
++      // Parse the mod's GraphicsLib CSV once per mod; shared with every selector.
++      final graphicsLibEntries = await GraphicsLibReferences.parse(
++        modInfo,
++        filesInMod,
++        onError: (msg) => progressText.appendAndPrint(msg, verboseOut),
++      );
+ 
+       final timeFinishedGettingGraphicsLibData =
+           DateTime.timestamp().millisecondsSinceEpoch;
+@@ -144,136 +158,95 @@ class VramChecker {
+         );
+       }
+ 
+-      // Process image files (png, jpg, etc.).
+-      final imageRowFutures = filesInMod.where((it) => it.file.isImage).map((
+-        file,
+-      ) async {
+-        if (isCancelled()) {
+-          throw Exception("Cancelled");
+-        }
+-        ImageType imageType;
+-        if (file.relativePath.contains(BACKGROUND_FOLDER_NAME)) {
+-          imageType = ImageType.background;
+-        } else if (UNUSED_INDICATOR.any(
+-          (suffix) => file.relativePath.contains(suffix),
+-        )) {
+-          imageType = ImageType.unused;
+-        } else {
+-          imageType = ImageType.texture;
+-        }
++      // Ask the selector which files to count.
++      final selectorCtx = VramSelectorContext(
++        verboseOut: verboseOut,
++        debugOut: debugOut,
++        isCancelled: isCancelled,
++        showPerformance: showPerformance,
++        graphicsLibEntries: graphicsLibEntries,
++      );
++      final selectedAssets = await selector.select(
++        modInfo,
++        filesInMod,
++        selectorCtx,
++      );
+ 
+-        MapType? graphicsLibType;
+-
+-        // Hardcode logic that the cache folder of GraphicsLib
+-        // always contains normal maps.
+-        if (modInfo.modId == Constants.graphicsLibId &&
+-            file.file.path.contains("cache")) {
+-          graphicsLibType = MapType.Normal;
+-        } else {
+-          graphicsLibType = graphicsLibEntries
+-              .firstWhereOrNull(
+-                (it) => it.relativeFilePath == file.relativePath,
+-              )
+-              ?.mapType;
+-        }
++      final timeFinishedSelector = DateTime.timestamp().millisecondsSinceEpoch;
++      if (showPerformance) {
++        final selectorMs =
++            timeFinishedSelector - timeFinishedGettingGraphicsLibData;
++        progressText.appendAndPrint(
++          "Selector '${selector.id}' returned ${selectedAssets.length} assets for ${modInfo.name} in $selectorMs ms",
++          verboseOut,
++        );
++        final refCount = selectedAssets
++            .where((a) => a.provenance == AssetProvenance.referenced)
++            .length;
++        final unrefCount = selectedAssets.length - refCount;
++        Fimber.d(
++          "[VramChecker] selector=${selector.id} mod=${modInfo.modId} "
++          "time=${selectorMs}ms referenced=$refCount unreferenced=$unrefCount "
++          "total=${selectedAssets.length}",
++        );
++      }
+ 
+-        try {
+-          final image = await _readImageHeaders(file, imageHeaderReaderPool);
+-          if (image == null) {
+-            throw Exception("Image is null");
+-          } else {
+-            return {
+-              'filePath': file.file.path,
+-              'textureHeight': (image.width == 1)
+-                  ? 1
+-                  : (image.width - 1).highestOneBit() * 2,
+-              'textureWidth': (image.height == 1)
+-                  ? 1
+-                  : (image.height - 1).highestOneBit() * 2,
+-              'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
+-              'imageType': imageType.name,
+-              'graphicsLibType': graphicsLibType?.name,
+-            };
+-          }
+-        } catch (e) {
+-          if (showSkippedFiles) {
+-            progressText.appendAndPrint(
+-              "Skipped non-image ${file.relativePath} ($e)",
+-              verboseOut,
+-            );
+-          }
+-          return null;
+-        }
+-      });
++      // Read image headers for selected files and build row maps.
++      final referencedFutures = _processAssets(
++        selectedAssets.where((a) => a.provenance == AssetProvenance.referenced),
++        imageHeaderReaderPool,
++        modInfo.modFolder,
++      );
++      final unreferencedFutures = _processAssets(
++        selectedAssets.where(
++          (a) => a.provenance == AssetProvenance.unreferenced,
++        ),
++        imageHeaderReaderPool,
++        modInfo.modFolder,
++      );
+ 
+-      // Gather non-null image rows.
+-      final modImageRows = (await Future.wait(
+-        imageRowFutures,
++      final referencedRows = (await Future.wait(
++        referencedFutures,
++      )).nonNulls.toList();
++      final unreferencedRows = (await Future.wait(
++        unreferencedFutures,
+       )).nonNulls.toList();
+ 
+       final timeFinishedGettingFileData =
+           DateTime.timestamp().millisecondsSinceEpoch;
+       if (showPerformance) {
++        final headerMs = timeFinishedGettingFileData - timeFinishedSelector;
+         progressText.appendAndPrint(
+-          "Finished getting file data for ${modInfo.formattedName} in ${(timeFinishedGettingFileData - timeFinishedGettingGraphicsLibData)} ms",
++          "Finished getting file data for ${modInfo.formattedName} in $headerMs ms",
+           verboseOut,
+         );
++        Fimber.d(
++          "[VramChecker] headerRead mod=${modInfo.modId} "
++          "refRows=${referencedRows.length} unrefRows=${unreferencedRows.length} "
++          "time=${headerMs}ms",
++        );
+       }
+ 
+-      // Build a columnar table from the row maps.
+-      final fullTable = ModImageTable.fromRows(modImageRows);
+-      // Create views for each row.
+-      List<ModImageView> imageViews = List.generate(
+-        fullTable.length,
+-        (i) => ModImageView(i, fullTable),
+-      );
++      // Build columnar tables and views.
++      final referencedTable = ModImageTable.fromRows(referencedRows);
++      final unreferencedTable = unreferencedRows.isEmpty
++          ? null
++          : ModImageTable.fromRows(unreferencedRows);
+ 
+-      // Filter out unused images.
+-      final unusedViews = imageViews
+-          .where((view) => view.imageType == ImageType.unused)
+-          .toList();
+-      if (unusedViews.isNotEmpty && showSkippedFiles) {
+-        progressText.appendAndPrint("Skipping unused files", verboseOut);
+-        for (var view in unusedViews) {
+-          progressText.appendAndPrint(
+-            "  ${p.relative(view.file.path, from: modInfo.modFolder)}",
+-            verboseOut,
+-          );
+-        }
+-      }
+-      imageViews.removeWhere((view) => view.imageType == ImageType.unused);
++      List<ModImageView> referencedViews = List.generate(
++        referencedTable.length,
++        (i) => ModImageView(i, referencedTable),
++      );
+ 
+       // The game only loads one background at a time and vanilla always has one loaded.
+       // Therefore, a mod only increases the VRAM use by the size difference of the largest background over vanilla.
+-      final backgroundViews = imageViews
+-          .where((view) => view.imageType == ImageType.background)
+-          .toList();
+-      final largestBackground = backgroundViews
+-          .where((view) => view.textureWidth > VANILLA_BACKGROUND_WIDTH)
+-          .maxByOrNull<num>((view) => view.bytesUsed);
+-      final modBackgroundsSmallerThanLargestVanilla = backgroundViews
+-          .where(
+-            (view) => largestBackground != null && view != largestBackground,
+-          )
+-          .toList();
+-      if (modBackgroundsSmallerThanLargestVanilla.isNotEmpty) {
+-        progressText.appendAndPrint(
+-          "Skipping backgrounds that are not larger than vanilla and/or not the mod's largest background.",
+-          verboseOut,
+-        );
+-        for (var view in modBackgroundsSmallerThanLargestVanilla) {
+-          progressText.appendAndPrint(
+-            "   ${p.relative(view.file.path, from: modInfo.modFolder)}",
+-            verboseOut,
+-          );
+-        }
+-      }
+-      imageViews.removeWhere(
+-        (view) => modBackgroundsSmallerThanLargestVanilla.contains(view),
++      referencedViews = _filterBackgroundsAgainstVanilla(
++        referencedViews,
++        modInfo.modFolder,
+       );
+ 
+-      // Optionally log each image’s details.
+-      for (var view in imageViews) {
++      // Optionally log each image's details.
++      for (var view in referencedViews) {
+         if (showCountedFiles) {
+           progressText.appendAndPrint(
+             "${p.relative(view.file.path, from: modInfo.modFolder)} - TexHeight: ${view.textureHeight}, TexWidth: ${view.textureWidth}, ChannelBits: ${view.bitsInAllChannelsSum}, Mult: ${view.multiplier}\n   --> ${view.textureHeight} * ${view.textureWidth} * ${view.bitsInAllChannelsSum} * ${view.multiplier} = ${view.bytesUsed} bytes added over vanilla",
+@@ -282,31 +255,36 @@ class VramChecker {
+         }
+       }
+ 
+-      // Reassemble the final table from the remaining image views.
+-      final filteredRows = imageViews
+-          .map(
+-            (view) => {
+-              'filePath': view.filePath,
+-              'textureHeight': view.textureHeight,
+-              'textureWidth': view.textureWidth,
+-              'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
+-              'imageType': view.imageType.name,
+-              'graphicsLibType': view.graphicsLibType?.name,
+-            },
+-          )
+-          .toList();
+-      final finalTable = ModImageTable.fromRows(filteredRows);
++      final filteredReferencedTable = ModImageTable.fromRows(
++        referencedViews
++            .map(
++              (view) => {
++                'filePath': view.filePath,
++                'textureHeight': view.textureHeight,
++                'textureWidth': view.textureWidth,
++                'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
++                'imageType': view.imageType.name,
++                'graphicsLibType': view.graphicsLibType?.name,
++                if (view.referencedBy != null &&
++                    view.referencedBy!.isNotEmpty)
++                  'referencedBy': view.referencedBy,
++              },
++            )
++            .toList(),
++      );
+ 
+       final mod = VramMod(
+         modInfo,
+         (enabledModIds ?? []).contains(modInfo.modId),
+-        finalTable,
++        filteredReferencedTable,
+         graphicsLibEntries,
++        unreferencedImages: unreferencedTable,
++        scannedAt: DateTime.now(),
+       );
+ 
+       if (showPerformance) {
+         progressText.appendAndPrint(
+-          "Finished calculating ${finalTable.length} file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
++          "Finished calculating ${filteredReferencedTable.length} file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
+           verboseOut,
+         );
+       }
+@@ -315,6 +293,10 @@ class VramChecker {
+         verboseOut,
+       );
+       modProgressOut(mod);
++      // Yield at mod boundaries so Flutter gets a frame in between.
++      // Cheap — one microtask hop per mod — and keeps the UI alive even
++      // if some mod's processing happens to be synchronous end-to-end.
++      await Future<void>.delayed(Duration.zero);
+       return mod;
+     }).toList()).sortedByDescending<num>((it) => it.bytesNotIncludingGraphicsLib()).toList();
+ 
+@@ -331,9 +313,11 @@ class VramChecker {
+     final totalBytesOfEnabledMods = enabledMods.getBytesUsedByDedupedImages();
+ 
+     if (showPerformance) {
+-      progressText.appendAndPrint(
+-        "Finished run in ${(DateTime.timestamp().millisecondsSinceEpoch - startTime)} ms",
+-        verboseOut,
++      final totalMs = DateTime.timestamp().millisecondsSinceEpoch - startTime;
++      progressText.appendAndPrint("Finished run in $totalMs ms", verboseOut);
++      Fimber.d(
++        "[VramChecker] runComplete selector=${selector.id} "
++        "mods=${mods.length} time=${totalMs}ms",
+       );
+     }
+ 
+@@ -420,17 +404,7 @@ class VramChecker {
+     summaryText.writeln(
+       "** This is only an estimate of VRAM use and actual use may be higher or lower.",
+     );
+-    summaryText.writeln(
+-      "** Unused images in mods are counted unless they contain one of ${UNUSED_INDICATOR.joinToString(transform: (it) => "\"$it\"")} in the file name.",
+-    );
+-
+-    // var currentFolder = currentDirectory.path;
+-    // var outputFile = File("$currentFolder/VRAM_usage_of_mods.txt");
+-    // outputFile.writeAsStringSync("$progressText\n$modTotals\n$summaryText",
+-    //     flush: true);
+-    //
+-    // summaryText.writeln(
+-    //     "\nFile written to ${outputFile.absolute.path}.\nSummary copied to clipboard, ready to paste.");
++    summaryText.writeln("** Selector: ${selector.id}. ${selector.description}");
+ 
+     verboseOut(modTotals.toString());
+     debugOut(summaryText.toString());
+@@ -438,76 +412,84 @@ class VramChecker {
+     return mods;
+   }
+ 
+-  Future<ImageHeader?> _readImageHeaders(
+-    _FileData file,
++  /// Read image headers for each asset and produce row maps suitable for
++  /// [ModImageTable.fromRows]. Files whose header cannot be read return null.
++  Iterable<Future<Map<String, dynamic>?>> _processAssets(
++    Iterable<SelectedAsset> assets,
+     ReadImageHeaders imageHeaderReaderPool,
+-  ) async {
+-    return await imageHeaderReaderPool.readImageDeterminingBest(file.file.path);
++    String modFolder,
++  ) {
++    return assets.map((asset) async {
++      if (isCancelled()) {
++        throw Exception("Cancelled");
++      }
++      final file = asset.file;
++      final imageType = file.relativePath.contains(BACKGROUND_FOLDER_NAME)
++          ? ImageType.background
++          : ImageType.texture;
++
++      try {
++        final image = await imageHeaderReaderPool.readImageDeterminingBest(
++          file.file.path,
++        );
++        if (image == null) {
++          throw Exception("Image is null");
++        }
++        return {
++          'filePath': file.file.path,
++          'textureHeight': (image.width == 1)
++              ? 1
++              : (image.width - 1).highestOneBit() * 2,
++          'textureWidth': (image.height == 1)
++              ? 1
++              : (image.height - 1).highestOneBit() * 2,
++          'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
++          'imageType': imageType.name,
++          'graphicsLibType': asset.graphicsLibType?.name,
++          if (asset.referencedBy != null && asset.referencedBy!.isNotEmpty)
++            'referencedBy': asset.referencedBy,
++        };
++      } catch (e) {
++        if (showSkippedFiles) {
++          progressText.appendAndPrint(
++            "Skipped non-image ${file.relativePath} ($e)",
++            verboseOut,
++          );
++        }
++        return null;
++      }
++    });
+   }
+ 
+-  // Update helper functions to return a row-map instead of a ModImage
+-
+-  List<GraphicsLibInfo>? _getGraphicsLibSettingsForMod(
+-    List<_FileData> filesInMod,
+-    CsvToListConverter csvReader,
+-    StringBuffer progressText,
++  /// Backgrounds at or below vanilla size contribute nothing; among oversized
++  /// backgrounds only the largest counts. Mirrors the previous behavior
++  /// exactly — applied to referenced assets only.
++  List<ModImageView> _filterBackgroundsAgainstVanilla(
++    List<ModImageView> views,
++    String modFolder,
+   ) {
+-    final modGraphicsLibSettingsFile = filesInMod
+-        .filter((it) => it.file.nameWithExtension.endsWith(".csv"))
+-        .map((file) {
+-          try {
+-            return csvReader.convert(
+-              file.file.readAsStringSync().replaceAll("\r\n", "\n"),
+-              eol: "\n",
+-            );
+-          } catch (e) {
+-            progressText.appendAndPrint(
+-              "Unable to read ${file.file.path}: $e",
+-              verboseOut,
+-            );
+-          }
+-
+-          return [null];
+-        })
+-        .nonNulls
+-        .filter((csvRows) => csvRows.isNotEmpty)
+-        .firstWhereOrNull(
+-          (csvRows) =>
+-              csvRows.first?.containsAll(["id", "type", "map", "path"]) == true,
++    final backgrounds = views
++        .where((view) => view.imageType == ImageType.background)
++        .toList();
++    final largestBackground = backgrounds
++        .where((view) => view.textureWidth > VANILLA_BACKGROUND_WIDTH)
++        .maxByOrNull<num>((view) => view.bytesUsed);
++    final backgroundsToDrop = backgrounds
++        .where((view) => largestBackground != null && view != largestBackground)
++        .toList();
++    if (backgroundsToDrop.isNotEmpty) {
++      progressText.appendAndPrint(
++        "Skipping backgrounds that are not larger than vanilla and/or not the mod's largest background.",
++        verboseOut,
++      );
++      for (var view in backgroundsToDrop) {
++        progressText.appendAndPrint(
++          "   ${p.relative(view.file.path, from: modFolder)}",
++          verboseOut,
+         );
+-
+-    if (modGraphicsLibSettingsFile == null) {
+-      return null;
++      }
+     }
+-
+-    final idColumn = modGraphicsLibSettingsFile.first!.indexOf("id");
+-    final mapColumn = modGraphicsLibSettingsFile.first!.indexOf("map");
+-    final pathColumn = modGraphicsLibSettingsFile.first!.indexOf("path");
+-
+-    return modGraphicsLibSettingsFile
+-        .map((List<dynamic>? row) {
+-          try {
+-            final mapType = switch (row![mapColumn]) {
+-              "normal" => MapType.Normal,
+-              "material" => MapType.Material,
+-              "surface" => MapType.Surface,
+-              _ => null,
+-            };
+-
+-            if (mapType == null) {
+-              return null;
+-            }
+-
+-            final path = row[pathColumn].trim();
+-            return GraphicsLibInfo(row[idColumn], mapType, p.normalize(path));
+-          } catch (e) {
+-            progressText.appendAndPrint("$row - $e", verboseOut);
+-          }
+-
+-          return null;
+-        })
+-        .nonNulls
+-        .toList();
++    return views.where((v) => !backgroundsToDrop.contains(v)).toList();
+   }
+ 
+   Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
+@@ -528,7 +510,9 @@ class VramChecker {
+ 
+ extension ModListExt on Iterable<VramMod> {
+   int getBytesUsedByDedupedImages() {
+-    // Use a set keyed by (modFolder, filePath)
++    // Use a set keyed by (modFolder, filePath). Only sums the referenced
++    // bucket; [VramMod.unreferencedImages] is advisory and never included
++    // in aggregate totals.
+     final seen = <Tuple2<String, String>>{};
+     int sum = 0;
+     for (var mod in this) {
+@@ -545,21 +529,3 @@ extension ModListExt on Iterable<VramMod> {
+     return sum;
+   }
+ }
+-
+-extension _FileExtensions on File {
+-  bool get isImage {
+-    final ext = p.extension(path).toLowerCase();
+-    return ext.endsWith(".png") ||
+-        ext.endsWith(".jpg") ||
+-        ext.endsWith(".jpeg") ||
+-        ext.endsWith(".gif") ||
+-        ext.endsWith(".webp");
+-  }
+-}
+-
+-class _FileData {
+-  final File file;
+-  final String relativePath;
+-
+-  _FileData({required this.file, required this.relativePath});
+-}
+diff --git a/lib/vram_estimator/vram_estimator_manager.dart b/lib/vram_estimator/vram_estimator_manager.dart
+index b57920b2..596ea97f 100644
+--- a/lib/vram_estimator/vram_estimator_manager.dart
++++ b/lib/vram_estimator/vram_estimator_manager.dart
+@@ -4,9 +4,12 @@ import 'package:dart_mappable/dart_mappable.dart';
+ import 'package:flutter_riverpod/flutter_riverpod.dart';
+ import 'package:trios/trios/app_state.dart';
+ import 'package:trios/trios/constants.dart';
++import 'package:trios/trios/settings/app_settings_logic.dart';
+ import 'package:trios/utils/generic_settings_manager.dart';
+ import 'package:trios/utils/generic_settings_notifier.dart';
+ import 'package:trios/utils/logging.dart';
++import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
++import 'package:trios/vram_estimator/selectors/selector_registry.dart';
+ import 'package:trios/vram_estimator/vram_checker_logic.dart';
+ 
+ import '../models/mod_variant.dart';
+@@ -18,24 +21,48 @@ part 'vram_estimator_manager.mapper.dart';
+ 
+ @MappableClass()
+ class VramEstimatorManagerState with VramEstimatorManagerStateMappable {
+-  /// SmolId to [VramMod] mapping.
++  /// SmolId to [VramMod] mapping — reflects the currently-active selector
++  /// + config. Per-selector results are kept in memory only on the
++  /// notifier (not persisted) so switching selectors is instant after
++  /// both have run.
+   final Map<String, VramMod> modVramInfo;
+-  bool isScanning = false;
+-  bool isCancelled = false;
++
++  /// Transient scan state. These get serialized by dart_mappable (it
++  /// doesn't support a per-field "ignore"), but the settings manager
++  /// resets them after load so a mid-scan app close can't leave the UI
++  /// stuck on "scanning" forever on next launch.
++  bool isScanning;
++  bool isCancelled;
++
+   final DateTime? lastUpdated;
+ 
++  /// Name of the mod currently being scanned, if any. Transient — cleared
++  /// when scanning completes or a new scan starts.
++  String? currentlyScanningModName;
++
++  /// Total mods queued for the active scan. Used together with
++  /// [modsScannedThisRun] to compute overall progress for the UI.
++  int totalModsToScan;
++
++  /// Mods completed in the currently-running scan. Reset to 0 at the
++  /// start of each scan so progress reflects *this* run, not the
++  /// accumulated `modVramInfo` which may carry entries from earlier
++  /// scans.
++  int modsScannedThisRun;
++
+   VramEstimatorManagerState({
+     required this.modVramInfo,
+     required this.lastUpdated,
++    this.isScanning = false,
++    this.isCancelled = false,
++    this.currentlyScanningModName,
++    this.totalModsToScan = 0,
++    this.modsScannedThisRun = 0,
+   });
+ 
+   factory VramEstimatorManagerState.initial() {
+     return VramEstimatorManagerState(modVramInfo: {}, lastUpdated: null);
+   }
+-
+-  // List<int> vramFromGraphicsLib(GraphicsLibConfig? graphicsLibConfig) {
+-  //
+-  // }
+ }
+ 
+ class VramEstimatorManager
+@@ -52,15 +79,42 @@ class VramEstimatorManager
+ 
+   @override
+   VramEstimatorManagerState Function(Map<String, dynamic> map) get fromMap =>
+-      (map) => VramEstimatorManagerStateMapper.fromMap(map);
++      (map) {
++        final loaded = VramEstimatorManagerStateMapper.fromMap(map);
++        // Reset transient scan state — a cache written mid-scan (e.g.,
++        // app crashed or closed before the scan finished) must not bring
++        // back a phantom "scanning in progress" UI on next launch.
++        loaded.isScanning = false;
++        loaded.isCancelled = false;
++        loaded.currentlyScanningModName = null;
++        loaded.totalModsToScan = 0;
++        loaded.modsScannedThisRun = 0;
++        return loaded;
++      };
+ 
+   @override
+   Map<String, dynamic> Function(VramEstimatorManagerState obj) get toMap =>
+       (obj) => obj.toMap();
+ }
+ 
++/// Derive a stable cache key for a (selectorId, config) pair. Folder-scan
++/// has no config, so its key collapses to just the selector id.
++String _cacheKey(String selectorId, ReferencedAssetsSelectorConfig config) {
++  if (selectorId == 'referenced') {
++    return 'referenced:${config.cacheHash}';
++  }
++  return selectorId;
++}
++
+ class VramEstimatorNotifier
+     extends GenericSettingsAsyncNotifier<VramEstimatorManagerState> {
++  /// In-memory cache of scan results per (selectorId, configHash). Lost on
++  /// app restart; survives selector/config toggles within a session.
++  final Map<String, Map<String, VramMod>> _perKeyCache = {};
++
++  /// Cache key for whatever is currently in [state.value.modVramInfo].
++  String? _activeCacheKey;
++
+   @override
+   GenericAsyncSettingsManager<VramEstimatorManagerState>
+   createSettingsManager() => VramEstimatorManager();
+@@ -69,40 +123,94 @@ class VramEstimatorNotifier
+   VramEstimatorManagerState createDefaultState() =>
+       VramEstimatorManagerState.initial();
+ 
++  /// Read the active selector id + config from user settings.
++  ({String selectorId, ReferencedAssetsSelectorConfig config})
++  _readActiveSelector() {
++    final settings = ref.read(appSettings);
++    return (
++      selectorId: settings.vramEstimatorSelectorId,
++      config: settings.referencedAssetsSelectorConfig,
++    );
++  }
++
++  /// Called when the user changes the selector or its config. If we have
++  /// cached results for the new key, swap them in immediately; otherwise
++  /// clear the active map and kick off a scan.
++  Future<void> onSelectorOrConfigChanged() async {
++    final active = _readActiveSelector();
++    final newKey = _cacheKey(active.selectorId, active.config);
++    if (newKey == _activeCacheKey) return;
++
++    // Save the current view into the per-key cache before swapping.
++    if (_activeCacheKey != null && state.value != null) {
++      _perKeyCache[_activeCacheKey!] = Map.from(state.requireValue.modVramInfo);
++    }
++
++    final cached = _perKeyCache[newKey];
++    _activeCacheKey = newKey;
++
++    if (cached != null) {
++      updateState(
++        (s) => s.copyWith(modVramInfo: Map.from(cached))..isScanning = false,
++      );
++    } else {
++      updateState(
++        (s) => s.copyWith(modVramInfo: <String, VramMod>{})..isScanning = false,
++      );
++      await startEstimating();
++    }
++  }
++
+   Future<void> startEstimating({List<ModVariant>? variantsToCheck}) async {
+     if (state.value?.isScanning == true) return;
+ 
+     var modsFolder = ref.read(AppState.modsFolder).value;
+     if (modsFolder == null || !modsFolder.existsSync()) {
+       Fimber.e('Mods folder not set');
+-      // Optionally, you can set an error state here
+       return;
+     }
+ 
++    final active = _readActiveSelector();
++    final activeKey = _cacheKey(active.selectorId, active.config);
++    _activeCacheKey = activeKey;
++    final selector = resolveSelector(active.selectorId, active.config);
++
++    final resolvedVariants =
++        variantsToCheck ??
++        ref
++            .read(AppState.mods)
++            .map((mod) => mod.findFirstEnabledOrHighestVersion)
++            .nonNulls
++            .toList();
++
+     updateState(
+       (s) => s.copyWith()
+         ..isScanning = true
+-        ..isCancelled = false,
++        ..isCancelled = false
++        ..totalModsToScan = resolvedVariants.length
++        ..modsScannedThisRun = 0
++        ..currentlyScanningModName = null,
+     );
+ 
+     try {
+       final info = await VramChecker(
+         enabledModIds: ref.read(AppState.enabledModIds).value,
+-        variantsToCheck:
+-            variantsToCheck ??
+-            ref
+-                .read(AppState.mods)
+-                .map((mod) => mod.findFirstEnabledOrHighestVersion)
+-                .nonNulls
+-                .toList(),
++        variantsToCheck: resolvedVariants,
+         graphicsLibConfig:
+             ref.read(graphicsLibConfigProvider) ?? GraphicsLibConfig.disabled,
+         showCountedFiles: true,
+         showSkippedFiles: true,
+         showGfxLibDebugOutput: true,
+         showPerformance: true,
++        selector: selector,
++        onModStart: (checkerMod) {
++          updateState(
++            (s) => s.copyWith()
++              ..currentlyScanningModName =
++                  checkerMod.name ?? checkerMod.modId,
++          );
++        },
+         modProgressOut: (VramMod mod) {
+-          // Update modVramInfo with each mod's progress
+           final updatedModVramInfo = {
+             ...state.requireValue.modVramInfo,
+             mod.info.smolId: mod,
+@@ -111,7 +219,7 @@ class VramEstimatorNotifier
+             (state) => state.copyWith(
+               modVramInfo: updatedModVramInfo,
+               lastUpdated: DateTime.now(),
+-            ),
++            )..modsScannedThisRun = state.modsScannedThisRun + 1,
+           );
+         },
+         debugOut: Fimber.d,
+@@ -125,22 +233,37 @@ class VramEstimatorNotifier
+             previousValue..[element.info.smolId] = element,
+       );
+ 
++      // Freeze the result into the per-key cache so flipping back is instant.
++      _perKeyCache[activeKey] = Map.from(modVramInfo);
++
+       updateState(
+         (state) => state.copyWith(modVramInfo: modVramInfo)
+           ..isScanning = false
+-          ..isCancelled = false,
++          ..isCancelled = false
++          ..currentlyScanningModName = null,
+       );
+     } catch (e) {
+       Fimber.w('Error scanning for VRAM usage: $e');
+-      // Optionally, set an error state
+       updateState(
+         (state) => state
+           ..isScanning = false
+-          ..isCancelled = false,
++          ..isCancelled = false
++          ..currentlyScanningModName = null,
+       );
+     }
+   }
+ 
++  /// Clear all per-selector caches and rerun under the active configuration.
++  /// Bound to the refresh button.
++  Future<void> refresh({List<ModVariant>? variantsToCheck}) async {
++    _perKeyCache.clear();
++    _activeCacheKey = null;
++    updateState(
++      (s) => s.copyWith(modVramInfo: <String, VramMod>{}),
++    );
++    await startEstimating(variantsToCheck: variantsToCheck);
++  }
++
+   void cancelEstimation() {
+     updateState((s) => s..isCancelled = true);
+   }
+diff --git a/lib/vram_estimator/vram_estimator_manager.mapper.dart b/lib/vram_estimator/vram_estimator_manager.mapper.dart
+index a98b1141..23d1acc4 100644
+--- a/lib/vram_estimator/vram_estimator_manager.mapper.dart
++++ b/lib/vram_estimator/vram_estimator_manager.mapper.dart
+@@ -37,14 +37,36 @@ class VramEstimatorManagerStateMapper
+   static const Field<VramEstimatorManagerState, bool> _f$isScanning = Field(
+     'isScanning',
+     _$isScanning,
+-    mode: FieldMode.member,
++    opt: true,
++    def: false,
+   );
+   static bool _$isCancelled(VramEstimatorManagerState v) => v.isCancelled;
+   static const Field<VramEstimatorManagerState, bool> _f$isCancelled = Field(
+     'isCancelled',
+     _$isCancelled,
+-    mode: FieldMode.member,
++    opt: true,
++    def: false,
+   );
++  static String? _$currentlyScanningModName(VramEstimatorManagerState v) =>
++      v.currentlyScanningModName;
++  static const Field<VramEstimatorManagerState, String>
++  _f$currentlyScanningModName = Field(
++    'currentlyScanningModName',
++    _$currentlyScanningModName,
++    opt: true,
++  );
++  static int _$totalModsToScan(VramEstimatorManagerState v) =>
++      v.totalModsToScan;
++  static const Field<VramEstimatorManagerState, int> _f$totalModsToScan = Field(
++    'totalModsToScan',
++    _$totalModsToScan,
++    opt: true,
++    def: 0,
++  );
++  static int _$modsScannedThisRun(VramEstimatorManagerState v) =>
++      v.modsScannedThisRun;
++  static const Field<VramEstimatorManagerState, int> _f$modsScannedThisRun =
++      Field('modsScannedThisRun', _$modsScannedThisRun, opt: true, def: 0);
+ 
+   @override
+   final MappableFields<VramEstimatorManagerState> fields = const {
+@@ -52,12 +74,20 @@ class VramEstimatorManagerStateMapper
+     #lastUpdated: _f$lastUpdated,
+     #isScanning: _f$isScanning,
+     #isCancelled: _f$isCancelled,
++    #currentlyScanningModName: _f$currentlyScanningModName,
++    #totalModsToScan: _f$totalModsToScan,
++    #modsScannedThisRun: _f$modsScannedThisRun,
+   };
+ 
+   static VramEstimatorManagerState _instantiate(DecodingData data) {
+     return VramEstimatorManagerState(
+       modVramInfo: data.dec(_f$modVramInfo),
+       lastUpdated: data.dec(_f$lastUpdated),
++      isScanning: data.dec(_f$isScanning),
++      isCancelled: data.dec(_f$isCancelled),
++      currentlyScanningModName: data.dec(_f$currentlyScanningModName),
++      totalModsToScan: data.dec(_f$totalModsToScan),
++      modsScannedThisRun: data.dec(_f$modsScannedThisRun),
+     );
+   }
+ 
+@@ -137,7 +167,15 @@ abstract class VramEstimatorManagerStateCopyWith<
+     implements ClassCopyWith<$R, $In, $Out> {
+   MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
+   get modVramInfo;
+-  $R call({Map<String, VramMod>? modVramInfo, DateTime? lastUpdated});
++  $R call({
++    Map<String, VramMod>? modVramInfo,
++    DateTime? lastUpdated,
++    bool? isScanning,
++    bool? isCancelled,
++    String? currentlyScanningModName,
++    int? totalModsToScan,
++    int? modsScannedThisRun,
++  });
+   VramEstimatorManagerStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+     Then<$Out2, $R2> t,
+   );
+@@ -160,18 +198,42 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
+     (v) => call(modVramInfo: v),
+   );
+   @override
+-  $R call({Map<String, VramMod>? modVramInfo, Object? lastUpdated = $none}) =>
+-      $apply(
+-        FieldCopyWithData({
+-          if (modVramInfo != null) #modVramInfo: modVramInfo,
+-          if (lastUpdated != $none) #lastUpdated: lastUpdated,
+-        }),
+-      );
++  $R call({
++    Map<String, VramMod>? modVramInfo,
++    Object? lastUpdated = $none,
++    bool? isScanning,
++    bool? isCancelled,
++    Object? currentlyScanningModName = $none,
++    int? totalModsToScan,
++    int? modsScannedThisRun,
++  }) => $apply(
++    FieldCopyWithData({
++      if (modVramInfo != null) #modVramInfo: modVramInfo,
++      if (lastUpdated != $none) #lastUpdated: lastUpdated,
++      if (isScanning != null) #isScanning: isScanning,
++      if (isCancelled != null) #isCancelled: isCancelled,
++      if (currentlyScanningModName != $none)
++        #currentlyScanningModName: currentlyScanningModName,
++      if (totalModsToScan != null) #totalModsToScan: totalModsToScan,
++      if (modsScannedThisRun != null) #modsScannedThisRun: modsScannedThisRun,
++    }),
++  );
+   @override
+   VramEstimatorManagerState $make(CopyWithData data) =>
+       VramEstimatorManagerState(
+         modVramInfo: data.get(#modVramInfo, or: $value.modVramInfo),
+         lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated),
++        isScanning: data.get(#isScanning, or: $value.isScanning),
++        isCancelled: data.get(#isCancelled, or: $value.isCancelled),
++        currentlyScanningModName: data.get(
++          #currentlyScanningModName,
++          or: $value.currentlyScanningModName,
++        ),
++        totalModsToScan: data.get(#totalModsToScan, or: $value.totalModsToScan),
++        modsScannedThisRun: data.get(
++          #modsScannedThisRun,
++          or: $value.modsScannedThisRun,
++        ),
+       );
+ 
+   @override
+diff --git a/lib/vram_estimator/vram_estimator_page.dart b/lib/vram_estimator/vram_estimator_page.dart
+index 9d7ba8ca..e25aeac8 100644
+--- a/lib/vram_estimator/vram_estimator_page.dart
++++ b/lib/vram_estimator/vram_estimator_page.dart
+@@ -2,16 +2,23 @@ import 'dart:math';
+ 
+ import 'package:flutter/material.dart';
+ import 'package:flutter_riverpod/flutter_riverpod.dart';
+-import 'package:trios/vram_estimator/vram_checker_explanation.dart';
+ import 'package:trios/models/version.dart';
+ import 'package:trios/thirdparty/dartx/iterable.dart';
+ import 'package:trios/trios/app_state.dart';
++import 'package:trios/trios/settings/app_settings_logic.dart';
+ import 'package:trios/utils/extensions.dart';
++import 'package:trios/vram_estimator/selectors/selector_registry.dart';
++import 'package:trios/vram_estimator/vram_checker_explanation.dart';
++import 'package:trios/vram_estimator/vram_estimator_manager.dart';
++import 'package:trios/vram_estimator/widgets/reference_scan_debug_panel.dart';
++import 'package:trios/vram_estimator/widgets/scan_progress_panel.dart';
+ import 'package:trios/widgets/disable.dart';
+ import 'package:trios/widgets/graph_radio_selector.dart';
+ import 'package:trios/widgets/moving_tooltip.dart';
+ import 'package:trios/widgets/spinning_refresh_button.dart';
+ import 'package:trios/widgets/toolbar_checkbox_button.dart';
++import 'package:trios/widgets/trios_dropdown_button.dart';
++import 'package:trios/widgets/viewer_search_box.dart';
+ 
+ import 'charts/bar_chart.dart';
+ import 'charts/pie_chart.dart';
+@@ -134,6 +141,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+   GraphType graphType = GraphType.bar;
+   RangeValues? selectedSliderValues;
+   bool _onlyEnabled = false;
++  final SearchController _searchController = SearchController();
++  String _searchQuery = '';
++
++  @override
++  void dispose() {
++    _searchController.dispose();
++    super.dispose();
++  }
+ 
+   @override
+   Widget build(BuildContext context) {
+@@ -150,6 +165,8 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+         .map((mod) => mod.smolId)
+         .toList();
+ 
++    final searchQuery = _searchQuery.trim().toLowerCase();
++
+     // Display only the highest version of each mod.
+     final groupedModVramInfo = vramState.modVramInfo.values
+         .where(
+@@ -157,6 +174,12 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+               // If only showing enabled, filter to only the enabled *variants*.
+               _onlyEnabled ? enabledSmolIds.contains(mod.info.smolId) : true,
+         )
++        .where((mod) {
++          if (searchQuery.isEmpty) return true;
++          final name = mod.info.name?.toLowerCase() ?? '';
++          final id = mod.info.modInfo.id.toLowerCase();
++          return name.contains(searchQuery) || id.contains(searchQuery);
++        })
+         .groupBy((mod) => mod.info.modInfo.id)
+         .values
+         .map(
+@@ -223,32 +246,11 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+                           }
+                         },
+                         isScanning: isScanning,
+-                        tooltip: 'Estimate VRAM',
+-                      ),
+-                    ),
+-                    if (isScanning)
+-                      Padding(
+-                        padding: const EdgeInsets.only(left: 8.0),
+-                        child: OutlinedButton.icon(
+-                          onPressed: () => ref
+-                              .read(AppState.vramEstimatorProvider.notifier)
+-                              .cancelEstimation(),
+-                          label: Text(
+-                            vramState.isCancelled ? 'Canceling...' : 'Cancel',
+-                          ),
+-                          icon: const Icon(Icons.cancel),
+-                        ),
+-                      ),
+-                    Padding(
+-                      padding: const EdgeInsets.only(left: 8.0),
+-                      child: Disable(
+-                        isEnabled: modVramInfoToShow.isNotEmpty,
+-                        child: Text(
+-                          '${modVramInfo.length} mods scanned',
+-                          style: Theme.of(context).textTheme.labelMedium,
+-                        ),
++                        tooltip: _buildRefreshTooltip(vramState),
+                       ),
+                     ),
++                    const SizedBox(width: 16),
++                    _buildSelectorDropdown(ref),
+                     Padding(
+                       padding: const EdgeInsets.only(left: 32.0),
+                       child: Disable(
+@@ -267,6 +269,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+                         ),
+                       ),
+                     ),
++                    const SizedBox(width: 16),
++                    ViewerSearchBox(
++                      searchController: _searchController,
++                      hintText: 'Filter mods...',
++                      onChanged: (query) =>
++                          setState(() => _searchQuery = query),
++                      onClear: () => setState(() => _searchQuery = ''),
++                    ),
+                     Spacer(),
+                     TriOSToolbarCheckboxButton(
+                       onChanged: (newValue) =>
+@@ -280,6 +290,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+             ),
+           ),
+         ),
++        const Padding(
++          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
++          child: ScanProgressPanel(),
++        ),
++        const Padding(
++          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
++          child: ReferenceScanDebugPanel(),
++        ),
+         if (modVramInfo.isNotEmpty)
+           Expanded(
+             child: Padding(
+@@ -355,6 +373,65 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
+         .toList();
+   }
+ 
++  String _buildProgressText(VramEstimatorManagerState state) {
++    final done = state.modsScannedThisRun;
++    final total = state.totalModsToScan;
++    final progress = total > 0 ? '$done / $total' : '$done';
++    final current = state.currentlyScanningModName;
++    if (current != null && current.isNotEmpty) {
++      return 'Scanning $current  ($progress)';
++    }
++    return 'Scanning…  ($progress)';
++  }
++
++  String _buildRefreshTooltip(VramEstimatorManagerState state) {
++    if (!state.isScanning) {
++      return state.modVramInfo.isEmpty ? 'Estimate VRAM' : 'Re-estimate VRAM';
++    }
++    final done = state.modsScannedThisRun;
++    final total = state.totalModsToScan;
++    final progress = total > 0 ? ' ($done/$total)' : '';
++    final current = state.currentlyScanningModName;
++    if (current != null && current.isNotEmpty) {
++      return 'Scanning: $current$progress';
++    }
++    return 'Scanning$progress';
++  }
++
++  Widget _buildSelectorDropdown(WidgetRef ref) {
++    final settings = ref.watch(appSettings);
++    final activeId = settings.vramEstimatorSelectorId;
++    final options = allSelectorOptions();
++    final theme = Theme.of(context);
++    return MovingTooltipWidget.text(
++      message: options
++          .firstWhere((o) => o.id == activeId, orElse: () => options.first)
++          .description,
++      child: TriOSDropdownButton<String>(
++        value: options.any((o) => o.id == activeId)
++            ? activeId
++            : options.first.id,
++        underline: const SizedBox.shrink(),
++        items: [
++          for (final opt in options)
++            DropdownMenuItem<String>(
++              value: opt.id,
++              child: Text(opt.displayName, style: theme.textTheme.labelMedium),
++            ),
++        ],
++        onChanged: (newId) {
++          if (newId == null) return;
++          ref
++              .read(appSettings.notifier)
++              .update((s) => s.copyWith(vramEstimatorSelectorId: newId));
++          ref
++              .read(AppState.vramEstimatorProvider.notifier)
++              .onSelectorOrConfigChanged();
++        },
++      ),
++    );
++  }
++
+   double _maxRange(
+     Map<String, VramMod> modVramInfo,
+     GraphicsLibConfig? graphicsLibConfig,
+diff --git a/lib/widgets/spinning_refresh_button.dart b/lib/widgets/spinning_refresh_button.dart
+index ec173788..664e3c9f 100644
+--- a/lib/widgets/spinning_refresh_button.dart
++++ b/lib/widgets/spinning_refresh_button.dart
+@@ -28,6 +28,9 @@ class SpinningRefreshButtonState extends State<SpinningRefreshButton>
+       duration: const Duration(seconds: 1),
+       vsync: this,
+     );
++    if (widget.isScanning) {
++      _animationController.repeat();
++    }
+   }
+ 
+   @override
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 31a49a2a..1862493a 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -16,6 +16,7 @@ environment:
+ dependencies:
+   flutter:
+     sdk: flutter
++  archive: ^4.0.9
+   collection: ^1.19.0
+   # Copied to thirdparty/flutter_context_menu to be able to customize. Was abandoned lib.
+   #  flutter_context_menu: ^0.2.0
+diff --git a/test/fix_json_test.dart b/test/fix_json_test.dart
+index 859794fe..a78dd569 100644
+--- a/test/fix_json_test.dart
++++ b/test/fix_json_test.dart
+@@ -1,13 +1,11 @@
+-import 'dart:convert';
+-
+ import 'package:flutter_test/flutter_test.dart';
+ import 'package:trios/utils/extensions.dart';
+ 
+ void main() {
+-  group('fixJson', () {
++  group('parseJsonToMap', () {
+     test('valid JSON passes through unchanged', () {
+       const input = '{"key": "value", "num": 42}';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['key'], 'value');
+       expect(result['num'], 42);
+     });
+@@ -19,7 +17,7 @@ void main() {
+   "type": "BALLISTIC";
+   "size": "LARGE"
+ }''';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['id'], 'test_wpn');
+       expect(result['type'], 'BALLISTIC');
+       expect(result['size'], 'LARGE');
+@@ -31,19 +29,19 @@ void main() {
+   "desc": "hello; world",
+   "type": "BALLISTIC"
+ }''';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['desc'], 'hello; world');
+     });
+ 
+     test('removes trailing commas', () {
+       const input = '{"key": "value"},';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['key'], 'value');
+     });
+ 
+     test('replaces tabs with spaces', () {
+       const input = '{\t"key":\t"value"}';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['key'], 'value');
+     });
+ 
+@@ -53,13 +51,13 @@ void main() {
+   // this is a comment
+   "key": "value"
+ }''';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['key'], 'value');
+     });
+ 
+     test('replaces escaped hashes', () {
+       const input = r'{"key": "color\#ff0000"}';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['key'], 'color#ff0000');
+     });
+ 
+@@ -72,7 +70,7 @@ void main() {
+   "size": "LARGE";
+   "turretOffsets": [10, 0]
+ }''';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['id'], 'ork_rightarm_wpn');
+       expect(result['type'], 'BALLISTIC');
+       expect(result['size'], 'LARGE');
+@@ -92,7 +90,7 @@ void main() {
+     "no_weapon_flux"
+   ]
+ }''';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['hullId'], 'ms_kobold');
+       expect(result['builtInWeapons'], {
+         'WS0001': 'ms_splinterKol',
+@@ -108,7 +106,7 @@ void main() {
+   "removeBuiltInMods": [""],
+   "emptyList": []
+ }''';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['tags'], ['']);
+       expect(result['removeBuiltInMods'], ['']);
+       expect(result['emptyList'], []);
+@@ -141,7 +139,7 @@ void main() {
+   "projectileSpecId":"bt_invis",
+   "fireSoundTwo":"bt_mech_punch"
+ }''';
+-      final result = jsonDecode(input.fixJson()) as Map<String, dynamic>;
++      final result = input.parseJsonToMap();
+       expect(result['id'], 'ork_rightarm_wpn');
+       expect(result['everyFrameEffect'],
+           'data.scripts.weapons.bt_arm_everyframe');

@@ -1,20 +1,20 @@
 import 'dart:core';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
-import 'package:csv/csv.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../models/mod_variant.dart';
+import '../utils/logging.dart';
 import '../utils/util.dart';
 import 'image_reader/image_reader_async.dart';
-import 'image_reader/png_chatgpt.dart';
 import 'models/gpu_info.dart';
 import 'models/graphics_lib_config.dart';
-import 'models/graphics_lib_info.dart';
 import 'models/vram_checker_models.dart';
+import 'selectors/folder_scan_selector.dart';
+import 'selectors/references/graphicslib_references.dart';
+import 'selectors/vram_asset_selector.dart';
 
 class VramChecker {
   List<String>? enabledModIds;
@@ -25,9 +25,15 @@ class VramChecker {
   bool showCountedFiles;
   GraphicsLibConfig graphicsLibConfig;
   Function(VramMod) modProgressOut = (it) => (it);
+  Function(VramCheckerMod) onModStart = (it) => (it);
   Function(String) verboseOut = (it) => (it);
   Function(String) debugOut = (it) => (it);
   bool Function() isCancelled;
+
+  /// Selector that decides which image files a mod contributes. Defaults to
+  /// [FolderScanSelector] (the behavior this class had before selectors
+  /// existed) so existing callers need no changes.
+  VramAssetSelector selector;
 
   int maxFileHandles;
 
@@ -41,11 +47,13 @@ class VramChecker {
     required this.showCountedFiles,
     required this.graphicsLibConfig,
     this.maxFileHandles = 2000,
+    VramAssetSelector? selector,
     Function(VramMod)? modProgressOut,
+    Function(VramCheckerMod)? onModStart,
     Function(String)? verboseOut,
     Function(String)? debugOut,
     required this.isCancelled,
-  }) {
+  }) : selector = selector ?? FolderScanSelector() {
     if (verboseOut != null) {
       this.verboseOut = verboseOut;
     }
@@ -55,6 +63,9 @@ class VramChecker {
     if (modProgressOut != null) {
       this.modProgressOut = modProgressOut;
     }
+    if (onModStart != null) {
+      this.onModStart = onModStart;
+    }
   }
 
   static const VANILLA_BACKGROUND_WIDTH = 2048;
@@ -63,8 +74,6 @@ class VramChecker {
       433586176.0; // 0.9.1a, per https://fractalsoftworks.com/forum/index.php?topic=8726.0
   static const OUTPUT_LABEL_WIDTH = 38;
 
-  /// If one of these strings is in the filename, the file is skipped *
-  static const UNUSED_INDICATOR = ["CURRENTLY_UNUSED", "DO_NOT_USE"];
   static const BACKGROUND_FOLDER_NAME = "backgrounds";
   var currentFileHandles = 0;
 
@@ -79,13 +88,12 @@ class VramChecker {
     summaryText = StringBuffer();
     startTime = DateTime.timestamp().millisecondsSinceEpoch;
 
-    const csvReader = CsvToListConverter(
-      allowInvalid: true,
-      convertEmptyTo: null,
-    );
-
     progressText.appendAndPrint(
       "GraphicsLib Config: $graphicsLibConfig",
+      debugOut,
+    );
+    progressText.appendAndPrint(
+      "Selector: ${selector.id} (${selector.displayName})",
       debugOut,
     );
 
@@ -103,6 +111,7 @@ class VramChecker {
       modInfo,
     ) async {
       progressText.appendAndPrint("\nFolder: ${modInfo.name}", verboseOut);
+      onModStart(modInfo);
       if (isCancelled()) {
         throw Exception("Cancelled");
       }
@@ -116,24 +125,29 @@ class VramChecker {
         maxImages = 20;
       }
 
-      // Gather all file data for this mod.
-      final filesInMod = modInfo.modFolder
-          .toDirectory()
-          .listSync(recursive: true)
-          .whereType<File>()
-          .take(maxImages ?? intMaxValue)
-          .map((file) {
-            return _FileData(
-              file: file,
-              relativePath: file.relativePath(modInfo.modFolder.toDirectory()),
-            );
-          })
-          .toList();
+      // Enumerate every file in the mod folder once. Selectors consume this
+      // pre-enumerated list so listing only happens per mod, not per selector.
+      // Async listing so the UI thread isn't blocked on large mods.
+      final modFolderDir = modInfo.modFolder.toDirectory();
+      final maxLimit = maxImages ?? intMaxValue;
+      final filesInMod = <VramModFile>[];
+      await for (final entity in modFolderDir.list(recursive: true)) {
+        if (entity is! File) continue;
+        filesInMod.add(
+          VramModFile(
+            file: entity,
+            relativePath: entity.relativePath(modFolderDir),
+          ),
+        );
+        if (filesInMod.length >= maxLimit) break;
+      }
 
-      // Get GraphicsLib settings from CSV files.
-      final List<GraphicsLibInfo> graphicsLibEntries =
-          _getGraphicsLibSettingsForMod(filesInMod, csvReader, progressText) ??
-          [];
+      // Parse the mod's GraphicsLib CSV once per mod; shared with every selector.
+      final graphicsLibEntries = await GraphicsLibReferences.parse(
+        modInfo,
+        filesInMod,
+        onError: (msg) => progressText.appendAndPrint(msg, verboseOut),
+      );
 
       final timeFinishedGettingGraphicsLibData =
           DateTime.timestamp().millisecondsSinceEpoch;
@@ -144,136 +158,94 @@ class VramChecker {
         );
       }
 
-      // Process image files (png, jpg, etc.).
-      final imageRowFutures = filesInMod.where((it) => it.file.isImage).map((
-        file,
-      ) async {
-        if (isCancelled()) {
-          throw Exception("Cancelled");
-        }
-        ImageType imageType;
-        if (file.relativePath.contains(BACKGROUND_FOLDER_NAME)) {
-          imageType = ImageType.background;
-        } else if (UNUSED_INDICATOR.any(
-          (suffix) => file.relativePath.contains(suffix),
-        )) {
-          imageType = ImageType.unused;
-        } else {
-          imageType = ImageType.texture;
-        }
+      // Ask the selector which files to count.
+      final selectorCtx = VramSelectorContext(
+        verboseOut: verboseOut,
+        debugOut: debugOut,
+        isCancelled: isCancelled,
+        showPerformance: showPerformance,
+        graphicsLibEntries: graphicsLibEntries,
+      );
+      final selectedAssets = await selector.select(
+        modInfo,
+        filesInMod,
+        selectorCtx,
+      );
 
-        MapType? graphicsLibType;
+      final timeFinishedSelector = DateTime.timestamp().millisecondsSinceEpoch;
+      if (showPerformance) {
+        final selectorMs =
+            timeFinishedSelector - timeFinishedGettingGraphicsLibData;
+        progressText.appendAndPrint(
+          "Selector '${selector.id}' returned ${selectedAssets.length} assets for ${modInfo.name} in $selectorMs ms",
+          verboseOut,
+        );
+        final refCount = selectedAssets
+            .where((a) => a.provenance == AssetProvenance.referenced)
+            .length;
+        final unrefCount = selectedAssets.length - refCount;
+        Fimber.d(
+          "[VramChecker] selector=${selector.id} mod=${modInfo.modId} "
+          "time=${selectorMs}ms referenced=$refCount unreferenced=$unrefCount "
+          "total=${selectedAssets.length}",
+        );
+      }
 
-        // Hardcode logic that the cache folder of GraphicsLib
-        // always contains normal maps.
-        if (modInfo.modId == Constants.graphicsLibId &&
-            file.file.path.contains("cache")) {
-          graphicsLibType = MapType.Normal;
-        } else {
-          graphicsLibType = graphicsLibEntries
-              .firstWhereOrNull(
-                (it) => it.relativeFilePath == file.relativePath,
-              )
-              ?.mapType;
-        }
+      final referencedFutures = _processAssets(
+        selectedAssets
+            .where((a) => a.provenance == AssetProvenance.referenced)
+            .toList(),
+        imageHeaderReaderPool,
+      );
+      final unreferencedFutures = _processAssets(
+        selectedAssets
+            .where((a) => a.provenance == AssetProvenance.unreferenced)
+            .toList(),
+        imageHeaderReaderPool,
+      );
 
-        try {
-          final image = await _readImageHeaders(file, imageHeaderReaderPool);
-          if (image == null) {
-            throw Exception("Image is null");
-          } else {
-            return {
-              'filePath': file.file.path,
-              'textureHeight': (image.width == 1)
-                  ? 1
-                  : (image.width - 1).highestOneBit() * 2,
-              'textureWidth': (image.height == 1)
-                  ? 1
-                  : (image.height - 1).highestOneBit() * 2,
-              'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
-              'imageType': imageType.name,
-              'graphicsLibType': graphicsLibType?.name,
-            };
-          }
-        } catch (e) {
-          if (showSkippedFiles) {
-            progressText.appendAndPrint(
-              "Skipped non-image ${file.relativePath} ($e)",
-              verboseOut,
-            );
-          }
-          return null;
-        }
-      });
-
-      // Gather non-null image rows.
-      final modImageRows = (await Future.wait(
-        imageRowFutures,
-      )).nonNulls.toList();
+      final results = await Future.wait([
+        Future.wait(referencedFutures),
+        Future.wait(unreferencedFutures),
+      ]);
+      final referencedRows = results[0].nonNulls.toList();
+      final unreferencedRows = results[1].nonNulls.toList();
 
       final timeFinishedGettingFileData =
           DateTime.timestamp().millisecondsSinceEpoch;
       if (showPerformance) {
+        final headerMs = timeFinishedGettingFileData - timeFinishedSelector;
         progressText.appendAndPrint(
-          "Finished getting file data for ${modInfo.formattedName} in ${(timeFinishedGettingFileData - timeFinishedGettingGraphicsLibData)} ms",
+          "Finished getting file data for ${modInfo.formattedName} in $headerMs ms",
           verboseOut,
+        );
+        Fimber.d(
+          "[VramChecker] headerRead mod=${modInfo.modId} "
+          "refRows=${referencedRows.length} unrefRows=${unreferencedRows.length} "
+          "time=${headerMs}ms",
         );
       }
 
-      // Build a columnar table from the row maps.
-      final fullTable = ModImageTable.fromRows(modImageRows);
-      // Create views for each row.
-      List<ModImageView> imageViews = List.generate(
-        fullTable.length,
-        (i) => ModImageView(i, fullTable),
-      );
+      // Build columnar tables and views.
+      final referencedTable = ModImageTable.fromRows(referencedRows);
+      final unreferencedTable = unreferencedRows.isEmpty
+          ? null
+          : ModImageTable.fromRows(unreferencedRows);
 
-      // Filter out unused images.
-      final unusedViews = imageViews
-          .where((view) => view.imageType == ImageType.unused)
-          .toList();
-      if (unusedViews.isNotEmpty && showSkippedFiles) {
-        progressText.appendAndPrint("Skipping unused files", verboseOut);
-        for (var view in unusedViews) {
-          progressText.appendAndPrint(
-            "  ${p.relative(view.file.path, from: modInfo.modFolder)}",
-            verboseOut,
-          );
-        }
-      }
-      imageViews.removeWhere((view) => view.imageType == ImageType.unused);
+      List<ModImageView> referencedViews = List.generate(
+        referencedTable.length,
+        (i) => ModImageView(i, referencedTable),
+      );
 
       // The game only loads one background at a time and vanilla always has one loaded.
       // Therefore, a mod only increases the VRAM use by the size difference of the largest background over vanilla.
-      final backgroundViews = imageViews
-          .where((view) => view.imageType == ImageType.background)
-          .toList();
-      final largestBackground = backgroundViews
-          .where((view) => view.textureWidth > VANILLA_BACKGROUND_WIDTH)
-          .maxByOrNull<num>((view) => view.bytesUsed);
-      final modBackgroundsSmallerThanLargestVanilla = backgroundViews
-          .where(
-            (view) => largestBackground != null && view != largestBackground,
-          )
-          .toList();
-      if (modBackgroundsSmallerThanLargestVanilla.isNotEmpty) {
-        progressText.appendAndPrint(
-          "Skipping backgrounds that are not larger than vanilla and/or not the mod's largest background.",
-          verboseOut,
-        );
-        for (var view in modBackgroundsSmallerThanLargestVanilla) {
-          progressText.appendAndPrint(
-            "   ${p.relative(view.file.path, from: modInfo.modFolder)}",
-            verboseOut,
-          );
-        }
-      }
-      imageViews.removeWhere(
-        (view) => modBackgroundsSmallerThanLargestVanilla.contains(view),
+      referencedViews = _filterBackgroundsAgainstVanilla(
+        referencedViews,
+        modInfo.modFolder,
       );
 
-      // Optionally log each image’s details.
-      for (var view in imageViews) {
+      // Optionally log each image's details.
+      for (var view in referencedViews) {
         if (showCountedFiles) {
           progressText.appendAndPrint(
             "${p.relative(view.file.path, from: modInfo.modFolder)} - TexHeight: ${view.textureHeight}, TexWidth: ${view.textureWidth}, ChannelBits: ${view.bitsInAllChannelsSum}, Mult: ${view.multiplier}\n   --> ${view.textureHeight} * ${view.textureWidth} * ${view.bitsInAllChannelsSum} * ${view.multiplier} = ${view.bytesUsed} bytes added over vanilla",
@@ -282,31 +254,36 @@ class VramChecker {
         }
       }
 
-      // Reassemble the final table from the remaining image views.
-      final filteredRows = imageViews
-          .map(
-            (view) => {
-              'filePath': view.filePath,
-              'textureHeight': view.textureHeight,
-              'textureWidth': view.textureWidth,
-              'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
-              'imageType': view.imageType.name,
-              'graphicsLibType': view.graphicsLibType?.name,
-            },
-          )
-          .toList();
-      final finalTable = ModImageTable.fromRows(filteredRows);
+      final filteredReferencedTable = ModImageTable.fromRows(
+        referencedViews
+            .map(
+              (view) => {
+                'filePath': view.filePath,
+                'textureHeight': view.textureHeight,
+                'textureWidth': view.textureWidth,
+                'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
+                'imageType': view.imageType.name,
+                'graphicsLibType': view.graphicsLibType?.name,
+                if (view.referencedBy != null &&
+                    view.referencedBy!.isNotEmpty)
+                  'referencedBy': view.referencedBy,
+              },
+            )
+            .toList(),
+      );
 
       final mod = VramMod(
         modInfo,
         (enabledModIds ?? []).contains(modInfo.modId),
-        finalTable,
+        filteredReferencedTable,
         graphicsLibEntries,
+        unreferencedImages: unreferencedTable,
+        scannedAt: DateTime.now(),
       );
 
       if (showPerformance) {
         progressText.appendAndPrint(
-          "Finished calculating ${finalTable.length} file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
+          "Finished calculating ${filteredReferencedTable.length} file sizes for ${mod.info.formattedName} in ${(DateTime.timestamp().millisecondsSinceEpoch - timeFinishedGettingFileData)} ms",
           verboseOut,
         );
       }
@@ -315,6 +292,8 @@ class VramChecker {
         verboseOut,
       );
       modProgressOut(mod);
+      // Yield between mods so the UI thread gets a frame.
+      await Future<void>.microtask(() {});
       return mod;
     }).toList()).sortedByDescending<num>((it) => it.bytesNotIncludingGraphicsLib()).toList();
 
@@ -331,9 +310,11 @@ class VramChecker {
     final totalBytesOfEnabledMods = enabledMods.getBytesUsedByDedupedImages();
 
     if (showPerformance) {
-      progressText.appendAndPrint(
-        "Finished run in ${(DateTime.timestamp().millisecondsSinceEpoch - startTime)} ms",
-        verboseOut,
+      final totalMs = DateTime.timestamp().millisecondsSinceEpoch - startTime;
+      progressText.appendAndPrint("Finished run in $totalMs ms", verboseOut);
+      Fimber.d(
+        "[VramChecker] runComplete selector=${selector.id} "
+        "mods=${mods.length} time=${totalMs}ms",
       );
     }
 
@@ -420,17 +401,7 @@ class VramChecker {
     summaryText.writeln(
       "** This is only an estimate of VRAM use and actual use may be higher or lower.",
     );
-    summaryText.writeln(
-      "** Unused images in mods are counted unless they contain one of ${UNUSED_INDICATOR.joinToString(transform: (it) => "\"$it\"")} in the file name.",
-    );
-
-    // var currentFolder = currentDirectory.path;
-    // var outputFile = File("$currentFolder/VRAM_usage_of_mods.txt");
-    // outputFile.writeAsStringSync("$progressText\n$modTotals\n$summaryText",
-    //     flush: true);
-    //
-    // summaryText.writeln(
-    //     "\nFile written to ${outputFile.absolute.path}.\nSummary copied to clipboard, ready to paste.");
+    summaryText.writeln("** Selector: ${selector.id}. ${selector.description}");
 
     verboseOut(modTotals.toString());
     debugOut(summaryText.toString());
@@ -438,76 +409,82 @@ class VramChecker {
     return mods;
   }
 
-  Future<ImageHeader?> _readImageHeaders(
-    _FileData file,
+  Iterable<Future<Map<String, dynamic>?>> _processAssets(
+    Iterable<SelectedAsset> assets,
     ReadImageHeaders imageHeaderReaderPool,
-  ) async {
-    return await imageHeaderReaderPool.readImageDeterminingBest(file.file.path);
+  ) {
+    return assets.map((asset) async {
+      if (isCancelled()) {
+        throw Exception("Cancelled");
+      }
+      final file = asset.file;
+      final imageType = file.relativePath.contains(BACKGROUND_FOLDER_NAME)
+          ? ImageType.background
+          : ImageType.texture;
+
+      try {
+        final image = await imageHeaderReaderPool.readImageDeterminingBest(
+          file.file.path,
+        );
+        if (image == null) {
+          throw Exception("Image is null");
+        }
+        return {
+          'filePath': file.file.path,
+          'textureHeight': (image.width == 1)
+              ? 1
+              : (image.width - 1).highestOneBit() * 2,
+          'textureWidth': (image.height == 1)
+              ? 1
+              : (image.height - 1).highestOneBit() * 2,
+          'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
+          'imageType': imageType.name,
+          'graphicsLibType': asset.graphicsLibType?.name,
+          if (asset.referencedBy != null && asset.referencedBy!.isNotEmpty)
+            'referencedBy': asset.referencedBy,
+        };
+      } catch (e) {
+        if (showSkippedFiles) {
+          progressText.appendAndPrint(
+            "Skipped non-image ${file.relativePath} ($e)",
+            verboseOut,
+          );
+        }
+        return null;
+      }
+    });
   }
 
-  // Update helper functions to return a row-map instead of a ModImage
-
-  List<GraphicsLibInfo>? _getGraphicsLibSettingsForMod(
-    List<_FileData> filesInMod,
-    CsvToListConverter csvReader,
-    StringBuffer progressText,
+  /// Backgrounds at or below vanilla size contribute nothing; among oversized
+  /// backgrounds only the largest counts. Mirrors the previous behavior
+  /// exactly — applied to referenced assets only.
+  List<ModImageView> _filterBackgroundsAgainstVanilla(
+    List<ModImageView> views,
+    String modFolder,
   ) {
-    final modGraphicsLibSettingsFile = filesInMod
-        .filter((it) => it.file.nameWithExtension.endsWith(".csv"))
-        .map((file) {
-          try {
-            return csvReader.convert(
-              file.file.readAsStringSync().replaceAll("\r\n", "\n"),
-              eol: "\n",
-            );
-          } catch (e) {
-            progressText.appendAndPrint(
-              "Unable to read ${file.file.path}: $e",
-              verboseOut,
-            );
-          }
-
-          return [null];
-        })
-        .nonNulls
-        .filter((csvRows) => csvRows.isNotEmpty)
-        .firstWhereOrNull(
-          (csvRows) =>
-              csvRows.first?.containsAll(["id", "type", "map", "path"]) == true,
-        );
-
-    if (modGraphicsLibSettingsFile == null) {
-      return null;
-    }
-
-    final idColumn = modGraphicsLibSettingsFile.first!.indexOf("id");
-    final mapColumn = modGraphicsLibSettingsFile.first!.indexOf("map");
-    final pathColumn = modGraphicsLibSettingsFile.first!.indexOf("path");
-
-    return modGraphicsLibSettingsFile
-        .map((List<dynamic>? row) {
-          try {
-            final mapType = switch (row![mapColumn]) {
-              "normal" => MapType.Normal,
-              "material" => MapType.Material,
-              "surface" => MapType.Surface,
-              _ => null,
-            };
-
-            if (mapType == null) {
-              return null;
-            }
-
-            final path = row[pathColumn].trim();
-            return GraphicsLibInfo(row[idColumn], mapType, p.normalize(path));
-          } catch (e) {
-            progressText.appendAndPrint("$row - $e", verboseOut);
-          }
-
-          return null;
-        })
-        .nonNulls
+    final backgrounds = views
+        .where((view) => view.imageType == ImageType.background)
         .toList();
+    final largestBackground = backgrounds
+        .where((view) => view.textureWidth > VANILLA_BACKGROUND_WIDTH)
+        .maxByOrNull<num>((view) => view.bytesUsed);
+    final backgroundsToDrop = {
+      for (final view in backgrounds)
+        if (largestBackground != null && view != largestBackground) view,
+    };
+    if (backgroundsToDrop.isNotEmpty) {
+      progressText.appendAndPrint(
+        "Skipping backgrounds that are not larger than vanilla and/or not the mod's largest background.",
+        verboseOut,
+      );
+      for (var view in backgroundsToDrop) {
+        progressText.appendAndPrint(
+          "   ${p.relative(view.file.path, from: modFolder)}",
+          verboseOut,
+        );
+      }
+    }
+    return views.where((v) => !backgroundsToDrop.contains(v)).toList();
   }
 
   Future<T> withFileHandleLimit<T>(Future<T> Function() function) async {
@@ -528,7 +505,9 @@ class VramChecker {
 
 extension ModListExt on Iterable<VramMod> {
   int getBytesUsedByDedupedImages() {
-    // Use a set keyed by (modFolder, filePath)
+    // Use a set keyed by (modFolder, filePath). Only sums the referenced
+    // bucket; [VramMod.unreferencedImages] is advisory and never included
+    // in aggregate totals.
     final seen = <Tuple2<String, String>>{};
     int sum = 0;
     for (var mod in this) {
@@ -544,22 +523,4 @@ extension ModListExt on Iterable<VramMod> {
     }
     return sum;
   }
-}
-
-extension _FileExtensions on File {
-  bool get isImage {
-    final ext = p.extension(path).toLowerCase();
-    return ext.endsWith(".png") ||
-        ext.endsWith(".jpg") ||
-        ext.endsWith(".jpeg") ||
-        ext.endsWith(".gif") ||
-        ext.endsWith(".webp");
-  }
-}
-
-class _FileData {
-  final File file;
-  final String relativePath;
-
-  _FileData({required this.file, required this.relativePath});
 }

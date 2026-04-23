@@ -349,6 +349,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       ModUpdateBehaviorMapper.ensureInitialized();
       DashboardModListSortMapper.ensureInitialized();
       CompressionLibMapper.ensureInitialized();
+      ReferencedAssetsSelectorConfigMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -870,6 +871,24 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static String _$vramEstimatorSelectorId(Settings v) =>
+      v.vramEstimatorSelectorId;
+  static const Field<Settings, String> _f$vramEstimatorSelectorId = Field(
+    'vramEstimatorSelectorId',
+    _$vramEstimatorSelectorId,
+    opt: true,
+    def: 'folder-scan',
+  );
+  static ReferencedAssetsSelectorConfig _$referencedAssetsSelectorConfig(
+    Settings v,
+  ) => v.referencedAssetsSelectorConfig;
+  static const Field<Settings, ReferencedAssetsSelectorConfig>
+  _f$referencedAssetsSelectorConfig = Field(
+    'referencedAssetsSelectorConfig',
+    _$referencedAssetsSelectorConfig,
+    opt: true,
+    def: ReferencedAssetsSelectorConfig.allEnabled,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -943,6 +962,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #showAprilFools2026: _f$showAprilFools2026,
     #forceShowAprilFools2026: _f$forceShowAprilFools2026,
     #debugMode: _f$debugMode,
+    #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
+    #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
   };
   @override
   final bool ignoreNull = true;
@@ -1028,6 +1049,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       showAprilFools2026: data.dec(_f$showAprilFools2026),
       forceShowAprilFools2026: data.dec(_f$forceShowAprilFools2026),
       debugMode: data.dec(_f$debugMode),
+      vramEstimatorSelectorId: data.dec(_f$vramEstimatorSelectorId),
+      referencedAssetsSelectorConfig: data.dec(
+        _f$referencedAssetsSelectorConfig,
+      ),
     );
   }
 
@@ -1126,6 +1151,12 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     PersistedFilterGroupCopyWith<$R, PersistedFilterGroup, PersistedFilterGroup>
   >
   get persistedFilterGroups;
+  ReferencedAssetsSelectorConfigCopyWith<
+    $R,
+    ReferencedAssetsSelectorConfig,
+    ReferencedAssetsSelectorConfig
+  >
+  get referencedAssetsSelectorConfig;
   $R call({
     Directory? gameDir,
     Directory? gameCoreDir,
@@ -1196,6 +1227,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showAprilFools2026,
     bool? forceShowAprilFools2026,
     bool? debugMode,
+    String? vramEstimatorSelectorId,
+    ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1282,6 +1315,16 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(persistedFilterGroups: v),
   );
   @override
+  ReferencedAssetsSelectorConfigCopyWith<
+    $R,
+    ReferencedAssetsSelectorConfig,
+    ReferencedAssetsSelectorConfig
+  >
+  get referencedAssetsSelectorConfig => $value
+      .referencedAssetsSelectorConfig
+      .copyWith
+      .$chain((v) => call(referencedAssetsSelectorConfig: v));
+  @override
   $R call({
     Object? gameDir = $none,
     Object? gameCoreDir = $none,
@@ -1352,6 +1395,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? showAprilFools2026 = $none,
     Object? forceShowAprilFools2026 = $none,
     bool? debugMode,
+    String? vramEstimatorSelectorId,
+    ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1454,6 +1499,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (forceShowAprilFools2026 != $none)
         #forceShowAprilFools2026: forceShowAprilFools2026,
       if (debugMode != null) #debugMode: debugMode,
+      if (vramEstimatorSelectorId != null)
+        #vramEstimatorSelectorId: vramEstimatorSelectorId,
+      if (referencedAssetsSelectorConfig != null)
+        #referencedAssetsSelectorConfig: referencedAssetsSelectorConfig,
     }),
   );
   @override
@@ -1662,6 +1711,14 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.forceShowAprilFools2026,
     ),
     debugMode: data.get(#debugMode, or: $value.debugMode),
+    vramEstimatorSelectorId: data.get(
+      #vramEstimatorSelectorId,
+      or: $value.vramEstimatorSelectorId,
+    ),
+    referencedAssetsSelectorConfig: data.get(
+      #referencedAssetsSelectorConfig,
+      or: $value.referencedAssetsSelectorConfig,
+    ),
   );
 
   @override

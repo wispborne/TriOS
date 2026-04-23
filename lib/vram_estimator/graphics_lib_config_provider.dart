@@ -64,8 +64,8 @@ GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref ref) {
     if (lunalibGraphicsLibConfigFile != null &&
         lunalibGraphicsLibConfigFile.existsSync()) {
       try {
-        final config = GraphicsLibLunaConfigMapper.fromJson(
-          lunalibGraphicsLibConfigFile.readAsStringSync().fixJson(),
+        final config = GraphicsLibLunaConfigMapper.fromMap(
+          lunalibGraphicsLibConfigFile.readAsStringSync().parseJsonToMap(),
         );
         Fimber.d("Lunalib config for GraphicsLib: $config");
 
@@ -84,8 +84,8 @@ GraphicsLibConfig? _buildNewState(List<Mod> mods, Ref ref) {
     }
 
     try {
-      graphicsLibConfig = GraphicsLibConfigMapper.fromJson(
-        configFile.readAsStringSync().fixJson(),
+      graphicsLibConfig = GraphicsLibConfigMapper.fromMap(
+        configFile.readAsStringSync().parseJsonToMap(),
       );
       Fimber.d("GraphicsLib config: $graphicsLibConfig");
     } catch (e) {

@@ -37,14 +37,36 @@ class VramEstimatorManagerStateMapper
   static const Field<VramEstimatorManagerState, bool> _f$isScanning = Field(
     'isScanning',
     _$isScanning,
-    mode: FieldMode.member,
+    opt: true,
+    def: false,
   );
   static bool _$isCancelled(VramEstimatorManagerState v) => v.isCancelled;
   static const Field<VramEstimatorManagerState, bool> _f$isCancelled = Field(
     'isCancelled',
     _$isCancelled,
-    mode: FieldMode.member,
+    opt: true,
+    def: false,
   );
+  static String? _$currentlyScanningModName(VramEstimatorManagerState v) =>
+      v.currentlyScanningModName;
+  static const Field<VramEstimatorManagerState, String>
+  _f$currentlyScanningModName = Field(
+    'currentlyScanningModName',
+    _$currentlyScanningModName,
+    opt: true,
+  );
+  static int _$totalModsToScan(VramEstimatorManagerState v) =>
+      v.totalModsToScan;
+  static const Field<VramEstimatorManagerState, int> _f$totalModsToScan = Field(
+    'totalModsToScan',
+    _$totalModsToScan,
+    opt: true,
+    def: 0,
+  );
+  static int _$modsScannedThisRun(VramEstimatorManagerState v) =>
+      v.modsScannedThisRun;
+  static const Field<VramEstimatorManagerState, int> _f$modsScannedThisRun =
+      Field('modsScannedThisRun', _$modsScannedThisRun, opt: true, def: 0);
 
   @override
   final MappableFields<VramEstimatorManagerState> fields = const {
@@ -52,12 +74,20 @@ class VramEstimatorManagerStateMapper
     #lastUpdated: _f$lastUpdated,
     #isScanning: _f$isScanning,
     #isCancelled: _f$isCancelled,
+    #currentlyScanningModName: _f$currentlyScanningModName,
+    #totalModsToScan: _f$totalModsToScan,
+    #modsScannedThisRun: _f$modsScannedThisRun,
   };
 
   static VramEstimatorManagerState _instantiate(DecodingData data) {
     return VramEstimatorManagerState(
       modVramInfo: data.dec(_f$modVramInfo),
       lastUpdated: data.dec(_f$lastUpdated),
+      isScanning: data.dec(_f$isScanning),
+      isCancelled: data.dec(_f$isCancelled),
+      currentlyScanningModName: data.dec(_f$currentlyScanningModName),
+      totalModsToScan: data.dec(_f$totalModsToScan),
+      modsScannedThisRun: data.dec(_f$modsScannedThisRun),
     );
   }
 
@@ -137,7 +167,15 @@ abstract class VramEstimatorManagerStateCopyWith<
     implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
   get modVramInfo;
-  $R call({Map<String, VramMod>? modVramInfo, DateTime? lastUpdated});
+  $R call({
+    Map<String, VramMod>? modVramInfo,
+    DateTime? lastUpdated,
+    bool? isScanning,
+    bool? isCancelled,
+    String? currentlyScanningModName,
+    int? totalModsToScan,
+    int? modsScannedThisRun,
+  });
   VramEstimatorManagerStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -160,18 +198,42 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
     (v) => call(modVramInfo: v),
   );
   @override
-  $R call({Map<String, VramMod>? modVramInfo, Object? lastUpdated = $none}) =>
-      $apply(
-        FieldCopyWithData({
-          if (modVramInfo != null) #modVramInfo: modVramInfo,
-          if (lastUpdated != $none) #lastUpdated: lastUpdated,
-        }),
-      );
+  $R call({
+    Map<String, VramMod>? modVramInfo,
+    Object? lastUpdated = $none,
+    bool? isScanning,
+    bool? isCancelled,
+    Object? currentlyScanningModName = $none,
+    int? totalModsToScan,
+    int? modsScannedThisRun,
+  }) => $apply(
+    FieldCopyWithData({
+      if (modVramInfo != null) #modVramInfo: modVramInfo,
+      if (lastUpdated != $none) #lastUpdated: lastUpdated,
+      if (isScanning != null) #isScanning: isScanning,
+      if (isCancelled != null) #isCancelled: isCancelled,
+      if (currentlyScanningModName != $none)
+        #currentlyScanningModName: currentlyScanningModName,
+      if (totalModsToScan != null) #totalModsToScan: totalModsToScan,
+      if (modsScannedThisRun != null) #modsScannedThisRun: modsScannedThisRun,
+    }),
+  );
   @override
   VramEstimatorManagerState $make(CopyWithData data) =>
       VramEstimatorManagerState(
         modVramInfo: data.get(#modVramInfo, or: $value.modVramInfo),
         lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated),
+        isScanning: data.get(#isScanning, or: $value.isScanning),
+        isCancelled: data.get(#isCancelled, or: $value.isCancelled),
+        currentlyScanningModName: data.get(
+          #currentlyScanningModName,
+          or: $value.currentlyScanningModName,
+        ),
+        totalModsToScan: data.get(#totalModsToScan, or: $value.totalModsToScan),
+        modsScannedThisRun: data.get(
+          #modsScannedThisRun,
+          or: $value.modsScannedThisRun,
+        ),
       );
 
   @override

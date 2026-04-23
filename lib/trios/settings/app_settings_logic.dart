@@ -14,6 +14,7 @@ import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/map_diff.dart';
 import 'package:trios/utils/util.dart';
+import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
 import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.dart';
 
 /// Settings State Provider
@@ -208,7 +209,9 @@ class SettingsFileManager {
               jsonDecode(contents) as Map<String, dynamic>;
           Fimber.i("$_fileName successfully loaded from disk.");
           final loaded = SettingsMapper.fromMap(map);
-          return _dropStalePersistedFilterGroups(loaded);
+          return _upgradeReferencedAssetsSelectorConfig(
+            _dropStalePersistedFilterGroups(loaded),
+          );
         } catch (e, stackTrace) {
           Fimber.e(
             "Error reading from disk, creating backup: $e",
@@ -265,6 +268,28 @@ Settings _dropStalePersistedFilterGroups(Settings settings) {
   }
   if (dropped == 0) return settings;
   return settings.copyWith(persistedFilterGroups: kept);
+}
+
+/// Unions any newly-registered reference parser ids into the user's
+/// persisted set so parsers added after their config was written become
+/// active on next launch. Ids the user explicitly disabled stay missing
+/// only if they aren't in the current default set — once a parser ships
+/// as default, it's treated as "on unless the user turns it off again
+/// post-upgrade", which matches the debug panel's opt-out mental model.
+Settings _upgradeReferencedAssetsSelectorConfig(Settings settings) {
+  final persisted = settings.referencedAssetsSelectorConfig;
+  final defaults = ReferencedAssetsSelectorConfig.allEnabled.enabledParserIds;
+  final missing = defaults.difference(persisted.enabledParserIds);
+  if (missing.isEmpty) return settings;
+  Fimber.i(
+    "Adding ${missing.length} newly-registered reference parser id(s) "
+    "to persisted config: $missing",
+  );
+  return settings.copyWith(
+    referencedAssetsSelectorConfig: persisted.copyWith(
+      enabledParserIds: {...persisted.enabledParserIds, ...missing},
+    ),
+  );
 }
 
 /// Mutex, but synchronous.

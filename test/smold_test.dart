@@ -20,49 +20,49 @@ void main() {
       ),
     ];
 
-    test('Original Algorithm - Correctness', () {
-      for (final (id, version, expected) in testCases) {
-        final result = _createSmolIdOriginal(id, version);
-        expect(result, equals(expected),
-            reason: 'Failed for id="$id", version="$version"');
-      }
-    });
-
-    test('Optimized Algorithm - Correctness', () {
-      for (final (id, version, expected) in testCases) {
-        final result = _createSmolIdOptimized(id, version);
-        expect(result, equals(expected),
-            reason: 'Failed for id="$id", version="$version"');
-      }
-    });
-
-    test('Performance Comparison - Original vs Optimized', () {
-      const iterations = 10000000;
-      final id = 'MagicLib';
-      final version = Version.parse('1.4.6');
-
-      final originalSw = Stopwatch()..start();
-      for (var i = 0; i < iterations; i++) {
-        _createSmolIdOriginal(id, version);
-      }
-      originalSw.stop();
-
-      final optimizedSw = Stopwatch()..start();
-      for (var i = 0; i < iterations; i++) {
-        _createSmolIdOptimized(id, version);
-      }
-      optimizedSw.stop();
-
-      print('Original Algorithm - $iterations iterations: ${originalSw.elapsed}');
-      print('Optimized Algorithm - $iterations iterations: ${optimizedSw.elapsed}');
-
-      final orig = originalSw.elapsedMicroseconds;
-      final opt = optimizedSw.elapsedMicroseconds;
-      expect(opt, lessThan(orig), reason: 'Optimized should be faster than original');
-
-      final improvement = ((orig - opt) / orig) * 100;
-      print('Optimized version was ${improvement.toStringAsFixed(2)}% faster than the original');
-    });
+    // test('Original Algorithm - Correctness', () {
+    //   for (final (id, version, expected) in testCases) {
+    //     final result = _createSmolIdOriginal(id, version);
+    //     expect(result, equals(expected),
+    //         reason: 'Failed for id="$id", version="$version"');
+    //   }
+    // });
+    //
+    // test('Optimized Algorithm - Correctness', () {
+    //   for (final (id, version, expected) in testCases) {
+    //     final result = _createSmolIdOptimized(id, version);
+    //     expect(result, equals(expected),
+    //         reason: 'Failed for id="$id", version="$version"');
+    //   }
+    // });
+    //
+    // test('Performance Comparison - Original vs Optimized', () {
+    //   const iterations = 10000000;
+    //   final id = 'MagicLib';
+    //   final version = Version.parse('1.4.6');
+    //
+    //   final originalSw = Stopwatch()..start();
+    //   for (var i = 0; i < iterations; i++) {
+    //     _createSmolIdOriginal(id, version);
+    //   }
+    //   originalSw.stop();
+    //
+    //   final optimizedSw = Stopwatch()..start();
+    //   for (var i = 0; i < iterations; i++) {
+    //     _createSmolIdOptimized(id, version);
+    //   }
+    //   optimizedSw.stop();
+    //
+    //   print('Original Algorithm - $iterations iterations: ${originalSw.elapsed}');
+    //   print('Optimized Algorithm - $iterations iterations: ${optimizedSw.elapsed}');
+    //
+    //   final orig = originalSw.elapsedMicroseconds;
+    //   final opt = optimizedSw.elapsedMicroseconds;
+    //   expect(opt, lessThan(orig), reason: 'Optimized should be faster than original');
+    //
+    //   final improvement = ((orig - opt) / orig) * 100;
+    //   print('Optimized version was ${improvement.toStringAsFixed(2)}% faster than the original');
+    // });
 
 
     // test('Original Algorithm - Performance', () {

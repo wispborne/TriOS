@@ -1,8 +1,46 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
+import 'package:trios/toolbar/nav_order_entry.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 part 'navigation.mapper.dart';
+
+/// The default order of reorderable nav items, used on fresh installs and
+/// after "Reset to default order". Matches the existing sidebar layout.
+///
+/// Only the 11 entries below — plus the single divider — are reorderable.
+/// Settings, action buttons, launcher, rules.csv, and the layout toggle are
+/// pinned and are NOT included here.
+const List<NavOrderEntry> defaultNavOrder = [
+  NavToolEntry(TriOSTools.dashboard),
+  NavToolEntry(TriOSTools.modManager),
+  NavToolEntry(TriOSTools.modProfiles),
+  NavToolEntry(TriOSTools.catalog),
+  NavToolEntry(TriOSTools.chipper),
+  NavDividerEntry(),
+  NavToolEntry(TriOSTools.ships),
+  NavToolEntry(TriOSTools.weapons),
+  NavToolEntry(TriOSTools.hullmods),
+  NavToolEntry(TriOSTools.portraits),
+  NavToolEntry(TriOSTools.vramEstimator),
+  NavToolEntry(TriOSTools.tips),
+];
+
+/// The set of tools that participate in reordering. `Settings` is pinned and
+/// intentionally excluded.
+const Set<TriOSTools> reorderableTools = {
+  TriOSTools.dashboard,
+  TriOSTools.modManager,
+  TriOSTools.modProfiles,
+  TriOSTools.catalog,
+  TriOSTools.chipper,
+  TriOSTools.ships,
+  TriOSTools.weapons,
+  TriOSTools.hullmods,
+  TriOSTools.portraits,
+  TriOSTools.vramEstimator,
+  TriOSTools.tips,
+};
 
 @MappableEnum(defaultValue: TriOSTools.dashboard)
 enum TriOSTools {

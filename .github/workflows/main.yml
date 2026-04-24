@@ -12,7 +12,26 @@ env:
 
 jobs:
 
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          architecture: x64
+          cache: true
+
+      - run: flutter --version
+
+      - run: flutter pub get
+
+      - name: Run tests
+        run: flutter test --exclude-tags local-only --reporter expanded
+
   build-windows:
+    needs: test
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -76,6 +95,7 @@ jobs:
           path: TriOS-Windows.zip
 
   build-macos-intel:
+    needs: test
     runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
@@ -122,6 +142,7 @@ jobs:
           path: TriOS-MacOS-Intel.zip
 
   build-macos-arm:
+    needs: test
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -168,6 +189,7 @@ jobs:
           path: TriOS-MacOS-AppleSilicon.zip
 
   build-linux:
+    needs: test
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4

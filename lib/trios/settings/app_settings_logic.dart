@@ -86,6 +86,7 @@ class AppSettingNotifier extends Notifier<Settings> {
 
   /// Updates [Settings] in memory by applying [mutator], optionally handling errors,
   /// and triggers a debounced disk write if changes occur.
+  /// Checks for equality and only writes if settings have changed.
   Future<Settings> update(
     Settings Function(Settings currentState) mutator, {
     Settings Function(Object, StackTrace)? onError,

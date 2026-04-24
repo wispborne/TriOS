@@ -1,11 +1,14 @@
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/catalog/models/catalog_card_click_action.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
+import 'package:trios/toolbar/nav_order_entry.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
@@ -63,6 +66,13 @@ class Settings with SettingsMappable {
   final TriOSTools defaultTool;
   final bool isSidebarCollapsed;
   final bool useTopToolbar;
+
+  /// User-customized ordering of the 11 reorderable nav icons plus the
+  /// section divider. Nullable: null means "use [defaultNavOrder]".
+  /// The `NavOrderController` handles reconciliation (missing/unknown/duplicate
+  /// entries) on load.
+  @MappableField(hook: SafeDecodeHook())
+  final List<NavOrderEntry>? navIconOrder;
 
   /// Relative paths from game dir to files the user has selected as vmparams files.
   final List<String> vmparamsFilePaths;
@@ -126,6 +136,15 @@ class Settings with SettingsMappable {
 
   final bool? hasHiddenForumDarkModeTip;
 
+  // Catalog page — collapsible browser panel and card-click action
+  final bool catalogBrowserPanelOpen;
+  final double? catalogBrowserPanelWidth;
+  final CatalogCardClickAction catalogCardClickAction;
+  final double catalogMinItemWidth;
+  final double catalogCardSpacing;
+  @MappableField(hook: SafeDecodeHook())
+  final CatalogPageStatePersisted? catalogPageState;
+
   // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
   // in a different shared_prefs key.
   final String? activeModProfileId;
@@ -160,6 +179,7 @@ class Settings with SettingsMappable {
     this.defaultTool = TriOSTools.dashboard,
     this.isSidebarCollapsed = true,
     this.useTopToolbar = true,
+    this.navIconOrder,
     this.vmparamsFilePaths = const [],
     this.themeKey,
     this.showChangelogNextLaunch,
@@ -223,6 +243,12 @@ class Settings with SettingsMappable {
     this.windowScaleFactor = 1.0,
     this.enableAccessibilitySemanticsOnLinux = false,
     this.hasHiddenForumDarkModeTip,
+    this.catalogBrowserPanelOpen = false,
+    this.catalogBrowserPanelWidth,
+    this.catalogCardClickAction = CatalogCardClickAction.forumDialog,
+    this.catalogMinItemWidth = 390,
+    this.catalogCardSpacing = 4,
+    this.catalogPageState,
     this.activeModProfileId,
     this.showForceUpdateWarning = true,
     this.showDonationButton = true,

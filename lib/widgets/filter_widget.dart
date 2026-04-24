@@ -46,9 +46,10 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
   @override
   void didUpdateWidget(GridFilterWidget<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.items != widget.items) {
-      _updateUniqueValues();
-    }
+    // Always recompute: `valuesGetter` may depend on external state (e.g.
+    // Catalog's Attributes group reads the controller's status map, which
+    // populates after modRecords load without changing `items`' identity).
+    _updateUniqueValues();
   }
 
   void _updateUniqueValues() {
@@ -311,8 +312,8 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
                             chipColor = null;
                             leadingIcon = null;
                             side = BorderSide(
-                              color: theme.colorScheme.outline.withOpacity(
-                                0.25,
+                              color: theme.colorScheme.outline.withValues(
+                                alpha: 0.25,
                               ),
                             );
                             break;

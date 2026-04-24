@@ -21,7 +21,7 @@ class FolderScanSelector extends VramAssetSelector {
   String get id => 'folder-scan';
 
   @override
-  String get displayName => 'Fast';
+  String get displayName => 'Fast Scan';
 
   @override
   String get description =>

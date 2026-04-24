@@ -142,13 +142,28 @@ class _CompositeCard<T> extends StatelessWidget {
           mainAxisSize: .min,
           crossAxisAlignment: .start,
           children: [
-            Align(
-              alignment: .topLeft,
-              child: FilterGridPersistButton(
-                scope: scope,
-                filterGroupId: group.id,
-                currentSelections: () => group.serialize(),
-              ),
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
+                  child: Text(
+                    group.name,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                FilterGridPersistButton(
+                  scope: scope,
+                  filterGroupId: group.id,
+                  currentSelections: () => group.serialize(),
+                ),
+              ],
             ),
             for (final f in group.fields)
               Padding(
@@ -179,6 +194,34 @@ class _CompositeCard<T> extends StatelessWidget {
         return MovingTooltipWidget.text(message: field.tooltip!, child: tile);
       }
       return tile;
+    }
+    if (field is StringChoiceField<T>) {
+      final entries = <DropdownMenuEntry<String?>>[
+        DropdownMenuEntry<String?>(
+          value: null,
+          label: field.labelFor(null),
+        ),
+        for (final opt in field.options)
+          DropdownMenuEntry<String?>(value: opt, label: field.labelFor(opt)),
+      ];
+      final dropdown = TriOSDropdownMenu<String?>(
+        initialSelection: field.selected,
+        onSelected: (v) {
+          field.setSelected(v);
+          onChanged();
+        },
+        highlightOutlineColor: field.isActive
+            ? theme.colorScheme.primary
+            : null,
+        dropdownMenuEntries: entries,
+      );
+      if (field.tooltip != null) {
+        return MovingTooltipWidget.text(
+          message: field.tooltip!,
+          child: dropdown,
+        );
+      }
+      return dropdown;
     }
     if (field is EnumField<T, dynamic>) {
       final entries = <DropdownMenuEntry<Object>>[];

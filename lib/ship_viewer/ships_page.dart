@@ -183,9 +183,12 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     List<Ship> shipsBeforeFilter,
   ) {
     if (!controllerState.showFilters) {
-      return CollapsedFilterButton(
-        onTap: controller.toggleShowFilters,
-        activeFilterCount: controller.activeFilterCount,
+      return Padding(
+        padding: const EdgeInsets.only(left: 8, top: 4),
+        child: CollapsedFilterButton(
+          onTap: controller.toggleShowFilters,
+          activeFilterCount: controller.activeFilterCount,
+        ),
       );
     }
 

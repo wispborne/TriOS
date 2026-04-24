@@ -1,9 +1,12 @@
 # 1.5.0
 - Added
+  - Navigation icons can now be rearranged. Right-click the sidebar or top bar to enter "Rearrange icons" mode, drag to reorder, then click Done (or press Esc). Icons can flow freely across the two sections, the section divider itself is draggable, and the order is shared between sidebar and top-bar layouts. A "Reset to default order" option is also in the context menu.
   - Mod Catalog: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
     - Catalog cards now show installation status, available updates, and game version requirements.
+    - UI refresh.
   - VRAM Estimator: new intelligent mode that tries to only include images that are actually used.
     - Also added more detailed per-image breakdown on the VRAM estimator page.
+  - Toolbar icons can now be rearranged. Mostly.
   - Ship/Weapon/Hullmod Filters may now be remembered across app restarts (click save icon).
   - Ships/Weapons Viewers: Added descriptions to the new tooltips.
   - Ships Viewer: filter by stations.

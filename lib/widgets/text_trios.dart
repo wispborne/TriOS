@@ -8,20 +8,24 @@ import 'package:trios/widgets/moving_tooltip.dart';
 /// dimensions so it can be used inside [Row], [Column], etc.
 class TextTriOS extends StatefulWidget {
   final String text;
+  final TextStyle? tooltipTextStyle;
   final TextStyle? style;
   final TextAlign? textAlign;
   final int? maxLines;
   final TextOverflow overflow;
   final TooltipWarningLevel warningLevel;
+  final double? tooltipMaxWidth;
 
   const TextTriOS(
     this.text, {
     super.key,
+    this.tooltipTextStyle,
     this.style,
     this.textAlign,
     this.maxLines,
     this.overflow = .ellipsis,
     this.warningLevel = .none,
+    this.tooltipMaxWidth,
   });
 
   @override
@@ -73,7 +77,9 @@ class _TextTriOSState extends State<TextTriOS> {
         ? MovingTooltipWidget.text(
             message: widget.text,
             child: textWidget,
+            textStyle: widget.tooltipTextStyle,
             warningLevel: widget.warningLevel,
+            maxWidth: widget.tooltipMaxWidth,
           )
         : textWidget;
   }

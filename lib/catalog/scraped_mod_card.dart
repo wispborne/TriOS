@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
@@ -49,6 +49,10 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   Color _statusBarColor(ThemeData theme) {
     final mod = widget.installedMod;
     if (mod == null) return Colors.transparent;
+
+    if (widget.versionCheckComparison?.hasUpdate == true) {
+      return theme.colorScheme.primary;
+    }
     if (mod.isEnabledInGame) {
       return theme.statusColors.success.withValues(alpha: 0.7);
     }
@@ -86,8 +90,6 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
               websiteUrl != null ||
               urls?.containsKey(ModUrlType.DirectDownload) == true;
 
-          final description =
-              (mod.summary ?? mod.description ?? 'No description...yet!');
           return ContextMenuRegion(
             contextMenu: ContextMenu(
               entries: [
@@ -103,8 +105,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                       versionCheckComparison: widget.versionCheckComparison,
                     ),
                   ),
-                if (mod.urls?[ModUrlType.DirectDownload]?.isNotEmpty ==
-                        true ||
+                if (mod.urls?[ModUrlType.DirectDownload]?.isNotEmpty == true ||
                     mod.getBestWebsiteUrl() != null)
                   MenuItem(
                     label: 'Copy Download URL',
@@ -226,59 +227,24 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                                             fontSize: 10,
                                             fontStyle: FontStyle.italic,
                                           ),
+                                      maxLines: 1,
+                                      overflow: .ellipsis,
                                     ),
-                                  Tags(mod: mod),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
-                                    child: ConditionalWrap(
-                                      condition:
-                                          description?.isNotEmpty == true,
-                                      wrapper: (child) =>
-                                          MovingTooltipWidget.framed(
-                                            tooltipWidget: SizedBox(
-                                              width: 400,
-                                              child: Text(
-                                                description ?? '',
-                                                style:
-                                                    theme.textTheme.bodySmall,
-                                              ),
-                                            ),
-                                            child: Material(
-                                              color: Colors.transparent,
-                                              child: InkWell(
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                hoverColor: theme
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.08),
-                                                onTap: () =>
-                                                    _showDescriptionDialog(
-                                                      context,
-                                                      mod.name,
-                                                      description!,
-                                                    ),
-                                                child: child,
-                                              ),
-                                            ),
-                                          ),
-                                      child: Text(
-                                        description
-                                            .split('\n')
-                                            .where((line) => line.isNotEmpty)
-                                            .take(2)
-                                            .join('\n'),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.labelSmall,
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: buildDescription(
+                                        theme,
+                                        context,
+                                        mod,
                                       ),
                                     ),
                                   ),
-                                  const Spacer(),
                                   if (widget.forumModIndex != null)
                                     _ForumStats(
                                       forumModIndex: widget.forumModIndex!,
                                     ),
+                                  Tags(mod: mod),
                                 ],
                               ),
                             ),
@@ -346,9 +312,20 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                           message: widget.installedMod!.isEnabledInGame
                               ? 'Enabled'
                               : 'Installed, disabled',
-                          child: Container(
-                            width: 4,
-                            color: _statusBarColor(theme),
+                          child: Builder(
+                            builder: (context) {
+                              final hasUpdate =
+                                  widget.versionCheckComparison?.hasUpdate ==
+                                  true;
+                              return ConditionalWrap(
+                                condition: hasUpdate,
+                                wrapper: (child) => Blur(blur: 2, child: child),
+                                child: Container(
+                                  width: 4,
+                                  color: _statusBarColor(theme),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -360,6 +337,67 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
         },
       ),
     );
+  }
+
+  Widget buildDescription(
+    ThemeData theme,
+    BuildContext context,
+    ScrapedMod mod,
+  ) {
+    final hasNoDescription = mod.summary == null && mod.description == null;
+    final description =
+        (mod.summary ?? mod.description ?? 'No description...yet!');
+    return TextTriOS(
+      description
+          .split('\n')
+          .where((line) => line.isNotEmpty)
+          .take(2)
+          .join('\n'),
+      maxLines: 2,
+      tooltipMaxWidth: 600,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.onSurface.withAlpha(150),
+        fontStyle: hasNoDescription ? FontStyle.italic : null,
+      ),
+      tooltipTextStyle: theme.textTheme.labelLarge,
+    );
+    // return ConditionalWrap(
+    //   condition: description.isNotEmpty == true,
+    //   wrapper: (child) => MovingTooltipWidget.framed(
+    //     tooltipWidget: SizedBox(
+    //       width: 400,
+    //       child: Text(
+    //         description,
+    //         // overflow: .ellipsis,
+    //         style: theme.textTheme.bodyMedium,
+    //       ),
+    //     ),
+    //     child: child,
+    //     // child: Material(
+    //     //   color: Colors.transparent,
+    //     //   child: InkWell(
+    //     //     borderRadius: BorderRadius.circular(4),
+    //     //     hoverColor: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+    //     //     onTap: () => _showDescriptionDialog(context, mod.name, description),
+    //     //     child: child,
+    //     //   ),
+    //     // ),
+    //   ),
+    //   child: Text(
+    //     description
+    //         .split('\n')
+    //         .where((line) => line.isNotEmpty)
+    //         .take(2)
+    //         .join('\n'),
+    //     maxLines: 2,
+    //     overflow: TextOverflow.ellipsis,
+    //     style: theme.textTheme.labelSmall?.copyWith(
+    //       color: theme.colorScheme.onSurface.withAlpha(150),
+    //       fontStyle: hasNoDescription ? FontStyle.italic : null,
+    //     ),
+    //   ),
+    // );
   }
 
   void _showDebugDialog(BuildContext context, ScrapedMod mod) {

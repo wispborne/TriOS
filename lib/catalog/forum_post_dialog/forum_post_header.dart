@@ -17,6 +17,7 @@ class ForumPostHeader extends StatelessWidget {
   final bool isFullScreen;
   final VoidCallback? onClose;
   final void Function(String url)? onLinkTap;
+  final void Function(String url, String label)? onDownloadLink;
 
   static final _dateFormat = DateFormat.yMMMMd().add_jm();
   static final _decimalFormat = NumberFormat.decimalPattern();
@@ -31,6 +32,7 @@ class ForumPostHeader extends StatelessWidget {
     this.isFullScreen = false,
     this.onClose,
     this.onLinkTap,
+    this.onDownloadLink,
   });
 
   static String _labelFor(ForumLink link) {
@@ -193,9 +195,9 @@ class ForumPostHeader extends StatelessWidget {
                 children: [
                   if (onOpenInBrowser != null)
                     Tooltip(
-                      message: 'Open in browser',
+                      message: 'Open in an external browser.',
                       child: IconButton(
-                        icon: const Icon(Icons.open_in_browser),
+                        icon: const Icon(Icons.public),
                         onPressed: onOpenInBrowser,
                       ),
                     ),
@@ -225,49 +227,52 @@ class ForumPostHeader extends StatelessWidget {
               ),
             ],
           ),
-          if (onLinkTap != null)
-            Builder(
-              builder: (context) {
-                final links = [
-                  for (final link
-                      in details.links ?? const <ForumLink>[])
-                    if (link.isDownloadable) (link: link, label: _labelFor(link)),
-                ];
-                if (links.isEmpty) return const SizedBox.shrink();
-                return Padding(
-                  padding: const .only(top: 8),
-                  child: Row(
-                    mainAxisAlignment: .end,
-                    children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: .center,
-                        children: [
-                          for (final entry in links)
-                            MovingTooltipWidget.text(
-                              message: "${entry.label}\n${entry.link.url}",
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 200,
+          Builder(
+            builder: (context) {
+              final links = [
+                for (final link in details.links ?? const <ForumLink>[])
+                  if (link.isDownloadable) (link: link, label: _labelFor(link)),
+              ];
+              if (links.isEmpty || onDownloadLink == null) {
+                return const SizedBox.shrink();
+              }
+              return Padding(
+                padding: const .only(top: 8),
+                child: Row(
+                  mainAxisAlignment: .end,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: .center,
+                      children: [
+                        for (final entry in links)
+                          MovingTooltipWidget.text(
+                            message: "${entry.label}\n${entry.link.url}",
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 200,
+                              ),
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.download, size: 16),
+                                label: Text(
+                                  entry.label,
+                                  style: theme.textTheme.labelMedium,
                                 ),
-                                child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.download, size: 16),
-                                  label: Text(
-                                    entry.label,
-                                    style: theme.textTheme.labelMedium,
-                                  ),
-                                  onPressed: () => onLinkTap!(entry.link.url),
+                                onPressed: () => onDownloadLink!(
+                                  entry.link.url,
+                                  entry.label,
                                 ),
                               ),
                             ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

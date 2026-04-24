@@ -224,10 +224,25 @@ class MovingTooltipWidget extends StatefulWidget {
     double windowEdgePadding = 10.0,
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
+    double? maxWidth,
   }) {
     return message.isNotNullOrBlank
         ? Builder(
             builder: (context) {
+              final text = Text(
+                message!,
+                style: (textStyle ?? Theme.of(context).textTheme.bodySmall)
+                    ?.copyWith(
+                      color: switch (warningLevel) {
+                        null => textStyle?.color,
+                        TooltipWarningLevel.none => null,
+                        TooltipWarningLevel.warning =>
+                          TriOSThemeConstants.vanillaWarningColor,
+                        TooltipWarningLevel.error =>
+                          TriOSThemeConstants.vanillaErrorColor,
+                      },
+                    ),
+              );
               return MovingTooltipWidget(
                 key: key,
                 tooltipWidget: TooltipFrame(
@@ -239,20 +254,12 @@ class MovingTooltipWidget extends StatefulWidget {
                       context,
                     ).colorScheme.onSecondaryContainer.withOpacity(0.5),
                   },
-                  child: Text(
-                    message!,
-                    style: (textStyle ?? Theme.of(context).textTheme.bodySmall)
-                        ?.copyWith(
-                          color: switch (warningLevel) {
-                            null => textStyle?.color,
-                            TooltipWarningLevel.none => null,
-                            TooltipWarningLevel.warning =>
-                              TriOSThemeConstants.vanillaWarningColor,
-                            TooltipWarningLevel.error =>
-                              TriOSThemeConstants.vanillaErrorColor,
-                          },
-                        ),
-                  ),
+                  child: maxWidth != null
+                      ? ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxWidth),
+                          child: text,
+                        )
+                      : text,
                 ),
                 windowEdgePadding: windowEdgePadding,
                 offset: offset,

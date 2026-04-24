@@ -1,9 +1,9 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart'
     show WebViewEnvironment, WebViewEnvironmentSettings;
-import 'package:trios/trios/constants_theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scaled_app/scaled_app.dart';
 import 'package:toastification/toastification.dart';
@@ -15,25 +15,25 @@ import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/portraits/portraits_page.dart';
 import 'package:trios/ship_viewer/ships_page.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/toolbar/app_sidebar.dart';
-import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/toolbar/compact_top_bar.dart';
 import 'package:trios/toolbar/full_top_bar.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/navigation_request.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings_page.dart';
 import 'package:trios/trios/toasts/toast_manager.dart';
+import 'package:trios/trios/toasts/widgets/self_update_toast.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/weapon_viewer/weapons_page.dart';
 import 'package:trios/widgets/lazy_indexed_stack.dart';
-import 'package:trios/trios/toasts/widgets/self_update_toast.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 
 import 'main.dart';
 import 'mod_profiles/mod_profiles_page.dart';
@@ -243,7 +243,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const WeaponsPage(),
       const HullmodsPage(),
       const SettingsPage(pagePadding: 8.0),
-      const CatalogPage(pagePadding: 8),
+      const CatalogPage(pagePadding: .all(8)),
       const TipsPage(),
     ];
 

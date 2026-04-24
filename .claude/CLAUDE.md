@@ -16,6 +16,7 @@ All-in-one Starsector launcher, mod manager, and toolkit. Desktop-only (Windows,
 - **Serialization**: dart_mappable (`@MappableClass`, `@MappableEnum`, `.mapper.dart` files). NOT freezed.
   - Custom hooks: `DirectoryHook()`, `VersionHook()`, `SafeDecodeHook()` in `lib/utils/dart_mappable_utils.dart`.
 - **Navigation**: Enum-based tabs via `TriOSTools` (`lib/trios/navigation.dart`). `AppShell` (`lib/app_shell.dart`) maps tab indices to tools. `LazyIndexedStack` for efficient tab switching.
+  - Nav-icon order is user-customizable via right-click → "Rearrange icons". Order lives in `NavOrderController` (`lib/toolbar/nav_order_controller.dart`) and is persisted to `Settings.navIconOrder` as `List<NavOrderEntry>` (sealed dart_mappable model in `lib/toolbar/nav_order_entry.dart`, with `NavToolEntry` and `NavDividerEntry` variants). The sidebar and top-bar both read `navOrderProvider`. Pinned items (`Settings`, action buttons, launcher, `rules.csv`, layout toggle) are NOT in the reorderable list; `reorderableTools` in `navigation.dart` is the source of truth for what's reorderable.
 - **Organization**: Feature-folder structure under `lib/`. Each feature has its own directory (e.g., `mod_manager/`, `ship_viewer/`, `weapon_viewer/`). All directory and file names use `snake_case`.
 
 ## Viewer Page Pattern

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 
 /// Persists across dialog instances within the app session.
 bool _isFullScreen = false;
@@ -26,7 +28,7 @@ void showForumPostDialog(
   );
 }
 
-class _ForumPostDialog extends StatefulWidget {
+class _ForumPostDialog extends ConsumerStatefulWidget {
   final ForumModDetails details;
   final ForumModIndex? index;
   final void Function(String href) linkLoader;
@@ -38,11 +40,43 @@ class _ForumPostDialog extends StatefulWidget {
   });
 
   @override
-  State<_ForumPostDialog> createState() => _ForumPostDialogState();
+  ConsumerState<_ForumPostDialog> createState() => _ForumPostDialogState();
 }
 
-class _ForumPostDialogState extends State<_ForumPostDialog> {
+class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
   final _hoveredUrl = ValueNotifier<String?>(null);
+
+  void _confirmAndDownload(String url, String label) {
+    final modName = widget.details.title.isNotEmpty
+        ? widget.details.title
+        : label;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(modName),
+        content: Text("Do you want to download '$modName'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              ref
+                  .read(downloadManager.notifier)
+                  .downloadAndInstallMod(
+                    modName,
+                    url,
+                    activateVariantOnComplete: false,
+                  );
+            },
+            child: const Text('Download'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -98,6 +132,7 @@ class _ForumPostDialogState extends State<_ForumPostDialog> {
               isFullScreen: _isFullScreen,
               onClose: () => Navigator.of(context).pop(),
               onLinkTap: widget.linkLoader,
+              onDownloadLink: _confirmAndDownload,
             ),
             Flexible(
               child: SingleChildScrollView(

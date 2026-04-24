@@ -184,9 +184,12 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     List<Hullmod> hullmodsBeforeFilter,
   ) {
     if (!controllerState.showFilters) {
-      return CollapsedFilterButton(
-        onTap: controller.toggleShowFilters,
-        activeFilterCount: controller.activeFilterCount,
+      return Padding(
+        padding: const EdgeInsets.only(left: 8, top: 4),
+        child: CollapsedFilterButton(
+          onTap: controller.toggleShowFilters,
+          activeFilterCount: controller.activeFilterCount,
+        ),
       );
     }
 

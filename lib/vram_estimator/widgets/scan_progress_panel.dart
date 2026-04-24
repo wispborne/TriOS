@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/relative_timestamp.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 import 'package:trios/widgets/disable.dart';
+
+final _lastScanFormat = DateFormat('yyyy-MM-dd HH:mm');
 
 /// Inline panel shown above the VRAM chart. While a scan is running it
 /// displays live progress; when idle it collapses to a single-line
@@ -162,7 +165,10 @@ class _IdleSummary extends StatelessWidget {
       children.add(Text('never', style: valueStyle));
     } else {
       children.addAll([
-        Text(lastUpdated.relativeTimestamp(), style: valueStyle),
+        Tooltip(
+          message: lastUpdated.relativeTimestamp(),
+          child: Text(_lastScanFormat.format(lastUpdated), style: valueStyle),
+        ),
         Text('•', style: mutedStyle),
         Text('$modCount mods', style: valueStyle),
         Text('•', style: mutedStyle),

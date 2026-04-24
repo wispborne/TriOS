@@ -336,6 +336,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = SettingsMapper._());
       TriOSToolsMapper.ensureInitialized();
+      NavOrderEntryMapper.ensureInitialized();
       LaunchSettingsMapper.ensureInitialized();
       DashboardGridModUpdateVisibilityMapper.ensureInitialized();
       ModsGridUpdateVisibilityMapper.ensureInitialized();
@@ -349,6 +350,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       ModUpdateBehaviorMapper.ensureInitialized();
       DashboardModListSortMapper.ensureInitialized();
       CompressionLibMapper.ensureInitialized();
+      CatalogCardClickActionMapper.ensureInitialized();
+      CatalogPageStatePersistedMapper.ensureInitialized();
       ReferencedAssetsSelectorConfigMapper.ensureInitialized();
     }
     return _instance!;
@@ -449,6 +452,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$useTopToolbar,
     opt: true,
     def: true,
+  );
+  static List<NavOrderEntry>? _$navIconOrder(Settings v) => v.navIconOrder;
+  static const Field<Settings, List<NavOrderEntry>> _f$navIconOrder = Field(
+    'navIconOrder',
+    _$navIconOrder,
+    opt: true,
+    hook: SafeDecodeHook(),
   );
   static List<String> _$vmparamsFilePaths(Settings v) => v.vmparamsFilePaths;
   static const Field<Settings, List<String>> _f$vmparamsFilePaths = Field(
@@ -809,6 +819,53 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$hasHiddenForumDarkModeTip,
     opt: true,
   );
+  static bool _$catalogBrowserPanelOpen(Settings v) =>
+      v.catalogBrowserPanelOpen;
+  static const Field<Settings, bool> _f$catalogBrowserPanelOpen = Field(
+    'catalogBrowserPanelOpen',
+    _$catalogBrowserPanelOpen,
+    opt: true,
+    def: false,
+  );
+  static double? _$catalogBrowserPanelWidth(Settings v) =>
+      v.catalogBrowserPanelWidth;
+  static const Field<Settings, double> _f$catalogBrowserPanelWidth = Field(
+    'catalogBrowserPanelWidth',
+    _$catalogBrowserPanelWidth,
+    opt: true,
+  );
+  static CatalogCardClickAction _$catalogCardClickAction(Settings v) =>
+      v.catalogCardClickAction;
+  static const Field<Settings, CatalogCardClickAction>
+  _f$catalogCardClickAction = Field(
+    'catalogCardClickAction',
+    _$catalogCardClickAction,
+    opt: true,
+    def: CatalogCardClickAction.forumDialog,
+  );
+  static double _$catalogMinItemWidth(Settings v) => v.catalogMinItemWidth;
+  static const Field<Settings, double> _f$catalogMinItemWidth = Field(
+    'catalogMinItemWidth',
+    _$catalogMinItemWidth,
+    opt: true,
+    def: 390,
+  );
+  static double _$catalogCardSpacing(Settings v) => v.catalogCardSpacing;
+  static const Field<Settings, double> _f$catalogCardSpacing = Field(
+    'catalogCardSpacing',
+    _$catalogCardSpacing,
+    opt: true,
+    def: 4,
+  );
+  static CatalogPageStatePersisted? _$catalogPageState(Settings v) =>
+      v.catalogPageState;
+  static const Field<Settings, CatalogPageStatePersisted> _f$catalogPageState =
+      Field(
+        'catalogPageState',
+        _$catalogPageState,
+        opt: true,
+        hook: SafeDecodeHook(),
+      );
   static String? _$activeModProfileId(Settings v) => v.activeModProfileId;
   static const Field<Settings, String> _f$activeModProfileId = Field(
     'activeModProfileId',
@@ -906,6 +963,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #defaultTool: _f$defaultTool,
     #isSidebarCollapsed: _f$isSidebarCollapsed,
     #useTopToolbar: _f$useTopToolbar,
+    #navIconOrder: _f$navIconOrder,
     #vmparamsFilePaths: _f$vmparamsFilePaths,
     #themeKey: _f$themeKey,
     #showChangelogNextLaunch: _f$showChangelogNextLaunch,
@@ -953,6 +1011,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #enableAccessibilitySemanticsOnLinux:
         _f$enableAccessibilitySemanticsOnLinux,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
+    #catalogBrowserPanelOpen: _f$catalogBrowserPanelOpen,
+    #catalogBrowserPanelWidth: _f$catalogBrowserPanelWidth,
+    #catalogCardClickAction: _f$catalogCardClickAction,
+    #catalogMinItemWidth: _f$catalogMinItemWidth,
+    #catalogCardSpacing: _f$catalogCardSpacing,
+    #catalogPageState: _f$catalogPageState,
     #activeModProfileId: _f$activeModProfileId,
     #showForceUpdateWarning: _f$showForceUpdateWarning,
     #showDonationButton: _f$showDonationButton,
@@ -984,6 +1048,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       defaultTool: data.dec(_f$defaultTool),
       isSidebarCollapsed: data.dec(_f$isSidebarCollapsed),
       useTopToolbar: data.dec(_f$useTopToolbar),
+      navIconOrder: data.dec(_f$navIconOrder),
       vmparamsFilePaths: data.dec(_f$vmparamsFilePaths),
       themeKey: data.dec(_f$themeKey),
       showChangelogNextLaunch: data.dec(_f$showChangelogNextLaunch),
@@ -1040,6 +1105,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         _f$enableAccessibilitySemanticsOnLinux,
       ),
       hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
+      catalogBrowserPanelOpen: data.dec(_f$catalogBrowserPanelOpen),
+      catalogBrowserPanelWidth: data.dec(_f$catalogBrowserPanelWidth),
+      catalogCardClickAction: data.dec(_f$catalogCardClickAction),
+      catalogMinItemWidth: data.dec(_f$catalogMinItemWidth),
+      catalogCardSpacing: data.dec(_f$catalogCardSpacing),
+      catalogPageState: data.dec(_f$catalogPageState),
       activeModProfileId: data.dec(_f$activeModProfileId),
       showForceUpdateWarning: data.dec(_f$showForceUpdateWarning),
       showDonationButton: data.dec(_f$showDonationButton),
@@ -1113,6 +1184,12 @@ extension SettingsValueCopy<$R, $Out> on ObjectCopyWith<$R, Settings, $Out> {
 
 abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<
+    $R,
+    NavOrderEntry,
+    NavOrderEntryCopyWith<$R, NavOrderEntry, NavOrderEntry>
+  >?
+  get navIconOrder;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get vmparamsFilePaths;
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
@@ -1151,6 +1228,12 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     PersistedFilterGroupCopyWith<$R, PersistedFilterGroup, PersistedFilterGroup>
   >
   get persistedFilterGroups;
+  CatalogPageStatePersistedCopyWith<
+    $R,
+    CatalogPageStatePersisted,
+    CatalogPageStatePersisted
+  >?
+  get catalogPageState;
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1172,6 +1255,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     TriOSTools? defaultTool,
     bool? isSidebarCollapsed,
     bool? useTopToolbar,
+    List<NavOrderEntry>? navIconOrder,
     List<String>? vmparamsFilePaths,
     String? themeKey,
     bool? showChangelogNextLaunch,
@@ -1218,6 +1302,12 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     double? windowScaleFactor,
     bool? enableAccessibilitySemanticsOnLinux,
     bool? hasHiddenForumDarkModeTip,
+    bool? catalogBrowserPanelOpen,
+    double? catalogBrowserPanelWidth,
+    CatalogCardClickAction? catalogCardClickAction,
+    double? catalogMinItemWidth,
+    double? catalogCardSpacing,
+    CatalogPageStatePersisted? catalogPageState,
     String? activeModProfileId,
     bool? showForceUpdateWarning,
     bool? showDonationButton,
@@ -1241,6 +1331,19 @@ class _SettingsCopyWithImpl<$R, $Out>
   @override
   late final ClassMapperBase<Settings> $mapper =
       SettingsMapper.ensureInitialized();
+  @override
+  ListCopyWith<
+    $R,
+    NavOrderEntry,
+    NavOrderEntryCopyWith<$R, NavOrderEntry, NavOrderEntry>
+  >?
+  get navIconOrder => $value.navIconOrder != null
+      ? ListCopyWith(
+          $value.navIconOrder!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(navIconOrder: v),
+        )
+      : null;
   @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get vmparamsFilePaths => ListCopyWith(
@@ -1315,6 +1418,15 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(persistedFilterGroups: v),
   );
   @override
+  CatalogPageStatePersistedCopyWith<
+    $R,
+    CatalogPageStatePersisted,
+    CatalogPageStatePersisted
+  >?
+  get catalogPageState => $value.catalogPageState?.copyWith.$chain(
+    (v) => call(catalogPageState: v),
+  );
+  @override
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1340,6 +1452,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     TriOSTools? defaultTool,
     bool? isSidebarCollapsed,
     bool? useTopToolbar,
+    Object? navIconOrder = $none,
     List<String>? vmparamsFilePaths,
     Object? themeKey = $none,
     Object? showChangelogNextLaunch = $none,
@@ -1386,6 +1499,12 @@ class _SettingsCopyWithImpl<$R, $Out>
     double? windowScaleFactor,
     bool? enableAccessibilitySemanticsOnLinux,
     Object? hasHiddenForumDarkModeTip = $none,
+    bool? catalogBrowserPanelOpen,
+    Object? catalogBrowserPanelWidth = $none,
+    CatalogCardClickAction? catalogCardClickAction,
+    double? catalogMinItemWidth,
+    double? catalogCardSpacing,
+    Object? catalogPageState = $none,
     Object? activeModProfileId = $none,
     bool? showForceUpdateWarning,
     bool? showDonationButton,
@@ -1414,6 +1533,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (defaultTool != null) #defaultTool: defaultTool,
       if (isSidebarCollapsed != null) #isSidebarCollapsed: isSidebarCollapsed,
       if (useTopToolbar != null) #useTopToolbar: useTopToolbar,
+      if (navIconOrder != $none) #navIconOrder: navIconOrder,
       if (vmparamsFilePaths != null) #vmparamsFilePaths: vmparamsFilePaths,
       if (themeKey != $none) #themeKey: themeKey,
       if (showChangelogNextLaunch != $none)
@@ -1486,6 +1606,16 @@ class _SettingsCopyWithImpl<$R, $Out>
             enableAccessibilitySemanticsOnLinux,
       if (hasHiddenForumDarkModeTip != $none)
         #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
+      if (catalogBrowserPanelOpen != null)
+        #catalogBrowserPanelOpen: catalogBrowserPanelOpen,
+      if (catalogBrowserPanelWidth != $none)
+        #catalogBrowserPanelWidth: catalogBrowserPanelWidth,
+      if (catalogCardClickAction != null)
+        #catalogCardClickAction: catalogCardClickAction,
+      if (catalogMinItemWidth != null)
+        #catalogMinItemWidth: catalogMinItemWidth,
+      if (catalogCardSpacing != null) #catalogCardSpacing: catalogCardSpacing,
+      if (catalogPageState != $none) #catalogPageState: catalogPageState,
       if (activeModProfileId != $none) #activeModProfileId: activeModProfileId,
       if (showForceUpdateWarning != null)
         #showForceUpdateWarning: showForceUpdateWarning,
@@ -1527,6 +1657,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.isSidebarCollapsed,
     ),
     useTopToolbar: data.get(#useTopToolbar, or: $value.useTopToolbar),
+    navIconOrder: data.get(#navIconOrder, or: $value.navIconOrder),
     vmparamsFilePaths: data.get(
       #vmparamsFilePaths,
       or: $value.vmparamsFilePaths,
@@ -1678,6 +1809,27 @@ class _SettingsCopyWithImpl<$R, $Out>
       #hasHiddenForumDarkModeTip,
       or: $value.hasHiddenForumDarkModeTip,
     ),
+    catalogBrowserPanelOpen: data.get(
+      #catalogBrowserPanelOpen,
+      or: $value.catalogBrowserPanelOpen,
+    ),
+    catalogBrowserPanelWidth: data.get(
+      #catalogBrowserPanelWidth,
+      or: $value.catalogBrowserPanelWidth,
+    ),
+    catalogCardClickAction: data.get(
+      #catalogCardClickAction,
+      or: $value.catalogCardClickAction,
+    ),
+    catalogMinItemWidth: data.get(
+      #catalogMinItemWidth,
+      or: $value.catalogMinItemWidth,
+    ),
+    catalogCardSpacing: data.get(
+      #catalogCardSpacing,
+      or: $value.catalogCardSpacing,
+    ),
+    catalogPageState: data.get(#catalogPageState, or: $value.catalogPageState),
     activeModProfileId: data.get(
       #activeModProfileId,
       or: $value.activeModProfileId,

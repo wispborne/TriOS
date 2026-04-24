@@ -47,15 +47,15 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
         //     style: theme.textTheme.labelLarge,
         //   ),
         // ),
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-          child: Text(
-            "For VRAM totals, see the Mods tab.",
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+        //   child: Text(
+        //     "For VRAM totals, see the Mods tab.",
+        //     style: theme.textTheme.labelMedium?.copyWith(
+        //       fontStyle: FontStyle.italic,
+        //     ),
+        //   ),
+        // ),
         Expanded(
           child: LayoutBuilder(
             builder: (context, layoutConstraints) {

@@ -174,6 +174,75 @@ class BoolField<T> extends FilterField<T> {
   void clear() => value = defaultValue;
 }
 
+/// Dropdown-backed field over a runtime-populated list of string choices.
+///
+/// Use this when the option list is data-driven (cannot be an `enum`). A
+/// `null` selection represents the "any" / "all" choice. `isActive` reports
+/// `selected != defaultValue`.
+class StringChoiceField<T> extends FilterField<T> {
+  @override
+  final String id;
+
+  @override
+  final String label;
+
+  final String? tooltip;
+  final String? defaultValue;
+  final List<String> options;
+  final bool Function(T item, String? selected) predicate;
+  final String Function(String)? optionLabel;
+  final String? allLabel;
+
+  String? selected;
+
+  StringChoiceField({
+    required this.id,
+    required this.label,
+    required this.options,
+    required this.predicate,
+    this.defaultValue,
+    this.tooltip,
+    this.optionLabel,
+    this.allLabel,
+  }) : selected = defaultValue;
+
+  @override
+  bool get isActive => selected != defaultValue;
+
+  @override
+  bool matches(T item) => predicate(item, selected);
+
+  @override
+  Object? serialize() => selected;
+
+  @override
+  void restoreFrom(Object? v) {
+    if (v == null) {
+      selected = null;
+      return;
+    }
+    if (v is String) {
+      if (options.contains(v)) {
+        selected = v;
+        return;
+      }
+    }
+    selected = defaultValue;
+  }
+
+  @override
+  void clear() => selected = defaultValue;
+
+  void setSelected(String? value) {
+    selected = value;
+  }
+
+  String labelFor(String? option) {
+    if (option == null) return allLabel ?? 'All';
+    return optionLabel?.call(option) ?? option;
+  }
+}
+
 /// Dropdown-backed enum field.
 ///
 /// `isActive` reports `selected != defaultValue`.

@@ -31,7 +31,7 @@ class FilterGridPersistButton extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return MovingTooltipWidget.text(
-      message: isLocked ? 'Filter group is being saved.' : 'Filter group is not being saved.',
+      message: isLocked ? 'Filter group is being saved' : 'Filter group is not being saved',
       child: IconButton(
         onPressed: () {
           if (isLocked) {

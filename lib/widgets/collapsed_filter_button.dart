@@ -15,29 +15,27 @@ class CollapsedFilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Card(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: MovingTooltipWidget.text(
-              message: "Show filters",
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  const Icon(Icons.filter_list, size: 16),
-                  Positioned(
-                    top: -12,
-                    right: -16,
-                    child: ActiveFilterCountPill(
-                      count: activeFilterCount,
-                    ),
+    return Card(
+      margin: .zero,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: MovingTooltipWidget.text(
+            message: "Show filters",
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.filter_list, size: 16),
+                Positioned(
+                  top: -12,
+                  right: -16,
+                  child: ActiveFilterCountPill(
+                    count: activeFilterCount,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

@@ -257,7 +257,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                         isEnabled: modVramInfoToShow.isNotEmpty,
                         child: Card.outlined(
                           child: SizedBox(
-                            width: 300,
+                            width: 250,
                             child: GraphTypeSelector(
                               onGraphTypeChanged: (GraphType type) {
                                 setState(() {
@@ -270,12 +270,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                       ),
                     ),
                     const SizedBox(width: 16),
-                    ViewerSearchBox(
-                      searchController: _searchController,
-                      hintText: 'Filter mods...',
-                      onChanged: (query) =>
-                          setState(() => _searchQuery = query),
-                      onClear: () => setState(() => _searchQuery = ''),
+                    Flexible(
+                      child: ViewerSearchBox(
+                        searchController: _searchController,
+                        hintText: 'Filter mods...',
+                        onChanged: (query) =>
+                            setState(() => _searchQuery = query),
+                        onClear: () => setState(() => _searchQuery = ''),
+                      ),
                     ),
                     Spacer(),
                     TriOSToolbarCheckboxButton(
@@ -294,10 +296,11 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
           padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: ScanProgressPanel(),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: ReferenceScanDebugPanel(),
-        ),
+        if (ref.watch(appSettings.select((s) => s.debugMode)))
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: ReferenceScanDebugPanel(),
+          ),
         if (modVramInfo.isNotEmpty)
           Expanded(
             child: Padding(

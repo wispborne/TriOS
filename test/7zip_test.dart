@@ -1,3 +1,6 @@
+@Tags(['local-only'])
+library;
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -30,7 +33,8 @@ void main() {
   test("7zip read game test", () async {
     configureLogging(LoggingSettings());
     final sevenZ = getSevenZip();
-    var archivePath = "F:/Downloads/starsector_install-0.97a-RC11.exe".toFile();
+    var archivePath = "F:/Downloads/starsector_install-0.97a-RC11.exe"
+        .toFile();
     final archiveEntries = await sevenZ.listFiles(archivePath);
 
     print("Archive file: $archivePath");

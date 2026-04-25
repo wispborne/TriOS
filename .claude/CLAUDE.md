@@ -97,3 +97,7 @@ dart run build_runner watch --delete-conflicting-outputs
 - **ModVariant** — a specific version/installation of a mod
 - **SmolId** — compact identifier for mod variants: `{id6chars}-{version9chars}-{hash}`
 - **TriOSTools** — enum of all app tools/pages (dashboard, modManager, ships, weapons, etc.)
+
+## Changelog
+
+- Do not update the changelog.md file.

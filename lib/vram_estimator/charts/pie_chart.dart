@@ -26,14 +26,64 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
   int touchedIndex = -1;
   GraphicsLibConfig? graphicsLibConfig;
 
+  List<VramMod> _visibleMods() => widget.modVramInfo
+      .where((element) => element.bytesNotIncludingGraphicsLib() > 0)
+      .toList();
+
+  Future<void> _rescanThisMod(VramMod mod) async {
+    final mods = ref.read(AppState.mods);
+    final modEntry = mods.firstWhereOrNull((m) => m.id == mod.info.modId);
+    final variant = modEntry?.findFirstEnabledOrHighestVersion;
+    if (variant == null) return;
+    await ref
+        .read(AppState.vramEstimatorProvider.notifier)
+        .startEstimating(variantsToCheck: [variant]);
+  }
+
+  Future<void> _showSliceMenu(Offset globalPosition, VramMod mod) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final isGlobalScanning =
+        ref.read(AppState.vramEstimatorProvider).value?.isScanning ?? false;
+    final selected = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        globalPosition.dx,
+        globalPosition.dy,
+        overlay.size.width - globalPosition.dx,
+        overlay.size.height - globalPosition.dy,
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'rescan',
+          enabled: !isGlobalScanning,
+          child: Row(
+            children: [
+              const Icon(Icons.refresh, size: 18),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  isGlobalScanning
+                      ? 'Scan in progress…'
+                      : 'Rescan ${mod.info.name ?? mod.info.modId}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    if (selected == 'rescan') {
+      await _rescanThisMod(mod);
+    }
+  }
+
   List<PieChartSectionData> createSections(BuildContext context) {
     final baseColor = Theme.of(context).colorScheme.primary;
     final theme = Theme.of(context);
     final realMods = ref.watch(AppState.mods);
 
-    return widget.modVramInfo
-        .where((element) => element.bytesNotIncludingGraphicsLib() > 0)
-        .map((mod) {
+    return _visibleMods().map((mod) {
           const fontSize = 12.0;
           const radius = 50.0;
           const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
@@ -97,26 +147,31 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
                 padding: const EdgeInsets.all(32.0),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: PieChart(
-                    PieChartData(
-                      // pieTouchData: PieTouchData(
-                      // touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                      //   setState(() {
-                      //     if (!event.isInterestedForInteractions ||
-                      //         pieTouchResponse == null ||
-                      //         pieTouchResponse.touchedSection == null) {
-                      //       touchedIndex = -1;
-                      //       return;
-                      //     }
-                      //     touchedIndex = pieTouchResponse
-                      //         .touchedSection!.touchedSectionIndex;
-                      //   });
-                      // },
-                      // ),
-                      borderData: FlBorderData(show: false),
-                      sectionsSpace: 1,
-                      // centerSpaceRadius: 130,
-                      sections: createSections(context),
+                  child: Builder(
+                    builder: (chartContext) => PieChart(
+                      PieChartData(
+                        pieTouchData: PieTouchData(
+                          touchCallback:
+                              (FlTouchEvent event, pieTouchResponse) {
+                            if (event is! FlTapUpEvent) return;
+                            final section = pieTouchResponse?.touchedSection;
+                            if (section == null) return;
+                            final idx = section.touchedSectionIndex;
+                            final visible = _visibleMods();
+                            if (idx < 0 || idx >= visible.length) return;
+                            final box = chartContext.findRenderObject()
+                                as RenderBox?;
+                            if (box == null) return;
+                            final global =
+                                box.localToGlobal(event.localPosition);
+                            _showSliceMenu(global, visible[idx]);
+                          },
+                        ),
+                        borderData: FlBorderData(show: false),
+                        sectionsSpace: 1,
+                        // centerSpaceRadius: 130,
+                        sections: createSections(context),
+                      ),
                     ),
                   ),
                 ),

@@ -87,7 +87,9 @@
       "Bash(git -C \"F:/Code/Starsector/TriOS\" log -p --follow -- lib/mod_manager/utils/mod_file_utils.dart)",
       "Bash(dart format *)",
       "Bash(ls openspec/specs/catalog-browser-rail)",
-      "Bash(ls openspec/specs/catalog-card-click-action)"
+      "Bash(ls openspec/specs/catalog-card-click-action)",
+      "Bash(openspec --version)",
+      "WebFetch(domain:pub.dev)"
     ]
   }
 }

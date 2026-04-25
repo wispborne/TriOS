@@ -61,15 +61,25 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
     }
   }
 
+  /// Apply [mutator] to the current state and schedule a write.
+  ///
+  /// By default, a `hashCode` equality check skips the write (and listener
+  /// notification) when the mutator returns a structurally identical
+  /// value. For small models that check is free, but for large
+  /// dart_mappable states (e.g. the VRAM cache with its full image table)
+  /// the structural hash walks the whole graph and can dominate CPU. Pass
+  /// [skipChangeCheck] = true on hot paths where the caller already knows
+  /// the state changed.
   Future<T> updateState(
     FutureOr<T> Function(T currentState) mutator, {
     FutureOr<T> Function(Object, StackTrace)? onError,
+    bool skipChangeCheck = false,
   }) async {
     return _updateMutex.protect(() async {
       final oldValue = state.value ?? createDefaultState();
       try {
         final newValue = await mutator(oldValue);
-        if (newValue.hashCode != oldValue.hashCode) {
+        if (skipChangeCheck || newValue.hashCode != oldValue.hashCode) {
           state = AsyncData(newValue);
           settingsManager.scheduleWrite(newValue);
         } else {

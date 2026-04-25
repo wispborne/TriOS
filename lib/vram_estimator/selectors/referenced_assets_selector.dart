@@ -57,7 +57,7 @@ class ReferencedAssetsSelector extends VramAssetSelector {
   String get id => 'referenced';
 
   @override
-  String get displayName => 'Intelligent Scan';
+  String get displayName => 'Selective Scan';
 
   @override
   String get description =>

@@ -1,12 +1,16 @@
+import 'dart:io';
 import 'dart:math';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/selectors/selector_registry.dart';
 import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
@@ -15,6 +19,7 @@ import 'package:trios/vram_estimator/widgets/scan_progress_panel.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/spinning_refresh_button.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
@@ -165,6 +170,17 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         .map((mod) => mod.smolId)
         .toList();
 
+    // Count of mods that would be scanned by the "scan unscanned only"
+    // button — enabled-or-highest-version variants whose smolId is not yet
+    // in the cache. Recomputed per rebuild; cheap (just a set lookup).
+    final scannedSmolIds = vramState.modVramInfo.keys.toSet();
+    final unscannedCount = ref
+        .watch(AppState.mods)
+        .map((mod) => mod.findFirstEnabledOrHighestVersion)
+        .nonNulls
+        .where((v) => !scannedSmolIds.contains(v.smolId))
+        .length;
+
     final searchQuery = _searchQuery.trim().toLowerCase();
 
     // Display only the highest version of each mod.
@@ -209,91 +225,17 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     return Column(
       children: <Widget>[
         Padding(
-          padding: const EdgeInsets.all(4),
-          child: SizedBox(
-            height: 50,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8, right: 8),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 4),
-                    Text(
-                      'VRAM Estimator',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineSmall?.copyWith(fontSize: 20),
-                    ),
-                    const SizedBox(width: 8),
-                    MovingTooltipWidget.text(
-                      message: "About VRAM & VRAM Estimator",
-                      child: IconButton(
-                        icon: const Icon(Icons.info),
-                        onPressed: () => showDialog(
-                          context: context,
-                          builder: (context) => VramCheckerExplanationDialog(),
-                        ),
-                      ),
-                    ),
-                    Disable(
-                      isEnabled: !isScanning,
-                      child: SpinningRefreshButton(
-                        onPressed: () {
-                          if (!isScanning) {
-                            ref
-                                .read(AppState.vramEstimatorProvider.notifier)
-                                .startEstimating();
-                          }
-                        },
-                        isScanning: isScanning,
-                        tooltip: _buildRefreshTooltip(vramState),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    _buildSelectorDropdown(ref),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 32.0),
-                      child: Disable(
-                        isEnabled: modVramInfoToShow.isNotEmpty,
-                        child: Card.outlined(
-                          child: SizedBox(
-                            width: 250,
-                            child: GraphTypeSelector(
-                              onGraphTypeChanged: (GraphType type) {
-                                setState(() {
-                                  graphType = type;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Flexible(
-                      child: ViewerSearchBox(
-                        searchController: _searchController,
-                        hintText: 'Filter mods...',
-                        onChanged: (query) =>
-                            setState(() => _searchQuery = query),
-                        onClear: () => setState(() => _searchQuery = ''),
-                      ),
-                    ),
-                    Spacer(),
-                    TriOSToolbarCheckboxButton(
-                      onChanged: (newValue) =>
-                          setState(() => _onlyEnabled = newValue ?? true),
-                      value: _onlyEnabled,
-                      text: 'Enabled Mods Only',
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          padding: const .only(top: 4, left: 4, right: 4),
+          child: buildToolbar(
+            context,
+            isScanning,
+            vramState,
+            unscannedCount,
+            modVramInfoToShow,
           ),
         ),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          padding: .only(left: 8, right: 8, bottom: 8),
           child: ScanProgressPanel(),
         ),
         if (ref.watch(appSettings.select((s) => s.debugMode)))
@@ -304,7 +246,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         if (modVramInfo.isNotEmpty)
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const .only(left: 4, right: 4),
               child: switch (graphType) {
                 GraphType.bar => VramBarChart(modVramInfo: modVramInfoToShow),
                 GraphType.pie => VramPieChart(modVramInfo: modVramInfoToShow),
@@ -356,6 +298,123 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
             ),
           ),
       ],
+    );
+  }
+
+  SizedBox buildToolbar(
+    BuildContext context,
+    bool isScanning,
+    VramEstimatorManagerState vramState,
+    int unscannedCount,
+    List<VramMod> modVramInfoToShow,
+  ) {
+    return SizedBox(
+      height: 50,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.only(left: 8, right: 8),
+          child: Row(
+            children: [
+              const SizedBox(width: 4),
+              Text(
+                'VRAM Estimator',
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineSmall?.copyWith(fontSize: 20),
+              ),
+              const SizedBox(width: 8),
+              MovingTooltipWidget.text(
+                message: "About VRAM & VRAM Estimator",
+                child: IconButton(
+                  icon: const Icon(Icons.info),
+                  onPressed: () => showDialog(
+                    context: context,
+                    builder: (context) => VramCheckerExplanationDialog(),
+                  ),
+                ),
+              ),
+              Disable(
+                isEnabled: !isScanning,
+                child: SpinningRefreshButton(
+                  onPressed: () {
+                    if (!isScanning) {
+                      ref
+                          .read(AppState.vramEstimatorProvider.notifier)
+                          .startEstimating();
+                    }
+                  },
+                  isScanning: isScanning,
+                  tooltip: _buildRefreshTooltip(vramState),
+                ),
+              ),
+              MovingTooltipWidget.text(
+                message: isScanning
+                    ? 'Scan in progress…'
+                    : unscannedCount == 0
+                    ? 'All mods are already scanned'
+                    : 'Scan $unscannedCount mod${unscannedCount == 1 ? "" : "s"} not yet in cache',
+                child: IconButton(
+                  icon: const Icon(Icons.playlist_add_check),
+                  onPressed: (isScanning || unscannedCount == 0)
+                      ? null
+                      : () {
+                          ref
+                              .read(AppState.vramEstimatorProvider.notifier)
+                              .scanUnscanned();
+                        },
+                ),
+              ),
+              MovingTooltipWidget.text(
+                message: vramState.modVramInfo.isEmpty
+                    ? 'Export cache as JSON… (nothing to export)'
+                    : 'Export cache as JSON…',
+                child: IconButton(
+                  icon: const Icon(Icons.file_download),
+                  onPressed: vramState.modVramInfo.isEmpty
+                      ? null
+                      : () => _exportCacheAsJson(context, ref),
+                ),
+              ),
+              const SizedBox(width: 16),
+              _buildSelectorDropdown(ref),
+              Padding(
+                padding: const EdgeInsets.only(left: 32.0),
+                child: Disable(
+                  isEnabled: modVramInfoToShow.isNotEmpty,
+                  child: Card.outlined(
+                    child: SizedBox(
+                      width: 250,
+                      child: GraphTypeSelector(
+                        onGraphTypeChanged: (GraphType type) {
+                          setState(() {
+                            graphType = type;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Flexible(
+                child: ViewerSearchBox(
+                  searchController: _searchController,
+                  hintText: 'Filter mods...',
+                  onChanged: (query) => setState(() => _searchQuery = query),
+                  onClear: () => setState(() => _searchQuery = ''),
+                ),
+              ),
+              Spacer(),
+              TriOSToolbarCheckboxButton(
+                onChanged: (newValue) =>
+                    setState(() => _onlyEnabled = newValue ?? true),
+                value: _onlyEnabled,
+                text: 'Enabled Mods Only',
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -422,6 +481,67 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         },
       ),
     );
+  }
+
+  Future<void> _exportCacheAsJson(BuildContext context, WidgetRef ref) async {
+    final timestamp = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
+    final suggestedName = 'TriOS-VRAM_CheckerCache-$timestamp.json';
+
+    String? chosen;
+    try {
+      chosen = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export VRAM cache as JSON',
+        fileName: suggestedName,
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        lockParentWindow: true,
+      );
+    } catch (e, st) {
+      Fimber.e(
+        'Failed to open save-file dialog for VRAM JSON export: $e',
+        ex: e,
+        stacktrace: st,
+      );
+      if (context.mounted) {
+        showSnackBar(
+          context: context,
+          type: SnackBarType.error,
+          content: const Text('Could not open save dialog.'),
+        );
+      }
+      return;
+    }
+
+    if (chosen == null) return;
+    if (!chosen.toLowerCase().endsWith('.json')) {
+      chosen = '$chosen.json';
+    }
+
+    try {
+      await ref
+          .read(AppState.vramEstimatorProvider.notifier)
+          .exportAsJson(File(chosen));
+      if (context.mounted) {
+        showSnackBar(
+          context: context,
+          type: SnackBarType.info,
+          content: Text('Exported VRAM cache to $chosen'),
+        );
+      }
+    } catch (e, st) {
+      Fimber.e(
+        'Failed to write VRAM cache JSON export to $chosen: $e',
+        ex: e,
+        stacktrace: st,
+      );
+      if (context.mounted) {
+        showSnackBar(
+          context: context,
+          type: SnackBarType.error,
+          content: Text('Export failed: $e'),
+        );
+      }
+    }
   }
 
   double _maxRange(

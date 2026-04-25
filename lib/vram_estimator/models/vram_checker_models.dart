@@ -102,6 +102,10 @@ class ModImageTable {
   }
 
   /// Converts the columnar data back into a list of maps for JSON serialization.
+  ///
+  /// Kept for tests and any other consumer that wants the row shape; the
+  /// serialization hook now uses [toColumnar] to avoid repeating the
+  /// field-name keys for every image.
   List<Map<String, dynamic>> toRows() {
     final rows = <Map<String, dynamic>>[];
     for (int i = 0; i < filePaths.length; i++) {
@@ -116,6 +120,85 @@ class ModImageTable {
       });
     }
     return rows;
+  }
+
+  /// Serializes this table as parallel arrays — one key per column instead
+  /// of one map per row. Shrinks the cache dramatically on image-heavy
+  /// mods because neither msgpack nor JSON dedupes repeated map keys.
+  Map<String, dynamic> toColumnar() {
+    final allRefsNull = referencedBys.every((r) => r == null);
+    return {
+      'filePaths': filePaths,
+      'textureHeights': textureHeights,
+      'textureWidths': textureWidths,
+      'bitsInAllChannelsSums': bitsInAllChannelsSums,
+      'imageTypes': [for (final t in imageTypes) t.name],
+      'graphicsLibTypes': [for (final t in graphicsLibTypes) t?.name],
+      // Most VramMods in folder-scan mode have no attribution at all; omit
+      // the whole array when it would be all-null.
+      if (!allRefsNull) 'referencedBys': referencedBys,
+    };
+  }
+
+  /// Inverse of [toColumnar].
+  factory ModImageTable.fromColumnar(Map<String, dynamic> data) {
+    final filePathsRaw = data['filePaths'] as List;
+    final length = filePathsRaw.length;
+
+    final filePaths = List<String>.from(
+      filePathsRaw.cast<String>(),
+      growable: false,
+    );
+    final heights = List<int>.from(
+      (data['textureHeights'] as List).cast<int>(),
+      growable: false,
+    );
+    final widths = List<int>.from(
+      (data['textureWidths'] as List).cast<int>(),
+      growable: false,
+    );
+    final bits = List<int>.from(
+      (data['bitsInAllChannelsSums'] as List).cast<int>(),
+      growable: false,
+    );
+
+    final imageTypeNames = (data['imageTypes'] as List);
+    final types = List<ImageType>.generate(length, (i) {
+      final s = imageTypeNames[i] as String?;
+      if (s == null) return ImageType.texture;
+      return ImageType.values.firstWhere(
+        (e) => e.name == s,
+        orElse: () => ImageType.texture,
+      );
+    }, growable: false);
+
+    final gfxTypeNames = (data['graphicsLibTypes'] as List);
+    final gfxTypes = List<MapType?>.generate(length, (i) {
+      final s = gfxTypeNames[i] as String?;
+      if (s == null) return null;
+      return MapType.values.firstWhereOrNull((m) => m.name == s);
+    }, growable: false);
+
+    // `referencedBys` is optional on disk — absent means "no attribution".
+    final refBysRaw = data['referencedBys'];
+    final refBys = List<List<String>?>.generate(length, (i) {
+      if (refBysRaw is! List) return null;
+      final raw = refBysRaw[i];
+      if (raw is List && raw.isNotEmpty) {
+        return List<String>.unmodifiable(raw.cast<String>());
+      }
+      return null;
+    }, growable: false);
+
+    return ModImageTable._(
+      filePaths,
+      heights,
+      widths,
+      bits,
+      types,
+      gfxTypes,
+      refBys,
+    );
   }
 
   List<ModImageView> toImageViews() =>
@@ -197,13 +280,19 @@ class ModImageView {
   }
 }
 
-/// A custom mapping hook for converting between a [ModImageTable] and its JSON representation.
+/// A custom mapping hook for converting between a [ModImageTable] and its
+/// serialized representation. Encoding emits the columnar form; decoding
+/// accepts either columnar (current) or the legacy list-of-rows shape so
+/// older caches still load.
 class ModImageTableHook extends MappingHook {
   const ModImageTableHook();
 
   @override
   dynamic beforeDecode(dynamic value) {
     if (value == null) return null;
+    if (value is Map) {
+      return ModImageTable.fromColumnar(value.cast<String, dynamic>());
+    }
     if (value is List) {
       return ModImageTable.fromRows(value.cast<Map<String, dynamic>>());
     }
@@ -214,7 +303,7 @@ class ModImageTableHook extends MappingHook {
   dynamic beforeEncode(dynamic value) {
     if (value == null) return null;
     if (value is ModImageTable) {
-      return value.toRows();
+      return value.toColumnar();
     }
     throw Exception('ModImageTableHook: Invalid type: $value');
   }
@@ -272,6 +361,7 @@ class VramMod with VramModMappable {
   ModImageView getModViewForIndex(int index) => ModImageView(index, images);
 
   List<int>? _cache;
+  int? _sumCache;
 
   /// Each value is the usage by one of the images.GraphicsLib() {
   List<int> imagesNotIncludingGraphicsLib() {
@@ -288,7 +378,10 @@ class VramMod with VramModMappable {
     return _cache!;
   }
 
-  int bytesNotIncludingGraphicsLib() => imagesNotIncludingGraphicsLib().sum();
+  // Sort keys in the VRAM page call this O(N log N) times per rebuild;
+  // without this cache it was ~44% of CPU during a scan.
+  int bytesNotIncludingGraphicsLib() =>
+      _sumCache ??= imagesNotIncludingGraphicsLib().sum();
 
   /// Sum of bytes for the unreferenced bucket, excluding GraphicsLib-tagged
   /// images (same rule as [bytesNotIncludingGraphicsLib]). Returns 0 when

@@ -1,17 +1,18 @@
 # 1.5.0
 - Added
-  - Navigation icons can now be rearranged. Right-click the sidebar or top bar to enter "Rearrange icons" mode, drag to reorder, then click Done (or press Esc). Icons can flow freely across the two sections, the section divider itself is draggable, and the order is shared between sidebar and top-bar layouts. A "Reset to default order" option is also in the context menu.
   - Mod Catalog: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
     - Catalog cards now show installation status, available updates, and game version requirements.
     - UI refresh.
   - VRAM Estimator: new intelligent mode that tries to only include images that are actually used.
     - Also added more detailed per-image breakdown on the VRAM estimator page.
+  - VRAM Estimator: "Export cache as JSON…" toolbar button for inspecting the cache in text form.
+  - VRAM Estimator: each selector now has its own persistent cache file, so switching between scan types loads the prior result instantly (even after restart).
   - Toolbar icons can now be rearranged. Mostly.
+  - Mods page: two-layer grouping, such as grouping by categories and then by enabled status.
   - Ship/Weapon/Hullmod Filters may now be remembered across app restarts (click save icon).
   - Ships/Weapons Viewers: Added descriptions to the new tooltips.
   - Ships Viewer: filter by stations.
   - Ships Viewer: sensor stats now shown on tooltip.
-  - WispGrid: two-level grouping via a new "Then By" context-menu entry. Secondary subgroups render as thin line headers under each primary group, collapse independently, and export as `## Subgroup:` markers in CSV.
 - Fixed
   - Portrait Replacer crashing Starsector if some cases where a portrait and its replacement were different sizes.
   - Ships Viewer: DP is now calculated correctly.
@@ -24,6 +25,7 @@
     - If a file is *valid* json, it will parse much faster than before.
     - If it is ""Starsector json"" (has comments, unquoted strings, other invalid syntax) then it will parse at the same slow speed as before.
   - Minor overall performance improvement by avoiding recalculation of computed values (e.g. enabled mod versions, ship mounts, etc).
+  - VRAM Estimator: cache is now stored as msgpack (smaller, faster)
 
 # 1.4.1
 - Added

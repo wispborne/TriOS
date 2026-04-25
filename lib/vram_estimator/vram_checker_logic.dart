@@ -30,6 +30,18 @@ class VramChecker {
   Function(String) debugOut = (it) => (it);
   bool Function() isCancelled;
 
+  /// Called with file-level progress for the mod currently being scanned.
+  /// [processed] is the number of selected assets whose header has been
+  /// read so far; [total] is the selector's full asset count for that mod;
+  /// [recentAssetPath] is the mod-relative path of the asset whose
+  /// completion just incremented [processed], or null on the initial
+  /// (0, total, null) fire-once call at the start of a mod.
+  ///
+  /// Note: reads run concurrently, so [recentAssetPath] isn't "the" file
+  /// being scanned — it's whichever happened to finish most recently. Good
+  /// enough for live activity feedback.
+  Function(int processed, int total, String? recentAssetPath)? onFileProgress;
+
   /// Selector that decides which image files a mod contributes. Defaults to
   /// [FolderScanSelector] (the behavior this class had before selectors
   /// existed) so existing callers need no changes.
@@ -52,6 +64,7 @@ class VramChecker {
     Function(VramCheckerMod)? onModStart,
     Function(String)? verboseOut,
     Function(String)? debugOut,
+    this.onFileProgress,
     required this.isCancelled,
   }) : selector = selector ?? FolderScanSelector() {
     if (verboseOut != null) {
@@ -191,17 +204,27 @@ class VramChecker {
         );
       }
 
+      final totalFiles = selectedAssets.length;
+      onFileProgress?.call(0, totalFiles, null);
+      var processedFiles = 0;
+      void onAssetDone(String relativePath) {
+        processedFiles++;
+        onFileProgress?.call(processedFiles, totalFiles, relativePath);
+      }
+
       final referencedFutures = _processAssets(
         selectedAssets
             .where((a) => a.provenance == AssetProvenance.referenced)
             .toList(),
         imageHeaderReaderPool,
+        onAssetDone: onAssetDone,
       );
       final unreferencedFutures = _processAssets(
         selectedAssets
             .where((a) => a.provenance == AssetProvenance.unreferenced)
             .toList(),
         imageHeaderReaderPool,
+        onAssetDone: onAssetDone,
       );
 
       final results = await Future.wait([
@@ -411,8 +434,9 @@ class VramChecker {
 
   Iterable<Future<Map<String, dynamic>?>> _processAssets(
     Iterable<SelectedAsset> assets,
-    ReadImageHeaders imageHeaderReaderPool,
-  ) {
+    ReadImageHeaders imageHeaderReaderPool, {
+    void Function(String relativePath)? onAssetDone,
+  }) {
     return assets.map((asset) async {
       if (isCancelled()) {
         throw Exception("Cancelled");
@@ -451,6 +475,8 @@ class VramChecker {
           );
         }
         return null;
+      } finally {
+        onAssetDone?.call(file.relativePath);
       }
     });
   }

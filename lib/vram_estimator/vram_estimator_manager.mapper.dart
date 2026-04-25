@@ -67,6 +67,27 @@ class VramEstimatorManagerStateMapper
       v.modsScannedThisRun;
   static const Field<VramEstimatorManagerState, int> _f$modsScannedThisRun =
       Field('modsScannedThisRun', _$modsScannedThisRun, opt: true, def: 0);
+  static int _$currentModFilesScanned(VramEstimatorManagerState v) =>
+      v.currentModFilesScanned;
+  static const Field<VramEstimatorManagerState, int> _f$currentModFilesScanned =
+      Field(
+        'currentModFilesScanned',
+        _$currentModFilesScanned,
+        opt: true,
+        def: 0,
+      );
+  static int _$currentModTotalFiles(VramEstimatorManagerState v) =>
+      v.currentModTotalFiles;
+  static const Field<VramEstimatorManagerState, int> _f$currentModTotalFiles =
+      Field('currentModTotalFiles', _$currentModTotalFiles, opt: true, def: 0);
+  static String? _$currentlyScanningFilePath(VramEstimatorManagerState v) =>
+      v.currentlyScanningFilePath;
+  static const Field<VramEstimatorManagerState, String>
+  _f$currentlyScanningFilePath = Field(
+    'currentlyScanningFilePath',
+    _$currentlyScanningFilePath,
+    opt: true,
+  );
 
   @override
   final MappableFields<VramEstimatorManagerState> fields = const {
@@ -77,6 +98,9 @@ class VramEstimatorManagerStateMapper
     #currentlyScanningModName: _f$currentlyScanningModName,
     #totalModsToScan: _f$totalModsToScan,
     #modsScannedThisRun: _f$modsScannedThisRun,
+    #currentModFilesScanned: _f$currentModFilesScanned,
+    #currentModTotalFiles: _f$currentModTotalFiles,
+    #currentlyScanningFilePath: _f$currentlyScanningFilePath,
   };
 
   static VramEstimatorManagerState _instantiate(DecodingData data) {
@@ -88,6 +112,9 @@ class VramEstimatorManagerStateMapper
       currentlyScanningModName: data.dec(_f$currentlyScanningModName),
       totalModsToScan: data.dec(_f$totalModsToScan),
       modsScannedThisRun: data.dec(_f$modsScannedThisRun),
+      currentModFilesScanned: data.dec(_f$currentModFilesScanned),
+      currentModTotalFiles: data.dec(_f$currentModTotalFiles),
+      currentlyScanningFilePath: data.dec(_f$currentlyScanningFilePath),
     );
   }
 
@@ -175,6 +202,9 @@ abstract class VramEstimatorManagerStateCopyWith<
     String? currentlyScanningModName,
     int? totalModsToScan,
     int? modsScannedThisRun,
+    int? currentModFilesScanned,
+    int? currentModTotalFiles,
+    String? currentlyScanningFilePath,
   });
   VramEstimatorManagerStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -206,6 +236,9 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
     Object? currentlyScanningModName = $none,
     int? totalModsToScan,
     int? modsScannedThisRun,
+    int? currentModFilesScanned,
+    int? currentModTotalFiles,
+    Object? currentlyScanningFilePath = $none,
   }) => $apply(
     FieldCopyWithData({
       if (modVramInfo != null) #modVramInfo: modVramInfo,
@@ -216,6 +249,12 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
         #currentlyScanningModName: currentlyScanningModName,
       if (totalModsToScan != null) #totalModsToScan: totalModsToScan,
       if (modsScannedThisRun != null) #modsScannedThisRun: modsScannedThisRun,
+      if (currentModFilesScanned != null)
+        #currentModFilesScanned: currentModFilesScanned,
+      if (currentModTotalFiles != null)
+        #currentModTotalFiles: currentModTotalFiles,
+      if (currentlyScanningFilePath != $none)
+        #currentlyScanningFilePath: currentlyScanningFilePath,
     }),
   );
   @override
@@ -233,6 +272,18 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
         modsScannedThisRun: data.get(
           #modsScannedThisRun,
           or: $value.modsScannedThisRun,
+        ),
+        currentModFilesScanned: data.get(
+          #currentModFilesScanned,
+          or: $value.currentModFilesScanned,
+        ),
+        currentModTotalFiles: data.get(
+          #currentModTotalFiles,
+          or: $value.currentModTotalFiles,
+        ),
+        currentlyScanningFilePath: data.get(
+          #currentlyScanningFilePath,
+          or: $value.currentlyScanningFilePath,
         ),
       );
 

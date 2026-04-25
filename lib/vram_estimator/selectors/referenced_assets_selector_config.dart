@@ -41,8 +41,10 @@ class ReferencedAssetsSelectorConfig
         },
       );
 
-  /// Deterministic hash used for the per-selector result cache key. Only
-  /// includes fields that actually affect scan output.
+  /// In-session equality key for detecting config changes. NOT stable
+  /// across process restarts (Dart's `Object.hashAll` seeds differently
+  /// per VM run) — never use as a filesystem identifier. Disk persistence
+  /// keys by selector id only.
   int get cacheHash => Object.hashAll([
     ...(enabledParserIds.toList()..sort()),
     suppressUnreferenced,

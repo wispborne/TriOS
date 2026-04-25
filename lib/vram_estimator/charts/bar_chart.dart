@@ -36,6 +36,9 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
     graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
     final realMods = ref.watch(AppState.mods);
     final realModsById = {for (final m in realMods) m.id: m};
+    final vramState = ref.watch(AppState.vramEstimatorProvider).value;
+    final isGlobalScanning = vramState?.isScanning ?? false;
+    final scanningName = vramState?.currentlyScanningModName;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,73 +89,87 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                           child: Card(
                             clipBehavior: Clip.antiAlias,
                             child: InkWell(
-                              onTap: () => VramModBreakdownDialog.show(
-                                context,
-                                mod,
-                              ),
+                              onTap: () =>
+                                  VramModBreakdownDialog.show(context, mod),
                               child: Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      if (iconFilePath != null)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 8.0,
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        if (iconFilePath != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 8.0,
+                                            ),
+                                            child: ModIcon(
+                                              iconFilePath,
+                                              size: 28,
+                                            ),
                                           ),
-                                          child: ModIcon(
-                                            iconFilePath,
-                                            size: 28,
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8.0,
+                                                    ),
+                                                child: Text(
+                                                  mod.info.formattedName,
+                                                  style: theme
+                                                      .textTheme
+                                                      .labelLarge,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8.0,
+                                                    ),
+                                                child: _ModBytesLabel(
+                                                  mod: mod,
+                                                  theme: theme,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8.0,
-                                            ),
-                                            child: Text(
-                                              mod.info.formattedName,
-                                              style: theme.textTheme.labelLarge,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8.0,
-                                            ),
-                                            child: _ModBytesLabel(
-                                              mod: mod,
-                                              theme: theme,
-                                            ),
-                                          ),
-                                        ],
+                                        _RowRescanButton(
+                                          isScanningThisMod:
+                                              isGlobalScanning &&
+                                              scanningName ==
+                                                  (mod.info.name ??
+                                                      mod.info.modId),
+                                          canRescan: !isGlobalScanning,
+                                          onRescan: () => _rescanThisMod(mod),
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
+                                    ),
+                                    Opacity(
+                                      opacity: 0.6,
+                                      child: Container(
+                                        width: width,
+                                        height: 10,
+                                        color: ColorGenerator.generateFromColor(
+                                          mod.info.smolId,
+                                          baseColor,
+                                        ).createMaterialColor().shade700,
                                       ),
-                                    ],
-                                  ),
-                                  Opacity(
-                                    opacity: 0.6,
-                                    child: Container(
-                                      width: width,
-                                      height: 10,
-                                      color: ColorGenerator.generateFromColor(
-                                        mod.info.smolId,
-                                        baseColor,
-                                      ).createMaterialColor().shade700,
                                     ),
-                                  ),
-                                  if (mod.unreferencedImages != null)
-                                    _UnreferencedBar(
-                                      mod: mod,
-                                      maxVramUsed: maxVramUsed,
-                                      layoutConstraints: layoutConstraints,
-                                    ),
-                                ],
+                                    if (mod.unreferencedImages != null)
+                                      _UnreferencedBar(
+                                        mod: mod,
+                                        maxVramUsed: maxVramUsed,
+                                        layoutConstraints: layoutConstraints,
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
                             ),
                           ),
                         );
@@ -163,6 +180,16 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
         ),
       ],
     );
+  }
+
+  Future<void> _rescanThisMod(VramMod mod) async {
+    final mods = ref.read(AppState.mods);
+    final modEntry = mods.firstWhereOrNull((m) => m.id == mod.info.modId);
+    final variant = modEntry?.findFirstEnabledOrHighestVersion;
+    if (variant == null) return;
+    await ref
+        .read(AppState.vramEstimatorProvider.notifier)
+        .startEstimating(variantsToCheck: [variant]);
   }
 
   double _calculateMostVramUse() {
@@ -230,6 +257,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
 class _ModBytesLabel extends StatelessWidget {
   final VramMod mod;
   final ThemeData theme;
+
   const _ModBytesLabel({required this.mod, required this.theme});
 
   @override
@@ -237,16 +265,14 @@ class _ModBytesLabel extends StatelessWidget {
     final refBytes = mod.bytesNotIncludingGraphicsLib();
     final hasUnref = mod.unreferencedImages != null;
     final unrefBytes = mod.unreferencedBytesNotIncludingGraphicsLib();
-    final mutedColor =
-        theme.textTheme.labelMedium?.color?.withValues(alpha: 0.6);
+    final mutedColor = theme.textTheme.labelMedium?.color?.withValues(
+      alpha: 0.6,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          refBytes.bytesAsReadableMB(),
-          style: theme.textTheme.labelMedium,
-        ),
+        Text(refBytes.bytesAsReadableMB(), style: theme.textTheme.labelMedium),
         if (hasUnref)
           MovingTooltipWidget.text(
             message:
@@ -262,6 +288,75 @@ class _ModBytesLabel extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _RowRescanButton extends StatefulWidget {
+  final bool isScanningThisMod;
+  final bool canRescan;
+  final VoidCallback onRescan;
+
+  const _RowRescanButton({
+    required this.isScanningThisMod,
+    required this.canRescan,
+    required this.onRescan,
+  });
+
+  @override
+  State<_RowRescanButton> createState() => _RowRescanButtonState();
+}
+
+class _RowRescanButtonState extends State<_RowRescanButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _anim = AnimationController(
+    duration: const Duration(seconds: 1),
+    vsync: this,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isScanningThisMod) _anim.repeat();
+  }
+
+  @override
+  void didUpdateWidget(_RowRescanButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isScanningThisMod && !_anim.isAnimating) {
+      _anim.repeat();
+    } else if (!widget.isScanningThisMod && _anim.isAnimating) {
+      _anim.stop();
+      _anim.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltip = widget.isScanningThisMod
+        ? 'Rescanning this mod…'
+        : widget.canRescan
+        ? 'Rescan this mod'
+        : 'Scan in progress — rescan unavailable';
+    return MovingTooltipWidget.text(
+      message: tooltip,
+      child: IconButton(
+        onPressed: widget.canRescan ? widget.onRescan : null,
+        icon: AnimatedBuilder(
+          animation: _anim,
+          builder: (_, child) => Transform.rotate(
+            angle: _anim.value * 2.0 * 3.141592,
+            child: child,
+          ),
+          child: const Icon(Icons.refresh),
+        ),
+      ),
     );
   }
 }

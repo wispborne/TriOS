@@ -1,9 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/relative_timestamp.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
@@ -13,8 +13,6 @@ import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
-
-final _scannedAtFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
 
 /// Detailed breakdown of a single mod's VRAM estimate. Shown when the
 /// user taps a mod row on the VRAM estimator page.
@@ -117,19 +115,16 @@ class _VramModBreakdownDialogState
               .toList();
     final filteredUnref = q.isEmpty
         ? unrefViews
-        : unrefViews
-              .where((v) => _matches(v, q, mod.info.modFolder))
-              .toList();
+        : unrefViews.where((v) => _matches(v, q, mod.info.modFolder)).toList();
 
     String tabLabel(String base, int filtered, int total) =>
         q.isEmpty ? '$base ($total)' : '$base ($filtered / $total)';
 
     return AlertDialog(
-      icon: const Icon(Icons.memory),
-      title: Text(mod.info.formattedName),
+      icon: null,
+      title: Text("VRAM Estimate: ${mod.info.formattedName}"),
       content: SizedBox(
         width: 900,
-        height: 600,
         child: DefaultTabController(
           length: unrefViews.isEmpty ? 1 : 2,
           child: Column(
@@ -179,11 +174,14 @@ class _VramModBreakdownDialogState
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ViewerSearchBox(
-                    searchController: _searchController,
-                    hintText: 'Search path or referenced-by…',
-                    onChanged: (value) => setState(() => _query = value),
-                    onClear: () => setState(() => _query = ''),
+                  Padding(
+                    padding: const .only(bottom: 4),
+                    child: ViewerSearchBox(
+                      searchController: _searchController,
+                      hintText: 'Search path or referenced-by…',
+                      onChanged: (value) => setState(() => _query = value),
+                      onClear: () => setState(() => _query = ''),
+                    ),
                   ),
                 ],
               ),
@@ -260,29 +258,29 @@ class _HeaderRow extends StatelessWidget {
     final chips = <Widget>[
       _chip(
         theme,
-        mod.isEnabled ? 'Enabled' : 'Disabled',
+        "Status:${mod.isEnabled ? 'Enabled' : 'Disabled'}",
         mod.isEnabled
             ? theme.colorScheme.primary
             : theme.colorScheme.onSurface.withOpacity(0.4),
       ),
       _chip(
         theme,
-        mod.unreferencedImages == null ? 'folder-scan' : 'referenced selector',
-        theme.colorScheme.secondary,
+        "Method: ${mod.unreferencedImages == null ? 'Scan All' : 'Selective Scan'}",
+        theme.colorScheme.onSurface,
       ),
       if ((mod.graphicsLibEntries ?? []).isNotEmpty)
         _chip(
           theme,
           'GraphicsLib CSV: ${mod.graphicsLibEntries!.length} entries',
-          theme.colorScheme.tertiary,
+          theme.colorScheme.onSurface,
         ),
       if (scannedAtLocal != null)
         MovingTooltipWidget.text(
-          message: 'Scanned ${scannedAtLocal.relativeTimestamp()}',
+          message: 'Last scanned ${scannedAtLocal.relativeTimestamp()}',
           child: _chip(
             theme,
-            'Scanned ${_scannedAtFormat.format(scannedAtLocal)}',
-            theme.colorScheme.onSurface.withOpacity(0.6),
+            'Last scan: ${Constants.dateTimeFormat.format(scannedAtLocal)}',
+            theme.colorScheme.onSurface,
           ),
         ),
     ];
@@ -635,7 +633,7 @@ class _ImagesTableState extends State<_ImagesTable> {
           ),
           Expanded(
             flex: 2,
-            child: Text('GfxLib', style: style, textAlign: TextAlign.end),
+            child: Text('GraphicsLib', style: style, textAlign: TextAlign.end),
           ),
           Expanded(
             flex: 2,
@@ -682,7 +680,7 @@ class _ImagesTableState extends State<_ImagesTable> {
         relPath,
         'Dimensions (POT): $dims',
         'Channels × bits: ${view.bitsInAllChannelsSum}',
-        'Type: ${view.imageType.name}${isGfx ? " · GfxLib ${view.graphicsLibType!.name}" : ""}',
+        'Type: ${view.imageType.name}${isGfx ? " · GraphicsLib ${view.graphicsLibType!.name}" : ""}',
         if (refBy != null && refBy.isNotEmpty)
           'Referenced by:\n${refBy.map((e) => "  $e").join("\n")}',
         if (refBy == null && !isUnreferencedTab)

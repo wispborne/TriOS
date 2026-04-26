@@ -946,6 +946,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: ReferencedAssetsSelectorConfig.allEnabled,
   );
+  static bool _$vramEstimatorMultithreaded(Settings v) =>
+      v.vramEstimatorMultithreaded;
+  static const Field<Settings, bool> _f$vramEstimatorMultithreaded = Field(
+    'vramEstimatorMultithreaded',
+    _$vramEstimatorMultithreaded,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -1028,6 +1036,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #debugMode: _f$debugMode,
     #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
     #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
+    #vramEstimatorMultithreaded: _f$vramEstimatorMultithreaded,
   };
   @override
   final bool ignoreNull = true;
@@ -1124,6 +1133,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       referencedAssetsSelectorConfig: data.dec(
         _f$referencedAssetsSelectorConfig,
       ),
+      vramEstimatorMultithreaded: data.dec(_f$vramEstimatorMultithreaded),
     );
   }
 
@@ -1319,6 +1329,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? debugMode,
     String? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
+    bool? vramEstimatorMultithreaded,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1516,6 +1527,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? debugMode,
     String? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
+    bool? vramEstimatorMultithreaded,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1633,6 +1645,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         #vramEstimatorSelectorId: vramEstimatorSelectorId,
       if (referencedAssetsSelectorConfig != null)
         #referencedAssetsSelectorConfig: referencedAssetsSelectorConfig,
+      if (vramEstimatorMultithreaded != null)
+        #vramEstimatorMultithreaded: vramEstimatorMultithreaded,
     }),
   );
   @override
@@ -1870,6 +1884,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     referencedAssetsSelectorConfig: data.get(
       #referencedAssetsSelectorConfig,
       or: $value.referencedAssetsSelectorConfig,
+    ),
+    vramEstimatorMultithreaded: data.get(
+      #vramEstimatorMultithreaded,
+      or: $value.vramEstimatorMultithreaded,
     ),
   );
 

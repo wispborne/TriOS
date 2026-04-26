@@ -7,6 +7,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/relative_timestamp.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
+import 'package:trios/vram_estimator/models/active_mod_scan.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/vram_checker_logic.dart';
@@ -17,11 +18,27 @@ import 'package:trios/widgets/moving_tooltip.dart';
 /// Inline panel shown above the VRAM chart. While a scan is running it
 /// displays live progress; when idle it collapses to a single-line
 /// summary of the last scan's results.
-class ScanProgressPanel extends ConsumerWidget {
+class ScanProgressPanel extends ConsumerStatefulWidget {
   const ScanProgressPanel({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ScanProgressPanel> createState() => _ScanProgressPanelState();
+}
+
+class _ScanProgressPanelState extends ConsumerState<ScanProgressPanel> {
+  // Persistent controller shared between the Scrollbar and the ListView
+  // so the Scrollbar can find a ScrollPosition when there are enough
+  // active scans to scroll.
+  final ScrollController _activeScansController = ScrollController();
+
+  @override
+  void dispose() {
+    _activeScansController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final vramStateProvider = ref.watch(AppState.vramEstimatorProvider);
     if (vramStateProvider.isLoading) return const SizedBox.shrink();
     final state = vramStateProvider.requireValue;
@@ -30,20 +47,29 @@ class ScanProgressPanel extends ConsumerWidget {
 
     final done = state.modsScannedThisRun;
     final total = state.totalModsToScan;
-    final current = state.currentlyScanningModName;
-    final filesDone = state.currentModFilesScanned;
-    final filesTotal = state.currentModTotalFiles;
-    final currentFilePath = state.currentlyScanningFilePath;
     final theme = Theme.of(context);
     final hasTotal = total > 0;
     final fraction = hasTotal ? (done / total).clamp(0.0, 1.0) : null;
     final percentText = fraction != null
         ? '${(fraction * 100).toStringAsFixed(0)}%'
         : '';
-    final hasFileProgress = filesTotal > 0;
-    final filePercentText = hasFileProgress
-        ? '${((filesDone / filesTotal) * 100).clamp(0, 100).toStringAsFixed(0)}%'
-        : '';
+
+    // Collect every active scan. Sort: actively-reading-files first
+    // (so the user sees the "live" rows up top), then mods that have
+    // started but are still in selector / parse prep. Alphabetical
+    // within each group keeps the list stable as workers complete.
+    final activeScans = state.activeScans.values.toList()
+      ..sort((a, b) {
+        final aActive = a.totalFiles > 0;
+        final bActive = b.totalFiles > 0;
+        if (aActive != bActive) return aActive ? -1 : 1;
+        return a.modName.toLowerCase().compareTo(b.modName.toLowerCase());
+      });
+    // Fallback for the brief window before the first onModStart fires
+    // (or for the legacy single-mod path while activeScans is still
+    // populating). Lets the user see *something* instead of an empty list.
+    final fallbackName =
+        activeScans.isEmpty ? state.currentlyScanningModName : null;
 
     return Card(
       margin: .zero,
@@ -65,7 +91,9 @@ class ScanProgressPanel extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Progress',
+                  activeScans.length > 1
+                      ? 'Progress  •  ${activeScans.length} scans in flight'
+                      : 'Progress',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -87,53 +115,45 @@ class ScanProgressPanel extends ConsumerWidget {
                 ),
               ],
             ),
-            // Primary line: current mod, with the most-recently-completed
-            // file path as a secondary line below it for live activity.
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Currently scanning: ',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+            // Per-mod live rows. One row per scan currently in flight;
+            // multiple rows under the multithreaded path. Capped + scrollable
+            // so a long list (e.g. a freshly-submitted batch) never pushes
+            // the rest of the page off-screen.
+            if (activeScans.isNotEmpty)
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 220),
+                child: Scrollbar(
+                  controller: _activeScansController,
+                  thumbVisibility: activeScans.length > 4,
+                  child: ListView.builder(
+                    controller: _activeScansController,
+                    shrinkWrap: true,
+                    itemCount: activeScans.length,
+                    itemBuilder: (context, i) =>
+                        _ActiveScanRow(scan: activeScans[i], theme: theme),
                   ),
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: .start,
-                    children: [
-                      Text(
-                        (current == null || current.isEmpty)
-                            ? 'preparing…'
-                            : current,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        currentFilePath ?? '',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                          fontFamily: 'Roboto Mono',
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+              )
+            else if (fallbackName != null && fallbackName.isNotEmpty)
+              _ActiveScanRow(
+                scan: ActiveModScan(modName: fallbackName),
+                theme: theme,
+              )
+            else
+              Text(
+                'preparing…',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  fontStyle: FontStyle.italic,
                 ),
-              ],
-            ),
-            // Secondary line: overall progress count
+              ),
+            // Overall progress count + bar
             Row(
               children: [
                 Text(
                   'Overall: ',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 Text(
@@ -144,25 +164,6 @@ class ScanProgressPanel extends ConsumerWidget {
                 ),
               ],
             ),
-            // Tertiary line: file-level progress within the current mod.
-            // Hidden between mods when the selector hasn't produced a
-            // file list yet.
-            if (hasFileProgress)
-              Row(
-                children: [
-                  Text(
-                    'Files: ',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  Text(
-                    '$filesDone of $filesTotal files  ($filePercentText)',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            // Progress bar
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
@@ -174,6 +175,86 @@ class ScanProgressPanel extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// One row of per-mod progress: name, file counter, file path, and a
+/// thin per-mod progress bar. Renders compactly so several rows stack
+/// without dwarfing the rest of the page.
+class _ActiveScanRow extends StatelessWidget {
+  const _ActiveScanRow({required this.scan, required this.theme});
+
+  final ActiveModScan scan;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasFileProgress = scan.totalFiles > 0;
+    final fileFraction = hasFileProgress
+        ? (scan.filesScanned / scan.totalFiles).clamp(0.0, 1.0)
+        : null;
+    final filePercentText = fileFraction != null
+        ? '${(fileFraction * 100).toStringAsFixed(0)}%'
+        : '';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  scan.modName,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                hasFileProgress
+                    ? '${scan.filesScanned} / ${scan.totalFiles}  ($filePercentText)'
+                    : 'preparing…',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  fontStyle: hasFileProgress
+                      ? FontStyle.normal
+                      : FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          if (scan.currentFilePath != null && scan.currentFilePath!.isNotEmpty)
+            Text(
+              scan.currentFilePath!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                fontFamily: 'Roboto Mono',
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          // Always show a thin progress bar — determinate while reading
+          // image headers, indeterminate during the selector / parse prelude
+          // so the user can see the worker is doing CPU work even before
+          // the file counter starts ticking.
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: hasFileProgress ? fileFraction : null,
+                minHeight: 2,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                color: theme.colorScheme.primary.withValues(alpha: 0.6),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

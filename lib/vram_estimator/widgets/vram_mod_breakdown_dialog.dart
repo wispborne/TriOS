@@ -452,13 +452,13 @@ class _TotalsCard extends StatelessWidget {
               const SizedBox(height: 8),
               MovingTooltipWidget.text(
                 message:
-                    'Advisory — images on disk with no detected reference. '
+                    'Images on disk with no detected reference. '
                     'May include dev leftovers or paths constructed dynamically '
-                    "in Java that the parsers can't see.",
+                    "in Java.",
                 child: _totalsLine(
                   theme,
                   _TotalsRow(
-                    'Unreferenced (advisory, not counted)',
+                    'Unreferenced (not counted)',
                     totalUnref,
                     muted: true,
                     italic: true,
@@ -496,9 +496,9 @@ class _TotalsCard extends StatelessWidget {
       MapType.Material => cfg.areGfxLibMaterialMapsEnabled,
       MapType.Surface => cfg.areGfxLibSurfaceMapsEnabled,
     };
-    if (!typeEnabled) return 'type disabled in GfxLib config';
+    if (!typeEnabled) return 'type disabled in GraphicsLib config';
     if (!cfg.preloadAllMaps) {
-      return 'streamed on-demand by GfxLib; not counted';
+      return 'streamed on-demand by GraphicsLib; not counted';
     }
     return 'not counted';
   }
@@ -675,23 +675,54 @@ class _ImagesTableState extends State<_ImagesTable> {
           : FontStyle.normal,
     );
 
-    return MovingTooltipWidget.text(
-      message: [
-        relPath,
-        'Dimensions (POT): $dims',
-        'Channels × bits: ${view.bitsInAllChannelsSum}',
-        'Type: ${view.imageType.name}${isGfx ? " · GraphicsLib ${view.graphicsLibType!.name}" : ""}',
-        if (refBy != null && refBy.isNotEmpty)
-          'Referenced by:\n${refBy.map((e) => "  $e").join("\n")}',
-        if (refBy == null && !isUnreferencedTab)
-          'No attribution recorded (folder-scan mode, or background file).',
-        if (isGfx && !active) 'Not counted; ${_gfxRowReason(view, gfxConfig)}',
-        if (view.imageType == ImageType.background)
-          'Background; only the largest oversized one counts',
-      ].join('\n'),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: SelectionArea(
+    final tooltipMessage = [
+      relPath,
+      'Dimensions (POT): $dims',
+      'Channels × bits: ${view.bitsInAllChannelsSum}',
+      'Type: ${view.imageType.name}${isGfx ? " · GraphicsLib ${view.graphicsLibType!.name}" : ""}',
+      if (refBy != null && refBy.isNotEmpty)
+        'Referenced by:\n${refBy.map((e) => "  $e").join("\n")}',
+      if (refBy == null && !isUnreferencedTab)
+        'No attribution recorded (folder-scan mode, or background file).',
+      if (isGfx && !active) 'Not counted; ${_gfxRowReason(view, gfxConfig)}',
+      if (view.imageType == ImageType.background)
+        'Background; only the largest oversized one counts',
+    ].join('\n');
+
+    return MovingTooltipWidget(
+      tooltipWidget: Card(
+        color: kDarkTooltipBackground,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 32,
+            children: [
+              Text(
+                tooltipMessage,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 150,
+                  maxHeight: 150,
+                ),
+                child: Image.file(
+                  view.file,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.none,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      child: InkWell(
+        onTap: () => view.file.showInExplorer(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Row(
             children: [
               Expanded(

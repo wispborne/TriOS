@@ -49,6 +49,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.0"
+  async_extension:
+    dependency: transitive
+    description:
+      name: async_extension
+      sha256: bfc1e4dc894f5d761ef3fb35e004678b6171d44f1170a84749ce8d2ee8cacb74
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.22"
+  async_task:
+    dependency: "direct main"
+    description:
+      name: async_task
+      sha256: c4c6e0f5c0216605cc388dc522f76da2e795ad8aaba7839b15fdb261bee8a7b3
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.2"
   boolean_selector:
     dependency: transitive
     description:

@@ -164,6 +164,10 @@ class Settings with SettingsMappable {
   final String vramEstimatorSelectorId;
   final ReferencedAssetsSelectorConfig referencedAssetsSelectorConfig;
 
+  /// When true, the VRAM scan runs across an isolate pool via `async_task`.
+  /// When false (default), runs the legacy single-isolate sequential pipeline.
+  final bool vramEstimatorMultithreaded;
+
   Settings({
     this.gameDir,
     this.gameCoreDir,
@@ -261,6 +265,7 @@ class Settings with SettingsMappable {
     this.vramEstimatorSelectorId = 'folder-scan',
     this.referencedAssetsSelectorConfig =
         ReferencedAssetsSelectorConfig.allEnabled,
+    this.vramEstimatorMultithreaded = false,
   });
 }
 

@@ -19,6 +19,7 @@ class VramEstimatorManagerStateMapper
         _instance = VramEstimatorManagerStateMapper._(),
       );
       VramModMapper.ensureInitialized();
+      ActiveModScanMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -88,6 +89,16 @@ class VramEstimatorManagerStateMapper
     _$currentlyScanningFilePath,
     opt: true,
   );
+  static Map<String, ActiveModScan> _$activeScans(
+    VramEstimatorManagerState v,
+  ) => v.activeScans;
+  static const Field<VramEstimatorManagerState, Map<String, ActiveModScan>>
+  _f$activeScans = Field(
+    'activeScans',
+    _$activeScans,
+    opt: true,
+    def: const {},
+  );
 
   @override
   final MappableFields<VramEstimatorManagerState> fields = const {
@@ -101,6 +112,7 @@ class VramEstimatorManagerStateMapper
     #currentModFilesScanned: _f$currentModFilesScanned,
     #currentModTotalFiles: _f$currentModTotalFiles,
     #currentlyScanningFilePath: _f$currentlyScanningFilePath,
+    #activeScans: _f$activeScans,
   };
 
   static VramEstimatorManagerState _instantiate(DecodingData data) {
@@ -115,6 +127,7 @@ class VramEstimatorManagerStateMapper
       currentModFilesScanned: data.dec(_f$currentModFilesScanned),
       currentModTotalFiles: data.dec(_f$currentModTotalFiles),
       currentlyScanningFilePath: data.dec(_f$currentlyScanningFilePath),
+      activeScans: data.dec(_f$activeScans),
     );
   }
 
@@ -194,6 +207,13 @@ abstract class VramEstimatorManagerStateCopyWith<
     implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
   get modVramInfo;
+  MapCopyWith<
+    $R,
+    String,
+    ActiveModScan,
+    ActiveModScanCopyWith<$R, ActiveModScan, ActiveModScan>
+  >
+  get activeScans;
   $R call({
     Map<String, VramMod>? modVramInfo,
     DateTime? lastUpdated,
@@ -205,6 +225,7 @@ abstract class VramEstimatorManagerStateCopyWith<
     int? currentModFilesScanned,
     int? currentModTotalFiles,
     String? currentlyScanningFilePath,
+    Map<String, ActiveModScan>? activeScans,
   });
   VramEstimatorManagerStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -228,6 +249,18 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
     (v) => call(modVramInfo: v),
   );
   @override
+  MapCopyWith<
+    $R,
+    String,
+    ActiveModScan,
+    ActiveModScanCopyWith<$R, ActiveModScan, ActiveModScan>
+  >
+  get activeScans => MapCopyWith(
+    $value.activeScans,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(activeScans: v),
+  );
+  @override
   $R call({
     Map<String, VramMod>? modVramInfo,
     Object? lastUpdated = $none,
@@ -239,6 +272,7 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
     int? currentModFilesScanned,
     int? currentModTotalFiles,
     Object? currentlyScanningFilePath = $none,
+    Map<String, ActiveModScan>? activeScans,
   }) => $apply(
     FieldCopyWithData({
       if (modVramInfo != null) #modVramInfo: modVramInfo,
@@ -255,6 +289,7 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
         #currentModTotalFiles: currentModTotalFiles,
       if (currentlyScanningFilePath != $none)
         #currentlyScanningFilePath: currentlyScanningFilePath,
+      if (activeScans != null) #activeScans: activeScans,
     }),
   );
   @override
@@ -285,6 +320,7 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
           #currentlyScanningFilePath,
           or: $value.currentlyScanningFilePath,
         ),
+        activeScans: data.get(#activeScans, or: $value.activeScans),
       );
 
   @override

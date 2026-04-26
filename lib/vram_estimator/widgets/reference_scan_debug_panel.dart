@@ -7,22 +7,23 @@ import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 
-/// Collapsible panel surfacing `ReferencedAssetsSelectorConfig` toggles.
-/// Visible only when the active selector is `ReferencedAssetsSelector`.
+/// Collapsible panel surfacing the VRAM estimator's debug toggles. The
+/// multithreaded-scan toggle is selector-independent and renders for any
+/// active selector; the reference-source toggles only render when the
+/// active selector is `ReferencedAssetsSelector`.
 class ReferenceScanDebugPanel extends ConsumerWidget {
   const ReferenceScanDebugPanel({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettings);
-    if (settings.vramEstimatorSelectorId != 'referenced') {
-      return const SizedBox.shrink();
-    }
+    final isReferencedSelector =
+        settings.vramEstimatorSelectorId == 'referenced';
     final config = settings.referencedAssetsSelectorConfig;
 
     return Card(
       child: TriOSExpansionTile(
-        title: const Text('Reference scan debug'),
+        title: const Text('VRAM scan debug'),
         leading: const Icon(Icons.tune),
         children: [
           Padding(
@@ -30,42 +31,66 @@ class ReferenceScanDebugPanel extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Enabled reference sources',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    for (final parser in registeredReferenceParsers)
-                      MovingTooltipWidget.text(
-                        message: parser.description,
-                        child: FilterChip(
-                          label: Text(parser.displayName),
-                          selected: config.enabledParserIds.contains(parser.id),
-                          onSelected: (val) =>
-                              _toggleParser(ref, config, parser.id, val),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
                 MovingTooltipWidget.text(
                   message:
-                      'Hide unreferenced bucket — compare directly to '
-                      'folder-scan totals.',
+                      'Run the per-mod scan loop across an isolate pool. '
+                      'Faster on large mod lists, but uses more CPU and '
+                      'multiplies the per-isolate file-handle limit by the '
+                      'pool size. Takes effect on the next scan.',
                   child: SwitchListTile(
-                    title: const Text('Suppress unreferenced bucket'),
-                    value: config.suppressUnreferenced,
-                    onChanged: (val) =>
-                        _updateConfig(
-                          ref,
-                          config.copyWith(suppressUnreferenced: val),
+                    title: const Text('Multithreaded scanning'),
+                    subtitle: const Text(
+                      'Faster scans, higher CPU and file-handle pressure',
+                    ),
+                    value: settings.vramEstimatorMultithreaded,
+                    onChanged: (val) => ref
+                        .read(appSettings.notifier)
+                        .update(
+                          (s) => s.copyWith(vramEstimatorMultithreaded: val),
                         ),
                   ),
                 ),
+                if (isReferencedSelector) ...[
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Enabled reference sources',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      for (final parser in registeredReferenceParsers)
+                        MovingTooltipWidget.text(
+                          message: parser.description,
+                          child: FilterChip(
+                            label: Text(parser.displayName),
+                            selected: config.enabledParserIds.contains(
+                              parser.id,
+                            ),
+                            onSelected: (val) =>
+                                _toggleParser(ref, config, parser.id, val),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  MovingTooltipWidget.text(
+                    message:
+                        'Hide unreferenced bucket — compare directly to '
+                        'folder-scan totals.',
+                    child: SwitchListTile(
+                      title: const Text('Suppress unreferenced bucket'),
+                      value: config.suppressUnreferenced,
+                      onChanged: (val) => _updateConfig(
+                        ref,
+                        config.copyWith(suppressUnreferenced: val),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -90,9 +115,9 @@ class ReferenceScanDebugPanel extends ConsumerWidget {
   }
 
   void _updateConfig(WidgetRef ref, ReferencedAssetsSelectorConfig newConfig) {
-    ref.read(appSettings.notifier).update(
-          (s) => s.copyWith(referencedAssetsSelectorConfig: newConfig),
-        );
+    ref
+        .read(appSettings.notifier)
+        .update((s) => s.copyWith(referencedAssetsSelectorConfig: newConfig));
     // Notify the VRAM manager so it swaps / rescans.
     ref
         .read(AppState.vramEstimatorProvider.notifier)

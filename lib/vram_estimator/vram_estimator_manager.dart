@@ -17,6 +17,7 @@ import 'package:trios/vram_estimator/vram_checker_logic.dart';
 
 import '../models/mod_variant.dart';
 import 'graphics_lib_config_provider.dart';
+import 'models/active_mod_scan.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/vram_checker_models.dart';
 
@@ -48,6 +49,12 @@ class VramEstimatorManagerState with VramEstimatorManagerStateMappable {
   // yet for the current mod, or when no scan is running.
   String? currentlyScanningFilePath;
 
+  /// Per-mod live progress for every mod currently being scanned, keyed
+  /// by mod id. Populated under both single- and multi-threaded paths;
+  /// the multithreaded path will hold multiple entries simultaneously.
+  /// Empty when no scan is in flight.
+  Map<String, ActiveModScan> activeScans;
+
   VramEstimatorManagerState({
     required this.modVramInfo,
     required this.lastUpdated,
@@ -59,6 +66,7 @@ class VramEstimatorManagerState with VramEstimatorManagerStateMappable {
     this.currentModFilesScanned = 0,
     this.currentModTotalFiles = 0,
     this.currentlyScanningFilePath,
+    this.activeScans = const {},
   });
 
   factory VramEstimatorManagerState.initial() {
@@ -209,6 +217,7 @@ class VramEstimatorManager
         loaded.currentModFilesScanned = 0;
         loaded.currentModTotalFiles = 0;
         loaded.currentlyScanningFilePath = null;
+        loaded.activeScans = const {};
         return loaded;
       };
 
@@ -266,6 +275,15 @@ class VramEstimatorNotifier
   int _pendingCurrentModTotalFiles = 0;
   String? _pendingCurrentlyScanningFilePath;
   bool _pendingFileProgressDirty = false;
+
+  // Per-mod active-scan tracking. Holds the latest seen state for every
+  // mod currently in flight; flushed into [activeScans] on the same
+  // cadence as the rest of the progress buffer. Removal is deferred to
+  // the flush as well so a removed-then-readded mod (shouldn't happen
+  // but defensively) still ends up correctly represented.
+  final Map<String, ActiveModScan> _pendingActiveScans = {};
+  final Set<String> _pendingActiveScansRemoved = <String>{};
+  bool _pendingActiveScansDirty = false;
   Timer? _chartFlushTimer;
 
   @override
@@ -296,6 +314,9 @@ class VramEstimatorNotifier
     _pendingCurrentModTotalFiles = 0;
     _pendingCurrentlyScanningFilePath = null;
     _pendingFileProgressDirty = false;
+    _pendingActiveScans.clear();
+    _pendingActiveScansRemoved.clear();
+    _pendingActiveScansDirty = false;
   }
 
   void _scheduleChartFlush() {
@@ -309,7 +330,8 @@ class VramEstimatorNotifier
     if (_pendingScanResults.isEmpty &&
         _pendingScanCount == 0 &&
         _pendingScanningModName == null &&
-        !_pendingFileProgressDirty) {
+        !_pendingFileProgressDirty &&
+        !_pendingActiveScansDirty) {
       return;
     }
     final pendingMods = Map.of(_pendingScanResults);
@@ -319,23 +341,41 @@ class VramEstimatorNotifier
     final pendingTotalFiles = _pendingCurrentModTotalFiles;
     final pendingFilePath = _pendingCurrentlyScanningFilePath;
     final fileProgressDirty = _pendingFileProgressDirty;
+    final pendingActive = Map<String, ActiveModScan>.from(_pendingActiveScans);
+    final pendingRemoved = Set<String>.from(_pendingActiveScansRemoved);
+    final activeDirty = _pendingActiveScansDirty;
     _pendingScanResults.clear();
     _pendingScanCount = 0;
     _pendingScanningModName = null;
     _pendingFileProgressDirty = false;
+    _pendingActiveScans.clear();
+    _pendingActiveScansRemoved.clear();
+    _pendingActiveScansDirty = false;
 
     await updateState(
       (s) {
         final merged = pendingMods.isEmpty
             ? s.modVramInfo
             : {...s.modVramInfo, ...pendingMods};
-        final next = s.copyWith(
-          modVramInfo: merged,
-          lastUpdated: pendingMods.isNotEmpty ? DateTime.now() : s.lastUpdated,
-        )
-          ..modsScannedThisRun = s.modsScannedThisRun + pendingCount
-          ..currentlyScanningModName =
-              pendingName ?? s.currentlyScanningModName;
+        Map<String, ActiveModScan> nextActive = s.activeScans;
+        if (activeDirty) {
+          nextActive = Map<String, ActiveModScan>.from(s.activeScans);
+          nextActive.addAll(pendingActive);
+          for (final id in pendingRemoved) {
+            nextActive.remove(id);
+          }
+        }
+        final next =
+            s.copyWith(
+                modVramInfo: merged,
+                lastUpdated: pendingMods.isNotEmpty
+                    ? DateTime.now()
+                    : s.lastUpdated,
+                activeScans: nextActive,
+              )
+              ..modsScannedThisRun = s.modsScannedThisRun + pendingCount
+              ..currentlyScanningModName =
+                  pendingName ?? s.currentlyScanningModName;
         if (fileProgressDirty) {
           next.currentModFilesScanned = pendingFilesScanned;
           next.currentModTotalFiles = pendingTotalFiles;
@@ -496,8 +536,10 @@ class VramEstimatorNotifier
         showGfxLibDebugOutput: true,
         showPerformance: true,
         selector: selector,
+        multithreaded: ref.read(appSettings).vramEstimatorMultithreaded,
         onModStart: (checkerMod) {
-          _pendingScanningModName = checkerMod.name ?? checkerMod.modId;
+          final name = checkerMod.name ?? checkerMod.modId;
+          _pendingScanningModName = name;
           // Zero the per-mod file counter and clear the last-file path
           // immediately so the UI doesn't keep showing the previous mod's
           // final state during the selector/parse prelude for the next mod.
@@ -505,18 +547,48 @@ class VramEstimatorNotifier
           _pendingCurrentModTotalFiles = 0;
           _pendingCurrentlyScanningFilePath = null;
           _pendingFileProgressDirty = true;
+          _pendingActiveScans[checkerMod.modId] = ActiveModScan(
+            modName: name,
+          );
+          _pendingActiveScansRemoved.remove(checkerMod.modId);
+          _pendingActiveScansDirty = true;
           _scheduleChartFlush();
         },
-        onFileProgress: (processed, total, path) {
+        onFileProgress: (checkerMod, processed, total, path) {
+          // Single-mod legacy fields (used by tooltips and the inline
+          // panel when only one mod is active).
           _pendingCurrentModFilesScanned = processed;
           _pendingCurrentModTotalFiles = total;
           _pendingCurrentlyScanningFilePath = path;
           _pendingFileProgressDirty = true;
+          // Per-mod live state, used by the multi-row progress UI.
+          final existing = _pendingActiveScans[checkerMod.modId];
+          _pendingActiveScans[checkerMod.modId] =
+              (existing ??
+                      ActiveModScan(
+                        modName: checkerMod.name ?? checkerMod.modId,
+                      ))
+                  .copyWith(
+                    filesScanned: processed,
+                    totalFiles: total,
+                    currentFilePath: path,
+                  );
+          _pendingActiveScansDirty = true;
           _scheduleChartFlush();
         },
         modProgressOut: (VramMod mod) {
           _pendingScanResults[mod.info.smolId] = mod;
           _pendingScanCount++;
+          _scheduleChartFlush();
+        },
+        onModEnd: (checkerMod) {
+          // Remove from in-flight tracking for every terminal outcome —
+          // success, failure, cancel, or worker error. Without this,
+          // mods whose scan failed would accumulate in the panel's
+          // "in flight" list until the whole batch ended.
+          _pendingActiveScans.remove(checkerMod.modId);
+          _pendingActiveScansRemoved.add(checkerMod.modId);
+          _pendingActiveScansDirty = true;
           _scheduleChartFlush();
         },
         debugOut: Fimber.d,
@@ -535,13 +607,17 @@ class VramEstimatorNotifier
       );
 
       updateState(
-        (state) => state.copyWith(modVramInfo: modVramInfo)
-          ..isScanning = false
-          ..isCancelled = false
-          ..currentlyScanningModName = null
-          ..currentModFilesScanned = 0
-          ..currentModTotalFiles = 0
-          ..currentlyScanningFilePath = null,
+        (state) =>
+            state.copyWith(
+                modVramInfo: modVramInfo,
+                activeScans: const <String, ActiveModScan>{},
+              )
+              ..isScanning = false
+              ..isCancelled = false
+              ..currentlyScanningModName = null
+              ..currentModFilesScanned = 0
+              ..currentModTotalFiles = 0
+              ..currentlyScanningFilePath = null,
         skipChangeCheck: true,
       );
     } catch (e) {
@@ -550,13 +626,14 @@ class VramEstimatorNotifier
       // so users see what got through before the error.
       await _flushPendingToState();
       updateState(
-        (state) => state
-          ..isScanning = false
-          ..isCancelled = false
-          ..currentlyScanningModName = null
-          ..currentModFilesScanned = 0
-          ..currentModTotalFiles = 0
-          ..currentlyScanningFilePath = null,
+        (state) =>
+            state.copyWith(activeScans: const <String, ActiveModScan>{})
+              ..isScanning = false
+              ..isCancelled = false
+              ..currentlyScanningModName = null
+              ..currentModFilesScanned = 0
+              ..currentModTotalFiles = 0
+              ..currentlyScanningFilePath = null,
         skipChangeCheck: true,
       );
     } finally {

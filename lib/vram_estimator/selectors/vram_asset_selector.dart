@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:trios/vram_estimator/models/graphics_lib_info.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
+import 'package:trios/vram_estimator/selectors/folder_scan_selector.dart';
+import 'package:trios/vram_estimator/selectors/referenced_assets_selector.dart';
+import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
 
 /// A file enumerated from a mod folder. Shared across selectors so the file
 /// listing happens once and is handed to every selector.
@@ -81,4 +84,30 @@ abstract class VramAssetSelector {
     List<VramModFile> allFiles,
     VramSelectorContext ctx,
   );
+
+  /// Reconstruct a selector from a serializable id + config pair. Used by
+  /// the multithreaded scan path to rebuild selectors inside worker
+  /// isolates from primitives that survive an isolate boundary. The
+  /// config object must be a `Map<String, dynamic>` (a dart_mappable
+  /// `.toMap()` payload) or a `ReferencedAssetsSelectorConfig` instance.
+  /// Unknown ids fall back to [FolderScanSelector] (matching the
+  /// `Settings.vramEstimatorSelectorId` "unknown ids fall back to
+  /// folder-scan" rule).
+  static VramAssetSelector fromId(String id, Object? config) {
+    switch (id) {
+      case 'referenced':
+        final ReferencedAssetsSelectorConfig resolved;
+        if (config is ReferencedAssetsSelectorConfig) {
+          resolved = config;
+        } else if (config is Map<String, dynamic>) {
+          resolved = ReferencedAssetsSelectorConfigMapper.fromMap(config);
+        } else {
+          resolved = ReferencedAssetsSelectorConfig.allEnabled;
+        }
+        return ReferencedAssetsSelector(config: resolved);
+      case 'folder-scan':
+      default:
+        return FolderScanSelector();
+    }
+  }
 }

@@ -89,7 +89,9 @@
       "Bash(ls openspec/specs/catalog-browser-rail)",
       "Bash(ls openspec/specs/catalog-card-click-action)",
       "Bash(openspec --version)",
-      "WebFetch(domain:pub.dev)"
+      "WebFetch(domain:pub.dev)",
+      "Bash(openspec propose *)",
+      "Bash(openspec change *)"
     ]
   }
 }

@@ -352,6 +352,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       CompressionLibMapper.ensureInitialized();
       CatalogCardClickActionMapper.ensureInitialized();
       CatalogPageStatePersistedMapper.ensureInitialized();
+      VramSelectorIdMapper.ensureInitialized();
       ReferencedAssetsSelectorConfigMapper.ensureInitialized();
     }
     return _instance!;
@@ -928,14 +929,15 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
-  static String _$vramEstimatorSelectorId(Settings v) =>
+  static VramSelectorId _$vramEstimatorSelectorId(Settings v) =>
       v.vramEstimatorSelectorId;
-  static const Field<Settings, String> _f$vramEstimatorSelectorId = Field(
-    'vramEstimatorSelectorId',
-    _$vramEstimatorSelectorId,
-    opt: true,
-    def: 'folder-scan',
-  );
+  static const Field<Settings, VramSelectorId> _f$vramEstimatorSelectorId =
+      Field(
+        'vramEstimatorSelectorId',
+        _$vramEstimatorSelectorId,
+        opt: true,
+        def: VramSelectorId.folderScan,
+      );
   static ReferencedAssetsSelectorConfig _$referencedAssetsSelectorConfig(
     Settings v,
   ) => v.referencedAssetsSelectorConfig;
@@ -952,7 +954,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'vramEstimatorMultithreaded',
     _$vramEstimatorMultithreaded,
     opt: true,
-    def: false,
+    def: true,
   );
 
   @override
@@ -1327,7 +1329,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showAprilFools2026,
     bool? forceShowAprilFools2026,
     bool? debugMode,
-    String? vramEstimatorSelectorId,
+    VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
   });
@@ -1525,7 +1527,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? showAprilFools2026 = $none,
     Object? forceShowAprilFools2026 = $none,
     bool? debugMode,
-    String? vramEstimatorSelectorId,
+    VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
   }) => $apply(

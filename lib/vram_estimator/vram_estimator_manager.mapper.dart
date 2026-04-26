@@ -34,6 +34,10 @@ class VramEstimatorManagerStateMapper
   static DateTime? _$lastUpdated(VramEstimatorManagerState v) => v.lastUpdated;
   static const Field<VramEstimatorManagerState, DateTime> _f$lastUpdated =
       Field('lastUpdated', _$lastUpdated);
+  static int? _$lastScanDurationMs(VramEstimatorManagerState v) =>
+      v.lastScanDurationMs;
+  static const Field<VramEstimatorManagerState, int> _f$lastScanDurationMs =
+      Field('lastScanDurationMs', _$lastScanDurationMs, opt: true);
   static bool _$isScanning(VramEstimatorManagerState v) => v.isScanning;
   static const Field<VramEstimatorManagerState, bool> _f$isScanning = Field(
     'isScanning',
@@ -104,6 +108,7 @@ class VramEstimatorManagerStateMapper
   final MappableFields<VramEstimatorManagerState> fields = const {
     #modVramInfo: _f$modVramInfo,
     #lastUpdated: _f$lastUpdated,
+    #lastScanDurationMs: _f$lastScanDurationMs,
     #isScanning: _f$isScanning,
     #isCancelled: _f$isCancelled,
     #currentlyScanningModName: _f$currentlyScanningModName,
@@ -119,6 +124,7 @@ class VramEstimatorManagerStateMapper
     return VramEstimatorManagerState(
       modVramInfo: data.dec(_f$modVramInfo),
       lastUpdated: data.dec(_f$lastUpdated),
+      lastScanDurationMs: data.dec(_f$lastScanDurationMs),
       isScanning: data.dec(_f$isScanning),
       isCancelled: data.dec(_f$isCancelled),
       currentlyScanningModName: data.dec(_f$currentlyScanningModName),
@@ -217,6 +223,7 @@ abstract class VramEstimatorManagerStateCopyWith<
   $R call({
     Map<String, VramMod>? modVramInfo,
     DateTime? lastUpdated,
+    int? lastScanDurationMs,
     bool? isScanning,
     bool? isCancelled,
     String? currentlyScanningModName,
@@ -264,6 +271,7 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
   $R call({
     Map<String, VramMod>? modVramInfo,
     Object? lastUpdated = $none,
+    Object? lastScanDurationMs = $none,
     bool? isScanning,
     bool? isCancelled,
     Object? currentlyScanningModName = $none,
@@ -277,6 +285,7 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
     FieldCopyWithData({
       if (modVramInfo != null) #modVramInfo: modVramInfo,
       if (lastUpdated != $none) #lastUpdated: lastUpdated,
+      if (lastScanDurationMs != $none) #lastScanDurationMs: lastScanDurationMs,
       if (isScanning != null) #isScanning: isScanning,
       if (isCancelled != null) #isCancelled: isCancelled,
       if (currentlyScanningModName != $none)
@@ -297,6 +306,10 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
       VramEstimatorManagerState(
         modVramInfo: data.get(#modVramInfo, or: $value.modVramInfo),
         lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated),
+        lastScanDurationMs: data.get(
+          #lastScanDurationMs,
+          or: $value.lastScanDurationMs,
+        ),
         isScanning: data.get(#isScanning, or: $value.isScanning),
         isCancelled: data.get(#isCancelled, or: $value.isCancelled),
         currentlyScanningModName: data.get(

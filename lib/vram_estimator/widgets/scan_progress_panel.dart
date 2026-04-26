@@ -68,8 +68,9 @@ class _ScanProgressPanelState extends ConsumerState<ScanProgressPanel> {
     // Fallback for the brief window before the first onModStart fires
     // (or for the legacy single-mod path while activeScans is still
     // populating). Lets the user see *something* instead of an empty list.
-    final fallbackName =
-        activeScans.isEmpty ? state.currentlyScanningModName : null;
+    final fallbackName = activeScans.isEmpty
+        ? state.currentlyScanningModName
+        : null;
 
     return Card(
       margin: .zero,
@@ -91,9 +92,7 @@ class _ScanProgressPanelState extends ConsumerState<ScanProgressPanel> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  activeScans.length > 1
-                      ? 'Progress  •  ${activeScans.length} scans in flight'
-                      : 'Progress',
+                  'Progress  •  ${activeScans.length} scan${activeScans.length == 1 ? '' : 's'} active',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -278,6 +277,7 @@ class _IdleSummary extends ConsumerWidget {
     final vramMap = state.modVramInfo;
     final modCount = vramMap.length;
     final lastUpdated = state.lastUpdated;
+    final lastScanDurationMs = state.lastScanDurationMs;
 
     final lastScanRow = <Widget>[
       Icon(
@@ -301,6 +301,13 @@ class _IdleSummary extends ConsumerWidget {
         ),
         Text('•', style: mutedStyle),
         Text('$modCount mods', style: valueStyle),
+        if (lastScanDurationMs != null) ...[
+          Text('•', style: mutedStyle),
+          Text(
+            'took ${_formatScanDuration(Duration(milliseconds: lastScanDurationMs))}',
+            style: valueStyle,
+          ),
+        ],
       ]);
     }
 
@@ -365,6 +372,16 @@ class _IdleSummary extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _formatScanDuration(Duration d) {
+  if (d.inMinutes >= 1) {
+    final seconds = d.inSeconds % 60;
+    return '${d.inMinutes}m ${seconds}s';
+  }
+  if (d.inSeconds >= 10) return '${d.inSeconds}s';
+  // Sub-10s: show one decimal so a fast scan doesn't read as "1s".
+  return '${(d.inMilliseconds / 1000).toStringAsFixed(1)}s';
 }
 
 /// Aggregated VRAM totals for a named cohort of mods.
@@ -500,8 +517,7 @@ class _CohortRow extends StatelessWidget {
       hideReason = "Scan all ${cohort.label} mods to see totals";
     } else if (cohort.hasNoMods) {
       valueText = Text('— none', style: approxStyle);
-      hideReason =
-          'No mods?';
+      hideReason = 'No mods?';
     } else if (cohort.hasNoScans) {
       valueText = Text(
         '— not scanned (${cohort.totalMods} mods)',

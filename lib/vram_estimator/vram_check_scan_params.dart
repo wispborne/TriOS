@@ -1,6 +1,7 @@
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 
 /// Serializable parameter object for [scanOneMod].
 ///
@@ -13,7 +14,7 @@ import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config
 class VramCheckScanParams {
   final VramCheckerMod modInfo;
   final List<String> enabledModIds;
-  final String selectorId;
+  final VramSelectorId selectorId;
   final Object? selectorConfig;
   final GraphicsLibConfig graphicsLibConfig;
   final bool showGfxLibDebugOutput;
@@ -51,7 +52,7 @@ class VramCheckScanParams {
     return <String, dynamic>{
       'modInfo': modInfo.toMap(),
       'enabledModIds': List<String>.from(enabledModIds),
-      'selectorId': selectorId,
+      'selectorId': selectorId.wireValue,
       'selectorConfig': configForTransfer,
       'graphicsLibConfig': graphicsLibConfig.toMap(),
       'showGfxLibDebugOutput': showGfxLibDebugOutput,
@@ -69,7 +70,7 @@ class VramCheckScanParams {
         Map<String, dynamic>.from(map['modInfo'] as Map),
       ),
       enabledModIds: List<String>.from(map['enabledModIds'] as List),
-      selectorId: map['selectorId'] as String,
+      selectorId: VramSelectorId.fromWire(map['selectorId'] as String),
       selectorConfig: map['selectorConfig'],
       graphicsLibConfig: GraphicsLibConfigMapper.fromMap(
         Map<String, dynamic>.from(map['graphicsLibConfig'] as Map),

@@ -12,6 +12,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/selectors/selector_registry.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 import 'package:trios/vram_estimator/widgets/reference_scan_debug_panel.dart';
@@ -457,14 +458,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
       message: options
           .firstWhere((o) => o.id == activeId, orElse: () => options.first)
           .description,
-      child: TriOSDropdownButton<String>(
+      child: TriOSDropdownButton<VramSelectorId>(
         value: options.any((o) => o.id == activeId)
             ? activeId
             : options.first.id,
         underline: const SizedBox.shrink(),
         items: [
           for (final opt in options)
-            DropdownMenuItem<String>(
+            DropdownMenuItem<VramSelectorId>(
               value: opt.id,
               child: Text(opt.displayName, style: theme.textTheme.labelMedium),
             ),

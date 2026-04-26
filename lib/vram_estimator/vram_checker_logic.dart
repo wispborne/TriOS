@@ -413,7 +413,7 @@ class VramChecker {
       debugOut,
     );
     progressText.appendAndPrint(
-      "Selector: ${selector.id} (${selector.displayName})",
+      "Selector: ${selector.id.wireValue} (${selector.displayName})",
       debugOut,
     );
 
@@ -451,7 +451,7 @@ class VramChecker {
       final totalMs = DateTime.timestamp().millisecondsSinceEpoch - startTime;
       progressText.appendAndPrint("Finished run in $totalMs ms", verboseOut);
       Fimber.d(
-        "[VramChecker] runComplete selector=${selector.id} "
+        "[VramChecker] runComplete selector=${selector.id.wireValue} "
         "mods=${mods.length} time=${totalMs}ms",
       );
     }
@@ -539,7 +539,9 @@ class VramChecker {
     summaryText.writeln(
       "** This is only an estimate of VRAM use and actual use may be higher or lower.",
     );
-    summaryText.writeln("** Selector: ${selector.id}. ${selector.description}");
+    summaryText.writeln(
+      "** Selector: ${selector.id.wireValue}. ${selector.description}",
+    );
 
     verboseOut(modTotals.toString());
     infoOut(summaryText.toString());

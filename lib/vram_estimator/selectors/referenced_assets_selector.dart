@@ -16,6 +16,7 @@ import 'package:trios/vram_estimator/selectors/references/settings_graphics_refe
 import 'package:trios/vram_estimator/selectors/references/ship_references.dart';
 import 'package:trios/vram_estimator/selectors/references/weapon_references.dart';
 import 'package:trios/vram_estimator/selectors/vram_asset_selector.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 
 // ADD NEW REFERENCE PARSERS BELOW. Each must normalize its paths via
 // PathNormalizer so union / intersection work on a single canonical form.
@@ -54,7 +55,7 @@ class ReferencedAssetsSelector extends VramAssetSelector {
   ReferencedAssetsSelector({required this.config});
 
   @override
-  String get id => 'referenced';
+  VramSelectorId get id => VramSelectorId.referenced;
 
   @override
   String get displayName => 'Selective Scan';

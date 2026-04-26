@@ -6,13 +6,14 @@ import 'package:image/image.dart' as img;
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 import 'package:trios/vram_estimator/vram_check_scan_params.dart';
 import 'package:trios/vram_estimator/vram_scan_one_mod.dart';
 
 VramCheckScanParams _params(VramCheckerMod mod) => VramCheckScanParams(
   modInfo: mod,
   enabledModIds: const [],
-  selectorId: 'folder-scan',
+  selectorId: VramSelectorId.folderScan,
   selectorConfig: null,
   graphicsLibConfig: GraphicsLibConfig.disabled,
   showGfxLibDebugOutput: false,

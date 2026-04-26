@@ -4,6 +4,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/vram_estimator/selectors/referenced_assets_selector.dart';
 import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 
@@ -18,7 +19,7 @@ class ReferenceScanDebugPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettings);
     final isReferencedSelector =
-        settings.vramEstimatorSelectorId == 'referenced';
+        settings.vramEstimatorSelectorId == VramSelectorId.referenced;
     final config = settings.referencedAssetsSelectorConfig;
 
     return Card(

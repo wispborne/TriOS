@@ -13,6 +13,7 @@ import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
 import 'package:trios/vram_estimator/selectors/selector_registry.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 import 'package:trios/vram_estimator/vram_checker_logic.dart';
 
 import '../models/mod_variant.dart';
@@ -33,6 +34,7 @@ class VramEstimatorManagerState with VramEstimatorManagerStateMappable {
   bool isCancelled;
 
   final DateTime? lastUpdated;
+  final int? lastScanDurationMs;
   String? currentlyScanningModName;
   int totalModsToScan;
   int modsScannedThisRun;
@@ -58,6 +60,7 @@ class VramEstimatorManagerState with VramEstimatorManagerStateMappable {
   VramEstimatorManagerState({
     required this.modVramInfo,
     required this.lastUpdated,
+    this.lastScanDurationMs,
     this.isScanning = false,
     this.isCancelled = false,
     this.currentlyScanningModName,
@@ -90,15 +93,16 @@ class VramEstimatorManager
   // The selector whose cache file this manager currently reads/writes. The
   // filename interpolates this value, so [setActiveSelector] effectively
   // swaps the underlying file.
-  String _activeSelectorId = 'folder-scan';
+  VramSelectorId _activeSelectorId = VramSelectorId.folderScan;
 
-  String get activeSelectorId => _activeSelectorId;
+  VramSelectorId get activeSelectorId => _activeSelectorId;
 
   @override
   FileFormat get fileFormat => FileFormat.msgpack;
 
   @override
-  String get fileName => "TriOS-VRAM_CheckerCache-$_activeSelectorId.mp";
+  String get fileName =>
+      "TriOS-VRAM_CheckerCache-${_activeSelectorId.wireValue}.mp";
 
   // Large payload — coalesce the burst of per-mod progress updates during a
   // scan into a single write after the scan settles.
@@ -110,7 +114,7 @@ class VramEstimatorManager
   /// loads from the new path on disk. Intended to be called while no scan
   /// is in flight; callers are responsible for awaiting cancellation and
   /// draining pending writes first.
-  void setActiveSelector(String selectorId) {
+  void setActiveSelector(VramSelectorId selectorId) {
     if (selectorId == _activeSelectorId) return;
     _activeSelectorId = selectorId;
     settingsFile = File("");
@@ -168,7 +172,10 @@ class VramEstimatorManager
     try {
       if (await legacyMp.exists()) {
         final target = File(
-          p.join(dir.path, "TriOS-VRAM_CheckerCache-$_activeSelectorId.mp"),
+          p.join(
+            dir.path,
+            "TriOS-VRAM_CheckerCache-${_activeSelectorId.wireValue}.mp",
+          ),
         );
         if (await target.exists()) {
           // Per-selector file wins — user already moved past the legacy
@@ -240,11 +247,22 @@ class VramEstimatorManager
   }
 }
 
-String _cacheKey(String selectorId, ReferencedAssetsSelectorConfig config) {
-  if (selectorId == 'referenced') {
-    return 'referenced:${config.cacheHash}';
-  }
-  return selectorId;
+/// In-memory cache key tracking which (selector id, referenced-config)
+/// pair produced the data currently in [VramEstimatorManagerState]. Disk
+/// persistence keys on selector id alone (one cache file per selector);
+/// the config hash here lets us spot a referenced-config change and
+/// invalidate the in-session cache without touching disk.
+typedef _CacheKey = ({VramSelectorId id, int? configHash});
+
+_CacheKey _cacheKey(
+  VramSelectorId selectorId,
+  ReferencedAssetsSelectorConfig config,
+) {
+  return (
+    id: selectorId,
+    configHash:
+        selectorId == VramSelectorId.referenced ? config.cacheHash : null,
+  );
 }
 
 class VramEstimatorNotifier
@@ -254,7 +272,7 @@ class VramEstimatorNotifier
   // changes. Disk persistence is keyed by selector id alone (two files
   // total); this in-memory key also includes the config hash so we can
   // notice when the referenced config changes and trigger a rescan.
-  String? _activeCacheKey;
+  _CacheKey? _activeCacheKey;
 
   // Completes when the in-flight scan's [startEstimating] call returns
   // (success or error). Used by [onSelectorOrConfigChanged] to wait for a
@@ -397,7 +415,7 @@ class VramEstimatorNotifier
   VramEstimatorManagerState createDefaultState() =>
       VramEstimatorManagerState.initial();
 
-  ({String selectorId, ReferencedAssetsSelectorConfig config})
+  ({VramSelectorId selectorId, ReferencedAssetsSelectorConfig config})
   _readActiveSelector() {
     final settings = ref.read(appSettings);
     return (
@@ -413,7 +431,7 @@ class VramEstimatorNotifier
 
     // Old and new selector ids. The id determines which cache *file* we
     // read/write; the config affects only in-session invalidation.
-    final oldSelectorId = _selectorIdOfKey(_activeCacheKey);
+    final oldSelectorId = _activeCacheKey?.id;
     final newSelectorId = active.selectorId;
     final selectorIdChanged = oldSelectorId != newSelectorId;
 
@@ -458,7 +476,7 @@ class VramEstimatorNotifier
       );
     } catch (e, st) {
       Fimber.w(
-        'Failed to load VRAM cache for $newSelectorId: $e',
+        'Failed to load VRAM cache for ${newSelectorId.wireValue}: $e',
         ex: e,
         stacktrace: st,
       );
@@ -476,12 +494,6 @@ class VramEstimatorNotifier
     if (!hasCachedData) {
       await startEstimating();
     }
-  }
-
-  String? _selectorIdOfKey(String? cacheKey) {
-    if (cacheKey == null) return null;
-    final colon = cacheKey.indexOf(':');
-    return colon == -1 ? cacheKey : cacheKey.substring(0, colon);
   }
 
   Future<void> startEstimating({List<ModVariant>? variantsToCheck}) async {
@@ -525,6 +537,7 @@ class VramEstimatorNotifier
       skipChangeCheck: true,
     );
 
+    final scanStopwatch = Stopwatch()..start();
     try {
       final info = await VramChecker(
         enabledModIds: ref.read(AppState.enabledModIds).value,
@@ -607,10 +620,12 @@ class VramEstimatorNotifier
             previousValue..[element.info.smolId] = element,
       );
 
+      scanStopwatch.stop();
       updateState(
         (state) =>
             state.copyWith(
                 modVramInfo: modVramInfo,
+                lastScanDurationMs: scanStopwatch.elapsedMilliseconds,
                 activeScans: const <String, ActiveModScan>{},
               )
               ..isScanning = false

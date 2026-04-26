@@ -1,6 +1,7 @@
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/selectors/references/graphicslib_references.dart';
 import 'package:trios/vram_estimator/selectors/vram_asset_selector.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 
 /// Selector that preserves the original VRAM estimator behavior: every
 /// image file in the mod folder counts, except those whose relative path
@@ -18,7 +19,7 @@ class FolderScanSelector extends VramAssetSelector {
   ];
 
   @override
-  String get id => 'folder-scan';
+  VramSelectorId get id => VramSelectorId.folderScan;
 
   @override
   String get displayName => 'Scan All';

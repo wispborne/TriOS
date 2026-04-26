@@ -12,6 +12,7 @@ import 'package:trios/toolbar/nav_order_entry.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
 import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.dart';
 
@@ -161,7 +162,7 @@ class Settings with SettingsMappable {
   final bool debugMode;
 
   /// Unknown ids fall back to folder-scan.
-  final String vramEstimatorSelectorId;
+  final VramSelectorId vramEstimatorSelectorId;
   final ReferencedAssetsSelectorConfig referencedAssetsSelectorConfig;
 
   /// When true, the VRAM scan runs across an isolate pool via `async_task`.
@@ -262,10 +263,10 @@ class Settings with SettingsMappable {
     this.showAprilFools2026,
     this.forceShowAprilFools2026,
     this.debugMode = false,
-    this.vramEstimatorSelectorId = 'folder-scan',
+    this.vramEstimatorSelectorId = VramSelectorId.folderScan,
     this.referencedAssetsSelectorConfig =
         ReferencedAssetsSelectorConfig.allEnabled,
-    this.vramEstimatorMultithreaded = false,
+    this.vramEstimatorMultithreaded = true,
   });
 }
 

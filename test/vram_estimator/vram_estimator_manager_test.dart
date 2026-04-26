@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
+import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 
 VramEstimatorManagerState _buildFixtureState() {
@@ -224,7 +225,7 @@ void main() {
           _assertRoundTripped(folderScanPayload, loaded1);
 
           // Swap to referenced; next read should come from the other file.
-          m.setActiveSelector('referenced');
+          m.setActiveSelector(VramSelectorId.referenced);
           final loaded2 = await m.read(
             VramEstimatorManagerState.initial(),
             forceLoadFromDisk: true,
@@ -233,7 +234,7 @@ void main() {
           expect(loaded2.lastUpdated, DateTime.utc(2026, 1, 1, 0, 0, 0));
 
           // Swap back: folder-scan payload is preserved.
-          m.setActiveSelector('folder-scan');
+          m.setActiveSelector(VramSelectorId.folderScan);
           final loaded3 = await m.read(
             VramEstimatorManagerState.initial(),
             forceLoadFromDisk: true,

@@ -234,14 +234,14 @@ Future<VramScanOutcome> scanOneMod(
       final selectorMs =
           timeFinishedSelector - timeFinishedGettingGraphicsLibData;
       verboseOut(
-        "Selector '${selector.id}' returned ${selectedAssets.length} assets for ${modInfo.name} in $selectorMs ms",
+        "Selector '${selector.id.wireValue}' returned ${selectedAssets.length} assets for ${modInfo.name} in $selectorMs ms",
       );
       final refCount = selectedAssets
           .where((a) => a.provenance == AssetProvenance.referenced)
           .length;
       final unrefCount = selectedAssets.length - refCount;
       Fimber.d(
-        "[VramChecker] selector=${selector.id} mod=${modInfo.modId} "
+        "[VramChecker] selector=${selector.id.wireValue} mod=${modInfo.modId} "
         "time=${selectorMs}ms referenced=$refCount unreferenced=$unrefCount "
         "total=${selectedAssets.length}",
       );

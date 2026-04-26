@@ -593,6 +593,7 @@ class VramEstimatorNotifier
         },
         debugOut: Fimber.d,
         verboseOut: (String message) => Fimber.v(() => message),
+        infoOut: Fimber.i,
         isCancelled: () => state.value?.isCancelled ?? false,
       ).check();
 

@@ -5,8 +5,7 @@
     - UI refresh.
   - VRAM Estimator: new intelligent mode that tries to only include images that are actually used.
     - Also added more detailed per-image breakdown on the VRAM estimator page.
-  - VRAM Estimator: "Export cache as JSON…" toolbar button for inspecting the cache in text form.
-  - VRAM Estimator: each selector now has its own persistent cache file, so switching between scan types loads the prior result instantly (even after restart).
+    - Optimized estimation time. Large modlists now take seconds.
   - Toolbar icons can now be rearranged. Mostly.
   - Mods page: two-layer grouping, such as grouping by categories and then by enabled status.
   - Ship/Weapon/Hullmod Filters may now be remembered across app restarts (click save icon).

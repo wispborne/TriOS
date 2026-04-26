@@ -18,11 +18,10 @@ class ImageHeader {
 }
 
 Future<ImageHeader?> readPngFileHeaders(String path) async {
-  final file = File(path);
   RandomAccessFile? fileStream;
   try {
-    fileStream = file.openSync();
-    var bytes = fileStream.readSync(8 + 8 + 13).toList();
+    fileStream = await File(path).open();
+    final bytes = await fileStream.read(33);
     return readPngHeadersFromBytes(bytes);
   } finally {
     await fileStream?.close();

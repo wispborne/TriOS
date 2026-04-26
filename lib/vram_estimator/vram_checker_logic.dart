@@ -36,6 +36,7 @@ class VramChecker {
   Function(VramCheckerMod) onModEnd = (it) => (it);
   Function(String) verboseOut = (it) => (it);
   Function(String) debugOut = (it) => (it);
+  Function(String) infoOut = (it) => (it);
   bool Function() isCancelled;
 
   /// Called with file-level progress for a mod that is currently being
@@ -86,6 +87,7 @@ class VramChecker {
     Function(VramCheckerMod)? onModEnd,
     Function(String)? verboseOut,
     Function(String)? debugOut,
+    Function(String)? infoOut,
     this.onFileProgress,
     required this.isCancelled,
     this.multithreaded = false,
@@ -95,6 +97,9 @@ class VramChecker {
     }
     if (debugOut != null) {
       this.debugOut = debugOut;
+    }
+    if (infoOut != null) {
+      this.infoOut = infoOut;
     }
     if (modProgressOut != null) {
       this.modProgressOut = modProgressOut;
@@ -537,7 +542,7 @@ class VramChecker {
     summaryText.writeln("** Selector: ${selector.id}. ${selector.description}");
 
     verboseOut(modTotals.toString());
-    debugOut(summaryText.toString());
+    infoOut(summaryText.toString());
 
     return mods;
   }

@@ -422,15 +422,14 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     Map<String, VramMod> modVramInfo,
     GraphicsLibConfig? graphicsLibConfig,
   ) {
+    final start = selectedSliderValues?.start ?? 0;
+    final end = selectedSliderValues?.end ??
+        _maxRange(modVramInfo, graphicsLibConfig);
     return modVramInfo.values
-        .where(
-          (mod) =>
-              mod.bytesNotIncludingGraphicsLib() >=
-                  (selectedSliderValues?.start ?? 0) &&
-              mod.bytesNotIncludingGraphicsLib() <=
-                  (selectedSliderValues?.end ??
-                      _maxRange(modVramInfo, graphicsLibConfig)),
-        )
+        .where((mod) {
+          final bytes = mod.bytesNotIncludingGraphicsLib();
+          return bytes >= start && bytes <= end;
+        })
         .sortedByDescending<num>((mod) => mod.bytesNotIncludingGraphicsLib())
         .toList();
   }
@@ -548,11 +547,11 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     Map<String, VramMod> modVramInfo,
     GraphicsLibConfig? graphicsLibConfig,
   ) {
-    return modVramInfo.values
-            .sortedByButBetter<num>((mod) => mod.bytesNotIncludingGraphicsLib())
-            .lastOrNull
-            ?.bytesNotIncludingGraphicsLib()
-            .toDouble() ??
-        2;
+    var max = 0;
+    for (final mod in modVramInfo.values) {
+      final bytes = mod.bytesNotIncludingGraphicsLib();
+      if (bytes > max) max = bytes;
+    }
+    return max == 0 ? 2 : max.toDouble();
   }
 }

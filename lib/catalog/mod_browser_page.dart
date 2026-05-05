@@ -702,7 +702,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                               const SizedBox(width: 16),
                                               Flexible(
                                                 child: Text(
-                                                  "${Constants.appName} quit unexpectedly.\n"
+                                                  "${context.appName} quit unexpectedly.\n"
                                                   "The browser has been disabled as a precaution.",
                                                   style: TextStyle(
                                                     color: theme
@@ -721,7 +721,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       children: [
                                         MovingTooltipWidget.text(
                                           message:
-                                              "Browser will be loaded until ${Constants.appName} exits.",
+                                              "Browser will be loaded until ${context.appName} exits.",
                                           child: OutlinedButton.icon(
                                             onPressed: _loadWebViewOnce,
                                             icon: Icon(Icons.web),
@@ -731,7 +731,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                         const SizedBox(width: 12),
                                         MovingTooltipWidget.text(
                                           message:
-                                              "Browser will always load (unless ${Constants.appName} crashes).",
+                                              "Browser will always load (unless ${context.appName} crashes).",
                                           child: OutlinedButton.icon(
                                             onPressed: _loadWebViewAlways,
                                             icon: const Icon(Icons.web),
@@ -834,8 +834,8 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       "Please install it from https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
                                   onOpen: (link) => OpenFilex.open(link.url),
                                 ),
-                                const Text(
-                                  "and then restart ${Constants.appName}.",
+                                Text(
+                                  "and then restart ${context.appName}.",
                                 ),
                               ],
                             ),

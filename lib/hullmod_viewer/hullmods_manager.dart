@@ -146,7 +146,7 @@ class HullmodListNotifier
     final hullmods = <Hullmod>[];
     for (final map in hullmodMaps) {
       final hullmod = HullmodMapper.fromMap(map);
-      final csvPath = map['csvFile'];
+      final csvPath = map['csvfile'];
       if (csvPath is String) hullmod.csvFile = File(csvPath);
       hullmod.modVariant = null;
       hullmods.add(hullmod);
@@ -282,7 +282,9 @@ Future<HullmodParseResult> _parseHullmodsCsv(
       }
 
       // Create Hullmod instance
-      final hullmod = HullmodMapper.fromMap(hullmodData)
+      final hullmod = HullmodMapper.fromMap(
+        {for (final e in hullmodData.entries) e.key.toLowerCase(): e.value},
+      )
         ..modVariant = modVariant
         ..csvFile = hullmodsCsvFile;
       hullmods.add(hullmod);

@@ -7,7 +7,7 @@ import 'package:trios/utils/dart_mappable_utils.dart';
 
 part 'hullmod.mapper.dart';
 
-@MappableClass()
+@MappableClass(caseStyle: CaseStyle.lowerCase)
 class Hullmod with HullmodMappable implements WispGridItem {
   @override
   String get key => id;
@@ -43,7 +43,7 @@ class Hullmod with HullmodMappable implements WispGridItem {
   @MappableField(hook: SkipSerializationHook())
   late ModVariant? modVariant;
   @MappableField(hook: FileHook())
-  late File csvFile;
+  File? csvFile;
 
   Hullmod({
     required this.id,

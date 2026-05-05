@@ -3,6 +3,7 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/utils/extensions.dart';
 
 class AboutPage extends ConsumerStatefulWidget {
   const AboutPage({super.key});
@@ -21,8 +22,8 @@ class _AboutPageState extends ConsumerState<AboutPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            const Text(
-              "TriOS is a mod manager, launcher, and toolkit."
+            Text(
+              "${context.appName} is a mod manager, launcher, and toolkit."
               "\nIt's written in Dart/Flutter.",
               textAlign: TextAlign.center,
             ),
@@ -65,8 +66,8 @@ class _AboutPageState extends ConsumerState<AboutPage> {
             ),
             Linkify(
               text:
-                  "- If you choose to allow it, device information (e.g. OS and screen resolution), mod list, and TriOS errors will be collected and uploaded to servers managed by Sentry.io. The information is associated with a randomly generated id and is used to fix bugs. Example of collected data: https://i.imgur.com/k9E6zxO.png."
-                  "\n- If you do not choose to allow this, TriOS only uses the internet for obvious things like version checker updates, mod updates, etc."
+                  "- If you choose to allow it, device information (e.g. OS and screen resolution), mod list, and ${context.appName} errors will be collected and uploaded to servers managed by Sentry.io. The information is associated with a randomly generated id and is used to fix bugs. Example of collected data: https://i.imgur.com/k9E6zxO.png."
+                  "\n- If you do not choose to allow this, ${context.appName} only uses the internet for obvious things like version checker updates, mod updates, etc."
                   "\n- No personal information is collected at any time. I don't know who you are, where you are, what your username is, etc.",
               style: textTheme.labelLarge,
               linkifiers: const [UrlLinkifier()],

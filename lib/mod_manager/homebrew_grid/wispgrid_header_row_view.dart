@@ -88,11 +88,19 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
 
     // Only update areas if the configuration has changed
     final updatedAreas = areas;
-    if (multiSplitController.areas.length != updatedAreas.length ||
-        !listEquals(
-          multiSplitController.areas.map((a) => a.size).toList(),
-          updatedAreas.map((a) => a.size).toList(),
-        )) {
+    final lengthChanged =
+        multiSplitController.areas.length != updatedAreas.length;
+    final sizesChanged = !listEquals(
+      multiSplitController.areas.map((a) => a.size).toList(),
+      updatedAreas.map((a) => a.size).toList(),
+    );
+
+    if (lengthChanged) {
+      // Visible-column count changed — sync immediately so build doesn't
+      // run with stale areas and overflow / mis-render the header row.
+      multiSplitController.areas = updatedAreas;
+    } else if (sizesChanged) {
+      // Just resizing — defer to avoid fighting the user's active drag.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         multiSplitController.areas = updatedAreas;
       });
@@ -328,27 +336,71 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
           ),
         MenuDivider(),
         MenuHeader(text: "Hide/Show Columns", disableUppercase: true),
+        MenuItem(
+          label: 'Show All',
+          icon: Icons.visibility,
+          onSelected: () {
+            updateGridState((WispGridState state) {
+              final columnSettings = state.sortedColumns(columns).toMap();
+              for (final key in columnSettings.keys.toList()) {
+                columnSettings[key] = columnSettings[key]!.copyWith(
+                  isVisible: true,
+                );
+              }
+              return state.copyWith(columnsState: columnSettings);
+            });
+          },
+        ),
+        MenuItem(
+          label: 'Hide All',
+          icon: Icons.visibility_off,
+          onSelected: () {
+            updateGridState((WispGridState state) {
+              final sorted = state.sortedColumns(columns).toList();
+              final columnSettings = Map.fromEntries(sorted);
+              // Keep the first column visible — the header is the only place
+              // to reach the column-visibility menu, so we must never end up
+              // with zero visible columns.
+              final keepVisibleKey = sorted.firstOrNull?.key;
+              for (final key in columnSettings.keys.toList()) {
+                columnSettings[key] = columnSettings[key]!.copyWith(
+                  isVisible: key == keepVisibleKey,
+                );
+              }
+              return state.copyWith(columnsState: columnSettings);
+            });
+          },
+        ),
+        MenuDivider(),
         // Visibility toggles
         ...sortedColumns.map((columnSetting) {
           final header = columnSetting.key;
           final column = columns.firstWhereOrNull((col) => col.key == header);
           final isVisible = gridState.columnsState[header]?.isVisible ?? true;
+          // Disable hiding the last remaining visible column.
+          final visibleCount =
+              sortedColumns.where((c) => c.value.isVisible).length;
+          final isLastVisible = isVisible && visibleCount <= 1;
           return MenuItem(
             label: column?.name ?? "???",
             icon: isVisible ? Icons.visibility : Icons.visibility_off,
             iconOpacity: isVisible ? null : 0.4,
             keepMenuOpen: true,
-            onSelected: () {
-              updateGridState((WispGridState state) {
-                final columnSettings = state.sortedColumns(columns).toMap();
-                final headerSetting = columnSettings[header]!;
-                columnSettings[header] = headerSetting.copyWith(
-                  isVisible: !headerSetting.isVisible,
-                );
+            onSelected: isLastVisible
+                ? null
+                : () {
+                    updateGridState((WispGridState state) {
+                      final columnSettings = state
+                          .sortedColumns(columns)
+                          .toMap();
+                      final headerSetting = columnSettings[header]!;
+                      columnSettings[header] = headerSetting.copyWith(
+                        isVisible: !headerSetting.isVisible,
+                      );
 
-                return state.copyWith(columnsState: columnSettings);
-              });
-            },
+                      return state.copyWith(columnsState: columnSettings);
+                    });
+                  },
           );
         }),
       ],

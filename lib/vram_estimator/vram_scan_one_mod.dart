@@ -5,7 +5,6 @@ import 'package:async_task/async_task.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/vram_estimator/image_reader/image_reader_async.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
@@ -240,7 +239,7 @@ Future<VramScanOutcome> scanOneMod(
           .where((a) => a.provenance == AssetProvenance.referenced)
           .length;
       final unrefCount = selectedAssets.length - refCount;
-      Fimber.d(
+      verboseOut(
         "[VramChecker] selector=${selector.id.wireValue} mod=${modInfo.modId} "
         "time=${selectorMs}ms referenced=$refCount unreferenced=$unrefCount "
         "total=${selectedAssets.length}",
@@ -308,7 +307,7 @@ Future<VramScanOutcome> scanOneMod(
       verboseOut(
         "Finished getting file data for ${modInfo.formattedName} in $headerMs ms",
       );
-      Fimber.d(
+      verboseOut(
         "[VramChecker] headerRead mod=${modInfo.modId} "
         "refRows=${referencedRows.length} unrefRows=${unreferencedRows.length} "
         "time=${headerMs}ms",

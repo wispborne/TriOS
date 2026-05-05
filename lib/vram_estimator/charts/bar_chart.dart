@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/app_state.dart';
@@ -11,7 +10,6 @@ import 'package:trios/vram_estimator/widgets/vram_mod_breakdown_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
-import '../../../utils/util.dart';
 import '../models/vram_checker_models.dart';
 // ...  (Import extensions, any custom models, and util as in your existing code)
 
@@ -155,10 +153,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                                       child: Container(
                                         width: width,
                                         height: 10,
-                                        color: ColorGenerator.generateFromColor(
-                                          mod.info.smolId,
-                                          baseColor,
-                                        ).createMaterialColor().shade700,
+                                        color: theme.colorScheme.secondary,
                                       ),
                                     ),
                                     if (mod.unreferencedImages != null)
@@ -198,57 +193,6 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
             ?.bytesNotIncludingGraphicsLib()
             .toDouble() ??
         0;
-  }
-
-  FlTitlesData _buildTitlesData() => FlTitlesData(
-    show: true,
-    bottomTitles: AxisTitles(
-      sideTitles: SideTitles(
-        showTitles: true,
-        reservedSize: 30, // Allocate space for labels
-        getTitlesWidget: (value, meta) => _buildBottomLabel(value, meta),
-      ),
-    ),
-    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true)),
-  );
-
-  Widget _buildBottomLabel(double value, TitleMeta meta) {
-    int modIndex = value.toInt();
-    if (modIndex >= 0 && modIndex < widget.modVramInfo.length) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8.0),
-        child: Text(
-          widget.modVramInfo[modIndex].info.name ?? '(no name)',
-          style: const TextStyle(fontSize: 10),
-        ),
-      );
-    } else {
-      return const Text('');
-    }
-  }
-
-  List<BarChartGroupData> _buildBarGroups(BuildContext context) {
-    final baseColor = Theme.of(context).colorScheme.primary;
-    return widget.modVramInfo
-        .where((element) => element.bytesNotIncludingGraphicsLib() > 0)
-        .map(
-          (mod) => BarChartGroupData(
-            x: widget.modVramInfo.indexOf(mod),
-            barRods: [
-              BarChartRodData(
-                toY: mod
-                    .bytesNotIncludingGraphicsLib()
-                    .toDouble(), // Y-axis value
-                color: ColorGenerator.generateFromColor(
-                  mod.info.smolId,
-                  baseColor,
-                ).createMaterialColor().shade700,
-                width: 12, // Adjust bar width
-              ),
-            ],
-          ),
-        )
-        .toList();
   }
 }
 

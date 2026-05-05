@@ -9,6 +9,7 @@ All-in-one Starsector launcher, mod manager, and toolkit. Desktop-only (Windows,
 - Make use of the new dot shorthands in Dart, when it makes sense. For example, `.all(8.0)` instead of `EdgeInsets.all(8.0)`.
 - `.withOpacity` is deprecated.
 - Make text selectable when it makes sense.
+- Always consider scaling. Plan for shrunken windows and oversized images and prevent overflowing content.
 
 ## Architecture
 
@@ -18,6 +19,10 @@ All-in-one Starsector launcher, mod manager, and toolkit. Desktop-only (Windows,
 - **Navigation**: Enum-based tabs via `TriOSTools` (`lib/trios/navigation.dart`). `AppShell` (`lib/app_shell.dart`) maps tab indices to tools. `LazyIndexedStack` for efficient tab switching.
   - Nav-icon order is user-customizable via right-click → "Rearrange icons". Order lives in `NavOrderController` (`lib/toolbar/nav_order_controller.dart`) and is persisted to `Settings.navIconOrder` as `List<NavOrderEntry>` (sealed dart_mappable model in `lib/toolbar/nav_order_entry.dart`, with `NavToolEntry` and `NavDividerEntry` variants). The sidebar and top-bar both read `navOrderProvider`. Pinned items (`Settings`, action buttons, launcher, `rules.csv`, layout toggle) are NOT in the reorderable list; `reorderableTools` in `navigation.dart` is the source of truth for what's reorderable.
 - **Organization**: Feature-folder structure under `lib/`. Each feature has its own directory (e.g., `mod_manager/`, `ship_viewer/`, `weapon_viewer/`). All directory and file names use `snake_case`.
+
+## Misc
+
+- Avoid introducing stringly-typed code and suggest replacing it when you see it.
 
 ## Viewer Page Pattern
 

@@ -118,13 +118,21 @@ class WispGridState with WispGridStateMappable {
   }
 
   /// Returns only the visible columns (i.e., `isVisible == true`)
-  /// in sorted order.
+  /// in sorted order. If a stale persisted state hides every column, falls
+  /// back to the `name`/`id` column (or the first sorted column) so the
+  /// header — the only entry point to the column-visibility menu — is
+  /// always reachable.
   List<MapEntry<String, WispGridColumnState>> sortedVisibleColumns(
     List<WispGridColumn> columnSpecs,
   ) {
-    return sortedColumns(
-      columnSpecs,
-    ).where((entry) => entry.value.isVisible).toList();
+    final all = sortedColumns(columnSpecs);
+    final visible = all.where((entry) => entry.value.isVisible).toList();
+    if (visible.isNotEmpty || all.isEmpty) return visible;
+    final fallback = all.firstWhere(
+      (e) => e.key == 'name' || e.key == 'id',
+      orElse: () => all.first,
+    );
+    return [MapEntry(fallback.key, fallback.value.copyWith(isVisible: true))];
   }
 
   // WispGridState empty() =>

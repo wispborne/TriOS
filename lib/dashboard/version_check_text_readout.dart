@@ -5,6 +5,7 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 
@@ -145,7 +146,7 @@ class _VersionCheckTextReadoutState
                 ),
               ),
             Text(
-              "Update information is provided by the mod author, not ${Constants.appName}.",
+              "Update information is provided by the mod author, not ${context.appName}.",
               style: theme.textTheme.labelLarge?.copyWith(
                 fontStyle: FontStyle.italic,
               ),

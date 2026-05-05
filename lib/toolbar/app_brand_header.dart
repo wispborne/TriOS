@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/dialogs.dart';
+import 'package:trios/utils/extensions.dart' show TriOSBuildContext;
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
@@ -16,6 +17,7 @@ class AppBrandHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final appName = context.appName;
     final iconSize = compact ? 24.0 : 48.0;
     final blurRadius = compact ? 8.0 : 10.0;
 
@@ -56,7 +58,7 @@ class AppBrandHeader extends StatelessWidget {
               spacing: 6,
               children: [
                 Text(
-                  Constants.appName,
+                  appName,
                   style: theme.textTheme.titleMedium,
                 ),
                 Text(
@@ -75,7 +77,7 @@ class AppBrandHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  Constants.appName,
+                  appName,
                   style: theme.textTheme.titleLarge,
                 ),
                 Text(

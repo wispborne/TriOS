@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 
 // import 'package:toml/toml.dart';
 import 'package:trios/themes/theme.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/thirdparty/yaml/yaml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
@@ -1274,7 +1275,15 @@ extension ColorFromObject on Object {
 extension TriOSBuildContextTheme on ThemeData {
   bool get rainbowAccent =>
       extension<TriOSThemeExtension>()?.rainbowAccent ?? false;
+  String? get iconAsset => extension<TriOSThemeExtension>()?.iconAsset;
 
   /// Access semantic status colors from the current theme.
   TriOSThemeExtension get statusColors => extension<TriOSThemeExtension>()!;
+}
+
+extension TriOSBuildContext on BuildContext {
+  /// The display name of the app, overridden by the active theme when set.
+  String get appName =>
+      Theme.of(this).extension<TriOSThemeExtension>()?.appNameOverride ??
+      Constants.appName;
 }

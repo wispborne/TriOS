@@ -161,6 +161,8 @@ class Settings with SettingsMappable {
 
   final bool debugMode;
 
+  final List<String> weaponsSearchHistory;
+
   /// Unknown ids fall back to folder-scan.
   final VramSelectorId vramEstimatorSelectorId;
   final ReferencedAssetsSelectorConfig referencedAssetsSelectorConfig;
@@ -183,7 +185,7 @@ class Settings with SettingsMappable {
     this.isMinimized,
     this.defaultTool = TriOSTools.dashboard,
     this.isSidebarCollapsed = true,
-    this.useTopToolbar = true,
+    this.useTopToolbar = false,
     this.navIconOrder,
     this.vmparamsFilePaths = const [],
     this.themeKey,
@@ -263,6 +265,7 @@ class Settings with SettingsMappable {
     this.showAprilFools2026,
     this.forceShowAprilFools2026,
     this.debugMode = false,
+    this.weaponsSearchHistory = const [],
     this.vramEstimatorSelectorId = VramSelectorId.folderScan,
     this.referencedAssetsSelectorConfig =
         ReferencedAssetsSelectorConfig.allEnabled,

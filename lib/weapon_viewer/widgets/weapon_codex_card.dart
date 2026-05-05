@@ -39,17 +39,19 @@ class WeaponCodexCard {
     return MovingTooltipWidget.starsector(
       tooltipWidget: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _maxWidth),
-        child: Consumer(
-          builder: (context, ref, _) => _buildWeaponContent(
-            weapon,
-            context,
-            description: ref.watch(
-              descriptionProvider((weapon.id, DescriptionEntry.typeWeapon)),
+        child: SingleChildScrollView(
+          child: Consumer(
+            builder: (context, ref, _) => _buildWeaponContent(
+              weapon,
+              context,
+              description: ref.watch(
+                descriptionProvider((weapon.id, DescriptionEntry.typeWeapon)),
+              ),
+              showTitle: showTitle,
+              showSprite: showSprite,
+              showDescription: showDescription,
+              useAbbreviations: useAbbreviations,
             ),
-            showTitle: showTitle,
-            showSprite: showSprite,
-            showDescription: showDescription,
-            useAbbreviations: useAbbreviations,
           ),
         ),
       ),

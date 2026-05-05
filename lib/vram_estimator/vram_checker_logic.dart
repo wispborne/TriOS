@@ -115,7 +115,7 @@ class VramChecker {
   static const VANILLA_BACKGROUND_WIDTH = 2048;
   static const VANILLA_BACKGROUND_TEXTURE_SIZE_IN_BYTES = 12582912.0;
   static const VANILLA_GAME_VRAM_USAGE_IN_BYTES =
-      433586176.0; // 0.9.1a, per https://fractalsoftworks.com/forum/index.php?topic=8726.0
+      600000000.0; // 0.9.8a, measured mine and Histidine's
   static const OUTPUT_LABEL_WIDTH = 38;
 
   static const BACKGROUND_FOLDER_NAME = "backgrounds";
@@ -450,9 +450,9 @@ class VramChecker {
     if (showPerformance) {
       final totalMs = DateTime.timestamp().millisecondsSinceEpoch - startTime;
       progressText.appendAndPrint("Finished run in $totalMs ms", verboseOut);
-      Fimber.d(
-        "[VramChecker] runComplete selector=${selector.id.wireValue} "
-        "mods=${mods.length} time=${totalMs}ms",
+      Fimber.v(
+        () => "[VramChecker] runComplete selector=${selector.id.wireValue} "
+            "mods=${mods.length} time=${totalMs}ms",
       );
     }
 

@@ -418,7 +418,7 @@ class AppState {
 class _GameRunningChecker extends AsyncNotifier<Result> {
   static const int period = 1500;
   int _generation = 0;
-  late final List<ProcessDetector> _detectors;
+  late List<ProcessDetector> _detectors;
   String? _lastMatchedDetectorName;
   List<String> _lastUsedDetectorNames = [];
   DateTime? _previousRunTime;

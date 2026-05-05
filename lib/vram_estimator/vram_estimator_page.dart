@@ -20,10 +20,8 @@ import 'package:trios/vram_estimator/widgets/scan_progress_panel.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/snackbar.dart';
-import 'package:trios/widgets/spinning_refresh_button.dart';
-import 'package:trios/widgets/toolbar_checkbox_button.dart';
-import 'package:trios/widgets/trios_dropdown_button.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
 
 import 'charts/bar_chart.dart';
@@ -235,10 +233,6 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
             modVramInfoToShow,
           ),
         ),
-        const Padding(
-          padding: .only(left: 8, right: 8, bottom: 8),
-          child: ScanProgressPanel(),
-        ),
         if (ref.watch(appSettings.select((s) => s.debugMode)))
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -309,82 +303,44 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     int unscannedCount,
     List<VramMod> modVramInfoToShow,
   ) {
+    final hasUnscanned = !isScanning && unscannedCount > 0;
+    final scanLabel = hasUnscanned
+        ? 'Scan $unscannedCount mod${unscannedCount == 1 ? "" : "s"}'
+        : isScanning
+        ? _buildRefreshTooltip(vramState)
+        : 'All mods scanned';
+
     return SizedBox(
-      height: 50,
+      // height: 50,
       child: Card(
         child: Padding(
           padding: const EdgeInsets.only(left: 8, right: 8),
-          child: Row(
+          child: Column(
             children: [
-              const SizedBox(width: 4),
-              Text(
-                'VRAM Estimator',
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineSmall?.copyWith(fontSize: 20),
-              ),
-              const SizedBox(width: 8),
-              MovingTooltipWidget.text(
-                message: "About VRAM & VRAM Estimator",
-                child: IconButton(
-                  icon: const Icon(Icons.info),
-                  onPressed: () => showDialog(
-                    context: context,
-                    builder: (context) => VramCheckerExplanationDialog(),
+              Row(
+                children: [
+                  const SizedBox(width: 4),
+                  Text(
+                    'VRAM Estimator',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineSmall?.copyWith(fontSize: 20),
                   ),
-                ),
-              ),
-              Disable(
-                isEnabled: !isScanning,
-                child: SpinningRefreshButton(
-                  onPressed: () {
-                    if (!isScanning) {
-                      ref
-                          .read(AppState.vramEstimatorProvider.notifier)
-                          .startEstimating();
-                    }
-                  },
-                  isScanning: isScanning,
-                  tooltip: _buildRefreshTooltip(vramState),
-                ),
-              ),
-              MovingTooltipWidget.text(
-                message: isScanning
-                    ? 'Scan in progress…'
-                    : unscannedCount == 0
-                    ? 'All mods are already scanned'
-                    : 'Scan $unscannedCount mod${unscannedCount == 1 ? "" : "s"} not yet in cache',
-                child: IconButton(
-                  icon: const Icon(Icons.playlist_add_check),
-                  onPressed: (isScanning || unscannedCount == 0)
-                      ? null
-                      : () {
-                          ref
-                              .read(AppState.vramEstimatorProvider.notifier)
-                              .scanUnscanned();
-                        },
-                ),
-              ),
-              MovingTooltipWidget.text(
-                message: vramState.modVramInfo.isEmpty
-                    ? 'Export cache as JSON… (nothing to export)'
-                    : 'Export cache as JSON…',
-                child: IconButton(
-                  icon: const Icon(Icons.file_download),
-                  onPressed: vramState.modVramInfo.isEmpty
-                      ? null
-                      : () => _exportCacheAsJson(context, ref),
-                ),
-              ),
-              const SizedBox(width: 16),
-              _buildSelectorDropdown(ref),
-              Padding(
-                padding: const EdgeInsets.only(left: 32.0),
-                child: Disable(
-                  isEnabled: modVramInfoToShow.isNotEmpty,
-                  child: Card.outlined(
-                    child: SizedBox(
-                      width: 250,
+                  const SizedBox(width: 8),
+                  MovingTooltipWidget.text(
+                    message: "About VRAM & VRAM Estimator",
+                    child: IconButton(
+                      icon: const Icon(Icons.info),
+                      onPressed: () => showDialog(
+                        context: context,
+                        builder: (context) => VramCheckerExplanationDialog(),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Disable(
+                      isEnabled: modVramInfoToShow.isNotEmpty,
                       child: GraphTypeSelector(
                         onGraphTypeChanged: (GraphType type) {
                           setState(() {
@@ -394,23 +350,36 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  _buildScanButton(
+                    isScanning,
+                    hasUnscanned,
+                    scanLabel,
+                    vramState,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Flexible(
+                          child: ViewerSearchBox(
+                            searchController: _searchController,
+                            hintText: 'Filter mods...',
+                            onChanged: (query) =>
+                                setState(() => _searchQuery = query),
+                            onClear: () => setState(() => _searchQuery = ''),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _buildOverflowMenu(vramState),
+                ],
               ),
-              const SizedBox(width: 16),
-              Flexible(
-                child: ViewerSearchBox(
-                  searchController: _searchController,
-                  hintText: 'Filter mods...',
-                  onChanged: (query) => setState(() => _searchQuery = query),
-                  onClear: () => setState(() => _searchQuery = ''),
-                ),
-              ),
-              Spacer(),
-              TriOSToolbarCheckboxButton(
-                onChanged: (newValue) =>
-                    setState(() => _onlyEnabled = newValue ?? true),
-                value: _onlyEnabled,
-                text: 'Enabled Mods Only',
+              const Padding(
+                padding: .only(left: 8, right: 8, bottom: 8, top: 8),
+                child: ScanProgressPanel(),
               ),
             ],
           ),
@@ -419,13 +388,183 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     );
   }
 
+  Widget _buildScanButton(
+    bool isScanning,
+    bool hasUnscanned,
+    String scanLabel,
+    VramEstimatorManagerState vramState,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        MovingTooltipWidget.text(
+          message: scanLabel,
+          child: Disable(
+            isEnabled: !isScanning && hasUnscanned,
+            child: Material(
+              color: colorScheme.surfaceContainer,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                bottomLeft: Radius.circular(20),
+              ),
+              child: InkWell(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                ),
+                onTap: hasUnscanned
+                    ? () => ref
+                          .read(AppState.vramEstimatorProvider.notifier)
+                          .scanUnscanned()
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 6,
+                    children: [
+                      if (isScanning)
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colorScheme.onSurface,
+                          ),
+                        )
+                      else
+                        Icon(
+                          Icons.memory,
+                          size: 18,
+                          color: colorScheme.onSurface,
+                        ),
+                      Text(
+                        scanLabel,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Container(
+          width: 1,
+          height: 28,
+          color: colorScheme.onInverseSurface.withValues(alpha: 0.3),
+        ),
+        MovingTooltipWidget.text(
+          message: 'More scan options',
+          child: Disable(
+            isEnabled: !isScanning,
+            child: Material(
+              color: colorScheme.surfaceContainerHigh,
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              child: PopupMenuButton<String>(
+                tooltip: '',
+                padding: EdgeInsets.zero,
+                position: PopupMenuPosition.under,
+                onSelected: (value) {
+                  if (value == 'rescan_all') {
+                    ref
+                        .read(AppState.vramEstimatorProvider.notifier)
+                        .startEstimating();
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'rescan_all',
+                    child: ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.refresh),
+                      title: Text(
+                        vramState.modVramInfo.isEmpty
+                            ? 'Scan all mods'
+                            : 'Re-scan all mods',
+                      ),
+                    ),
+                  ),
+                ],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 6,
+                  ),
+                  child: Icon(
+                    Icons.arrow_drop_down,
+                    size: 18,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOverflowMenu(VramEstimatorManagerState vramState) {
+    final settings = ref.watch(appSettings);
+    final activeId = settings.vramEstimatorSelectorId;
+    final options = allSelectorOptions();
+
+    return OverflowMenuButton(
+      menuItems: [
+        OverflowMenuCheckItem(
+          title: 'Enabled Mods Only',
+          icon: Icons.filter_list,
+          checked: _onlyEnabled,
+          onTap: () => setState(() => _onlyEnabled = !_onlyEnabled),
+        ).toEntry(0),
+        const PopupMenuDivider(),
+        for (final opt in options)
+          OverflowMenuCheckItem(
+            title: opt.displayName,
+            icon: opt.id == VramSelectorId.folderScan
+                ? Icons.folder_open
+                : Icons.manage_search,
+            checked: activeId == opt.id,
+            onTap: () {
+              ref
+                  .read(appSettings.notifier)
+                  .update((s) => s.copyWith(vramEstimatorSelectorId: opt.id));
+              ref
+                  .read(AppState.vramEstimatorProvider.notifier)
+                  .onSelectorOrConfigChanged();
+            },
+          ).toEntry(null),
+        const PopupMenuDivider(),
+        OverflowMenuItem(
+          title: 'Export cache as JSON…',
+          icon: Icons.file_download,
+          onTap: vramState.modVramInfo.isEmpty
+              ? () {}
+              : () => _exportCacheAsJson(context, ref),
+        ).toEntry(1),
+      ],
+    );
+  }
+
   List<VramMod> _calculateModsToShow(
     Map<String, VramMod> modVramInfo,
     GraphicsLibConfig? graphicsLibConfig,
   ) {
     final start = selectedSliderValues?.start ?? 0;
-    final end = selectedSliderValues?.end ??
-        _maxRange(modVramInfo, graphicsLibConfig);
+    final end =
+        selectedSliderValues?.end ?? _maxRange(modVramInfo, graphicsLibConfig);
     return modVramInfo.values
         .where((mod) {
           final bytes = mod.bytesNotIncludingGraphicsLib();
@@ -447,40 +586,6 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
       return 'Scanning: $current$progress';
     }
     return 'Scanning$progress';
-  }
-
-  Widget _buildSelectorDropdown(WidgetRef ref) {
-    final settings = ref.watch(appSettings);
-    final activeId = settings.vramEstimatorSelectorId;
-    final options = allSelectorOptions();
-    final theme = Theme.of(context);
-    return MovingTooltipWidget.text(
-      message: options
-          .firstWhere((o) => o.id == activeId, orElse: () => options.first)
-          .description,
-      child: TriOSDropdownButton<VramSelectorId>(
-        value: options.any((o) => o.id == activeId)
-            ? activeId
-            : options.first.id,
-        underline: const SizedBox.shrink(),
-        items: [
-          for (final opt in options)
-            DropdownMenuItem<VramSelectorId>(
-              value: opt.id,
-              child: Text(opt.displayName, style: theme.textTheme.labelMedium),
-            ),
-        ],
-        onChanged: (newId) {
-          if (newId == null) return;
-          ref
-              .read(appSettings.notifier)
-              .update((s) => s.copyWith(vramEstimatorSelectorId: newId));
-          ref
-              .read(AppState.vramEstimatorProvider.notifier)
-              .onSelectorOrConfigChanged();
-        },
-      ),
-    );
   }
 
   Future<void> _exportCacheAsJson(BuildContext context, WidgetRef ref) async {

@@ -211,7 +211,7 @@ class ShipListNotifier
     final ships = <Ship>[];
     for (final map in shipMaps) {
       final ship = ShipMapper.fromMap(map);
-      final csvPath = map['csvFile'];
+      final csvPath = map['csvfile'];
       if (csvPath is String) ship.csvFile = File(csvPath);
       final dataPath = map['dataFile'];
       if (dataPath is String) ship.dataFile = File(dataPath);
@@ -413,7 +413,9 @@ class ShipListNotifier
       data.addAll(json);
 
       try {
-        final ship = ShipMapper.fromMap(data)
+        final ship = ShipMapper.fromMap(
+          {for (final e in data.entries) e.key.toLowerCase(): e.value},
+        )
           ..modVariant = modVariant
           ..csvFile = shipsCsvFile
           ..dataFile = shipFilesByHullId[shipId];

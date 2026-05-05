@@ -96,7 +96,7 @@ Future<void> showTriOSAboutDialog(BuildContext context) async {
   return showAboutDialog(
     context: context,
     applicationIcon: const TriOSAppIcon(),
-    applicationName: Constants.appTitle,
+    applicationName: "${context.appName}v${Constants.version}",
     applicationVersion: "A Starsector toolkit\nby Wisp",
     children: [
       ConstrainedBox(

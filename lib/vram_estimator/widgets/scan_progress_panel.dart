@@ -72,109 +72,101 @@ class _ScanProgressPanelState extends ConsumerState<ScanProgressPanel> {
         ? state.currentlyScanningModName
         : null;
 
-    return Card(
-      margin: .zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 8,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Progress  •  ${activeScans.length} scan${activeScans.length == 1 ? '' : 's'} active',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Disable(
-                  isEnabled: !state.isCancelled,
-                  child: OutlinedButton.icon(
-                    onPressed: () => ref
-                        .read(AppState.vramEstimatorProvider.notifier)
-                        .cancelEstimation(),
-                    icon: const Icon(Icons.stop, size: 16),
-                    label: Text(state.isCancelled ? 'Cancelling…' : 'Cancel'),
-                    style: OutlinedButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // Per-mod live rows. One row per scan currently in flight;
-            // multiple rows under the multithreaded path. Capped + scrollable
-            // so a long list (e.g. a freshly-submitted batch) never pushes
-            // the rest of the page off-screen.
-            if (activeScans.isNotEmpty)
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 220),
-                child: Scrollbar(
-                  controller: _activeScansController,
-                  thumbVisibility: activeScans.length > 4,
-                  child: ListView.builder(
-                    controller: _activeScansController,
-                    shrinkWrap: true,
-                    itemCount: activeScans.length,
-                    itemBuilder: (context, i) =>
-                        _ActiveScanRow(scan: activeScans[i], theme: theme),
-                  ),
-                ),
-              )
-            else if (fallbackName != null && fallbackName.isNotEmpty)
-              _ActiveScanRow(
-                scan: ActiveModScan(modName: fallbackName),
-                theme: theme,
-              )
-            else
-              Text(
-                'preparing…',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            // Overall progress count + bar
-            Row(
-              children: [
-                Text(
-                  'Overall: ',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-                Text(
-                  hasTotal
-                      ? '$done of $total mods  ($percentText)'
-                      : '$done mods',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: fraction,
-                minHeight: 6,
-                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
                 color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Progress  •  ${activeScans.length} scan${activeScans.length == 1 ? '' : 's'} active',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Disable(
+              isEnabled: !state.isCancelled,
+              child: OutlinedButton.icon(
+                onPressed: () => ref
+                    .read(AppState.vramEstimatorProvider.notifier)
+                    .cancelEstimation(),
+                icon: const Icon(Icons.stop, size: 16),
+                label: Text(state.isCancelled ? 'Cancelling…' : 'Cancel'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
               ),
             ),
           ],
         ),
-      ),
+        // Overall progress count + bar
+        Row(
+          children: [
+            Text(
+              'Overall: ',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            Text(
+              hasTotal ? '$done of $total mods  ($percentText)' : '$done mods',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: fraction,
+            minHeight: 6,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        // Per-mod live rows. One row per scan currently in flight;
+        // multiple rows under the multithreaded path. Capped + scrollable
+        // so a long list (e.g. a freshly-submitted batch) never pushes
+        // the rest of the page off-screen.
+        if (activeScans.isNotEmpty)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 220),
+            child: Scrollbar(
+              controller: _activeScansController,
+              thumbVisibility: activeScans.length > 4,
+              child: ListView.builder(
+                controller: _activeScansController,
+                shrinkWrap: true,
+                itemCount: activeScans.length,
+                itemBuilder: (context, i) =>
+                    _ActiveScanRow(scan: activeScans[i], theme: theme),
+              ),
+            ),
+          )
+        else if (fallbackName != null && fallbackName.isNotEmpty)
+          _ActiveScanRow(
+            scan: ActiveModScan(modName: fallbackName),
+            theme: theme,
+          )
+        else
+          Text(
+            'Preparing scan — collecting mod folders…',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -218,7 +210,7 @@ class _ActiveScanRow extends StatelessWidget {
               Text(
                 hasFileProgress
                     ? '${scan.filesScanned} / ${scan.totalFiles}  ($filePercentText)'
-                    : 'preparing…',
+                    : 'discovering image files…',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   fontStyle: hasFileProgress
@@ -340,36 +332,30 @@ class _IdleSummary extends ConsumerWidget {
             ),
           ];
 
-    return Card(
-      margin: .zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(spacing: 8, mainAxisSize: .min, children: lastScanRow),
-            if (cohorts.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Estimated VRAM if launched now',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 2),
-              for (final c in cohorts)
-                _CohortRow(
-                  cohort: c,
-                  gfxConfig: gfxConfig,
-                  mutedStyle: mutedStyle,
-                  valueStyle: valueStyle,
-                ),
-            ],
-          ],
-        ),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(spacing: 8, mainAxisSize: .min, children: lastScanRow),
+        if (cohorts.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Estimated VRAM if launched now',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          for (final c in cohorts)
+            _CohortRow(
+              cohort: c,
+              gfxConfig: gfxConfig,
+              mutedStyle: mutedStyle,
+              valueStyle: valueStyle,
+            ),
+        ],
+      ],
     );
   }
 }
@@ -505,7 +491,8 @@ class _CohortRow extends StatelessWidget {
       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
     );
 
-    final hasScannedAllMods = cohort.hasData && cohort.unscannedCount == 0;
+    final hasScannedAllMods =
+        cohort.totalMods == 0 || (cohort.hasData && cohort.unscannedCount == 0);
     Widget valueText;
     String? hideReason;
 
@@ -515,12 +502,9 @@ class _CohortRow extends StatelessWidget {
         style: approxStyle,
       );
       hideReason = "Scan all ${cohort.label} mods to see totals";
-    } else if (cohort.hasNoMods) {
-      valueText = Text('— none', style: approxStyle);
-      hideReason = 'No mods?';
-    } else if (cohort.hasNoScans) {
+    } else if (cohort.totalMods > 0 && cohort.hasNoScans) {
       valueText = Text(
-        '— not scanned (${cohort.totalMods} mods)',
+        ' not scanned (${cohort.totalMods} mods)',
         style: approxStyle,
       );
       hideReason =
@@ -597,15 +581,14 @@ class _CohortBreakdownTooltip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Estimated VRAM use — ${cohort.label.toLowerCase()}',
+          'Estimated VRAM use by: ${cohort.label.toLowerCase()}',
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
-        if (cohort.unscannedCount > 0)
+        if (!cohort.hasNoMods && cohort.unscannedCount > 0)
           Text(
-            '${cohort.unscannedCount} of ${cohort.totalMods} mods unscanned — '
-            'total understates real VRAM use.',
+            '${cohort.unscannedCount} of ${cohort.totalMods} mods unscanned.',
             style: theme.textTheme.labelSmall?.copyWith(
               fontStyle: FontStyle.italic,
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),

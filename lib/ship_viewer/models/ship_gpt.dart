@@ -10,7 +10,7 @@ import 'package:trios/utils/extensions.dart';
 
 part 'ship_gpt.mapper.dart';
 
-@MappableClass()
+@MappableClass(caseStyle: CaseStyle.lowerCase)
 class Ship with ShipMappable implements WispGridItem {
   @override
   String get key => id;
@@ -147,7 +147,7 @@ class Ship with ShipMappable implements WispGridItem {
 
   /// The ship_data.csv file this ship was loaded from.
   @MappableField(hook: FileHook())
-  late File csvFile;
+  File? csvFile;
 
   /// The .ship or .skin file for this hull (null if not found during parsing).
   @MappableField(hook: FileHook())

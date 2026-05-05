@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/descriptions/description_entry.dart';
@@ -301,6 +302,11 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: <ContextMenuEntry>[
+          MenuItem(
+            label: 'Copy ID',
+            icon: Icons.copy,
+            onSelected: () => Clipboard.setData(ClipboardData(text: ship.id)),
+          ),
           if (ship.dataFile != null)
             MenuItem(
               label: 'Open ${ship.isSkin ? '.skin' : '.ship'} file',
@@ -309,13 +315,14 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 ship.dataFile!.absolute.showInExplorer();
               },
             ),
-          MenuItem(
-            label: 'Open ship_data.csv',
-            icon: Icons.edit_note,
-            onSelected: () {
-              ship.csvFile.absolute.showInExplorer();
-            },
-          ),
+          if (ship.csvFile != null)
+            MenuItem(
+              label: 'Open ship_data.csv',
+              icon: Icons.edit_note,
+              onSelected: () {
+                ship.csvFile!.absolute.showInExplorer();
+              },
+            ),
           buildOpenSingleFolderMenuItem(
             _getPathForSpriteName(ship, gameCoreDir).parent,
           ),
@@ -456,6 +463,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         csvValue: (item) => item.hullNameForDisplay(),
         defaultState: WispGridColumnState(position: position++, width: 200),
       ),
+      col('id', 'ID', (s) => s.id),
       col('hullSize', 'Hull', (s) => s.hullSizeForDisplay(), width: 80),
       WispGridColumn(
         key: 'weaponSlotCount',
@@ -607,7 +615,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                               tooltip: 'Open ship_data.csv',
                               icon: const Icon(Icons.edit_note),
                               onPressed: () =>
-                                  s.csvFile.absolute.showInExplorer(),
+                                  s.csvFile?.absolute.showInExplorer(),
                             ),
                             IconButton(
                               tooltip: 'Open Folder',
@@ -671,12 +679,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
               child: Column(
                 crossAxisAlignment: .start,
                 children: [
-                  Text(
+                  SelectableText(
                     s.hullNameForDisplay(),
-                    style: theme.textTheme.titleLarge,
-                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  Text(s.id, style: theme.textTheme.labelSmall),
+                  SelectableText(s.id, style: theme.textTheme.labelSmall),
                   if (s.isSkin && s.baseHullId != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),

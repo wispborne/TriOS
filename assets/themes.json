@@ -213,6 +213,19 @@
       "surface": "#32444F",
       "surfaceContainer": "#112633",
       "onPrimary": "#FDFDFD"
+    },
+    "Hegemony": {
+      "isDark": true,
+      "primary": "#D4A535",
+      "secondary": "#E8752A",
+      "surface": "#141010",
+      "surfaceContainer": "#1E1816",
+      "onPrimary": "#1A1207",
+      "iconAsset": "assets/images/hegemony_crest.png",
+      "appNameOverride": "HegOS",
+      "successSeed": "#8A9A3B",
+      "warningSeed": "#E8752A",
+      "infoSeed": "#D4A535"
     }
   }
 }

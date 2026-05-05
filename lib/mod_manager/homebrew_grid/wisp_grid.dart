@@ -635,10 +635,21 @@ class _WispGridState<T extends WispGridItem>
       }
     }
 
-    final totalRowWidth = gridState
-        .sortedVisibleColumns(widget.columns)
-        .map((e) => e.value.width + WispGrid.gridRowSpacing)
-        .sum;
+    final visibleColumnsForWidth =
+        gridState.sortedVisibleColumns(widget.columns);
+    // Width must satisfy two layouts that share this SizedBox:
+    //   Row body (WispGridRowView): 2 wrapping boxes + N columns +
+    //     (N+1) inter-child gaps = sum(w) + (N+3)*spacing
+    //   Header (WispGridHeaderRowView): horizontal padding of 2*spacing on
+    //     each side + N dividers between (N+1) MultiSplitView areas
+    //     = sum(w) + (N+4)*spacing (endspace flex floors at 0)
+    // The header is the larger of the two; under-allocating squeezes the
+    // header columns, and onMultiSplitViewChanged persists the squeezed
+    // widths back to state — a feedback loop that shrinks columns to zero.
+    final totalRowWidth = visibleColumnsForWidth
+            .map((e) => e.value.width)
+            .sum +
+        (visibleColumnsForWidth.length + 4) * WispGrid.gridRowSpacing;
 
     // Start with the content area
     Widget content = _buildVerticalScrollView(displayedMods, totalRowWidth);
@@ -668,10 +679,7 @@ class _WispGridState<T extends WispGridItem>
           scrollDirection: Axis.horizontal,
           controller: _gridScrollControllerHorizontal,
           child: SizedBox(
-            width: gridState
-                .sortedVisibleColumns(widget.columns)
-                .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
-                .sum,
+            width: totalRowWidth,
             child: content,
           ),
         ),
@@ -682,10 +690,7 @@ class _WispGridState<T extends WispGridItem>
         scrollDirection: Axis.horizontal,
         controller: _gridScrollControllerHorizontal,
         child: SizedBox(
-          width: gridState
-              .sortedVisibleColumns(widget.columns)
-              .map((e) => e.value.width + WispGrid.gridRowSpacing + 10)
-              .sum,
+          width: totalRowWidth,
           child: content,
         ),
       );

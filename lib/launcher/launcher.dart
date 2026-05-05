@@ -137,7 +137,7 @@ class LauncherButton extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "\nTip: ${Constants.appName} is never required to ",
+                        "\nTip: ${context.appName} is never required to ",
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           color: theme.colorScheme.onSurface.withAlpha(180),

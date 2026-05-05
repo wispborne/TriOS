@@ -9,7 +9,7 @@ import 'package:trios/utils/dart_mappable_utils.dart';
 
 part 'weapon.mapper.dart';
 
-@MappableClass()
+@MappableClass(caseStyle: CaseStyle.lowerCase)
 class Weapon with WeaponMappable implements WispGridItem {
   @override
   String get key => id;
@@ -29,7 +29,6 @@ class Weapon with WeaponMappable implements WispGridItem {
   final double? impact;
   @MappableField(key: 'turn rate')
   final double? turnRate;
-  @MappableField(key: 'OPs')
   final int? ops;
   final double? ammo;
   @MappableField(key: 'ammo/sec')
@@ -105,7 +104,7 @@ class Weapon with WeaponMappable implements WispGridItem {
   @MappableField(hook: SkipSerializationHook())
   late ModVariant? modVariant;
   @MappableField(hook: FileHook())
-  late File csvFile;
+  File? csvFile;
   @MappableField(hook: FileHook())
   File? wpnFile;
 

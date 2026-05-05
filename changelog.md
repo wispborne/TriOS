@@ -12,10 +12,13 @@
   - Ships/Weapons Viewers: Added descriptions to the new tooltips.
   - Ships Viewer: filter by stations.
   - Ships Viewer: sensor stats now shown on tooltip.
+  - New theme: Hegemony.
 - Fixed
   - Portrait Replacer crashing Starsector if some cases where a portrait and its replacement were different sizes.
   - Ships Viewer: DP is now calculated correctly.
   - Improved .csv parsing to handle multi-line strings.
+  - Weapon, ship, and hullmod columns weren't read if they had mixed case headers.
+  - Log Viewer: incomplete logs would show `null, null` when copying mod info.
 - Changed
   - Cleaned up how a few themes look on the new ship/weapon tooltips.
   - Refactored game detection and added a new default detection method on Windows that should be faster.

@@ -147,7 +147,7 @@ class WeaponListNotifier
     final weapons = <Weapon>[];
     for (final map in weaponMaps) {
       final weapon = WeaponMapper.fromMap(map);
-      final csvPath = map['csvFile'];
+      final csvPath = map['csvfile'];
       if (csvPath is String) weapon.csvFile = File(csvPath);
       final wpnPath = map['wpnFile'];
       if (wpnPath is String) weapon.wpnFile = File(wpnPath);
@@ -350,7 +350,9 @@ Future<ParseResult> _parseWeaponsCsv(
       }
 
       // Create Weapon instance
-      final weapon = WeaponMapper.fromMap(weaponData)
+      final weapon = WeaponMapper.fromMap(
+        {for (final e in weaponData.entries) e.key.toLowerCase(): e.value},
+      )
         ..modVariant = modVariant
         ..csvFile = weaponsCsvFile
         ..wpnFile = weaponData['wpnFile'];

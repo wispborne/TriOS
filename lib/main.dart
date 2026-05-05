@@ -122,7 +122,7 @@ void main() async {
         shouldDebugRiverpod: shouldDebugRiverpod,
       ),
     );
-    Fimber.i("${Constants.appTitle} logging started.");
+    Fimber.i("${Constants.appName} v${Constants.version} logging started.");
     Fimber.i(
       "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.",
     );
@@ -454,7 +454,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     }
 
     return MaterialApp(
-      title: Constants.appTitle,
+      title: "${context.appName}v${Constants.version}",
       theme: currentTheme.themeData,
       themeMode: currentTheme.themeData.brightness == Brightness.light
           ? ThemeMode.light

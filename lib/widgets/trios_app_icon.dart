@@ -18,12 +18,19 @@ class TriOSAppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rainbowAccent = context.theme.rainbowAccent;
+    final theme = context.theme;
+    final iconAsset = theme.iconAsset;
+
+    if (iconAsset != null) {
+      return Image.asset(iconAsset, width: width, height: height);
+    }
+
+    final rainbowAccent = theme.rainbowAccent;
 
     final svg = SvgPicture.asset(
       "assets/images/telos_faction_crest.svg",
       colorFilter: ColorFilter.mode(
-        color ?? (rainbowAccent ? Colors.white : Theme.of(context).colorScheme.primary),
+        color ?? (rainbowAccent ? Colors.white : theme.colorScheme.primary),
         BlendMode.srcIn,
       ),
       width: width,

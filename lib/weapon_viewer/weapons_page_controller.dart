@@ -12,6 +12,8 @@ import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
+import 'package:trios/widgets/smart_search/search_dsl_field.dart';
+import 'package:trios/widgets/smart_search/search_dsl_parser.dart';
 
 part 'weapons_page_controller.mapper.dart';
 
@@ -70,12 +72,17 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   static final _scope = const FilterScope(kWeaponsPageId);
 
   late final FilterScopeController<Weapon> _filters;
+  late final List<SearchField<Weapon>> _searchFields;
+  late final Map<String, SearchField<Weapon>> _fieldsByKey;
 
   final vanillaName = 'Vanilla';
 
   FilterScope get scope => _scope;
 
   List<FilterGroup<Weapon>> get filterGroups => _filters.groups;
+
+  List<SearchFieldMeta> get searchFieldsMeta =>
+      _searchFields.map((f) => f.toMeta(state.allWeapons)).toList();
 
   CompositeFilterGroup<Weapon> get _general =>
       _filters.findGroup('general') as CompositeFilterGroup<Weapon>;
@@ -99,6 +106,8 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   WeaponsPageState build() {
     if (stateOrNull == null) {
       _filters = _buildFilters();
+      _searchFields = _buildSearchFields();
+      _fieldsByKey = {for (final f in _searchFields) f.key: f};
       final persistence = ref.read(filterGroupPersistenceProvider);
       _filters.loadPersisted(persistence);
     }
@@ -291,7 +300,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
 
     weapons = _filters.applyChipFilters(weapons);
 
-    weapons = _filterBySearch(
+    weapons = _applyParsedQuery(
       weapons,
       currentState.currentSearchQuery,
       currentState.weaponSearchIndices,
@@ -327,9 +336,9 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   }
 
   void updateSearchQuery(String query) {
+    if (query == state.currentSearchQuery) return;
     final mods = ref.read(AppState.mods);
-    final updatedState = state.copyWith(currentSearchQuery: query);
-    state = _processAllFilters(updatedState, mods);
+    state = _processAllFilters(state.copyWith(currentSearchQuery: query), mods);
   }
 
   void toggleShowEnabled() {
@@ -400,20 +409,240 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     state = _processAllFilters(state, mods);
   }
 
-  List<Weapon> _filterBySearch(
+  List<SearchField<Weapon>> _buildSearchFields() {
+    return [
+      SearchField<Weapon>(
+        key: 'tracking',
+        description: 'Tracking quality (excellent, good, poor, none)',
+        valueSuggestions: (weapons) => weapons
+            .map((w) => w.trackingStr?.toLowerCase())
+            .whereType<String>()
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (weapon, op, value) {
+          if (op != DslOperator.equals) return false;
+          return weapon.trackingStr?.toLowerCase() == value.toLowerCase();
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'ammo',
+        description: 'Ammo count (none = unlimited); supports numeric operators',
+        supportsNumeric: true,
+        valueSuggestions: (weapons) => ['none'],
+        matches: (weapon, op, value) {
+          if (value.toLowerCase() == 'none') {
+            if (op != DslOperator.equals) return false;
+            return weapon.ammo == null || weapon.ammo == 0;
+          }
+          final numVal = double.tryParse(value);
+          if (numVal == null) return false;
+          return _compareNumeric(weapon.ammo ?? 0, numVal, op);
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'type',
+        description: 'Weapon type (missile, energy, ballistic, hybrid)',
+        valueSuggestions: (weapons) => weapons
+            .map((w) => w.weaponType?.toLowerCase())
+            .whereType<String>()
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (weapon, op, value) {
+          if (op != DslOperator.equals) return false;
+          return weapon.weaponType?.toLowerCase() == value.toLowerCase();
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'size',
+        description: 'Mount size (small, medium, large)',
+        valueSuggestions: (weapons) => weapons
+            .map((w) => w.size?.toLowerCase())
+            .whereType<String>()
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (weapon, op, value) {
+          if (op != DslOperator.equals) return false;
+          return weapon.size?.toLowerCase() == value.toLowerCase();
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'damage',
+        description: 'Damage type (kinetic, he, energy, fragmentation)',
+        valueSuggestions: (weapons) => weapons
+            .map((w) => w.damageType?.toLowerCase())
+            .whereType<String>()
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (weapon, op, value) {
+          if (op != DslOperator.equals) return false;
+          return weapon.damageType?.toLowerCase() == value.toLowerCase();
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'range',
+        description: 'Weapon range; supports numeric operators (>800)',
+        supportsNumeric: true,
+        valueSuggestions: (_) => [],
+        matches: (weapon, op, value) {
+          final numVal = double.tryParse(value);
+          if (numVal == null) return false;
+          final range = weapon.range;
+          if (range == null) return false;
+          return _compareNumeric(range, numVal, op);
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'op',
+        description: 'Ordnance points cost; supports numeric operators',
+        supportsNumeric: true,
+        valueSuggestions: (_) => [],
+        matches: (weapon, op, value) {
+          final numVal = double.tryParse(value);
+          if (numVal == null) return false;
+          final ops = weapon.ops?.toDouble();
+          if (ops == null) return false;
+          return _compareNumeric(ops, numVal, op);
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'dps',
+        description: 'Damage per second; supports numeric operators',
+        supportsNumeric: true,
+        valueSuggestions: (_) => [],
+        matches: (weapon, op, value) {
+          final numVal = double.tryParse(value);
+          if (numVal == null) return false;
+          final dps = weapon.damagePerSecond;
+          if (dps == null) return false;
+          return _compareNumeric(dps, numVal, op);
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'hint',
+        description: 'Weapon hint tag; matches any hint in a multi-value set',
+        valueSuggestions: (weapons) => weapons
+            .expand((w) => w.hintsAsSet)
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (weapon, op, value) {
+          if (op != DslOperator.equals) return false;
+          return weapon.hintsAsSet.contains(value.toLowerCase());
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'tag',
+        description: 'Weapon CSV tag; matches any tag in a multi-value set',
+        valueSuggestions: (weapons) => weapons
+            .expand((w) => w.tagsAsSet)
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (weapon, op, value) {
+          if (op != DslOperator.equals) return false;
+          return weapon.tagsAsSet.contains(value.toLowerCase());
+        },
+      ),
+      SearchField<Weapon>(
+        key: 'mod',
+        description: 'Mod name substring match',
+        valueSuggestions: (weapons) => weapons
+            .map((w) => w.modVariant?.modInfo.nameOrId)
+            .whereType<String>()
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (weapon, op, value) {
+          if (op != DslOperator.equals) return false;
+          final modName =
+              weapon.modVariant?.modInfo.nameOrId.toLowerCase() ?? '';
+          return modName.contains(value.toLowerCase());
+        },
+      ),
+    ];
+  }
+
+  List<Weapon> _applyParsedQuery(
     List<Weapon> weapons,
     String query,
     Map<String, List<String>> weaponValuesByWeaponId,
   ) {
-    if (query.isEmpty) return weapons;
+    if (query.trim().isEmpty) return weapons;
 
-    query = query.toLowerCase();
+    final parsed = SearchDslParser.parse(query);
+    if (parsed.isEmpty) return weapons;
 
-    return weapons.where((weapon) {
-      return weaponValuesByWeaponId[weapon.id]?.any(
-            (value) => value.contains(query),
-          ) ??
-          false;
-    }).toList();
+    final preparedTokens = [
+      for (final token in parsed.tokens)
+        if (token is TextToken)
+          (token: token, lowered: token.text.toLowerCase())
+        else if (token is FieldToken)
+          (
+            token: token,
+            lowered: _fieldsByKey.containsKey(token.key)
+                ? ''
+                : token.toQueryString().toLowerCase(),
+          ),
+    ];
+
+    return weapons
+        .where(
+          (w) => _weaponMatchesQuery(w, preparedTokens, weaponValuesByWeaponId),
+        )
+        .toList();
+  }
+
+  bool _weaponMatchesQuery(
+    Weapon weapon,
+    List<({Object token, String lowered})> tokens,
+    Map<String, List<String>> weaponValuesByWeaponId,
+  ) {
+    final values = weaponValuesByWeaponId[weapon.id];
+    for (final entry in tokens) {
+      final token = entry.token;
+      if (token is TextToken) {
+        if (!(values?.any((v) => v.contains(entry.lowered)) ?? false)) {
+          return false;
+        }
+      } else if (token is FieldToken) {
+        final field = _fieldsByKey[token.key];
+        final bool result;
+        if (field == null) {
+          // Unknown field key — fall back to substring match on the raw token
+          result = values?.any((v) => v.contains(entry.lowered)) ?? false;
+        } else {
+          result = field.matches(weapon, token.operator, token.value);
+        }
+        if (token.negated ? result : !result) return false;
+      }
+    }
+    return true;
+  }
+
+  bool _compareNumeric(num actual, double target, DslOperator op) => switch (op) {
+    DslOperator.equals => actual == target,
+    DslOperator.greaterThan => actual > target,
+    DslOperator.lessThan => actual < target,
+    DslOperator.greaterThanOrEqual => actual >= target,
+    DslOperator.lessThanOrEqual => actual <= target,
+  };
+
+  void submitSearchQuery() {
+    final query = state.currentSearchQuery.trim();
+    if (query.isEmpty) return;
+    ref.read(appSettings.notifier).update((s) {
+      final deduped = [query, ...s.weaponsSearchHistory.where((h) => h != query)];
+      return s.copyWith(weaponsSearchHistory: deduped.take(10).toList());
+    });
   }
 }

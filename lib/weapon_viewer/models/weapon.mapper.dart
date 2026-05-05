@@ -77,12 +77,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     opt: true,
   );
   static int? _$ops(Weapon v) => v.ops;
-  static const Field<Weapon, int> _f$ops = Field(
-    'ops',
-    _$ops,
-    key: r'OPs',
-    opt: true,
-  );
+  static const Field<Weapon, int> _f$ops = Field('ops', _$ops, opt: true);
   static double? _$ammo(Weapon v) => v.ammo;
   static const Field<Weapon, double> _f$ammo = Field('ammo', _$ammo, opt: true);
   static double? _$ammoPerSec(Weapon v) => v.ammoPerSec;
@@ -208,12 +203,14 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static const Field<Weapon, double> _f$autofireAccBonus = Field(
     'autofireAccBonus',
     _$autofireAccBonus,
+    key: r'autofireaccbonus',
     opt: true,
   );
   static String? _$extraArcForAI(Weapon v) => v.extraArcForAI;
   static const Field<Weapon, String> _f$extraArcForAI = Field(
     'extraArcForAI',
     _$extraArcForAI,
+    key: r'extraarcforai',
     opt: true,
   );
   static String? _$hints(Weapon v) => v.hints;
@@ -228,6 +225,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static const Field<Weapon, String> _f$groupTag = Field(
     'groupTag',
     _$groupTag,
+    key: r'grouptag',
     opt: true,
   );
   static String? _$techManufacturer(Weapon v) => v.techManufacturer;
@@ -248,60 +246,70 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static const Field<Weapon, String> _f$primaryRoleStr = Field(
     'primaryRoleStr',
     _$primaryRoleStr,
+    key: r'primaryrolestr',
     opt: true,
   );
   static String? _$speedStr(Weapon v) => v.speedStr;
   static const Field<Weapon, String> _f$speedStr = Field(
     'speedStr',
     _$speedStr,
+    key: r'speedstr',
     opt: true,
   );
   static String? _$trackingStr(Weapon v) => v.trackingStr;
   static const Field<Weapon, String> _f$trackingStr = Field(
     'trackingStr',
     _$trackingStr,
+    key: r'trackingstr',
     opt: true,
   );
   static String? _$turnRateStr(Weapon v) => v.turnRateStr;
   static const Field<Weapon, String> _f$turnRateStr = Field(
     'turnRateStr',
     _$turnRateStr,
+    key: r'turnratestr',
     opt: true,
   );
   static String? _$accuracyStr(Weapon v) => v.accuracyStr;
   static const Field<Weapon, String> _f$accuracyStr = Field(
     'accuracyStr',
     _$accuracyStr,
+    key: r'accuracystr',
     opt: true,
   );
   static String? _$customPrimary(Weapon v) => v.customPrimary;
   static const Field<Weapon, String> _f$customPrimary = Field(
     'customPrimary',
     _$customPrimary,
+    key: r'customprimary',
     opt: true,
   );
   static String? _$customPrimaryHL(Weapon v) => v.customPrimaryHL;
   static const Field<Weapon, String> _f$customPrimaryHL = Field(
     'customPrimaryHL',
     _$customPrimaryHL,
+    key: r'customprimaryhl',
     opt: true,
   );
   static String? _$customAncillary(Weapon v) => v.customAncillary;
   static const Field<Weapon, String> _f$customAncillary = Field(
     'customAncillary',
     _$customAncillary,
+    key: r'customancillary',
     opt: true,
   );
   static String? _$customAncillaryHL(Weapon v) => v.customAncillaryHL;
   static const Field<Weapon, String> _f$customAncillaryHL = Field(
     'customAncillaryHL',
     _$customAncillaryHL,
+    key: r'customancillaryhl',
     opt: true,
   );
   static bool? _$noDPSInTooltip(Weapon v) => v.noDPSInTooltip;
   static const Field<Weapon, bool> _f$noDPSInTooltip = Field(
     'noDPSInTooltip',
     _$noDPSInTooltip,
+    key: r'nodpsintooltip',
     opt: true,
   );
   static double? _$number(Weapon v) => v.number;
@@ -314,6 +322,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static const Field<Weapon, String> _f$specClass = Field(
     'specClass',
     _$specClass,
+    key: r'specclass',
     opt: true,
   );
   static String? _$weaponType(Weapon v) => v.weaponType;
@@ -329,72 +338,84 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static const Field<Weapon, String> _f$damageType = Field(
     'damageType',
     _$damageType,
+    key: r'damagetype',
     opt: true,
   );
   static String? _$turretSprite(Weapon v) => v.turretSprite;
   static const Field<Weapon, String> _f$turretSprite = Field(
     'turretSprite',
     _$turretSprite,
+    key: r'turretsprite',
     opt: true,
   );
   static String? _$turretGunSprite(Weapon v) => v.turretGunSprite;
   static const Field<Weapon, String> _f$turretGunSprite = Field(
     'turretGunSprite',
     _$turretGunSprite,
+    key: r'turretgunsprite',
     opt: true,
   );
   static String? _$hardpointSprite(Weapon v) => v.hardpointSprite;
   static const Field<Weapon, String> _f$hardpointSprite = Field(
     'hardpointSprite',
     _$hardpointSprite,
+    key: r'hardpointsprite',
     opt: true,
   );
   static String? _$hardpointGunSprite(Weapon v) => v.hardpointGunSprite;
   static const Field<Weapon, String> _f$hardpointGunSprite = Field(
     'hardpointGunSprite',
     _$hardpointGunSprite,
+    key: r'hardpointgunsprite',
     opt: true,
   );
   static String? _$mountTypeOverride(Weapon v) => v.mountTypeOverride;
   static const Field<Weapon, String> _f$mountTypeOverride = Field(
     'mountTypeOverride',
     _$mountTypeOverride,
+    key: r'mounttypeoverride',
     opt: true,
   );
   static ModVariant? _$modVariant(Weapon v) => v.modVariant;
   static const Field<Weapon, ModVariant> _f$modVariant = Field(
     'modVariant',
     _$modVariant,
+    key: r'modvariant',
     hook: SkipSerializationHook(),
   );
-  static File _$csvFile(Weapon v) => v.csvFile;
+  static File? _$csvFile(Weapon v) => v.csvFile;
   static const Field<Weapon, File> _f$csvFile = Field(
     'csvFile',
     _$csvFile,
+    key: r'csvfile',
     hook: FileHook(),
   );
   static File? _$wpnFile(Weapon v) => v.wpnFile;
   static const Field<Weapon, File> _f$wpnFile = Field(
     'wpnFile',
     _$wpnFile,
+    key: r'wpnfile',
     hook: FileHook(),
   );
   static Set<String> _$hintsAsSet(Weapon v) => v.hintsAsSet;
   static const Field<Weapon, Set<String>> _f$hintsAsSet = Field(
     'hintsAsSet',
     _$hintsAsSet,
+    key: r'hintsasset',
     mode: FieldMode.member,
   );
   static Set<String> _$tagsAsSet(Weapon v) => v.tagsAsSet;
   static const Field<Weapon, Set<String>> _f$tagsAsSet = Field(
     'tagsAsSet',
     _$tagsAsSet,
+    key: r'tagsasset',
     mode: FieldMode.member,
   );
   static List<String> _$spritesForWeapon(Weapon v) => v.spritesForWeapon;
   static const Field<Weapon, List<String>> _f$spritesForWeapon = Field(
     'spritesForWeapon',
     _$spritesForWeapon,
+    key: r'spritesforweapon',
     mode: FieldMode.member,
   );
 

@@ -452,7 +452,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'useTopToolbar',
     _$useTopToolbar,
     opt: true,
-    def: true,
+    def: false,
   );
   static List<NavOrderEntry>? _$navIconOrder(Settings v) => v.navIconOrder;
   static const Field<Settings, List<NavOrderEntry>> _f$navIconOrder = Field(
@@ -929,6 +929,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static List<String> _$weaponsSearchHistory(Settings v) =>
+      v.weaponsSearchHistory;
+  static const Field<Settings, List<String>> _f$weaponsSearchHistory = Field(
+    'weaponsSearchHistory',
+    _$weaponsSearchHistory,
+    opt: true,
+    def: const [],
+  );
   static VramSelectorId _$vramEstimatorSelectorId(Settings v) =>
       v.vramEstimatorSelectorId;
   static const Field<Settings, VramSelectorId> _f$vramEstimatorSelectorId =
@@ -1036,6 +1044,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #showAprilFools2026: _f$showAprilFools2026,
     #forceShowAprilFools2026: _f$forceShowAprilFools2026,
     #debugMode: _f$debugMode,
+    #weaponsSearchHistory: _f$weaponsSearchHistory,
     #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
     #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
     #vramEstimatorMultithreaded: _f$vramEstimatorMultithreaded,
@@ -1131,6 +1140,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       showAprilFools2026: data.dec(_f$showAprilFools2026),
       forceShowAprilFools2026: data.dec(_f$forceShowAprilFools2026),
       debugMode: data.dec(_f$debugMode),
+      weaponsSearchHistory: data.dec(_f$weaponsSearchHistory),
       vramEstimatorSelectorId: data.dec(_f$vramEstimatorSelectorId),
       referencedAssetsSelectorConfig: data.dec(
         _f$referencedAssetsSelectorConfig,
@@ -1246,6 +1256,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     CatalogPageStatePersisted
   >?
   get catalogPageState;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get weaponsSearchHistory;
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1329,6 +1341,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showAprilFools2026,
     bool? forceShowAprilFools2026,
     bool? debugMode,
+    List<String>? weaponsSearchHistory,
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
@@ -1440,6 +1453,13 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(catalogPageState: v),
   );
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get weaponsSearchHistory => ListCopyWith(
+    $value.weaponsSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(weaponsSearchHistory: v),
+  );
+  @override
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1527,6 +1547,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? showAprilFools2026 = $none,
     Object? forceShowAprilFools2026 = $none,
     bool? debugMode,
+    List<String>? weaponsSearchHistory,
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
@@ -1643,6 +1664,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (forceShowAprilFools2026 != $none)
         #forceShowAprilFools2026: forceShowAprilFools2026,
       if (debugMode != null) #debugMode: debugMode,
+      if (weaponsSearchHistory != null)
+        #weaponsSearchHistory: weaponsSearchHistory,
       if (vramEstimatorSelectorId != null)
         #vramEstimatorSelectorId: vramEstimatorSelectorId,
       if (referencedAssetsSelectorConfig != null)
@@ -1879,6 +1902,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.forceShowAprilFools2026,
     ),
     debugMode: data.get(#debugMode, or: $value.debugMode),
+    weaponsSearchHistory: data.get(
+      #weaponsSearchHistory,
+      or: $value.weaponsSearchHistory,
+    ),
     vramEstimatorSelectorId: data.get(
       #vramEstimatorSelectorId,
       or: $value.vramEstimatorSelectorId,

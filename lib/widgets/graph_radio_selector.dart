@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trios/widgets/trios_radio_tile.dart';
 
 enum GraphType { pie, bar }
 
@@ -17,50 +16,44 @@ class GraphTypeSelectorState extends State<GraphTypeSelector> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Expanded(
-          child: TriOSRadioTile<GraphType>(
-            title: const Text('Bar Chart'),
-            value: GraphType.bar,
-            dense: true,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(14),
-              bottomLeft: Radius.circular(14),
-            ),
-            groupValue: _selectedType,
-            onChanged: (GraphType? value) {
-              if (value != null) {
-                setState(() {
-                  _selectedType = value;
-                  widget.onGraphTypeChanged(value);
-                });
-              }
-            },
-          ),
+    final colorScheme = Theme.of(context).colorScheme;
+    return SegmentedButton<GraphType>(
+      showSelectedIcon: false,
+      style: ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return colorScheme.primaryContainer;
+          }
+          return null;
+        }),
+        foregroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return colorScheme.onPrimaryContainer;
+          }
+          return null;
+        }),
+      ),
+      segments: [
+        ButtonSegment<GraphType>(
+          value: GraphType.bar,
+          icon: const Icon(Icons.bar_chart, size: 20),
+          tooltip: 'Bar Chart',
         ),
-        Expanded(
-          child: TriOSRadioTile<GraphType>(
-            title: const Text('Pie Chart'),
-            value: GraphType.pie,
-            groupValue: _selectedType,
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(14),
-              bottomRight: Radius.circular(14),
-            ),
-            dense: true,
-            onChanged: (GraphType? value) {
-              if (value != null) {
-                setState(() {
-                  _selectedType = value;
-                  widget.onGraphTypeChanged(value);
-                });
-              }
-            },
-          ),
+        ButtonSegment<GraphType>(
+          value: GraphType.pie,
+          icon: const Icon(Icons.pie_chart, size: 20),
+          tooltip: 'Pie Chart',
         ),
       ],
+      selected: {_selectedType},
+      onSelectionChanged: (Set<GraphType> selected) {
+        setState(() {
+          _selectedType = selected.first;
+          widget.onGraphTypeChanged(selected.first);
+        });
+      },
     );
   }
 }

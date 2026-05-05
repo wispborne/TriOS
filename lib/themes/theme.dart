@@ -30,6 +30,8 @@ class TriOSTheme {
   final Color? onError;
   final String? fontFamily;
   final bool rainbowAccent;
+  final String? iconAsset;
+  final String? appNameOverride;
 
   // Semantic status color seeds (optional overrides).
   final Color? successSeed;
@@ -52,6 +54,8 @@ class TriOSTheme {
     this.onError,
     this.fontFamily,
     this.rainbowAccent = false,
+    this.iconAsset,
+    this.appNameOverride,
     this.successSeed,
     this.warningSeed,
     this.infoSeed,
@@ -74,6 +78,8 @@ class TriOSTheme {
     String? onError,
     this.fontFamily,
     this.rainbowAccent = false,
+    this.iconAsset,
+    this.appNameOverride,
     String? successSeed,
     String? warningSeed,
     String? infoSeed,
@@ -118,6 +124,8 @@ class TriOSTheme {
     Color? onError,
     String? fontFamily,
     bool? rainbowAccent,
+    String? iconAsset,
+    String? appNameOverride,
     Color? successSeed,
     Color? warningSeed,
     Color? infoSeed,
@@ -138,6 +146,8 @@ class TriOSTheme {
       onError: onError ?? this.onError,
       fontFamily: fontFamily ?? this.fontFamily,
       rainbowAccent: rainbowAccent ?? this.rainbowAccent,
+      iconAsset: iconAsset ?? this.iconAsset,
+      appNameOverride: appNameOverride ?? this.appNameOverride,
       successSeed: successSeed ?? this.successSeed,
       warningSeed: warningSeed ?? this.warningSeed,
       infoSeed: infoSeed ?? this.infoSeed,
@@ -149,6 +159,8 @@ class TriOSTheme {
 /// Theme extension to expose custom TriOS theme properties via [Theme.of].
 class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
   final bool rainbowAccent;
+  final String? iconAsset;
+  final String? appNameOverride;
 
   // Success
   final Color success;
@@ -176,6 +188,8 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
 
   const TriOSThemeExtension({
     this.rainbowAccent = false,
+    this.iconAsset,
+    this.appNameOverride,
     this.success = const Color(0xFF4CAF50),
     this.onSuccess = const Color(0xFFFFFFFF),
     this.successContainer = const Color(0xFF4CAF50),
@@ -197,6 +211,8 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
   @override
   TriOSThemeExtension copyWith({
     bool? rainbowAccent,
+    String? iconAsset,
+    String? appNameOverride,
     Color? success,
     Color? onSuccess,
     Color? successContainer,
@@ -216,6 +232,8 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
   }) {
     return TriOSThemeExtension(
       rainbowAccent: rainbowAccent ?? this.rainbowAccent,
+      iconAsset: iconAsset ?? this.iconAsset,
+      appNameOverride: appNameOverride ?? this.appNameOverride,
       success: success ?? this.success,
       onSuccess: onSuccess ?? this.onSuccess,
       successContainer: successContainer ?? this.successContainer,
@@ -240,6 +258,8 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
     if (other == null) return this;
     return TriOSThemeExtension(
       rainbowAccent: t < 0.5 ? rainbowAccent : other.rainbowAccent,
+      iconAsset: t < 0.5 ? iconAsset : other.iconAsset,
+      appNameOverride: t < 0.5 ? appNameOverride : other.appNameOverride,
       success: Color.lerp(success, other.success, t)!,
       onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
       successContainer: Color.lerp(successContainer, other.successContainer, t)!,

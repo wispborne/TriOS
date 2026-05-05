@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -29,7 +30,7 @@ import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:trios/widgets/viewer_search_box.dart';
+import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'package:trios/widgets/viewer_split_pane.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
 
@@ -48,7 +49,6 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
   @override
   bool get wantKeepAlive => true;
 
-  final SearchController _searchController = SearchController();
   final ScrollController _filterScrollController = ScrollController();
   WispGridController<Weapon>? _gridController;
   Widget? _cachedBuild;
@@ -63,7 +63,6 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
 
   @override
   void dispose() {
-    _searchController.dispose();
     _filterScrollController.dispose();
     super.dispose();
   }
@@ -152,15 +151,16 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       visible: visible,
       isLoading: controllerState.isLoading,
       onRefresh: () => ref.invalidate(weaponListNotifierProvider),
-      searchBox: ViewerSearchBox(
-        searchController: _searchController,
-        hintText: "Filter weapons...",
-        onChanged: (query) => ref
-            .read(weaponsPageControllerProvider.notifier)
-            .updateSearchQuery(query),
-        onClear: () => ref
-            .read(weaponsPageControllerProvider.notifier)
-            .updateSearchQuery(''),
+      searchBox: SmartSearchBar(
+        fields: controller.searchFieldsMeta,
+        recentHistory: ref.watch(
+          appSettings.select((s) => s.weaponsSearchHistory),
+        ),
+        initialValue: controllerState.currentSearchQuery,
+        onChanged: (query) =>
+            ref.read(weaponsPageControllerProvider.notifier).updateSearchQuery(query),
+        onSubmitted: () =>
+            ref.read(weaponsPageControllerProvider.notifier).submitSearchQuery(),
       ),
       splitPane: controllerState.splitPane,
       onToggleSplitPane: () {
@@ -332,17 +332,17 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                               tooltip: 'Open weapon_data.csv',
                               icon: const Icon(Icons.edit_note),
                               onPressed: () =>
-                                  w.csvFile.absolute.showInExplorer(),
+                                  w.csvFile?.absolute.showInExplorer(),
                             ),
                             if (w.spritesForWeapon.isNotEmpty)
                               IconButton(
                                 tooltip: 'Open weapon data folder(s)',
                                 icon: const Icon(Icons.folder),
                                 onPressed: () {
-                                  w.csvFile.parent.path.openAsUriInBrowser();
+                                  w.csvFile?.parent.path.openAsUriInBrowser();
                                   final wpnParent = w.wpnFile?.parent;
                                   if (wpnParent != null &&
-                                      wpnParent.path != w.csvFile.parent.path) {
+                                      wpnParent.path != w.csvFile?.parent.path) {
                                     wpnParent.path.openAsUriInBrowser();
                                   }
                                 },
@@ -390,12 +390,13 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  SelectableText(
                     w.name ?? w.id,
-                    style: theme.textTheme.titleLarge,
-                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  Text(w.id, style: theme.textTheme.labelSmall),
+                  SelectableText(w.id, style: theme.textTheme.labelSmall),
                 ],
               ),
             ),
@@ -644,6 +645,11 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: <ContextMenuEntry>[
+          MenuItem(
+            label: 'Copy ID',
+            icon: Icons.copy,
+            onSelected: () => Clipboard.setData(ClipboardData(text: weapon.id)),
+          ),
           if (weapon.wpnFile != null)
             MenuItem(
               label: 'Open .wpn file',
@@ -652,16 +658,17 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 weapon.wpnFile!.absolute.showInExplorer();
               },
             ),
-          MenuItem(
-            label: 'Open weapon_data.csv',
-            icon: Icons.edit_note,
-            onSelected: () {
-              weapon.csvFile.absolute.showInExplorer();
-            },
-          ),
-          if (weaponSpritePath != null)
+          if (weapon.csvFile != null)
+            MenuItem(
+              label: 'Open weapon_data.csv',
+              icon: Icons.edit_note,
+              onSelected: () {
+                weapon.csvFile!.absolute.showInExplorer();
+              },
+            ),
+          if (weaponSpritePath != null && weapon.csvFile != null)
             buildOpenSingleFolderMenuItem(
-              weapon.csvFile.parent,
+              weapon.csvFile!.parent,
               secondFolder: weapon.wpnFile?.parent,
               label: 'Open weapon data folder(s)',
             ),
@@ -705,6 +712,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       String name,
       Comparable<dynamic>? Function(Weapon) getValue, {
       double width = 100,
+      bool isVisible = true,
     }) {
       return WispGridColumn<Weapon>(
         key: key,
@@ -719,7 +727,11 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           );
         },
         csvValue: (item) => wepValueToString(getValue, item),
-        defaultState: WispGridColumnState(position: position++, width: width),
+        defaultState: WispGridColumnState(
+          position: position++,
+          width: width,
+          isVisible: isVisible,
+        ),
       );
     }
 
@@ -771,6 +783,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         csvValue: (weapon) => weapon.modVariant?.modInfo.nameOrId ?? "Vanilla",
         defaultState: WispGridColumnState(position: position++, width: 150),
       ),
+      col('id', 'ID', (w) => w.id),
       col(
         'weaponType',
         'Weapon Type',
@@ -779,19 +792,203 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       ),
       col('size', 'Size', (w) => w.size?.toTitleCase(), width: 80),
       col(
+        'damageType',
+        'Dmg Type',
+        (w) => w.damageType?.toTitleCase(),
+        width: 90,
+      ),
+      col(
         'techManufacturer',
         'Tech/Manufacturer',
         (w) => w.techManufacturer,
         width: 150,
       ),
+      col(
+        'specClass',
+        'Spec Class',
+        (w) => w.specClass,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'primaryRoleStr',
+        'Role',
+        (w) => w.primaryRoleStr,
+        width: 110,
+        isVisible: false,
+      ),
+      col(
+        'accuracyStr',
+        'Accuracy',
+        (w) => w.accuracyStr,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'trackingStr',
+        'Tracking',
+        (w) => w.trackingStr,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'speedStr',
+        'Speed',
+        (w) => w.speedStr,
+        width: 90,
+        isVisible: false,
+      ),
+      col(
+        'turnRateStr',
+        'Turn Rate (text)',
+        (w) => w.turnRateStr,
+        width: 110,
+        isVisible: false,
+      ),
       col('damagePerShot', 'Dmg/Shot', (w) => w.damagePerShot, width: 110),
+      col('impact', 'Impact', (w) => w.impact, width: 80, isVisible: false),
       col('op', 'OP', (w) => w.ops, width: 110),
+      col('baseValue', 'Cost', (w) => w.baseValue, width: 80),
+      col(
+        'energyPerShot',
+        'Flux/Shot',
+        (w) => w.energyPerShot,
+        width: 90,
+      ),
+      col(
+        'energyPerSecond',
+        'Flux/Sec',
+        (w) => w.energyPerSecond,
+        width: 90,
+      ),
       col('range', 'Range', (w) => w.range, width: 80),
       col('damagePerSecond', 'Dmg/Sec', (w) => w.damagePerSecond, width: 90),
       col('ammo', 'Ammo', (w) => w.ammo, width: 80),
+      col(
+        'ammoPerSec',
+        'Ammo/Sec',
+        (w) => w.ammoPerSec,
+        width: 90,
+        isVisible: false,
+      ),
+      col(
+        'reloadSize',
+        'Reload Size',
+        (w) => w.reloadSize,
+        width: 100,
+        isVisible: false,
+      ),
       col('emp', 'EMP', (w) => w.emp, width: 80),
+      col(
+        'chargeup',
+        'Chargeup',
+        (w) => w.chargeup,
+        width: 90,
+        isVisible: false,
+      ),
+      col(
+        'chargedown',
+        'Chargedown',
+        (w) => w.chargedown,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'burstSize',
+        'Burst Size',
+        (w) => w.burstSize,
+        width: 90,
+        isVisible: false,
+      ),
+      col(
+        'burstDelay',
+        'Burst Delay',
+        (w) => w.burstDelay,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'minSpread',
+        'Min Spread',
+        (w) => w.minSpread,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'maxSpread',
+        'Max Spread',
+        (w) => w.maxSpread,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'spreadPerShot',
+        'Spread/Shot',
+        (w) => w.spreadPerShot,
+        width: 110,
+        isVisible: false,
+      ),
+      col(
+        'spreadDecayPerSec',
+        'Spread Decay',
+        (w) => w.spreadDecayPerSec,
+        width: 110,
+        isVisible: false,
+      ),
+      col(
+        'autofireAccBonus',
+        'AF Acc Bonus',
+        (w) => w.autofireAccBonus,
+        width: 110,
+        isVisible: false,
+      ),
+      col(
+        'projSpeed',
+        'Proj Speed',
+        (w) => w.projSpeed,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'beamSpeed',
+        'Beam Speed',
+        (w) => w.beamSpeed,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'launchSpeed',
+        'Launch Speed',
+        (w) => w.launchSpeed,
+        width: 110,
+        isVisible: false,
+      ),
+      col(
+        'flightTime',
+        'Flight Time',
+        (w) => w.flightTime,
+        width: 100,
+        isVisible: false,
+      ),
+      col(
+        'projHitpoints',
+        'Proj HP',
+        (w) => w.projHitpoints,
+        width: 90,
+        isVisible: false,
+      ),
       col('turnRate', 'Turn Rate', (w) => w.turnRate, width: 90),
       col('tier', 'Tier', (w) => w.tier, width: 60),
+      col('rarity', 'Rarity', (w) => w.rarity, width: 80, isVisible: false),
+      col('hints', 'Hints', (w) => w.hints, width: 150, isVisible: false),
+      col('tags', 'Tags', (w) => w.tags, width: 150, isVisible: false),
+      col(
+        'groupTag',
+        'Group Tag',
+        (w) => w.groupTag,
+        width: 120,
+        isVisible: false,
+      ),
     ];
   }
 

@@ -294,12 +294,14 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, String> _f$breakProb = Field(
     'breakProb',
     _$breakProb,
+    key: r'breakprob',
     opt: true,
   );
   static double? _$minPieces(Ship v) => v.minPieces;
   static const Field<Ship, double> _f$minPieces = Field(
     'minPieces',
     _$minPieces,
+    key: r'minpieces',
     opt: true,
     hook: SafeDoubleHook(),
   );
@@ -307,6 +309,7 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, double> _f$maxPieces = Field(
     'maxPieces',
     _$maxPieces,
+    key: r'maxpieces',
     opt: true,
     hook: SafeDoubleHook(),
   );
@@ -340,6 +343,7 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, double> _f$collisionRadius = Field(
     'collisionRadius',
     _$collisionRadius,
+    key: r'collisionradius',
     opt: true,
   );
   static double? _$height(Ship v) => v.height;
@@ -358,30 +362,35 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, String> _f$hullSize = Field(
     'hullSize',
     _$hullSize,
+    key: r'hullsize',
     opt: true,
   );
   static List<double>? _$shieldCenter(Ship v) => v.shieldCenter;
   static const Field<Ship, List<double>> _f$shieldCenter = Field(
     'shieldCenter',
     _$shieldCenter,
+    key: r'shieldcenter',
     opt: true,
   );
   static double? _$shieldRadius(Ship v) => v.shieldRadius;
   static const Field<Ship, double> _f$shieldRadius = Field(
     'shieldRadius',
     _$shieldRadius,
+    key: r'shieldradius',
     opt: true,
   );
   static String? _$spriteName(Ship v) => v.spriteName;
   static const Field<Ship, String> _f$spriteName = Field(
     'spriteName',
     _$spriteName,
+    key: r'spritename',
     opt: true,
   );
   static String? _$spriteFile(Ship v) => v.spriteFile;
   static const Field<Ship, String> _f$spriteFile = Field(
     'spriteFile',
     _$spriteFile,
+    key: r'spritefile',
     opt: true,
   );
   static String? _$style(Ship v) => v.style;
@@ -394,60 +403,70 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, double> _f$viewOffset = Field(
     'viewOffset',
     _$viewOffset,
+    key: r'viewoffset',
     opt: true,
   );
   static List<dynamic>? _$engineSlots(Ship v) => v.engineSlots;
   static const Field<Ship, List<dynamic>> _f$engineSlots = Field(
     'engineSlots',
     _$engineSlots,
+    key: r'engineslots',
     opt: true,
   );
   static List<ShipWeaponSlot>? _$weaponSlots(Ship v) => v.weaponSlots;
   static const Field<Ship, List<ShipWeaponSlot>> _f$weaponSlots = Field(
     'weaponSlots',
     _$weaponSlots,
+    key: r'weaponslots',
     opt: true,
   );
   static Map<String, String>? _$builtInWeapons(Ship v) => v.builtInWeapons;
   static const Field<Ship, Map<String, String>> _f$builtInWeapons = Field(
     'builtInWeapons',
     _$builtInWeapons,
+    key: r'builtinweapons',
     opt: true,
   );
   static List<String>? _$builtInMods(Ship v) => v.builtInMods;
   static const Field<Ship, List<String>> _f$builtInMods = Field(
     'builtInMods',
     _$builtInMods,
+    key: r'builtinmods',
     opt: true,
   );
   static List<String>? _$builtInWings(Ship v) => v.builtInWings;
   static const Field<Ship, List<String>> _f$builtInWings = Field(
     'builtInWings',
     _$builtInWings,
+    key: r'builtinwings',
     opt: true,
   );
   static List<double>? _$moduleAnchor(Ship v) => v.moduleAnchor;
   static const Field<Ship, List<double>> _f$moduleAnchor = Field(
     'moduleAnchor',
     _$moduleAnchor,
+    key: r'moduleanchor',
     opt: true,
   );
   static String? _$modId(Ship v) => v.modId;
   static const Field<Ship, String> _f$modId = Field(
     'modId',
     _$modId,
+    key: r'modid',
     opt: true,
   );
   static String? _$modName(Ship v) => v.modName;
   static const Field<Ship, String> _f$modName = Field(
     'modName',
     _$modName,
+    key: r'modname',
     opt: true,
   );
   static bool _$isSkin(Ship v) => v.isSkin;
   static const Field<Ship, bool> _f$isSkin = Field(
     'isSkin',
     _$isSkin,
+    key: r'isskin',
     opt: true,
     def: false,
   );
@@ -455,6 +474,7 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, String> _f$baseHullId = Field(
     'baseHullId',
     _$baseHullId,
+    key: r'basehullid',
     opt: true,
   );
   static Color? _$color(Ship v) => v.color;
@@ -463,54 +483,63 @@ class ShipMapper extends ClassMapperBase<Ship> {
   static const Field<Ship, ModVariant> _f$modVariant = Field(
     'modVariant',
     _$modVariant,
+    key: r'modvariant',
     hook: SkipSerializationHook(),
   );
-  static File _$csvFile(Ship v) => v.csvFile;
+  static File? _$csvFile(Ship v) => v.csvFile;
   static const Field<Ship, File> _f$csvFile = Field(
     'csvFile',
     _$csvFile,
+    key: r'csvfile',
     hook: FileHook(),
   );
   static File? _$dataFile(Ship v) => v.dataFile;
   static const Field<Ship, File> _f$dataFile = Field(
     'dataFile',
     _$dataFile,
+    key: r'datafile',
     hook: FileHook(),
   );
   static Map<String, String> _$shipSizesMap(Ship v) => v.shipSizesMap;
   static const Field<Ship, Map<String, String>> _f$shipSizesMap = Field(
     'shipSizesMap',
     _$shipSizesMap,
+    key: r'shipsizesmap',
     mode: FieldMode.member,
   );
   static int _$mountableWeaponSlotCount(Ship v) => v.mountableWeaponSlotCount;
   static const Field<Ship, int> _f$mountableWeaponSlotCount = Field(
     'mountableWeaponSlotCount',
     _$mountableWeaponSlotCount,
+    key: r'mountableweaponslotcount',
     mode: FieldMode.member,
   );
   static bool _$isStation(Ship v) => v.isStation;
   static const Field<Ship, bool> _f$isStation = Field(
     'isStation',
     _$isStation,
+    key: r'isstation',
     mode: FieldMode.member,
   );
   static bool _$hasStationSlots(Ship v) => v.hasStationSlots;
   static const Field<Ship, bool> _f$hasStationSlots = Field(
     'hasStationSlots',
     _$hasStationSlots,
+    key: r'hasstationslots',
     mode: FieldMode.member,
   );
   static double? _$sensorProfile(Ship v) => v.sensorProfile;
   static const Field<Ship, double> _f$sensorProfile = Field(
     'sensorProfile',
     _$sensorProfile,
+    key: r'sensorprofile',
     mode: FieldMode.member,
   );
   static double? _$sensorStrength(Ship v) => v.sensorStrength;
   static const Field<Ship, double> _f$sensorStrength = Field(
     'sensorStrength',
     _$sensorStrength,
+    key: r'sensorstrength',
     mode: FieldMode.member,
   );
 

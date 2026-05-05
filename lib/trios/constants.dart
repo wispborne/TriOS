@@ -6,7 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.5.0-preview04";
+  static const version = "1.5.0-preview05";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -75,6 +75,7 @@ class Constants {
       "https://api.github.com/repos/wispborne/TriOS/releases";
   static const changelogFallbackUrl =
       "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
+
   static String changelogUrlForBranch(String branch) =>
       "https://raw.githubusercontent.com/wispborne/TriOS/$branch/changelog.md";
   static const triosForumThread =
@@ -96,8 +97,9 @@ class Constants {
   static const String modRepoUrl =
       "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";
   static const String forumDataBundleUrl =
-  "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/forum-data-bundle.json";
-      // "https://raw.githubusercontent.com/theRoastSuckling/QBForumModData/refs/heads/main/forum-data-bundle.json";
+      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/forum-data-bundle.json";
+
+  // "https://raw.githubusercontent.com/theRoastSuckling/QBForumModData/refs/heads/main/forum-data-bundle.json";
   static const String patreonUrl = "https://www.patreon.com/wispborne";
   static const String kofiUrl = "https://ko-fi.com/wispborne";
 

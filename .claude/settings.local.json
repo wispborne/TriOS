@@ -91,7 +91,10 @@
       "Bash(openspec --version)",
       "WebFetch(domain:pub.dev)",
       "Bash(openspec propose *)",
-      "Bash(openspec change *)"
+      "Bash(openspec change *)",
+      "Read(//f/Downloads/**)",
+      "Bash(mkdir -p openspec/specs/context-menu-rendering)",
+      "Bash(cp openspec/changes/screen-fit-context-menus/specs/context-menu-rendering/spec.md openspec/specs/context-menu-rendering/spec.md)"
     ]
   }
 }

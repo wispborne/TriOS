@@ -568,8 +568,41 @@ class ModImage extends StatelessWidget {
         : null;
 
     if (mainImage != null && mainImage.url != null) {
-      return MovingTooltipWidget.text(
-        message: mainImage.description ?? "",
+      final description = mainImage.description;
+      return MovingTooltipWidget.framed(
+        tooltipWidget: Builder(
+          builder: (context) {
+            final media = MediaQuery.of(context);
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: media.size.width * 0.9,
+                maxHeight: media.size.height * 0.9,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Image.network(
+                      mainImage.url!,
+                      fit: BoxFit.scaleDown,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _defaultImage(),
+                    ),
+                  ),
+                  if (description != null && description.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        description,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
         child: Image.network(
           mainImage.url!,
           fit: .scaleDown,

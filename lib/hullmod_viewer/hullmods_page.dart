@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -13,6 +14,7 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/thirdparty/flutter_context_menu/components/menu_item.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
 import 'package:trios/thirdparty/flutter_context_menu/widgets/context_menu_region.dart';
@@ -87,9 +89,10 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         filterRequest.destination == TriOSTools.hullmods) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ref
-            .read(hullmodsPageControllerProvider.notifier)
-            .setChipSelections('mod', {filterRequest.modName: true});
+        ref.read(hullmodsPageControllerProvider.notifier).setChipSelections(
+          'mod',
+          {filterRequest.modName: true},
+        );
         ref.read(AppState.viewerFilterRequest.notifier).state = null;
       });
     }
@@ -385,12 +388,13 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  SelectableText(
                     h.name ?? h.id,
-                    style: theme.textTheme.titleLarge,
-                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  Text(h.id, style: theme.textTheme.labelSmall),
+                  SelectableText(h.id, style: theme.textTheme.labelSmall),
                 ],
               ),
             ),
@@ -416,7 +420,8 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             description: h.desc!,
             baseStyle: theme.textTheme.bodySmall,
             highlightColor: fancyColor,
-            showPlaceholderHintText: (h.sModDesc ?? '').isEmpty, // Show if it won't be shown on Smod text.
+            showPlaceholderHintText: (h.sModDesc ?? '')
+                .isEmpty, // Show if it won't be shown on Smod text.
           ),
         ],
         if ((h.sModDesc ?? '').isNotEmpty) ...[
@@ -531,10 +536,17 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: <ContextMenuEntry>[
-          buildOpenSingleFolderMenuItem(
-            hullmod.csvFile.parent,
-            label: 'Open hullmod data folder',
+          MenuItem(
+            label: 'Copy ID',
+            icon: Icons.copy,
+            onSelected: () =>
+                Clipboard.setData(ClipboardData(text: hullmod.id)),
           ),
+          if (hullmod.csvFile != null)
+            buildOpenSingleFolderMenuItem(
+              hullmod.csvFile!.parent,
+              label: 'Open hullmod data folder',
+            ),
           if (hullmod.modVariant != null)
             buildOpenSingleFolderMenuItem(
               hullmod.modVariant!.modFolder.absolute,
@@ -656,6 +668,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         defaultState: WispGridColumnState(position: position++, width: 48),
       ),
       col('name', 'Name', (h) => h.name ?? h.id, width: 180),
+      col('id', 'ID', (h) => h.id),
       col(
         'techManufacturer',
         'Tech/Manufacturer',

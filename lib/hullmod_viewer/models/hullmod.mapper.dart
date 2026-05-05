@@ -55,6 +55,7 @@ class HullmodMapper extends ClassMapperBase<Hullmod> {
   static const Field<Hullmod, String> _f$uiTags = Field(
     'uiTags',
     _$uiTags,
+    key: r'uitags',
     opt: true,
   );
   static double? _$baseValue(Hullmod v) => v.baseValue;
@@ -80,6 +81,7 @@ class HullmodMapper extends ClassMapperBase<Hullmod> {
   static const Field<Hullmod, bool> _f$hiddenEverywhere = Field(
     'hiddenEverywhere',
     _$hiddenEverywhere,
+    key: r'hiddeneverywhere',
     opt: true,
   );
   static int? _$costFrigate(Hullmod v) => v.costFrigate;
@@ -133,6 +135,7 @@ class HullmodMapper extends ClassMapperBase<Hullmod> {
   static const Field<Hullmod, String> _f$sModDesc = Field(
     'sModDesc',
     _$sModDesc,
+    key: r'smoddesc',
     opt: true,
   );
   static String? _$sprite(Hullmod v) => v.sprite;
@@ -145,24 +148,28 @@ class HullmodMapper extends ClassMapperBase<Hullmod> {
   static const Field<Hullmod, ModVariant> _f$modVariant = Field(
     'modVariant',
     _$modVariant,
+    key: r'modvariant',
     hook: SkipSerializationHook(),
   );
-  static File _$csvFile(Hullmod v) => v.csvFile;
+  static File? _$csvFile(Hullmod v) => v.csvFile;
   static const Field<Hullmod, File> _f$csvFile = Field(
     'csvFile',
     _$csvFile,
+    key: r'csvfile',
     hook: FileHook(),
   );
   static Set<String> _$tagsAsSet(Hullmod v) => v.tagsAsSet;
   static const Field<Hullmod, Set<String>> _f$tagsAsSet = Field(
     'tagsAsSet',
     _$tagsAsSet,
+    key: r'tagsasset',
     mode: FieldMode.member,
   );
   static Set<String> _$uiTagsAsSet(Hullmod v) => v.uiTagsAsSet;
   static const Field<Hullmod, Set<String>> _f$uiTagsAsSet = Field(
     'uiTagsAsSet',
     _$uiTagsAsSet,
+    key: r'uitagsasset',
     mode: FieldMode.member,
   );
 

@@ -1,4 +1,3 @@
-import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/selectors/path_normalizer.dart';
 import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
@@ -109,7 +108,7 @@ class ReferencedAssetsSelector extends VramAssetSelector {
         mergeParserResult(parser.id, result);
         if (ctx.showPerformance) {
           final took = DateTime.timestamp().millisecondsSinceEpoch - start;
-          Fimber.d(
+          ctx.verboseOut(
             "[VramChecker] parser=${parser.id} mod=${mod.modId} "
             "paths=${result.length} time=${took}ms",
           );
@@ -141,7 +140,7 @@ class ReferencedAssetsSelector extends VramAssetSelector {
         if (ctx.showPerformance) {
           final took =
               DateTime.timestamp().millisecondsSinceEpoch - start;
-          Fimber.d(
+          ctx.verboseOut(
             "[VramChecker] parser=$parserId mod=${mod.modId} "
             "paths=${result.length} time=${took}ms",
           );
@@ -218,7 +217,7 @@ class ReferencedAssetsSelector extends VramAssetSelector {
 
     if (ctx.showPerformance) {
       final took = DateTime.timestamp().millisecondsSinceEpoch - intersectStart;
-      Fimber.d(
+      ctx.verboseOut(
         "[VramChecker] intersect mod=${mod.modId} "
         "referencedPaths=${referencedPaths.length} "
         "selectedAssets=${result.length} time=${took}ms",

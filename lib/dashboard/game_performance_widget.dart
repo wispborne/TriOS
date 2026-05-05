@@ -190,17 +190,15 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
       });
     }
 
+    final gameSettingsPvdr = ref.watch(gameSettingsProvider);
     return Card(
       child: Padding(
         padding: EdgeInsets.all(16),
-        child: Builder(
-          builder: (context) {
-            final gameSettingsPvdr = ref.watch(gameSettingsProvider);
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Stack(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Stack(
                     children: [
                       Center(
                         child: Text(
@@ -335,20 +333,17 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                           : MovingTooltipWidget.text(
                               message:
                                   "Vsync reduces screen tearing but introduces a tiny input delay.",
-                              child: Transform.translate(
-                                offset: Offset(0, 0),
-                                child: CheckboxWithLabel(
-                                  label: "Use Vsync",
-                                  value: gameSettings.vsync!,
-                                  labelStyle: Theme.of(
-                                    context,
-                                  ).textTheme.labelLarge,
-                                  onChanged: (value) {
-                                    ref
-                                        .read(gameSettingsProvider.notifier)
-                                        .setVsync(value == true);
-                                  },
-                                ),
+                              child: CheckboxWithLabel(
+                                label: "Use Vsync",
+                                value: gameSettings.vsync!,
+                                labelStyle: Theme.of(
+                                  context,
+                                ).textTheme.labelLarge,
+                                onChanged: (value) {
+                                  ref
+                                      .read(gameSettingsProvider.notifier)
+                                      .setVsync(value == true);
+                                },
                               ),
                             ),
                     ],
@@ -360,9 +355,7 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                   loading: () => CircularProgressIndicator(),
                 ),
               ],
-            );
-          },
-        ),
+            ),
       ),
     );
   }

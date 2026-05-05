@@ -203,17 +203,24 @@ class _ReorderableNavList extends StatelessWidget {
       );
     }
 
-    return FadedScrollable(
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            for (var i = 0; i < entries.length; i++)
-              _buildEntry(
-                context,
-                entries[i],
-                key: ValueKey(_entryKey(entries[i], i)),
-              ),
-          ],
+    return Theme(
+      data: Theme.of(context).copyWith(
+        scrollbarTheme: const ScrollbarThemeData(
+          thickness: WidgetStatePropertyAll(4),
+        ),
+      ),
+      child: FadedScrollable(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              for (var i = 0; i < entries.length; i++)
+                _buildEntry(
+                  context,
+                  entries[i],
+                  key: ValueKey(_entryKey(entries[i], i)),
+                ),
+            ],
+          ),
         ),
       ),
     );

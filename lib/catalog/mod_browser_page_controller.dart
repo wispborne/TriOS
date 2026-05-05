@@ -43,7 +43,7 @@ const List<String> _kAttributeOrder = [
 ];
 
 const Map<String, String> _kAttributeLabels = {
-  kAttrDownload: 'Has Download',
+  kAttrDownload: 'Has Download Link',
   kAttrDiscord: 'Discord',
   kAttrIndex: 'Index',
   kAttrForum: 'Forum',

@@ -35,34 +35,53 @@ class LaunchWithSettings extends ConsumerStatefulWidget {
 class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
   StarsectorVanillaLaunchPreferences? starsectorLaunchPrefs;
   Timer? _onClickedTimer;
+  late final TextEditingController _resControllerWidth;
+  late final TextEditingController _resControllerHeight;
 
   @override
   void initState() {
+    super.initState();
     try {
       starsectorLaunchPrefs = LauncherButton.getStarsectorLaunchPrefs();
     } catch (e) {
       Fimber.e("Failed to get default Starsector launch prefs", ex: e);
     }
-    super.initState();
+    _resControllerWidth = TextEditingController();
+    _resControllerHeight = TextEditingController();
+    _syncControllerTexts();
+  }
+
+  @override
+  void dispose() {
+    _resControllerWidth.dispose();
+    _resControllerHeight.dispose();
+    _onClickedTimer?.cancel();
+    super.dispose();
+  }
+
+  void _syncControllerTexts() {
+    final launchSettings = ref.read(appSettings).launchSettings;
+    final newWidth =
+        launchSettings.resolutionWidth?.toString() ??
+        starsectorLaunchPrefs?.resolution.split("x")[1] ??
+        '';
+    final newHeight =
+        launchSettings.resolutionHeight?.toString() ??
+        starsectorLaunchPrefs?.resolution.split("x")[0] ??
+        '';
+    if (_resControllerWidth.text != newWidth) {
+      _resControllerWidth.text = newWidth;
+    }
+    if (_resControllerHeight.text != newHeight) {
+      _resControllerHeight.text = newHeight;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final resControllerWidth = TextEditingController(
-      text:
-          ref
-              .watch(appSettings.select((value) => value.launchSettings))
-              .resolutionWidth
-              ?.toString() ??
-          starsectorLaunchPrefs?.resolution.split("x")[1],
-    );
-    final resControllerHeight = TextEditingController(
-      text:
-          ref
-              .watch(appSettings.select((value) => value.launchSettings))
-              .resolutionHeight
-              ?.toString() ??
-          starsectorLaunchPrefs?.resolution.split("x")[0],
+    ref.listen(
+      appSettings.select((value) => value.launchSettings),
+      (_, _) => _syncControllerTexts(),
     );
 
     final enableDirectLaunch = ref.watch(
@@ -129,10 +148,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                       ),
                     ),
                   ),
-                  // Padding(
-                  //   padding: const EdgeInsets.only(right: 42),
-                  //   child: Text("(experimental)", style: Theme.of(context).textTheme.labelSmall),
-                  // ),
                 ],
               ),
             ),
@@ -146,54 +161,7 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
                       children: [
-                        true
-                            ? LauncherButton(showTextInsteadOfIcon: true)
-                            : Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(
-                                    TriOSThemeConstants.cornerRadius,
-                                  ),
-                                  border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                    strokeAlign: BorderSide.strokeAlignOutside,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    if (isRunning) return;
-                                    _onClickedTimer?.cancel();
-                                    _onClickedTimer = Timer(
-                                      const Duration(seconds: 5),
-                                      () => {},
-                                    );
-                                    LauncherButton.launchGame(ref, context);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        TriOSThemeConstants.cornerRadius,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isRunning ? "RUNNING..." : "LAUNCH",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontFamily: "Orbitron",
-                                      fontSize: 27,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                        LauncherButton(showTextInsteadOfIcon: true),
                         const SizedBox(height: 8),
                         Row(
                           spacing: 4,
@@ -255,16 +223,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               "Starsector version unknown",
                           style: Theme.of(context).textTheme.labelMedium,
                         ),
-                        // Removed because it's shown on the JRE & RAM Settings tile now.
-                        // Builder(builder: (context) {
-                        //   final activeJre =
-                        //       ref.watch(AppState.activeJre).value?.version;
-                        //   return Text(
-                        //       activeJre != null
-                        //           ? "Java ${activeJre.versionString}"
-                        //           : "Java version unknown",
-                        //       style: Theme.of(context).textTheme.labelMedium);
-                        // }),
                         Text(
                           ref.watch(AppState.modsFolder).value?.path ??
                               "No mods folder!",
@@ -344,13 +302,12 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                     SizedBox(
                                       width: 50,
                                       child: TextField(
-                                        controller: resControllerHeight,
+                                        controller: _resControllerHeight,
                                         inputFormatters: <TextInputFormatter>[
                                           FilteringTextInputFormatter
                                               .digitsOnly,
                                         ],
                                         decoration: const InputDecoration(
-                                          // errorText: gamePathExists ? null : "Path does not exist",
                                           labelText: 'Width',
                                         ),
                                       ),
@@ -367,14 +324,13 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                     SizedBox(
                                       width: 50,
                                       child: TextField(
-                                        controller: resControllerWidth,
+                                        controller: _resControllerWidth,
                                         keyboardType: TextInputType.number,
                                         inputFormatters: <TextInputFormatter>[
                                           FilteringTextInputFormatter
                                               .digitsOnly,
                                         ],
                                         decoration: const InputDecoration(
-                                          // errorText: gamePathExists ? null : "Path does not exist",
                                           labelText: 'Height',
                                         ),
                                       ),
@@ -398,9 +354,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                                       const LaunchSettings(),
                                                 ),
                                               );
-                                          setState(
-                                            () {},
-                                          ); // Force refresh widget to update text fields to default.
                                         },
                                         text: "Clear Custom Launch Settings",
                                         style: Theme.of(
@@ -429,7 +382,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               "If you encounter strange issues in-game, disable Skip Launcher.",
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
-                                    color: TriOSThemeConstants.vanillaWarningColor
+                                    color: TriOSThemeConstants
+                                        .vanillaWarningColor
                                         .withAlpha(200),
                                   ),
                             ),
@@ -437,7 +391,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               "Possible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
-                                    color: TriOSThemeConstants.vanillaWarningColor
+                                    color: TriOSThemeConstants
+                                        .vanillaWarningColor
                                         .withAlpha(200),
                                   ),
                             ),

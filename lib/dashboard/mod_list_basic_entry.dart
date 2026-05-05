@@ -220,7 +220,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                 height: rowHeight,
                 child: MovingTooltipWidget.framed(
                   position: TooltipPosition.topLeft,
-                  padding: const EdgeInsets.all(0),
+                  padding: EdgeInsets.zero,
                   tooltipWidget: SizedBox(
                     width: 400,
                     child: ModSummaryWidget(

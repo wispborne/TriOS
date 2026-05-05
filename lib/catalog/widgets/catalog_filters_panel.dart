@@ -19,7 +19,7 @@ class CatalogFiltersPanel extends ConsumerWidget {
     ref.watch(catalogPageControllerProvider);
 
     return FiltersPanel(
-      width: 220,
+      width: 270,
       onHide: controller.toggleShowFilters,
       activeFilterCount: controller.activeFilterCount,
       showClearAll: controller.filterGroups.any((g) => g.isActive),

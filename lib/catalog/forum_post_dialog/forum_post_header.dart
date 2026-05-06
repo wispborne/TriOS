@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:trios/catalog/models/forum_link.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
+import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 
@@ -53,7 +54,7 @@ class ForumPostHeader extends StatelessWidget {
     final showLastEdit = lastEdit != null && lastEdit != postDate;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.6),
         border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
@@ -238,35 +239,49 @@ class ForumPostHeader extends StatelessWidget {
               }
               return Padding(
                 padding: const .only(top: 8),
-                child: Row(
-                  mainAxisAlignment: .end,
+                child: Column(
+                  crossAxisAlignment: .start,
+                  spacing: 4,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: .center,
-                      children: [
-                        for (final entry in links)
-                          MovingTooltipWidget.text(
-                            message: "${entry.label}\n${entry.link.url}",
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: 200,
-                              ),
-                              child: ElevatedButton.icon(
-                                icon: const Icon(Icons.download, size: 16),
-                                label: Text(
-                                  entry.label,
-                                  style: theme.textTheme.labelMedium,
+                    Text(
+                      "File download link(s)",
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withAlpha(200),
+                        fontStyle: .italic,
+                      ),
+                    ),
+                    FadedScrollable(
+                      child: SingleChildScrollView(
+                        scrollDirection: .horizontal,
+                        child: Row(
+                          mainAxisSize: .min,
+                          spacing: 8,
+                          children: [
+                            for (final entry in links)
+                              MovingTooltipWidget.text(
+                                message: "${entry.label}\n${entry.link.url}",
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 200,
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.download, size: 16),
+                                    label: Text(
+                                      entry.label,
+                                      maxLines: 1,
+                                      overflow: .ellipsis,
+                                      style: theme.textTheme.labelMedium,
+                                    ),
+                                    onPressed: () => onDownloadLink!(
+                                      entry.link.url,
+                                      entry.label,
+                                    ),
+                                  ),
                                 ),
-                                onPressed: () => onDownloadLink!(
-                                  entry.link.url,
-                                  entry.label,
-                                ),
                               ),
-                            ),
-                          ),
-                      ],
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),

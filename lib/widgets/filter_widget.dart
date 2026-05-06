@@ -412,6 +412,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Card(
+          margin: .zero,
           child: Scrollbar(
             thumbVisibility: true,
             controller: _controller,

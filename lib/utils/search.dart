@@ -246,7 +246,8 @@ List<TextSearchItemTerm> createScrapedModSearchTags(ScrapedMod mod) {
 
   addTag(mod.gameVersionReq, 0.0);
   addTag(mod.modVersion, 0.0);
+  addTag(mod.description, 15.0);
 
-  var uniqueTags = LinkedHashSet<TextSearchItemTerm>.from(tags);
+  final uniqueTags = LinkedHashSet<TextSearchItemTerm>.from(tags);
   return uniqueTags.toList();
 }

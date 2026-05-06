@@ -196,11 +196,14 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
       );
     }
 
-    return _buildFilterPanel(
-      theme,
-      hullmodsBeforeFilter,
-      controllerState,
-      controller,
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, top: 4, bottom: 8),
+      child: _buildFilterPanel(
+        theme,
+        hullmodsBeforeFilter,
+        controllerState,
+        controller,
+      ),
     );
   }
 

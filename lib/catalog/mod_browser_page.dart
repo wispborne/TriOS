@@ -255,16 +255,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              Expanded(
-                                child: Align(
-                                  alignment: .centerLeft,
-                                  child: SizedBox(
-                                    height: 30,
-                                    width: 240,
-                                    child: buildSearchBox(catalogController),
-                                  ),
-                                ),
-                              ),
                               ConstrainedBox(
                                 constraints: const BoxConstraints(
                                   maxWidth: 200,
@@ -273,7 +263,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                   initialSelection: catalogState.selectedSort,
                                   onSelected: (value) {
                                     catalogController.setSort(
-                                      value ?? CatalogSortKey.nameAsc,
+                                      value ?? CatalogSortKey.name,
                                     );
                                   },
                                   dropdownMenuEntries: CatalogSortKey.values
@@ -284,6 +274,30 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                         ),
                                       )
                                       .toList(),
+                                ),
+                              ),
+                              MovingTooltipWidget.text(
+                                message: catalogState.sortAscending
+                                    ? 'Ascending'
+                                    : 'Descending',
+                                child: IconButton(
+                                  icon: Icon(
+                                    catalogState.sortAscending
+                                        ? Icons.arrow_upward
+                                        : Icons.arrow_downward,
+                                  ),
+                                  onPressed:
+                                      catalogController.toggleSortDirection,
+                                ),
+                              ),
+                              Expanded(
+                                child: Align(
+                                  alignment: .centerRight,
+                                  child: SizedBox(
+                                    height: 30,
+                                    width: 240,
+                                    child: buildSearchBox(catalogController),
+                                  ),
                                 ),
                               ),
                               buildCatalogOverflowButton(),
@@ -304,7 +318,10 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (catalogState.showFilters)
-                            CatalogFiltersPanel(items: allMods)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 4, top: 4),
+                              child: CatalogFiltersPanel(items: allMods),
+                            )
                           else
                             Padding(
                               padding: const EdgeInsets.only(right: 12, top: 4),
@@ -834,9 +851,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       "Please install it from https://developer.microsoft.com/en-us/microsoft-edge/webview2/",
                                   onOpen: (link) => OpenFilex.open(link.url),
                                 ),
-                                Text(
-                                  "and then restart ${context.appName}.",
-                                ),
+                                Text("and then restart ${context.appName}."),
                               ],
                             ),
                             WebViewStatus.linuxNotSupported => Column(
@@ -998,7 +1013,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
           enabled: false,
           height: 28,
           child: Text(
-            'Card click opens',
+            'Clicking a mod opens...',
             style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),

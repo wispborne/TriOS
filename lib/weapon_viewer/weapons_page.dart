@@ -194,11 +194,14 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       );
     }
 
-    return buildFilterPanel(
-      theme,
-      weaponsBeforeFilter,
-      controllerState,
-      controller,
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, top: 4, bottom: 8),
+      child: buildFilterPanel(
+        theme,
+        weaponsBeforeFilter,
+        controllerState,
+        controller,
+      ),
     );
   }
 

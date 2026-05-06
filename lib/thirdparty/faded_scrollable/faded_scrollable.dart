@@ -49,6 +49,7 @@ class FadedScrollable extends StatefulWidget {
   const FadedScrollable({
     super.key,
     required this.child,
+    this.axis,
     this.scrollRatioStart = kScrollRatioStart,
     this.scrollRatioEnd = kScrollRatioEnd,
     this.minTopScreenRatioFade = kMinScreenRatioFade,
@@ -92,6 +93,9 @@ class FadedScrollable extends StatefulWidget {
   /// The widget that will be faded at the top and bottom. Either this widget or some of its children should be scrollable.
   final Widget child;
 
+  /// Scroll axis. If null, auto-detected from the first scroll notification.
+  final Axis? axis;
+
   /// Scroll ratio greater than this will cause top fade to appear.
   ///
   /// Defaults to 0.0.
@@ -134,6 +138,7 @@ class FadedScrollable extends StatefulWidget {
 class _FadedScrollableState extends State<FadedScrollable> {
   double scrollRatio = 0;
   bool _isScrollable = false;
+  Axis _detectedAxis = Axis.vertical;
 
   _GradientConfig _getGradientConfig() {
     final double upperStop = widget.maxTopScreenRatioFade;
@@ -204,6 +209,7 @@ class _FadedScrollableState extends State<FadedScrollable> {
         setState(() {
           _isScrollable = isScrollableNow;
           scrollRatio = ratio;
+          _detectedAxis = metrics.axis;
         });
 
         return true;
@@ -212,9 +218,14 @@ class _FadedScrollableState extends State<FadedScrollable> {
           ? widget.child
           : ShaderMask(
               shaderCallback: (Rect rect) {
+                final axis = widget.axis ?? _detectedAxis;
                 return LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: axis == Axis.horizontal
+                      ? Alignment.centerLeft
+                      : Alignment.topCenter,
+                  end: axis == Axis.horizontal
+                      ? Alignment.centerRight
+                      : Alignment.bottomCenter,
                   colors: gradientConfig.colors,
                   stops: gradientConfig.stops,
                 ).createShader(rect);

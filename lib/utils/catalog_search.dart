@@ -242,19 +242,24 @@ Map<String, Set<String>> extractVersionGroups(List<ScrapedMod> mods) {
 
 // ===== Sort =====
 
-/// Sort keys matching Starmodder3's sort options.
+/// Sort keys for the catalog page.
 enum CatalogSortKey {
-  nameAsc('Name A\u2013Z'),
-  nameDesc('Name Z\u2013A'),
-  dateDesc('Newest'),
-  dateAsc('Oldest'),
-  versionDesc('Game Version'),
-  mostViewed('Most Viewed'),
-  lastActivity('Last Activity');
+  name('Name'),
+  date('Date Added'),
+  version('Game Version'),
+  mostViewed('Forum Views'),
+  mostReplies('Forum Replies'),
+  lastActivity('Last Forum Activity');
 
   final String label;
 
   const CatalogSortKey(this.label);
+
+  /// Whether ascending is the natural/default direction for this sort key.
+  bool get defaultAscending => switch (this) {
+    CatalogSortKey.name => true,
+    _ => false,
+  };
 }
 
 /// Looks up the [ForumModIndex] for a [ScrapedMod] using the forum URL.
@@ -269,36 +274,35 @@ ForumModIndex? _forumFor(ScrapedMod mod, Map<int, ForumModIndex> forumLookup) {
 List<ScrapedMod> sortScrapedMods(
   List<ScrapedMod> mods,
   CatalogSortKey sortKey, {
+  bool ascending = true,
   Map<int, ForumModIndex> forumLookup = const {},
 }) {
   final sorted = List<ScrapedMod>.from(mods);
+  final flip = ascending ? 1 : -1;
   switch (sortKey) {
-    case CatalogSortKey.nameAsc:
-      sorted.sort(nameCompare);
-    case CatalogSortKey.nameDesc:
-      sorted.sort((a, b) => nameCompare(b, a));
-    case CatalogSortKey.dateDesc:
+    case CatalogSortKey.name:
+      sorted.sort((a, b) => nameCompare(a, b) * flip);
+    case CatalogSortKey.date:
       sorted.sort((a, b) {
-        final da = a.dateTimeCreated?.millisecondsSinceEpoch ?? 0;
-        final db = b.dateTimeCreated?.millisecondsSinceEpoch ?? 0;
-        return db.compareTo(da);
+        final da =
+            (a.dateTimeCreated ?? _forumFor(a, forumLookup)?.createdDate);
+        final db =
+            (b.dateTimeCreated ?? _forumFor(b, forumLookup)?.createdDate);
+        if (da == null && db == null) return nameCompare(a, b);
+        if (da == null) return 1;
+        if (db == null) return -1;
+        final cmp = da.compareTo(db) * flip;
+        return cmp != 0 ? cmp : nameCompare(a, b);
       });
-    case CatalogSortKey.dateAsc:
-      sorted.sort((a, b) {
-        final da = a.dateTimeCreated?.millisecondsSinceEpoch ?? 0;
-        final db = b.dateTimeCreated?.millisecondsSinceEpoch ?? 0;
-        return da.compareTo(db);
-      });
-    case CatalogSortKey.versionDesc:
+    case CatalogSortKey.version:
       sorted.sort((a, b) {
         final aVer = a.gameVersionReq ?? '';
         final bVer = b.gameVersionReq ?? '';
         if (aVer.isEmpty && bVer.isEmpty) return nameCompare(a, b);
         if (aVer.isEmpty) return 1;
         if (bVer.isEmpty) return -1;
-        final cmp = compareVersions(aVer, bVer);
-        if (cmp != 0) return -cmp; // newest first
-        return nameCompare(a, b);
+        final cmp = compareVersions(aVer, bVer) * flip;
+        return cmp != 0 ? cmp : nameCompare(a, b);
       });
     case CatalogSortKey.mostViewed:
       sorted.sort((a, b) {
@@ -307,7 +311,17 @@ List<ScrapedMod> sortScrapedMods(
         if (af == null && bf == null) return nameCompare(a, b);
         if (af == null) return 1;
         if (bf == null) return -1;
-        final cmp = bf.views.compareTo(af.views); // descending
+        final cmp = af.views.compareTo(bf.views) * flip;
+        return cmp != 0 ? cmp : nameCompare(a, b);
+      });
+    case CatalogSortKey.mostReplies:
+      sorted.sort((a, b) {
+        final af = _forumFor(a, forumLookup);
+        final bf = _forumFor(b, forumLookup);
+        if (af == null && bf == null) return nameCompare(a, b);
+        if (af == null) return 1;
+        if (bf == null) return -1;
+        final cmp = af.replies.compareTo(bf.replies) * flip;
         return cmp != 0 ? cmp : nameCompare(a, b);
       });
     case CatalogSortKey.lastActivity:
@@ -317,7 +331,7 @@ List<ScrapedMod> sortScrapedMods(
         if (af == null && bf == null) return nameCompare(a, b);
         if (af == null) return 1;
         if (bf == null) return -1;
-        final cmp = bf.compareTo(af); // most recent first
+        final cmp = af.compareTo(bf) * flip;
         return cmp != 0 ? cmp : nameCompare(a, b);
       });
   }

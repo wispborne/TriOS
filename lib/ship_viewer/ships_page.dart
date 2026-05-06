@@ -193,11 +193,14 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       );
     }
 
-    return buildFilterPanel(
-      theme,
-      shipsBeforeFilter,
-      controllerState,
-      controller,
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, top: 4, bottom: 8),
+      child: buildFilterPanel(
+        theme,
+        shipsBeforeFilter,
+        controllerState,
+        controller,
+      ),
     );
   }
 

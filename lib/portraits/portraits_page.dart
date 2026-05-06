@@ -162,12 +162,15 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       );
     }
 
-    return _buildFilterPanel(
-      theme,
-      filterItems,
-      pane: pane,
-      showOnlyYourChangesFilter: showOnlyYourChangesFilter,
-      activeFilterCount: activeFilterCount,
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
+      child: _buildFilterPanel(
+        theme,
+        filterItems,
+        pane: pane,
+        showOnlyYourChangesFilter: showOnlyYourChangesFilter,
+        activeFilterCount: activeFilterCount,
+      ),
     );
   }
 

@@ -67,6 +67,7 @@ class CatalogPageState with CatalogPageStateMappable {
   final List<ScrapedMod> displayedMods;
   final String currentSearchQuery;
   final CatalogSortKey selectedSort;
+  final bool sortAscending;
   final bool isLoading;
 
   bool get showFilters => persisted.showFilters;
@@ -77,6 +78,7 @@ class CatalogPageState with CatalogPageStateMappable {
     this.displayedMods = const [],
     this.currentSearchQuery = '',
     this.selectedSort = CatalogSortKey.mostViewed,
+    this.sortAscending = false,
     this.isLoading = false,
   });
 }
@@ -272,6 +274,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
     final sorted = sortScrapedMods(
       items.toList(),
       current.selectedSort,
+      ascending: current.sortAscending,
       forumLookup: ref.read(forumDataByTopicId),
     );
 
@@ -310,7 +313,18 @@ class CatalogPageController extends Notifier<CatalogPageState> {
   }
 
   void setSort(CatalogSortKey sort) {
-    state = _processAllFilters(state.copyWith(selectedSort: sort));
+    state = _processAllFilters(
+      state.copyWith(
+        selectedSort: sort,
+        sortAscending: sort.defaultAscending,
+      ),
+    );
+  }
+
+  void toggleSortDirection() {
+    state = _processAllFilters(
+      state.copyWith(sortAscending: !state.sortAscending),
+    );
   }
 
   void toggleShowFilters() {

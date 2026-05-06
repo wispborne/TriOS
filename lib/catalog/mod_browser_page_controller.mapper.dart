@@ -198,6 +198,13 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
     opt: true,
     def: CatalogSortKey.mostViewed,
   );
+  static bool _$sortAscending(CatalogPageState v) => v.sortAscending;
+  static const Field<CatalogPageState, bool> _f$sortAscending = Field(
+    'sortAscending',
+    _$sortAscending,
+    opt: true,
+    def: false,
+  );
   static bool _$isLoading(CatalogPageState v) => v.isLoading;
   static const Field<CatalogPageState, bool> _f$isLoading = Field(
     'isLoading',
@@ -213,6 +220,7 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
     #displayedMods: _f$displayedMods,
     #currentSearchQuery: _f$currentSearchQuery,
     #selectedSort: _f$selectedSort,
+    #sortAscending: _f$sortAscending,
     #isLoading: _f$isLoading,
   };
 
@@ -223,6 +231,7 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
       displayedMods: data.dec(_f$displayedMods),
       currentSearchQuery: data.dec(_f$currentSearchQuery),
       selectedSort: data.dec(_f$selectedSort),
+      sortAscending: data.dec(_f$sortAscending),
       isLoading: data.dec(_f$isLoading),
     );
   }
@@ -305,6 +314,7 @@ abstract class CatalogPageStateCopyWith<$R, $In extends CatalogPageState, $Out>
     List<ScrapedMod>? displayedMods,
     String? currentSearchQuery,
     CatalogSortKey? selectedSort,
+    bool? sortAscending,
     bool? isLoading,
   });
   CatalogPageStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
@@ -348,6 +358,7 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
     List<ScrapedMod>? displayedMods,
     String? currentSearchQuery,
     CatalogSortKey? selectedSort,
+    bool? sortAscending,
     bool? isLoading,
   }) => $apply(
     FieldCopyWithData({
@@ -356,6 +367,7 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
       if (displayedMods != null) #displayedMods: displayedMods,
       if (currentSearchQuery != null) #currentSearchQuery: currentSearchQuery,
       if (selectedSort != null) #selectedSort: selectedSort,
+      if (sortAscending != null) #sortAscending: sortAscending,
       if (isLoading != null) #isLoading: isLoading,
     }),
   );
@@ -369,6 +381,7 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
       or: $value.currentSearchQuery,
     ),
     selectedSort: data.get(#selectedSort, or: $value.selectedSort),
+    sortAscending: data.get(#sortAscending, or: $value.sortAscending),
     isLoading: data.get(#isLoading, or: $value.isLoading),
   );
 

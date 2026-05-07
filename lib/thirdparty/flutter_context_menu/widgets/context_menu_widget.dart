@@ -74,14 +74,19 @@ class ContextMenuWidget extends StatelessWidget {
       ),
     );
 
-    // Default to a screen-fit cap so a tall menu becomes scrollable instead
-    // of overflowing the viewport. Callers can pass an explicit `maxHeight`
-    // (including `double.infinity` to opt out of the cap entirely).
     const safetyMargin = 8.0;
     final screenHeight = MediaQuery.sizeOf(context).height;
     final availableHeight = screenHeight - state.position.dy - safetyMargin;
-    final effectiveMaxHeight =
-        state.maxHeight ?? (availableHeight > 0 ? availableHeight : 0);
+    // During the invisible measurement frame, let the menu render at natural
+    // size so verifyPosition can see its true height and reposition upward
+    // when near the bottom of the screen.
+    final double effectiveMaxHeight;
+    if (!state.isPositionVerified) {
+      effectiveMaxHeight = state.maxHeight ?? screenHeight;
+    } else {
+      effectiveMaxHeight =
+          state.maxHeight ?? (availableHeight > 0 ? availableHeight : 0);
+    }
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.8, end: 1.0),

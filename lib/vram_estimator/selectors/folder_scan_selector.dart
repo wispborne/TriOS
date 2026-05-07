@@ -8,8 +8,8 @@ import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 /// contains one of [unusedIndicators]. GraphicsLib map tagging is applied
 /// to the selected files.
 ///
-/// Every asset is emitted with [AssetProvenance.referenced] — this selector
-/// has no concept of an unreferenced bucket.
+/// Every asset is emitted as referenced — this selector has no concept of
+/// an unreferenced bucket.
 class FolderScanSelector extends VramAssetSelector {
   /// Substrings in a file's relative path that mark it as intentionally
   /// unused by the mod author. Matches the prior [VramChecker.UNUSED_INDICATOR].
@@ -49,7 +49,7 @@ class FolderScanSelector extends VramAssetSelector {
         SelectedAsset(
           file: file,
           graphicsLibType: mapType,
-          provenance: AssetProvenance.referenced,
+          isReferenced: true,
         ),
       );
     }

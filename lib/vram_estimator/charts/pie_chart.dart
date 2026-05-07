@@ -111,11 +111,12 @@ class VramPieChartState extends ConsumerState<VramPieChart> {
               shadows: shadows,
             ),
             badgeWidget: MovingTooltipWidget.framed(
-              tooltipWidget: VramEstimatorPage.buildVramTopFilesTableWidget(
-                theme,
-                mod,
-                graphicsLibConfig,
-              ),
+              tooltipWidgetBuilder: (_) =>
+                  VramEstimatorPage.buildVramTopFilesTableWidget(
+                    theme,
+                    mod,
+                    graphicsLibConfig,
+                  ),
               child: iconFilePath != null
                   ? ModIcon(iconFilePath)
                   : Container(

@@ -15,9 +15,7 @@ import 'package:trios/vram_estimator/vram_check_scan_params.dart';
 const String _backgroundFolderName = "backgrounds";
 const int _vanillaBackgroundWidth = 2048;
 
-/// Channel message sent from the worker to the main isolate carrying a
-/// `(processed, total, recentAssetPath)` per-file progress tick. Plain
-/// `Map` so async_task's default codec round-trips it without registration.
+/// Plain `Map` so async_task's default codec round-trips it without registration.
 Map<String, Object?> fileProgressMsg(
   int processed,
   int total,
@@ -29,23 +27,15 @@ Map<String, Object?> fileProgressMsg(
   'recentAssetPath': recentAssetPath,
 };
 
-/// Channel message sent from the worker to the main isolate signaling that
-/// scanning of a particular mod is starting. Used to drive `onModStart`.
 Map<String, Object?> modStartMsg() => <String, Object?>{'kind': 'modStart'};
 
-/// Cancellation marker the dispatcher sends *into* the worker. The worker
-/// polls for this between phase boundaries and aborts.
 const String cancelChannelMarker = '__cancel__';
 
-/// Marker the worker sends as its very last channel message so the
-/// dispatcher's pump loop can stop awaiting `waitMessage` (which would
-/// otherwise hang once the task completes — the channel doesn't surface
-/// closure as a `null` from `waitMessage`).
+/// async_task's channel doesn't surface closure as null from `waitMessage`,
+/// so without this the dispatcher's pump loop hangs after the task completes.
 const String scanDoneChannelMarker = '__scan_done__';
 
-/// Per-call file-handle limiter. The pre-extraction code kept a single
-/// counter on `VramChecker`; per-mod scopes are isolate-safe and avoid
-/// sharing state across worker isolates.
+/// Per-mod scope so it's isolate-safe without shared state across workers.
 class _FileHandleLimiter {
   final int max;
   int current = 0;
@@ -69,21 +59,9 @@ class _FileHandleLimiter {
   }
 }
 
-/// Pure, isolate-safe per-mod scan body. Both the single-isolate path
-/// inside `VramChecker.check()` and (in the multithreaded path)
-/// `VramScanTask.run()` call into this function so the actual scan logic
-/// lives in exactly one place.
-///
-/// When [channel] is non-null, per-file progress and per-mod-start events
-/// are emitted as channel messages; cancellation is observed by polling
-/// for [cancelChannelMarker] on the same channel. When [channel] is null,
-/// [onModStart] / [onFileProgress] are invoked directly on the calling
-/// isolate, and [isCancelledLocal] is polled for cooperative cancellation.
-///
-/// Verbose / debug log lines are always captured into a per-mod
-/// `StringBuffer` and returned in [VramScanOutcome.logBuffer] — the
-/// dispatcher replays them into the user-visible log streams after the
-/// task settles, preserving per-mod-atomic ordering.
+/// Isolate-safe per-mod scan. When [channel] is non-null, progress and
+/// cancellation go through channel messages (worker path); otherwise
+/// callbacks and [isCancelledLocal] are used directly (main-isolate path).
 Future<VramScanOutcome> scanOneMod(
   VramCheckScanParams params, {
   AsyncTaskChannel? channel,
@@ -95,8 +73,6 @@ Future<VramScanOutcome> scanOneMod(
 }) async {
   final logBuffer = StringBuffer();
 
-  // All non-progress log writes go through this pair so worker and main
-  // isolate paths stay identical.
   void verboseOut(String line) {
     logBuffer.writeln(line);
   }
@@ -105,11 +81,6 @@ Future<VramScanOutcome> scanOneMod(
     logBuffer.writeln(line);
   }
 
-  // Cancellation in the worker path is delivered via a channel message; the
-  // dispatcher in `VramChecker.check()` is responsible for sending the
-  // marker on the same channel when the scan is cancelled mid-flight. Phase
-  // boundaries call [checkCancelled] which both polls the channel (worker)
-  // and the local predicate (main isolate).
   bool channelCancelObserved = false;
   void drainCancelMessages() {
     if (channel == null) return;
@@ -138,8 +109,6 @@ Future<VramScanOutcome> scanOneMod(
 
   final modInfo = params.modInfo;
   VramScanOutcome buildOutcome(VramScanOutcome o) {
-    // Send a "done" sentinel so the dispatcher's pump loop exits.
-    // Worker-only — the main-isolate path doesn't open a channel.
     if (channel != null) {
       try {
         channel.send(scanDoneChannelMarker);
@@ -162,16 +131,12 @@ Future<VramScanOutcome> scanOneMod(
     final startTimeForMod = DateTime.timestamp().millisecondsSinceEpoch;
 
     int? maxImages;
-    // Special handling for Illustrated Entities, which dynamically unloads
-    // images. Very rough estimate.
+    // Illustrated Entities dynamically unloads images, so cap the estimate.
     if (modInfo.modInfo.id == Constants.illustratedEntitiesId) {
       maxImages = 20;
     }
 
-    // Enumerate every file in the mod folder once. Selectors consume this
-    // pre-enumerated list so listing only happens per mod, not per
-    // selector. Async listing so the calling isolate isn't blocked on
-    // large mods.
+    // Enumerate once; selectors share this list to avoid re-listing per selector.
     final modFolderDir = modInfo.modFolder.toDirectory();
     final maxLimit = maxImages ?? intMaxValue;
     final filesInMod = <VramModFile>[];
@@ -188,8 +153,6 @@ Future<VramScanOutcome> scanOneMod(
 
     checkCancelled();
 
-    // Parse the mod's GraphicsLib CSV once per mod; shared with every
-    // selector.
     final graphicsLibEntries = await GraphicsLibReferences.parse(
       modInfo,
       filesInMod,
@@ -206,10 +169,6 @@ Future<VramScanOutcome> scanOneMod(
 
     checkCancelled();
 
-    // Reconstruct the selector inside this isolate from the serializable
-    // (id, config) pair. On the main isolate this is the same logical
-    // result as `resolveSelector` since both code paths register through
-    // `VramAssetSelector.fromId`.
     final selector = VramAssetSelector.fromId(
       params.selectorId,
       params.selectorConfig,
@@ -235,9 +194,7 @@ Future<VramScanOutcome> scanOneMod(
       verboseOut(
         "Selector '${selector.id.wireValue}' returned ${selectedAssets.length} assets for ${modInfo.name} in $selectorMs ms",
       );
-      final refCount = selectedAssets
-          .where((a) => a.provenance == AssetProvenance.referenced)
-          .length;
+      final refCount = selectedAssets.where((a) => a.isReferenced).length;
       final unrefCount = selectedAssets.length - refCount;
       verboseOut(
         "[VramChecker] selector=${selector.id.wireValue} mod=${modInfo.modId} "
@@ -271,9 +228,7 @@ Future<VramScanOutcome> scanOneMod(
     );
 
     final referencedFutures = _processAssets(
-      selectedAssets
-          .where((a) => a.provenance == AssetProvenance.referenced)
-          .toList(),
+      selectedAssets.where((a) => a.isReferenced).toList(),
       imagePool,
       fileHandleLimiter,
       isCancelled: isCancelled,
@@ -282,9 +237,7 @@ Future<VramScanOutcome> scanOneMod(
       onAssetDone: onAssetDone,
     );
     final unreferencedFutures = _processAssets(
-      selectedAssets
-          .where((a) => a.provenance == AssetProvenance.unreferenced)
-          .toList(),
+      selectedAssets.where((a) => !a.isReferenced).toList(),
       imagePool,
       fileHandleLimiter,
       isCancelled: isCancelled,
@@ -335,7 +288,7 @@ Future<VramScanOutcome> scanOneMod(
     if (params.showCountedFiles) {
       for (var view in referencedViews) {
         verboseOut(
-          "${p.relative(view.file.path, from: modInfo.modFolder)} - TexHeight: ${view.textureHeight}, TexWidth: ${view.textureWidth}, ChannelBits: ${view.bitsInAllChannelsSum}, Mult: ${view.multiplier}\n   --> ${view.textureHeight} * ${view.textureWidth} * ${view.bitsInAllChannelsSum} * ${view.multiplier} = ${view.bytesUsed} bytes added over vanilla",
+          "${p.relative(view.file.path, from: modInfo.modFolder)} - TexHeight: ${view.textureHeight}, TexWidth: ${view.textureWidth}, Mipmaps: ${view.hasMipmaps}\n   --> ${view.bytesUsed} bytes added over vanilla",
         );
       }
     }
@@ -425,12 +378,8 @@ Iterable<Future<Map<String, dynamic>?>> _processAssets(
         }
         return {
           'filePath': file.file.path,
-          'textureHeight': (image.width == 1)
-              ? 1
-              : (image.width - 1).highestOneBit() * 2,
-          'textureWidth': (image.height == 1)
-              ? 1
-              : (image.height - 1).highestOneBit() * 2,
+          'textureHeight': nextPowerOfTwo(image.height),
+          'textureWidth': nextPowerOfTwo(image.width),
           'bitsInAllChannelsSum': image.bitDepth * image.numChannels,
           'imageType': imageType.name,
           'graphicsLibType': asset.graphicsLibType?.name,
@@ -449,9 +398,8 @@ Iterable<Future<Map<String, dynamic>?>> _processAssets(
   });
 }
 
-/// Backgrounds at or below vanilla size contribute nothing; among
-/// oversized backgrounds only the largest counts. Mirrors the previous
-/// behavior exactly — applied to referenced assets only.
+/// Backgrounds at or below vanilla size contribute nothing extra; among
+/// oversized backgrounds only the largest counts.
 List<ModImageView> _filterBackgroundsAgainstVanilla(
   List<ModImageView> views,
   String modFolder, {

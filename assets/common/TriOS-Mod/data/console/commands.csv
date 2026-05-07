@@ -1,0 +1,2 @@
+command,class,tags,syntax,help
+TriOS_ProfileVram,wisp.trios.TriOS_ProfileVram,"utility",trios_profilevram,"Profiles GPU VRAM usage for all loaded textures and writes results to saves/common for TriOS consumption."

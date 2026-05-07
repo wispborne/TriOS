@@ -12,6 +12,27 @@ import '../../models/version.dart';
 
 part 'vram_checker_models.mapper.dart';
 
+/// Rounds up to the next power of two, matching the game's algorithm
+/// (`byte var2 = 2; while(var2 < var1) var2 *= 2`). Minimum result is 2.
+int nextPowerOfTwo(int dim) {
+  if (dim <= 2) return 2;
+  return (dim - 1).highestOneBit() * 2;
+}
+
+/// Exact sum of all mipmap levels in bytes (4 bytes/pixel).
+int mipmapChainBytes(int width, int height) {
+  int total = 0;
+  int w = width;
+  int h = height;
+  while (true) {
+    total += w * h * 4;
+    if (w == 1 && h == 1) break;
+    if (w > 1) w ~/= 2;
+    if (h > 1) h ~/= 2;
+  }
+  return total;
+}
+
 /// Represents the type of an image asset.
 @MappableEnum()
 enum ImageType { texture, background, unused }
@@ -234,18 +255,16 @@ class ModImageView {
 
   File get file => File(filePath);
 
-  /// Returns the memory multiplier (125% for mipmaps; 100% for backgrounds).
-  double get multiplier =>
-      (imageType == ImageType.background) ? 1.0 : (4.0 / 3.0);
+  /// Whether the GPU generates mipmaps for this texture (both POT dims <= 1024).
+  bool get hasMipmaps => textureWidth <= 1024 && textureHeight <= 1024;
 
   /// Computes the memory usage (in bytes) of the image.
   int get bytesUsed {
     const vanillaBackgroundTextSizeInBytes = 12582912.0;
-    final rawSize =
-        (textureHeight *
-            textureWidth *
-            (bitsInAllChannelsSum / 8) *
-            multiplier) -
+    final totalBytes = hasMipmaps
+        ? mipmapChainBytes(textureWidth, textureHeight)
+        : textureWidth * textureHeight * 4;
+    final rawSize = totalBytes -
         ((imageType == ImageType.background)
             ? vanillaBackgroundTextSizeInBytes
             : 0.0);
@@ -362,6 +381,7 @@ class VramMod with VramModMappable {
 
   List<int>? _cache;
   int? _sumCache;
+  List<ModImageView>? _imagesSortedByBytesDesc;
 
   /// Each value is the usage by one of the images.GraphicsLib() {
   List<int> imagesNotIncludingGraphicsLib() {
@@ -382,6 +402,24 @@ class VramMod with VramModMappable {
   // without this cache it was ~44% of CPU during a scan.
   int bytesNotIncludingGraphicsLib() =>
       _sumCache ??= imagesNotIncludingGraphicsLib().sum();
+
+  /// Top images by `bytesUsed`, filtered by [config] and capped at [take].
+  /// The full sort over all images is cached on the [VramMod] instance —
+  /// repeated calls (e.g. tooltip rebuilds while scrolling) only redo the
+  /// O(N) filter + take.
+  List<ModImageView> topImagesByBytesUsed(
+    GraphicsLibConfig? config, {
+    int take = 10,
+  }) {
+    final sorted =
+        _imagesSortedByBytesDesc ??=
+            List.generate(images.length, getModViewForIndex)
+                .sortedByDescending<num>((image) => image.bytesUsed);
+    return sorted
+        .where((view) => view.isUsedBasedOnGraphicsLibConfig(config))
+        .take(take)
+        .toList();
+  }
 
   /// Sum of bytes for the unreferenced bucket, excluding GraphicsLib-tagged
   /// images (same rule as [bytesNotIncludingGraphicsLib]). Returns 0 when

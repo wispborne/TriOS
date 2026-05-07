@@ -84,14 +84,11 @@ You have full context of the OpenSpec system. Use it naturally, don't force it.
 
 ### Check for context
 
-At the start, quickly check what exists:
-```bash
-openspec list --json
-```
+At the start, quickly check what exists by listing directories under `openspec/changes/` (excluding `archive/`). Each subdirectory is an active change. Read its `.openspec.yaml` for metadata and check which artifact files exist (proposal.md, design.md, tasks.md, specs/).
 
 This tells you:
 - If there are active changes
-- Their names, schemas, and status
+- Their names and status
 - What the user might be working on
 
 If the user mentioned a specific change name, read its artifacts for context.

@@ -128,87 +128,33 @@ class VramEstimatorManager
     return dir;
   }
 
-  /// Runs once per manager lifetime. Removes the legacy JSON cache (from
-  /// before the msgpack switch) and migrates the legacy single-file
-  /// msgpack cache into the per-selector filename for the currently
-  /// active selector.
+  /// Runs once per manager lifetime. Deletes legacy cache files from
+  /// previous formats (JSON, single-file msgpack). The cache rebuilds
+  /// in seconds so there's no need to migrate.
   Future<void> cleanupLegacyCachesOnce(Directory dir) async {
     if (_legacyCleanupAttempted) return;
     _legacyCleanupAttempted = true;
 
-    // Phase 1: delete legacy JSON cache + its backup (pre-msgpack era).
-    final legacyJson = File(p.join(dir.path, _legacyJsonFileName));
-    final legacyJsonBackup = File(
-      p.join(dir.path, _legacyJsonBackupFileName),
-    );
-    var deletedAny = false;
-    for (final f in [legacyJson, legacyJsonBackup]) {
+    final legacyFiles = [
+      File(p.join(dir.path, _legacyJsonFileName)),
+      File(p.join(dir.path, _legacyJsonBackupFileName)),
+      File(p.join(dir.path, _legacyMsgpackFileName)),
+      File(p.join(dir.path, _legacyMsgpackBackupFileName)),
+    ];
+
+    for (final f in legacyFiles) {
       try {
         if (await f.exists()) {
           await f.delete();
-          deletedAny = true;
+          Fimber.i("Deleted legacy VRAM cache: ${f.path}");
         }
       } catch (e, st) {
         Fimber.w(
-          "Failed to delete legacy VRAM JSON cache ${f.path}: $e",
+          "Failed to delete legacy VRAM cache ${f.path}: $e",
           ex: e,
           stacktrace: st,
         );
       }
-    }
-    if (deletedAny) {
-      Fimber.i("Removed legacy VRAM JSON cache from ${dir.path}");
-    }
-
-    // Phase 2: migrate legacy single-file msgpack cache into the active
-    // selector's per-selector filename. The legacy file was authoritative
-    // for *whichever* selector was active at the time of the last write;
-    // we assume that's the same selector active now (best approximation
-    // with no metadata).
-    final legacyMp = File(p.join(dir.path, _legacyMsgpackFileName));
-    final legacyMpBackup = File(
-      p.join(dir.path, _legacyMsgpackBackupFileName),
-    );
-    try {
-      if (await legacyMp.exists()) {
-        final target = File(
-          p.join(
-            dir.path,
-            "TriOS-VRAM_CheckerCache-${_activeSelectorId.wireValue}.mp",
-          ),
-        );
-        if (await target.exists()) {
-          // Per-selector file wins — user already moved past the legacy
-          // layout. Discard the legacy file.
-          await legacyMp.delete();
-          Fimber.i(
-            "Discarded legacy VRAM msgpack cache (per-selector file already present)",
-          );
-        } else {
-          await legacyMp.rename(target.path);
-          Fimber.i(
-            "Migrated legacy VRAM msgpack cache into ${target.path}",
-          );
-        }
-      }
-    } catch (e, st) {
-      Fimber.w(
-        "Failed to migrate legacy VRAM msgpack cache ${legacyMp.path}: $e",
-        ex: e,
-        stacktrace: st,
-      );
-    }
-    // Legacy backup is never needed post-migration.
-    try {
-      if (await legacyMpBackup.exists()) {
-        await legacyMpBackup.delete();
-      }
-    } catch (e, st) {
-      Fimber.w(
-        "Failed to delete legacy VRAM msgpack backup ${legacyMpBackup.path}: $e",
-        ex: e,
-        stacktrace: st,
-      );
     }
   }
 

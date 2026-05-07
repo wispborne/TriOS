@@ -200,7 +200,13 @@ enum TooltipWarningLevel { none, warning, error }
 
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
-  final Widget tooltipWidget;
+  final Widget? tooltipWidget;
+
+  /// Builder variant of [tooltipWidget]. When provided, the tooltip widget is
+  /// only constructed on hover, not during the parent's build. Use this for
+  /// expensive tooltip content to avoid paying the cost on every parent
+  /// rebuild (e.g. while scrolling lists).
+  final WidgetBuilder? tooltipWidgetBuilder;
   final double windowEdgePadding;
   final Size offset;
   final TooltipPosition position;
@@ -208,11 +214,15 @@ class MovingTooltipWidget extends StatefulWidget {
   const MovingTooltipWidget({
     super.key,
     required this.child,
-    required this.tooltipWidget,
+    this.tooltipWidget,
+    this.tooltipWidgetBuilder,
     this.windowEdgePadding = 10.0,
     this.offset = const Size(5, 5),
     this.position = TooltipPosition.bottomRight,
-  });
+  }) : assert(
+         (tooltipWidget == null) != (tooltipWidgetBuilder == null),
+         'Exactly one of tooltipWidget or tooltipWidgetBuilder must be provided',
+       );
 
   static Widget text({
     Key? key,
@@ -273,7 +283,8 @@ class MovingTooltipWidget extends StatefulWidget {
 
   static Widget framed({
     Key? key,
-    required Widget? tooltipWidget,
+    Widget? tooltipWidget,
+    WidgetBuilder? tooltipWidgetBuilder,
     TooltipWarningLevel? warningLevel,
     required Widget child,
     EdgeInsetsGeometry padding = const EdgeInsets.all(8),
@@ -281,22 +292,26 @@ class MovingTooltipWidget extends StatefulWidget {
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
   }) {
-    if (tooltipWidget == null) return child;
+    if (tooltipWidget == null && tooltipWidgetBuilder == null) return child;
     return Builder(
       builder: (context) {
+        Widget frame(Widget content) => TooltipFrame(
+          padding: padding,
+          borderColor: switch (warningLevel) {
+            null || TooltipWarningLevel.none => null,
+            TooltipWarningLevel.warning ||
+            TooltipWarningLevel.error => Theme.of(
+              context,
+            ).colorScheme.onSecondaryContainer.withOpacity(0.5),
+          },
+          child: content,
+        );
         return MovingTooltipWidget(
           key: key,
-          tooltipWidget: TooltipFrame(
-            padding: padding,
-            borderColor: switch (warningLevel) {
-              null || TooltipWarningLevel.none => null,
-              TooltipWarningLevel.warning ||
-              TooltipWarningLevel.error => Theme.of(
-                context,
-              ).colorScheme.onSecondaryContainer.withOpacity(0.5),
-            },
-            child: tooltipWidget,
-          ),
+          tooltipWidget: tooltipWidget == null ? null : frame(tooltipWidget),
+          tooltipWidgetBuilder: tooltipWidgetBuilder == null
+              ? null
+              : (ctx) => frame(tooltipWidgetBuilder(ctx)),
           windowEdgePadding: windowEdgePadding,
           offset: offset,
           position: position,
@@ -385,6 +400,7 @@ class MovingTooltipWidget extends StatefulWidget {
 
 class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   OverlayEntry? _overlayEntry;
+  Widget? _builtTooltip;
   late final int _depth;
   bool _blockTooltip = false; // Prevents parent tooltip from activating
   _MovingTooltipWidgetState? _parentState; // Cache parent reference
@@ -417,6 +433,9 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     _latestGlobalMousePosition = globalPosition;
     _parentState?._setTooltipBlock(true); // Disable parent tooltip
 
+    _builtTooltip =
+        widget.tooltipWidget ?? widget.tooltipWidgetBuilder!(context);
+
     _overlayEntry = OverlayEntry(
       builder: (_) => Stack(
         children: [
@@ -425,7 +444,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
             windowEdgePadding: widget.windowEdgePadding,
             offset: widget.offset,
             position: widget.position,
-            child: IgnorePointer(child: widget.tooltipWidget),
+            child: IgnorePointer(child: _builtTooltip!),
           ),
         ],
       ),
@@ -451,6 +470,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     if (_overlayEntry != null) {
       _overlayEntry!.remove();
       _overlayEntry = null;
+      _builtTooltip = null;
     }
     _parentState?._setTooltipBlock(false); // Re-enable parent's tooltip
   }

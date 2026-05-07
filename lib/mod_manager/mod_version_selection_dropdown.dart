@@ -15,6 +15,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/text_trios.dart';
 
 import '../models/mod.dart';
 import '../models/mod_variant.dart';
@@ -320,11 +321,13 @@ class _ModVersionSelectionDropdownState
                               ),
                               Expanded(
                                 child: Center(
-                                  child: Text(
+                                  child: TextTriOS(
                                     isEnabled
                                         ? enabledVariant!.modInfo.version
                                               .toString()
                                         : "Enable",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ),

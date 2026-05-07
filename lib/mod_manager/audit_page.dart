@@ -8,6 +8,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/thirdparty/dartx/list.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/widgets/text_trios.dart';
 
 import 'audit_log.dart';
 
@@ -48,56 +49,56 @@ class _AuditPageState extends ConsumerState<AuditPage> {
           final actionWord =
               "${entry.action.name.replaceFirstMapped(RegExp(r'^.'), (match) => match.group(0)!.toUpperCase())}d";
 
-          return SelectionArea(
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(switch (entry.action) {
-                    ModAction.enable => Icons.check,
-                    ModAction.disable => Icons.close,
-                    ModAction.delete => Icons.delete,
-                  }),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            if (variant?.iconFilePath != null)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: Image.file(
-                                  File(variant!.iconFilePath!),
-                                  width: 24,
-                                  height: 24,
-                                ),
+          return Container(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(switch (entry.action) {
+                  ModAction.enable => Icons.check,
+                  ModAction.disable => Icons.close,
+                  ModAction.delete => Icons.delete,
+                }),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (variant?.iconFilePath != null)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Image.file(
+                                File(variant!.iconFilePath!),
+                                width: 24,
+                                height: 24,
                               ),
-                            Text(
+                            ),
+                          Flexible(
+                            child: TextTriOS(
                               variant != null
                                   ? "${variant.modInfo.nameOrId} ${variant.modInfo.version}"
                                   : entry.smolId,
+                              maxLines: 1,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      SelectableText(
+                        "$actionWord ${dateFormat.format(entry.timestamp)}\nReason: ${entry.reason}",
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "$actionWord ${dateFormat.format(entry.timestamp)}\nReason: ${entry.reason}",
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.6),
-                              ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },

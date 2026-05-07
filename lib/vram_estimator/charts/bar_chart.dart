@@ -78,7 +78,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                             ?.iconFilePath;
 
                         return MovingTooltipWidget.framed(
-                          tooltipWidget:
+                          tooltipWidgetBuilder: (_) =>
                               VramEstimatorPage.buildVramTopFilesTableWidget(
                                 theme,
                                 mod,

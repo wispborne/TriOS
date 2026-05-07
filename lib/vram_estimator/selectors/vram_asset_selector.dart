@@ -16,15 +16,13 @@ class VramModFile {
   VramModFile({required this.file, required this.relativePath});
 }
 
-enum AssetProvenance { referenced, unreferenced }
-
 /// A single image file selected for VRAM accounting, together with any
 /// GraphicsLib tag and (optionally, when attribution tracking is enabled)
 /// the parser ids that referenced it.
 class SelectedAsset {
   final VramModFile file;
   final MapType? graphicsLibType;
-  final AssetProvenance provenance;
+  final bool isReferenced;
 
   /// Parser ids that referenced this asset. Null when attribution tracking
   /// is off (the default) — never an empty list.
@@ -33,7 +31,7 @@ class SelectedAsset {
   const SelectedAsset({
     required this.file,
     required this.graphicsLibType,
-    required this.provenance,
+    required this.isReferenced,
     this.referencedBy,
   });
 }
@@ -76,7 +74,7 @@ abstract class VramAssetSelector {
   /// explanation dialog and as a dropdown tooltip.
   String get description;
 
-  /// Return the assets this selector wants to count, tagged with provenance.
+  /// Return the assets this selector wants to count.
   ///
   /// `allFiles` is a pre-enumerated list of every file in the mod folder so
   /// multiple selectors can share the listing cost.

@@ -1698,9 +1698,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   Constants.illustratedEntitiesId;
 
               return MovingTooltipWidget.framed(
-                tooltipWidget: vramEstimate == null
+                tooltipWidgetBuilder: vramEstimate == null
                     ? null
-                    : IntrinsicWidth(
+                    : (_) => IntrinsicWidth(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2124,7 +2124,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         );
 
                         return MovingTooltipWidget.framed(
-                          tooltipWidget: Column(
+                          tooltipWidgetBuilder: (context) => Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: mod.modVariants
@@ -2209,7 +2209,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         return MovingTooltipWidget.framed(
           // position: TooltipPosition.topLeft,
           padding: const EdgeInsets.all(0),
-          tooltipWidget: SizedBox(
+          tooltipWidgetBuilder: (context) => SizedBox(
             width: 400,
             child: ModSummaryWidget(
               modVariant: bestVersion,

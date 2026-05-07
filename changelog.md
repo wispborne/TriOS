@@ -19,6 +19,7 @@
   - Improved .csv parsing to handle multi-line strings.
   - Weapon, ship, and hullmod columns weren't read if they had mixed case headers.
   - Log Viewer: incomplete logs would show `null, null` when copying mod info.
+  - Context menu could clip off the bottom of the screen.
 - Changed
   - Cleaned up how a few themes look on the new ship/weapon tooltips.
   - Refactored game detection and added a new default detection method on Windows that should be faster.
@@ -27,6 +28,7 @@
     - If a file is *valid* json, it will parse much faster than before.
     - If it is ""Starsector json"" (has comments, unquoted strings, other invalid syntax) then it will parse at the same slow speed as before.
   - Minor overall performance improvement by avoiding recalculation of computed values (e.g. enabled mod versions, ship mounts, etc).
+    - And other minor performance improvements (e.g. not prebuilding expensive tooltips)
   - VRAM Estimator: cache is now stored as msgpack (smaller, faster)
 
 # 1.4.1

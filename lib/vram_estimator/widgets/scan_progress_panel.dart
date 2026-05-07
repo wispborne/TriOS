@@ -6,6 +6,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/relative_timestamp.dart';
+import 'package:trios/vram_estimator/engine_overhead.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/vram_estimator/models/active_mod_scan.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
@@ -332,6 +333,33 @@ class _IdleSummary extends ConsumerWidget {
             ),
           ];
 
+    // Engine overhead: compute from the Enabled cohort (what would launch).
+    final enabledCohort = cohorts.isEmpty
+        ? null
+        : cohorts.firstWhere((c) => c.label == 'Enabled');
+    final showEngineOverhead = enabledCohort != null &&
+        enabledCohort.hasData &&
+        enabledCohort.unscannedCount == 0;
+
+    // GraphicsLib state for engine overhead. If GraphicsLib is installed but
+    // its config could not be read, default to "enabled" for safety (Decision 5).
+    final graphicsLibInstalled = mods.any(
+      (m) => m.id == Constants.graphicsLibId,
+    );
+    final graphicsLibEnabled =
+        gfxConfig?.areAnyEffectsEnabled ?? graphicsLibInstalled;
+    final graphicsLibStateUnknown = graphicsLibInstalled && gfxConfig == null;
+
+    final overhead = showEngineOverhead
+        ? engineOverheadBytes(
+            estimatedCacheBytes: enabledCohort.totalBytes,
+            graphicsLibEnabled: graphicsLibEnabled,
+          )
+        : 0;
+    final projectedTotal = showEngineOverhead
+        ? enabledCohort.totalBytes + overhead
+        : 0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -354,6 +382,21 @@ class _IdleSummary extends ConsumerWidget {
               mutedStyle: mutedStyle,
               valueStyle: valueStyle,
             ),
+          if (showEngineOverhead) ...[
+            const SizedBox(height: 8),
+            _EngineOverheadRow(
+              overheadBytes: overhead,
+              graphicsLibEnabled: graphicsLibEnabled,
+              graphicsLibStateUnknown: graphicsLibStateUnknown,
+              mutedStyle: mutedStyle,
+              valueStyle: valueStyle,
+            ),
+            _ProjectedGpuRow(
+              projectedBytes: projectedTotal,
+              mutedStyle: mutedStyle,
+              valueStyle: valueStyle,
+            ),
+          ],
         ],
       ],
     );
@@ -542,6 +585,118 @@ class _CohortRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
       child: Align(alignment: Alignment.centerLeft, child: wrapped),
+    );
+  }
+}
+
+class _EngineOverheadRow extends StatelessWidget {
+  final int overheadBytes;
+  final bool graphicsLibEnabled;
+  final bool graphicsLibStateUnknown;
+  final TextStyle? mutedStyle;
+  final TextStyle? valueStyle;
+
+  const _EngineOverheadRow({
+    required this.overheadBytes,
+    required this.graphicsLibEnabled,
+    required this.graphicsLibStateUnknown,
+    required this.mutedStyle,
+    required this.valueStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltipText = graphicsLibStateUnknown
+        ? 'GPU memory used by the engine itself: render buffers, shaders, '
+            "GraphicsLib's lighting effects (~250 MB), and GPU driver overhead "
+            '(~10% of texture cache). Independent of which specific mods you '
+            'have enabled.\n\n'
+            'GraphicsLib state could not be determined; assuming enabled for safety.'
+        : graphicsLibEnabled
+            ? 'GPU memory used by the engine itself: render buffers, shaders, '
+                "GraphicsLib's lighting effects (~250 MB), and GPU driver "
+                'overhead (~10% of texture cache). Independent of which '
+                'specific mods you have enabled.'
+            : 'GPU memory used by the engine itself: render buffers, shaders, '
+                'and GPU driver overhead (~10% of texture cache). Independent '
+                'of which specific mods you have enabled.';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
+          children: [
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 64,
+              child: Text('Overhead', style: mutedStyle),
+            ),
+            Text(overheadBytes.bytesAsReadableMB(), style: valueStyle),
+            MovingTooltipWidget.text(
+              message: tooltipText,
+              child: Icon(
+                Icons.info_outline,
+                size: 14,
+                color: mutedStyle?.color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectedGpuRow extends StatelessWidget {
+  final int projectedBytes;
+  final TextStyle? mutedStyle;
+  final TextStyle? valueStyle;
+
+  const _ProjectedGpuRow({
+    required this.projectedBytes,
+    required this.mutedStyle,
+    required this.valueStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const tooltipText =
+        "Approximate total GPU memory the game will use with these mods "
+        "loaded. Comparable to Task Manager's 'Dedicated GPU memory' for "
+        "java.exe — within ~10–15% on typical setups. Based on "
+        "in-game profiler measurements.";
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
+          children: [
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 64,
+              child: Text('Projected', style: mutedStyle),
+            ),
+            Text(
+              projectedBytes.bytesAsReadableMB(),
+              style: valueStyle?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            MovingTooltipWidget.text(
+              message: tooltipText,
+              child: Icon(
+                Icons.info_outline,
+                size: 14,
+                color: mutedStyle?.color,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

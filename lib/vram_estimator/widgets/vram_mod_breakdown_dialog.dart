@@ -727,7 +727,7 @@ class _ImagesTableState extends State<_ImagesTable> {
             children: [
               Expanded(
                 flex: 5,
-                child: TextTriOS(
+                child: Text(
                   relPath,
                   style: style,
                   overflow: TextOverflow.ellipsis,

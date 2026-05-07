@@ -166,32 +166,25 @@ void main() {
     });
 
     test(
-      'legacy single-file .mp is migrated to the active selector\'s file',
+      'legacy single-file .mp is deleted (not migrated)',
       () async {
         final tmp = await Directory.systemTemp.createTemp(
           'vram_legacy_mp_test_',
         );
         try {
-          // Produce a valid legacy payload by serializing via a fresh
-          // manager (which still writes in the per-selector format today
-          // — but the file contents are format-agnostic to this test, we
-          // just need something msgpack-decodable).
-          final original = _buildFixtureState();
-          final bytes = await VramEstimatorManager().serialize(original);
-
           final legacyMp = File(p.join(tmp.path, 'TriOS-VRAM_CheckerCache.mp'));
-          await legacyMp.writeAsBytes(bytes);
+          await legacyMp.writeAsBytes([0]);
+
+          final legacyMpBackup = File(
+            p.join(tmp.path, 'TriOS-VRAM_CheckerCache.mp_backup.bak'),
+          );
+          await legacyMpBackup.writeAsBytes([0]);
 
           final m = _VramEstimatorManagerWithDir(tmp);
-          final loaded = await m.read(VramEstimatorManagerState.initial());
+          await m.read(VramEstimatorManagerState.initial());
 
-          // Legacy file gone, per-selector file exists, contents preserved.
           expect(await legacyMp.exists(), isFalse);
-          final migrated = File(
-            p.join(tmp.path, 'TriOS-VRAM_CheckerCache-folder-scan.mp'),
-          );
-          expect(await migrated.exists(), isTrue);
-          _assertRoundTripped(original, loaded);
+          expect(await legacyMpBackup.exists(), isFalse);
         } finally {
           if (await tmp.exists()) await tmp.delete(recursive: true);
         }

@@ -46,8 +46,7 @@ List<ReferenceParser> get registeredReferenceParsers =>
 /// reference sources (data files, GraphicsLib CSV, JAR strings, Java
 /// source strings) to build a referenced-path set, intersects with
 /// on-disk image files, and (unless `suppressUnreferenced` is set)
-/// reports the rest as `AssetProvenance.unreferenced` for advisory
-/// display.
+/// reports the rest as unreferenced for advisory display.
 class ReferencedAssetsSelector extends VramAssetSelector {
   final ReferencedAssetsSelectorConfig config;
 
@@ -200,7 +199,7 @@ class ReferencedAssetsSelector extends VramAssetSelector {
           SelectedAsset(
             file: file,
             graphicsLibType: mapType,
-            provenance: AssetProvenance.referenced,
+            isReferenced: true,
             referencedBy: _flattenAttribution(attribution[normalized]),
           ),
         );
@@ -209,7 +208,7 @@ class ReferencedAssetsSelector extends VramAssetSelector {
           SelectedAsset(
             file: file,
             graphicsLibType: mapType,
-            provenance: AssetProvenance.unreferenced,
+            isReferenced: false,
           ),
         );
       }

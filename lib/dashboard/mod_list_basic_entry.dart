@@ -221,7 +221,7 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                 child: MovingTooltipWidget.framed(
                   position: TooltipPosition.topLeft,
                   padding: EdgeInsets.zero,
-                  tooltipWidget: SizedBox(
+                  tooltipWidgetBuilder: (context) => SizedBox(
                     width: 400,
                     child: ModSummaryWidget(
                       modVariant: modVariant,

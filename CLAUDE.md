@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 All-in-one Starsector launcher, mod manager, and toolkit. Flutter desktop app — Windows, macOS, Linux only (no web/mobile). Dart SDK 3.10.7 / Flutter 3.38.6.
 
+## Claude Directive
+
+- Do not use jargon.
+- Do not use Opus 4.7. If you are using Opus 4.7, switch to Opus 4.6 instead.
+- Use the `idea` connector when available.
+
 ## Common Commands
 
 Build the app for the current platform:
@@ -117,3 +123,9 @@ Filter values: `null` (indifferent), `true` (include), `false` (exclude). If any
 - **ModVariant** — a specific version/installation of a mod
 - **SmolId** — compact identifier for mod variants: `{id6chars}-{version9chars}-{hash}`
 - **TriOSTools** — enum of all app tools/pages (dashboard, modManager, ships, weapons, etc.)
+
+## Starsector Game Code
+
+- Copied to `starsector-core` for convenient reference. Not added to git.
+- Critical: read only! Do not modify the game code.
+- Game obfuscated code is decompiled in `starsector-core/decompiled_obf`.

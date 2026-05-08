@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +13,6 @@ import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_info.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
 
 /// Detailed breakdown of a single mod's VRAM estimate. Shown when the
@@ -51,9 +52,9 @@ class _VramModBreakdownDialogState
     if (query.isEmpty) return true;
     final path = p.relative(view.file.path, from: modFolder).toLowerCase();
     if (path.contains(query)) return true;
-    final refBy = view.referencedBy;
-    if (refBy != null) {
-      for (final entry in refBy) {
+    final referencedBy = view.referencedBy;
+    if (referencedBy != null) {
+      for (final entry in referencedBy) {
         if (entry.toLowerCase().contains(query)) return true;
       }
     }
@@ -63,7 +64,7 @@ class _VramModBreakdownDialogState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gfxConfig = ref.watch(graphicsLibConfigProvider);
+    final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
     final vramState = ref.watch(AppState.vramEstimatorProvider).value;
     // Prefer the freshest VramMod for this smolId so a rescan updates the
     // dialog live. Fall back to the one the caller passed in when the state
@@ -81,44 +82,51 @@ class _VramModBreakdownDialogState
       mod.images.length,
       (i) => ModImageView(i, mod.images),
     );
-    final unrefTable = mod.unreferencedImages;
-    final unrefViews = unrefTable == null
+    final unreferencedTable = mod.unreferencedImages;
+    final unreferencedViews = unreferencedTable == null
         ? const <ModImageView>[]
-        : List.generate(unrefTable.length, (i) => ModImageView(i, unrefTable));
+        : List.generate(
+            unreferencedTable.length,
+            (i) => ModImageView(i, unreferencedTable),
+          );
 
-    final refByType = _groupByGfxType(referencedViews, gfxConfig);
-    final unrefByType = _groupByGfxType(unrefViews, gfxConfig);
+    final referencedByType = _groupByGraphicsLibType(
+      referencedViews,
+      graphicsLibConfig,
+    );
 
-    final totalRefNonGfx = referencedViews
-        .where((v) => v.graphicsLibType == null)
-        .map((v) => v.bytesUsed)
+    final totalReferencedWithoutGraphicsLib = referencedViews
+        .where((view) => view.graphicsLibType == null)
+        .map((view) => view.bytesUsed)
         .sum;
-    final totalRefGfxActive = referencedViews
+    final totalReferencedGraphicsLibActive = referencedViews
         .where(
-          (v) =>
-              v.graphicsLibType != null &&
-              v.isUsedBasedOnGraphicsLibConfig(gfxConfig),
+          (view) =>
+              view.graphicsLibType != null &&
+              view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig),
         )
-        .map((v) => v.bytesUsed)
+        .map((view) => view.bytesUsed)
         .sum;
-    final totalUnref = unrefViews
-        .where((v) => v.graphicsLibType == null)
-        .map((v) => v.bytesUsed)
+    final totalUnreferenced = unreferencedViews
+        .where((view) => view.graphicsLibType == null)
+        .map((view) => view.bytesUsed)
         .sum;
 
     // Filter by search query (case-insensitive). Empty query = pass through.
-    final q = _query.trim().toLowerCase();
-    final filteredReferenced = q.isEmpty
+    final query = _query.trim().toLowerCase();
+    final filteredReferenced = query.isEmpty
         ? referencedViews
         : referencedViews
-              .where((v) => _matches(v, q, mod.info.modFolder))
+              .where((view) => _matches(view, query, mod.info.modFolder))
               .toList();
-    final filteredUnref = q.isEmpty
-        ? unrefViews
-        : unrefViews.where((v) => _matches(v, q, mod.info.modFolder)).toList();
+    final filteredUnreferenced = query.isEmpty
+        ? unreferencedViews
+        : unreferencedViews
+              .where((view) => _matches(view, query, mod.info.modFolder))
+              .toList();
 
     String tabLabel(String base, int filtered, int total) =>
-        q.isEmpty ? '$base ($total)' : '$base ($filtered / $total)';
+        query.isEmpty ? '$base ($total)' : '$base ($filtered / $total)';
 
     return AlertDialog(
       icon: null,
@@ -126,7 +134,7 @@ class _VramModBreakdownDialogState
       content: SizedBox(
         width: 900,
         child: DefaultTabController(
-          length: unrefViews.isEmpty ? 1 : 2,
+          length: unreferencedViews.isEmpty ? 1 : 2,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -139,12 +147,14 @@ class _VramModBreakdownDialogState
               const SizedBox(height: 12),
               _TotalsCard(
                 theme: theme,
-                totalRefNonGfx: totalRefNonGfx,
-                totalRefGfxActive: totalRefGfxActive,
-                totalUnref: totalUnref,
-                gfxBreakdown: refByType,
-                hasUnref: unrefViews.isNotEmpty,
-                gfxConfig: gfxConfig,
+                totalReferencedWithoutGraphicsLib:
+                    totalReferencedWithoutGraphicsLib,
+                totalReferencedGraphicsLibActive:
+                    totalReferencedGraphicsLibActive,
+                totalUnreferenced: totalUnreferenced,
+                graphicsLibBreakdown: referencedByType,
+                hasUnreferenced: unreferencedViews.isNotEmpty,
+                graphicsLibConfig: graphicsLibConfig,
               ),
               const SizedBox(height: 12),
               Row(
@@ -162,12 +172,12 @@ class _VramModBreakdownDialogState
                             referencedViews.length,
                           ),
                         ),
-                        if (unrefViews.isNotEmpty)
+                        if (unreferencedViews.isNotEmpty)
                           Tab(
                             text: tabLabel(
                               'Unreferenced',
-                              filteredUnref.length,
-                              unrefViews.length,
+                              filteredUnreferenced.length,
+                              unreferencedViews.length,
                             ),
                           ),
                       ],
@@ -191,13 +201,13 @@ class _VramModBreakdownDialogState
                     _ImagesTable(
                       views: filteredReferenced,
                       modFolder: mod.info.modFolder,
-                      gfxConfig: gfxConfig,
+                      graphicsLibConfig: graphicsLibConfig,
                     ),
-                    if (unrefViews.isNotEmpty)
+                    if (unreferencedViews.isNotEmpty)
                       _ImagesTable(
-                        views: filteredUnref,
+                        views: filteredUnreferenced,
                         modFolder: mod.info.modFolder,
-                        gfxConfig: gfxConfig,
+                        graphicsLibConfig: graphicsLibConfig,
                         isUnreferencedTab: true,
                       ),
                   ],
@@ -226,13 +236,14 @@ class _VramModBreakdownDialogState
         .startEstimating(variantsToCheck: [variant]);
   }
 
-  Map<MapType?, int> _groupByGfxType(
+  Map<MapType?, int> _groupByGraphicsLibType(
     List<ModImageView> views,
-    GraphicsLibConfig? cfg,
+    GraphicsLibConfig? graphicsLibConfig,
   ) {
     final out = <MapType?, int>{};
-    for (final v in views) {
-      out[v.graphicsLibType] = (out[v.graphicsLibType] ?? 0) + v.bytesUsed;
+    for (final view in views) {
+      out[view.graphicsLibType] =
+          (out[view.graphicsLibType] ?? 0) + view.bytesUsed;
     }
     return out;
   }
@@ -385,34 +396,37 @@ class _RescanButtonState extends State<_RescanButton>
 
 class _TotalsCard extends StatelessWidget {
   final ThemeData theme;
-  final int totalRefNonGfx;
-  final int totalRefGfxActive;
-  final int totalUnref;
-  final Map<MapType?, int> gfxBreakdown;
-  final bool hasUnref;
-  final GraphicsLibConfig? gfxConfig;
+  final int totalReferencedWithoutGraphicsLib;
+  final int totalReferencedGraphicsLibActive;
+  final int totalUnreferenced;
+  final Map<MapType?, int> graphicsLibBreakdown;
+  final bool hasUnreferenced;
+  final GraphicsLibConfig? graphicsLibConfig;
 
   const _TotalsCard({
     required this.theme,
-    required this.totalRefNonGfx,
-    required this.totalRefGfxActive,
-    required this.totalUnref,
-    required this.gfxBreakdown,
-    required this.hasUnref,
-    required this.gfxConfig,
+    required this.totalReferencedWithoutGraphicsLib,
+    required this.totalReferencedGraphicsLibActive,
+    required this.totalUnreferenced,
+    required this.graphicsLibBreakdown,
+    required this.hasUnreferenced,
+    required this.graphicsLibConfig,
   });
 
   @override
   Widget build(BuildContext context) {
     final rows = <_TotalsRow>[
-      _TotalsRow('Base textures (excl. GraphicsLib)', totalRefNonGfx),
+      _TotalsRow(
+        'Base textures (excl. GraphicsLib)',
+        totalReferencedWithoutGraphicsLib,
+      ),
     ];
 
     for (final type in MapType.values) {
-      final bytes = gfxBreakdown[type] ?? 0;
+      final bytes = graphicsLibBreakdown[type] ?? 0;
       if (bytes == 0) continue;
-      final active = _mapTypeActive(type, gfxConfig);
-      final reason = _inactiveReason(type, gfxConfig);
+      final active = _mapTypeActive(type, graphicsLibConfig);
+      final reason = _inactiveReason(type, graphicsLibConfig);
       rows.add(
         _TotalsRow(
           'GraphicsLib ${type.name} maps',
@@ -423,7 +437,8 @@ class _TotalsCard extends StatelessWidget {
       );
     }
 
-    final total = totalRefNonGfx + totalRefGfxActive;
+    final total =
+        totalReferencedWithoutGraphicsLib + totalReferencedGraphicsLibActive;
 
     return Card(
       child: Padding(
@@ -438,7 +453,7 @@ class _TotalsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            ...rows.map((r) => _totalsLine(theme, r)),
+            ...rows.map((row) => _totalsLine(theme, row)),
             const Divider(height: 16),
             _totalsLine(
               theme,
@@ -448,7 +463,7 @@ class _TotalsCard extends StatelessWidget {
                 emphasize: true,
               ),
             ),
-            if (hasUnref) ...[
+            if (hasUnreferenced) ...[
               const SizedBox(height: 8),
               MovingTooltipWidget.text(
                 message:
@@ -459,7 +474,7 @@ class _TotalsCard extends StatelessWidget {
                   theme,
                   _TotalsRow(
                     'Unreferenced (not counted)',
-                    totalUnref,
+                    totalUnreferenced,
                     muted: true,
                     italic: true,
                   ),
@@ -472,16 +487,16 @@ class _TotalsCard extends StatelessWidget {
     );
   }
 
-  bool _mapTypeActive(MapType type, GraphicsLibConfig? cfg) {
-    if (cfg == null) return false;
+  bool _mapTypeActive(MapType type, GraphicsLibConfig? graphicsLibConfig) {
+    if (graphicsLibConfig == null) return false;
     // Maps only count toward steady-state VRAM when preloadAllMaps is on.
     // Otherwise GraphicsLib streams them in/out as ships appear on
     // screen, so they don't contribute meaningfully to the loaded set.
-    if (!cfg.preloadAllMaps) return false;
+    if (!graphicsLibConfig.preloadAllMaps) return false;
     return switch (type) {
-      MapType.Normal => cfg.areGfxLibNormalMapsEnabled,
-      MapType.Material => cfg.areGfxLibMaterialMapsEnabled,
-      MapType.Surface => cfg.areGfxLibSurfaceMapsEnabled,
+      MapType.Normal => graphicsLibConfig.areGfxLibNormalMapsEnabled,
+      MapType.Material => graphicsLibConfig.areGfxLibMaterialMapsEnabled,
+      MapType.Surface => graphicsLibConfig.areGfxLibSurfaceMapsEnabled,
     };
   }
 
@@ -489,39 +504,39 @@ class _TotalsCard extends StatelessWidget {
   /// "type is off entirely" from "maps stream on-demand because
   /// preloadAllMaps is off" — the latter is the common case and users
   /// benefit from understanding that the bytes aren't a concern.
-  String _inactiveReason(MapType type, GraphicsLibConfig? cfg) {
-    if (cfg == null) return 'GraphicsLib not enabled';
+  String _inactiveReason(MapType type, GraphicsLibConfig? graphicsLibConfig) {
+    if (graphicsLibConfig == null) return 'GraphicsLib not enabled';
     final typeEnabled = switch (type) {
-      MapType.Normal => cfg.areGfxLibNormalMapsEnabled,
-      MapType.Material => cfg.areGfxLibMaterialMapsEnabled,
-      MapType.Surface => cfg.areGfxLibSurfaceMapsEnabled,
+      MapType.Normal => graphicsLibConfig.areGfxLibNormalMapsEnabled,
+      MapType.Material => graphicsLibConfig.areGfxLibMaterialMapsEnabled,
+      MapType.Surface => graphicsLibConfig.areGfxLibSurfaceMapsEnabled,
     };
     if (!typeEnabled) return 'type disabled in GraphicsLib config';
-    if (!cfg.preloadAllMaps) {
+    if (!graphicsLibConfig.preloadAllMaps) {
       return 'streamed on-demand by GraphicsLib; not counted';
     }
     return 'not counted';
   }
 
-  Widget _totalsLine(ThemeData theme, _TotalsRow r) {
+  Widget _totalsLine(ThemeData theme, _TotalsRow row) {
     final baseStyle =
-        (r.emphasize
+        (row.emphasize
             ? theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)
             : theme.textTheme.bodyMedium) ??
         const TextStyle();
-    final color = r.muted
+    final color = row.muted
         ? theme.colorScheme.onSurface.withOpacity(0.5)
         : baseStyle.color;
     final style = baseStyle.copyWith(
       color: color,
-      fontStyle: r.italic ? FontStyle.italic : FontStyle.normal,
+      fontStyle: row.italic ? FontStyle.italic : FontStyle.normal,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Expanded(child: Text('${r.label}${r.suffix}', style: style)),
-          Text(r.bytes.bytesAsReadableMB(), style: style),
+          Expanded(child: Text('${row.label}${row.suffix}', style: style)),
+          Text(row.bytes.bytesAsReadableMB(), style: style),
         ],
       ),
     );
@@ -549,13 +564,13 @@ class _TotalsRow {
 class _ImagesTable extends StatefulWidget {
   final List<ModImageView> views;
   final String modFolder;
-  final GraphicsLibConfig? gfxConfig;
+  final GraphicsLibConfig? graphicsLibConfig;
   final bool isUnreferencedTab;
 
   const _ImagesTable({
     required this.views,
     required this.modFolder,
-    required this.gfxConfig,
+    required this.graphicsLibConfig,
     this.isUnreferencedTab = false,
   });
 
@@ -576,7 +591,7 @@ class _ImagesTableState extends State<_ImagesTable> {
 
   String get modFolder => widget.modFolder;
 
-  GraphicsLibConfig? get gfxConfig => widget.gfxConfig;
+  GraphicsLibConfig? get graphicsLibConfig => widget.graphicsLibConfig;
 
   bool get isUnreferencedTab => widget.isUnreferencedTab;
 
@@ -626,7 +641,7 @@ class _ImagesTableState extends State<_ImagesTable> {
       child: Row(
         children: [
           Expanded(flex: 5, child: Text('File', style: style)),
-          Expanded(flex: 4, child: Text('Referenced by', style: style)),
+          Expanded(flex: 4, child: Text('Explanation', style: style)),
           Expanded(
             flex: 2,
             child: Text('Dimensions', style: style, textAlign: TextAlign.end),
@@ -645,9 +660,9 @@ class _ImagesTableState extends State<_ImagesTable> {
   }
 
   Widget _row(BuildContext context, ThemeData theme, ModImageView view) {
-    final isGfx = view.graphicsLibType != null;
-    final active = isGfx
-        ? view.isUsedBasedOnGraphicsLibConfig(gfxConfig)
+    final isGraphicsLib = view.graphicsLibType != null;
+    final active = isGraphicsLib
+        ? view.isUsedBasedOnGraphicsLibConfig(graphicsLibConfig)
         : true;
     final muted = !active || view.imageType == ImageType.background;
     final color = muted
@@ -658,33 +673,43 @@ class _ImagesTableState extends State<_ImagesTable> {
       fontFamily: 'Roboto Mono',
       fontFamilyFallback: const ['Consolas', 'Courier New', 'Monaco'],
     );
-    final relPath = p.relative(view.file.path, from: modFolder);
-    final dims = '${view.textureWidth}×${view.textureHeight}';
-    final gfxLabel = view.graphicsLibType == null
+    final relativePath = p.relative(view.file.path, from: modFolder);
+    final dimensions = '${view.textureWidth}×${view.textureHeight}';
+    final graphicsLibLabel = view.graphicsLibType == null
         ? (view.imageType == ImageType.background ? 'bg' : '-')
         : view.graphicsLibType!.name.toLowerCase();
 
-    final refBy = view.referencedBy;
-    final refByLabel = _referencedByLabel(refBy, isUnreferencedTab);
-    final refByStyle = style?.copyWith(
-      color: refBy == null || refBy.isEmpty
-          ? theme.colorScheme.onSurface.withOpacity(0.4)
-          : color,
-      fontStyle: refBy == null || refBy.isEmpty
-          ? FontStyle.italic
-          : FontStyle.normal,
+    final referencedBy = view.referencedBy;
+    final explanationLabel = _explanationLabel(
+      view,
+      referencedBy,
+      isUnreferencedTab,
+    );
+    final hasExplanation = explanationLabel != '—';
+    final explanationStyle = style?.copyWith(
+      color: hasExplanation
+          ? color
+          : theme.colorScheme.onSurface.withOpacity(0.4),
+      fontStyle: hasExplanation ? FontStyle.normal : FontStyle.italic,
     );
 
     final tooltipMessage = [
-      relPath,
-      'Dimensions (POT): $dims',
+      relativePath,
+      'Dimensions (POT): $dimensions',
       'Channels × bits: ${view.bitsInAllChannelsSum}',
-      'Type: ${view.imageType.name}${isGfx ? " · GraphicsLib ${view.graphicsLibType!.name}" : ""}',
-      if (refBy != null && refBy.isNotEmpty)
-        'Referenced by:\n${refBy.map((e) => "  $e").join("\n")}',
-      if (refBy == null && !isUnreferencedTab)
+      'Type: ${view.imageType.name}${isGraphicsLib ? " · GraphicsLib ${view.graphicsLibType!.name}" : ""}',
+      if (view.vanillaReplacementCost > 0 &&
+          view.vanillaReplacementCost >= view.bytesUsed)
+        'Replaces a vanilla file already counted in vanilla VRAM, so adds nothing extra.',
+      if (view.vanillaReplacementCost > 0 &&
+          view.vanillaReplacementCost < view.bytesUsed)
+        'Replaces a vanilla file (${view.vanillaReplacementCost.bytesAsReadableMB()}) with a larger version. Only the extra ${(view.bytesUsed - view.vanillaReplacementCost).bytesAsReadableMB()} counts.',
+      if (referencedBy != null && referencedBy.isNotEmpty)
+        'Referenced by:\n${referencedBy.map((e) => "  $e").join("\n")}',
+      if (referencedBy == null && !isUnreferencedTab)
         'No attribution recorded (folder-scan mode, or background file).',
-      if (isGfx && !active) 'Not counted; ${_gfxRowReason(view, gfxConfig)}',
+      if (isGraphicsLib && !active)
+        'Not counted; ${_graphicsLibRowReason(view, graphicsLibConfig)}',
       if (view.imageType == ImageType.background)
         'Background; only the largest oversized one counts',
     ].join('\n');
@@ -728,7 +753,7 @@ class _ImagesTableState extends State<_ImagesTable> {
               Expanded(
                 flex: 5,
                 child: Text(
-                  relPath,
+                  relativePath,
                   style: style,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -736,23 +761,30 @@ class _ImagesTableState extends State<_ImagesTable> {
               Expanded(
                 flex: 4,
                 child: Text(
-                  refByLabel,
-                  style: refByStyle,
+                  explanationLabel,
+                  style: explanationStyle,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               Expanded(
                 flex: 2,
-                child: Text(dims, style: style, textAlign: TextAlign.end),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(gfxLabel, style: style, textAlign: TextAlign.end),
+                child: Text(dimensions, style: style, textAlign: TextAlign.end),
               ),
               Expanded(
                 flex: 2,
                 child: Text(
-                  view.bytesUsed.bytesAsReadableMB(),
+                  graphicsLibLabel,
+                  style: style,
+                  textAlign: TextAlign.end,
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  max(
+                    0,
+                    view.bytesUsed - view.vanillaReplacementCost,
+                  ).bytesAsReadableMB(),
                   style: style,
                   textAlign: TextAlign.end,
                 ),
@@ -764,35 +796,53 @@ class _ImagesTableState extends State<_ImagesTable> {
     );
   }
 
-  String _gfxRowReason(ModImageView view, GraphicsLibConfig? cfg) {
+  String _graphicsLibRowReason(
+    ModImageView view,
+    GraphicsLibConfig? graphicsLibConfig,
+  ) {
     final type = view.graphicsLibType!;
-    if (cfg == null) return 'GraphicsLib not enabled';
+    if (graphicsLibConfig == null) return 'GraphicsLib not enabled';
     final typeEnabled = switch (type) {
-      MapType.Normal => cfg.areGfxLibNormalMapsEnabled,
-      MapType.Material => cfg.areGfxLibMaterialMapsEnabled,
-      MapType.Surface => cfg.areGfxLibSurfaceMapsEnabled,
+      MapType.Normal => graphicsLibConfig.areGfxLibNormalMapsEnabled,
+      MapType.Material => graphicsLibConfig.areGfxLibMaterialMapsEnabled,
+      MapType.Surface => graphicsLibConfig.areGfxLibSurfaceMapsEnabled,
     };
     if (!typeEnabled) {
       return 'GraphicsLib ${type.name} maps disabled in config';
     }
-    if (!cfg.preloadAllMaps) {
+    if (!graphicsLibConfig.preloadAllMaps) {
       return 'GraphicsLib loads/unloads ${type.name} maps on-demand when preloadAllMaps is off';
     }
     return '${type.name} maps not counted';
   }
 
-  String _referencedByLabel(List<String>? refBy, bool isUnreferencedTab) {
+  String _explanationLabel(
+    ModImageView view,
+    List<String>? referencedBy,
+    bool isUnreferencedTab,
+  ) {
+    final parts = <String>[];
+
+    if (view.vanillaReplacementCost > 0) {
+      if (view.vanillaReplacementCost >= view.bytesUsed) {
+        parts.add('Replaces vanilla, no extra VRAM');
+      } else {
+        final extra = (view.bytesUsed - view.vanillaReplacementCost)
+            .bytesAsReadableMB();
+        parts.add('Replaces vanilla, $extra larger');
+      }
+    }
+
     if (isUnreferencedTab) {
-      return '(unreferenced)';
+      parts.add('(unreferenced)');
+    } else if (referencedBy != null && referencedBy.isNotEmpty) {
+      parts.add(referencedBy.join(', '));
     }
-    if (refBy == null) {
-      // No attribution available (folder-scan, or a special-case row like
-      // a background that's counted without going through parser matching).
-      return '—';
+
+    if (view.imageType == ImageType.background) {
+      parts.add('background');
     }
-    if (refBy.isEmpty) {
-      return '—';
-    }
-    return refBy.join(', ');
+
+    return parts.isEmpty ? '—' : parts.join(' · ');
   }
 }

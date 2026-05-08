@@ -7,10 +7,10 @@ part 'vram_selector_id.mapper.dart';
 /// name suffix, isolate transfer payload) — keep stable across releases.
 @MappableEnum(defaultValue: VramSelectorId.folderScan)
 enum VramSelectorId {
-  @MappableValue('folder-scan')
-  folderScan('folder-scan'),
   @MappableValue('referenced')
-  referenced('referenced');
+  referenced('referenced'),
+  @MappableValue('folder-scan')
+  folderScan('folder-scan');
 
   const VramSelectorId(this.wireValue);
 

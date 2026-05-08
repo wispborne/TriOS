@@ -97,33 +97,19 @@ void main() {
       // 4 input files; the folder scan should pick all of them up.
       expect(scanned.images.length, 4);
 
-      // Texture dimensions are rounded up to the next power of two before
-      // the byte calculation; multiplier = 4/3 for non-background images.
-      // None of these go in graphics/backgrounds/, so they are all textures.
-      int nextPow2(int n) {
-        if (n <= 1) return 1;
-        var v = 1;
-        while (v < n) {
-          v <<= 1;
-        }
-        return v;
-      }
-
-      int bytesFor(int w, int h, int channels) {
-        final tw = nextPow2(w);
-        final th = nextPow2(h);
-        final raw = th * tw * channels * (4.0 / 3.0);
-        return raw.ceil();
-      }
-
-      // PNG 64x64 RGBA   → 64x64,   32 bits/pixel
-      // JPG 320x240 RGB  → 512x256, 24 bits/pixel
-      // GIF 32x32        → 32x32,   32 bits/pixel (hardcoded RGBA)
-      // WEBP VP8X 100x80 → 128x128, 32 bits/pixel
-      final expected = bytesFor(64, 64, 4) +
-          bytesFor(320, 240, 3) +
-          bytesFor(32, 32, 4) +
-          bytesFor(100, 80, 4);
+      // Texture dimensions are rounded up to the next power of two.
+      // All textures are <= 1024 so mipmaps apply. bytesUsed uses 4 bytes
+      // per pixel regardless of source channel count. None are in a
+      // backgrounds/ folder, so no background subtraction.
+      //
+      // PNG 64x64     → POT 64x64,   mipmapChainBytes(64, 64)
+      // JPG 320x240   → POT 512x256, mipmapChainBytes(512, 256)
+      // GIF 32x32     → POT 32x32,   mipmapChainBytes(32, 32)
+      // WEBP 100x80   → POT 128x128, mipmapChainBytes(128, 128)
+      final expected = mipmapChainBytes(64, 64) +
+          mipmapChainBytes(512, 256) +
+          mipmapChainBytes(32, 32) +
+          mipmapChainBytes(128, 128);
       expect(scanned.bytesNotIncludingGraphicsLib(), expected);
     } finally {
       root.deleteSync(recursive: true);

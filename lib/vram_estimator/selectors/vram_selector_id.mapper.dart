@@ -27,22 +27,22 @@ class VramSelectorIdMapper extends EnumMapper<VramSelectorId> {
   @override
   VramSelectorId decode(dynamic value) {
     switch (value) {
-      case 'folder-scan':
-        return VramSelectorId.folderScan;
       case 'referenced':
         return VramSelectorId.referenced;
+      case 'folder-scan':
+        return VramSelectorId.folderScan;
       default:
-        return VramSelectorId.values[0];
+        return VramSelectorId.values[1];
     }
   }
 
   @override
   dynamic encode(VramSelectorId self) {
     switch (self) {
-      case VramSelectorId.folderScan:
-        return 'folder-scan';
       case VramSelectorId.referenced:
         return 'referenced';
+      case VramSelectorId.folderScan:
+        return 'folder-scan';
     }
   }
 }

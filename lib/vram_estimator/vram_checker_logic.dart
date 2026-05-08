@@ -14,10 +14,57 @@ import 'models/gpu_info.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/vram_checker_models.dart';
 import 'selectors/folder_scan_selector.dart';
+import 'selectors/path_normalizer.dart';
 import 'selectors/vram_asset_selector.dart';
 import 'vram_check_scan_params.dart';
 import 'vram_scan_one_mod.dart';
 import 'vram_scan_task.dart';
+
+/// Recursively enumerates all image files in [coreDir], reads their headers,
+/// and returns a map of normalized relative path to computed bytesUsed, plus
+/// the sum of all values.
+Future<({Map<String, int> assets, int total})> scanVanillaAssets(
+  Directory coreDir,
+  ReadImageHeaders imageReader, {
+  void Function(String)? debugOut,
+}) async {
+  final assets = <String, int>{};
+  int total = 0;
+  final coreDirNorm = coreDir.absolute;
+
+  await for (final entity in coreDirNorm.list(recursive: true)) {
+    if (entity is! File) continue;
+    final lower = entity.path.toLowerCase();
+    if (!lower.endsWith('.png') &&
+        !lower.endsWith('.jpg') &&
+        !lower.endsWith('.jpeg') &&
+        !lower.endsWith('.gif') &&
+        !lower.endsWith('.webp')) {
+      continue;
+    }
+    try {
+      final header = await imageReader.readImageDeterminingBest(entity.path);
+      if (header == null) continue;
+      final w = nextPowerOfTwo(header.width);
+      final h = nextPowerOfTwo(header.height);
+      final hasMipmaps = w <= 1024 && h <= 1024;
+      final bytes = hasMipmaps ? mipmapChainBytes(w, h) : w * h * 4;
+
+      final relPath = PathNormalizer.normalize(
+        entity.relativePath(coreDirNorm),
+      );
+      assets[relPath] = bytes;
+      total += bytes;
+    } catch (_) {
+      // Skip unreadable files.
+    }
+  }
+
+  debugOut?.call(
+    'Scanned ${assets.length} vanilla images, total ${total} bytes',
+  );
+  return (assets: assets, total: total);
+}
 
 class VramChecker {
   List<String>? enabledModIds;
@@ -71,6 +118,19 @@ class VramChecker {
   /// single-isolate sequential pipeline. See `Settings.vramEstimatorMultithreaded`.
   bool multithreaded;
 
+  /// Path to the starsector-core directory. When non-null, vanilla images are
+  /// scanned and their sizes used to deduplicate mod replacements.
+  Directory? gameCoreDir;
+
+  /// Populated during [check] from [scanVanillaAssets]. Null when
+  /// [gameCoreDir] is not set.
+  Map<String, int>? _vanillaAssets;
+  int? _vanillaTotal;
+
+  /// The scanned vanilla total in bytes, or the hardcoded fallback.
+  int get vanillaTotal =>
+      _vanillaTotal ?? VANILLA_GAME_VRAM_USAGE_IN_BYTES.toInt();
+
   /// [modProgressOut] is called with each mod as it is processed.
   VramChecker({
     this.enabledModIds,
@@ -81,6 +141,7 @@ class VramChecker {
     required this.showCountedFiles,
     required this.graphicsLibConfig,
     this.maxFileHandles = 2000,
+    this.gameCoreDir,
     VramAssetSelector? selector,
     Function(VramMod)? modProgressOut,
     Function(VramCheckerMod)? onModStart,
@@ -161,6 +222,7 @@ class VramChecker {
       showSkippedFiles: showSkippedFiles,
       showCountedFiles: showCountedFiles,
       maxFileHandles: maxFileHandles,
+      vanillaAssets: _vanillaAssets,
     );
   }
 
@@ -424,6 +486,17 @@ class VramChecker {
       );
     }
 
+    // Scan vanilla images to build the deduplication lookup.
+    if (gameCoreDir != null && gameCoreDir!.existsSync()) {
+      final result = await scanVanillaAssets(
+        gameCoreDir!,
+        ReadImageHeaders(),
+        debugOut: debugOut,
+      );
+      _vanillaAssets = result.assets;
+      _vanillaTotal = result.total;
+    }
+
     // Isolate spawn cost dominates for tiny lists; fall back to the
     // single-isolate path when there's nothing to parallelize.
     final useMultithreaded = multithreaded && variantsToCheck.length >= 2;
@@ -498,8 +571,7 @@ class VramChecker {
         );
 
         // If expected VRAM after loading game and mods is less than 300 MB, show warning
-        if (info.freeVRAM -
-                (totalBytesOfEnabledMods + VANILLA_GAME_VRAM_USAGE_IN_BYTES) <
+        if (info.freeVRAM - (totalBytesOfEnabledMods + vanillaTotal) <
             300000) {
           summaryText.writeln();
           summaryText.writeln(
@@ -522,7 +594,7 @@ class VramChecker {
     );
     summaryText.writeln(
       "Enabled + Disabled Mods w/ Vanilla".padRight(OUTPUT_LABEL_WIDTH) +
-          (totalBytes + VANILLA_GAME_VRAM_USAGE_IN_BYTES).bytesAsReadableMB(),
+          (totalBytes + vanillaTotal).bytesAsReadableMB(),
     );
     summaryText.writeln();
     summaryText.writeln(
@@ -531,8 +603,7 @@ class VramChecker {
     );
     summaryText.writeln(
       "Enabled Mods w/ Vanilla".padRight(OUTPUT_LABEL_WIDTH) +
-          (totalBytesOfEnabledMods + VANILLA_GAME_VRAM_USAGE_IN_BYTES)
-              .bytesAsReadableMB(),
+          (totalBytesOfEnabledMods + vanillaTotal).bytesAsReadableMB(),
     );
 
     summaryText.writeln();
@@ -564,7 +635,8 @@ extension ModListExt on Iterable<VramMod> {
         final key = Tuple2(mod.info.modFolder, view.filePath);
         if (!seen.contains(key)) {
           seen.add(key);
-          sum += view.bytesUsed;
+          final effectiveCost = view.bytesUsed - view.vanillaReplacementCost;
+          sum += max(0, effectiveCost);
         }
       }
     }

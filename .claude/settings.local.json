@@ -108,7 +108,9 @@
       "Bash(git -C /f/Code/Starsector/TriOS log --all --oneline pubspec.yaml)",
       "Bash(javac -source 17 -target 17 -cp \"C:/Program Files \\(x86\\)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/starfarer.api.jar;C:/Program Files \\(x86\\)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/starfarer_obf.jar;C:/Program Files \\(x86\\)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/log4j-1.2.9.jar;C:/Program Files \\(x86\\)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/lwjgl.jar;C:/Program Files \\(x86\\)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/lwjgl_util.jar;C:/Program Files \\(x86\\)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/json.jar;C:/Program Files \\(x86\\)/Fractal Softworks/Starsector-0.98a-RC5/mods/Console Commands/jars/lw_Console.jar\" -d out/production/TriOS-Companion-Mod src/wisp/trios/*.java)",
       "Bash(javap -p com/fs/starfarer/settings/StarfarerSettings.class)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(cd /d F:\\\\Code\\\\Starsector\\\\TriOS)",
+      "Bash(dir TriOS-Companion-Mod)"
     ]
   }
 }

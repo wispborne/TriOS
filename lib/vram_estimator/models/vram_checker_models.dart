@@ -55,6 +55,11 @@ class ModImageTable {
   /// mode) the unreferenced bucket has no referrers by definition.
   final List<List<String>?> referencedBys;
 
+  /// Per-row vanilla replacement cost in bytes. When a mod image replaces a
+  /// vanilla asset at the same relative path, this holds the vanilla image's
+  /// bytesUsed so the aggregation can subtract it. 0 for non-replacements.
+  final List<int> vanillaReplacementCosts;
+
   ModImageTable._(
     this.filePaths,
     this.textureHeights,
@@ -63,6 +68,7 @@ class ModImageTable {
     this.imageTypes,
     this.graphicsLibTypes,
     this.referencedBys,
+    this.vanillaReplacementCosts,
   );
 
   /// Constructs a [ModImageTable] from a list of maps (typically parsed from JSON).
@@ -79,6 +85,7 @@ class ModImageTable {
     );
     final gfxTypes = List<MapType?>.filled(length, null, growable: false);
     final refBys = List<List<String>?>.filled(length, null, growable: false);
+    final vanillaCosts = List<int>.filled(length, 0, growable: false);
 
     for (int i = 0; i < length; i++) {
       final row = rows[i];
@@ -109,6 +116,8 @@ class ModImageTable {
       if (refByRaw is List && refByRaw.isNotEmpty) {
         refBys[i] = List<String>.unmodifiable(refByRaw.cast<String>());
       }
+
+      vanillaCosts[i] = (row['vanillaReplacementCost'] as int?) ?? 0;
     }
 
     return ModImageTable._(
@@ -119,6 +128,7 @@ class ModImageTable {
       types,
       gfxTypes,
       refBys,
+      vanillaCosts,
     );
   }
 
@@ -138,6 +148,8 @@ class ModImageTable {
         'imageType': imageTypes[i].name,
         'graphicsLibType': graphicsLibTypes[i]?.name,
         if (referencedBys[i] != null) 'referencedBy': referencedBys[i],
+        if (vanillaReplacementCosts[i] != 0)
+          'vanillaReplacementCost': vanillaReplacementCosts[i],
       });
     }
     return rows;
@@ -148,6 +160,7 @@ class ModImageTable {
   /// mods because neither msgpack nor JSON dedupes repeated map keys.
   Map<String, dynamic> toColumnar() {
     final allRefsNull = referencedBys.every((r) => r == null);
+    final allVanillaZero = vanillaReplacementCosts.every((c) => c == 0);
     return {
       'filePaths': filePaths,
       'textureHeights': textureHeights,
@@ -155,9 +168,8 @@ class ModImageTable {
       'bitsInAllChannelsSums': bitsInAllChannelsSums,
       'imageTypes': [for (final t in imageTypes) t.name],
       'graphicsLibTypes': [for (final t in graphicsLibTypes) t?.name],
-      // Most VramMods in folder-scan mode have no attribution at all; omit
-      // the whole array when it would be all-null.
       if (!allRefsNull) 'referencedBys': referencedBys,
+      if (!allVanillaZero) 'vanillaReplacementCosts': vanillaReplacementCosts,
     };
   }
 
@@ -211,6 +223,13 @@ class ModImageTable {
       return null;
     }, growable: false);
 
+    // Optional — old caches without this column default to 0.
+    final vanillaCostsRaw = data['vanillaReplacementCosts'];
+    final vanillaCosts = List<int>.generate(length, (i) {
+      if (vanillaCostsRaw is! List) return 0;
+      return (vanillaCostsRaw[i] as int?) ?? 0;
+    }, growable: false);
+
     return ModImageTable._(
       filePaths,
       heights,
@@ -219,6 +238,7 @@ class ModImageTable {
       types,
       gfxTypes,
       refBys,
+      vanillaCosts,
     );
   }
 
@@ -253,6 +273,10 @@ class ModImageView {
   /// bucket rows.
   List<String>? get referencedBy => table.referencedBys[index];
 
+  /// Vanilla asset bytes at this image's relative path, or 0 if this image
+  /// does not replace a vanilla asset.
+  int get vanillaReplacementCost => table.vanillaReplacementCosts[index];
+
   File get file => File(filePath);
 
   /// Whether the GPU generates mipmaps for this texture (both POT dims <= 1024).
@@ -264,7 +288,8 @@ class ModImageView {
     final totalBytes = hasMipmaps
         ? mipmapChainBytes(textureWidth, textureHeight)
         : textureWidth * textureHeight * 4;
-    final rawSize = totalBytes -
+    final rawSize =
+        totalBytes -
         ((imageType == ImageType.background)
             ? vanillaBackgroundTextSizeInBytes
             : 0.0);
@@ -411,10 +436,10 @@ class VramMod with VramModMappable {
     GraphicsLibConfig? config, {
     int take = 10,
   }) {
-    final sorted =
-        _imagesSortedByBytesDesc ??=
-            List.generate(images.length, getModViewForIndex)
-                .sortedByDescending<num>((image) => image.bytesUsed);
+    final sorted = _imagesSortedByBytesDesc ??= List.generate(
+      images.length,
+      getModViewForIndex,
+    ).sortedByDescending<num>((image) => image.bytesUsed);
     return sorted
         .where((view) => view.isUsedBasedOnGraphicsLibConfig(config))
         .take(take)

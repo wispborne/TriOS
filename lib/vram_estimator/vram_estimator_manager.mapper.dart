@@ -103,6 +103,10 @@ class VramEstimatorManagerStateMapper
     opt: true,
     def: const {},
   );
+  static int? _$vanillaVramBytes(VramEstimatorManagerState v) =>
+      v.vanillaVramBytes;
+  static const Field<VramEstimatorManagerState, int> _f$vanillaVramBytes =
+      Field('vanillaVramBytes', _$vanillaVramBytes, opt: true);
 
   @override
   final MappableFields<VramEstimatorManagerState> fields = const {
@@ -118,6 +122,7 @@ class VramEstimatorManagerStateMapper
     #currentModTotalFiles: _f$currentModTotalFiles,
     #currentlyScanningFilePath: _f$currentlyScanningFilePath,
     #activeScans: _f$activeScans,
+    #vanillaVramBytes: _f$vanillaVramBytes,
   };
 
   static VramEstimatorManagerState _instantiate(DecodingData data) {
@@ -134,6 +139,7 @@ class VramEstimatorManagerStateMapper
       currentModTotalFiles: data.dec(_f$currentModTotalFiles),
       currentlyScanningFilePath: data.dec(_f$currentlyScanningFilePath),
       activeScans: data.dec(_f$activeScans),
+      vanillaVramBytes: data.dec(_f$vanillaVramBytes),
     );
   }
 
@@ -233,6 +239,7 @@ abstract class VramEstimatorManagerStateCopyWith<
     int? currentModTotalFiles,
     String? currentlyScanningFilePath,
     Map<String, ActiveModScan>? activeScans,
+    int? vanillaVramBytes,
   });
   VramEstimatorManagerStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -281,6 +288,7 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
     int? currentModTotalFiles,
     Object? currentlyScanningFilePath = $none,
     Map<String, ActiveModScan>? activeScans,
+    Object? vanillaVramBytes = $none,
   }) => $apply(
     FieldCopyWithData({
       if (modVramInfo != null) #modVramInfo: modVramInfo,
@@ -299,6 +307,7 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
       if (currentlyScanningFilePath != $none)
         #currentlyScanningFilePath: currentlyScanningFilePath,
       if (activeScans != null) #activeScans: activeScans,
+      if (vanillaVramBytes != $none) #vanillaVramBytes: vanillaVramBytes,
     }),
   );
   @override
@@ -334,6 +343,10 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
           or: $value.currentlyScanningFilePath,
         ),
         activeScans: data.get(#activeScans, or: $value.activeScans),
+        vanillaVramBytes: data.get(
+          #vanillaVramBytes,
+          or: $value.vanillaVramBytes,
+        ),
       );
 
   @override

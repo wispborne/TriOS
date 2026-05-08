@@ -8,6 +8,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/util.dart';
 import 'package:trios/vram_estimator/image_reader/image_reader_async.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
+import 'package:trios/vram_estimator/selectors/path_normalizer.dart';
 import 'package:trios/vram_estimator/selectors/references/graphicslib_references.dart';
 import 'package:trios/vram_estimator/selectors/vram_asset_selector.dart';
 import 'package:trios/vram_estimator/vram_check_scan_params.dart';
@@ -293,18 +294,35 @@ Future<VramScanOutcome> scanOneMod(
       }
     }
 
+    // Mark vanilla replacements: for each non-background image, check if its
+    // relative path exists in the vanilla asset lookup. If so, record the
+    // vanilla bytesUsed so the aggregation can subtract it.
+    final vanillaAssets = params.vanillaAssets;
+
     final filteredReferencedTable = ModImageTable.fromRows(
       referencedViews
           .map(
-            (view) => {
-              'filePath': view.filePath,
-              'textureHeight': view.textureHeight,
-              'textureWidth': view.textureWidth,
-              'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
-              'imageType': view.imageType.name,
-              'graphicsLibType': view.graphicsLibType?.name,
-              if (view.referencedBy != null && view.referencedBy!.isNotEmpty)
-                'referencedBy': view.referencedBy,
+            (view) {
+              int vanillaCost = 0;
+              if (vanillaAssets != null &&
+                  view.imageType != ImageType.background) {
+                final relPath = PathNormalizer.normalize(
+                  File(view.filePath).relativePath(modFolderDir),
+                );
+                final vanillaBytes = vanillaAssets[relPath];
+                if (vanillaBytes != null) vanillaCost = vanillaBytes;
+              }
+              return {
+                'filePath': view.filePath,
+                'textureHeight': view.textureHeight,
+                'textureWidth': view.textureWidth,
+                'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
+                'imageType': view.imageType.name,
+                'graphicsLibType': view.graphicsLibType?.name,
+                if (view.referencedBy != null && view.referencedBy!.isNotEmpty)
+                  'referencedBy': view.referencedBy,
+                if (vanillaCost != 0) 'vanillaReplacementCost': vanillaCost,
+              };
             },
           )
           .toList(),

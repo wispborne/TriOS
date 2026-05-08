@@ -23,6 +23,10 @@ class VramCheckScanParams {
   final bool showCountedFiles;
   final int maxFileHandles;
 
+  /// Normalized relative path to bytesUsed for every image in starsector-core.
+  /// Null when the game core directory is unavailable.
+  final Map<String, int>? vanillaAssets;
+
   const VramCheckScanParams({
     required this.modInfo,
     required this.enabledModIds,
@@ -34,6 +38,7 @@ class VramCheckScanParams {
     required this.showSkippedFiles,
     required this.showCountedFiles,
     required this.maxFileHandles,
+    this.vanillaAssets,
   });
 
   /// Serialize for transmission across an isolate boundary. Object types
@@ -60,11 +65,13 @@ class VramCheckScanParams {
       'showSkippedFiles': showSkippedFiles,
       'showCountedFiles': showCountedFiles,
       'maxFileHandles': maxFileHandles,
+      if (vanillaAssets != null) 'vanillaAssets': vanillaAssets,
     };
   }
 
   /// Inverse of [toTransfer].
   factory VramCheckScanParams.fromTransfer(Map<String, dynamic> map) {
+    final vanillaRaw = map['vanillaAssets'];
     return VramCheckScanParams(
       modInfo: VramCheckerModMapper.fromMap(
         Map<String, dynamic>.from(map['modInfo'] as Map),
@@ -80,6 +87,9 @@ class VramCheckScanParams {
       showSkippedFiles: map['showSkippedFiles'] as bool,
       showCountedFiles: map['showCountedFiles'] as bool,
       maxFileHandles: map['maxFileHandles'] as int,
+      vanillaAssets: vanillaRaw is Map
+          ? Map<String, int>.from(vanillaRaw.cast<String, int>())
+          : null,
     );
   }
 }

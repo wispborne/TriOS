@@ -22,11 +22,11 @@ class FolderScanSelector extends VramAssetSelector {
   VramSelectorId get id => VramSelectorId.folderScan;
 
   @override
-  String get displayName => 'Scan All';
+  String get displayName => 'Scan All (deprecated)';
 
   @override
   String get description =>
-      'Counts every image in mod folders, even unused ones.';
+      'Counts every image in mod folders, even unused ones. Overestimates VRAM use.';
 
   @override
   Future<List<SelectedAsset>> select(

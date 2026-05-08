@@ -524,17 +524,18 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
           onTap: () => setState(() => _onlyEnabled = !_onlyEnabled),
         ).toEntry(0),
         const PopupMenuDivider(),
-        for (final opt in options)
+        for (final option in options)
           OverflowMenuCheckItem(
-            title: opt.displayName,
-            icon: opt.id == VramSelectorId.folderScan
+            title: option.displayName,
+            tooltip: option.description,
+            icon: option.id == VramSelectorId.folderScan
                 ? Icons.folder_open
                 : Icons.manage_search,
-            checked: activeId == opt.id,
+            checked: activeId == option.id,
             onTap: () {
               ref
                   .read(appSettings.notifier)
-                  .update((s) => s.copyWith(vramEstimatorSelectorId: opt.id));
+                  .update((s) => s.copyWith(vramEstimatorSelectorId: option.id));
               ref
                   .read(AppState.vramEstimatorProvider.notifier)
                   .onSelectorOrConfigChanged();

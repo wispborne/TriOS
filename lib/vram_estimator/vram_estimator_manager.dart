@@ -57,6 +57,11 @@ class VramEstimatorManagerState with VramEstimatorManagerStateMappable {
   /// Empty when no scan is in flight.
   Map<String, ActiveModScan> activeScans;
 
+  /// Scanned vanilla VRAM total in bytes. Null when vanilla hasn't been
+  /// scanned (e.g. game path not configured), in which case consumers
+  /// fall back to [VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES].
+  final int? vanillaVramBytes;
+
   VramEstimatorManagerState({
     required this.modVramInfo,
     required this.lastUpdated,
@@ -70,6 +75,7 @@ class VramEstimatorManagerState with VramEstimatorManagerStateMappable {
     this.currentModTotalFiles = 0,
     this.currentlyScanningFilePath,
     this.activeScans = const {},
+    this.vanillaVramBytes,
   });
 
   factory VramEstimatorManagerState.initial() {
@@ -485,7 +491,8 @@ class VramEstimatorNotifier
 
     final scanStopwatch = Stopwatch()..start();
     try {
-      final info = await VramChecker(
+      final gameCoreDir = ref.read(AppState.gameCoreFolder).value;
+      final checker = VramChecker(
         enabledModIds: ref.read(AppState.enabledModIds).value,
         variantsToCheck: resolvedVariants,
         graphicsLibConfig:
@@ -495,6 +502,7 @@ class VramEstimatorNotifier
         showGfxLibDebugOutput: true,
         showPerformance: true,
         selector: selector,
+        gameCoreDir: gameCoreDir,
         multithreaded: ref.read(appSettings).vramEstimatorMultithreaded,
         onModStart: (checkerMod) {
           final name = checkerMod.name ?? checkerMod.modId;
@@ -554,7 +562,8 @@ class VramEstimatorNotifier
         verboseOut: (String message) => Fimber.v(() => message),
         infoOut: Fimber.i,
         isCancelled: () => state.value?.isCancelled ?? false,
-      ).check();
+      );
+      final info = await checker.check();
 
       // `info` is the authoritative list of successful scans — drop any
       // buffered mods rather than merging, so we don't re-apply duplicates.
@@ -573,6 +582,7 @@ class VramEstimatorNotifier
                 modVramInfo: modVramInfo,
                 lastScanDurationMs: scanStopwatch.elapsedMilliseconds,
                 activeScans: const <String, ActiveModScan>{},
+                vanillaVramBytes: checker.vanillaTotal,
               )
               ..isScanning = false
               ..isCancelled = false

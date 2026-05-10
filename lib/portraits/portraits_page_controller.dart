@@ -22,7 +22,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:trios/utils/search.dart';
+import 'package:trios/utils/mod_search.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 import 'package:trios/widgets/moving_tooltip.dart';

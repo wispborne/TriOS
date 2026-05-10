@@ -1,4 +1,4 @@
-import 'package:trios/ship_viewer/models/ship_gpt.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_variant.dart';
 
 /// Per-variant cache payload for the ships viewer. One of these is stored in

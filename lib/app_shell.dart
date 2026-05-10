@@ -105,7 +105,7 @@ class _AppShellState extends ConsumerState<AppShell>
                 );
               })
               .onError((error, stackTrace) {
-                Fimber.e(
+                Fimber.w(
                   "Error creating WebView2 environment: $error",
                   ex: error,
                   stacktrace: stackTrace,

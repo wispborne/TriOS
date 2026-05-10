@@ -60,7 +60,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
-import '../utils/search.dart';
+import '../utils/mod_search.dart';
 import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
 import 'homebrew_grid/wispgrid_header_row_view.dart';

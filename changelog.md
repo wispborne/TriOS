@@ -20,6 +20,7 @@
   - Weapon, ship, and hullmod columns weren't read if they had mixed case headers.
   - Log Viewer: incomplete logs would show `null, null` when copying mod info.
   - Context menu could clip off the bottom of the screen.
+  - Ships Viewer: renamed Supplies/Rec to DP and added columns for ship builtins.
 - Changed
   - Cleaned up how a few themes look on the new ship/weapon tooltips.
   - Refactored game detection and added a new default detection method on Windows that should be faster.
@@ -30,6 +31,7 @@
   - Minor overall performance improvement by avoiding recalculation of computed values (e.g. enabled mod versions, ship mounts, etc).
     - And other minor performance improvements (e.g. not prebuilding expensive tooltips)
   - VRAM Estimator: cache is now stored as msgpack (smaller, faster)
+  - Bundled fonts rather than background downloading.
 
 # 1.4.1
 - Added

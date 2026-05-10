@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/ship_viewer/models/ship_gpt.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/ship_viewer/utils/polygon_utils.dart';

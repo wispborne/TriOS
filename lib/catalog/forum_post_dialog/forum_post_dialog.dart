@@ -5,6 +5,9 @@ import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/download_manager/downloader.dart';
+import 'package:trios/utils/http_client.dart';
+import 'package:trios/utils/logging.dart';
 
 /// Persists across dialog instances within the app session.
 bool _isFullScreen = false;
@@ -45,6 +48,48 @@ class _ForumPostDialog extends ConsumerStatefulWidget {
 
 class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
   final _hoveredUrl = ValueNotifier<String?>(null);
+
+  Future<void> _onLinkTap(String url) async {
+    // Show a spinner while we check whether the link is a downloadable file.
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(
+        canPop: false,
+        child: Center(
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: CircularProgressIndicator(strokeWidth: 3),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final httpClient = ref.read(triOSHttpClient);
+      final result = await DownloadManager.fetchFinalUrlAndHeaders(
+        url,
+        httpClient,
+      );
+      final isDownload = await DownloadManager.isDownloadableFile(
+        result.url,
+        result.headersMap,
+        httpClient,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop(); // dismiss spinner
+      if (isDownload) {
+        _confirmAndDownload(result.url, url);
+        return;
+      }
+    } catch (e) {
+      Fimber.d('Error checking if link is downloadable: $e');
+      if (mounted) Navigator.of(context).pop(); // dismiss spinner
+    }
+    widget.linkLoader(url);
+  }
 
   void _confirmAndDownload(String url, String label) {
     final modName = widget.details.title.isNotEmpty
@@ -131,7 +176,7 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
               },
               isFullScreen: _isFullScreen,
               onClose: () => Navigator.of(context).pop(),
-              onLinkTap: widget.linkLoader,
+              onLinkTap: _onLinkTap,
               onDownloadLink: _confirmAndDownload,
             ),
             Flexible(
@@ -142,7 +187,7 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
                   children: htmlToWidgets(
                     widget.details.contentHtml,
                     context,
-                    onLinkTap: widget.linkLoader,
+                    onLinkTap: _onLinkTap,
                     onLinkHover: (url) => _hoveredUrl.value = url,
                     baseUrl: widget.index?.topicUrl,
                   ),

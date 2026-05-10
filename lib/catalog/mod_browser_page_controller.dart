@@ -13,7 +13,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/logging.dart';
-import 'package:trios/utils/search.dart';
+import 'package:trios/utils/mod_search.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 
@@ -26,8 +26,6 @@ const String kAttrDownload = 'download';
 const String kAttrDiscord = 'discord';
 const String kAttrIndex = 'index';
 const String kAttrForum = 'forum';
-const String kAttrInstalled = 'installed';
-const String kAttrUpdate = 'update';
 const String kAttrWip = 'wip';
 const String kAttrArchived = 'archived';
 
@@ -36,8 +34,6 @@ const List<String> _kAttributeOrder = [
   kAttrDiscord,
   kAttrIndex,
   kAttrForum,
-  kAttrInstalled,
-  kAttrUpdate,
   kAttrWip,
   kAttrArchived,
 ];
@@ -47,8 +43,6 @@ const Map<String, String> _kAttributeLabels = {
   kAttrDiscord: 'Discord',
   kAttrIndex: 'Index',
   kAttrForum: 'Forum',
-  kAttrInstalled: 'Installed',
-  kAttrUpdate: 'Has Update',
   kAttrWip: 'WIP',
   kAttrArchived: 'Archived',
 };
@@ -180,6 +174,27 @@ class CatalogPageController extends Notifier<CatalogPageState> {
     }
 
     final groups = <FilterGroup<ScrapedMod>>[
+      CompositeFilterGroup<ScrapedMod>(
+        id: 'status',
+        name: 'Status',
+        fields: [
+          BoolField<ScrapedMod>(
+            id: 'installed',
+            label: 'Installed',
+            predicate: (mod) =>
+                _catalogStatusMap.containsKey(mod.name.toLowerCase().trim()),
+          ),
+          BoolField<ScrapedMod>(
+            id: 'hasUpdate',
+            label: 'Has Update',
+            predicate: (mod) {
+              final status =
+                  _catalogStatusMap[mod.name.toLowerCase().trim()];
+              return status?.versionCheck?.hasUpdate == true;
+            },
+          ),
+        ],
+      ),
       ChipFilterGroup<ScrapedMod>(
         id: 'attributes',
         name: 'Attributes',
@@ -211,7 +226,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
       ChipFilterGroup<ScrapedMod>(
         id: 'category',
         name: 'Category',
-        collapsedByDefault: true,
+        collapsedByDefault: false,
         valueGetter: (_) => '',
         valuesGetter: (m) => m.categories ?? const <String>[],
       ),
@@ -231,12 +246,6 @@ class CatalogPageController extends Notifier<CatalogPageState> {
     if (sources?.contains(ModSource.Index) == true) result.add(kAttrIndex);
     if (sources?.contains(ModSource.ModdingSubforum) == true) {
       result.add(kAttrForum);
-    }
-    final statusKey = mod.name.toLowerCase().trim();
-    final status = _catalogStatusMap[statusKey];
-    if (status != null) {
-      result.add(kAttrInstalled);
-      if (status.versionCheck?.hasUpdate == true) result.add(kAttrUpdate);
     }
     final topicId = extractForumTopicId(mod.urls?[ModUrlType.Forum]);
     if (topicId != null) {

@@ -6,7 +6,7 @@ import 'package:trios/descriptions/description_entry.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
-import 'package:trios/ship_viewer/models/ship_gpt.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';

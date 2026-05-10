@@ -141,6 +141,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/chipper/
+    - assets/fonts/
     - assets/themes.json
     - assets/common/
     - assets/windows/7zip/

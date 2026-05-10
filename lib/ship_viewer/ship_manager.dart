@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/ship_viewer/models/ship_gpt.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_skin.dart';
 import 'package:trios/ship_viewer/models/ship_variant.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';

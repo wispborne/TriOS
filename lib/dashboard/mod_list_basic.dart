@@ -24,7 +24,7 @@ import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
-import '../utils/search.dart';
+import '../utils/mod_search.dart';
 import '../widgets/add_new_mods_button.dart';
 import '../widgets/refresh_mods_button.dart';
 import 'mod_list_basic_entry.dart';

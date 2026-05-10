@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/search.dart';
+import 'package:trios/utils/mod_search.dart';
 import 'package:trios/widgets/simple_data_row.dart';
 
 import '../models/mod.dart';

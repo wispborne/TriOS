@@ -18,6 +18,36 @@ The initial field set SHALL include:
 | `hint` | string | `hintsAsSet` | multi-value: matches if any hint matches |
 | `tag` | string | `tagsAsSet` | multi-value: matches if any tag matches |
 | `mod` | string | `modVariant.modInfo.nameOrId` | matches substring of mod name |
+| `dpshot` | numeric | `damagePerShot` | damage per shot |
+| `emp` | numeric | `emp` | EMP damage |
+| `energy` | numeric | `energyPerShot` | flux per shot |
+| `eps` | numeric | `energyPerSecond` | flux per second |
+| `chargeup` | numeric | `chargeup` | charge-up time in seconds |
+| `chargedown` | numeric | `chargedown` | charge-down time in seconds |
+| `burst` | numeric | `burstSize` | burst size (number of shots) |
+| `burstdelay` | numeric | `burstDelay` | delay between burst shots |
+| `turnrate` | numeric | `turnRate` | projectile/beam turn rate |
+| `speed` | numeric | `projSpeed` | projectile speed |
+| `beamspeed` | numeric | `beamSpeed` | beam speed |
+| `launchspeed` | numeric | `launchSpeed` | missile launch speed |
+| `flighttime` | numeric | `flightTime` | projectile flight time |
+| `projhp` | numeric | `projHitpoints` | projectile hitpoints |
+| `ammosec` | numeric | `ammoPerSec` | ammo regeneration per second |
+| `reload` | numeric | `reloadSize` | reload size |
+| `impact` | numeric | `impact` | impact/force value |
+| `autofire` | numeric | `autofireAccBonus` | autofire accuracy bonus |
+| `spread` | numeric | `maxSpread` | maximum spread |
+| `minspread` | numeric | `minSpread` | minimum spread |
+| `spreadshot` | numeric | `spreadPerShot` | spread added per shot |
+| `spreaddecay` | numeric | `spreadDecayPerSec` | spread decay per second |
+| `specclass` | string | `specClass` | weapon class (beam, projectile, missile, etc.) |
+| `mount` | string | `effectiveMountType` | effective mount type (TURRET, HARDPOINT, HIDDEN) |
+| `manufacturer` | string | `techManufacturer` | tech/manufacturer |
+| `role` | string | `primaryRoleStr` | primary role description |
+| `group` | string | `groupTag` | weapon group tag |
+| `tier` | numeric | `tier` | weapon tier |
+| `rarity` | numeric | `rarity` | rarity value |
+| `cost` | numeric | `baseValue` | base credit value |
 
 #### Scenario: Tracking field filters by quality
 - **WHEN** the user enters `tracking:excellent`

@@ -247,14 +247,13 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                           child: Row(
                             children: [
                               const SizedBox(width: 4),
-                              MovingTooltipWidget.text(
-                                message: 'Clear all filters',
-                                child: IconButton(
-                                  icon: const Icon(Icons.clear_all),
-                                  onPressed: catalogController.clearAllFilters,
+                              Text(
+                                'Mod Catalog',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontSize: 20,
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 16),
                               ConstrainedBox(
                                 constraints: const BoxConstraints(
                                   maxWidth: 200,

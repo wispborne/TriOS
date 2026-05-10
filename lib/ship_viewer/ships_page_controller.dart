@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_systems_manager/ship_systems_manager.dart';
-import 'package:trios/ship_viewer/models/ship_gpt.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_variant.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
@@ -14,6 +14,7 @@ import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/search_index.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
@@ -410,26 +411,12 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   }
 
   Map<String, List<String>> _updateSearchIndices(List<Ship> allShips) {
-    final currentIndices = stateOrNull?.shipSearchIndices ?? {};
-    final currentShipIds = allShips.map((ship) => ship.id).toSet();
-    final cachedShipIds = currentIndices.keys.toSet();
-
-    final indicesToRemove = cachedShipIds.difference(currentShipIds);
-    final shipValuesByShipId = Map<String, List<String>>.from(currentIndices);
-    for (final shipId in indicesToRemove) {
-      shipValuesByShipId.remove(shipId);
-    }
-
-    final newShips = allShips.where((ship) => !cachedShipIds.contains(ship.id));
-    for (final ship in newShips) {
-      final searchValues = ship
-          .toMap()
-          .values
-          .map((shipField) => shipField.toString().toLowerCase())
-          .toList();
-      shipValuesByShipId[ship.id] = searchValues;
-    }
-    return shipValuesByShipId;
+    return updateSearchIndices(
+      allShips,
+      stateOrNull?.shipSearchIndices ?? {},
+      (s) => s.id,
+      (s) => s.toMap(),
+    );
   }
 
   ShipsPageState _processAllFilters(

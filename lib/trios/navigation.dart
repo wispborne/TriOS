@@ -80,7 +80,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.dashboard => 'Dashboard',
     TriOSTools.modManager => 'Mod Manager',
     TriOSTools.modProfiles => 'Mod Profiles',
-    TriOSTools.catalog => 'Browse online mods',
+    TriOSTools.catalog => 'Mod Catalog',
     TriOSTools.chipper => 'Log Viewer',
     TriOSTools.vramEstimator => 'VRAM Estimator',
     TriOSTools.ships => 'Ship Viewer',

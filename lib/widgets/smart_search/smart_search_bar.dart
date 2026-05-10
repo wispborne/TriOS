@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:trios/widgets/filter_pill.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/smart_search/search_dsl_field.dart';
 import 'package:trios/widgets/smart_search/search_dsl_parser.dart';
 
@@ -24,7 +25,7 @@ class SmartSearchBar extends StatefulWidget {
     required this.onChanged,
     this.onSubmitted,
     this.initialValue = '',
-    this.hintText = 'field:value — Space to commit',
+    this.hintText = 'Search',
   });
 
   @override
@@ -186,14 +187,10 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
               _selectedPillIndex = idx;
             } else {
               _selectedPillIndex = -1;
-              _controller.selection =
-                  const TextSelection.collapsed(offset: 0);
+              _controller.selection = const TextSelection.collapsed(offset: 0);
             }
           } else {
-            _selectedPillIndex = (idx - 1).clamp(
-              0,
-              _committedPills.length - 1,
-            );
+            _selectedPillIndex = (idx - 1).clamp(0, _committedPills.length - 1);
           }
         });
         _emitQuery();
@@ -399,15 +396,23 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     List<_Suggestion> suggestions;
 
     if (currentToken.isEmpty && text.trim().isEmpty && _isFocused) {
-      suggestions = widget.recentHistory
-          .map(
-            (h) => _Suggestion(
-              kind: _SuggestionKind.historyEntry,
-              label: h,
-              insertText: h,
-            ),
-          )
-          .toList();
+      suggestions = [
+        ...widget.recentHistory.map(
+          (h) => _Suggestion(
+            kind: _SuggestionKind.historyEntry,
+            label: h,
+            insertText: h,
+          ),
+        ),
+        ...widget.fields.map(
+          (f) => _Suggestion(
+            kind: _SuggestionKind.fieldName,
+            label: f.key,
+            subtitle: f.description,
+            insertText: '${f.key}:',
+          ),
+        ),
+      ];
     } else if (!currentToken.contains(':')) {
       final negated = currentToken.startsWith('-');
       final negPrefix = negated ? '-' : '';
@@ -527,10 +532,26 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       }
     }
 
-    // Field name selected — insert and keep typing for value
-    _setTextSilently('$prefix${suggestion.insertText}');
+    // Field name selected — insert and keep typing for value.
+    // Keep the flag raised so the focus-loss handler doesn't tear down the
+    // overlay before requestFocus re-focuses the text field.
+    _isSelectingSuggestion = true;
+    final newText = '$prefix${suggestion.insertText}';
+    _setTextSilently(newText);
+    _focusNode.requestFocus();
+    setState(() => _isFocused = true);
     _updateSuggestions();
     _emitQuery();
+    // Re-collapse the cursor after focus is restored, since requestFocus
+    // can cause Flutter to select all text.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _controller.selection = TextSelection.collapsed(
+          offset: _controller.text.length,
+        );
+      }
+      _isSelectingSuggestion = false;
+    });
   }
 
   void _showOrUpdateOverlay() {
@@ -570,6 +591,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       width: max(barSize.width, 280),
       child: Material(
         elevation: 8,
+        color: Theme.of(context).colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(8),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: maxDropdownH),
@@ -580,6 +602,10 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
   }
 
   Widget _buildDropdownList() {
+    final hasHistoryAndOther =
+        _suggestions.any((s) => s.kind == _SuggestionKind.historyEntry) &&
+        _suggestions.any((s) => s.kind != _SuggestionKind.historyEntry);
+
     return ListView.builder(
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -587,56 +613,71 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       itemBuilder: (ctx, index) {
         final s = _suggestions[index];
         final isHighlighted = index == _highlightedIndex;
-        return Material(
-          color: isHighlighted
-              ? Theme.of(context).colorScheme.primaryContainer
-              : Colors.transparent,
-          child: InkWell(
-            onTapDown: (_) => _isSelectingSuggestion = true,
-            onTapCancel: () => _isSelectingSuggestion = false,
-            onTap: () {
-              _isSelectingSuggestion = false;
-              _acceptSuggestion(s);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Row(
-                spacing: 8,
-                children: [
-                  Icon(
-                    _suggestionIcon(s.kind),
-                    size: 14,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+        final showDivider =
+            hasHistoryAndOther &&
+            index > 0 &&
+            s.kind != _SuggestionKind.historyEntry &&
+            _suggestions[index - 1].kind == _SuggestionKind.historyEntry;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showDivider)
+              const Divider(height: 1, indent: 12, endIndent: 12),
+            Material(
+              color: isHighlighted
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : Colors.transparent,
+              child: InkWell(
+                onTapDown: (_) => _isSelectingSuggestion = true,
+                onTapCancel: () => _isSelectingSuggestion = false,
+                onTap: () {
+                  _isSelectingSuggestion = false;
+                  _acceptSuggestion(s);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
                   ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          s.label,
-                          style: Theme.of(context).textTheme.bodySmall,
-                          overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    spacing: 8,
+                    children: [
+                      Icon(
+                        _suggestionIcon(s.kind),
+                        size: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              s.label,
+                              style: Theme.of(context).textTheme.bodySmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (s.subtitle != null)
+                              Text(
+                                s.subtitle!,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                      fontSize: 10,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
                         ),
-                        if (s.subtitle != null)
-                          Text(
-                            s.subtitle!,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                  fontSize: 10,
-                                ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         );
       },
     );
@@ -743,96 +784,103 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
             child: MouseRegion(
               cursor: SystemMouseCursors.text,
               child: Container(
-            height: 34,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.search,
-                  size: 18,
-                  color: theme.colorScheme.onSurfaceVariant,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (ctx, constraints) => SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      reverse: true,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: constraints.maxWidth,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ..._committedPills.asMap().entries.map(
-                              (e) => _buildPill(
-                                theme,
-                                e.key,
-                                e.value,
-                                selected: e.key == _selectedPillIndex,
-                              ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.search,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (ctx, constraints) => SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minWidth: constraints.maxWidth,
                             ),
-                            IntrinsicWidth(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  minWidth: 120,
-                                ),
-                                child: TextField(
-                                  controller: _controller,
-                                  focusNode: _focusNode,
-                                  onSubmitted: (_) =>
-                                      widget.onSubmitted?.call(),
-                                  decoration: InputDecoration(
-                                    hintText: _committedPills.isEmpty
-                                        ? widget.hintText
-                                        : null,
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding:
-                                        const EdgeInsets.symmetric(
-                                          vertical: 8,
-                                          horizontal: 4,
-                                        ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ..._committedPills.asMap().entries.map(
+                                  (e) => _buildPill(
+                                    theme,
+                                    e.key,
+                                    e.value,
+                                    selected: e.key == _selectedPillIndex,
                                   ),
-                                  style: theme.textTheme.bodySmall,
                                 ),
-                              ),
+                                IntrinsicWidth(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 120,
+                                    ),
+                                    child: TextField(
+                                      controller: _controller,
+                                      focusNode: _focusNode,
+                                      onSubmitted: (_) =>
+                                          widget.onSubmitted?.call(),
+                                      decoration: InputDecoration(
+                                        hintText: _committedPills.isEmpty
+                                            ? widget.hintText
+                                            : null,
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 8,
+                                              horizontal: 4,
+                                            ),
+                                      ),
+                                      style: theme.textTheme.bodySmall,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                if (hasSomething)
-                  IconButton(
-                    icon: const Icon(Icons.clear, size: 16),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 28,
-                      minHeight: 28,
+                    if (hasSomething)
+                      MovingTooltipWidget.text(
+                        message: 'Clear search',
+                        child: IconButton(
+                          icon: const Icon(Icons.clear, size: 16),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
+                          onPressed: _clearAll,
+                        ),
+                      ),
+                    const SizedBox(width: 2),
+                    MovingTooltipWidget.text(
+                      message: 'View search field reference',
+                      child: IconButton(
+                        icon: const Icon(Icons.info_outline, size: 18),
+                        padding: const EdgeInsets.all(6),
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                        onPressed: _showInfoPanel,
+                      ),
                     ),
-                    tooltip: 'Clear search',
-                    onPressed: _clearAll,
-                  ),
-                const SizedBox(width: 2),
-              ],
+                    const SizedBox(width: 2),
+                  ],
+                ),
+              ),
             ),
           ),
-            ),
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.info_outline, size: 18),
-          tooltip: 'View search field reference',
-          padding: const EdgeInsets.all(6),
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          onPressed: _showInfoPanel,
         ),
       ],
     );
@@ -869,9 +917,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: selected
-                ? theme.colorScheme.primary
-                : Colors.transparent,
+            color: selected ? theme.colorScheme.primary : Colors.transparent,
             width: 1.5,
           ),
         ),

@@ -140,6 +140,9 @@ class _TooltipRenderBox extends RenderShiftedBox {
         break;
     }
 
+    if (left.isNaN) left = _windowEdgePadding;
+    if (top.isNaN) top = _windowEdgePadding;
+
     final childParentData = child?.parentData as BoxParentData?;
     if (childParentData != null) {
       childParentData.offset = Offset(left, top);
@@ -150,7 +153,9 @@ class _TooltipRenderBox extends RenderShiftedBox {
   void paint(PaintingContext context, Offset offset) {
     if (child != null) {
       final childParentData = child!.parentData as BoxParentData;
-      context.paintChild(child!, childParentData.offset + offset);
+      final resolved = childParentData.offset + offset;
+      if (resolved.dx.isNaN || resolved.dy.isNaN) return;
+      context.paintChild(child!, resolved);
     }
   }
 }

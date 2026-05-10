@@ -4,27 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # TriOS
 
-All-in-one Starsector launcher, mod manager, and toolkit. Flutter desktop app — Windows, macOS, Linux only (no web/mobile). Dart SDK 3.10.7 / Flutter 3.38.6.
+All-in-one Starsector launcher, mod manager, and toolkit. Flutter desktop app — Windows, macOS, Linux only (no web/mobile).
 
 ## Claude Directive
 
 - Do not use jargon.
 - Do not use Opus 4.7. If you are using Opus 4.7, switch to Opus 4.6 instead.
 - Use the `idea` connector when available.
+- Avoid Powershell when possible.
 
 ## Common Commands
-
-Build the app for the current platform:
-
-```
-flutter build windows   # or macos / linux
-```
-
-Run in development:
-
-```
-flutter run -d windows  # or macos / linux
-```
 
 Run all tests:
 
@@ -54,12 +43,6 @@ dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs
 ```
 
-Regenerate FFI bindings for bit7z (Windows archive support):
-
-```
-dart run ffigen --config build_bit7z_bindings.yaml
-```
-
 The Linux build needs `libcurl4-openssl-dev` installed (for Sentry). Don't use the Snap version of Flutter on Linux — install manually so it picks up system libs. Windows builds need the InAppWebView Windows setup (see https://inappwebview.dev/docs/intro/#setup-windows).
 
 ## Architecture
@@ -77,6 +60,7 @@ The Linux build needs `libcurl4-openssl-dev` installed (for Sentry). Don't use t
 - Align widgets using an 8.0 dip grid.
 - Use the new `spacing` parameter on `Row`/`Column` instead of `SizedBox` separators when spacing is even.
 - Prefer Dart's dot shorthand where it reads cleanly — e.g. `.all(8.0)` over `EdgeInsets.all(8.0)`.
+- Instead of using `tooltip`, use `MovingTooltipWidget.text`.
 
 ## Viewer Page Pattern
 

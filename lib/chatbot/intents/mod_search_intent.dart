@@ -3,7 +3,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 
 import '../../models/mod.dart';
 import '../../models/mod_variant.dart';
-import '../../utils/search.dart' as mod_search;
+import '../../utils/mod_search.dart' as mod_search;
 import '../chatbot_engine.dart';
 import '../chatbot_models.dart';
 import 'mod_aware_intent.dart';

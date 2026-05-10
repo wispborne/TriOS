@@ -8,7 +8,7 @@ import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
 
-part 'ship_gpt.mapper.dart';
+part 'ship.mapper.dart';
 
 @MappableClass(caseStyle: CaseStyle.lowerCase)
 class Ship with ShipMappable implements WispGridItem {

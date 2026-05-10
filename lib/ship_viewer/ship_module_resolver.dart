@@ -1,6 +1,6 @@
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/ship_viewer/models/ship_gpt.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_variant.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';

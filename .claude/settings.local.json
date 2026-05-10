@@ -28,8 +28,8 @@
       "Bash(findstr toastification:*)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(p[''''rootUri'''']\\) for p in d[''''packages''''] if ''''toastification'''' in p[''''name'''']]\")",
       "Bash(xargs sed:*)",
-      "Bash(sed -i \"s|part ''shipGpt.mapper.dart'';|part ''ship_gpt.mapper.dart'';|g\" lib/ship_viewer/models/ship_gpt.dart)",
-      "Bash(sed -i \"s|part of ''shipGpt.dart'';|part of ''ship_gpt.dart'';|g\" lib/ship_viewer/models/ship_gpt.mapper.dart)",
+      "Bash(sed -i \"s|part ''shipGpt.mapper.dart'';|part ''ship_gpt.mapper.dart'';|g\" lib/ship_viewer/models/ship.dart)",
+      "Bash(sed -i \"s|part of ''shipGpt.dart'';|part of ''ship.dart'';|g\" lib/ship_viewer/models/ship_gpt.mapper.dart)",
       "Bash(sed -i \"s|part ''shipSkin.mapper.dart'';|part ''ship_skin.mapper.dart'';|g\" lib/ship_viewer/models/ship_skin.dart)",
       "Bash(sed -i \"s|part of ''shipSkin.dart'';|part of ''ship_skin.dart'';|g\" lib/ship_viewer/models/ship_skin.mapper.dart)",
       "Bash(sed -i 's|package:trios/widgets/ingame_ship_tooltip.dart|package:trios/ship_viewer/widgets/ingame_ship_tooltip.dart|g' lib/ship_viewer/ships_page.dart)",
@@ -110,7 +110,11 @@
       "Bash(javap -p com/fs/starfarer/settings/StarfarerSettings.class)",
       "Bash(python3)",
       "Bash(cd /d F:\\\\Code\\\\Starsector\\\\TriOS)",
-      "Bash(dir TriOS-Companion-Mod)"
+      "Bash(dir TriOS-Companion-Mod)",
+      "mcp__idea__read_file",
+      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\" -Recurse -Directory -Filter \"*weapon*\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\\\\ship_viewer\" -Recurse -File -Filter \"*.dart\")"
     ]
   }
 }

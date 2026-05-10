@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/utils/search.dart' as mod_search;
+import 'package:trios/utils/mod_search.dart' as mod_search;
 
 import '../chatbot_engine.dart';
 import '../chatbot_models.dart';

@@ -11,6 +11,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
+import 'package:trios/utils/search_index.dart';
 
 part 'hullmods_page_controller.mapper.dart';
 
@@ -238,30 +239,12 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
   }
 
   Map<String, List<String>> _updateSearchIndices(List<Hullmod> allHullmods) {
-    final currentIndices = stateOrNull?.hullmodSearchIndices ?? {};
-    final currentHullmodIds = allHullmods.map((hullmod) => hullmod.id).toSet();
-    final cachedHullmodIds = currentIndices.keys.toSet();
-
-    final indicesToRemove = cachedHullmodIds.difference(currentHullmodIds);
-    final hullmodValuesByHullmodId = Map<String, List<String>>.from(
-      currentIndices,
+    return updateSearchIndices(
+      allHullmods,
+      stateOrNull?.hullmodSearchIndices ?? {},
+      (h) => h.id,
+      (h) => h.toMap(),
     );
-    for (final hullmodId in indicesToRemove) {
-      hullmodValuesByHullmodId.remove(hullmodId);
-    }
-
-    final newHullmods = allHullmods.where(
-      (hullmod) => !cachedHullmodIds.contains(hullmod.id),
-    );
-    for (final hullmod in newHullmods) {
-      final searchValues = hullmod
-          .toMap()
-          .values
-          .map((hullmodField) => hullmodField.toString().toLowerCase())
-          .toList();
-      hullmodValuesByHullmodId[hullmod.id] = searchValues;
-    }
-    return hullmodValuesByHullmodId;
   }
 
   HullmodsPageState _processAllFilters(

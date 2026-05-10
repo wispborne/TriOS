@@ -10,7 +10,7 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/ship_viewer/models/ship_gpt.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
@@ -477,6 +477,39 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         csvValue: (ship) => ship.mountableWeaponSlotCount.toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
+      WispGridColumn(
+        key: 'builtInWeaponCount',
+        name: 'Built-in Wpns',
+        isSortable: true,
+        getSortValue: (ship) => ship.builtInWeapons?.length ?? 0,
+        itemCellBuilder: (item, _) =>
+            Text('${item.builtInWeapons?.length ?? 0}'),
+        csvValue: (ship) =>
+            (ship.builtInWeapons?.length ?? 0).toString(),
+        defaultState: WispGridColumnState(position: position++, width: 120),
+      ),
+      WispGridColumn(
+        key: 'builtInModCount',
+        name: 'Built-in Mods',
+        isSortable: true,
+        getSortValue: (ship) => ship.builtInMods?.length ?? 0,
+        itemCellBuilder: (item, _) =>
+            Text('${item.builtInMods?.length ?? 0}'),
+        csvValue: (ship) =>
+            (ship.builtInMods?.length ?? 0).toString(),
+        defaultState: WispGridColumnState(position: position++, width: 120),
+      ),
+      WispGridColumn(
+        key: 'builtInWingCount',
+        name: 'Built-in Wings',
+        isSortable: true,
+        getSortValue: (ship) => ship.builtInWings?.length ?? 0,
+        itemCellBuilder: (item, _) =>
+            Text('${item.builtInWings?.length ?? 0}'),
+        csvValue: (ship) =>
+            (ship.builtInWings?.length ?? 0).toString(),
+        defaultState: WispGridColumnState(position: position++, width: 120),
+      ),
       col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),
       ...[
         col('designation', 'Designation', (s) => s.designation),
@@ -487,6 +520,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
               controllerState.shipSystemsMap[s.systemId ?? ""]?.name ??
               s.systemId,
         ),
+        col('deploymentPoints', 'DP', (s) => s.deploymentPoints),
         col('fleetPts', 'Fleet Pts', (s) => s.fleetPts),
         col('hitpoints', 'Hitpoints', (s) => s.hitpoints),
         col('armorRating', 'Armor', (s) => s.armorRating),
@@ -520,13 +554,14 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         col('fuelPerLY', 'Fuel/LY', (s) => s.fuelPerLY),
         col('range', 'Range', (s) => s.range),
         col('maxBurn', 'Max Burn', (s) => s.maxBurn),
+        col('sensorProfile', 'Sensor Profile', (s) => s.sensorProfile),
+        col('sensorStrength', 'Sensor Strength', (s) => s.sensorStrength),
         col('baseValue', 'Credits (base)', (s) => s.baseValue.asCredits()),
         col('crPercentPerDay', 'CR%/Day', (s) => s.crPercentPerDay),
         col('crToDeploy', 'CR to Deploy', (s) => s.crToDeploy),
         col('peakCrSec', 'PPT', (s) => s.peakCrSec),
         col('crLossPerSec', 'CR Loss/Sec', (s) => s.crLossPerSec),
         col('supplyCostPerMonth', 'Supplies/Mon', (s) => s.suppliesMo),
-        col('suppliesRec', 'Supplies/Rec', (s) => s.suppliesRec),
         col('rarity', 'Rarity', (s) => s.rarity),
         col('breakProb', 'Break Prob', (s) => s.breakProb),
         col('minPieces', 'Min Pieces', (s) => s.minPieces),
@@ -802,6 +837,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             _chip('Ordnance Pts', _fmtNum(s.ordnancePoints)),
             _chip('Fighter Bays', _fmtNum(s.fighterBays)),
             _chip('Weapons', _fmtNum(s.mountableWeaponSlotCount)),
+            _chip('Built-in Wpns', _fmtNum(s.builtInWeapons?.length ?? 0)),
+            _chip('Built-in Mods', _fmtNum(s.builtInMods?.length ?? 0)),
+            _chip('Built-in Wings', _fmtNum(s.builtInWings?.length ?? 0)),
           ],
         ),
         // Shields / Phase
@@ -844,6 +882,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             _chip('Fuel/LY', _fmtNum(s.fuelPerLY)),
             _chip('Range', _fmtNum(s.range)),
             _chip('Max Burn', _fmtNum(s.maxBurn)),
+            _chip('Sensor Profile', _fmtNum(s.sensorProfile)),
+            _chip('Sensor Strength', _fmtNum(s.sensorStrength)),
           ],
         ),
         // Economics & CR
@@ -857,7 +897,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             _chip('PPT (s)', _fmtNum(s.peakCrSec)),
             _chip('CR Loss/Sec', _fmtNum(s.crLossPerSec)),
             _chip('Supplies/Mo', _fmtNum(s.suppliesMo)),
-            _chip('Supplies/Rec', _fmtNum(s.suppliesRec)),
+            _chip('DP', _fmtNum(s.deploymentPoints)),
           ],
         ),
         // Misc

@@ -33,7 +33,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:trios/widgets/viewer_search_box.dart';
+import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'package:trios/widgets/viewer_split_pane.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
 
@@ -49,7 +49,6 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
   @override
   bool get wantKeepAlive => true;
 
-  final SearchController _searchController = SearchController();
   final ScrollController _filterScrollController = ScrollController();
   WispGridController<Hullmod>? _gridController;
   Widget? _cachedBuild;
@@ -64,7 +63,6 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
 
   @override
   void dispose() {
-    _searchController.dispose();
     _filterScrollController.dispose();
     super.dispose();
   }
@@ -154,15 +152,19 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
       visible: visible,
       isLoading: controllerState.isLoading,
       onRefresh: () => ref.invalidate(hullmodListNotifierProvider),
-      searchBox: ViewerSearchBox(
-        searchController: _searchController,
+      searchBox: SmartSearchBar(
+        fields: controller.searchFieldsMeta,
+        recentHistory: ref.watch(
+          appSettings.select((s) => s.hullmodsSearchHistory),
+        ),
+        initialValue: controllerState.currentSearchQuery,
         hintText: "Filter hullmods...",
         onChanged: (query) => ref
             .read(hullmodsPageControllerProvider.notifier)
             .updateSearchQuery(query),
-        onClear: () => ref
+        onSubmitted: () => ref
             .read(hullmodsPageControllerProvider.notifier)
-            .updateSearchQuery(''),
+            .submitSearchQuery(),
       ),
       splitPane: controllerState.splitPane,
       onToggleSplitPane: () {

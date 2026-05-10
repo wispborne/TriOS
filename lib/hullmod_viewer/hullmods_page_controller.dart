@@ -12,6 +12,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 import 'package:trios/utils/search_index.dart';
+import 'package:trios/widgets/smart_search/search_dsl_field.dart';
 
 part 'hullmods_page_controller.mapper.dart';
 
@@ -68,6 +69,11 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
   static final _scope = const FilterScope(kHullmodsPageId);
 
   late final FilterScopeController<Hullmod> _filters;
+  late final List<SearchField<Hullmod>> _searchFields;
+  late final Map<String, SearchField<Hullmod>> _fieldsByKey;
+
+  List<SearchFieldMeta> get searchFieldsMeta =>
+      _searchFields.map((f) => f.toMeta(state.allHullmods)).toList();
 
   final vanillaName = 'Vanilla';
 
@@ -99,6 +105,8 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
       _filters = _buildFilters();
       final persistence = ref.read(filterGroupPersistenceProvider);
       _filters.loadPersisted(persistence);
+      _searchFields = _buildSearchFields();
+      _fieldsByKey = {for (final f in _searchFields) f.key: f};
     }
 
     final saved = ref.read(appSettings).hullmodsPageState;
@@ -258,7 +266,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
 
     hullmods = _filters.applyChipFilters(hullmods);
 
-    hullmods = _filterBySearch(
+    hullmods = _applyParsedQuery(
       hullmods,
       currentState.currentSearchQuery,
       currentState.hullmodSearchIndices,
@@ -368,20 +376,100 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
     state = _processAllFilters(state, mods);
   }
 
-  List<Hullmod> _filterBySearch(
+  List<Hullmod> _applyParsedQuery(
     List<Hullmod> hullmods,
     String query,
     Map<String, List<String>> hullmodValuesByHullmodId,
   ) {
-    if (query.isEmpty) return hullmods;
+    return SearchField.applyQuery(
+      hullmods,
+      query,
+      _fieldsByKey,
+      hullmodValuesByHullmodId,
+      (h) => h.id,
+    );
+  }
 
-    query = query.toLowerCase();
+  void submitSearchQuery() {
+    final query = state.currentSearchQuery.trim();
+    if (query.isEmpty) return;
+    ref.read(appSettings.notifier).update((s) {
+      final deduped = [
+        query,
+        ...s.hullmodsSearchHistory.where((h) => h != query),
+      ];
+      return s.copyWith(hullmodsSearchHistory: deduped.take(10).toList());
+    });
+  }
 
-    return hullmods.where((hullmod) {
-      return hullmodValuesByHullmodId[hullmod.id]?.any(
-            (value) => value.contains(query),
-          ) ??
-          false;
-    }).toList();
+  List<SearchField<Hullmod>> _buildSearchFields() {
+    return [
+      SearchField.string(
+        'tier',
+        'Hullmod tier (1, 2, 3)',
+        (h) => h.tier?.toString(),
+      ),
+      SearchField.string(
+        'tech',
+        'Tech/manufacturer',
+        (h) => h.techManufacturer,
+      ),
+      SearchField<Hullmod>(
+        key: 'mod',
+        description: 'Mod name substring match',
+        valueSuggestions: (hullmods) => hullmods
+            .map((h) => h.modVariant?.modInfo.nameOrId)
+            .whereType<String>()
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (hullmod, op, value) {
+          if (op != DslOperator.equals) return false;
+          final modName =
+              hullmod.modVariant?.modInfo.nameOrId.toLowerCase() ?? '';
+          return modName.contains(value.toLowerCase());
+        },
+      ),
+      SearchField.multiValue(
+        'tag',
+        'CSV tag; matches any tag',
+        (h) => h.tags
+            ?.split(',')
+            .map((t) => t.trim())
+            .where((t) => t.isNotEmpty)
+            .toList(),
+      ),
+      SearchField.multiValue(
+        'uitag',
+        'UI tag; matches any UI tag',
+        (h) => h.uiTags
+            ?.split(',')
+            .map((t) => t.trim())
+            .where((t) => t.isNotEmpty)
+            .toList(),
+      ),
+      SearchField.numeric('rarity', 'Rarity value', (h) => h.rarity),
+      SearchField.numeric('value', 'Base credit value', (h) => h.baseValue),
+      SearchField.numeric(
+        'costfrigate',
+        'Ordnance points cost for frigates',
+        (h) => h.costFrigate,
+      ),
+      SearchField.numeric(
+        'costdest',
+        'Ordnance points cost for destroyers',
+        (h) => h.costDest,
+      ),
+      SearchField.numeric(
+        'costcruiser',
+        'Ordnance points cost for cruisers',
+        (h) => h.costCruiser,
+      ),
+      SearchField.numeric(
+        'costcapital',
+        'Ordnance points cost for capital ships',
+        (h) => h.costCapital,
+      ),
+    ];
   }
 }

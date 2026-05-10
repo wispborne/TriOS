@@ -241,8 +241,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   };
 
   String _spoilerTooltip(WeaponSpoilerLevel e) => switch (e) {
-    WeaponSpoilerLevel.noSpoilers =>
-      'Hides weapons tagged CODEX_UNLOCKABLE.',
+    WeaponSpoilerLevel.noSpoilers => 'Hides weapons tagged CODEX_UNLOCKABLE.',
     WeaponSpoilerLevel.showAllSpoilers =>
       'Shows weapons tagged CODEX_UNLOCKABLE.',
   };
@@ -393,10 +392,15 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
 
   List<SearchField<Weapon>> _buildSearchFields() {
     return [
-      SearchField.string('tracking', 'Tracking quality (excellent, good, poor, none)', (w) => w.trackingStr),
+      SearchField.string(
+        'tracking',
+        'Tracking quality (excellent, good, poor, none)',
+        (w) => w.trackingStr,
+      ),
       SearchField<Weapon>(
         key: 'ammo',
-        description: 'Ammo count (none = unlimited); supports numeric operators',
+        description:
+            'Ammo count (none = unlimited); supports numeric operators',
         supportsNumeric: true,
         valueSuggestions: (weapons) => ['none'],
         matches: (weapon, op, value) {
@@ -416,21 +420,34 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
           };
         },
       ),
-      SearchField.string('type', 'Weapon type (missile, energy, ballistic, hybrid)', (w) => w.weaponType),
-      SearchField.string('size', 'Mount size (small, medium, large)', (w) => w.size),
-      SearchField.string('damage', 'Damage type (kinetic, he, energy, fragmentation)', (w) => w.damageType),
+      SearchField.string(
+        'type',
+        'Weapon type (missile, energy, ballistic, hybrid)',
+        (w) => w.weaponType,
+      ),
+      SearchField.string(
+        'size',
+        'Mount size (small, medium, large)',
+        (w) => w.size,
+      ),
+      SearchField.string(
+        'damage',
+        'Damage type (kinetic, he, energy, fragmentation)',
+        (w) => w.damageType,
+      ),
       SearchField.numeric('range', 'Weapon range', (w) => w.range),
       SearchField.numeric('op', 'Ordnance points cost', (w) => w.ops),
       SearchField.numeric('dps', 'Damage per second', (w) => w.damagePerSecond),
       SearchField<Weapon>(
         key: 'hint',
         description: 'Weapon hint tag; matches any hint in a multi-value set',
-        valueSuggestions: (weapons) => weapons
-            .expand((w) => w.hintsAsSet)
-            .where((v) => v.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort(),
+        valueSuggestions: (weapons) =>
+            weapons
+                .expand((w) => w.hintsAsSet)
+                .where((v) => v.isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort(),
         matches: (weapon, op, value) {
           if (op != DslOperator.equals) return false;
           return weapon.hintsAsSet.contains(value.toLowerCase());
@@ -439,12 +456,13 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
       SearchField<Weapon>(
         key: 'tag',
         description: 'Weapon CSV tag; matches any tag in a multi-value set',
-        valueSuggestions: (weapons) => weapons
-            .expand((w) => w.tagsAsSet)
-            .where((v) => v.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort(),
+        valueSuggestions: (weapons) =>
+            weapons
+                .expand((w) => w.tagsAsSet)
+                .where((v) => v.isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort(),
         matches: (weapon, op, value) {
           if (op != DslOperator.equals) return false;
           return weapon.tagsAsSet.contains(value.toLowerCase());
@@ -453,12 +471,13 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
       SearchField<Weapon>(
         key: 'mod',
         description: 'Mod name substring match',
-        valueSuggestions: (weapons) => weapons
-            .map((w) => w.modVariant?.modInfo.nameOrId)
-            .whereType<String>()
-            .toSet()
-            .toList()
-          ..sort(),
+        valueSuggestions: (weapons) =>
+            weapons
+                .map((w) => w.modVariant?.modInfo.nameOrId)
+                .whereType<String>()
+                .toSet()
+                .toList()
+              ..sort(),
         matches: (weapon, op, value) {
           if (op != DslOperator.equals) return false;
           final modName =
@@ -471,30 +490,94 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
       SearchField.numeric('emp', 'EMP damage', (w) => w.emp),
       SearchField.numeric('energy', 'Flux per shot', (w) => w.energyPerShot),
       SearchField.numeric('eps', 'Flux per second', (w) => w.energyPerSecond),
-      SearchField.numeric('chargeup', 'Charge-up time in seconds', (w) => w.chargeup),
-      SearchField.numeric('chargedown', 'Charge-down time in seconds', (w) => w.chargedown),
-      SearchField.numeric('burst', 'Burst size (number of shots)', (w) => w.burstSize),
-      SearchField.numeric('burstdelay', 'Delay between burst shots', (w) => w.burstDelay),
-      SearchField.numeric('turnrate', 'Projectile/beam turn rate', (w) => w.turnRate),
+      SearchField.numeric(
+        'chargeup',
+        'Charge-up time in seconds',
+        (w) => w.chargeup,
+      ),
+      SearchField.numeric(
+        'chargedown',
+        'Charge-down time in seconds',
+        (w) => w.chargedown,
+      ),
+      SearchField.numeric(
+        'burst',
+        'Burst size (number of shots)',
+        (w) => w.burstSize,
+      ),
+      SearchField.numeric(
+        'burstdelay',
+        'Delay between burst shots',
+        (w) => w.burstDelay,
+      ),
+      SearchField.numeric(
+        'turnrate',
+        'Projectile/beam turn rate',
+        (w) => w.turnRate,
+      ),
       SearchField.numeric('speed', 'Projectile speed', (w) => w.projSpeed),
       SearchField.numeric('beamspeed', 'Beam speed', (w) => w.beamSpeed),
-      SearchField.numeric('launchspeed', 'Missile launch speed', (w) => w.launchSpeed),
-      SearchField.numeric('flighttime', 'Projectile flight time', (w) => w.flightTime),
-      SearchField.numeric('projhp', 'Projectile hitpoints', (w) => w.projHitpoints),
-      SearchField.numeric('ammosec', 'Ammo regeneration per second', (w) => w.ammoPerSec),
+      SearchField.numeric(
+        'launchspeed',
+        'Missile launch speed',
+        (w) => w.launchSpeed,
+      ),
+      SearchField.numeric(
+        'flighttime',
+        'Projectile flight time',
+        (w) => w.flightTime,
+      ),
+      SearchField.numeric(
+        'projhp',
+        'Projectile hitpoints',
+        (w) => w.projHitpoints,
+      ),
+      SearchField.numeric(
+        'ammosec',
+        'Ammo regeneration per second',
+        (w) => w.ammoPerSec,
+      ),
       SearchField.numeric('reload', 'Reload size', (w) => w.reloadSize),
       SearchField.numeric('impact', 'Impact/force value', (w) => w.impact),
-      SearchField.numeric('autofire', 'Autofire accuracy bonus', (w) => w.autofireAccBonus),
+      SearchField.numeric(
+        'autofire',
+        'Autofire accuracy bonus',
+        (w) => w.autofireAccBonus,
+      ),
       // Spread/accuracy (numeric)
       SearchField.numeric('spread', 'Maximum spread', (w) => w.maxSpread),
       SearchField.numeric('minspread', 'Minimum spread', (w) => w.minSpread),
-      SearchField.numeric('spreadshot', 'Spread added per shot', (w) => w.spreadPerShot),
-      SearchField.numeric('spreaddecay', 'Spread decay per second', (w) => w.spreadDecayPerSec),
+      SearchField.numeric(
+        'spreadshot',
+        'Spread added per shot',
+        (w) => w.spreadPerShot,
+      ),
+      SearchField.numeric(
+        'spreaddecay',
+        'Spread decay per second',
+        (w) => w.spreadDecayPerSec,
+      ),
       // Weapon identity (string, with value suggestions)
-      SearchField.string('specclass', 'Weapon spec class (beam, projectile, missile, etc.)', (w) => w.specClass),
-      SearchField.string('mount', 'Effective mount type (TURRET, HARDPOINT, HIDDEN)', (w) => w.effectiveMountType),
-      SearchField.string('manufacturer', 'Tech/manufacturer', (w) => w.techManufacturer),
-      SearchField.string('role', 'Primary role description', (w) => w.primaryRoleStr),
+      SearchField.string(
+        'specclass',
+        'Weapon spec class (beam, projectile, missile, etc.)',
+        (w) => w.specClass,
+      ),
+      SearchField.string(
+        'mount',
+        'Effective mount type (TURRET, HARDPOINT, HIDDEN)',
+        (w) => w.effectiveMountType,
+      ),
+      SearchField.string(
+        'manufacturer',
+        'Tech/manufacturer',
+        (w) => w.techManufacturer,
+      ),
+      SearchField.string(
+        'role',
+        'Primary role description',
+        (w) => w.primaryRoleStr,
+      ),
       SearchField.string('group', 'Weapon group tag', (w) => w.groupTag),
       // Metadata (numeric)
       SearchField.numeric('tier', 'Weapon tier', (w) => w.tier),
@@ -521,7 +604,10 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     final query = state.currentSearchQuery.trim();
     if (query.isEmpty) return;
     ref.read(appSettings.notifier).update((s) {
-      final deduped = [query, ...s.weaponsSearchHistory.where((h) => h != query)];
+      final deduped = [
+        query,
+        ...s.weaponsSearchHistory.where((h) => h != query),
+      ];
       return s.copyWith(weaponsSearchHistory: deduped.take(10).toList());
     });
   }

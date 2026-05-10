@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 
 /// Displays a description string with `%s` placeholders highlighted.
@@ -33,7 +34,7 @@ class DescriptionWithSubstitutions extends StatelessWidget {
 
     // Check if there are unsubstituted %s remaining after applying replacements.
     final substituted = desc.replaceSubstitutions(highlightValues);
-    final hasRawPlaceholders = substituted.contains('%s');
+    final hasRawPlaceholders = substituted.contains(Constants.substitutionPlaceholder);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -48,9 +49,9 @@ class DescriptionWithSubstitutions extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child:
-                'Values shown as %s are placeholders filled in by game code. Additional text may be entirely added by game code.'
+                'Values shown as ${Constants.substitutionPlaceholder} are placeholders filled in by game code. Additional text may be entirely added by game code.'
                     .replaceSubstitutionsRich(
-                      '%s',
+                      Constants.substitutionPlaceholder,
                       highlightColor: effectiveHighlightColor,
                       baseStyle: theme.textTheme.labelMedium?.copyWith(
                         fontStyle: FontStyle.italic,

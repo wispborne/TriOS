@@ -115,7 +115,10 @@
       "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\" -Recurse -Directory -Filter \"*weapon*\" -ErrorAction SilentlyContinue)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\\\\ship_viewer\" -Recurse -File -Filter \"*.dart\")",
-      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\" -Recurse -Filter \"weapons_page_controller.dart\")"
+      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\" -Recurse -Filter \"weapons_page_controller.dart\")",
+      "Bash(not exist *)",
+      "PowerShell(New-Item -ItemType Directory -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\" -Force)",
+      "PowerShell(Move-Item -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\hullmod-codex-tooltip\" -Destination \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-10-hullmod-codex-tooltip\")"
     ]
   }
 }

@@ -367,7 +367,7 @@ List<_SubstitutionPart> _parseStarsectorSubstitutions({
         flushLiteral();
         final replacement = (argIndex < replacementValues.length)
             ? replacementValues[argIndex++]
-            : '%s';
+            : Constants.substitutionPlaceholder;
         parts.add(_SubstitutionPart(replacement, true));
         i += 2;
         continue;

@@ -43,7 +43,9 @@ class HullmodsPageState with HullmodsPageStateMappable {
   final bool isLoading;
 
   bool get splitPane => persisted.splitPane;
+
   bool get useContainFit => persisted.useContainFit;
+
   bool get showFilters => persisted.showFilters;
 
   const HullmodsPageState({
@@ -199,7 +201,8 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
         id: 'uiTags',
         name: 'UI Tags',
         valueGetter: (hullmod) => hullmod.uiTags ?? '',
-        valuesGetter: (hullmod) => hullmod.uiTags
+        valuesGetter: (hullmod) =>
+            hullmod.uiTags
                 ?.split(',')
                 .map((tag) => tag.trim())
                 .where((tag) => tag.isNotEmpty)
@@ -213,8 +216,9 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
   bool _spoilerMatches(Hullmod hullmod, HullmodSpoilerLevel level) {
     if (level == HullmodSpoilerLevel.showAllSpoilers) return true;
     final isCodexUnlockable = hullmod.tagsAsSet.contains('codex_unlockable');
-    final isCodexRequireRelated =
-        hullmod.tagsAsSet.contains('codex_require_related');
+    final isCodexRequireRelated = hullmod.tagsAsSet.contains(
+      'codex_require_related',
+    );
     return !isCodexUnlockable && !isCodexRequireRelated;
   }
 
@@ -342,9 +346,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
 
   void toggleUseContainFit() {
     final updatedState = state.copyWith(
-      persisted: state.persisted.copyWith(
-        useContainFit: !state.useContainFit,
-      ),
+      persisted: state.persisted.copyWith(useContainFit: !state.useContainFit),
     );
     state = updatedState;
     _persistState(state);
@@ -417,12 +419,13 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
       SearchField<Hullmod>(
         key: 'mod',
         description: 'Mod name substring match',
-        valueSuggestions: (hullmods) => hullmods
-            .map((h) => h.modVariant?.modInfo.nameOrId)
-            .whereType<String>()
-            .toSet()
-            .toList()
-          ..sort(),
+        valueSuggestions: (hullmods) =>
+            hullmods
+                .map((h) => h.modVariant?.modInfo.nameOrId)
+                .whereType<String>()
+                .toSet()
+                .toList()
+              ..sort(),
         matches: (hullmod, op, value) {
           if (op != DslOperator.equals) return false;
           final modName =

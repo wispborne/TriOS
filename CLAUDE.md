@@ -11,7 +11,7 @@ All-in-one Starsector launcher, mod manager, and toolkit. Flutter desktop app â€
 - Do not use jargon.
 - Do not use Opus 4.7. If you are using Opus 4.7, switch to Opus 4.6 instead.
 - Use the `idea` connector when available.
-- Avoid Powershell when possible.
+- Avoid Powershell when possible. Allow the user to verify changes manully; don't run the app yourself.
 
 ## Common Commands
 

@@ -2,12 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
-import 'package:trios/descriptions/description_entry.dart';
-import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
+import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -25,7 +23,6 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
-import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
@@ -305,8 +302,6 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
   }
 
   void _showHullmodDetailsDialog(BuildContext context, Hullmod h) {
-    final theme = Theme.of(context);
-
     showDialog(
       context: context,
       builder: (ctx) {
@@ -320,20 +315,23 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildInfoPane(
-                      h,
-                      theme,
-                      context,
-                      useContainFit: ref
-                          .read(hullmodsPageControllerProvider)
-                          .useContainFit,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          tooltip: 'Close',
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                        ),
+                      ],
                     ),
+                    HullmodCodexCard.create(hullmod: h),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         const Spacer(),
                         TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => Navigator.of(ctx).pop(),
                           child: const Text('Close'),
                         ),
                       ],
@@ -345,195 +343,6 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
           ),
         );
       },
-    );
-  }
-
-  Column _buildInfoPane(
-    Hullmod h,
-    ThemeData theme,
-    BuildContext context, {
-    bool useContainFit = false,
-  }) {
-    Widget section(String title) => Padding(
-      padding: const EdgeInsets.only(top: 12, bottom: 4),
-      child: Text(
-        title,
-        style: theme.textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: theme.colorScheme.primary,
-        ),
-      ),
-    );
-
-    final fancyColor = theme.colorScheme.onSurface.mix(
-      theme.colorScheme.primary,
-      0.5,
-    );
-    final variableColor = theme.colorScheme.onSurface.mix(
-      theme.colorScheme.secondary,
-      0.3,
-    );
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            if (h.sprite != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: _HullmodSpriteWidget(
-                  spritePath: h.sprite!,
-                  size: 32,
-                  fit: useContainFit ? BoxFit.contain : BoxFit.scaleDown,
-                ),
-              ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SelectableText(
-                    h.name ?? h.id,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SelectableText(h.id, style: theme.textTheme.labelSmall),
-                ],
-              ),
-            ),
-            IconButton(
-              tooltip: 'Close',
-              icon: const Icon(Icons.close),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-        if ((h.shortDescription ?? '').isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            h.shortDescription!,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-        if ((h.desc ?? '').isNotEmpty) ...[
-          const SizedBox(height: 8),
-          DescriptionWithSubstitutions(
-            description: h.desc!,
-            baseStyle: theme.textTheme.bodySmall,
-            highlightColor: fancyColor,
-            showPlaceholderHintText: (h.sModDesc ?? '')
-                .isEmpty, // Show if it won't be shown on Smod text.
-          ),
-        ],
-        if ((h.sModDesc ?? '').isNotEmpty) ...[
-          const SizedBox(height: 4),
-          DescriptionWithSubstitutions(
-            description: 'S-Mod: ${h.sModDesc!}',
-            baseStyle: theme.textTheme.bodySmall?.copyWith(color: fancyColor),
-            highlightColor: variableColor,
-          ),
-        ],
-        Builder(
-          builder: (context) {
-            final desc = ref.watch(
-              descriptionProvider((h.id, DescriptionEntry.typeHullMod)),
-            );
-            if (desc?.text1 == null) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: DescriptionWithSubstitutions(
-                description: desc!.text1!,
-                baseStyle: theme.textTheme.bodySmall,
-              ),
-            );
-          },
-        ),
-        Divider(color: theme.colorScheme.outline),
-        _kv(
-          h.modVariant != null ? 'Mod' : null,
-          h.modVariant?.modInfo.nameOrId ?? 'Vanilla',
-          theme,
-        ),
-        _kv('Tech/Manufacturer', h.techManufacturer, theme),
-        _kv('Script', h.script, theme),
-        // Costs
-        section('OP Costs'),
-        Wrap(
-          runSpacing: 6,
-          children: [
-            _chip('Frigate', _fmtNum(h.costFrigate)),
-            _chip('Destroyer', _fmtNum(h.costDest)),
-            _chip('Cruiser', _fmtNum(h.costCruiser)),
-            _chip('Capital', _fmtNum(h.costCapital)),
-          ],
-        ),
-        // Misc
-        section('Misc'),
-        Wrap(
-          runSpacing: 6,
-          children: [
-            _chip('Tier', _fmtNum(h.tier)),
-            _chip('Rarity', _fmtNum(h.rarity)),
-            _chip('Base Value', h.baseValue.asCredits()),
-            if (h.unlocked == true) _chip('Unlocked', 'Yes'),
-            if (h.hidden == true) _chip('Hidden', 'Yes'),
-            if (h.hiddenEverywhere == true) _chip('Hidden Everywhere', 'Yes'),
-            if ((h.tags ?? '').isNotEmpty) _chip('Tags', h.tags!),
-            if ((h.uiTags ?? '').isNotEmpty) _chip('UI Tags', h.uiTags!),
-          ],
-        ),
-      ],
-    );
-  }
-
-  String _fmtNum(num? n) => switch (n) {
-    null => '-',
-    double d => d.toStringAsFixed(d % 1 == 0 ? 0 : 2),
-    _ => n.toString(),
-  };
-
-  Widget _kv(String? k, String? v, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: RichText(
-        text: TextSpan(
-          style: theme.textTheme.bodySmall,
-          children: [
-            if (k != null) TextSpan(text: '$k: '),
-            TextSpan(
-              text: (v == null || v.isEmpty) ? '-' : v,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(String label, String value) {
-    return Container(
-      margin: const EdgeInsets.only(right: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: SelectableText.rich(
-        TextSpan(
-          style: const TextStyle(fontSize: 11, color: Colors.white70),
-          children: [
-            TextSpan(
-              text: '$label: ',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            TextSpan(text: value),
-          ],
-        ),
-      ),
     );
   }
 
@@ -610,34 +419,6 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
 
     return [
       WispGridColumn(
-        key: 'info',
-        isSortable: false,
-        name: '',
-        itemCellBuilder: (item, _) => MovingTooltipWidget.framed(
-          tooltipWidget: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: SingleChildScrollView(
-                child: _buildInfoPane(
-                  item,
-                  theme,
-                  context,
-                  useContainFit: controllerState.useContainFit,
-                ),
-              ),
-            ),
-          ),
-          child: Icon(
-            Icons.info,
-            size: 24,
-            color: theme.iconTheme.color?.withAlpha(200),
-          ),
-        ),
-        csvValue: (hullmod) => null,
-        defaultState: WispGridColumnState(position: position++, width: 32),
-      ),
-      WispGridColumn(
         key: 'modVariant',
         isSortable: true,
         name: 'Mod',
@@ -672,7 +453,25 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         csvValue: (hullmod) => hullmod.sprite,
         defaultState: WispGridColumnState(position: position++, width: 48),
       ),
-      col('name', 'Name', (h) => h.name ?? h.id, width: 180),
+      WispGridColumn<Hullmod>(
+        key: 'name',
+        isSortable: true,
+        name: 'Name',
+        getSortValue: (h) => h.name ?? h.id,
+        itemCellBuilder: (item, _) => HullmodCodexCard.tooltip(
+          hullmod: item,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.none,
+            child: TextTriOS(
+              item.name ?? item.id,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        csvValue: (item) => item.name ?? item.id,
+        defaultState: WispGridColumnState(position: position++, width: 180),
+      ),
       col('id', 'ID', (h) => h.id),
       col(
         'techManufacturer',

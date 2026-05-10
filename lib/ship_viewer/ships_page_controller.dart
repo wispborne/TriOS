@@ -15,6 +15,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/search_index.dart';
+import 'package:trios/widgets/smart_search/search_dsl_field.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
@@ -96,6 +97,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   static final _scope = const FilterScope(kShipsPageId);
 
   late final FilterScopeController<Ship> _filters;
+  late final List<SearchField<Ship>> _searchFields;
+  late final Map<String, SearchField<Ship>> _fieldsByKey;
+
+  List<SearchFieldMeta> get searchFieldsMeta =>
+      _searchFields.map((f) => f.toMeta(state.allShips)).toList();
 
   // Memoization for shipsWithModuleIds, keyed by input identity so we skip
   // the O(N²) recompute on rebuilds where ship/variant references haven't
@@ -184,6 +190,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     // rebuilds so live filter state persists across them.
     if (stateOrNull == null) {
       _filters = _buildFilters();
+      _searchFields = _buildSearchFields();
+      _fieldsByKey = {for (final f in _searchFields) f.key: f};
       final persistence = ref.read(filterGroupPersistenceProvider);
       _filters.loadPersisted(persistence);
     }
@@ -429,7 +437,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
     ships = _filters.applyChipFilters(ships);
 
-    ships = _filterBySearch(
+    ships = _applyParsedQuery(
       ships,
       currentState.currentSearchQuery,
       currentState.shipSearchIndices,
@@ -511,21 +519,75 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     state = _processAllFilters(state, mods);
   }
 
-  List<Ship> _filterBySearch(
+  List<Ship> _applyParsedQuery(
     List<Ship> ships,
     String query,
     Map<String, List<String>> shipValuesByShipId,
   ) {
-    if (query.isEmpty) return ships;
+    return SearchField.applyQuery(
+      ships,
+      query,
+      _fieldsByKey,
+      shipValuesByShipId,
+      (s) => s.id,
+    );
+  }
 
-    query = query.toLowerCase();
+  void submitSearchQuery() {
+    final query = state.currentSearchQuery.trim();
+    if (query.isEmpty) return;
+    ref.read(appSettings.notifier).update((s) {
+      final deduped = [query, ...s.shipsSearchHistory.where((h) => h != query)];
+      return s.copyWith(shipsSearchHistory: deduped.take(10).toList());
+    });
+  }
 
-    return ships.where((ship) {
-      return shipValuesByShipId[ship.id]?.any(
-            (value) => value.contains(query),
-          ) ??
-          false;
-    }).toList();
+  List<SearchField<Ship>> _buildSearchFields() {
+    return [
+      // String fields
+      SearchField.string('size', 'Hull size (frigate, destroyer, cruiser, capital_ship)', (s) => s.hullSize),
+      SearchField.string('shield', 'Shield type (FRONT, OMNI, PHASE, NONE)', (s) => s.shieldType),
+      SearchField.string('system', 'Ship system ID', (s) => s.systemId),
+      SearchField.string('defense', 'Defense system ID', (s) => s.defenseId),
+      SearchField.string('manufacturer', 'Tech/manufacturer', (s) => s.techManufacturer),
+      SearchField.string('style', 'Visual style', (s) => s.style),
+      SearchField<Ship>(
+        key: 'mod',
+        description: 'Mod name substring match',
+        valueSuggestions: (ships) => ships
+            .map((s) => s.modVariant?.modInfo.nameOrId)
+            .whereType<String>()
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (ship, op, value) {
+          if (op != DslOperator.equals) return false;
+          final modName = ship.modVariant?.modInfo.nameOrId.toLowerCase() ?? '';
+          return modName.contains(value.toLowerCase());
+        },
+      ),
+      SearchField.multiValue('hint', 'Ship hint; matches any hint in a multi-value set', (s) => s.hints),
+      SearchField.multiValue('tag', 'Ship CSV tag; matches any tag in a multi-value set', (s) => s.tags),
+      // Numeric fields
+      SearchField.numeric('hp', 'Hull hitpoints', (s) => s.hitpoints),
+      SearchField.numeric('armor', 'Armor rating', (s) => s.armorRating),
+      SearchField.numeric('flux', 'Max flux capacity', (s) => s.maxFlux),
+      SearchField.numeric('dissipation', 'Flux dissipation', (s) => s.fluxDissipation),
+      SearchField.numeric('op', 'Ordnance points', (s) => s.ordnancePoints),
+      SearchField.numeric('speed', 'Max speed', (s) => s.maxSpeed),
+      SearchField.numeric('bays', 'Fighter bays', (s) => s.fighterBays),
+      SearchField.numeric('shieldarc', 'Shield arc', (s) => s.shieldArc),
+      SearchField.numeric('shieldeff', 'Shield efficiency', (s) => s.shieldEfficiency),
+      SearchField.numeric('crew', 'Minimum crew', (s) => s.minCrew),
+      SearchField.numeric('cargo', 'Cargo capacity', (s) => s.cargo),
+      SearchField.numeric('fuel', 'Fuel capacity', (s) => s.fuel),
+      SearchField.numeric('burn', 'Max burn', (s) => s.maxBurn),
+      SearchField.numeric('mass', 'Ship mass', (s) => s.mass),
+      SearchField.numeric('dp', 'Deployment points', (s) => s.deploymentPoints),
+      SearchField.numeric('cost', 'Base credit value', (s) => s.baseValue),
+      SearchField.numeric('slots', 'Mountable weapon slots', (s) => s.mountableWeaponSlotCount),
+      SearchField.numeric('peak', 'Peak CR seconds', (s) => s.peakCrSec),
+    ];
   }
 }
 

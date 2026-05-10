@@ -162,6 +162,7 @@ class Settings with SettingsMappable {
   final bool debugMode;
 
   final List<String> weaponsSearchHistory;
+  final List<String> shipsSearchHistory;
 
   /// Unknown ids fall back to folder-scan.
   final VramSelectorId vramEstimatorSelectorId;
@@ -266,6 +267,7 @@ class Settings with SettingsMappable {
     this.forceShowAprilFools2026,
     this.debugMode = false,
     this.weaponsSearchHistory = const [],
+    this.shipsSearchHistory = const [],
     this.vramEstimatorSelectorId = VramSelectorId.folderScan,
     this.referencedAssetsSelectorConfig =
         ReferencedAssetsSelectorConfig.allEnabled,

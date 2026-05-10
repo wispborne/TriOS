@@ -51,6 +51,7 @@ class _Suggestion {
 class _SmartSearchBarState extends State<SmartSearchBar> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
+  late final ScrollController _pillScrollController;
 
   List<FieldToken> _committedPills = [];
   int _selectedPillIndex = -1; // -1 = focus is in the text field
@@ -60,6 +61,8 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
   String _previousText = '';
   bool _isFocused = false;
   bool _isSelectingSuggestion = false;
+  int? _editingAtIndex;
+  final List<GlobalKey> _pillKeys = [];
   Map<String, SearchFieldMeta> _fieldsByKey = const {};
 
   @override
@@ -67,6 +70,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     super.initState();
     _focusNode = FocusNode(onKeyEvent: _handleKeyEvent);
     _controller = TextEditingController();
+    _pillScrollController = ScrollController();
     _rebuildFieldsByKey();
     _initFromQuery(widget.initialValue); // also adds _onTextChange listener
     _focusNode.addListener(_onFocusChange);
@@ -114,6 +118,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     _focusNode.removeListener(_onFocusChange);
     _controller.dispose();
     _focusNode.dispose();
+    _pillScrollController.dispose();
     super.dispose();
   }
 
@@ -128,9 +133,13 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     _setTextSilently(text, moveCursorToEnd: false);
 
     if (mounted) {
-      setState(() => _committedPills = pills);
+      setState(() {
+        _committedPills = pills;
+        _editingAtIndex = null;
+      });
     } else {
       _committedPills = pills;
+      _editingAtIndex = null;
     }
   }
 
@@ -143,6 +152,32 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
   }
 
   void _emitQuery() => widget.onChanged(_fullQuery);
+
+  void _syncPillKeys() {
+    while (_pillKeys.length < _committedPills.length) {
+      _pillKeys.add(GlobalKey());
+    }
+    if (_pillKeys.length > _committedPills.length) {
+      _pillKeys.removeRange(_committedPills.length, _pillKeys.length);
+    }
+  }
+
+  void _scrollToSelectedPill() {
+    if (_selectedPillIndex < 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          _selectedPillIndex < 0 ||
+          _selectedPillIndex >= _pillKeys.length ||
+          !_pillScrollController.hasClients) {
+        return;
+      }
+      final ctx = _pillKeys[_selectedPillIndex].currentContext;
+      if (ctx == null) return;
+      final renderObject = ctx.findRenderObject();
+      if (renderObject == null) return;
+      _pillScrollController.position.ensureVisible(renderObject);
+    });
+  }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
@@ -158,6 +193,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
             _committedPills.length - 1,
           );
         });
+        _scrollToSelectedPill();
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
@@ -169,6 +205,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
             _selectedPillIndex++;
           }
         });
+        _scrollToSelectedPill();
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.backspace ||
@@ -193,7 +230,12 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
             _selectedPillIndex = (idx - 1).clamp(0, _committedPills.length - 1);
           }
         });
+        _scrollToSelectedPill();
         _emitQuery();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.enter) {
+        _editPill(_selectedPillIndex);
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.escape) {
@@ -202,6 +244,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       }
       if (event.logicalKey == LogicalKeyboardKey.home) {
         setState(() => _selectedPillIndex = 0);
+        _scrollToSelectedPill();
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.end) {
@@ -235,6 +278,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
         _suggestions = [];
         _highlightedIndex = -1;
       });
+      _scrollToSelectedPill();
       return KeyEventResult.handled;
     }
 
@@ -246,6 +290,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
         _suggestions = [];
         _highlightedIndex = -1;
       });
+      _scrollToSelectedPill();
       return KeyEventResult.handled;
     }
 
@@ -302,16 +347,18 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     if (focused) {
       _updateSuggestions();
     } else {
-      // Defer via microtask: on desktop, pointer-down unfocuses the TextField
-      // before the InkWell's onTapDown fires. Deferring lets onTapDown set
-      // _isSelectingSuggestion = true before we decide to close.
-      Future.microtask(() {
-        if (!_isSelectingSuggestion && mounted) {
+      // Defer until after the frame so that requestFocus() calls from pill
+      // or suggestion taps have time to restore focus before we decide to
+      // tear down state.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_focusNode.hasFocus && !_isSelectingSuggestion) {
+          _commitAllFieldTokens();
           _hideOverlay();
           setState(() {
             _suggestions = [];
             _highlightedIndex = -1;
             _selectedPillIndex = -1;
+            _editingAtIndex = null;
           });
         }
       });
@@ -341,6 +388,35 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     _emitQuery();
   }
 
+  void _insertPills(List<FieldToken> tokens) {
+    final insertAt = _editingAtIndex ?? _committedPills.length;
+    setState(() {
+      _committedPills = [
+        ..._committedPills.sublist(0, insertAt),
+        ...tokens,
+        ..._committedPills.sublist(insertAt),
+      ];
+      _editingAtIndex = null;
+    });
+    _emitQuery();
+  }
+
+  void _commitAllFieldTokens() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    final parsed = SearchDslParser.parse(text);
+    final fieldTokens = parsed.tokens.whereType<FieldToken>().toList();
+    if (fieldTokens.isEmpty) return;
+
+    final remaining = parsed.tokens
+        .whereType<TextToken>()
+        .map((t) => t.text)
+        .join(' ');
+    _setTextSilently(remaining);
+    _insertPills(fieldTokens);
+  }
+
   void _tryCommitLastToken() {
     final text = _controller.text.trimRight();
     if (text.isEmpty) return;
@@ -355,8 +431,53 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       final token = parsed.tokens.first as FieldToken;
       final remaining = parts.sublist(0, parts.length - 1).join(' ');
       _setTextSilently(remaining.isEmpty ? '' : '$remaining ');
-      setState(() => _committedPills = [..._committedPills, token]);
+      _insertPills([token]);
     }
+  }
+
+  void _editPill(int index) {
+    // Recommit any field tokens already in the text field before editing.
+    final existingText = _controller.text.trim();
+    var recommitted = <FieldToken>[];
+    var remainingText = '';
+    if (existingText.isNotEmpty) {
+      final parsed = SearchDslParser.parse(existingText);
+      recommitted = parsed.tokens.whereType<FieldToken>().toList();
+      remainingText = parsed.tokens
+          .whereType<TextToken>()
+          .map((t) => t.text)
+          .join(' ');
+    }
+
+    final token = _committedPills[index];
+    final pillText = token.toQueryString();
+
+    setState(() {
+      final updated = [..._committedPills, ...recommitted];
+      _committedPills = [
+        ...updated.sublist(0, index),
+        ...updated.sublist(index + 1),
+      ];
+      _selectedPillIndex = -1;
+      _editingAtIndex = index;
+    });
+
+    final newText = remainingText.isEmpty
+        ? pillText
+        : '$pillText $remainingText';
+    _setTextSilently(newText, moveCursorToEnd: false);
+
+    _focusNode.requestFocus();
+    _updateSuggestions();
+    _emitQuery();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _controller.selection = TextSelection.collapsed(
+          offset: pillText.length,
+        );
+      }
+    });
   }
 
   void _removePill(int index) {
@@ -382,6 +503,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       _suggestions = [];
       _highlightedIndex = -1;
       _selectedPillIndex = -1;
+      _editingAtIndex = null;
     });
     _setTextSilently('');
     _hideOverlay();
@@ -520,13 +642,12 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       if (parsed.tokens.length == 1 && parsed.tokens.first is FieldToken) {
         final token = parsed.tokens.first as FieldToken;
         _setTextSilently(prefix);
+        _insertPills([token]);
         setState(() {
-          _committedPills = [..._committedPills, token];
           _suggestions = [];
           _highlightedIndex = -1;
         });
         _hideOverlay();
-        _emitQuery();
         _focusNode.requestFocus();
         return;
       }
@@ -780,7 +901,16 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
         Expanded(
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
-            onTap: () => _focusNode.requestFocus(),
+            onTap: () {
+              _focusNode.requestFocus();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _controller.selection = TextSelection.collapsed(
+                    offset: _controller.text.length,
+                  );
+                }
+              });
+            },
             child: MouseRegion(
               cursor: SystemMouseCursors.text,
               child: Container(
@@ -801,6 +931,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
                     Expanded(
                       child: LayoutBuilder(
                         builder: (ctx, constraints) => SingleChildScrollView(
+                          controller: _pillScrollController,
                           scrollDirection: Axis.horizontal,
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
@@ -809,40 +940,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                ..._committedPills.asMap().entries.map(
-                                  (e) => _buildPill(
-                                    theme,
-                                    e.key,
-                                    e.value,
-                                    selected: e.key == _selectedPillIndex,
-                                  ),
-                                ),
-                                IntrinsicWidth(
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      minWidth: 120,
-                                    ),
-                                    child: TextField(
-                                      controller: _controller,
-                                      focusNode: _focusNode,
-                                      onSubmitted: (_) =>
-                                          widget.onSubmitted?.call(),
-                                      decoration: InputDecoration(
-                                        hintText: _committedPills.isEmpty
-                                            ? widget.hintText
-                                            : null,
-                                        border: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              vertical: 8,
-                                              horizontal: 4,
-                                            ),
-                                      ),
-                                      style: theme.textTheme.bodySmall,
-                                    ),
-                                  ),
-                                ),
+                                ..._buildPillsAndTextField(theme),
                               ],
                             ),
                           ),
@@ -886,6 +984,54 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     );
   }
 
+  List<Widget> _buildPillsAndTextField(ThemeData theme) {
+    final textField = IntrinsicWidth(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 120),
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          onSubmitted: (_) => widget.onSubmitted?.call(),
+          decoration: InputDecoration(
+            hintText: _committedPills.isEmpty && _editingAtIndex == null
+                ? widget.hintText
+                : null,
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: 4,
+            ),
+          ),
+          style: theme.textTheme.bodySmall,
+        ),
+      ),
+    );
+
+    _syncPillKeys();
+    final widgets = <Widget>[];
+    for (var i = 0; i < _committedPills.length; i++) {
+      if (i == _editingAtIndex) {
+        widgets.add(textField);
+      }
+      widgets.add(
+        KeyedSubtree(
+          key: _pillKeys[i],
+          child: _buildPill(
+            theme,
+            i,
+            _committedPills[i],
+            selected: i == _selectedPillIndex,
+          ),
+        ),
+      );
+    }
+    if (_editingAtIndex == null || _editingAtIndex! >= _committedPills.length) {
+      widgets.add(textField);
+    }
+    return widgets;
+  }
+
   Widget _buildPill(
     ThemeData theme,
     int index,
@@ -908,11 +1054,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       onDeleted: () => _removePill(index),
     );
     return GestureDetector(
-      onTap: () {
-        setState(() => _selectedPillIndex = index);
-        _hideOverlay();
-        _focusNode.requestFocus();
-      },
+      onTap: () => _editPill(index),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),

@@ -937,6 +937,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: const [],
   );
+  static List<String> _$shipsSearchHistory(Settings v) => v.shipsSearchHistory;
+  static const Field<Settings, List<String>> _f$shipsSearchHistory = Field(
+    'shipsSearchHistory',
+    _$shipsSearchHistory,
+    opt: true,
+    def: const [],
+  );
   static VramSelectorId _$vramEstimatorSelectorId(Settings v) =>
       v.vramEstimatorSelectorId;
   static const Field<Settings, VramSelectorId> _f$vramEstimatorSelectorId =
@@ -1045,6 +1052,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #forceShowAprilFools2026: _f$forceShowAprilFools2026,
     #debugMode: _f$debugMode,
     #weaponsSearchHistory: _f$weaponsSearchHistory,
+    #shipsSearchHistory: _f$shipsSearchHistory,
     #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
     #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
     #vramEstimatorMultithreaded: _f$vramEstimatorMultithreaded,
@@ -1141,6 +1149,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       forceShowAprilFools2026: data.dec(_f$forceShowAprilFools2026),
       debugMode: data.dec(_f$debugMode),
       weaponsSearchHistory: data.dec(_f$weaponsSearchHistory),
+      shipsSearchHistory: data.dec(_f$shipsSearchHistory),
       vramEstimatorSelectorId: data.dec(_f$vramEstimatorSelectorId),
       referencedAssetsSelectorConfig: data.dec(
         _f$referencedAssetsSelectorConfig,
@@ -1258,6 +1267,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
   get catalogPageState;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get weaponsSearchHistory;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get shipsSearchHistory;
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1342,6 +1353,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? forceShowAprilFools2026,
     bool? debugMode,
     List<String>? weaponsSearchHistory,
+    List<String>? shipsSearchHistory,
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
@@ -1460,6 +1472,13 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(weaponsSearchHistory: v),
   );
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get shipsSearchHistory => ListCopyWith(
+    $value.shipsSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(shipsSearchHistory: v),
+  );
+  @override
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1548,6 +1567,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? forceShowAprilFools2026 = $none,
     bool? debugMode,
     List<String>? weaponsSearchHistory,
+    List<String>? shipsSearchHistory,
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
@@ -1666,6 +1686,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (debugMode != null) #debugMode: debugMode,
       if (weaponsSearchHistory != null)
         #weaponsSearchHistory: weaponsSearchHistory,
+      if (shipsSearchHistory != null) #shipsSearchHistory: shipsSearchHistory,
       if (vramEstimatorSelectorId != null)
         #vramEstimatorSelectorId: vramEstimatorSelectorId,
       if (referencedAssetsSelectorConfig != null)
@@ -1905,6 +1926,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     weaponsSearchHistory: data.get(
       #weaponsSearchHistory,
       or: $value.weaponsSearchHistory,
+    ),
+    shipsSearchHistory: data.get(
+      #shipsSearchHistory,
+      or: $value.shipsSearchHistory,
     ),
     vramEstimatorSelectorId: data.get(
       #vramEstimatorSelectorId,

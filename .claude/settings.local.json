@@ -114,7 +114,8 @@
       "mcp__idea__read_file",
       "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\" -Recurse -Directory -Filter \"*weapon*\" -ErrorAction SilentlyContinue)",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\\\\ship_viewer\" -Recurse -File -Filter \"*.dart\")"
+      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\\\\ship_viewer\" -Recurse -File -Filter \"*.dart\")",
+      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\" -Recurse -Filter \"weapons_page_controller.dart\")"
     ]
   }
 }

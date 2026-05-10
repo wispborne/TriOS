@@ -90,6 +90,28 @@ class SearchField<T> {
     },
   );
 
+  static SearchField<T> multiValue<T>(
+    String key,
+    String description,
+    List<String>? Function(T) accessor,
+  ) => SearchField<T>(
+    key: key,
+    description: description,
+    valueSuggestions: (items) => items
+        .expand((i) => accessor(i) ?? <String>[])
+        .map((v) => v.toLowerCase())
+        .where((v) => v.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort(),
+    matches: (item, op, value) {
+      if (op != DslOperator.equals) return false;
+      return accessor(item)?.any(
+        (v) => v.toLowerCase() == value.toLowerCase(),
+      ) ?? false;
+    },
+  );
+
   /// Filter [items] using a DSL query string, matching against [fieldsByKey]
   /// for field tokens and falling back to substring search on [searchIndices]
   /// for plain text tokens.

@@ -28,7 +28,7 @@ import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:trios/widgets/viewer_search_box.dart';
+import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'package:trios/widgets/viewer_split_pane.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
 
@@ -48,8 +48,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
   @override
   bool get wantKeepAlive => true;
 
-  final SearchController _searchController = SearchController();
-
   WispGridController<Ship>? _gridController;
   Widget? _cachedBuild;
 
@@ -59,12 +57,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     return controllerState.splitPane
         ? [Area(id: 'top'), Area(id: 'bottom')]
         : [Area(id: 'top')];
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   @override
@@ -151,15 +143,19 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       visible: visible,
       isLoading: controllerState.isLoading,
       onRefresh: () => ref.invalidate(shipListNotifierProvider),
-      searchBox: ViewerSearchBox(
-        searchController: _searchController,
+      searchBox: SmartSearchBar(
+        fields: controller.searchFieldsMeta,
+        recentHistory: ref.watch(
+          appSettings.select((s) => s.shipsSearchHistory),
+        ),
+        initialValue: controllerState.currentSearchQuery,
         hintText: "Filter ships...",
         onChanged: (query) => ref
             .read(shipsPageControllerProvider.notifier)
             .updateSearchQuery(query),
-        onClear: () => ref
+        onSubmitted: () => ref
             .read(shipsPageControllerProvider.notifier)
-            .updateSearchQuery(''),
+            .submitSearchQuery(),
       ),
       splitPane: controllerState.splitPane,
       onToggleSplitPane: () {

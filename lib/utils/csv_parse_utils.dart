@@ -166,6 +166,16 @@ class CsvJsonParsingUtils {
         continue;
       }
       if (c == '"') {
+        // A quoted field starting with "#" at the beginning of a row is a
+        // comment (Starsector convention: `"#Name"` comments out the row).
+        if (rowStartLine == null &&
+            i + 1 < content.length &&
+            content[i + 1] == '#') {
+          inQuotes = true;
+          inComment = true;
+          i += 1; // skip the '#'
+          continue;
+        }
         inQuotes = true;
         markRowStart();
         currentRow.write('"');

@@ -173,12 +173,8 @@ TooltipStatEntry tooltipRow(String label, String value, {Color? color, int inden
     TooltipStatEntry(label: label, value: value, valueColor: color, indentLevel: indentLevel);
 
 /// A full-width informational note (empty label, dimmer italic text).
-TooltipStatEntry tooltipNote(String text) =>
-    TooltipStatEntry(label: '', value: text, isNote: true);
-
-/// A right-aligned informational note (value column, dimmer italic text).
-TooltipStatEntry tooltipNoteRight(String text) =>
-    TooltipStatEntry(label: '', value: text, isNote: true, rightAlign: true);
+TooltipStatEntry tooltipNote(String text, {bool rightAlign = false}) =>
+    TooltipStatEntry(label: '', value: text, isNote: true, rightAlign: rightAlign);
 
 /// An empty separator row.
 const tooltipGap = TooltipStatEntry.gap();

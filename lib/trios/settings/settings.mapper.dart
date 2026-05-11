@@ -914,6 +914,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'showAprilFools2026',
     _$showAprilFools2026,
     opt: true,
+    def: false,
   );
   static bool? _$forceShowAprilFools2026(Settings v) =>
       v.forceShowAprilFools2026;
@@ -921,6 +922,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'forceShowAprilFools2026',
     _$forceShowAprilFools2026,
     opt: true,
+    def: false,
   );
   static bool _$debugMode(Settings v) => v.debugMode;
   static const Field<Settings, bool> _f$debugMode = Field(
@@ -959,7 +961,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         'vramEstimatorSelectorId',
         _$vramEstimatorSelectorId,
         opt: true,
-        def: VramSelectorId.folderScan,
+        def: VramSelectorId.referenced,
       );
   static ReferencedAssetsSelectorConfig _$referencedAssetsSelectorConfig(
     Settings v,

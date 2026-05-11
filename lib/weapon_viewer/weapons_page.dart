@@ -456,28 +456,6 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
               )
               .toList(),
         ),
-        if (w.customPrimary != null || w.customAncillary != null)
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              if ((w.customPrimary ?? '').isNotEmpty)
-                DescriptionWithSubstitutions(
-                  description: w.customPrimary!,
-                  highlightValues: w.customPrimaryHL,
-                  highlightColor: theme.colorScheme.secondary,
-                  baseStyle: theme.textTheme.bodySmall,
-                ),
-              if ((w.customAncillary ?? '').isNotEmpty)
-                DescriptionWithSubstitutions(
-                  description: w.customAncillary!,
-                  highlightValues: w.customAncillaryHL,
-                  highlightColor: theme.colorScheme.secondary,
-                  baseStyle: theme.textTheme.bodySmall,
-                ),
-            ],
-          ),
         const SizedBox(height: 8),
         WeaponCodexCard.create(
           weapon: w,

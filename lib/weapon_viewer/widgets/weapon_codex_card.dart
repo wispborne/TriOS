@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -97,10 +95,12 @@ class WeaponCodexCard {
     final theme = Theme.of(context);
     final highlightColor = TriOSThemeConstants.vanillaCyanColor;
 
-    final isBeam = weapon.specClass?.toLowerCase().contains('beam') == true;
+    final isBeam = weapon.isBeam;
     final isMissile =
         weapon.effectiveMountType?.toUpperCase() == 'MISSILE' ||
         weapon.specClass?.toLowerCase().contains('missile') == true;
+    final hasMissileDisplay =
+        isMissile || weapon.speedStr != null || weapon.trackingStr != null;
     final isSoftFlux = isBeam || weapon.tagsAsSet.contains('damage_soft_flux');
     final showStats = !weapon.tagsAsSet.contains('no_standard_data');
     final noDPS = weapon.noDPSInTooltip == true;
@@ -111,101 +111,25 @@ class WeaponCodexCard {
     // Ammo present but no reload/recharge — game's `var66`.
     final limitedAmmo = usesAmmo && !hasReload;
 
-    // ── Derived stats (faithful to WeaponSpreadsheetLoader in the game JAR) ──
-    //
-    // For BEAM weapons the game reads `damage/second` straight from the CSV and
-    // computes fluxPerDam = energyPerSecond / dps.
-    //
-    // For PROJECTILE weapons `damage/second` is absent from the CSV; the game
-    // computes everything from the raw timing columns:
-    //   cycleTime  = chargeup + chargedown + burstDelay * (burstSize - 1)
-    //   dps        = damagePerShot * burstSize / cycleTime
-    //   fluxPerDam = (chargeup*energyPerSecond + energyPerShot*burstSize)
-    //                / max(1, damagePerShot * burstSize)
-    //   fluxPerSec = dps * fluxPerDam
-    //   sustainedDps = damagePerShot * ammoPerSecond  (ammo-regen limited)
+    // ── Derived stats (memoized on the Weapon model) ──
+    final isBurstBeam = weapon.isBurstBeam;
+    final effectiveDps = weapon.effectiveDps;
+    final sustainedDps = weapon.sustainedDps;
+    final burstBeamDamage = weapon.burstDamage;
+    final fluxPerDam = weapon.fluxPerDamage;
+    final fluxPerSecond = weapon.fluxPerSecond;
+    final sustainedFluxPerSecond = weapon.sustainedFluxPerSecond;
+    final empDisplay = weapon.empPerActivation;
+    final hasSustained = weapon.hasSustainedDps;
+    final hasFluxCost = (fluxPerSecond ?? 0) > 0;
+    final refireDelaySeconds = weapon.refireDelay;
 
-    final int burstSize = weapon.burstSize?.toInt().clamp(1, 99999) ?? 1;
-    final double chargeup = weapon.chargeup ?? 0.0;
-    final double chargedown = weapon.chargedown ?? 0.0; // refireDelay for proj.
-    final double burstDelay = weapon.burstDelay ?? 0.0;
-
-    // chargeTime + refireDelay + burstDelay * (burstSize - 1)
-    final double cycleTime =
-        chargeup +
-        chargedown +
-        burstDelay * (burstSize > 1 ? (burstSize - 1).toDouble() : 0.0);
-
-    // Effective burst DPS.
-    double? effectiveDps;
-    if (isBeam) {
-      final v = weapon.damagePerSecond ?? 0;
-      if (v > 0) effectiveDps = v.toDouble();
-    } else {
-      final dmg = weapon.damagePerShot ?? 0.0;
-      if (dmg > 0 && cycleTime > 0) effectiveDps = dmg * burstSize / cycleTime;
-    }
-
-    // Sustained (ammo-regen) DPS: damagePerShot * ammoPerSecond.
-    double? sustainedDps;
-    if (effectiveDps != null &&
-        !isBeam &&
-        weapon.ammoPerSec != null &&
-        weapon.ammoPerSec! > 0 &&
-        weapon.damagePerShot != null) {
-      final s = weapon.damagePerShot! * weapon.ammoPerSec!;
-      if ((s - effectiveDps).abs() / effectiveDps >= 0.01) sustainedDps = s;
-    }
-
-    // Total flux per firing cycle: chargeup*energyPerSecond + energyPerShot*burstSize
-    final double totalFluxPerCycle =
-        chargeup * (weapon.energyPerSecond ?? 0.0) +
-        (weapon.energyPerShot ?? 0.0) * burstSize;
-
-    // Flux / damage.
-    double? fluxPerDam;
-    if (isBeam) {
-      if (effectiveDps != null &&
-          effectiveDps > 0 &&
-          (weapon.energyPerSecond ?? 0) > 0) {
-        fluxPerDam = weapon.energyPerSecond! / effectiveDps;
-      }
-    } else {
-      final totalDmg = (weapon.damagePerShot ?? 0.0) * burstSize;
-      if (totalFluxPerCycle > 0) {
-        fluxPerDam = totalFluxPerCycle / math.max(1.0, totalDmg);
-      }
-    }
-
-    // Flux / second = dps * fluxPerDam.
-    // Fallback for beams where effectiveDps couldn't be resolved.
-    double? fluxPerSecond;
-    if (effectiveDps != null && fluxPerDam != null) {
-      fluxPerSecond = effectiveDps * fluxPerDam;
-    } else if (isBeam && (weapon.energyPerSecond ?? 0) > 0) {
-      fluxPerSecond = weapon.energyPerSecond!.toDouble();
-    }
-
-    // Sustained flux / second = sustainedDps * fluxPerDam.
-    final double? sustainedFluxPerSecond =
-        (sustainedDps != null && fluxPerDam != null)
-        ? sustainedDps! * fluxPerDam!
-        : null;
-
-    // hasSustained mirrors game's `var67` (dps ≠ sustainedDps) and controls
-    // whether both DPS and Flux/second rows show the "(sustained)" variant.
-    final bool hasSustained = sustainedDps != null;
-    final bool hasFluxCost = (fluxPerSecond ?? 0) > 0;
-
-    // Refire delay display value (projectile weapons only).
-    // Game: refireDelay + burstFireDuration = chargedown + chargeup + burstDelay*(burstSize-1)
-    //     = cycleTime
-    final double? refireDelaySeconds = !isBeam && cycleTime > 0
-        ? cycleTime
-        : null;
-
-    final showBurstSize =
-        isMissile && weapon.burstSize != null && weapon.burstSize! > 1;
+    final hasBurst =
+        !isBeam && weapon.burstSize != null && weapon.burstSize! > 1;
+    final showDamageMultiplier =
+        hasBurst &&
+        weapon.burstSize! < 1000 &&
+        (weapon.ammo == null || weapon.ammo! > weapon.burstSize!);
     final showRefireDelay = refireDelaySeconds != null;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -242,8 +166,9 @@ class WeaponCodexCard {
         _iconRow(
               icon: showSprite ? _weaponSprite(weapon) : null,
               child: tooltipStatsGrid(theme, [
-                if (weapon.primaryRoleStr != null)
-                  tooltipRow('Primary role', weapon.primaryRoleStr!),
+                if (weapon.primaryRoleStr ?? description?.text2
+                    case final role?)
+                  tooltipRow('Primary role', role),
                 tooltipRow('Mount type', _mountType(weapon)),
                 ..._mountNotes(weapon),
                 // "Counts as X for stat modifiers" when mount type differs from
@@ -254,6 +179,7 @@ class WeaponCodexCard {
                         weapon.mountTypeOverride!.toUpperCase())
                   tooltipNote(
                     'Counts as ${weapon.weaponType!.toTitleCase()} for stat modifiers',
+                    rightAlign: true,
                   ),
                 if (weapon.ops != null)
                   tooltipRow('Ordnance points', '${weapon.ops}'),
@@ -262,8 +188,15 @@ class WeaponCodexCard {
                 if (showStats) ...[
                   if (weapon.range != null)
                     tooltipRow('Range', tooltipFmt(weapon.range)),
-                  if (!isBeam && weapon.damagePerShot != null)
-                    tooltipRow('Damage', tooltipFmt(weapon.damagePerShot)),
+                  if (isBurstBeam && burstBeamDamage != null)
+                    tooltipRow('Damage', tooltipFmt(burstBeamDamage))
+                  else if (!isBeam && weapon.damagePerShot != null)
+                    tooltipRow(
+                      'Damage',
+                      showDamageMultiplier
+                          ? '${tooltipFmt(weapon.damagePerShot)}x${weapon.burstSize!.toInt()}'
+                          : tooltipFmt(weapon.damagePerShot),
+                    ),
                   if (!noDPS && effectiveDps != null)
                     tooltipRow(
                       hasSustained
@@ -273,10 +206,10 @@ class WeaponCodexCard {
                           ? '${tooltipFmt(effectiveDps)} (${tooltipFmt(sustainedDps)})'
                           : tooltipFmt(effectiveDps),
                     ),
-                  if (weapon.emp != null && weapon.emp! > 0)
+                  if (empDisplay != null && empDisplay > 0)
                     tooltipRow(
-                      isBeam ? 'EMP DPS' : 'EMP damage',
-                      tooltipFmt(weapon.emp),
+                      isBeam && !isBurstBeam ? 'EMP DPS' : 'EMP damage',
+                      tooltipFmt(empDisplay),
                     ),
                   tooltipGap,
                 ],
@@ -303,15 +236,17 @@ class WeaponCodexCard {
                     ),
                   if (limitedAmmo) ...[
                     tooltipGap,
-                    tooltipNoteRight(
+                    tooltipNote(
                       'Limited ${isEnergyType ? "charges" : "ammo"}'
                       ' (${tooltipFmt(weapon.ammo)})',
+                      rightAlign: true,
                     ),
                   ],
                 ] else if (limitedAmmo) ...[
-                  tooltipNoteRight(
+                  tooltipNote(
                     'No flux cost to fire, limited '
                     '${isEnergyType ? "charges" : "ammo"} (${tooltipFmt(weapon.ammo)})',
+                    rightAlign: true,
                   ),
                 ] else ...[
                   tooltipNote('No flux cost to fire'),
@@ -343,41 +278,43 @@ class WeaponCodexCard {
                 if (showStats) ...[
                   tooltipRow('Damage type', _damageTypeName(weapon, isBeam)),
                   if (_damageTypeDesc(weapon, isSoftFlux).isNotEmpty)
-                    tooltipNoteRight(_damageTypeDesc(weapon, isSoftFlux)),
+                    tooltipNote(
+                      _damageTypeDesc(weapon, isSoftFlux),
+                      rightAlign: true,
+                    ),
                   tooltipGap,
 
-                  // Core ancillary stats — shown for all weapon types.
+                  // Game shows each stat independently if its value
+                  // is non-null, in order: Speed, Tracking, Hitpoints,
+                  // Accuracy, Turn rate.
+                  if (weapon.speedStr != null ||
+                      (isMissile && weapon.projSpeed != null))
+                    tooltipRow(
+                      'Speed',
+                      weapon.speedStr ?? tooltipFmt(weapon.projSpeed),
+                    ),
+                  if (weapon.trackingStr != null)
+                    tooltipRow('Tracking', weapon.trackingStr!),
+                  if (hasMissileDisplay &&
+                      weapon.projHitpoints != null &&
+                      weapon.projHitpoints! > 0)
+                    tooltipRow('Hitpoints', tooltipFmt(weapon.projHitpoints)),
                   if (weapon.accuracyStr != null)
                     tooltipRow('Accuracy', weapon.accuracyStr!)
-                  else if (isBeam)
+                  else if (!hasMissileDisplay && isBeam)
                     tooltipRow('Accuracy', 'Perfect')
-                  else if (weapon.maxSpread != null)
+                  else if (!hasMissileDisplay)
                     tooltipRow(
                       'Accuracy',
-                      _accuracyDisplayName(weapon.maxSpread!),
+                      _accuracyDisplayName(weapon.maxSpread ?? 0),
                     ),
                   if (weapon.turnRateStr != null)
                     tooltipRow('Turn rate', weapon.turnRateStr!)
-                  else if (weapon.turnRate != null)
+                  else if (!hasMissileDisplay && weapon.turnRate != null)
                     tooltipRow(
                       'Turn rate',
                       _turnRateDisplayName(weapon.turnRate!),
                     ),
-
-                  // Missile-specific stats.
-                  if (isMissile) ...[
-                    tooltipGap,
-                    if (weapon.speedStr != null || weapon.projSpeed != null)
-                      tooltipRow(
-                        'Speed',
-                        weapon.speedStr ?? tooltipFmt(weapon.projSpeed),
-                      ),
-                    if (weapon.trackingStr != null)
-                      tooltipRow('Tracking', weapon.trackingStr!),
-                    if (weapon.projHitpoints != null &&
-                        weapon.projHitpoints! > 0)
-                      tooltipRow('Hitpoints', tooltipFmt(weapon.projHitpoints)),
-                  ],
                 ],
 
                 // Ammo / charges — missiles only.
@@ -387,29 +324,23 @@ class WeaponCodexCard {
                     isEnergyType ? 'Max charges' : 'Max ammo',
                     tooltipFmt(weapon.ammo),
                   ),
-                  if (weapon.reloadSize != null && weapon.ammoPerSec! > 0)
+                  if (weapon.ammoPerSec! > 0)
                     tooltipRow(
                       isEnergyType ? 'Seconds / recharge' : 'Seconds / reload',
-                      tooltipFmt(weapon.reloadSize! / weapon.ammoPerSec!),
+                      tooltipFmt(
+                        (weapon.reloadSize ?? 1.0) / weapon.ammoPerSec!,
+                      ),
                     ),
-                  if (weapon.reloadSize != null)
-                    tooltipRow(
-                      isEnergyType ? 'Charges gained' : 'Reload size',
-                      tooltipFmt(weapon.reloadSize),
-                    ),
-                ] else if (isMissile && usesAmmo) ...[
-                  tooltipGap,
                   tooltipRow(
-                    isEnergyType ? 'Charges' : 'Ammo',
-                    tooltipFmt(weapon.ammo),
+                    isEnergyType ? 'Charges gained' : 'Reload size',
+                    tooltipFmt(weapon.reloadSize ?? 1.0),
                   ),
                 ],
 
-                if (showBurstSize || showRefireDelay) tooltipGap,
+                if (hasBurst || showRefireDelay) tooltipGap,
 
-                // Burst size — missiles only.
-                if (showBurstSize)
-                  tooltipRow('Burst size', '${weapon.burstSize}'),
+                if (hasBurst)
+                  tooltipRow('Burst size', '${weapon.burstSize!.toInt()}'),
 
                 if (showRefireDelay)
                   tooltipRow(
@@ -436,6 +367,25 @@ class WeaponCodexCard {
         if (showDescription && description?.text1 != null) ...[
           const SizedBox(height: 8),
           tooltipHairline(theme),
+
+          if (weapon.baseValue != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text.rich(
+                TextSpan(
+                  text: 'Base value: ',
+                  style: theme.textTheme.bodySmall,
+                  children: [
+                    TextSpan(
+                      text: weapon.baseValue?.asCredits(),
+                      style: TextStyle(
+                        color: TriOSThemeConstants.vanillaYellowGoldColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 6),
           DescriptionWithSubstitutions(
             description: description!.text1!,
@@ -562,7 +512,9 @@ List<TooltipStatEntry> _mountNotes(Weapon w) {
     _ => null,
   };
   if (note == null) return const [];
-  return [TooltipStatEntry(label: '', value: note, isNote: true)];
+  return [
+    TooltipStatEntry(label: '', value: note, isNote: true, rightAlign: true),
+  ];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

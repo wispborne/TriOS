@@ -9,11 +9,14 @@
   - Toolbar icons can now be rearranged. Mostly.
   - Mods page: two-layer grouping, such as grouping by categories and then by enabled status.
   - Ship/Weapon/Hullmod Filters may now be remembered across app restarts (click save icon).
+  - Ship/Weapon/Hullmod Viewers now have advanced search, e.g. `size:medium damage:high_explosive range:>20`.
   - Ships/Weapons Viewers: Added descriptions to the new tooltips.
   - Ships Viewer: filter by stations.
   - Ships Viewer: sensor stats now shown on tooltip.
   - New theme: Hegemony.
+  - More.
 - Fixed
+  - Onboarding dialog appearing every launch.
   - Portrait Replacer crashing Starsector if some cases where a portrait and its replacement were different sizes.
   - Ships Viewer: DP is now calculated correctly.
   - Improved .csv parsing to handle multi-line strings.
@@ -21,6 +24,7 @@
   - Log Viewer: incomplete logs would show `null, null` when copying mod info.
   - Context menu could clip off the bottom of the screen.
   - Ships Viewer: renamed Supplies/Rec to DP and added columns for ship builtins.
+  - Weapons Viewer: many fixes to the weapon tooltips. Wow the game has a lot of special code for this stuff.
 - Changed
   - Cleaned up how a few themes look on the new ship/weapon tooltips.
   - Refactored game detection and added a new default detection method on Windows that should be faster.

@@ -4,8 +4,11 @@
 /// applies in switch expressions in the renderer.
 sealed class FilterGroup<T> {
   String get id;
+
   String get name;
+
   bool get isActive;
+
   int get activeCount;
 
   bool matches(T item);
@@ -119,7 +122,9 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
 /// A single field inside a [CompositeFilterGroup].
 sealed class FilterField<T> {
   String get id;
+
   String get label;
+
   bool get isActive;
 
   bool matches(T item);
@@ -265,6 +270,8 @@ class EnumField<T, E extends Enum> extends FilterField<T> {
   /// Flutter.
   final Object? Function(E)? optionIcon;
 
+  final bool alwaysActive;
+
   E selected;
 
   EnumField({
@@ -277,10 +284,11 @@ class EnumField<T, E extends Enum> extends FilterField<T> {
     this.optionLabel,
     this.optionTooltip,
     this.optionIcon,
+    this.alwaysActive = false,
   }) : selected = defaultValue;
 
   @override
-  bool get isActive => selected != defaultValue;
+  bool get isActive => alwaysActive || selected != defaultValue;
 
   @override
   bool matches(T item) => predicate(item, selected);

@@ -1,6 +1,7 @@
 // weapon.dart
 
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -43,7 +44,7 @@ class Weapon with WeaponMappable implements WispGridItem {
   final double? chargeup;
   final double? chargedown;
   @MappableField(key: 'burst size')
-  final int? burstSize;
+  final double? burstSize;
   @MappableField(key: 'burst delay')
   final double? burstDelay;
   @MappableField(key: 'min spread')
@@ -177,6 +178,123 @@ class Weapon with WeaponMappable implements WispGridItem {
   /// Returns the tags as a set of strings, with each tag trimmed and lowercased.
   late final Set<String> tagsAsSet =
       tags?.split(',').map((tag) => tag.trim().toLowerCase()).toSet() ?? {};
+
+  // ── Derived weapon stats (faithful to WeaponSpreadsheetLoader) ──
+
+  late final bool isBeam = specClass?.toLowerCase().contains('beam') == true;
+
+  late final double _beamBurstDuration = isBeam
+      ? (burstSize ?? 0).toDouble()
+      : 0.0;
+
+  late final bool isBurstBeam = isBeam && _beamBurstDuration > 0;
+
+  late final int _projBurstSize = isBeam
+      ? 1
+      : (burstSize?.toInt().clamp(1, 99999) ?? 1);
+
+  late final double _cu = chargeup ?? 0.0;
+  late final double _cd = chargedown ?? 0.0;
+  late final double _bd = burstDelay ?? 0.0;
+
+  late final double _projCycleTime =
+      _cu +
+      _cd +
+      _bd * (_projBurstSize > 1 ? (_projBurstSize - 1).toDouble() : 0.0);
+
+  // 0.333 = average beam intensity during chargeup/chargedown ramps.
+  late final double _beamDamageMultiplier =
+      (_cu + _cd) * 0.333 + _beamBurstDuration;
+
+  late final double? burstDamage = isBurstBeam
+      ? (damagePerSecond ?? 0.0) * _beamDamageMultiplier
+      : null;
+
+  late final double? refireDelay = () {
+    if (isBurstBeam) return _cu + _cd + _beamBurstDuration + _bd;
+    if (!isBeam && _projCycleTime > 0) return _projCycleTime;
+    return null;
+  }();
+
+  late final double? effectiveDps = () {
+    if (isBurstBeam) {
+      final d = burstDamage;
+      final r = refireDelay;
+      if (d != null && d > 0 && r != null && r > 0) return d / r;
+      return null;
+    }
+    if (isBeam) {
+      final v = damagePerSecond ?? 0;
+      return v > 0 ? v.toDouble() : null;
+    }
+    final dmg = damagePerShot ?? 0.0;
+    if (dmg > 0 && _projCycleTime > 0) {
+      return dmg * _projBurstSize / _projCycleTime;
+    }
+    return null;
+  }();
+
+  late final double? sustainedDps = () {
+    final dps = effectiveDps;
+    if (dps == null || ammoPerSec == null || ammoPerSec! <= 0) return null;
+
+    // Burst beams: sustained = burstDamage × ammoPerSec.
+    // Projectiles: sustained = damagePerShot × ammoPerSec.
+    final double? s;
+    if (isBurstBeam) {
+      s = burstDamage != null ? burstDamage! * ammoPerSec! : null;
+    } else if (!isBeam && damagePerShot != null) {
+      s = damagePerShot! * ammoPerSec!;
+    } else {
+      s = null;
+    }
+    if (s != null && (s - dps).abs() / dps >= 0.01) return s;
+    return null;
+  }();
+
+  late final double? fluxPerDamage = () {
+    if (isBurstBeam) {
+      final bd = burstDamage;
+      if (bd != null && bd > 0) {
+        return (energyPerSecond ?? 0.0) * (_cu + _beamBurstDuration) / bd;
+      }
+    } else if (isBeam) {
+      final dps = effectiveDps;
+      if (dps != null && dps > 0 && (energyPerSecond ?? 0) > 0) {
+        return energyPerSecond! / dps;
+      }
+    } else {
+      final totalDmg = (damagePerShot ?? 0.0) * _projBurstSize;
+      final totalFlux =
+          _cu * (energyPerSecond ?? 0.0) +
+          (energyPerShot ?? 0.0) * _projBurstSize;
+      if (totalFlux > 0) return totalFlux / math.max(1.0, totalDmg);
+    }
+    return null;
+  }();
+
+  late final double? fluxPerSecond = () {
+    final dps = effectiveDps;
+    final fpd = fluxPerDamage;
+    if (dps != null && fpd != null) return dps * fpd;
+    if (isBeam && (energyPerSecond ?? 0) > 0) {
+      return energyPerSecond!.toDouble();
+    }
+    return null;
+  }();
+
+  late final double? sustainedFluxPerSecond = () {
+    final sdps = sustainedDps;
+    final fpd = fluxPerDamage;
+    if (sdps != null && fpd != null) return sdps * fpd;
+    return null;
+  }();
+
+  late final double? empPerActivation = isBurstBeam && emp != null && emp! > 0
+      ? emp! * _beamDamageMultiplier
+      : emp;
+
+  late final bool hasSustainedDps = sustainedDps != null;
 
   bool isHidden() {
     if (weaponType?.toLowerCase() == "decorative") return true;

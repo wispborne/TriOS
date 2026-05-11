@@ -118,6 +118,14 @@ void main() {
       },
     );
 
+    test('quoted field starting with # at row start is treated as comment', () {
+      const input =
+          'name,id\n"#Light Mortar (Fighter)",lightmortar_fighter\nFoo,foo\n';
+      final result = input.stripCsvCommentsAndTrackLines();
+      expect(result.cleanContent, 'name,id\nFoo,foo');
+      expect(result.lineNumberMap, [1, 3]);
+    });
+
     test('normalizes CRLF line endings', () {
       const input = 'name,id\r\nFoo,foo\r\nBar,bar\r\n';
       final result = input.stripCsvCommentsAndTrackLines();

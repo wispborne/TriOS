@@ -122,8 +122,8 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     _$chargedown,
     opt: true,
   );
-  static int? _$burstSize(Weapon v) => v.burstSize;
-  static const Field<Weapon, int> _f$burstSize = Field(
+  static double? _$burstSize(Weapon v) => v.burstSize;
+  static const Field<Weapon, double> _f$burstSize = Field(
     'burstSize',
     _$burstSize,
     key: r'burst size',
@@ -411,6 +411,83 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'tagsasset',
     mode: FieldMode.member,
   );
+  static bool _$isBeam(Weapon v) => v.isBeam;
+  static const Field<Weapon, bool> _f$isBeam = Field(
+    'isBeam',
+    _$isBeam,
+    key: r'isbeam',
+    mode: FieldMode.member,
+  );
+  static bool _$isBurstBeam(Weapon v) => v.isBurstBeam;
+  static const Field<Weapon, bool> _f$isBurstBeam = Field(
+    'isBurstBeam',
+    _$isBurstBeam,
+    key: r'isburstbeam',
+    mode: FieldMode.member,
+  );
+  static double? _$burstDamage(Weapon v) => v.burstDamage;
+  static const Field<Weapon, double> _f$burstDamage = Field(
+    'burstDamage',
+    _$burstDamage,
+    key: r'burstdamage',
+    mode: FieldMode.member,
+  );
+  static double? _$refireDelay(Weapon v) => v.refireDelay;
+  static const Field<Weapon, double> _f$refireDelay = Field(
+    'refireDelay',
+    _$refireDelay,
+    key: r'refiredelay',
+    mode: FieldMode.member,
+  );
+  static double? _$effectiveDps(Weapon v) => v.effectiveDps;
+  static const Field<Weapon, double> _f$effectiveDps = Field(
+    'effectiveDps',
+    _$effectiveDps,
+    key: r'effectivedps',
+    mode: FieldMode.member,
+  );
+  static double? _$sustainedDps(Weapon v) => v.sustainedDps;
+  static const Field<Weapon, double> _f$sustainedDps = Field(
+    'sustainedDps',
+    _$sustainedDps,
+    key: r'sustaineddps',
+    mode: FieldMode.member,
+  );
+  static double? _$fluxPerDamage(Weapon v) => v.fluxPerDamage;
+  static const Field<Weapon, double> _f$fluxPerDamage = Field(
+    'fluxPerDamage',
+    _$fluxPerDamage,
+    key: r'fluxperdamage',
+    mode: FieldMode.member,
+  );
+  static double? _$fluxPerSecond(Weapon v) => v.fluxPerSecond;
+  static const Field<Weapon, double> _f$fluxPerSecond = Field(
+    'fluxPerSecond',
+    _$fluxPerSecond,
+    key: r'fluxpersecond',
+    mode: FieldMode.member,
+  );
+  static double? _$sustainedFluxPerSecond(Weapon v) => v.sustainedFluxPerSecond;
+  static const Field<Weapon, double> _f$sustainedFluxPerSecond = Field(
+    'sustainedFluxPerSecond',
+    _$sustainedFluxPerSecond,
+    key: r'sustainedfluxpersecond',
+    mode: FieldMode.member,
+  );
+  static double? _$empPerActivation(Weapon v) => v.empPerActivation;
+  static const Field<Weapon, double> _f$empPerActivation = Field(
+    'empPerActivation',
+    _$empPerActivation,
+    key: r'empperactivation',
+    mode: FieldMode.member,
+  );
+  static bool _$hasSustainedDps(Weapon v) => v.hasSustainedDps;
+  static const Field<Weapon, bool> _f$hasSustainedDps = Field(
+    'hasSustainedDps',
+    _$hasSustainedDps,
+    key: r'hassustaineddps',
+    mode: FieldMode.member,
+  );
   static List<String> _$spritesForWeapon(Weapon v) => v.spritesForWeapon;
   static const Field<Weapon, List<String>> _f$spritesForWeapon = Field(
     'spritesForWeapon',
@@ -484,6 +561,17 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #wpnFile: _f$wpnFile,
     #hintsAsSet: _f$hintsAsSet,
     #tagsAsSet: _f$tagsAsSet,
+    #isBeam: _f$isBeam,
+    #isBurstBeam: _f$isBurstBeam,
+    #burstDamage: _f$burstDamage,
+    #refireDelay: _f$refireDelay,
+    #effectiveDps: _f$effectiveDps,
+    #sustainedDps: _f$sustainedDps,
+    #fluxPerDamage: _f$fluxPerDamage,
+    #fluxPerSecond: _f$fluxPerSecond,
+    #sustainedFluxPerSecond: _f$sustainedFluxPerSecond,
+    #empPerActivation: _f$empPerActivation,
+    #hasSustainedDps: _f$hasSustainedDps,
     #spritesForWeapon: _f$spritesForWeapon,
   };
 
@@ -617,7 +705,7 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     double? energyPerSecond,
     double? chargeup,
     double? chargedown,
-    int? burstSize,
+    double? burstSize,
     double? burstDelay,
     double? minSpread,
     double? maxSpread,

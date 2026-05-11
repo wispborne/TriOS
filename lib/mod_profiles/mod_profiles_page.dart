@@ -16,6 +16,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:uuid/uuid.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/snackbar.dart';
 
 import 'mod_profile_card.dart';
@@ -153,7 +154,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                         );
                       },
                       loading: () =>
-                          const Center(child: CircularProgressIndicator()),
+                          Center(child: ThemedCircularProgressIndicator()),
                       error: (error, stackTrace) =>
                           Center(child: Text('Error: $error')),
                     ),
@@ -230,7 +231,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                           );
                         },
                         loading: () =>
-                            const Center(child: CircularProgressIndicator()),
+                            Center(child: ThemedCircularProgressIndicator()),
                         error: (error, stackTrace) =>
                             Center(child: Text('Error: $error')),
                       ),

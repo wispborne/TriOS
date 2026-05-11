@@ -13,6 +13,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/dense_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
@@ -205,7 +206,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
             data: (tips) {
               return _buildBody(tips, context);
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => Center(child: ThemedCircularProgressIndicator()),
             error: (err, st) {
               Fimber.e('Error loading tips: $err', ex: err, stacktrace: st);
               return Center(child: Text('Error: $err'));

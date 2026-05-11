@@ -31,6 +31,8 @@ import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
 import '../../widgets/restartable_app.dart';
 import '../toasts/widgets/self_update_toast.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+
 import '../../widgets/trios_expansion_tile.dart';
 import '../app_state.dart';
 import '../constants.dart';
@@ -621,7 +623,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     SizedBox(
                                       width: 24,
                                       height: 24,
-                                      child: const CircularProgressIndicator(),
+                                      child: ThemedCircularProgressIndicator(),
                                     ),
                                 ],
                               ),

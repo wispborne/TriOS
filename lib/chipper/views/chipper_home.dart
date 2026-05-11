@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 import '../../trios/drag_drop_handler.dart';
 import '../chipper_state.dart';
@@ -66,7 +67,7 @@ class DesktopDropState extends ConsumerState<DesktopDrop> {
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const CircularProgressIndicator(),
+                          ThemedCircularProgressIndicator(),
                           Container(height: 10),
                           Text(
                             [

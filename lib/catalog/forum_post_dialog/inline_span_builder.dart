@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:html/dom.dart' as dom;
 
 /// Context for inline span building, threaded through recursive calls.
@@ -593,7 +594,7 @@ class _InlineImageState extends State<_InlineImage> {
             child: SizedBox(
               width: 16,
               height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: ThemedCircularProgressIndicator(strokeWidth: 2),
             ),
           ),
         );

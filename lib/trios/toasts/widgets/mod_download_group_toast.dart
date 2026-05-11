@@ -12,6 +12,7 @@ import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 import '../../download_manager/download_manager.dart';
 import '../../download_manager/download_status.dart';
@@ -349,13 +350,11 @@ class _ModDownloadGroupToastState extends ConsumerState<ModDownloadGroupToast>
                                           : SizedBox(
                                               width: 32,
                                               height: 32,
-                                              child: CircularProgressIndicator(
+                                              child: ThemedCircularProgressIndicator(
                                                 value: percent,
                                                 strokeWidth: 3,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<Color>(
-                                                      theme.colorScheme.onSurface,
-                                                    ),
+                                                color:
+                                                    theme.colorScheme.onSurface,
                                                 ),
                                             );
                                     },

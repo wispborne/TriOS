@@ -299,6 +299,19 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         stopIndicatorColor: Colors.transparent,
         trackGap: 0,
       ),
+      scrollbarTheme: swatch.rainbowAccent
+          ? ScrollbarThemeData(
+              thumbColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.dragged)) {
+                  return swatch.primary;
+                }
+                if (states.contains(WidgetState.hovered)) {
+                  return swatch.primary.withValues(alpha: 0.7);
+                }
+                return null;
+              }),
+            )
+          : null,
     );
   }
 

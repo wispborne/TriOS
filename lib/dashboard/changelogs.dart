@@ -6,6 +6,8 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 
 import '../mod_manager/version_checker.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+
 import '../models/version_checker_info.dart';
 
 class Changelogs extends ConsumerStatefulWidget {
@@ -124,7 +126,7 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
                     return SelectableText.rich(TextSpan(children: textSpans));
                   },
                 )
-              : const Center(child: CircularProgressIndicator()),
+              : Center(child: ThemedCircularProgressIndicator()),
         ),
       ],
     );

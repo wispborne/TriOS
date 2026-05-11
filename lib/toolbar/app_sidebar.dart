@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/launcher/launcher.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
@@ -364,8 +365,10 @@ class _SidebarNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rainbow = theme.rainbowAccent;
+    final activeColor = rainbow ? TriOSThemeConstants.prideActiveColor : theme.colorScheme.primary;
     final foreground = isSelected
-        ? theme.colorScheme.primary
+        ? (rainbow ? TriOSThemeConstants.prideIndicatorColor.lighter(30) : theme.colorScheme.primary)
         : theme.colorScheme.onSurface.withValues(alpha: 0.8);
 
     final content = SizedBox(
@@ -380,10 +383,14 @@ class _SidebarNavItem extends StatelessWidget {
           child: Container(
             decoration: isSelected
                 ? BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    color: rainbow
+                        ? TriOSThemeConstants.prideIndicatorColor.withValues(alpha: 0.55)
+                        : activeColor.withValues(alpha: 0.1),
                     border: Border(
                       left: BorderSide(
-                        color: theme.colorScheme.primary,
+                        color: rainbow
+                            ? TriOSThemeConstants.prideActiveColor
+                            : theme.colorScheme.primary,
                         width: 3,
                       ),
                     ),

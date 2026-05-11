@@ -17,6 +17,7 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_context_menu.dart';
@@ -687,11 +688,11 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                   ],
                 );
               },
-              loading: () => const Center(
+              loading: () => Center(
                 child: SizedBox(
                   width: 48,
                   height: 48,
-                  child: CircularProgressIndicator(),
+                  child: ThemedCircularProgressIndicator(),
                 ),
               ),
               error: (error, stackTrace) => Text('Error: $error'),

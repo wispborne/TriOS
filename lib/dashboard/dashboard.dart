@@ -9,6 +9,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/relative_timestamp.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/text_trios.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
@@ -71,9 +72,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: TriOSExpansionTile(
-                                title: const Text(
-                                  "RAM and Game Settings",
-                                ),
+                                title: const Text("RAM and Game Settings"),
                                 leading:
                                     (ref
                                             .watch(vmparamsManagerProvider)
@@ -83,8 +82,8 @@ class _DashboardState extends ConsumerState<Dashboard>
                                     ? const Icon(
                                         Icons.warning_amber_rounded,
                                         size: 32,
-                                        color:
-                                            TriOSThemeConstants.vanillaWarningColor,
+                                        color: TriOSThemeConstants
+                                            .vanillaWarningColor,
                                       )
                                     : const Icon(Icons.speed, size: 32),
                                 subtitle: Text(
@@ -160,18 +159,23 @@ class _DashboardState extends ConsumerState<Dashboard>
                                         ],
                                       ),
                                     ),
-                                    const Spacer(),
-                                    MovingTooltipWidget.text(
-                                      message: logfile?.path ?? "",
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          "${logfile?.nameWithExtension ?? ""} • last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
-                                          style: theme.textTheme.labelSmall,
+                                    Expanded(
+                                      child: MovingTooltipWidget.text(
+                                        message: logfile?.path ?? "",
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8,
+                                            top: 4,
+                                          ),
+                                          child: TextTriOS(
+                                            "${logfile?.nameWithExtension ?? ""} •   last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
+                                            style: theme.textTheme.labelSmall,
+                                            maxLines: 1,
+                                            overflow: .ellipsis,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                    const Spacer(),
                                     Padding(
                                       padding: const EdgeInsets.only(
                                         left: 16,

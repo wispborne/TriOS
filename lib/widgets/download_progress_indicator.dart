@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 class TriOSDownloadProgressIndicator extends ConsumerStatefulWidget {
   final TriOSDownloadProgress value;
@@ -25,7 +26,7 @@ class _TriOSDownloadProgressIndicatorState
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(3),
-          child: LinearProgressIndicator(
+          child: ThemedLinearProgressIndicator(
             value: widget.value.isIndeterminate
                 ? null
                 : widget.value.progressPercent,

@@ -8,6 +8,7 @@ import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/downloader.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 /// Persists across dialog instances within the app session.
 bool _isFullScreen = false;
@@ -55,13 +56,13 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const PopScope(
+      builder: (_) => PopScope(
         canPop: false,
         child: Center(
           child: SizedBox(
             width: 48,
             height: 48,
-            child: CircularProgressIndicator(strokeWidth: 3),
+            child: ThemedCircularProgressIndicator(strokeWidth: 3),
           ),
         ),
       ),

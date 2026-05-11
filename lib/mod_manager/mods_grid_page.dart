@@ -1,11 +1,11 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/trios/constants_theme.dart';
-import 'package:trios/widgets/snackbar.dart';
 
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:google_fonts/google_fonts.dart';
@@ -33,6 +33,7 @@ import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/mod_metadata.dart';
@@ -44,26 +45,29 @@ import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
-import 'package:trios/widgets/trios_dropdown_button.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/popup_style_menu_anchor.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/widgets/refresh_mods_button.dart';
+import 'package:trios/widgets/smart_search/smart_search_bar.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
-import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'homebrew_grid/wispgrid_group.dart';
-import 'mods_grid_page_controller.dart';
 import 'homebrew_grid/wispgrid_header_row_view.dart';
+import 'mods_grid_page_controller.dart';
 
 final vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
 
@@ -180,7 +184,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               buildProfileSelector(isGameRunning),
                               Padding(
                                 padding: const .symmetric(vertical: 8),
-                                child: VerticalDivider(color: theme.dividerColor.withAlpha(150)),
+                                child: VerticalDivider(
+                                  color: theme.dividerColor.withAlpha(150),
+                                ),
                               ),
                               buildGroupBySelector(gridState),
                               const SizedBox(width: 8),
@@ -194,16 +200,29 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                 height: 30,
                                 width: 300,
                                 child: SmartSearchBar(
-                                  fields: ref.watch(modsGridSearchControllerProvider.notifier).searchFieldsMeta,
+                                  fields: ref
+                                      .watch(
+                                        modsGridSearchControllerProvider
+                                            .notifier,
+                                      )
+                                      .searchFieldsMeta,
                                   recentHistory: ref.watch(
-                                    appSettings.select((s) => s.modsSearchHistory),
+                                    appSettings.select(
+                                      (s) => s.modsSearchHistory,
+                                    ),
                                   ),
                                   initialValue: searchState.currentSearchQuery,
                                   onChanged: (query) => ref
-                                      .read(modsGridSearchControllerProvider.notifier)
+                                      .read(
+                                        modsGridSearchControllerProvider
+                                            .notifier,
+                                      )
                                       .updateSearchQuery(query),
                                   onSubmitted: () => ref
-                                      .read(modsGridSearchControllerProvider.notifier)
+                                      .read(
+                                        modsGridSearchControllerProvider
+                                            .notifier,
+                                      )
                                       .submitSearchQuery(),
                                 ),
                               ),
@@ -785,7 +804,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                         GameCompatibility.perfectMatch
                                     ? theme.textTheme.labelLarge
                                     : theme.textTheme.labelLarge?.copyWith(
-                                        color: TriOSThemeConstants.vanillaErrorColor,
+                                        color: TriOSThemeConstants
+                                            .vanillaErrorColor,
                                       ),
                               ),
                             ),
@@ -1018,7 +1038,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 }
               },
               tooltip: "",
-              borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+              borderRadius: BorderRadius.circular(
+                TriOSThemeConstants.cornerRadius,
+              ),
               initialValue: activeProfile,
               itemBuilder: (BuildContext context) =>
                   profiles?.modProfiles
@@ -1199,18 +1221,18 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final currentPrimaryKey =
         gridState.groupingSetting?.currentGroupedByKey ??
         EnabledStateModGridGroup().key;
-    final currentSecondaryKey = gridState.groupingSetting?.secondaryGroupedByKey;
-    final candidates = groups
-        .where((g) => g.key != currentPrimaryKey)
-        .toList();
+    final currentSecondaryKey =
+        gridState.groupingSetting?.secondaryGroupedByKey;
+    final candidates = groups.where((g) => g.key != currentPrimaryKey).toList();
 
     // Hide the selector entirely when "Then By" would be meaningless.
     if (groups.length <= 1 || candidates.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final currentSecondary =
-        candidates.firstWhereOrNull((g) => g.key == currentSecondaryKey);
+    final currentSecondary = candidates.firstWhereOrNull(
+      (g) => g.key == currentSecondaryKey,
+    );
 
     void updateSecondary(String? newKey) {
       ref.read(appSettings.notifier).update((state) {
@@ -1277,10 +1299,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "Then By",
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
+                Text("Then By", style: Theme.of(context).textTheme.labelMedium),
                 Text(
                   currentSecondary?.displayName ?? 'None',
                   style: Theme.of(
@@ -1764,7 +1783,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8.0,
                               ),
-                              child: LinearProgressIndicator(
+                              child: ThemedLinearProgressIndicator(
                                 value: ratio.isNaN || ratio.isInfinite
                                     ? 0
                                     : ratio,
@@ -2412,12 +2431,25 @@ class FavoriteButton extends ConsumerWidget {
                         ),
                       );
                 },
-                child: Icon(
-                  isFavorited ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorited
-                      ? Theme.of(context).colorScheme.secondary.withOpacity(0.6)
-                      : Theme.of(context).colorScheme.primary.withOpacity(0.6),
-                ),
+                child: Theme.of(context).rainbowAccent && isFavorited
+                    ? ShaderMask(
+                        shaderCallback: (bounds) => const SweepGradient(
+                          colors: rainbowColors,
+                          transform: GradientRotation(-pi / 2),
+                        ).createShader(bounds),
+                        blendMode: BlendMode.srcIn,
+                        child: const Icon(Icons.favorite),
+                      )
+                    : Icon(
+                        isFavorited ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorited
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.secondary.withOpacity(0.6)
+                            : Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.6),
+                      ),
               ),
             ),
           ),

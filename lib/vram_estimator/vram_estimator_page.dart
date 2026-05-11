@@ -22,6 +22,7 @@ import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/snackbar.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
 
 import 'charts/bar_chart.dart';
@@ -154,7 +155,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
     final vramStateProvider = ref.watch(AppState.vramEstimatorProvider);
     if (vramStateProvider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: ThemedCircularProgressIndicator());
     }
     final vramState = vramStateProvider.requireValue;
     final isScanning = vramState.isScanning;
@@ -427,7 +428,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
                         SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(
+                          child: ThemedCircularProgressIndicator(
                             strokeWidth: 2,
                             color: colorScheme.onSurface,
                           ),

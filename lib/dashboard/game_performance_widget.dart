@@ -14,6 +14,8 @@ import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/trios/constants_theme.dart';
 
 import '../vmparams/ram_changer.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+
 import '../widgets/disable_if_cannot_write_game_folder.dart';
 
 class GamePerformanceWidget extends ConsumerStatefulWidget {
@@ -352,7 +354,7 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                     "Error: $err",
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
-                  loading: () => CircularProgressIndicator(),
+                  loading: () => ThemedCircularProgressIndicator(),
                 ),
               ],
             ),

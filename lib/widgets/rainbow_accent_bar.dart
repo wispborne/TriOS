@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants_theme.dart';
 
 /// Rainbow pride colors shared across accent widgets.
@@ -11,36 +10,6 @@ const rainbowColors = [
   Color(0xFF2979FF), // Blue
   Color(0xFFAA00FF), // Violet
 ];
-
-/// A thin bar with a rainbow gradient, used as an accent for pride themes.
-class RainbowAccentBar extends StatelessWidget {
-  final Axis axis;
-  final double thickness;
-
-  const RainbowAccentBar({super.key, required this.axis, this.thickness = 4.0});
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: 0.6,
-      child: Container(
-        width: axis == Axis.vertical ? thickness : double.infinity,
-        height: axis == Axis.horizontal ? thickness : double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: rainbowColors,
-            begin: axis == Axis.vertical
-                ? Alignment.topCenter
-                : Alignment.centerLeft,
-            end: axis == Axis.vertical
-                ? Alignment.bottomCenter
-                : Alignment.centerRight,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// Wraps a child widget with a rainbow gradient border.
 class RainbowBorder extends StatelessWidget {

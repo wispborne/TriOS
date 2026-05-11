@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/vmparams/vmparams_manager.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 
 class VmparamsFileSelectorDialog extends ConsumerStatefulWidget {
@@ -102,7 +103,7 @@ class _VmparamsFileSelectorDialogState
             ),
             const SizedBox(height: 16),
             if (_isScanning)
-              const Center(child: CircularProgressIndicator())
+              Center(child: ThemedCircularProgressIndicator())
             else if (files.isEmpty)
               const Text("No vmparams-type files found in the game directory.")
             else

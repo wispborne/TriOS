@@ -14,6 +14,7 @@ import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/file_card.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 import '../chipper/views/chipper_home.dart';
 import 'constants.dart';
@@ -229,7 +230,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                         ? Colors.blue.withOpacity(0.4)
                         : Colors.transparent,
                     child: _inProgress
-                        ? const Center(child: CircularProgressIndicator())
+                        ? Center(child: ThemedCircularProgressIndicator())
                         : hoveredEvents != null
                         ? SizedBox(
                             width: double.infinity,

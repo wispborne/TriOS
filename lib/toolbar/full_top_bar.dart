@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/toolbar/app_action_buttons.dart';
@@ -10,6 +11,7 @@ import 'package:trios/toolbar/nav_order_controller.dart';
 import 'package:trios/toolbar/nav_order_entry.dart';
 import 'package:trios/toolbar/nav_reorder_menu.dart';
 import 'package:trios/toolbar/tab_button.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
@@ -259,7 +261,7 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
     final child = switch (entry) {
       NavToolEntry(:final tool) =>
         asCoreStyle
-            ? _coreTabButton(tool, isInDragMode)
+            ? _coreTabButton(tool, theme, isInDragMode)
             : _viewerIconButton(tool, theme, isInDragMode),
       NavDividerEntry() => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -284,17 +286,23 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _coreTabButton(TriOSTools tool, bool isInDragMode) {
-    return MovingTooltipWidget.text(
+  Widget _coreTabButton(TriOSTools tool, ThemeData theme, bool isInDragMode) {
+    final rainbow = theme.rainbowAccent;
+    final isSelected = currentPage == tool;
+    Widget child = MovingTooltipWidget.text(
       message: tool.tooltip,
       child: TabButton(
         text: tool.label,
         icon: tool.icon(),
-        isSelected: currentPage == tool,
-        // Suppress navigation while rearranging.
+        isSelected: isSelected,
+        selectedColor: rainbow ? TriOSThemeConstants.prideIndicatorColor.lighter(30) : null,
         onPressed: isInDragMode ? () {} : () => onTabChanged(tool),
       ),
     );
+    if (rainbow && isSelected) {
+      child = _prideSelectedDecoration(child, 4, 3);
+    }
+    return child;
   }
 
   Widget _viewerIconButton(
@@ -302,14 +310,44 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
     ThemeData theme,
     bool isInDragMode,
   ) {
-    return MovingTooltipWidget.text(
+    final rainbow = theme.rainbowAccent;
+    final isSelected = currentPage == tool;
+    final selectedColor = rainbow
+        ? TriOSThemeConstants.prideIndicatorColor.lighter(30)
+        : theme.colorScheme.primary;
+    Widget child = MovingTooltipWidget.text(
       message: tool.tooltip,
       child: IconButton(
         icon: tool.icon(),
-        selectedIcon: tool.icon(color: theme.colorScheme.primary),
-        isSelected: currentPage == tool,
+        selectedIcon: tool.icon(color: selectedColor),
+        isSelected: isSelected,
         onPressed: isInDragMode ? () {} : () => onTabChanged(tool),
       ),
+    );
+    if (rainbow && isSelected) {
+      child = _prideSelectedDecoration(child, 3, 0);
+    }
+    return child;
+  }
+
+  Widget _prideSelectedDecoration(
+    Widget child,
+    double height,
+    double bottomPadding,
+  ) {
+    return Stack(
+      children: [
+        Container(
+          color: TriOSThemeConstants.prideIndicatorColor.withValues(alpha: 0.55),
+          child: child,
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: bottomPadding,
+          child: Container(height: height, color: TriOSThemeConstants.prideActiveColor),
+        ),
+      ],
     );
   }
 }

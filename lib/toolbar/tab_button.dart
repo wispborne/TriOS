@@ -7,6 +7,7 @@ class TabButton extends StatelessWidget {
   final Widget icon;
   final double iconSize;
   final double iconSpacing;
+  final Color? selectedColor;
 
   const TabButton({
     super.key,
@@ -16,13 +17,14 @@ class TabButton extends StatelessWidget {
     required this.icon,
     this.iconSize = 24,
     this.iconSpacing = 2,
+    this.selectedColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final foregroundColor = isSelected
-        ? colors.primary
+        ? (selectedColor ?? colors.primary)
         : colors.onSurface.withOpacity(0.8);
 
     return Padding(

@@ -23,6 +23,7 @@ import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:win32_registry/win32_registry.dart';
 
@@ -162,9 +163,8 @@ class LauncherButton extends HookConsumerWidget {
                         "\nInvisible ships, zoomed-in combat,"
                         "\nand more may result.",
                         style: TextStyle(
-                          color: TriOSThemeConstants.vanillaWarningColor.withAlpha(
-                            200,
-                          ),
+                          color: TriOSThemeConstants.vanillaWarningColor
+                              .withAlpha(200),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -755,27 +755,37 @@ class StarsectorIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    final rainbow = theme.rainbowAccent;
+
+    final prideBlue = theme.colorScheme.onSurface;
+
+    final icon = Container(
       decoration: BoxDecoration(
         color: colorAnimation ?? theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
-        border: Border.all(
-          color: theme.colorScheme.primary.darker(15),
-          strokeAlign: BorderSide.strokeAlignOutside,
-          width: 2,
-        ),
+        border: rainbow
+            ? null
+            : Border.all(
+                color: theme.colorScheme.primary.darker(15),
+                strokeAlign: BorderSide.strokeAlignOutside,
+                width: 2,
+              ),
         boxShadow: [
           BoxShadow(
             blurRadius: boxShadowAnimation,
             blurStyle: BlurStyle.normal,
-            color: theme.colorScheme.primary.withOpacity(0.25),
+            color: (rainbow ? prideBlue : theme.colorScheme.primary)
+                .withOpacity(0.25),
             offset: Offset.zero,
             spreadRadius: 2,
           ),
           BoxShadow(
             blurRadius: 4,
             blurStyle: BlurStyle.normal,
-            color: Colors.black.mix(theme.colorScheme.primary, 0.5)!,
+            color: Colors.black.mix(
+              rainbow ? prideBlue : theme.colorScheme.primary,
+              0.5,
+            )!,
             offset: Offset.zero,
             spreadRadius: 1,
           ),
@@ -796,12 +806,23 @@ class StarsectorIcon extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 fontFamily: "Orbitron",
                 fontSize: fontSize ?? 22,
-                color: theme.colorScheme.primary.darker(5),
+                color: rainbow
+                    ? prideBlue
+                    : theme.colorScheme.primary.darker(5),
               ),
             ),
           ),
         ),
       ),
+    );
+
+    if (!rainbow) return icon;
+
+    return RainbowBorder(
+      borderWidth: 2,
+      borderRadius: TriOSThemeConstants.cornerRadius + 2,
+      alpha: 0.8,
+      child: icon,
     );
   }
 }

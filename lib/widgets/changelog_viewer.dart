@@ -9,6 +9,8 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 
 import '../trios/constants.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+
 import '../utils/extensions.dart';
 
 final changelogProvider = AsyncNotifierProvider<ChangelogNotifier, String>(
@@ -183,7 +185,7 @@ class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
             const SizedBox.shrink(),
         Expanded(
           child: changelogAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => Center(child: ThemedCircularProgressIndicator()),
             error: (error, _) => Center(child: Text('Error: $error')),
             data: (content) {
               var text = widget.lastestVersionToShow == null

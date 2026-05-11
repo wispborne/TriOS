@@ -30,6 +30,8 @@ import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 
 import '../main.dart';
 import '../trios/download_manager/downloader.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+
 import '../widgets/moving_tooltip.dart';
 import 'catalog_data_sources_dialog.dart';
 import 'forum_data_manager.dart';
@@ -284,6 +286,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                     catalogState.sortAscending
                                         ? Icons.arrow_upward
                                         : Icons.arrow_downward,
+                                    size: 20,
                                   ),
                                   onPressed:
                                       catalogController.toggleSortDirection,
@@ -332,11 +335,11 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                             ),
                           Expanded(
                             child: catalogState.isLoading
-                                ? const Center(
+                                ? Center(
                                     child: SizedBox(
                                       width: 64,
                                       height: 64,
-                                      child: CircularProgressIndicator(
+                                      child: ThemedCircularProgressIndicator(
                                         strokeWidth: 2,
                                         strokeCap: StrokeCap.round,
                                       ),
@@ -489,7 +492,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                                   flipX:
                                                       webLoadingProgress == 0,
                                                   child:
-                                                      CircularProgressIndicator(
+                                                      ThemedCircularProgressIndicator(
                                                         strokeWidth: 2,
                                                         value:
                                                             webLoadingProgress ==

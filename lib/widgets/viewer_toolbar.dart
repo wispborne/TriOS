@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
 /// Shared toolbar for viewer pages (Ships, Weapons, Hullmods, etc.).
@@ -57,7 +58,7 @@ class ViewerToolbar extends StatelessWidget {
                     child: SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: ThemedCircularProgressIndicator(strokeWidth: 2),
                     ),
                   ),
                 if (!isLoading)

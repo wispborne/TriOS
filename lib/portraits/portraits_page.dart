@@ -23,6 +23,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/mode_switcher.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/multi_split_mixin_view.dart';
@@ -351,11 +352,11 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     final portraitsAsync = ref.watch(AppState.portraits);
 
     final result = portraitsAsync.when(
-      loading: () => const Center(
+      loading: () => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
+            ThemedCircularProgressIndicator(),
             Padding(padding: .all(16), child: Text('Loading portraits...')),
           ],
         ),

@@ -9,6 +9,7 @@ import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/vram_estimator/widgets/vram_mod_breakdown_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 import '../models/vram_checker_models.dart';
 // ...  (Import extensions, any custom models, and util as in your existing code)
@@ -61,7 +62,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
           child: LayoutBuilder(
             builder: (context, layoutConstraints) {
               return mods.isEmpty
-                  ? const CircularProgressIndicator()
+                  ? ThemedCircularProgressIndicator()
                   : ListView.builder(
                       itemCount: mods.length,
                       itemBuilder: (context, index) {

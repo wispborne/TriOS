@@ -17,4 +17,7 @@ abstract final class TriOSThemeConstants {
     blurRadius: 7,
     offset: const Offset(0, 3),
   );
+
+  static const Color prideIndicatorColor = Color(0xFF229AC9);
+  static const Color prideActiveColor = Color(0xFFE67585);
 }

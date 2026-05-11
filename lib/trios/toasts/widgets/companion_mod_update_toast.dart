@@ -7,6 +7,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 class CompanionModUpdateToast extends ConsumerStatefulWidget {
   const CompanionModUpdateToast(this.installedVersion, this.item, {super.key});
@@ -62,10 +63,10 @@ class _CompanionModUpdateToastState
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: _isUpdating
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 24,
                                   height: 24,
-                                  child: CircularProgressIndicator(
+                                  child: ThemedCircularProgressIndicator(
                                     strokeWidth: 2,
                                   ),
                                 )

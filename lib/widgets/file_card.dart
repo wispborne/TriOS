@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/dotted_border.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 class DragDropInstallModOverlay extends StatelessWidget {
   final List<FileSystemEntity> entities;
@@ -115,7 +116,7 @@ class DragDropInstallModOverlay extends StatelessWidget {
       future: _getFileOrDirectorySize(entity),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
-          return const CircularProgressIndicator();
+          return ThemedCircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text(
             'Error: ${snapshot.error}',

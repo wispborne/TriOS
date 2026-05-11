@@ -13,6 +13,7 @@ import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Inline panel shown above the VRAM chart. While a scan is running it
@@ -81,7 +82,7 @@ class _ScanProgressPanelState extends ConsumerState<ScanProgressPanel> {
             SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(
+              child: ThemedCircularProgressIndicator(
                 strokeWidth: 2,
                 color: theme.colorScheme.primary,
               ),
@@ -127,7 +128,7 @@ class _ScanProgressPanelState extends ConsumerState<ScanProgressPanel> {
         ),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
+          child: ThemedLinearProgressIndicator(
             value: fraction,
             minHeight: 6,
             backgroundColor: theme.colorScheme.surfaceContainerHighest,
@@ -237,7 +238,7 @@ class _ActiveScanRow extends StatelessWidget {
             padding: const EdgeInsets.only(top: 2),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
+              child: ThemedLinearProgressIndicator(
                 value: hasFileProgress ? fileFraction : null,
                 minHeight: 2,
                 backgroundColor: theme.colorScheme.surfaceContainerHighest,

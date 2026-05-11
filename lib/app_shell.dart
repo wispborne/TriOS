@@ -33,7 +33,6 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/weapon_viewer/weapons_page.dart';
 import 'package:trios/widgets/lazy_indexed_stack.dart';
-import 'package:trios/widgets/rainbow_accent_bar.dart';
 
 import 'main.dart';
 import 'mod_profiles/mod_profiles_page.dart';
@@ -303,7 +302,6 @@ class _AppShellState extends ConsumerState<AppShell>
     final isSidebarCollapsed = ref.watch(
       appSettings.select((value) => value.isSidebarCollapsed),
     );
-    final rainbowAccent = context.theme.rainbowAccent;
 
     return Row(
       children: [
@@ -311,14 +309,13 @@ class _AppShellState extends ConsumerState<AppShell>
           currentPage: _currentPage,
           onTabChanged: _changeTab,
           isCollapsed: isSidebarCollapsed,
-          showBorder: !rainbowAccent,
+          showBorder: !context.theme.rainbowAccent,
           onToggleCollapsed: () => ref
               .read(appSettings.notifier)
               .update(
                 (s) => s.copyWith(isSidebarCollapsed: !isSidebarCollapsed),
               ),
         ),
-        if (rainbowAccent) RainbowAccentBar(axis: Axis.vertical),
         Expanded(
           child: Scaffold(
             appBar: CompactTopBar(
@@ -333,22 +330,13 @@ class _AppShellState extends ConsumerState<AppShell>
 
   /// Top toolbar layout (old UI).
   Widget _buildTopToolbarLayout(BuildContext context, Widget body) {
-    final rainbowAccent = context.theme.rainbowAccent;
-
     return Scaffold(
       appBar: FullTopBar(
         currentPage: _currentPage,
         onTabChanged: _changeTab,
         scrollController: rightToolbarScrollController,
       ),
-      body: rainbowAccent
-          ? Column(
-              children: [
-                RainbowAccentBar(axis: Axis.horizontal),
-                Expanded(child: body),
-              ],
-            )
-          : body,
+      body: body,
     );
   }
 }

@@ -14,6 +14,7 @@ import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/toasts/toast_countdown_mixin.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -667,7 +668,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
                                 ],
                               ),
                             ),
-                            LinearProgressIndicator(
+                            ThemedLinearProgressIndicator(
                               value: ((timeTotal - timeElapsed) / timeTotal)
                                   .clamp(0.0, 1.0),
                               minHeight: 3,

@@ -128,7 +128,11 @@
       "Bash(cd \"C:\\\\Program Files \\(x86\\)\\\\Fractal Softworks\\\\Starsector\\\\starsector-core\\\\decompiled_obf\" && find . -type f -name \"*.java\" | head -20)",
       "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\" -Directory)",
       "Bash(Select-Object Name)",
-      "Bash(move \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\unify-mods-smart-search\" \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-11-unify-mods-smart-search\")"
+      "Bash(move \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\unify-mods-smart-search\" \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-11-unify-mods-smart-search\")",
+      "PowerShell(flutter analyze 2>&1)",
+      "PowerShell(flutter analyze 2>&1 | Where-Object { $_ -match \"error\" -and $_ -notmatch \"onError\" -and $_ -notmatch \"errorC\" } | Select-Object -First 20)",
+      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\" -Recurse -Filter \"*tab_button*\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -Last 30)"
     ]
   }
 }

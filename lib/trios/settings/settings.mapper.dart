@@ -954,6 +954,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: const [],
   );
+  static List<String> _$modsSearchHistory(Settings v) => v.modsSearchHistory;
+  static const Field<Settings, List<String>> _f$modsSearchHistory = Field(
+    'modsSearchHistory',
+    _$modsSearchHistory,
+    opt: true,
+    def: const [],
+  );
   static VramSelectorId _$vramEstimatorSelectorId(Settings v) =>
       v.vramEstimatorSelectorId;
   static const Field<Settings, VramSelectorId> _f$vramEstimatorSelectorId =
@@ -1064,6 +1071,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #weaponsSearchHistory: _f$weaponsSearchHistory,
     #shipsSearchHistory: _f$shipsSearchHistory,
     #hullmodsSearchHistory: _f$hullmodsSearchHistory,
+    #modsSearchHistory: _f$modsSearchHistory,
     #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
     #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
     #vramEstimatorMultithreaded: _f$vramEstimatorMultithreaded,
@@ -1162,6 +1170,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       weaponsSearchHistory: data.dec(_f$weaponsSearchHistory),
       shipsSearchHistory: data.dec(_f$shipsSearchHistory),
       hullmodsSearchHistory: data.dec(_f$hullmodsSearchHistory),
+      modsSearchHistory: data.dec(_f$modsSearchHistory),
       vramEstimatorSelectorId: data.dec(_f$vramEstimatorSelectorId),
       referencedAssetsSelectorConfig: data.dec(
         _f$referencedAssetsSelectorConfig,
@@ -1283,6 +1292,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
   get shipsSearchHistory;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get hullmodsSearchHistory;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get modsSearchHistory;
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1369,6 +1380,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
     List<String>? hullmodsSearchHistory,
+    List<String>? modsSearchHistory,
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
@@ -1501,6 +1513,13 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(hullmodsSearchHistory: v),
   );
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get modsSearchHistory => ListCopyWith(
+    $value.modsSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(modsSearchHistory: v),
+  );
+  @override
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1591,6 +1610,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
     List<String>? hullmodsSearchHistory,
+    List<String>? modsSearchHistory,
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
@@ -1712,6 +1732,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (shipsSearchHistory != null) #shipsSearchHistory: shipsSearchHistory,
       if (hullmodsSearchHistory != null)
         #hullmodsSearchHistory: hullmodsSearchHistory,
+      if (modsSearchHistory != null) #modsSearchHistory: modsSearchHistory,
       if (vramEstimatorSelectorId != null)
         #vramEstimatorSelectorId: vramEstimatorSelectorId,
       if (referencedAssetsSelectorConfig != null)
@@ -1959,6 +1980,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     hullmodsSearchHistory: data.get(
       #hullmodsSearchHistory,
       or: $value.hullmodsSearchHistory,
+    ),
+    modsSearchHistory: data.get(
+      #modsSearchHistory,
+      or: $value.modsSearchHistory,
     ),
     vramEstimatorSelectorId: data.get(
       #vramEstimatorSelectorId,

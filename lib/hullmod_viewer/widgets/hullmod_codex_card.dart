@@ -16,7 +16,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 class HullmodCodexCard {
   HullmodCodexCard._();
 
-  static const _maxWidth = 450.0;
+  static const _maxWidth = 300.0;
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows hullmod stats on hover.
   static Widget tooltip({

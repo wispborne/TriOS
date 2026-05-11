@@ -816,7 +816,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       builder: (ctx) => AlertDialog(
         title: const Text('Search Field Reference'),
         content: SizedBox(
-          width: 440,
+          width: 460,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -854,37 +854,42 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            spacing: 8,
-            children: [
-              SelectableText(
-                f.key,
-                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'monospace',
+      child: SelectionArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              spacing: 8,
+              crossAxisAlignment: .baseline,
+              textBaseline: .alphabetic,
+              children: [
+                Text(
+                  f.key,
+                  style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'monospace',
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Text(
-                  f.description,
-                  style: Theme.of(ctx).textTheme.bodySmall,
+                Expanded(
+                  child: Text(
+                    f.description,
+                    style: Theme.of(ctx).textTheme.labelMedium,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Text(
-            ops,
-            style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-              color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-              fontFamily: 'monospace',
+              ],
             ),
-          ),
-          const Divider(height: 8),
-        ],
+            Text(
+              ops,
+              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                color: Theme.of(
+                  ctx,
+                ).colorScheme.onSurfaceVariant.withAlpha(150),
+                fontFamily: 'monospace',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -939,9 +944,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ..._buildPillsAndTextField(theme),
-                              ],
+                              children: [..._buildPillsAndTextField(theme)],
                             ),
                           ),
                         ),

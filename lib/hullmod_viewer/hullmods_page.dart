@@ -34,6 +34,8 @@ import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'package:trios/widgets/viewer_split_pane.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
 
+final _nonAlphanumeric = RegExp(r'[^0-9a-zA-Z]');
+
 class HullmodsPage extends ConsumerStatefulWidget {
   const HullmodsPage({super.key});
 
@@ -155,7 +157,6 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
           appSettings.select((s) => s.hullmodsSearchHistory),
         ),
         initialValue: controllerState.currentSearchQuery,
-        hintText: "Filter hullmods...",
         onChanged: (query) => ref
             .read(hullmodsPageControllerProvider.notifier)
             .updateSearchQuery(query),
@@ -457,12 +458,12 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         key: 'name',
         isSortable: true,
         name: 'Name',
-        getSortValue: (h) => h.name ?? h.id,
+        getSortValue: (h) => (h.name ?? h.id).replaceAll(_nonAlphanumeric, ''),
         itemCellBuilder: (item, _) => HullmodCodexCard.tooltip(
           hullmod: item,
           child: MouseRegion(
             cursor: SystemMouseCursors.none,
-            child: TextTriOS(
+            child: Text(
               item.name ?? item.id,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

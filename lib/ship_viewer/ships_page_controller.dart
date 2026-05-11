@@ -257,6 +257,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
               SpoilerLevel.showSlightSpoilers => Icons.visibility,
               SpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
             },
+            inactiveValue: SpoilerLevel.showAllSpoilers,
           ),
         ],
       ),

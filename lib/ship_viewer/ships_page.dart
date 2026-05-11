@@ -36,6 +36,8 @@ import '../trios/navigation.dart';
 import '../widgets/multi_split_mixin_view.dart';
 import 'widgets/ship_blueprint_view.dart';
 
+final _nonAlphanumeric = RegExp(r'[^0-9a-zA-Z]');
+
 class ShipsPage extends ConsumerStatefulWidget {
   const ShipsPage({super.key});
 
@@ -149,7 +151,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           appSettings.select((s) => s.shipsSearchHistory),
         ),
         initialValue: controllerState.currentSearchQuery,
-        hintText: "Filter ships...",
         onChanged: (query) => ref
             .read(shipsPageControllerProvider.notifier)
             .updateSearchQuery(query),
@@ -254,43 +255,46 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
   ) {
     final gridState = ref.watch(appSettings.select((s) => s.shipsGridState));
 
-    return WispGrid<Ship>(
-      gridState: gridState,
-      updateGridState: (updateFn) {
-        ref.read(appSettings.notifier).update((state) {
-          // I'm not a hack you're a hack
-          return state.copyWith(
-            shipsGridState:
-                updateFn(state.shipsGridState) ?? Settings().shipsGridState,
-          );
-        });
-      },
-      onLoaded: (controller) {
-        _gridController = controller;
-      },
-      columns: columns,
-      items: items,
-      itemExtent: 48,
-      scrollbarConfig: ScrollbarConfig(
-        showLeftScrollbar: ScrollbarVisibility.always,
-        showRightScrollbar: ScrollbarVisibility.always,
-        showBottomScrollbar: ScrollbarVisibility.always,
-      ),
-      rowBuilder: ({required item, required modifiers, required child}) =>
-          Padding(
-            padding: const .only(top: 4),
-            child: SizedBox(
-              height: 40,
-              child: InkWell(
-                onTap: () => _showShipDetailsDialog(context, item),
-                child: Container(
-                  color: Colors.transparent,
-                  child: buildRowContextMenu(item, child),
+    return DefaultTextStyle.merge(
+      style: theme.textTheme.labelLarge!.copyWith(fontSize: 14),
+      child: WispGrid<Ship>(
+        gridState: gridState,
+        updateGridState: (updateFn) {
+          ref.read(appSettings.notifier).update((state) {
+            // I'm not a hack you're a hack
+            return state.copyWith(
+              shipsGridState:
+                  updateFn(state.shipsGridState) ?? Settings().shipsGridState,
+            );
+          });
+        },
+        onLoaded: (controller) {
+          _gridController = controller;
+        },
+        columns: columns,
+        items: items,
+        itemExtent: 48,
+        scrollbarConfig: ScrollbarConfig(
+          showLeftScrollbar: ScrollbarVisibility.always,
+          showRightScrollbar: ScrollbarVisibility.always,
+          showBottomScrollbar: ScrollbarVisibility.always,
+        ),
+        rowBuilder: ({required item, required modifiers, required child}) =>
+            Padding(
+              padding: const .only(top: 4),
+              child: SizedBox(
+                height: 40,
+                child: InkWell(
+                  onTap: () => _showShipDetailsDialog(context, item),
+                  child: Container(
+                    color: Colors.transparent,
+                    child: buildRowContextMenu(item, child),
+                  ),
                 ),
               ),
             ),
-          ),
-      groups: [UngroupedShipGridGroup(), ModShipGridGroup()],
+        groups: [UngroupedShipGridGroup(), ModShipGridGroup()],
+      ),
     );
   }
 
@@ -415,7 +419,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         key: 'hullName',
         isSortable: true,
         name: 'Name',
-        getSortValue: (ship) => ship.hullNameForDisplay(),
+        getSortValue: (ship) => ship.hullNameForDisplay().replaceAll(_nonAlphanumeric, ''),
         itemCellBuilder: (item, _) => Row(
           children: [
             Flexible(

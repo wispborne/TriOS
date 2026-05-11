@@ -164,6 +164,7 @@ class Settings with SettingsMappable {
   final List<String> weaponsSearchHistory;
   final List<String> shipsSearchHistory;
   final List<String> hullmodsSearchHistory;
+  final List<String> modsSearchHistory;
 
   /// Unknown ids fall back to folder-scan.
   final VramSelectorId vramEstimatorSelectorId;
@@ -270,6 +271,7 @@ class Settings with SettingsMappable {
     this.weaponsSearchHistory = const [],
     this.shipsSearchHistory = const [],
     this.hullmodsSearchHistory = const [],
+    this.modsSearchHistory = const [],
     this.vramEstimatorSelectorId = VramSelectorId.referenced,
     this.referencedAssetsSelectorConfig =
         ReferencedAssetsSelectorConfig.allEnabled,

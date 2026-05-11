@@ -60,12 +60,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
-import '../utils/mod_search.dart';
-import 'filter_mods_search_view.dart';
+import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'homebrew_grid/wispgrid_group.dart';
+import 'mods_grid_page_controller.dart';
 import 'homebrew_grid/wispgrid_header_row_view.dart';
 
-final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
 final vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
 
 class ModsGridPage extends ConsumerStatefulWidget {
@@ -80,7 +79,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
   @override
   bool get wantKeepAlive => true;
   Mod? selectedMod;
-  final _searchController = SearchController();
   AnimationController? animationController;
   List<Mod> filteredMods = [];
   WispGridController<Mod>? controller;
@@ -105,8 +103,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     // (e.g. drag-and-drop between category groups, context menu reassignment).
     ref.watch(categoryManagerProvider);
 
-    final query = _searchController.value.text;
-    final modsMatchingSearch = searchMods(allMods, query) ?? [];
+    final searchState = ref.watch(modsGridSearchControllerProvider);
+    final modsMatchingSearch = searchState.filteredMods;
     final modsMetadata = ref.watch(AppState.modsMetadata).value;
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final modsGridUpdateVisibility = ref.watch(
@@ -195,10 +193,18 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               SizedBox(
                                 height: 30,
                                 width: 300,
-                                child: FilterModsSearchBar(
-                                  searchController: _searchController,
-                                  query: ref.watch(modsGridSearchQuery),
-                                  ref: ref,
+                                child: SmartSearchBar(
+                                  fields: ref.watch(modsGridSearchControllerProvider.notifier).searchFieldsMeta,
+                                  recentHistory: ref.watch(
+                                    appSettings.select((s) => s.modsSearchHistory),
+                                  ),
+                                  initialValue: searchState.currentSearchQuery,
+                                  onChanged: (query) => ref
+                                      .read(modsGridSearchControllerProvider.notifier)
+                                      .updateSearchQuery(query),
+                                  onSubmitted: () => ref
+                                      .read(modsGridSearchControllerProvider.notifier)
+                                      .submitSearchQuery(),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -2171,7 +2177,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             ?.getMergedModMetadata(mod.id)
             ?.color;
 
-        final nameText = TextTriOS(
+        final nameText = Text(
           bestVersion.modInfo.name ?? "(no name)",
           style: GoogleFonts.roboto(
             textStyle: theme.textTheme.labelLarge?.copyWith(

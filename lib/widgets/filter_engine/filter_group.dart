@@ -272,6 +272,12 @@ class EnumField<T, E extends Enum> extends FilterField<T> {
 
   final bool alwaysActive;
 
+  /// When set, the filter is considered "inactive" when [selected] equals this
+  /// value instead of [defaultValue]. Useful when the initial selection should
+  /// still count as an active filter (e.g. "No spoilers" hides content by
+  /// default, so the user should see it flagged).
+  final E? inactiveValue;
+
   E selected;
 
   EnumField({
@@ -285,10 +291,11 @@ class EnumField<T, E extends Enum> extends FilterField<T> {
     this.optionTooltip,
     this.optionIcon,
     this.alwaysActive = false,
+    this.inactiveValue,
   }) : selected = defaultValue;
 
   @override
-  bool get isActive => alwaysActive || selected != defaultValue;
+  bool get isActive => alwaysActive || selected != (inactiveValue ?? defaultValue);
 
   @override
   bool matches(T item) => predicate(item, selected);

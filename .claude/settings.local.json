@@ -125,7 +125,10 @@
       "Bash(Select-String -Pattern \"\\(All tests|tests passed|Some tests|FAILED|Error\\)\")",
       "Bash(Select-Object -Last 5)",
       "mcp__idea__search_in_files_by_text",
-      "Bash(cd \"C:\\\\Program Files \\(x86\\)\\\\Fractal Softworks\\\\Starsector\\\\starsector-core\\\\decompiled_obf\" && find . -type f -name \"*.java\" | head -20)"
+      "Bash(cd \"C:\\\\Program Files \\(x86\\)\\\\Fractal Softworks\\\\Starsector\\\\starsector-core\\\\decompiled_obf\" && find . -type f -name \"*.java\" | head -20)",
+      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(move \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\unify-mods-smart-search\" \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-11-unify-mods-smart-search\")"
     ]
   }
 }

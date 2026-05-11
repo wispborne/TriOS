@@ -178,6 +178,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
               HullmodSpoilerLevel.noSpoilers => Icons.visibility_off,
               HullmodSpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
             },
+            inactiveValue: HullmodSpoilerLevel.showAllSpoilers,
           ),
         ],
       ),

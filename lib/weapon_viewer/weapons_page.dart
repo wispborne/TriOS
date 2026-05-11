@@ -37,6 +37,8 @@ import 'package:trios/widgets/viewer_toolbar.dart';
 import '../trios/navigation.dart';
 import '../widgets/multi_split_mixin_view.dart';
 
+final _nonAlphanumeric = RegExp(r'[^0-9a-zA-Z]');
+
 class WeaponsPage extends ConsumerStatefulWidget {
   const WeaponsPage({super.key});
 
@@ -748,7 +750,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         key: 'name',
         isSortable: true,
         name: 'Name',
-        getSortValue: (w) => w.name ?? w.id,
+        getSortValue: (w) => (w.name ?? w.id).replaceAll(_nonAlphanumeric, ''),
         itemCellBuilder: (w, _) => WeaponCodexCard.tooltip(
           weapon: w,
           child: MouseRegion(

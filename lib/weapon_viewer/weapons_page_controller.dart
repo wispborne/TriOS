@@ -184,7 +184,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
               WeaponSpoilerLevel.noSpoilers => Icons.visibility_off,
               WeaponSpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
             },
-            alwaysActive: true,
+            inactiveValue: WeaponSpoilerLevel.showAllSpoilers,
           ),
         ],
       ),

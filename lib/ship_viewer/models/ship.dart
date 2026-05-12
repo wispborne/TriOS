@@ -246,6 +246,26 @@ class Ship with ShipMappable implements WispGridItem {
   late final int mountableWeaponSlotCount =
       weaponSlots?.where((s) => s.isMountable).length ?? 0;
 
+  late final Map<(String, String), int> _mountableSlotCounts = () {
+    final counts = <(String, String), int>{};
+    for (final s in weaponSlots ?? <ShipWeaponSlot>[]) {
+      if (!s.isMountable) continue;
+      final key = (s.typeUppercase, s.sizeUppercase);
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }();
+
+  int countMountableSlots({String? type, String? size}) {
+    int count = 0;
+    for (final entry in _mountableSlotCounts.entries) {
+      if (type != null && entry.key.$1 != type) continue;
+      if (size != null && entry.key.$2 != size) continue;
+      count += entry.value;
+    }
+    return count;
+  }
+
   /// Whether this hull is a station (orbital station, battlestation, etc.).
   late final bool isStation = hints?.contains('STATION') ?? false;
 

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:text_search/text_search.dart';
 import 'package:trios/widgets/filter_pill.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/smart_search/search_dsl_field.dart';
@@ -540,21 +541,39 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       final negPrefix = negated ? '-' : '';
       final queryPart = negated ? currentToken.substring(1) : currentToken;
       final query = queryPart.toLowerCase();
-      suggestions = widget.fields
-          .where(
-            (f) =>
-                (query.isEmpty || f.key.contains(query)) &&
-                (!negated || f.supportsNegation),
-          )
-          .map(
-            (f) => _Suggestion(
-              kind: _SuggestionKind.fieldName,
-              label: negated ? '-${f.key}' : f.key,
-              subtitle: f.description,
-              insertText: '$negPrefix${f.key}:',
-            ),
-          )
-          .toList();
+      if (query.isEmpty) {
+        suggestions = widget.fields
+            .where((f) => !negated || f.supportsNegation)
+            .map(
+              (f) => _Suggestion(
+                kind: _SuggestionKind.fieldName,
+                label: negated ? '-${f.key}' : f.key,
+                subtitle: f.description,
+                insertText: '$negPrefix${f.key}:',
+              ),
+            )
+            .toList();
+      } else {
+        final candidates = widget.fields
+            .where((f) => !negated || f.supportsNegation)
+            .toList();
+        final search = TextSearch(
+          candidates
+              .map((f) => TextSearchItem(f, [TextSearchItemTerm(f.key)]))
+              .toList(),
+        );
+        suggestions = search
+            .search(query)
+            .map(
+              (r) => _Suggestion(
+                kind: _SuggestionKind.fieldName,
+                label: negated ? '-${r.object.key}' : r.object.key,
+                subtitle: r.object.description,
+                insertText: '$negPrefix${r.object.key}:',
+              ),
+            )
+            .toList();
+      }
     } else {
       final colonIdx = currentToken.indexOf(':');
       var fieldKey = currentToken.substring(0, colonIdx);
@@ -571,20 +590,35 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       final field = _fieldsByKey[fieldKey];
       if (field != null && (!negated || field.supportsNegation)) {
         final values = field.valueSuggestions();
-        suggestions = values
-            .where(
-              (v) =>
-                  valuePrefix.isEmpty || v.toLowerCase().contains(valuePrefix),
-            )
-            .map(
-              (v) => _Suggestion(
-                kind: _SuggestionKind.fieldValue,
-                label: v,
-                insertText:
-                    '$negPrefix$fieldKey:$opPart${v.contains(' ') ? '"$v"' : v}',
-              ),
-            )
-            .toList();
+        if (valuePrefix.isEmpty) {
+          suggestions = values
+              .map(
+                (v) => _Suggestion(
+                  kind: _SuggestionKind.fieldValue,
+                  label: v,
+                  insertText:
+                      '$negPrefix$fieldKey:$opPart${v.contains(' ') ? '"$v"' : v}',
+                ),
+              )
+              .toList();
+        } else {
+          final search = TextSearch(
+            values
+                .map((v) => TextSearchItem(v, [TextSearchItemTerm(v)]))
+                .toList(),
+          );
+          suggestions = search
+              .search(valuePrefix)
+              .map(
+                (r) => _Suggestion(
+                  kind: _SuggestionKind.fieldValue,
+                  label: r.object,
+                  insertText:
+                      '$negPrefix$fieldKey:$opPart${r.object.contains(' ') ? '"${r.object}"' : r.object}',
+                ),
+              )
+              .toList();
+        }
       } else {
         suggestions = [];
       }

@@ -69,7 +69,10 @@ class ShipsPageState with ShipsPageStateMappable {
 
   /// Returns the display name for a ship by its ID, or the ID itself if not found.
   String hullNameById(String id) =>
-      allShips.where((s) => s.id == id).firstOrNull?.hullNameForDisplay() ?? id;
+      allShips
+          .where((s) => s.id == id)
+          .firstOrNull
+          ?.hullNameForDisplay() ?? id;
 }
 
 @MappableClass()
@@ -133,11 +136,9 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   /// inputs has a different identity than the last call. Riverpod's
   /// providers return the same list/map instance until the underlying data
   /// actually changes, so `identical` is the right equality here.
-  Set<String> _computeShipsWithModuleIdsMemo(
-    List<Ship> allShips,
-    Map<String, ShipVariant> moduleVariants,
-    Map<String, String> variantHullIdMap,
-  ) {
+  Set<String> _computeShipsWithModuleIdsMemo(List<Ship> allShips,
+      Map<String, ShipVariant> moduleVariants,
+      Map<String, String> variantHullIdMap,) {
     final cached = _cachedShipsWithModuleIds;
     if (cached != null &&
         identical(_lastShips, allShips) &&
@@ -200,30 +201,32 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     _filters.applyPendingChipMerge(allShips);
 
     // Initialize saved settings (non-filter UI).
-    final saved = ref.read(appSettings).shipsPageState;
+    final saved = ref
+        .read(appSettings)
+        .shipsPageState;
 
     Map<String, List<String>> shipSearchIndices = _updateSearchIndices(
       allShips,
     );
 
     final initialState =
-        (stateOrNull ??
-                ShipsPageState(
-                  persisted: ShipsPageStatePersisted(
-                    splitPane: saved?.splitPane ?? false,
-                    showFilters: saved?.showFilters ?? false,
-                    useContainFit: saved?.useContainFit ?? false,
-                  ),
-                ))
-            .copyWith(
-              shipSystemsMap: shipSystemsMap,
-              weaponsMap: weaponsMap,
-              hullmodsMap: hullmodsMap,
-              shipsWithModuleIds: shipsWithModuleIds,
-              allShips: allShips,
-              shipSearchIndices: shipSearchIndices,
-              isLoading: isLoadingShips,
-            );
+    (stateOrNull ??
+        ShipsPageState(
+          persisted: ShipsPageStatePersisted(
+            splitPane: saved?.splitPane ?? false,
+            showFilters: saved?.showFilters ?? false,
+            useContainFit: saved?.useContainFit ?? false,
+          ),
+        ))
+        .copyWith(
+      shipSystemsMap: shipSystemsMap,
+      weaponsMap: weaponsMap,
+      hullmodsMap: hullmodsMap,
+      shipsWithModuleIds: shipsWithModuleIds,
+      allShips: allShips,
+      shipSearchIndices: shipSearchIndices,
+      isLoading: isLoadingShips,
+    );
 
     return _processAllFilters(initialState, mods);
   }
@@ -241,7 +244,9 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             predicate: (ship) {
               final mods = ref.read(AppState.mods);
               return ship.modVariant == null ||
-                  ship.modVariant?.mod(mods)?.hasEnabledVariant == true;
+                  ship.modVariant
+                      ?.mod(mods)
+                      ?.hasEnabledVariant == true;
             },
           ),
           EnumField<Ship, SpoilerLevel>(
@@ -252,7 +257,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             predicate: _spoilerMatches,
             optionLabel: _spoilerLabel,
             optionTooltip: _spoilerTooltip,
-            optionIcon: (e) => switch (e) {
+            optionIcon: (e) =>
+            switch (e) {
               SpoilerLevel.showNone => Icons.visibility_off,
               SpoilerLevel.showSlightSpoilers => Icons.visibility,
               SpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
@@ -265,7 +271,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         id: 'type',
         name: 'Type',
         valueGetter: (ship) => ship.isSkin ? 'Skin' : 'Base Hull',
-        valuesGetter: (ship) => [
+        valuesGetter: (ship) =>
+        [
           ship.isSkin ? 'Skin' : 'Base Hull',
           if (stateOrNull?.shipsWithModuleIds.contains(ship.id) ?? false)
             'Has Modules',
@@ -275,7 +282,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         id: 'hullSize',
         name: 'Hull Size',
         valueGetter: (ship) =>
-            ship.isStation ? 'Station' : ship.hullSizeForDisplay(),
+        ship.isStation ? 'Station' : ship.hullSizeForDisplay(),
         useDefaultSort: true,
       ),
       ChipFilterGroup<Ship>(
@@ -283,11 +290,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         name: 'Weapon Slot Type',
         valueGetter: (ship) => '',
         valuesGetter: (ship) =>
-            ship.weaponSlots
-                ?.where((s) => s.isMountable)
-                .map((s) => s.typeUppercase)
-                .toSet()
-                .toList() ??
+        ship.weaponSlots
+            ?.where((s) => s.isMountable)
+            .map((s) => s.typeUppercase)
+            .toSet()
+            .toList() ??
             [],
         displayNameGetter: (value) => value.toTitleCase(),
       ),
@@ -296,11 +303,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         name: 'Weapon Size',
         valueGetter: (ship) => '',
         valuesGetter: (ship) =>
-            ship.weaponSlots
-                ?.where((s) => s.isMountable)
-                .map((s) => s.sizeUppercase)
-                .toSet()
-                .toList() ??
+        ship.weaponSlots
+            ?.where((s) => s.isMountable)
+            .map((s) => s.sizeUppercase)
+            .toSet()
+            .toList() ??
             [],
         displayNameGetter: (value) => value.toTitleCase(),
         sortComparator: (a, b) {
@@ -313,11 +320,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         name: 'Mount Type',
         valueGetter: (ship) => '',
         valuesGetter: (ship) =>
-            ship.weaponSlots
-                ?.where((s) => s.isMountable)
-                .map((s) => s.mount.toUpperCase())
-                .toSet()
-                .toList() ??
+        ship.weaponSlots
+            ?.where((s) => s.isMountable)
+            .map((s) => s.mount.toUpperCase())
+            .toSet()
+            .toList() ??
             [],
         displayNameGetter: (value) => value.toTitleCase(),
       ),
@@ -332,7 +339,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         name: 'Mod',
         collapsedByDefault: true,
         valueGetter: (ship) => ship.modVariant?.modInfo.nameOrId ?? vanillaName,
-        sortComparator: (a, b) => a == vanillaName
+        sortComparator: (a, b) =>
+        a == vanillaName
             ? -1
             : b == vanillaName
             ? 1
@@ -344,7 +352,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         collapsedByDefault: true,
         valueGetter: (ship) => ship.systemId ?? '',
         displayNameGetter: (value) =>
-            stateOrNull?.shipSystemsMap[value]?.name ?? value,
+        stateOrNull?.shipSystemsMap[value]?.name ?? value,
       ),
       ChipFilterGroup<Ship>(
         id: 'defenseId',
@@ -352,7 +360,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         collapsedByDefault: true,
         valueGetter: (ship) => ship.defenseId ?? '',
         displayNameGetter: (value) =>
-            stateOrNull?.shipSystemsMap[value]?.name ?? value,
+        stateOrNull?.shipSystemsMap[value]?.name ?? value,
       ),
       ChipFilterGroup<Ship>(
         id: 'techManufacturer',
@@ -383,33 +391,36 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     return !hidden && !isSlightSpoiler && !isSpoiler;
   }
 
-  String _spoilerLabel(SpoilerLevel e) => switch (e) {
-    SpoilerLevel.showNone => 'No Spoilers',
-    SpoilerLevel.showSlightSpoilers => 'Show slight spoilers',
-    SpoilerLevel.showAllSpoilers => 'Show all spoilers',
-  };
+  String _spoilerLabel(SpoilerLevel e) =>
+      switch (e) {
+        SpoilerLevel.showNone => 'No Spoilers',
+        SpoilerLevel.showSlightSpoilers => 'Show slight spoilers',
+        SpoilerLevel.showAllSpoilers => 'Show all spoilers',
+      };
 
-  String _spoilerTooltip(SpoilerLevel e) => switch (e) {
-    SpoilerLevel.showNone => 'No spoilers shown at all.',
-    SpoilerLevel.showSlightSpoilers => 'Shows CODEX_UNLOCKABLE ships.',
-    SpoilerLevel.showAllSpoilers =>
-      'Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships',
-  };
+  String _spoilerTooltip(SpoilerLevel e) =>
+      switch (e) {
+        SpoilerLevel.showNone => 'No spoilers shown at all.',
+        SpoilerLevel.showSlightSpoilers => 'Shows CODEX_UNLOCKABLE ships.',
+        SpoilerLevel.showAllSpoilers =>
+        'Show all spoilers, including HIDE_IN_CODEX and certain ultra-redacted vanilla tagged ships',
+      };
 
   void _persistState(ShipsPageState newState) {
     try {
       ref
           .read(appSettings.notifier)
           .update(
-            (s) => s.copyWith(
+            (s) =>
+            s.copyWith(
               shipsPageState: (s.shipsPageState ?? ShipsPageStatePersisted())
                   .copyWith(
-                    splitPane: newState.splitPane,
-                    showFilters: newState.showFilters,
-                    useContainFit: newState.useContainFit,
-                  ),
+                splitPane: newState.splitPane,
+                showFilters: newState.showFilters,
+                useContainFit: newState.useContainFit,
+              ),
             ),
-          );
+      );
     } catch (e, stackTrace) {
       Fimber.w(
         "Failed to persist ships page state",
@@ -423,15 +434,13 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     return updateSearchIndices(
       allShips,
       stateOrNull?.shipSearchIndices ?? {},
-      (s) => s.id,
-      (s) => s.toMap(),
+          (s) => s.id,
+          (s) => s.toMap(),
     );
   }
 
-  ShipsPageState _processAllFilters(
-    ShipsPageState currentState,
-    List<Mod> mods,
-  ) {
+  ShipsPageState _processAllFilters(ShipsPageState currentState,
+      List<Mod> mods,) {
     var ships = _filters.applyNonChipFilters(currentState.allShips);
 
     final shipsBeforeGridFilter = ships.toList();
@@ -495,7 +504,10 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   int get activeFilterCount => _filters.activeCount;
 
   Directory getGameCoreDir() {
-    return Directory(ref.read(AppState.gameCoreFolder).value?.path ?? '');
+    return Directory(ref
+        .read(AppState.gameCoreFolder)
+        .value
+        ?.path ?? '');
   }
 
   void clearAllFilters() {
@@ -520,17 +532,15 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     state = _processAllFilters(state, mods);
   }
 
-  List<Ship> _applyParsedQuery(
-    List<Ship> ships,
-    String query,
-    Map<String, List<String>> shipValuesByShipId,
-  ) {
+  List<Ship> _applyParsedQuery(List<Ship> ships,
+      String query,
+      Map<String, List<String>> shipValuesByShipId,) {
     return SearchField.applyQuery(
       ships,
       query,
       _fieldsByKey,
       shipValuesByShipId,
-      (s) => s.id,
+          (s) => s.id,
     );
   }
 
@@ -546,16 +556,23 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   List<SearchField<Ship>> _buildSearchFields() {
     return [
       // String fields
-      SearchField.string('size', 'Hull size (frigate, destroyer, cruiser, capital_ship)', (s) => s.hullSize),
-      SearchField.string('shield', 'Shield type (FRONT, OMNI, PHASE, NONE)', (s) => s.shieldType),
+      SearchField.string(
+          'size', 'Hull size (frigate, destroyer, cruiser, capital_ship)', (
+          s) => s.hullSize),
+      SearchField.string(
+          'shield', 'Shield type (FRONT, OMNI, PHASE, NONE)', (s) =>
+      s
+          .shieldType),
       SearchField.string('system', 'Ship system ID', (s) => s.systemId),
       SearchField.string('defense', 'Defense system ID', (s) => s.defenseId),
-      SearchField.string('manufacturer', 'Tech/manufacturer', (s) => s.techManufacturer),
+      SearchField.string(
+          'manufacturer', 'Tech/manufacturer', (s) => s.techManufacturer),
       SearchField.string('style', 'Visual style', (s) => s.style),
       SearchField<Ship>(
         key: 'mod',
         description: 'Mod name substring match',
-        valueSuggestions: (ships) => ships
+        valueSuggestions: (ships) =>
+        ships
             .map((s) => s.modVariant?.modInfo.nameOrId)
             .whereType<String>()
             .toSet()
@@ -567,18 +584,26 @@ class ShipsPageController extends Notifier<ShipsPageState> {
           return modName.contains(value.toLowerCase());
         },
       ),
-      SearchField.multiValue('hint', 'Ship hint; matches any hint in a multi-value set', (s) => s.hints),
-      SearchField.multiValue('tag', 'Ship CSV tag; matches any tag in a multi-value set', (s) => s.tags),
+      SearchField.multiValue(
+          'hint', 'Ship hint; matches any hint in a multi-value set', (s) =>
+      s
+          .hints),
+      SearchField.multiValue(
+          'tag', 'Ship CSV tag; matches any tag in a multi-value set', (s) =>
+      s
+          .tags),
       // Numeric fields
       SearchField.numeric('hp', 'Hull hitpoints', (s) => s.hitpoints),
       SearchField.numeric('armor', 'Armor rating', (s) => s.armorRating),
       SearchField.numeric('flux', 'Max flux capacity', (s) => s.maxFlux),
-      SearchField.numeric('dissipation', 'Flux dissipation', (s) => s.fluxDissipation),
+      SearchField.numeric(
+          'dissipation', 'Flux dissipation', (s) => s.fluxDissipation),
       SearchField.numeric('op', 'Ordnance points', (s) => s.ordnancePoints),
       SearchField.numeric('speed', 'Max speed', (s) => s.maxSpeed),
       SearchField.numeric('bays', 'Fighter bays', (s) => s.fighterBays),
       SearchField.numeric('shieldarc', 'Shield arc', (s) => s.shieldArc),
-      SearchField.numeric('shieldeff', 'Shield efficiency', (s) => s.shieldEfficiency),
+      SearchField.numeric(
+          'shieldeff', 'Shield efficiency', (s) => s.shieldEfficiency),
       SearchField.numeric('crew', 'Minimum crew', (s) => s.minCrew),
       SearchField.numeric('cargo', 'Cargo capacity', (s) => s.cargo),
       SearchField.numeric('fuel', 'Fuel capacity', (s) => s.fuel),
@@ -586,13 +611,50 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       SearchField.numeric('mass', 'Ship mass', (s) => s.mass),
       SearchField.numeric('dp', 'Deployment points', (s) => s.deploymentPoints),
       SearchField.numeric('cost', 'Base credit value', (s) => s.baseValue),
-      SearchField.numeric('slots', 'Mountable weapon slots', (s) => s.mountableWeaponSlotCount),
+      SearchField.numeric(
+          'slots', 'Mountable weapon slots', (s) => s.mountableWeaponSlotCount),
       SearchField.numeric('peak', 'Peak CR seconds', (s) => s.peakCrSec),
+      // Weapon slot fields by size, type, and size+type combination
+      for (final size in const ['SMALL', 'MEDIUM', 'LARGE'])
+        SearchField.numeric<Ship>(
+          '${size.toLowerCase()}Slots',
+          '${size.toLowerCase().toTitleCase()} mountable slots',
+              (s) => s.countMountableSlots(size: size),
+        ),
+      for (final type in const [
+        'BALLISTIC',
+        'ENERGY',
+        'MISSILE',
+        'COMPOSITE',
+        'HYBRID',
+        'SYNERGY',
+        'UNIVERSAL'
+      ])
+        SearchField.numeric<Ship>(
+          '${type.toLowerCase()}Slots',
+          '${type.toLowerCase().toTitleCase()} mountable slots',
+              (s) => s.countMountableSlots(type: type),
+        ),
+      for (final size in const ['SMALL', 'MEDIUM', 'LARGE'])
+        for (final type in const [
+          'BALLISTIC',
+          'ENERGY',
+          'MISSILE',
+          'COMPOSITE',
+          'HYBRID',
+          'SYNERGY',
+          'UNIVERSAL'
+        ])
+          SearchField.numeric<Ship>(
+            '${size.toLowerCase()}${type.toLowerCase().toTitleCase()}',
+            '${size.toLowerCase().toTitleCase()} ${type.toLowerCase()} slots',
+                (s) => s.countMountableSlots(type: type, size: size),
+          ),
     ];
   }
 }
 
 final shipsPageControllerProvider =
-    NotifierProvider<ShipsPageController, ShipsPageState>(() {
-      return ShipsPageController();
-    });
+NotifierProvider<ShipsPageController, ShipsPageState>(() {
+  return ShipsPageController();
+});

@@ -178,11 +178,19 @@ class CatalogPageController extends Notifier<CatalogPageState> {
         id: 'status',
         name: 'Status',
         fields: [
-          BoolField<ScrapedMod>(
+          StringChoiceField<ScrapedMod>(
             id: 'installed',
             label: 'Installed',
-            predicate: (mod) =>
-                _catalogStatusMap.containsKey(mod.name.toLowerCase().trim()),
+            allLabel: 'Both Installed & Available',
+            options: const ['installed', 'available'],
+            optionLabel: (v) =>
+                v == 'installed' ? 'Only Installed' : 'Not Installed',
+            predicate: (mod, selected) {
+              if (selected == null) return true;
+              final isInstalled = _catalogStatusMap
+                  .containsKey(mod.name.toLowerCase().trim());
+              return selected == 'installed' ? isInstalled : !isInstalled;
+            },
           ),
           BoolField<ScrapedMod>(
             id: 'hasUpdate',

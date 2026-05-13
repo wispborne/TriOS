@@ -1,3 +1,14 @@
+# 1.5.1
+- Added
+  - Mods Catalog can now hide mods that you have installed already.
+- Fixed
+  - Mods could have a negative VRAM estimate (e.g. Ship Mastery System).
+    - Caused by miscategorizing small images as backgrounds.
+  - Ships Viewer: Stretch Icons To Fit now works.
+- Changed
+  - Mod Index url now links to raw.github instead of github.
+    - Removes a redirect that might've been rarely causing the mod catalog to not load.
+
 # 1.5.0
 - Added
   - Mod Catalog: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.

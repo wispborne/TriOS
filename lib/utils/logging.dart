@@ -544,7 +544,7 @@ SentryFlutterOptions configureSentry(
         return null;
       }
 
-      if (event.exceptions?.firstOrNull is NetworkImageLoadException) {
+      if (event.exceptions?.firstOrNull?.type == 'NetworkImageLoadException') {
         return null;
       }
 

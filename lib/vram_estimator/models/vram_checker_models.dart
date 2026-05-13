@@ -293,7 +293,7 @@ class ModImageView {
         ((imageType == ImageType.background)
             ? vanillaBackgroundTextSizeInBytes
             : 0.0);
-    return rawSize.ceil();
+    return rawSize.ceil().coerceAtLeast(0);
   }
 
   /// Determines if the image is used based on the provided graphics library configuration.

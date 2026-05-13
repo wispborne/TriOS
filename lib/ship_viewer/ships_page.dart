@@ -1055,6 +1055,7 @@ class _ShipImageCellState extends State<ShipImageCell> {
                 child: ShipBlueprintView.minimal(
                   ship: widget.ship!,
                   cacheWidth: size.toInt(),
+                  fit: widget.fit,
                 ),
               )
             : Image.file(

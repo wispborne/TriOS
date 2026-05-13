@@ -7,7 +7,7 @@ import 'package:trios/utils/extensions.dart';
 
 class Constants {
   static const substitutionPlaceholder = '%s';
-  static const version = "1.5.0";
+  static const version = "1.5.1";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -96,7 +96,7 @@ class Constants {
   static const companionModVersion = "1.0.3";
 
   static const String modRepoUrl =
-      "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";
+      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/ModRepo.json";
   static const String forumDataBundleUrl =
       "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/forum-data-bundle.json";
 

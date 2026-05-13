@@ -132,7 +132,11 @@
       "PowerShell(flutter analyze 2>&1)",
       "PowerShell(flutter analyze 2>&1 | Where-Object { $_ -match \"error\" -and $_ -notmatch \"onError\" -and $_ -notmatch \"errorC\" } | Select-Object -First 20)",
       "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\" -Recurse -Filter \"*tab_button*\" -ErrorAction SilentlyContinue)",
-      "Bash(Select-Object -Last 30)"
+      "Bash(Select-Object -Last 30)",
+      "Bash(cd /F/Code/Starsector/TriOS && find . -type f -name \"*.dart\" | head -20)",
+      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__find_organizations",
+      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__search_issues",
+      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__find_releases"
     ]
   }
 }

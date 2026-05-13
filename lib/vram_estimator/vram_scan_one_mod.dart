@@ -382,10 +382,6 @@ Iterable<Future<Map<String, dynamic>?>> _processAssets(
       throw const _CancelledException();
     }
     final file = asset.file;
-    final imageType = file.relativePath.contains(_backgroundFolderName)
-        ? ImageType.background
-        : ImageType.texture;
-
     try {
       return await limiter.run(() async {
         final image = await imageHeaderReaderPool.readImageDeterminingBest(
@@ -394,6 +390,12 @@ Iterable<Future<Map<String, dynamic>?>> _processAssets(
         if (image == null) {
           throw Exception("Image is null");
         }
+        final imageType =
+            file.relativePath.contains(_backgroundFolderName) &&
+                    image.width >= 1024 &&
+                    image.height >= 1024
+                ? ImageType.background
+                : ImageType.texture;
         return {
           'filePath': file.file.path,
           'textureHeight': nextPowerOfTwo(image.height),

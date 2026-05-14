@@ -136,7 +136,27 @@
       "Bash(cd /F/Code/Starsector/TriOS && find . -type f -name \"*.dart\" | head -20)",
       "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__find_organizations",
       "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__search_issues",
-      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__find_releases"
+      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__find_releases",
+      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__whoami",
+      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__get_sentry_resource",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" tag --sort=-v:refname)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --oneline 1.3.4..1.3.4-preview01)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" diff 1.3.4..1.3.4-preview01 -- pubspec.lock)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" diff 1.3.4..1.3.4-preview01 -- lib/trios/settings/settings_page.dart)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" show 1.3.4:pubspec.lock)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" show 1.3.4-preview01:pubspec.lock)",
+      "Bash(Select-String -Pattern \"flutter_inappwebview_windows\" -Context 0,8)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --all --oneline -- pubspec.yaml)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --oneline c84a3ac9 -1)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --oneline 375ef8cc -1)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --oneline 8a7fc1b5 -1)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --oneline aec03c29 -1)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" diff 665d8d6f..998e3024 -- pubspec.yaml)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --oneline --all --diff-filter=M -- pubspec.yaml)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --oneline -1 6d64ad31)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --format=\"%H %ai %s\" -1 6d64ad31)",
+      "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" tag --contains aec03c29 --sort=v:refname)",
+      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__find_projects"
     ]
   }
 }

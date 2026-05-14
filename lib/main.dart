@@ -505,9 +505,8 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
       }
     } catch (e) {
       Fimber.w("Error deleting running.lock: $e");
-    } finally {
-      await windowManager.destroy();
     }
+    exit(0);
   }
 
   void _saveWindowPosition() async {

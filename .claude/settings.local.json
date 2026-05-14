@@ -156,7 +156,8 @@
       "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --oneline -1 6d64ad31)",
       "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" log --format=\"%H %ai %s\" -1 6d64ad31)",
       "Bash(git -C \"F:\\\\Code\\\\Starsector\\\\TriOS\" tag --contains aec03c29 --sort=v:refname)",
-      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__find_projects"
+      "mcp__2d723961-c89d-4bff-8ba8-0bc0ea5eb3c4__find_projects",
+      "WebSearch"
     ]
   }
 }

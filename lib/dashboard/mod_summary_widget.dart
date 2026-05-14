@@ -3,11 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod_variant.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
-import '../themes/theme_manager.dart';
 import '../trios/app_state.dart';
 import '../widgets/fancy_mod_tooltip_header.dart';
 
@@ -99,20 +98,22 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      modInfo.name ?? "(no name)",
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    Text(
-                      "${modInfo.id} • ${modInfo.version ?? ""}",
-                      style: theme.textTheme.labelSmall,
-                    ),
-                  ],
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        modInfo.name ?? "(no name)",
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      Text(
+                        "${modInfo.id} • ${modInfo.version ?? ""}",
+                        style: theme.textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

@@ -7,7 +7,7 @@ import 'package:trios/utils/extensions.dart';
 
 class Constants {
   static const substitutionPlaceholder = '%s';
-  static const version = "1.5.1-preview01";
+  static const version = "1.5.2";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";

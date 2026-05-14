@@ -775,7 +775,18 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                 ),
                               ),
                             ),
-                            WebViewStatus.loaded => InAppWebView(
+                            WebViewStatus.loaded =>
+                              // On Windows the WebViewEnvironment is created
+                              // async at startup; if we build InAppWebView with
+                              // a null env it binds to WebView2's default
+                              // environment (different userDataFolder) and
+                              // cookies/login state for our custom env are
+                              // missing until the user reopens the panel.
+                              // Hold off until the env is ready.
+                              (currentPlatform == TargetPlatform.windows &&
+                                      ref.watch(webViewEnvironment) == null)
+                                  ? const Center(child: CircularProgressIndicator())
+                                  : InAppWebView(
                               key: webViewKey,
                               webViewEnvironment: ref.watch(webViewEnvironment),
                               shouldOverrideUrlLoading:

@@ -801,6 +801,22 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}",
                   ),
                   const SizedBox(height: 8),
+                  Text(
+                    "TriOS version: ${Constants.version}",
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Dart version: ${Platform.version}",
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "OS: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}",
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Processors: ${Platform.numberOfProcessors}",
+                  ),
+                  const SizedBox(height: 8),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.settings),
                     label: const Text("Show Current App Settings"),

@@ -506,7 +506,19 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     } catch (e) {
       Fimber.w("Error deleting running.lock: $e");
     }
-    exit(0);
+    if (Platform.isWindows) {
+      // TLDR; fixes crash-on-quit that was blowing up Sentry and Event Viewer.
+      // Neither exit(0) nor windowManager.destroy() exits cleanly on Windows:
+      //   - exit(0) → CRT atexit chain crashes in dcomp.dll because the engine's
+      //     DirectComposition swap chain is still alive at teardown.
+      //   - destroy() → flutter_windows.dll access-violates during WindowProc
+      //     teardown (0xc000041d fatal user-callback exception).
+      // On Windows, Process.killPid(pid, sigkill) calls TerminateProcess, which
+      // skips CRT atexit, DLL_PROCESS_DETACH, and static destructors entirely.
+      Process.killPid(pid, ProcessSignal.sigkill);
+    } else {
+      exit(0);
+    }
   }
 
   void _saveWindowPosition() async {

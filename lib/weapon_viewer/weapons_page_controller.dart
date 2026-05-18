@@ -74,6 +74,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   late final FilterScopeController<Weapon> _filters;
   late final List<SearchField<Weapon>> _searchFields;
   late final Map<String, SearchField<Weapon>> _fieldsByKey;
+  List<Weapon>? _searchIndexItems;
 
   final vanillaName = 'Vanilla';
 
@@ -123,9 +124,11 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
 
     _filters.applyPendingChipMerge(allWeapons);
 
-    Map<String, List<String>> weaponValuesByWeaponId = _updateSearchIndices(
-      allWeapons,
-    );
+    final itemsChanged = !identical(allWeapons, _searchIndexItems);
+    _searchIndexItems = allWeapons;
+    final weaponValuesByWeaponId = itemsChanged
+        ? _updateSearchIndices(allWeapons)
+        : stateOrNull?.weaponSearchIndices ?? _updateSearchIndices(allWeapons);
 
     final initialState =
         (stateOrNull ??
@@ -141,6 +144,13 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
               weaponSearchIndices: weaponValuesByWeaponId,
               isLoading: isLoadingWeapons,
             );
+
+    if (!itemsChanged && !showEnabled && stateOrNull != null) {
+      return initialState.copyWith(
+        filteredWeapons: stateOrNull!.filteredWeapons,
+        weaponsBeforeGridFilter: stateOrNull!.weaponsBeforeGridFilter,
+      );
+    }
 
     return _processAllFilters(initialState, mods);
   }

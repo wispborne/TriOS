@@ -106,6 +106,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   List<SearchFieldMeta> get searchFieldsMeta =>
       _searchFields.map((f) => f.toMeta(state.allShips)).toList();
 
+  List<Ship>? _searchIndexItems;
+
   // Memoization for shipsWithModuleIds, keyed by input identity so we skip
   // the O(N²) recompute on rebuilds where ship/variant references haven't
   // actually changed (e.g. an unrelated watched provider ticked).
@@ -205,9 +207,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         .read(appSettings)
         .shipsPageState;
 
-    Map<String, List<String>> shipSearchIndices = _updateSearchIndices(
-      allShips,
-    );
+    final itemsChanged = !identical(allShips, _searchIndexItems);
+    _searchIndexItems = allShips;
+    final shipSearchIndices = itemsChanged
+        ? _updateSearchIndices(allShips)
+        : stateOrNull?.shipSearchIndices ?? _updateSearchIndices(allShips);
 
     final initialState =
     (stateOrNull ??
@@ -227,6 +231,13 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       shipSearchIndices: shipSearchIndices,
       isLoading: isLoadingShips,
     );
+
+    if (!itemsChanged && !showEnabled && stateOrNull != null) {
+      return initialState.copyWith(
+        filteredShips: stateOrNull!.filteredShips,
+        shipsBeforeGridFilter: stateOrNull!.shipsBeforeGridFilter,
+      );
+    }
 
     return _processAllFilters(initialState, mods);
   }

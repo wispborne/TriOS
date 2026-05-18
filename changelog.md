@@ -5,6 +5,7 @@
   - Mods could have a negative VRAM estimate (e.g. Ship Mastery System).
     - Caused by miscategorizing small images as backgrounds.
   - Ships Viewer: Stretch Icons To Fit now works.
+  - Invisible crash-on-quit that showed up in Event Viewer and used all my Sentry.io quota :') 
 - Changed
   - Mod Index url now links to raw.github instead of github.
     - Removes a redirect that might've been rarely causing the mod catalog to not load.

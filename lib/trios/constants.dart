@@ -6,8 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const substitutionPlaceholder = '%s';
-  static const version = "1.5.1";
+  static const version = "1.5.2-preview01";
   static Version currentVersion = Version.parse(version);
 
   static const appName = "TriOS";
@@ -61,6 +60,7 @@ class Constants {
   ];
 
   static const versionCheckerCsvPath = "data/config/version/version_files.csv";
+  static const substitutionPlaceholder = '%s';
   static const versionCheckerFileEnding = ".version";
   static const forumUrl = "https://fractalsoftworks.com/forum/index.php";
   static const nexusModsPageUrl = "https://www.nexusmods.com/starsector/mods/";

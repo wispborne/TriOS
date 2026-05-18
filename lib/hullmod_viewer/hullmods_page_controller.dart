@@ -73,6 +73,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
   late final FilterScopeController<Hullmod> _filters;
   late final List<SearchField<Hullmod>> _searchFields;
   late final Map<String, SearchField<Hullmod>> _fieldsByKey;
+  List<Hullmod>? _searchIndexItems;
 
   List<SearchFieldMeta> get searchFieldsMeta =>
       _searchFields.map((f) => f.toMeta(state.allHullmods)).toList();
@@ -122,9 +123,11 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
 
     _filters.applyPendingChipMerge(allHullmods);
 
-    Map<String, List<String>> hullmodValuesByHullmodId = _updateSearchIndices(
-      allHullmods,
-    );
+    final itemsChanged = !identical(allHullmods, _searchIndexItems);
+    _searchIndexItems = allHullmods;
+    final hullmodValuesByHullmodId = itemsChanged
+        ? _updateSearchIndices(allHullmods)
+        : stateOrNull?.hullmodSearchIndices ?? _updateSearchIndices(allHullmods);
 
     var initialState =
         (stateOrNull ??
@@ -140,6 +143,13 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
               hullmodSearchIndices: hullmodValuesByHullmodId,
               isLoading: isLoadingHullmods,
             );
+
+    if (!itemsChanged && !showEnabled && stateOrNull != null) {
+      return initialState.copyWith(
+        filteredHullmods: stateOrNull!.filteredHullmods,
+        hullmodsBeforeGridFilter: stateOrNull!.hullmodsBeforeGridFilter,
+      );
+    }
 
     return _processAllFilters(initialState, mods);
   }

@@ -136,10 +136,23 @@ class AppState {
     return mods.map((mod) => mod.findFirstEnabled).nonNulls.toList()..sort();
   });
 
-  /// Emits when a mod is added/removed, but not when it's changed (e.g. enabled/disabled)
+  static List<String> _previousSmolIds = const [];
+
+  static bool _smolIdsEqual(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  /// Emits when a mod is added/removed, but not when it's changed (e.g. enabled/disabled).
   static final smolIds = Provider<List<String>>((ref) {
     final mods = ref.watch(AppState.modVariants).value ?? [];
-    return mods.map((mod) => mod.smolId).toList()..sort();
+    final newSmolIds = mods.map((mod) => mod.smolId).toList()..sort();
+    if (_smolIdsEqual(_previousSmolIds, newSmolIds)) return _previousSmolIds;
+    _previousSmolIds = newSmolIds;
+    return newSmolIds;
   });
 
   static final modAudit = AsyncNotifierProvider<AuditLog, List<AuditEntry>>(

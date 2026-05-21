@@ -1,11 +1,10 @@
 import 'dart:math' as math;
-import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
@@ -384,15 +383,29 @@ class MovingTooltipWidget extends StatefulWidget {
     Key? key,
     double padding = 16,
     Color? backgroundColor,
+    bool showPathAsLabel = true,
     required String path,
     required Widget child,
   }) {
+    final file = path.toFile();
+    if (!file.existsSync()) return child;
     return MovingTooltipWidget(
       tooltipWidget: Card(
         color: backgroundColor ?? kDarkTooltipBackground,
         child: Padding(
           padding: EdgeInsets.all(padding),
-          child: Image.file(path.toFile(), fit: BoxFit.contain),
+          child: Column(
+            crossAxisAlignment: .start,
+            mainAxisSize: .min,
+            children: [
+              Image.file(file, fit: BoxFit.contain),
+              if (showPathAsLabel)
+                Text(
+                  file.nameWithExtension,
+                  style: TextStyle(fontSize: 12),
+                ),
+            ],
+          ),
         ),
       ),
       child: child,

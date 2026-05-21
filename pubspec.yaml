@@ -5,8 +5,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: 3.10.7
-  flutter: '3.38.6'
+  sdk: 3.12.0
+  flutter: '3.44.0'
 
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -18,16 +18,16 @@ dependencies:
     sdk: flutter
   archive: ^4.0.9
   async_task: ^1.1.2
-  collection: ^1.19.0
+  collection: ^1.19.1
   # Copied to thirdparty/flutter_context_menu to be able to customize. Was abandoned lib.
   #  flutter_context_menu: ^0.2.0
-  cross_file: ^0.3.4+2
-  crypto: ^3.0.6
-  csv: ^6.0.0
+  cross_file: ^0.3.5+2
+  crypto: ^3.0.7
+  csv: ^6.0.0 # should upgrade to v8 when possible, but it's breaking.
   dart_extensions_methods: ^2.0.0
-  dart_mappable: ^4.6.1
+  dart_mappable: ^4.8.0
   defer_pointer: ^0.0.2
-  desktop_drop: ^0.7.0
+  desktop_drop: ^0.7.1
   dropdown_button2: ^3.0.0-beta.22
   dynamic_library: ^0.9.0
   ffi: ^2.1.5
@@ -36,13 +36,13 @@ dependencies:
   flutter_animate: ^4.5.2
   flutter_color: ^2.1.0
   google_fonts: ^7.0.0
-  material_color_utilities: ^0.11.1
+  material_color_utilities: ^0.13.0
   hooks_riverpod: ^2.6.1
   hashlib: ^2.3.0
   html: ^0.15.6
   flutter_inappwebview: 6.1.5
   intl: ^0.20.2
-  json_annotation: ^4.9.0
+  json_annotation: ^4.12.0
   ktx: ^1.1.6
   flutter_linkify: ^6.0.0
   logger: ^2.5.0
@@ -105,12 +105,12 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   # Used only by VRAM image-header parity tests in
   # test/vram_estimator/image_reader/. Not imported anywhere in lib/.
-  image: ^4.7.2
-  build_runner: ^2.5.4
-  dart_mappable_builder: ^4.6.3
+  image: ^4.8.0
+  build_runner: ^2.15.0
+  dart_mappable_builder: ^4.8.0
   flutter_launcher_icons: ^0.14.3
   ffigen: ^20.1.1
-  json_serializable: ^6.11.3
+  json_serializable: ^6.14.0
   msix: ^3.16.9
 
 flutter_launcher_icons:

@@ -345,6 +345,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       WeaponsPageStatePersistedMapper.ensureInitialized();
       HullmodsPageStatePersistedMapper.ensureInitialized();
       PortraitsPageStatePersistedMapper.ensureInitialized();
+      FactionViewerStatePersistedMapper.ensureInitialized();
       PersistedFilterGroupMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
@@ -591,6 +592,22 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$portraitsPageState,
     opt: true,
     hook: SafeDecodeHook(),
+  );
+  static FactionViewerStatePersisted? _$factionViewerState(Settings v) =>
+      v.factionViewerState;
+  static const Field<Settings, FactionViewerStatePersisted>
+  _f$factionViewerState = Field(
+    'factionViewerState',
+    _$factionViewerState,
+    opt: true,
+    hook: SafeDecodeHook(),
+  );
+  static WispGridState _$factionsGridState(Settings v) => v.factionsGridState;
+  static const Field<Settings, WispGridState> _f$factionsGridState = Field(
+    'factionsGridState',
+    _$factionsGridState,
+    opt: true,
+    def: const WispGridState(groupingSetting: null, columnsState: {}),
   );
   static Map<String, PersistedFilterGroup> _$persistedFilterGroups(
     Settings v,
@@ -961,6 +978,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: const [],
   );
+  static List<String> _$factionSearchHistory(Settings v) =>
+      v.factionSearchHistory;
+  static const Field<Settings, List<String>> _f$factionSearchHistory = Field(
+    'factionSearchHistory',
+    _$factionSearchHistory,
+    opt: true,
+    def: const [],
+  );
   static VramSelectorId _$vramEstimatorSelectorId(Settings v) =>
       v.vramEstimatorSelectorId;
   static const Field<Settings, VramSelectorId> _f$vramEstimatorSelectorId =
@@ -1022,6 +1047,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #hullmodsGridState: _f$hullmodsGridState,
     #hullmodsPageState: _f$hullmodsPageState,
     #portraitsPageState: _f$portraitsPageState,
+    #factionViewerState: _f$factionViewerState,
+    #factionsGridState: _f$factionsGridState,
     #persistedFilterGroups: _f$persistedFilterGroups,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
@@ -1072,6 +1099,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #shipsSearchHistory: _f$shipsSearchHistory,
     #hullmodsSearchHistory: _f$hullmodsSearchHistory,
     #modsSearchHistory: _f$modsSearchHistory,
+    #factionSearchHistory: _f$factionSearchHistory,
     #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
     #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
     #vramEstimatorMultithreaded: _f$vramEstimatorMultithreaded,
@@ -1114,6 +1142,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       hullmodsGridState: data.dec(_f$hullmodsGridState),
       hullmodsPageState: data.dec(_f$hullmodsPageState),
       portraitsPageState: data.dec(_f$portraitsPageState),
+      factionViewerState: data.dec(_f$factionViewerState),
+      factionsGridState: data.dec(_f$factionsGridState),
       persistedFilterGroups: data.dec(_f$persistedFilterGroups),
       customGameExePath: data.dec(_f$customGameExePath),
       useCustomGameExePath: data.dec(_f$useCustomGameExePath),
@@ -1171,6 +1201,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       shipsSearchHistory: data.dec(_f$shipsSearchHistory),
       hullmodsSearchHistory: data.dec(_f$hullmodsSearchHistory),
       modsSearchHistory: data.dec(_f$modsSearchHistory),
+      factionSearchHistory: data.dec(_f$factionSearchHistory),
       vramEstimatorSelectorId: data.dec(_f$vramEstimatorSelectorId),
       referencedAssetsSelectorConfig: data.dec(
         _f$referencedAssetsSelectorConfig,
@@ -1273,6 +1304,13 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     PortraitsPageStatePersisted
   >?
   get portraitsPageState;
+  FactionViewerStatePersistedCopyWith<
+    $R,
+    FactionViewerStatePersisted,
+    FactionViewerStatePersisted
+  >?
+  get factionViewerState;
+  WispGridStateCopyWith<$R, WispGridState, WispGridState> get factionsGridState;
   MapCopyWith<
     $R,
     String,
@@ -1294,6 +1332,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
   get hullmodsSearchHistory;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get modsSearchHistory;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get factionSearchHistory;
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1332,6 +1372,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     WispGridState? hullmodsGridState,
     HullmodsPageStatePersisted? hullmodsPageState,
     PortraitsPageStatePersisted? portraitsPageState,
+    FactionViewerStatePersisted? factionViewerState,
+    WispGridState? factionsGridState,
     Map<String, PersistedFilterGroup>? persistedFilterGroups,
     String? customGameExePath,
     bool? useCustomGameExePath,
@@ -1381,6 +1423,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     List<String>? shipsSearchHistory,
     List<String>? hullmodsSearchHistory,
     List<String>? modsSearchHistory,
+    List<String>? factionSearchHistory,
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
@@ -1471,6 +1514,20 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(portraitsPageState: v),
   );
   @override
+  FactionViewerStatePersistedCopyWith<
+    $R,
+    FactionViewerStatePersisted,
+    FactionViewerStatePersisted
+  >?
+  get factionViewerState => $value.factionViewerState?.copyWith.$chain(
+    (v) => call(factionViewerState: v),
+  );
+  @override
+  WispGridStateCopyWith<$R, WispGridState, WispGridState>
+  get factionsGridState => $value.factionsGridState.copyWith.$chain(
+    (v) => call(factionsGridState: v),
+  );
+  @override
   MapCopyWith<
     $R,
     String,
@@ -1520,6 +1577,13 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(modsSearchHistory: v),
   );
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get factionSearchHistory => ListCopyWith(
+    $value.factionSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(factionSearchHistory: v),
+  );
+  @override
   ReferencedAssetsSelectorConfigCopyWith<
     $R,
     ReferencedAssetsSelectorConfig,
@@ -1562,6 +1626,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     WispGridState? hullmodsGridState,
     Object? hullmodsPageState = $none,
     Object? portraitsPageState = $none,
+    Object? factionViewerState = $none,
+    WispGridState? factionsGridState,
     Map<String, PersistedFilterGroup>? persistedFilterGroups,
     Object? customGameExePath = $none,
     bool? useCustomGameExePath,
@@ -1611,6 +1677,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     List<String>? shipsSearchHistory,
     List<String>? hullmodsSearchHistory,
     List<String>? modsSearchHistory,
+    List<String>? factionSearchHistory,
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
@@ -1652,6 +1719,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (hullmodsGridState != null) #hullmodsGridState: hullmodsGridState,
       if (hullmodsPageState != $none) #hullmodsPageState: hullmodsPageState,
       if (portraitsPageState != $none) #portraitsPageState: portraitsPageState,
+      if (factionViewerState != $none) #factionViewerState: factionViewerState,
+      if (factionsGridState != null) #factionsGridState: factionsGridState,
       if (persistedFilterGroups != null)
         #persistedFilterGroups: persistedFilterGroups,
       if (customGameExePath != $none) #customGameExePath: customGameExePath,
@@ -1733,6 +1802,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (hullmodsSearchHistory != null)
         #hullmodsSearchHistory: hullmodsSearchHistory,
       if (modsSearchHistory != null) #modsSearchHistory: modsSearchHistory,
+      if (factionSearchHistory != null)
+        #factionSearchHistory: factionSearchHistory,
       if (vramEstimatorSelectorId != null)
         #vramEstimatorSelectorId: vramEstimatorSelectorId,
       if (referencedAssetsSelectorConfig != null)
@@ -1806,6 +1877,14 @@ class _SettingsCopyWithImpl<$R, $Out>
     portraitsPageState: data.get(
       #portraitsPageState,
       or: $value.portraitsPageState,
+    ),
+    factionViewerState: data.get(
+      #factionViewerState,
+      or: $value.factionViewerState,
+    ),
+    factionsGridState: data.get(
+      #factionsGridState,
+      or: $value.factionsGridState,
     ),
     persistedFilterGroups: data.get(
       #persistedFilterGroups,
@@ -1984,6 +2063,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     modsSearchHistory: data.get(
       #modsSearchHistory,
       or: $value.modsSearchHistory,
+    ),
+    factionSearchHistory: data.get(
+      #factionSearchHistory,
+      or: $value.factionSearchHistory,
     ),
     vramEstimatorSelectorId: data.get(
       #vramEstimatorSelectorId,

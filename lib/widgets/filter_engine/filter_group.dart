@@ -155,8 +155,9 @@ class BoolField<T> extends FilterField<T> {
     required this.label,
     required this.predicate,
     this.defaultValue = false,
+    bool? initialValue,
     this.tooltip,
-  }) : value = defaultValue;
+  }) : value = initialValue ?? defaultValue;
 
   @override
   bool get isActive => value != defaultValue;

@@ -16,6 +16,7 @@ class ViewerToolbar extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onRefresh;
   final Widget searchBox;
+  final List<Widget> leadingActions;
   final bool splitPane;
   final VoidCallback? onToggleSplitPane;
   final List<Widget> trailingActions;
@@ -28,6 +29,7 @@ class ViewerToolbar extends StatelessWidget {
     required this.isLoading,
     required this.onRefresh,
     required this.searchBox,
+    this.leadingActions = const [],
     this.splitPane = false,
     this.onToggleSplitPane,
     this.trailingActions = const [],
@@ -72,6 +74,7 @@ class ViewerToolbar extends StatelessWidget {
                       ),
                     ),
                   ),
+                ...leadingActions,
                 const SizedBox(width: 8),
                 ExpandingConstrainedAlignedWidget(
                   alignment: Alignment.centerRight,

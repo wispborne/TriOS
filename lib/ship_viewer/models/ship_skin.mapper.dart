@@ -341,7 +341,7 @@ abstract class ShipSkinCopyWith<$R, $In extends ShipSkin, $Out>
   get removeBuiltInWeapons;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
   get removeWeaponSlots;
-  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>>?
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
   get weaponSlotChanges;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get removeHints;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get addHints;
@@ -349,7 +349,7 @@ abstract class ShipSkinCopyWith<$R, $In extends ShipSkin, $Out>
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
   get builtInWings;
   ListCopyWith<$R, int, ObjectCopyWith<$R, int, int>>? get removeEngineSlots;
-  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>>?
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
   get engineSlotChanges;
   ListCopyWith<$R, int, ObjectCopyWith<$R, int, int>>? get coversColor;
   $R call({
@@ -442,7 +442,7 @@ class _ShipSkinCopyWithImpl<$R, $Out>
         )
       : null;
   @override
-  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>>?
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
   get weaponSlotChanges => $value.weaponSlotChanges != null
       ? MapCopyWith(
           $value.weaponSlotChanges!,
@@ -496,7 +496,7 @@ class _ShipSkinCopyWithImpl<$R, $Out>
         )
       : null;
   @override
-  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>>?
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
   get engineSlotChanges => $value.engineSlotChanges != null
       ? MapCopyWith(
           $value.engineSlotChanges!,

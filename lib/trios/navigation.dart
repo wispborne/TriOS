@@ -21,6 +21,7 @@ const List<NavOrderEntry> defaultNavOrder = [
   NavToolEntry(TriOSTools.ships),
   NavToolEntry(TriOSTools.weapons),
   NavToolEntry(TriOSTools.hullmods),
+  NavToolEntry(TriOSTools.factions),
   NavToolEntry(TriOSTools.portraits),
   NavToolEntry(TriOSTools.vramEstimator),
   NavToolEntry(TriOSTools.tips),
@@ -37,6 +38,7 @@ const Set<TriOSTools> reorderableTools = {
   TriOSTools.ships,
   TriOSTools.weapons,
   TriOSTools.hullmods,
+  TriOSTools.factions,
   TriOSTools.portraits,
   TriOSTools.vramEstimator,
   TriOSTools.tips,
@@ -53,6 +55,7 @@ enum TriOSTools {
   weapons,
   ships,
   hullmods,
+  factions,
   settings,
   catalog,
   tips,
@@ -71,6 +74,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.ships => 'Ships',
     TriOSTools.weapons => 'Weapons',
     TriOSTools.hullmods => 'Hullmods',
+    TriOSTools.factions => 'Factions',
     TriOSTools.portraits => 'Portraits',
     TriOSTools.tips => 'Tips',
     TriOSTools.settings => 'Settings',
@@ -86,6 +90,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.ships => 'Ship Viewer',
     TriOSTools.weapons => 'Weapon Viewer',
     TriOSTools.hullmods => 'Hullmod Viewer',
+    TriOSTools.factions => 'Faction Viewer',
     TriOSTools.portraits => 'Portrait Viewer & Replacer',
     TriOSTools.tips => 'Tips Manager',
     TriOSTools.settings => 'Settings',
@@ -134,6 +139,7 @@ extension TriOSToolsUI on TriOSTools {
       width: size,
       color: color,
     ),
+    TriOSTools.factions => Icon(Icons.flag, size: size, color: color),
     TriOSTools.portraits => SvgImageIcon(
       "assets/images/icon-account-box-outline.svg",
       color: color,
@@ -152,6 +158,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.ships ||
     TriOSTools.weapons ||
     TriOSTools.hullmods ||
+    TriOSTools.factions ||
     TriOSTools.portraits ||
     TriOSTools.tips => NavGroup.viewers,
     TriOSTools.settings => NavGroup.bottom,

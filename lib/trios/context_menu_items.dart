@@ -4,6 +4,7 @@ import 'package:trios/widgets/snackbar.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_records/mod_record_sources_dialog.dart';
 import 'package:trios/models/mod.dart';
@@ -417,6 +418,12 @@ MenuItem buildMenuItemViewInViewer(Mod mod, WidgetRef ref) {
     );
   }
 
+  final factions = ref.read(factionListNotifierProvider).valueOrNull ?? [];
+  final modFactions = factions
+      .where((f) => f.sources.any((s) => s.name == modName))
+      .toList()
+    ..sort((a, b) => a.displayName.compareTo(b.displayName));
+
   return MenuItem.submenu(
     label: 'View...',
     icon: Icons.search,
@@ -436,6 +443,38 @@ MenuItem buildMenuItemViewInViewer(Mod mod, WidgetRef ref) {
         leading: SvgImageIcon("assets/images/icon-hullmod.svg"),
         onSelected: () => navigate(TriOSTools.hullmods),
       ),
+      if (modFactions.isNotEmpty)
+        MenuItem.submenu(
+          label: 'Factions (${modFactions.length})',
+          icon: Icons.flag,
+          items: [
+            MenuItem(
+              label: 'View all in Faction Viewer',
+              icon: Icons.open_in_new,
+              onSelected: () => navigate(TriOSTools.factions),
+            ),
+            const MenuDivider(),
+            for (final faction in modFactions)
+              MenuItem(
+                label: faction.displayName,
+                leading: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: faction.factionColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                onSelected: () => navigate(TriOSTools.factions),
+              ),
+          ],
+        ),
+      if (modFactions.isEmpty)
+        MenuItem(
+          label: 'Factions',
+          icon: Icons.flag,
+          onSelected: () => navigate(TriOSTools.factions),
+        ),
       MenuItem(
         label: 'Portraits',
         leading: SvgImageIcon("assets/images/icon-account-box-outline.svg"),

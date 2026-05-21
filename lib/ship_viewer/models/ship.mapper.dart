@@ -753,7 +753,7 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
   ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>? get center;
   ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
   get shieldCenter;
-  ListCopyWith<$R, dynamic, ObjectCopyWith<$R, dynamic, dynamic>>?
+  ListCopyWith<$R, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
   get engineSlots;
   ListCopyWith<
     $R,
@@ -895,7 +895,7 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
         )
       : null;
   @override
-  ListCopyWith<$R, dynamic, ObjectCopyWith<$R, dynamic, dynamic>>?
+  ListCopyWith<$R, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
   get engineSlots => $value.engineSlots != null
       ? ListCopyWith(
           $value.engineSlots!,

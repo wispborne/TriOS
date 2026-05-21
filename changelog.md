@@ -1,3 +1,9 @@
+# 1.6.0
+- Added
+  - Factions Viewer
+- Fixed
+  - 
+
 # 1.5.1
 - Added
   - Mods Catalog can now hide mods that you have installed already.

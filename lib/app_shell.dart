@@ -10,6 +10,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/catalog/mod_browser_page.dart';
 import 'package:trios/chipper/chipper_app.dart';
 import 'package:trios/dashboard/dashboard.dart';
+import 'package:trios/faction_viewer/faction_viewer_page.dart';
 import 'package:trios/hullmod_viewer/hullmods_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
@@ -65,9 +66,10 @@ class _AppShellState extends ConsumerState<AppShell>
     6: TriOSTools.ships,
     7: TriOSTools.weapons,
     8: TriOSTools.hullmods,
-    9: TriOSTools.settings,
-    10: TriOSTools.catalog,
-    11: TriOSTools.tips,
+    9: TriOSTools.factions,
+    10: TriOSTools.settings,
+    11: TriOSTools.catalog,
+    12: TriOSTools.tips,
   };
 
   late final toolToIndexMap = tabToolMap.map((k, v) => MapEntry(v, k));
@@ -241,6 +243,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const ShipsPage(),
       const WeaponsPage(),
       const HullmodsPage(),
+      const FactionViewerPage(),
       const SettingsPage(pagePadding: 8.0),
       const CatalogPage(pagePadding: .all(8)),
       const TipsPage(),

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/faction_viewer/faction_viewer_controller.dart';
 import 'package:trios/catalog/models/catalog_card_click_action.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
@@ -100,6 +101,9 @@ class Settings with SettingsMappable {
   final HullmodsPageStatePersisted? hullmodsPageState;
   @MappableField(hook: SafeDecodeHook())
   final PortraitsPageStatePersisted? portraitsPageState;
+  @MappableField(hook: SafeDecodeHook())
+  final FactionViewerStatePersisted? factionViewerState;
+  final WispGridState factionsGridState;
 
   /// Per-filter-group persisted selections, keyed by
   /// `"{pageId}::{filterGroupId}"`.
@@ -165,6 +169,7 @@ class Settings with SettingsMappable {
   final List<String> shipsSearchHistory;
   final List<String> hullmodsSearchHistory;
   final List<String> modsSearchHistory;
+  final List<String> factionSearchHistory;
 
   /// Unknown ids fall back to folder-scan.
   final VramSelectorId vramEstimatorSelectorId;
@@ -223,6 +228,11 @@ class Settings with SettingsMappable {
     ),
     this.hullmodsPageState,
     this.portraitsPageState,
+    this.factionViewerState,
+    this.factionsGridState = const WispGridState(
+      groupingSetting: null,
+      columnsState: {},
+    ),
     this.persistedFilterGroups = const {},
     this.customGameExePath,
     this.useCustomGameExePath = false,
@@ -272,6 +282,7 @@ class Settings with SettingsMappable {
     this.shipsSearchHistory = const [],
     this.hullmodsSearchHistory = const [],
     this.modsSearchHistory = const [],
+    this.factionSearchHistory = const [],
     this.vramEstimatorSelectorId = VramSelectorId.referenced,
     this.referencedAssetsSelectorConfig =
         ReferencedAssetsSelectorConfig.allEnabled,

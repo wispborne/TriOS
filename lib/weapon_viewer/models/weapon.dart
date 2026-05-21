@@ -298,7 +298,7 @@ class Weapon with WeaponMappable implements WispGridItem {
 
   bool isHidden() {
     if (weaponType?.toLowerCase() == "decorative") return true;
-    if (hintsAsSet.contains("system") && !tagsAsSet.contains("show_in_codex"))
+    if (hintsAsSet.contains("system") && !hintsAsSet.contains("show_in_codex"))
       return true;
     return false;
   }

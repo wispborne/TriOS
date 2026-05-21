@@ -276,18 +276,26 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             },
             inactiveValue: SpoilerLevel.showAllSpoilers,
           ),
+          BoolField<Ship>(
+            id: 'hasModules',
+            label: 'Has Modules',
+            tooltip: 'Only show ships that have modules.',
+            predicate: (ship) =>
+                stateOrNull?.shipsWithModuleIds.contains(ship.id) ?? false,
+          ),
+          BoolField<Ship>(
+            id: 'hasBuiltInWeapons',
+            label: 'Has Built-in Weapons',
+            tooltip: 'Only show ships that have built-in weapons.',
+            predicate: (ship) =>
+                ship.builtInWeapons != null && ship.builtInWeapons!.isNotEmpty,
+          ),
         ],
       ),
       ChipFilterGroup<Ship>(
         id: 'type',
         name: 'Type',
         valueGetter: (ship) => ship.isSkin ? 'Skin' : 'Base Hull',
-        valuesGetter: (ship) =>
-        [
-          ship.isSkin ? 'Skin' : 'Base Hull',
-          if (stateOrNull?.shipsWithModuleIds.contains(ship.id) ?? false)
-            'Has Modules',
-        ],
       ),
       ChipFilterGroup<Ship>(
         id: 'hullSize',
@@ -623,13 +631,13 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       SearchField.numeric('dp', 'Deployment points', (s) => s.deploymentPoints),
       SearchField.numeric('cost', 'Base credit value', (s) => s.baseValue),
       SearchField.numeric(
-          'slots', 'Mountable weapon slots', (s) => s.mountableWeaponSlotCount),
+          'slots', 'Weapon slots', (s) => s.mountableWeaponSlotCount),
       SearchField.numeric('peak', 'Peak CR seconds', (s) => s.peakCrSec),
       // Weapon slot fields by size, type, and size+type combination
       for (final size in const ['SMALL', 'MEDIUM', 'LARGE'])
         SearchField.numeric<Ship>(
           '${size.toLowerCase()}Slots',
-          '${size.toLowerCase().toTitleCase()} mountable slots',
+          '${size.toLowerCase().toTitleCase()} slots',
               (s) => s.countMountableSlots(size: size),
         ),
       for (final type in const [

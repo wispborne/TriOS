@@ -13,6 +13,7 @@ import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
+import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/ingame_tooltip_shared.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -466,9 +467,8 @@ class ShipCodexCard {
                           ),
                         ),
                         Expanded(
-                          child: _mountWrap(
+                          child: _armamentWrap(
                             armamentGroups,
-                            null,
                             theme,
                             TriOSThemeConstants.vanillaYellowGoldColor,
                           ),
@@ -597,11 +597,13 @@ Map<String, int> _groupMounts(Ship ship) {
   );
 }
 
-/// Groups built-in weapons and wings by display name and returns a count map.
-/// Weapon entries include size/type from the [Weapon] model when available,
-/// mirroring the mount grouping style (e.g. "Tachyon Lance (Large Energy)").
-Map<String, int> _groupArmaments(Ship ship, Map<String, Weapon> weaponsMap) {
-  final groups = <String, int>{};
+/// Groups built-in weapons and wings by display name, preserving the [Weapon]
+/// object for tooltip use.
+Map<String, ({int count, Weapon? weapon})> _groupArmaments(
+  Ship ship,
+  Map<String, Weapon> weaponsMap,
+) {
+  final groups = <String, ({int count, Weapon? weapon})>{};
   for (final id
       in ship.builtInWeapons?.values ?? const Iterable<String>.empty()) {
     final weapon = weaponsMap[id];
@@ -611,11 +613,13 @@ Map<String, int> _groupArmaments(Ship ship, Map<String, Weapon> weaponsMap) {
       name +=
           ' (${weapon!.size!.toTitleCase()} ${weapon.effectiveMountType!.toTitleCase()})';
     }
-    groups[name] = (groups[name] ?? 0) + 1;
+    final existing = groups[name];
+    groups[name] = (count: (existing?.count ?? 0) + 1, weapon: weapon);
   }
   for (final id in ship.builtInWings ?? const <String>[]) {
     final name = _toDisplay(id);
-    groups[name] = (groups[name] ?? 0) + 1;
+    final existing = groups[name];
+    groups[name] = (count: (existing?.count ?? 0) + 1, weapon: null);
   }
   return groups;
 }
@@ -657,6 +661,38 @@ Widget _mountWrap(
           ),
         )
         .toList(),
+  );
+}
+
+/// Like [_mountWrap] but wraps each weapon entry in a [WeaponCodexCard]
+/// tooltip when the [Weapon] object is available.
+Widget _armamentWrap(
+  Map<String, ({int count, Weapon? weapon})> groups,
+  ThemeData theme,
+  Color highlightColor,
+) {
+  final baseStyle = theme.textTheme.bodySmall;
+  final countStyle = baseStyle?.copyWith(
+    color: highlightColor,
+    fontWeight: FontWeight.bold,
+  );
+
+  return Wrap(
+    spacing: 16,
+    runSpacing: 2,
+    children: groups.entries.map((e) {
+      final text = Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: '${e.value.count}×', style: countStyle),
+            TextSpan(text: ' ${e.key}', style: baseStyle),
+          ],
+        ),
+      );
+      final weapon = e.value.weapon;
+      if (weapon == null) return text;
+      return WeaponCodexCard.tooltip(weapon: weapon, child: text);
+    }).toList(),
   );
 }
 

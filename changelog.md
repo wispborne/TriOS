@@ -1,8 +1,9 @@
 # 1.6.0
 - Added
   - Factions Viewer
+  - May now filter for ships with built-ins on Ship Viewer page.
 - Fixed
-  - 
+  - Built-in weapons not showing on ship tooltips.
 
 # 1.5.1
 - Added

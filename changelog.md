@@ -2,8 +2,10 @@
 - Added
   - Factions Viewer
   - May now filter for ships with built-ins on Ship Viewer page.
+  - Ship Viewer dialog: built-in weapons are now shown on the mount tooltips.
 - Fixed
   - Built-in weapons not showing on ship tooltips.
+  - Ship skins not applying weapon slot changes.
 
 # 1.5.1
 - Added

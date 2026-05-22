@@ -339,6 +339,7 @@ class FactionProfileDialog extends ConsumerWidget {
           getThumbnail: (s) =>
               s.spriteFile != null ? File(s.spriteFile!) : null,
           buildTooltip: (item, child) => _shipTooltip(ref, item, child),
+          onTap: (context, ship) => _showShipDialog(context, ref, ship),
         ),
         _BlueprintSection<Weapon>(
           label: 'Known Weapons',
@@ -358,6 +359,7 @@ class FactionProfileDialog extends ConsumerWidget {
           },
           buildTooltip: (item, child) =>
               WeaponCodexCard.tooltip(weapon: item, child: child),
+          onTap: (context, weapon) => _showWeaponDialog(context, weapon),
         ),
         _BlueprintSection<Ship>(
           label: 'Known Fighters',
@@ -373,6 +375,7 @@ class FactionProfileDialog extends ConsumerWidget {
           getThumbnail: (s) =>
               s.spriteFile != null ? File(s.spriteFile!) : null,
           buildTooltip: (item, child) => _shipTooltip(ref, item, child),
+          onTap: (context, ship) => _showShipDialog(context, ref, ship),
         ),
         _BlueprintSection<Hullmod>(
           label: 'Known Hullmods',
@@ -391,8 +394,115 @@ class FactionProfileDialog extends ConsumerWidget {
           },
           buildTooltip: (item, child) =>
               HullmodCodexCard.tooltip(hullmod: item, child: child),
+          onTap: (context, hullmod) => _showHullmodDialog(context, hullmod),
         ),
       ],
+    );
+  }
+
+  void _showShipDialog(BuildContext context, WidgetRef ref, Ship ship) {
+    final shipSystems = ref.read(shipSystemsStreamProvider).valueOrNull ?? [];
+    final shipSystemsMap = {for (final s in shipSystems) s.id: s};
+    final weapons = ref.read(weaponListNotifierProvider).valueOrNull ?? [];
+    final weaponsMap = {for (final w in weapons) w.id: w};
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Padding(
+            padding: .all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ShipCodexCard.create(
+                    ship: ship,
+                    shipSystemsMap: shipSystemsMap,
+                    weaponsMap: weaponsMap,
+                    useAbbreviations: false,
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWeaponDialog(BuildContext context, Weapon weapon) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Padding(
+            padding: .all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  WeaponCodexCard.create(
+                    weapon: weapon,
+                    useAbbreviations: false,
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showHullmodDialog(BuildContext context, Hullmod hullmod) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Padding(
+            padding: .all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  HullmodCodexCard.create(hullmod: hullmod),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -559,6 +669,7 @@ class _BlueprintSection<T> extends StatelessWidget {
   final String Function(T) getName;
   final File? Function(T) getThumbnail;
   final Widget Function(T item, Widget child)? buildTooltip;
+  final void Function(BuildContext context, T item)? onTap;
 
   const _BlueprintSection({
     required this.label,
@@ -573,6 +684,7 @@ class _BlueprintSection<T> extends StatelessWidget {
     required this.getName,
     required this.getThumbnail,
     this.buildTooltip,
+    this.onTap,
   });
 
   @override
@@ -611,6 +723,7 @@ class _BlueprintSection<T> extends StatelessWidget {
                           getName: getName,
                           getThumbnail: getThumbnail,
                           buildTooltip: buildTooltip,
+                          onTap: onTap,
                         ),
                       ],
               ),
@@ -657,6 +770,7 @@ class _BlueprintSection<T> extends StatelessWidget {
           getName: getName,
           getThumbnail: getThumbnail,
           buildTooltip: buildTooltip,
+          onTap: onTap,
         ),
       ],
     ];
@@ -671,6 +785,7 @@ class _BlueprintWrap<T> extends StatelessWidget {
   final String Function(T) getName;
   final File? Function(T) getThumbnail;
   final Widget Function(T item, Widget child)? buildTooltip;
+  final void Function(BuildContext context, T item)? onTap;
 
   const _BlueprintWrap({
     required this.ids,
@@ -680,6 +795,7 @@ class _BlueprintWrap<T> extends StatelessWidget {
     required this.getName,
     required this.getThumbnail,
     this.buildTooltip,
+    this.onTap,
   });
 
   @override
@@ -712,20 +828,33 @@ class _BlueprintWrap<T> extends StatelessWidget {
           thumb = getThumbnail(item);
         }
 
+        final avatarWidget = thumb != null && thumb.existsSync()
+            ? Image.file(
+                thumb,
+                fit: BoxFit.contain,
+                cacheWidth: 20,
+                errorBuilder: (_, _, _) =>
+                    const Icon(Icons.image_not_supported, size: 20),
+              )
+            : const Icon(Icons.image_not_supported, size: 20);
+
         Widget chip = DisplayChip(
-          avatar: thumb != null && thumb.existsSync()
-              ? Image.file(
-                  thumb,
-                  fit: BoxFit.contain,
-                  cacheWidth: 20,
-                  errorBuilder: (_, _, _) =>
-                      const Icon(Icons.image_not_supported, size: 20),
-                )
-              : const Icon(Icons.image_not_supported, size: 20),
+          avatar: avatarWidget,
           label: name,
           avatarSize: 20,
           labelStyle: theme.textTheme.labelSmall,
         );
+
+        if (item != null && onTap != null) {
+          chip = MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onTap!(context, item),
+              child: IgnorePointer(child: chip),
+            ),
+          );
+        }
 
         if (item != null && buildTooltip != null) {
           chip = buildTooltip!(item, chip);

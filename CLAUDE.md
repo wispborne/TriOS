@@ -190,6 +190,87 @@ See [Shared viewer widgets](#shared-viewer-widgets) and [WispGrid](#wispgrid) un
 - `DragDropInstallModOverlay` (`lib/widgets/file_card.dart`) — Drag-drop overlay for mod installation.
 - `TriOSChangelogViewer` (`lib/widgets/changelog_viewer.dart`) — Formatted changelog display.
 
+## Common Utilities
+
+Reusable functions and extensions in `lib/utils/`. Use these before writing new helpers.
+
+### JSON & Data Parsing
+
+- `String.parseJsonToMap()` (`lib/utils/extensions.dart`) — Parse Starsector JSON-ish files (handles trailing commas, `//` comments, unquoted keys). 3-tier fallback: raw → fixups → YAML.
+- `String.parseJsonToMapAsync()` (`lib/utils/extensions.dart`) — Async version of `parseJsonToMap()`.
+- `Map.removeNullValues()` (`lib/utils/extensions.dart`) — Recursively strip null entries from a JSON map.
+- `Map.prettyPrintJson()` (`lib/utils/extensions.dart`) — Pretty-print a map as indented JSON.
+- `CsvJsonParsingUtils` (`lib/utils/csv_parse_utils.dart`) — CSV/JSON comment removal, safe CSV parsing, row-to-typed-map conversion.
+
+### Timestamps & Formatting
+
+- `DateTime.relativeTimestamp()` (`lib/utils/relative_timestamp.dart`) — Human-readable relative time, e.g. "5 hours ago", "in 3 days".
+- `DateTime.ageCompact()` (`lib/utils/relative_timestamp.dart`) — Compact age: "5s", "3m", "2h", "4d".
+- `Duration.toCompactString()` (`lib/utils/relative_timestamp.dart`) — Compact duration: "5s", "3m", "2h", "4d".
+- `num?.asCredits()` (`lib/utils/extensions.dart`) — Format number as Starsector credits with `¢` suffix and thousands separators.
+- `int.bytesAsReadable()` (`lib/utils/extensions.dart`) — Human-readable byte count: auto-selects B/KB/MB.
+
+### String Extensions (`lib/utils/extensions.dart`)
+
+- `String.toDirectory()` / `.toFile()` — Convert path string to `Directory`/`File`.
+- `String.take(n)` / `.takeLast(n)` — First/last N characters.
+- `String.compareRecognizingNumbers()` — Natural sort comparison ("item2" < "item10").
+- `String.fixFilenameForFileSystem()` — Strip illegal filename characters.
+- `String.toTitleCase()` — Convert to title case, treating underscores as word separators.
+- `String.containsAny()` / `.containsAnyIgnoreCase()` — Check if string contains any of the given substrings.
+
+### File & Directory Extensions (`lib/utils/extensions.dart`)
+
+- `File.relativePath(baseFolder)` — Relative path from a base directory.
+- `File.moveTo(destDir)` — Move file to a directory with optional overwrite.
+- `File.readAsStringUtf8OrLatin1()` — Read as UTF-8, falling back to Latin-1 (for Starsector CSVs with non-UTF-8 bytes).
+- `File.showInExplorer()` — Reveal file in OS file manager (Windows Explorer, Finder, xdg-open).
+- `Directory.copyDirectory(destDir)` — Recursive directory copy.
+- `Directory.swapDirectoryWith()` — Atomic directory swap with rollback on failure.
+
+### Collection Extensions (`lib/utils/extensions.dart`)
+
+- `Iterable.mapNotNull()` — Map + filter nulls in one pass.
+- `Iterable.flatMap()` — Map each element to an iterable, then flatten.
+- `Iterable.sortedByButBetter()` — Sort by selector with null handling (`nullsLast` option).
+- `Iterable.maxByOrNull()` / `.minByOrNull()` — Max/min by selector, null-safe.
+- `Iterable.zipWithNext()` — Pair each element with its successor.
+- `Iterable.filter()` — Alias for `where()`.
+- `List<Future>.awaitAll()` — Alias for `Future.wait()`.
+- `List<Future>.awaitPooled(poolSize)` — Concurrent future execution with pool limit.
+
+### Kotlin-style Scoping (`lib/utils/extensions.dart`)
+
+- `T.also(block)` — Run a side-effect block on a value, return the value.
+- `T.let(block)` — Transform a value through a block, return the result.
+
+### Color (`lib/utils/extensions.dart`)
+
+- `HexColorExt.fromHex(hexString)` — Parse hex string ("aabbcc" or "#ffaabbcc") to `Color`.
+- `Color.toHex()` — Convert `Color` to hex string.
+
+### Debouncing
+
+- `Debouncer` (`lib/utils/debouncer.dart`) — Debounce async operations. First call executes immediately; subsequent calls within the window are coalesced.
+
+### Logging
+
+- `Fimber` (`lib/utils/logging.dart`) — Static logging facade. Levels: `.v()` (verbose), `.d()` (debug), `.i()` (info), `.w()` (warning), `.e()` (error). Logs to console, file, and Sentry.
+
+### HTTP & Caching
+
+- `TriOSHttpClient` (`lib/utils/http_client.dart`) — HTTP client with concurrency queue, retry logic, and progress callbacks. Riverpod provider: `triOSHttpClient`.
+- `CachedJsonFetcher` (`lib/utils/cached_json_fetcher.dart`) — Fetch JSON from a URL with on-disk TTL cache and stale-cache fallback on network error.
+
+### Settings Persistence
+
+- `GenericAsyncSettingsManager<T>` (`lib/utils/generic_settings_manager.dart`) — Abstract settings file manager with debounced writes, file-lock retry, and backup support.
+- `GenericSettingsAsyncNotifier<T>` (`lib/utils/generic_settings_notifier.dart`) — Riverpod `AsyncNotifier` base class that auto-persists state via a settings manager.
+
+### Serialization Hooks (`lib/utils/dart_mappable_utils.dart`)
+
+Custom dart_mappable hooks for common types: `VersionHook`, `DirectoryHook`, `FileHook`, `BoolHook`, `ColorHook`, `StringArrayHook` ("a,b,c" ↔ list), `SafeDecodeHook<T>` (catch errors, return default), `SkipSerializationHook`.
+
 ## Viewer Page Pattern
 
 All viewer pages (ships, weapons, hullmods, portraits, factions) follow this template:

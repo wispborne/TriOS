@@ -545,6 +545,27 @@ class ShipListNotifier
           .toList();
     }
 
+    // Weapon slots: apply per-slot field overrides
+    if (skin.weaponSlotChanges != null &&
+        skin.weaponSlotChanges!.isNotEmpty &&
+        weaponSlots != null) {
+      weaponSlots = weaponSlots.map((slot) {
+        final changes = skin.weaponSlotChanges![slot.id];
+        if (changes == null || changes is! Map<String, dynamic>) return slot;
+        return ShipWeaponSlot(
+          id: slot.id,
+          angle: (changes['angle'] as num?)?.toDouble() ?? slot.angle,
+          arc: (changes['arc'] as num?)?.toDouble() ?? slot.arc,
+          mount: changes['mount'] as String? ?? slot.mount,
+          size: changes['size'] as String? ?? slot.size,
+          type: changes['type'] as String? ?? slot.type,
+          locations: slot.locations,
+          position: slot.position,
+          renderOrderMod: slot.renderOrderMod,
+        );
+      }).toList();
+    }
+
     // Hints: remove then add
     final hints = List<String>.from(baseHull.hints ?? []);
     if (skin.removeHints != null) {
@@ -568,6 +589,35 @@ class ShipListNotifier
     final spriteFile = skin.spriteName != null
         ? p.join(folder.path, skin.spriteName!).toFile().normalize.path
         : baseHull.spriteFile;
+
+    // Engine slots: remove by index, then apply per-slot overrides
+    var engineSlots = baseHull.engineSlots != null
+        ? List<dynamic>.from(baseHull.engineSlots!)
+        : null;
+    if (skin.removeEngineSlots != null &&
+        skin.removeEngineSlots!.isNotEmpty &&
+        engineSlots != null) {
+      final toRemove =
+          skin.removeEngineSlots!
+              .where((i) => i >= 0 && i < engineSlots.length)
+              .map((i) => engineSlots[i])
+              .toList();
+      engineSlots.removeWhere(toRemove.contains);
+    }
+    if (skin.engineSlotChanges != null &&
+        skin.engineSlotChanges!.isNotEmpty &&
+        engineSlots != null) {
+      for (final entry in skin.engineSlotChanges!.entries) {
+        final index = int.tryParse(entry.key);
+        if (index == null || index < 0 || index >= engineSlots.length) continue;
+        final changes = entry.value;
+        if (changes is! Map<String, dynamic>) continue;
+        final original = engineSlots[index];
+        if (original is Map<String, dynamic>) {
+          engineSlots[index] = {...original, ...changes};
+        }
+      }
+    }
 
     return Ship(
       id: skin.skinHullId,
@@ -631,7 +681,7 @@ class ShipListNotifier
       spriteFile: spriteFile,
       style: baseHull.style,
       viewOffset: baseHull.viewOffset,
-      engineSlots: baseHull.engineSlots,
+      engineSlots: engineSlots,
       weaponSlots: weaponSlots,
       builtInWeapons: builtInWeapons,
       builtInMods: builtInMods,

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
+import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/ship_viewer/utils/polygon_utils.dart';
 import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
@@ -162,8 +163,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     'LARGE': 12.0,
   };
 
-  Color _colorForType(String type) =>
-      _slotColors[type] ?? Colors.white;
+  Color _colorForType(String type) => _slotColors[type] ?? Colors.white;
 
   double _radiusForSize(String size) =>
       _slotBaseRadius[size.toUpperCase()] ?? 5.0;
@@ -307,9 +307,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
             left + (mc != null && mc.length >= 2 ? mc[0] : modSize.width / 2);
         double sprCy =
             top +
-            (mc != null && mc.length >= 2
-                ? modSize.height - mc[1]
-                : modSize.height / 2);
+                (mc != null && mc.length >= 2
+                    ? modSize.height - mc[1]
+                    : modSize.height / 2);
 
         if (angleDeg != 0) {
           final dx = sprCx - slotX;
@@ -329,13 +329,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
         angleDeg == 0
             ? Rect.fromLTWH(left, top, modSize.width, modSize.height)
             : rotatedBounds(
-                left,
-                top,
-                modSize.width,
-                modSize.height,
-                angleRad,
-                Offset(anchorX, anchorY),
-              ),
+          left,
+          top,
+          modSize.width,
+          modSize.height,
+          angleRad,
+          Offset(anchorX, anchorY),
+        ),
       );
       layouts.add(
         _ModuleSpriteLayout(
@@ -389,6 +389,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
               adjustedAngleDeg: ws.angle + angleDeg,
               moduleIndex: i,
               moduleName: modName,
+              builtInWeaponId: mod.moduleShip.builtInWeapons?[ws.id],
             ),
           );
         }
@@ -422,12 +423,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     ];
   }
 
-  Widget _buildModuleSpriteWidget(
-    int index,
-    _ModuleSpriteLayout layout,
-    double dx,
-    double dy,
-  ) {
+  Widget _buildModuleSpriteWidget(int index,
+      _ModuleSpriteLayout layout,
+      double dx,
+      double dy,) {
     final isHovered = _hoveredModuleIndex == index;
 
     Widget sprite = ColorFiltered(
@@ -579,12 +578,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
         ? 0.0
         : effectiveSlots.map((s) => _radiusForSize(s.size) * 5).reduce(max);
     final moduleArcRadius =
-        (_showModules &&
-            _cachedModuleGeometry != null &&
-            _cachedModuleGeometry!.transformedSlots.isNotEmpty)
+    (_showModules &&
+        _cachedModuleGeometry != null &&
+        _cachedModuleGeometry!.transformedSlots.isNotEmpty)
         ? _cachedModuleGeometry!.transformedSlots
-              .map((ts) => _radiusForSize(ts.slot.size) * 5)
-              .reduce(max)
+        .map((ts) => _radiusForSize(ts.slot.size) * 5)
+        .reduce(max)
         : 0.0;
     final maxArcRadius = max(parentArcRadius, moduleArcRadius);
     final pad = maxArcRadius;
@@ -611,31 +610,31 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
           child: MouseRegion(
             hitTestBehavior: HitTestBehavior.translucent,
             onHover:
-                widget.interactive &&
-                    _showModules &&
-                    _cachedModuleGeometry != null
+            widget.interactive &&
+                _showModules &&
+                _cachedModuleGeometry != null
                 ? (event) {
-                    final cGeom = _cachedModuleGeometry!;
-                    // Adjust hit-test position for the origin offset.
-                    final pos =
-                        event.localPosition - Offset(originDx, originDy);
-                    for (var i = cGeom.polygons.length - 1; i >= 0; i--) {
-                      final poly = cGeom.polygons[i];
-                      final hit = poly.isNotEmpty
-                          ? polygonContainsPoint(poly, pos)
-                          : i < cGeom.rects.length &&
-                                cGeom.rects[i].contains(pos);
-                      if (hit) {
-                        if (_hoveredModuleIndex != i) {
-                          setState(() => _hoveredModuleIndex = i);
-                        }
-                        return;
-                      }
-                    }
-                    if (_hoveredModuleIndex != null) {
-                      setState(() => _hoveredModuleIndex = null);
-                    }
+              final cGeom = _cachedModuleGeometry!;
+              // Adjust hit-test position for the origin offset.
+              final pos =
+                  event.localPosition - Offset(originDx, originDy);
+              for (var i = cGeom.polygons.length - 1; i >= 0; i--) {
+                final poly = cGeom.polygons[i];
+                final hit = poly.isNotEmpty
+                    ? polygonContainsPoint(poly, pos)
+                    : i < cGeom.rects.length &&
+                    cGeom.rects[i].contains(pos);
+                if (hit) {
+                  if (_hoveredModuleIndex != i) {
+                    setState(() => _hoveredModuleIndex = i);
                   }
+                  return;
+                }
+              }
+              if (_hoveredModuleIndex != null) {
+                setState(() => _hoveredModuleIndex = null);
+              }
+            }
                 : null,
             onExit: (_) {
               if (_hoveredModuleIndex != null) {
@@ -677,14 +676,14 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                         size: Size(imgW, imgH),
                         painter: _BoundsPainter(
                           parentBoundsPolygon:
-                              ship.bounds != null &&
-                                  ship.bounds!.length >= 6 &&
-                                  hasCenter
+                          ship.bounds != null &&
+                              ship.bounds!.length >= 6 &&
+                              hasCenter
                               ? parseBoundsToPolygon(
-                                  ship.bounds!,
-                                  center[0],
-                                  imgH - center[1],
-                                )
+                            ship.bounds!,
+                            center[0],
+                            imgH - center[1],
+                          )
                               : null,
                           moduleBoundsPolygons: _showModules
                               ? (_cachedModuleGeometry?.polygons ?? const [])
@@ -696,8 +695,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                       (effectiveSlots.isNotEmpty ||
                           (_showModules &&
                               (_cachedModuleGeometry
-                                      ?.transformedSlots
-                                      .isNotEmpty ??
+                                  ?.transformedSlots
+                                  .isNotEmpty ??
                                   false))))
                     Positioned(
                       left: originDx,
@@ -710,7 +709,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                           slots: effectiveSlots,
                           moduleSlots: _showModules
                               ? (_cachedModuleGeometry?.transformedSlots ??
-                                    const [])
+                              const [])
                               : const [],
                           imgH: imgH,
                           center: center!,
@@ -739,9 +738,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                       _showModules &&
                       _cachedModuleGeometry != null)
                     for (
-                      var i = 0;
-                      i < _cachedModuleGeometry!.transformedSlots.length;
-                      i++
+                    var i = 0;
+                    i < _cachedModuleGeometry!.transformedSlots.length;
+                    i++
                     )
                       _buildModuleSlotHitAreaOffset(
                         i,
@@ -761,7 +760,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
             if (event is PointerScrollEvent) {
               GestureBinding.instance.pointerSignalResolver.register(
                 event,
-                (event) {},
+                    (event) {},
               );
             }
           },
@@ -788,7 +787,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                   top: 4,
                   child: _compactIconButton(
                     onPressed: () =>
-                        _controller.value = _computeCenteringTransform(),
+                    _controller.value = _computeCenteringTransform(),
                     icon: Icons.fit_screen_outlined,
                     tooltip: 'Reset zoom',
                   ),
@@ -831,7 +830,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                       ),
                       Flexible(
                         child: TextTriOS(
-                          ship.spriteFile?.split(Platform.pathSeparator).last ??
+                          ship.spriteFile
+                              ?.split(Platform.pathSeparator)
+                              .last ??
                               "",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -863,30 +864,28 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
   }) {
     return isActive
         ? IconButton.filledTonal(
-            onPressed: onPressed,
-            icon: Icon(icon, size: 16),
-            iconSize: 16,
-            style: _compactButtonStyle,
-            tooltip: tooltip,
-          )
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      iconSize: 16,
+      style: _compactButtonStyle,
+      tooltip: tooltip,
+    )
         : IconButton.outlined(
-            onPressed: onPressed,
-            icon: Icon(icon, size: 16),
-            iconSize: 16,
-            style: _compactButtonStyle,
-            tooltip: tooltip,
-          );
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      iconSize: 16,
+      style: _compactButtonStyle,
+      tooltip: tooltip,
+    );
   }
 
-  Widget _buildSlotHitAreaOffset(
-    int index,
-    ShipWeaponSlot slot,
-    double imgH,
-    BuildContext context,
-    List<ResolvedModule> modules,
-    double dx,
-    double dy,
-  ) {
+  Widget _buildSlotHitAreaOffset(int index,
+      ShipWeaponSlot slot,
+      double imgH,
+      BuildContext context,
+      List<ResolvedModule> modules,
+      double dx,
+      double dy,) {
     final pos = _slotScreenPos(slot, imgH);
     final radius = _radiusForSize(slot.size);
     final hitSize = (radius + 6) * 2;
@@ -904,20 +903,31 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
       height: hitSize,
       child: widget.showSlotTooltips
           ? MovingTooltipWidget(
-              tooltipWidget: TooltipFrame(
-                child: _buildSlotTooltipContent(slot, context, modules),
-              ),
-              child: hitRegion,
-            )
+        tooltipWidget: TooltipFrame(
+          child: _buildSlotTooltipContent(slot, context, modules),
+        ),
+        child: hitRegion,
+      )
           : hitRegion,
     );
   }
 
-  Widget _buildSlotTooltipContent(
-    ShipWeaponSlot slot,
-    BuildContext context,
-    List<ResolvedModule> modules,
-  ) {
+  /// Resolves a built-in weapon ID to its display name, falling back to the
+  /// raw ID if the weapons list hasn't loaded yet.
+  String _builtInWeaponName(String weaponId) {
+    final weapons = ref
+        .read(weaponListNotifierProvider)
+        .valueOrNull;
+    if (weapons != null) {
+      final weapon = weapons.firstWhereOrNull((w) => w.id == weaponId);
+      if (weapon?.name != null) return weapon!.name!;
+    }
+    return weaponId;
+  }
+
+  Widget _buildSlotTooltipContent(ShipWeaponSlot slot,
+      BuildContext context,
+      List<ResolvedModule> modules,) {
     final theme = Theme.of(context);
     final color = _colorForType(slot.type);
     final mountLabel = slot.mount.toUpperCase() == 'HARDPOINT'
@@ -934,10 +944,21 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
       }
     }
 
+    final builtInWeaponId = widget.ship.builtInWeapons?[slot.id];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (builtInWeaponId != null) ...[
+          Text(
+            'Built-in: ${_builtInWeaponName(builtInWeaponId)}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
         Row(
           mainAxisSize: MainAxisSize.min,
           spacing: 6,
@@ -965,18 +986,19 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
           Text('Station Module', style: theme.textTheme.bodySmall),
           if (moduleName != null)
             Text('Module: $moduleName', style: theme.textTheme.bodySmall),
-        ] else ...[
-          Text(
-            '${slot.sizeUppercase} $mountLabel',
-            style: theme.textTheme.bodySmall,
-          ),
-          Text('Type: ${slot.type}', style: theme.textTheme.bodySmall),
-          if (slot.arc > 0)
+        ] else
+          ...[
             Text(
-              'Arc: ${slot.arc.toStringAsFixed(0)}°',
+              '${slot.sizeUppercase} $mountLabel',
               style: theme.textTheme.bodySmall,
             ),
-        ],
+            Text('Type: ${slot.type}', style: theme.textTheme.bodySmall),
+            if (slot.arc > 0)
+              Text(
+                'Arc: ${slot.arc.toStringAsFixed(0)}°',
+                style: theme.textTheme.bodySmall,
+              ),
+          ],
         Text(
           'Angle: ${slot.angle.toStringAsFixed(0)}°',
           style: theme.textTheme.bodySmall,
@@ -985,13 +1007,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     );
   }
 
-  Widget _buildModuleSlotHitAreaOffset(
-    int index,
-    _TransformedSlot ts,
-    BuildContext context,
-    double dx,
-    double dy,
-  ) {
+  Widget _buildModuleSlotHitAreaOffset(int index,
+      _TransformedSlot ts,
+      BuildContext context,
+      double dx,
+      double dy,) {
     final radius = _radiusForSize(ts.slot.size);
     final hitSize = (radius + 6) * 2;
 
@@ -1008,19 +1028,17 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
       height: hitSize,
       child: widget.showSlotTooltips
           ? MovingTooltipWidget(
-              tooltipWidget: TooltipFrame(
-                child: _buildModuleSlotTooltipContent(ts, context),
-              ),
-              child: hitRegion,
-            )
+        tooltipWidget: TooltipFrame(
+          child: _buildModuleSlotTooltipContent(ts, context),
+        ),
+        child: hitRegion,
+      )
           : hitRegion,
     );
   }
 
-  Widget _buildModuleSlotTooltipContent(
-    _TransformedSlot ts,
-    BuildContext context,
-  ) {
+  Widget _buildModuleSlotTooltipContent(_TransformedSlot ts,
+      BuildContext context,) {
     final theme = Theme.of(context);
     final slot = ts.slot;
     final color = _colorForType(slot.typeUppercase);
@@ -1032,6 +1050,15 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (ts.builtInWeaponId != null) ...[
+          Text(
+            'Built-in: ${_builtInWeaponName(ts.builtInWeaponId!)}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
         Row(
           mainAxisSize: MainAxisSize.min,
           spacing: 6,
@@ -1183,15 +1210,13 @@ class _WeaponSlotPainter extends CustomPainter {
     }
   }
 
-  void _drawFiringArc(
-    Canvas canvas,
-    Offset pos,
-    double angleDeg,
-    double arcDeg,
-    Color color,
-    double radius,
-    bool isHovered,
-  ) {
+  void _drawFiringArc(Canvas canvas,
+      Offset pos,
+      double angleDeg,
+      double arcDeg,
+      Color color,
+      double radius,
+      bool isHovered,) {
     final arcRadius = radius * 5;
     final arcRect = Rect.fromCircle(center: pos, radius: arcRadius);
 
@@ -1225,15 +1250,13 @@ class _WeaponSlotPainter extends CustomPainter {
     canvas.drawPath(path, outlinePaint);
   }
 
-  void _drawSlotMarker(
-    Canvas canvas,
-    Offset pos,
-    double angleDeg,
-    ShipWeaponSlot slot,
-    Color color,
-    double radius,
-    bool isHovered,
-  ) {
+  void _drawSlotMarker(Canvas canvas,
+      Offset pos,
+      double angleDeg,
+      ShipWeaponSlot slot,
+      Color color,
+      double radius,
+      bool isHovered,) {
     final isHardpoint = slot.mount.toUpperCase() == 'HARDPOINT';
     final coloredStrokeWidth = isHovered ? 2.0 : 1.2;
 
@@ -1337,13 +1360,12 @@ class _BoundsPainter extends CustomPainter {
     }
   }
 
-  void _drawPolygon(
-    Canvas canvas,
-    List<Offset> vertices,
-    Paint stroke,
-    Paint fill,
-  ) {
-    final path = Path()..moveTo(vertices[0].dx, vertices[0].dy);
+  void _drawPolygon(Canvas canvas,
+      List<Offset> vertices,
+      Paint stroke,
+      Paint fill,) {
+    final path = Path()
+      ..moveTo(vertices[0].dx, vertices[0].dy);
     for (var i = 1; i < vertices.length; i++) {
       path.lineTo(vertices[i].dx, vertices[i].dy);
     }
@@ -1412,6 +1434,7 @@ class _TransformedSlot {
   final double adjustedAngleDeg;
   final int moduleIndex;
   final String moduleName;
+  final String? builtInWeaponId;
 
   const _TransformedSlot({
     required this.slot,
@@ -1419,5 +1442,6 @@ class _TransformedSlot {
     required this.adjustedAngleDeg,
     required this.moduleIndex,
     required this.moduleName,
+    this.builtInWeaponId,
   });
 }

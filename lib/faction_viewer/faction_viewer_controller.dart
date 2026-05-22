@@ -2,6 +2,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
@@ -136,6 +137,20 @@ class FactionViewerController extends Notifier<FactionViewerState> {
               id: 'hideModOnly',
               label: 'Hide mod-only factions',
               predicate: (f) => !f.isModOnly,
+            ),
+            BoolField<Faction>(
+              id: 'showEnabled',
+              label: 'Only Enabled Mods',
+              tooltip: 'Only show factions from enabled mods.',
+              predicate: (f) {
+                final mods = ref.read(AppState.mods);
+                return f.isVanilla ||
+                    f.sources.any(
+                      (s) =>
+                          s.modVariant != null &&
+                          s.modVariant.mod(mods)?.hasEnabledVariant == true,
+                    );
+              },
             ),
           ],
         ),

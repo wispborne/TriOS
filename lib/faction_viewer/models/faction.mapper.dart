@@ -261,6 +261,12 @@ class FactionMapper extends ClassMapperBase<Faction> {
     def: const {},
     hook: SkipSerializationHook(),
   );
+  static Color _$factionColor(Faction v) => v.factionColor;
+  static const Field<Faction, Color> _f$factionColor = Field(
+    'factionColor',
+    _$factionColor,
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<Faction> fields = const {
@@ -299,6 +305,7 @@ class FactionMapper extends ClassMapperBase<Faction> {
     #sources: _f$sources,
     #sectionAttributions: _f$sectionAttributions,
     #itemAttributions: _f$itemAttributions,
+    #factionColor: _f$factionColor,
   };
 
   static Faction _instantiate(DecodingData data) {

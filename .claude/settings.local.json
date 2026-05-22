@@ -189,7 +189,13 @@
       "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\\\\faction_viewer\\\\\" -Recurse | Select-Object FullName | ConvertTo-Csv | Out-String)",
       "Bash(Get-ChildItem -Recurse -ErrorAction SilentlyContinue)",
       "Bash(Select-String -Pattern \"\\(catalog|browse|browser\\)\")",
-      "Bash(Head -20)"
+      "Bash(Head -20)",
+      "mcp__idea__get_symbol_info",
+      "Bash(Get-ChildItem -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\" -Directory -Name)",
+      "Bash(Select-Object -First 20)",
+      "WebSearch",
+      "Bash(findstr /i \"material_color_utilities dart_mappable\")",
+      "Bash(Select-String -Pattern \"material_color_utilities|dart_mappable\" -Context 2)"
     ]
   }
 }

@@ -801,14 +801,49 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       return;
     }
 
-    // We're going to make a batch of changes, wait until they're done to refresh modVariants.
-    // ref
-    //     .read(AppState.modVariants.notifier)
-    //     .shouldAutomaticallyReloadOnFilesChanged = false;
-
     // If enabling a variant, disable all other non-bricked mod variants
     // (except for the variant we want to actually enable, if that's already active).
-    for (var variant in modInfoEnabledVariants) {
+    // Extracted to a separate method to work around a Dart AOT compiler bug
+    // where `await` inside a for loop in this method generates a bad state machine.
+    await _disableOtherVariants(
+      modInfoEnabledVariants,
+      modVariant,
+      isDisablingMod: isDisablingMod,
+      mod: mod,
+    );
+
+    if (!isDisablingMod) {
+      await _enableModVariant(
+        modVariant,
+        mod,
+        enableInVanillaLauncher: true,
+        reason:
+            "You changed ${mod.id} to version ${modVariant.bestVersion} from ${mod.findFirstEnabled == null ? "disabled" : mod.findFirstEnabled?.bestVersion}.",
+      );
+    } else {
+      await _unbrickModInfoFiles(mod);
+    }
+
+    // TODO update ONLY the mod that changed and any dependents/dependencies.
+    if (notifyWatchers) {
+      await ref
+          .read(AppState.modVariants.notifier)
+          .reloadModVariants(
+            onlyVariants: mod.modVariants,
+          );
+    }
+    if (validateDependencies) {
+      await validateModDependencies(modsToFreeze: [mod.id]);
+    }
+  }
+
+  Future<void> _disableOtherVariants(
+    List<ModVariant> modInfoEnabledVariants,
+    ModVariant? modVariant, {
+    required bool isDisablingMod,
+    required Mod mod,
+  }) async {
+    for (final variant in modInfoEnabledVariants) {
       if (variant.smolId != modVariant?.smolId) {
         try {
           await _disableModVariant(
@@ -821,56 +856,31 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             brickModInfo: !isDisablingMod && mod.modVariants.length > 1,
             reason: isDisablingMod
                 ? "You disabled ${mod.id} (${variant.modInfo.version} was enabled before)."
-                : "Changed ${mod.id} to ${modVariant.modInfo.version}, so ${variant.bestVersion} has to be disabled.",
+                : "Changed ${mod.id} to ${modVariant!.modInfo.version}, so ${variant.bestVersion} has to be disabled.",
           );
         } catch (e, st) {
           Fimber.e("Error disabling mod variant: $e", ex: e, stacktrace: st);
         }
       }
     }
+  }
 
-    if (!isDisablingMod) {
-      await _enableModVariant(
-        modVariant,
-        mod,
-        enableInVanillaLauncher: true,
-        reason:
-            "You changed ${mod.id} to version ${modVariant.bestVersion} from ${mod.findFirstEnabled == null ? "disabled" : mod.findFirstEnabled?.bestVersion}.",
-      );
-    } else {
-      // If mod is disabled in `enabled_mods.json`, set all the `mod_info.json` files to non-bricked.
-      // That makes things easier on the user & MOSS by mimicking vanilla behavior whenever possible.
-      final disabledModVariants = mod.modVariants
-          .where((v) => !v.isModInfoEnabled)
-          .toList();
-      for (final disabledVariant in disabledModVariants) {
-        try {
-          await _enableModInfoFile(disabledVariant);
-        } catch (e, st) {
-          Fimber.e(
-            "Error enabling mod_info.json file: $e",
-            ex: e,
-            stacktrace: st,
-          );
-        }
+  Future<void> _unbrickModInfoFiles(Mod mod) async {
+    // If mod is disabled in `enabled_mods.json`, set all the `mod_info.json` files to non-bricked.
+    // That makes things easier on the user & MOSS by mimicking vanilla behavior whenever possible.
+    final disabledModVariants = mod.modVariants
+        .where((v) => !v.isModInfoEnabled)
+        .toList();
+    for (final disabledVariant in disabledModVariants) {
+      try {
+        await _enableModInfoFile(disabledVariant);
+      } catch (e, st) {
+        Fimber.e(
+          "Error enabling mod_info.json file: $e",
+          ex: e,
+          stacktrace: st,
+        );
       }
-    }
-
-    // ref
-    //     .read(AppState.modVariants.notifier)
-    //     .shouldAutomaticallyReloadOnFilesChanged = true;
-
-    // TODO update ONLY the mod that changed and any dependents/dependencies.
-    if (notifyWatchers) {
-      await ref
-          .read(AppState.modVariants.notifier)
-          .reloadModVariants(
-            onlyVariants: mod.modVariants,
-          );
-    }
-
-    if (validateDependencies) {
-      await validateModDependencies(modsToFreeze: [mod.id]);
     }
   }
 

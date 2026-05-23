@@ -92,6 +92,10 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
             }
             ref.invalidateSelf(); // Forces a call to build() to re-fetch the list of downloads
           });
+          // Also invalidate when install completes or is cancelled, so watchers
+          // (Activity Panel, icon badge) can re-filter in-progress vs completed.
+          download.installComplete.addListener(() => ref.invalidateSelf());
+          download.installCancelled.addListener(() => ref.invalidateSelf());
           return download;
         });
   }
@@ -104,6 +108,8 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     final task = DownloadTask(DownloadRequest(sourcePath, '', null));
     task.status.value = DownloadStatus.completed;
     final download = Download(id, displayName, task);
+    download.installComplete.addListener(() => ref.invalidateSelf());
+    download.installCancelled.addListener(() => ref.invalidateSelf());
     _downloads.add(download);
     state = AsyncValue.data(_downloads);
     return download;

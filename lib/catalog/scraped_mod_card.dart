@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
@@ -13,7 +14,6 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
-import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
@@ -428,29 +428,12 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     String modName,
     String downloadUrl,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(modName),
-          content: Text("Do you want to download '$modName'?"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                widget.linkLoader(downloadUrl);
-                Navigator.of(context).pop();
-              },
-              child: const Text('Download'),
-            ),
-          ],
-        );
-      },
+    confirmAndDownloadMod(
+      context,
+      modName: modName,
+      downloadUrl: downloadUrl,
+      skipDialog: true,
+      onConfirm: () => widget.linkLoader(downloadUrl),
     );
   }
 
@@ -976,31 +959,12 @@ class CatalogDownloadButton extends ConsumerWidget {
     String modName,
     String downloadUrl,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(modName),
-        content: Text("Do you want to download '$modName'?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ref
-                  .read(downloadManager.notifier)
-                  .downloadAndInstallMod(
-                    modName,
-                    downloadUrl,
-                    activateVariantOnComplete: false,
-                  );
-            },
-            child: const Text('Download'),
-          ),
-        ],
-      ),
+    confirmAndDownloadModViaManager(
+      context,
+      ref,
+      modName: modName,
+      downloadUrl: downloadUrl,
+      skipDialog: true,
     );
   }
 

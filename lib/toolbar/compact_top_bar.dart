@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/toolbar/activity_icon_button.dart';
 import 'package:trios/toolbar/app_action_buttons.dart';
 import 'package:trios/toolbar/app_brand_header.dart';
 import 'package:trios/toolbar/app_right_toolbar.dart';
@@ -46,6 +47,7 @@ class CompactTopBar extends StatelessWidget implements PreferredSizeWidget {
                         const GameFolderButton(),
                         const LogFileButton(),
                         const BugReportButton(),
+                        const ActivityIconButton(),
                         SizedBox(
                           height: preferredSize.height - 16,
                           child: VerticalDivider(

@@ -163,6 +163,10 @@ class Settings with SettingsMappable {
   final bool? showAprilFools2026;
   final bool? forceShowAprilFools2026;
 
+  final bool isActivityPanelOpen;
+  final double activityPanelWidth;
+  final ActivityPanelMode activityPanelMode;
+
   final bool debugMode;
 
   final List<String> weaponsSearchHistory;
@@ -277,6 +281,9 @@ class Settings with SettingsMappable {
     this.shouldLoadWebView = false,
     this.showAprilFools2026 = false,
     this.forceShowAprilFools2026 = false,
+    this.isActivityPanelOpen = false,
+    this.activityPanelWidth = 320,
+    this.activityPanelMode = ActivityPanelMode.pinned,
     this.debugMode = false,
     this.weaponsSearchHistory = const [],
     this.shipsSearchHistory = const [],
@@ -289,6 +296,9 @@ class Settings with SettingsMappable {
     this.vramEstimatorMultithreaded = true,
   });
 }
+
+@MappableEnum(defaultValue: ActivityPanelMode.pinned)
+enum ActivityPanelMode { pinned, overlay }
 
 @MappableEnum(defaultValue: FolderNamingSetting.allFoldersVersioned)
 enum FolderNamingSetting {

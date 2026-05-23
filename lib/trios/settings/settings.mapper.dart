@@ -8,6 +8,52 @@
 
 part of 'settings.dart';
 
+class ActivityPanelModeMapper extends EnumMapper<ActivityPanelMode> {
+  ActivityPanelModeMapper._();
+
+  static ActivityPanelModeMapper? _instance;
+  static ActivityPanelModeMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ActivityPanelModeMapper._());
+    }
+    return _instance!;
+  }
+
+  static ActivityPanelMode fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  ActivityPanelMode decode(dynamic value) {
+    switch (value) {
+      case r'pinned':
+        return ActivityPanelMode.pinned;
+      case r'overlay':
+        return ActivityPanelMode.overlay;
+      default:
+        return ActivityPanelMode.values[0];
+    }
+  }
+
+  @override
+  dynamic encode(ActivityPanelMode self) {
+    switch (self) {
+      case ActivityPanelMode.pinned:
+        return r'pinned';
+      case ActivityPanelMode.overlay:
+        return r'overlay';
+    }
+  }
+}
+
+extension ActivityPanelModeMapperExtension on ActivityPanelMode {
+  String toValue() {
+    ActivityPanelModeMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<ActivityPanelMode>(this) as String;
+  }
+}
+
 class FolderNamingSettingMapper extends EnumMapper<FolderNamingSetting> {
   FolderNamingSettingMapper._();
 
@@ -353,6 +399,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       CompressionLibMapper.ensureInitialized();
       CatalogCardClickActionMapper.ensureInitialized();
       CatalogPageStatePersistedMapper.ensureInitialized();
+      ActivityPanelModeMapper.ensureInitialized();
       VramSelectorIdMapper.ensureInitialized();
       ReferencedAssetsSelectorConfigMapper.ensureInitialized();
     }
@@ -941,6 +988,28 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool _$isActivityPanelOpen(Settings v) => v.isActivityPanelOpen;
+  static const Field<Settings, bool> _f$isActivityPanelOpen = Field(
+    'isActivityPanelOpen',
+    _$isActivityPanelOpen,
+    opt: true,
+    def: false,
+  );
+  static double _$activityPanelWidth(Settings v) => v.activityPanelWidth;
+  static const Field<Settings, double> _f$activityPanelWidth = Field(
+    'activityPanelWidth',
+    _$activityPanelWidth,
+    opt: true,
+    def: 320,
+  );
+  static ActivityPanelMode _$activityPanelMode(Settings v) =>
+      v.activityPanelMode;
+  static const Field<Settings, ActivityPanelMode> _f$activityPanelMode = Field(
+    'activityPanelMode',
+    _$activityPanelMode,
+    opt: true,
+    def: ActivityPanelMode.pinned,
+  );
   static bool _$debugMode(Settings v) => v.debugMode;
   static const Field<Settings, bool> _f$debugMode = Field(
     'debugMode',
@@ -1094,6 +1163,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #shouldLoadWebView: _f$shouldLoadWebView,
     #showAprilFools2026: _f$showAprilFools2026,
     #forceShowAprilFools2026: _f$forceShowAprilFools2026,
+    #isActivityPanelOpen: _f$isActivityPanelOpen,
+    #activityPanelWidth: _f$activityPanelWidth,
+    #activityPanelMode: _f$activityPanelMode,
     #debugMode: _f$debugMode,
     #weaponsSearchHistory: _f$weaponsSearchHistory,
     #shipsSearchHistory: _f$shipsSearchHistory,
@@ -1196,6 +1268,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       shouldLoadWebView: data.dec(_f$shouldLoadWebView),
       showAprilFools2026: data.dec(_f$showAprilFools2026),
       forceShowAprilFools2026: data.dec(_f$forceShowAprilFools2026),
+      isActivityPanelOpen: data.dec(_f$isActivityPanelOpen),
+      activityPanelWidth: data.dec(_f$activityPanelWidth),
+      activityPanelMode: data.dec(_f$activityPanelMode),
       debugMode: data.dec(_f$debugMode),
       weaponsSearchHistory: data.dec(_f$weaponsSearchHistory),
       shipsSearchHistory: data.dec(_f$shipsSearchHistory),
@@ -1418,6 +1493,9 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? shouldLoadWebView,
     bool? showAprilFools2026,
     bool? forceShowAprilFools2026,
+    bool? isActivityPanelOpen,
+    double? activityPanelWidth,
+    ActivityPanelMode? activityPanelMode,
     bool? debugMode,
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
@@ -1672,6 +1750,9 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? shouldLoadWebView,
     Object? showAprilFools2026 = $none,
     Object? forceShowAprilFools2026 = $none,
+    bool? isActivityPanelOpen,
+    double? activityPanelWidth,
+    ActivityPanelMode? activityPanelMode,
     bool? debugMode,
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
@@ -1795,6 +1876,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (showAprilFools2026 != $none) #showAprilFools2026: showAprilFools2026,
       if (forceShowAprilFools2026 != $none)
         #forceShowAprilFools2026: forceShowAprilFools2026,
+      if (isActivityPanelOpen != null)
+        #isActivityPanelOpen: isActivityPanelOpen,
+      if (activityPanelWidth != null) #activityPanelWidth: activityPanelWidth,
+      if (activityPanelMode != null) #activityPanelMode: activityPanelMode,
       if (debugMode != null) #debugMode: debugMode,
       if (weaponsSearchHistory != null)
         #weaponsSearchHistory: weaponsSearchHistory,
@@ -2046,6 +2131,18 @@ class _SettingsCopyWithImpl<$R, $Out>
     forceShowAprilFools2026: data.get(
       #forceShowAprilFools2026,
       or: $value.forceShowAprilFools2026,
+    ),
+    isActivityPanelOpen: data.get(
+      #isActivityPanelOpen,
+      or: $value.isActivityPanelOpen,
+    ),
+    activityPanelWidth: data.get(
+      #activityPanelWidth,
+      or: $value.activityPanelWidth,
+    ),
+    activityPanelMode: data.get(
+      #activityPanelMode,
+      or: $value.activityPanelMode,
     ),
     debugMode: data.get(#debugMode, or: $value.debugMode),
     weaponsSearchHistory: data.get(

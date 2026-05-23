@@ -318,6 +318,10 @@ extension StringExt on String {
       softWrap: softWrap ?? true,
     );
   }
+
+  String? nullIfEmpty() {
+    return isEmpty ? null : this;
+  }
 }
 
 class _SubstitutionPart {
@@ -1279,6 +1283,7 @@ extension TriOSBuildContextTheme on ThemeData {
 
   /// Access semantic status colors from the current theme.
   TriOSThemeExtension get statusColors => extension<TriOSThemeExtension>()!;
+  TriOSThemeExtension get triosExtensions => extension<TriOSThemeExtension>()!;
 }
 
 extension TriOSBuildContext on BuildContext {

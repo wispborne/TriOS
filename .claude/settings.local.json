@@ -195,7 +195,20 @@
       "Bash(Select-Object -First 20)",
       "WebSearch",
       "Bash(findstr /i \"material_color_utilities dart_mappable\")",
-      "Bash(Select-String -Pattern \"material_color_utilities|dart_mappable\" -Context 2)"
+      "Bash(Select-String -Pattern \"material_color_utilities|dart_mappable\" -Context 2)",
+      "PowerShell(Get-WinEvent -FilterHashtable @{LogName='Application'; Level=1,2; StartTime=\\(Get-Date\\).AddMinutes\\(-30\\)} -MaxEvents 10 | Select-Object TimeCreated, Id, Message | Format-List)",
+      "Bash(flutter create *)",
+      "Bash(rm \"F:\\\\Code\\\\Starsector\\\\aot_crash_repro\\\\test\\\\widget_test.dart\" && echo \"removed\")",
+      "Bash(./dart_only_repro.exe)",
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(mkdir -p \"F:\\\\Code\\\\Starsector\\\\dart_aot_bug\")",
+      "Bash(cp \"F:\\\\Code\\\\Starsector\\\\aot_crash_repro\\\\dart_only_repro.dart\" \"F:\\\\Code\\\\Starsector\\\\dart_aot_bug\\\\repro.dart\")",
+      "Bash(\"C:\\\\Users\\\\whitm\\\\fvm\\\\versions\\\\3.44.0\\\\bin\\\\flutter.bat\" analyze *)",
+      "PowerShell(fvm flutter analyze lib/mod_manager/homebrew_grid/wispgrid_header_row_view.dart 2>&1)",
+      "PowerShell(if \\(-not \\(Test-Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\"\\)\\) { New-Item -ItemType Directory -Force \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\" }; Move-Item \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\activity-panel\" \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-22-activity-panel\")",
+      "Bash(move \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\activity-panel-polish\" \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-23-activity-panel-polish\")",
+      "PowerShell(Move-Item -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\activity-panel-polish\" -Destination \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-23-activity-panel-polish\")",
+      "Bash(dart compile *)"
     ]
   }
 }

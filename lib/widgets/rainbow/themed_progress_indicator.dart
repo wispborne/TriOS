@@ -38,15 +38,15 @@ class ThemedCircularProgressIndicator extends StatelessWidget {
         CircularProgressIndicator(
           value: 1.0,
           strokeWidth: strokeWidth,
-          color: backgroundColor ??
+          color:
+              backgroundColor ??
               Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12),
           backgroundColor: Colors.transparent,
           strokeCap: strokeCap,
         ),
         ShaderMask(
-          shaderCallback: (bounds) => const SweepGradient(
-            colors: rainbowColors,
-          ).createShader(bounds),
+          shaderCallback: (bounds) =>
+              const SweepGradient(colors: rainbowColors).createShader(bounds),
           blendMode: BlendMode.srcIn,
           child: CircularProgressIndicator(
             value: value,
@@ -67,6 +67,7 @@ class ThemedLinearProgressIndicator extends StatelessWidget {
   final Color? color;
   final Color? backgroundColor;
   final double minHeight;
+  final int alpha;
 
   const ThemedLinearProgressIndicator({
     super.key,
@@ -74,20 +75,25 @@ class ThemedLinearProgressIndicator extends StatelessWidget {
     this.color,
     this.backgroundColor,
     this.minHeight = 4.0,
+    this.alpha = 250,
   });
 
   @override
   Widget build(BuildContext context) {
     if (!context.theme.rainbowAccent) {
-      return LinearProgressIndicator(
-        value: value,
-        color: color,
-        backgroundColor: backgroundColor,
-        minHeight: minHeight,
+      return Opacity(
+        opacity: alpha / 255.0,
+        child: LinearProgressIndicator(
+          value: value,
+          color: color,
+          backgroundColor: backgroundColor,
+          minHeight: minHeight,
+        ),
       );
     }
 
-    final trackColor = backgroundColor ??
+    final trackColor =
+        backgroundColor ??
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12);
 
     return Stack(
@@ -98,15 +104,18 @@ class ThemedLinearProgressIndicator extends StatelessWidget {
           backgroundColor: Colors.transparent,
           minHeight: minHeight,
         ),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: rainbowColors,
-          ).createShader(bounds),
-          blendMode: BlendMode.srcIn,
-          child: LinearProgressIndicator(
-            value: value,
-            backgroundColor: Colors.transparent,
-            minHeight: minHeight,
+        Opacity(
+          opacity: alpha / 255.0,
+          child: ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: rainbowColors,
+            ).createShader(bounds),
+            blendMode: BlendMode.srcIn,
+            child: LinearProgressIndicator(
+              value: value,
+              backgroundColor: Colors.transparent,
+              minHeight: minHeight,
+            ),
           ),
         ),
       ],

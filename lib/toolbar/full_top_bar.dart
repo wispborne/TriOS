@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/toolbar/activity_icon_button.dart';
 import 'package:trios/toolbar/app_action_buttons.dart';
 import 'package:trios/toolbar/app_brand_header.dart';
 import 'package:trios/toolbar/app_right_toolbar.dart';
@@ -166,6 +167,7 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
           const LogFileButton(),
           const BugReportButton(),
           const ToolbarLayoutToggle(),
+          const ActivityIconButton(),
           SettingsNavButton(
             currentPage: currentPage,
             onTabChanged: onTabChanged,

@@ -26,7 +26,10 @@ import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/navigation_request.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
+import 'package:trios/trios/activity_panel/activity_panel.dart';
+import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
 import 'package:trios/trios/toasts/toast_manager.dart';
 import 'package:trios/trios/toasts/widgets/self_update_toast.dart';
 import 'package:trios/utils/extensions.dart';
@@ -54,6 +57,7 @@ class _AppShellState extends ConsumerState<AppShell>
     with SingleTickerProviderStateMixin {
   late TriOSTools _currentPage;
   bool isNewGrid = true;
+  bool _isResizeHandleHovered = false;
   final rightToolbarScrollController = ScrollController();
 
   final tabToolMap = {
@@ -276,22 +280,94 @@ class _AppShellState extends ConsumerState<AppShell>
                 ),
               ),
             Expanded(
-              child: Stack(
-                children: [
-                  LazyIndexedStack(
-                    index: toolToIndexMap[_currentPage] ?? 0,
-                    children: tabChildren,
-                  ),
-                  const Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Padding(
-                      padding: EdgeInsets.all(8),
-                      child: ToastDisplayer(),
+              child: () {
+                final isOpen = ref.watch(
+                  appSettings.select((s) => s.isActivityPanelOpen),
+                );
+                final isPinned =
+                    ref.watch(appSettings.select((s) => s.activityPanelMode)) ==
+                    ActivityPanelMode.pinned;
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          LazyIndexedStack(
+                            index: toolToIndexMap[_currentPage] ?? 0,
+                            children: tabChildren,
+                          ),
+                          const Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child: ToastDisplayer(),
+                            ),
+                          ),
+                          if (!isPinned) ...[
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                ignoring: !isOpen,
+                                child: GestureDetector(
+                                  onTap: () => ref
+                                      .read(appSettings.notifier)
+                                      .update(
+                                        (s) => s.copyWith(
+                                          isActivityPanelOpen: false,
+                                        ),
+                                      ),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: const SizedBox.expand(),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 8,
+                              top: 4,
+                              bottom: 8,
+                              child: IgnorePointer(
+                                ignoring: !isOpen,
+                                child: AnimatedOpacity(
+                                  opacity: isOpen ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 60),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _buildResizeHandle(context),
+                                      DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                              blurRadius: 16,
+                                              offset: const Offset(-2, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const ActivityPanel(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    if (isOpen && isPinned) ...[
+                      _buildResizeHandle(context),
+                      const ActivityPanel(),
+                    ],
+                  ],
+                );
+              }(),
             ),
           ],
         ),
@@ -340,6 +416,48 @@ class _AppShellState extends ConsumerState<AppShell>
         scrollController: rightToolbarScrollController,
       ),
       body: body,
+    );
+  }
+
+  Widget _buildResizeHandle(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      onEnter: (_) => setState(() => _isResizeHandleHovered = true),
+      onExit: (_) => setState(() => _isResizeHandleHovered = false),
+      child: GestureDetector(
+        onHorizontalDragUpdate: (details) {
+          final currentWidth = ref.read(appSettings).activityPanelWidth;
+          final newWidth = (currentWidth - details.delta.dx).clamp(
+            minActivityPanelWidth,
+            maxActivityPanelWidth,
+          );
+          ref
+              .read(appSettings.notifier)
+              .update((s) => s.copyWith(activityPanelWidth: newWidth));
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 8,
+          color: Colors.transparent,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 4,
+              height: _isResizeHandleHovered ? 48 : 40,
+              decoration: BoxDecoration(
+                color: _isResizeHandleHovered
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6)
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

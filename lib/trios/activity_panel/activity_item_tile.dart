@@ -1,0 +1,373 @@
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/download_progress.dart';
+import 'package:trios/models/mod_variant.dart';
+import 'package:trios/trios/activity_panel/activity_entry.dart';
+import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/download_manager/download_status.dart';
+import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/relative_timestamp.dart';
+import 'package:trios/widgets/download_progress_indicator.dart';
+import 'package:trios/widgets/mod_icon.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+
+/// Shared card container for activity tiles.
+class _ActivityCard extends StatelessWidget {
+  final Widget child;
+
+  const _ActivityCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: .symmetric(horizontal: 8, vertical: 4),
+      child: Container(
+        padding: .all(8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+          border: Border.all(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Displays a single completed/failed activity entry as a card.
+class CompletedActivityTile extends ConsumerWidget {
+  final ActivityEntry entry;
+
+  const CompletedActivityTile({super.key, required this.entry});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isFailed = entry.status == ActivityStatus.failed;
+    final isCancelled = entry.status == ActivityStatus.cancelled;
+
+    final mods = ref.watch(AppState.mods);
+    final mod = entry.modId != null
+        ? mods.firstWhereOrNull((m) => m.id == entry.modId)
+        : mods.firstWhereOrNull(
+            (m) => m.findHighestVersion?.modInfo.nameOrId == entry.modName,
+          );
+    final variant = mod?.findHighestVersion;
+    final isEnabled = mod?.isEnabledInGame == true;
+
+    final hasIcon = variant?.iconFilePath != null;
+    return _ActivityCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              Padding(
+                padding: .only(top: hasIcon ? 4 : 2),
+                child: hasIcon
+                    ? ModIcon(variant!.iconFilePath, size: 24)
+                    : Icon(
+                        isFailed
+                            ? Icons.error
+                            : isCancelled
+                            ? Icons.cancel_outlined
+                            : Icons.check_circle,
+                        size: 20,
+                        color: isFailed
+                            ? theme.colorScheme.error
+                            : isCancelled
+                            ? theme.colorScheme.onSurfaceVariant
+                            : theme.colorScheme.primary,
+                      ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      spacing: 2,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.modName,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (entry.modVersion != null)
+                          Text(
+                            entry.modVersion!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: 11,
+                            ),
+                          ),
+                        MovingTooltipWidget.text(
+                          message: 'Clear',
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              iconSize: 14,
+                              icon: Icon(
+                                Icons.close,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              onPressed: () => ref
+                                  .read(activityHistoryStore.notifier)
+                                  .removeEntry(entry.id),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      [
+                        isCancelled
+                            ? 'Cancelled'
+                            : entry.sourceType == ActivitySourceType.download
+                            ? 'Downloaded'
+                            : 'From archive',
+                        entry.timestamp.relativeTimestamp(
+                          minUnit: TimeUnit.minutes,
+                        ),
+                      ].join(' · '),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (isFailed && entry.errorMessage != null)
+                      MovingTooltipWidget.text(
+                        message: entry.errorMessage!,
+                        child: Text(
+                          entry.errorMessage!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                            fontSize: 11,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (!isFailed && !isCancelled && variant != null)
+            Padding(
+              padding: .only(top: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                spacing: 4,
+                children: [
+                  MovingTooltipWidget.text(
+                    message: 'Open mod folder',
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        launchUrlString(variant.modFolder.path);
+                      },
+                      icon: Icon(
+                        Icons.folder_open,
+                        size: 14,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      label: Text(
+                        'Open',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 11,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: .symmetric(horizontal: 6, vertical: 2),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+                  if (!isEnabled && mod != null)
+                    MovingTooltipWidget.text(
+                      message: 'Enable this mod',
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await ref
+                              .read(modManager.notifier)
+                              .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                                mod,
+                                variant,
+                              );
+                        },
+                        icon: const Icon(Icons.power_settings_new, size: 14),
+                        label: Text(
+                          'Enable',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 11,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          padding: .symmetric(horizontal: 6, vertical: 2),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Displays a single in-progress download/install as a card.
+/// Listens to the download's ValueNotifiers for live progress updates.
+class InProgressActivityTile extends StatelessWidget {
+  final Download download;
+
+  const InProgressActivityTile({super.key, required this.download});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        download.task.status,
+        download.task.downloaded,
+        download.installProgress,
+        download.installComplete,
+        download.installedVariant,
+      ]),
+      builder: (context, _) => _buildContent(context),
+    );
+  }
+
+  String? _resolveIconPath() {
+    final installed = download.installedVariant.value;
+    if (installed != null) return installed.iconFilePath;
+    if (download is ModDownload) {
+      return ModVariant.iconCache[(download as ModDownload).modInfo.id];
+    }
+    return null;
+  }
+
+  Widget _buildIcon(
+    IconData statusIcon,
+    bool isInstalling,
+    DownloadStatus status,
+    ThemeData theme,
+  ) {
+    final iconPath = _resolveIconPath();
+    return MovingTooltipWidget.text(
+      message: isInstalling ? 'Installing...' : status.displayString,
+      child: iconPath != null
+          ? ModIcon(iconPath, size: 24)
+          : Icon(statusIcon, size: 20, color: theme.iconTheme.color),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final theme = Theme.of(context);
+    final status = download.task.status.value;
+    final dlAmount = download.task.downloaded.value;
+
+    final isInstalling =
+        status == DownloadStatus.completed && !download.installComplete.value;
+    final installProgress = download.installProgress.value;
+
+    String statusText;
+    TriOSDownloadProgress? progressValue;
+
+    if (isInstalling) {
+      statusText = installProgress?.customStatus ?? 'Installing...';
+      progressValue =
+          installProgress ?? TriOSDownloadProgress(0, 0, isIndeterminate: true);
+    } else if (status == DownloadStatus.downloading) {
+      statusText = 'Downloading...';
+      progressValue = TriOSDownloadProgress(
+        dlAmount.bytesReceived,
+        dlAmount.totalBytes,
+        isIndeterminate: dlAmount.totalBytes == 0,
+      );
+    } else if (status == DownloadStatus.queued ||
+        status == DownloadStatus.retrievingFileInfo) {
+      statusText = status.displayString;
+      progressValue = TriOSDownloadProgress(0, 0, isIndeterminate: true);
+    } else {
+      statusText = status.displayString;
+      progressValue = null;
+    }
+
+    final IconData statusIcon = isInstalling
+        ? Icons.install_desktop
+        : switch (status) {
+            DownloadStatus.queued => Icons.schedule,
+            DownloadStatus.retrievingFileInfo => Icons.downloading,
+            DownloadStatus.downloading => Icons.downloading,
+            DownloadStatus.completed => Icons.check_circle,
+            DownloadStatus.failed => Icons.error,
+            DownloadStatus.canceled => Icons.cancel,
+            _ => Icons.downloading,
+          };
+
+    return _ActivityCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            spacing: 8,
+            children: [
+              _buildIcon(statusIcon, isInstalling, status, theme),
+              Expanded(
+                child: Text(
+                  download.displayName,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          if (progressValue != null)
+            Padding(
+              padding: .only(top: 6),
+              child: TriOSDownloadProgressIndicator(value: progressValue),
+            ),
+          if (progressValue == null)
+            Padding(
+              padding: .only(top: 4),
+              child: Text(
+                statusText,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

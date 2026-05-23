@@ -10,6 +10,10 @@ import '../widgets/context_menu_state.dart';
 /// allowing multiple selections without closing the menu.
 final class CheckableMenuItem extends ContextMenuItem<void> {
   final String label;
+  final IconData? checkedIcon;
+  final IconData? uncheckedIcon;
+  final double? checkedIconOpacity;
+  final double? uncheckedIconOpacity;
   final Widget? leading;
   final BoxConstraints? constraints;
   final bool enabled;
@@ -21,6 +25,10 @@ final class CheckableMenuItem extends ContextMenuItem<void> {
   CheckableMenuItem({
     required this.label,
     required this.isChecked,
+    this.checkedIcon,
+    this.uncheckedIcon,
+    this.checkedIconOpacity,
+    this.uncheckedIconOpacity,
     this.leading,
     super.onSelected,
     this.constraints,
@@ -77,10 +85,15 @@ final class CheckableMenuItem extends ContextMenuItem<void> {
                     dimension: 32.0,
                     child: Icon(
                       isChecked
-                          ? Icons.check_box
-                          : Icons.check_box_outline_blank,
+                          ? (checkedIcon ?? Icons.check_box)
+                          : (uncheckedIcon ?? Icons.check_box_outline_blank),
                       size: 16.0,
-                      color: foregroundColor,
+                      color: foregroundColor.withOpacity(
+                        (isChecked
+                                ? checkedIconOpacity
+                                : uncheckedIconOpacity) ??
+                            foregroundColor.a,
+                      ),
                     ),
                   ),
                   if (leading != null) ...[

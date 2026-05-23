@@ -129,9 +129,6 @@ Future<void> configureLogging(LoggingSettings settings) async {
         ex: details.exception,
         stacktrace: details.stack,
       );
-      // if (details.stack != null) {
-      //   Fimber.e();
-      // }
     };
 
     _consoleLogger = Logger(

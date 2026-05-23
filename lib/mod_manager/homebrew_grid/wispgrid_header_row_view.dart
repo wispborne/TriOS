@@ -35,6 +35,7 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
   final String? defaultGridSort;
+
   /// Per-column additional context menu entries, keyed by column key.
   final Map<String, List<ContextMenuEntry>> perColumnContextMenuEntries;
 
@@ -249,8 +250,7 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
     final thenByCandidates = widget.groups
         .where((g) => g.key != currentPrimaryKey)
         .toList();
-    final showThenBy =
-        widget.groups.length > 1 && thenByCandidates.isNotEmpty;
+    final showThenBy = widget.groups.length > 1 && thenByCandidates.isNotEmpty;
     var sortedColumns = gridState.sortedColumns(columns);
     return ContextMenu(
       entries: [
@@ -273,24 +273,21 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                         ? Icons.check
                         : null,
                     onSelected: () {
-                      updateGridState(
-                        (WispGridState state) {
-                          final existing = state.groupingSetting ??
-                              GroupingSetting(
-                                currentGroupedByKey: group.key,
-                              );
-                          final clearSecondary =
-                              existing.secondaryGroupedByKey == group.key;
-                          return state.copyWith(
-                            groupingSetting: existing.copyWith(
-                              currentGroupedByKey: group.key,
-                              secondaryGroupedByKey: clearSecondary
-                                  ? null
-                                  : existing.secondaryGroupedByKey,
-                            ),
-                          );
-                        },
-                      );
+                      updateGridState((WispGridState state) {
+                        final existing =
+                            state.groupingSetting ??
+                            GroupingSetting(currentGroupedByKey: group.key);
+                        final clearSecondary =
+                            existing.secondaryGroupedByKey == group.key;
+                        return state.copyWith(
+                          groupingSetting: existing.copyWith(
+                            currentGroupedByKey: group.key,
+                            secondaryGroupedByKey: clearSecondary
+                                ? null
+                                : existing.secondaryGroupedByKey,
+                          ),
+                        );
+                      });
                     },
                   ),
                 )
@@ -309,8 +306,9 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                     final existing = state.groupingSetting;
                     if (existing == null) return state;
                     return state.copyWith(
-                      groupingSetting:
-                          existing.copyWith(secondaryGroupedByKey: null),
+                      groupingSetting: existing.copyWith(
+                        secondaryGroupedByKey: null,
+                      ),
                     );
                   });
                 },
@@ -376,31 +374,30 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
         ...sortedColumns.map((columnSetting) {
           final header = columnSetting.key;
           final column = columns.firstWhereOrNull((col) => col.key == header);
-          final isVisible = gridState.columnsState[header]?.isVisible ?? true;
+          final isVisible = columnSetting.value.isVisible;
           // Disable hiding the last remaining visible column.
-          final visibleCount =
-              sortedColumns.where((c) => c.value.isVisible).length;
+          final visibleCount = sortedColumns
+              .where((c) => c.value.isVisible)
+              .length;
           final isLastVisible = isVisible && visibleCount <= 1;
-          return MenuItem(
-            label: column?.name ?? "???",
-            icon: isVisible ? Icons.visibility : Icons.visibility_off,
-            iconOpacity: isVisible ? null : 0.4,
-            keepMenuOpen: true,
-            onSelected: isLastVisible
-                ? null
-                : () {
-                    updateGridState((WispGridState state) {
-                      final columnSettings = state
-                          .sortedColumns(columns)
-                          .toMap();
-                      final headerSetting = columnSettings[header]!;
-                      columnSettings[header] = headerSetting.copyWith(
-                        isVisible: !headerSetting.isVisible,
-                      );
+          return CheckableMenuItem(
+            label: column?.name.nullIfEmpty() ?? column?.key.toTitleCase() ?? "???",
+            isChecked: isVisible,
+            checkedIcon: Icons.visibility,
+            uncheckedIcon: Icons.visibility_off,
+            uncheckedIconOpacity: 0.4,
+            enabled: !isLastVisible,
+            onSelected: () {
+              updateGridState((WispGridState state) {
+                final columnSettings = state.sortedColumns(columns).toMap();
+                final headerSetting = columnSettings[header]!;
+                columnSettings[header] = headerSetting.copyWith(
+                  isVisible: !headerSetting.isVisible,
+                );
 
-                      return state.copyWith(columnsState: columnSettings);
-                    });
-                  },
+                return state.copyWith(columnsState: columnSettings);
+              });
+            },
           );
         }),
       ],

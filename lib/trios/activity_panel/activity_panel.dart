@@ -41,6 +41,24 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
     super.dispose();
   }
 
+  /// Section label with a hairline rule beneath it.
+  Widget _sectionHeader(String label, ThemeData theme) {
+    return Padding(
+      padding: .fromLTRB(16, 4, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -87,10 +105,13 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
         children: [
           // Header.
           Padding(
-            padding: .fromLTRB(16, 12, 8, 8),
+            padding: .fromLTRB(16, 12, 8, 0),
             child: Row(
               children: [
-                Text('Activity', style: theme.textTheme.titleSmall),
+                Text(
+                  'Installation Activity',
+                  style: theme.textTheme.titleSmall,
+                ),
                 const Spacer(),
                 if (hasHistory)
                   MovingTooltipWidget.text(
@@ -106,6 +127,7 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
                       ),
                     ),
                   ),
+                const SizedBox(width: 4),
                 MovingTooltipWidget.text(
                   message: isPinned ? 'Unpin (overlay)' : 'Pin (side panel)',
                   child: IconButton(
@@ -130,7 +152,6 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
               ],
             ),
           ),
-          const Divider(height: 1),
           // Body.
           Expanded(
             child: (!hasInProgress && !hasHistory)
@@ -147,32 +168,20 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
                     children: [
                       // In-progress section.
                       if (hasInProgress) ...[
-                        Padding(
-                          padding: .symmetric(horizontal: 16, vertical: 4),
-                          child: Text(
-                            'In Progress',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                        for (final download in inProgress)
+                        _sectionHeader('In Progress', theme),
+                        for (final (i, download) in inProgress.indexed) ...[
+                          if (i > 0) const SizedBox(height: 8),
                           InProgressActivityTile(download: download),
-                        if (hasHistory) const Divider(height: 16),
+                        ],
+                        if (hasHistory) const SizedBox(height: 8),
                       ],
                       // Completed section.
                       if (hasHistory) ...[
-                        Padding(
-                          padding: .symmetric(horizontal: 16, vertical: 4),
-                          child: Text(
-                            'Recent',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                        for (final entry in history)
+                        _sectionHeader('Recent', theme),
+                        for (final (i, entry) in history.indexed) ...[
+                          if (i > 0) const SizedBox(height: 8),
                           CompletedActivityTile(entry: entry),
+                        ],
                       ],
                     ],
                   ),

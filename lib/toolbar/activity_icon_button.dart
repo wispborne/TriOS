@@ -34,7 +34,7 @@ class ActivityIconButton extends ConsumerWidget {
     }).toList();
 
     return MovingTooltipWidget.text(
-      message: 'Activity',
+      message: 'Installation Activity',
       child: Stack(
         clipBehavior: Clip.none,
         children: [

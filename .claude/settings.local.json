@@ -208,7 +208,8 @@
       "PowerShell(if \\(-not \\(Test-Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\"\\)\\) { New-Item -ItemType Directory -Force \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\" }; Move-Item \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\activity-panel\" \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-22-activity-panel\")",
       "Bash(move \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\activity-panel-polish\" \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-23-activity-panel-polish\")",
       "PowerShell(Move-Item -Path \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\activity-panel-polish\" -Destination \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\openspec\\\\changes\\\\archive\\\\2026-05-23-activity-panel-polish\")",
-      "Bash(dart compile *)"
+      "Bash(dart compile *)",
+      "mcp__idea__reformat_file"
     ]
   }
 }

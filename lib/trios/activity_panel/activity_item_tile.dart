@@ -10,40 +10,16 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/download_status.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/relative_timestamp.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-/// Shared card container for activity tiles.
-class _ActivityCard extends StatelessWidget {
-  final Widget child;
+/// Padding for a flush, dense activity row (no card chrome).
+const _activityRowPadding = EdgeInsets.symmetric(horizontal: 16, vertical: 6);
 
-  const _ActivityCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: .symmetric(horizontal: 8, vertical: 4),
-      child: Container(
-        padding: .all(8),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
-          border: Border.all(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-          ),
-        ),
-        child: child,
-      ),
-    );
-  }
-}
-
-/// Displays a single completed/failed activity entry as a card.
+/// Displays a single completed/failed activity entry as a dense row.
 class CompletedActivityTile extends ConsumerWidget {
   final ActivityEntry entry;
 
@@ -65,176 +41,224 @@ class CompletedActivityTile extends ConsumerWidget {
     final isEnabled = mod?.isEnabledInGame == true;
 
     final hasIcon = variant?.iconFilePath != null;
-    return _ActivityCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
-            children: [
-              Padding(
-                padding: .only(top: hasIcon ? 4 : 2),
-                child: hasIcon
-                    ? ModIcon(variant!.iconFilePath, size: 24)
-                    : Icon(
-                        isFailed
-                            ? Icons.error
-                            : isCancelled
-                            ? Icons.cancel_outlined
-                            : Icons.check_circle,
-                        size: 20,
-                        color: isFailed
-                            ? theme.colorScheme.error
-                            : isCancelled
-                            ? theme.colorScheme.onSurfaceVariant
-                            : theme.colorScheme.primary,
-                      ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      spacing: 2,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.modName,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
+    // Inset the tap highlight without shifting content: the inset lives on an
+    // outer Padding and is subtracted back out of the inner content Padding.
+    const highlightInset = EdgeInsets.symmetric(horizontal: 8);
+    return Padding(
+      padding: highlightInset,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: (!isFailed && !isCancelled && variant != null)
+              ? () => launchUrlString(variant.modFolder.path)
+              : null,
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+          child: Padding(
+            padding: _activityRowPadding - highlightInset,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 8,
+              children: [
+                Center(
+                  child: Padding(
+                    padding: .only(top: hasIcon ? 4 : 8),
+                    child: hasIcon
+                        ? ModIcon(variant!.iconFilePath, size: 32)
+                        : SizedBox(
+                            width: 32,
+                            child: Icon(
+                              isFailed
+                                  ? Icons.error
+                                  : isCancelled
+                                  ? Icons.cancel
+                                  : Icons.check,
+                              size: 20,
+                              color: isFailed
+                                  ? theme.colorScheme.error
+                                  : isCancelled
+                                  ? theme.colorScheme.onSurfaceVariant
+                                  : theme.colorScheme.onSurfaceVariant,
                             ),
-                            maxLines: 1,
+                          ),
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        spacing: 8,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              spacing: 8,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    entry.modName,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (entry.modVersion != null)
+                                  Text(
+                                    entry.modVersion!,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          MovingTooltipWidget.text(
+                            message: 'Clear',
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                iconSize: 14,
+                                icon: Icon(
+                                  Icons.close,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                onPressed: () => ref
+                                    .read(activityHistoryStore.notifier)
+                                    .removeEntry(entry.id),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (isFailed && entry.errorMessage != null)
+                        MovingTooltipWidget.text(
+                          message: entry.errorMessage!,
+                          child: Text(
+                            entry.errorMessage!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.error,
+                              fontSize: 11,
+                            ),
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (entry.modVersion != null)
-                          Text(
-                            entry.modVersion!,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 11,
-                            ),
-                          ),
-                        MovingTooltipWidget.text(
-                          message: 'Clear',
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              iconSize: 14,
-                              icon: Icon(
-                                Icons.close,
-                                color: theme.colorScheme.onSurfaceVariant,
+                      Padding(
+                        padding: .only(top: 4),
+                        child: Row(
+                          spacing: 4,
+                          children: [
+                            MovingTooltipWidget.text(
+                              message: isCancelled
+                                  ? "Canceled"
+                                  : entry.sourceType ==
+                                        ActivitySourceType.download
+                                  ? "Downloaded from\n${entry.sourceDetail}"
+                                  : "Installed from archive",
+                              child: Icon(
+                                isCancelled
+                                    ? Icons.cancel
+                                    : entry.sourceType ==
+                                          ActivitySourceType.download
+                                    ? Icons.download
+                                    : Icons.archive,
+                                size: 12,
                               ),
-                              onPressed: () => ref
-                                  .read(activityHistoryStore.notifier)
-                                  .removeEntry(entry.id),
                             ),
-                          ),
+                            Expanded(
+                              child: Text(
+                                entry.timestamp.relativeTimestamp(
+                                  minUnit: TimeUnit.minutes,
+                                ),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 11,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (!isFailed && !isCancelled && variant != null)
+                              MovingTooltipWidget.text(
+                                message: 'Open mod folder',
+                                child: SizedBox(
+                                  height: 15,
+                                  child: IconButton(
+                                    onPressed: () {
+                                      launchUrlString(variant.modFolder.path);
+                                    },
+                                    icon: Icon(
+                                      Icons.folder_open,
+                                      size: 14,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                    // label: Text(
+                                    //   'Open',
+                                    //   style: theme.textTheme.bodySmall?.copyWith(
+                                    //     color: theme.colorScheme.onSurface,
+                                    //     fontSize: 11,
+                                    //   ),
+                                    // ),
+                                    padding: .zero,
+                                    style: ElevatedButton.styleFrom(
+                                      padding: .symmetric(
+                                        horizontal: 6,
+                                        vertical: 1,
+                                      ),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (!isFailed && !isCancelled && variant != null)
+                              if (!isEnabled && mod != null)
+                                MovingTooltipWidget.text(
+                                  message: 'Enable this mod',
+                                  child: ElevatedButton.icon(
+                                    onPressed: () async {
+                                      await ref
+                                          .read(modManager.notifier)
+                                          .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                                            mod,
+                                            variant,
+                                          );
+                                    },
+                                    icon: const Icon(
+                                      Icons.power_settings_new,
+                                      size: 14,
+                                    ),
+                                    label: Text(
+                                      'Enable',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(fontSize: 11),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: .symmetric(
+                                        horizontal: 6,
+                                        vertical: 4,
+                                      ),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                                ),
+                          ],
                         ),
-                      ],
-                    ),
-                    Text(
-                      [
-                        isCancelled
-                            ? 'Cancelled'
-                            : entry.sourceType == ActivitySourceType.download
-                            ? 'Downloaded'
-                            : 'From archive',
-                        entry.timestamp.relativeTimestamp(
-                          minUnit: TimeUnit.minutes,
-                        ),
-                      ].join(' · '),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 11,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (isFailed && entry.errorMessage != null)
-                      MovingTooltipWidget.text(
-                        message: entry.errorMessage!,
-                        child: Text(
-                          entry.errorMessage!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.error,
-                            fontSize: 11,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (!isFailed && !isCancelled && variant != null)
-            Padding(
-              padding: .only(top: 6),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                spacing: 4,
-                children: [
-                  MovingTooltipWidget.text(
-                    message: 'Open mod folder',
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        launchUrlString(variant.modFolder.path);
-                      },
-                      icon: Icon(
-                        Icons.folder_open,
-                        size: 14,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      label: Text(
-                        'Open',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 11,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: .symmetric(horizontal: 6, vertical: 2),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
+                    ],
                   ),
-                  if (!isEnabled && mod != null)
-                    MovingTooltipWidget.text(
-                      message: 'Enable this mod',
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await ref
-                              .read(modManager.notifier)
-                              .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
-                                mod,
-                                variant,
-                              );
-                        },
-                        icon: const Icon(Icons.power_settings_new, size: 14),
-                        label: Text(
-                          'Enable',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 11,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          padding: .symmetric(horizontal: 6, vertical: 2),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                ),
+              ],
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
@@ -329,7 +353,8 @@ class InProgressActivityTile extends StatelessWidget {
             _ => Icons.downloading,
           };
 
-    return _ActivityCard(
+    return Padding(
+      padding: _activityRowPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

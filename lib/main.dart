@@ -136,18 +136,18 @@ void main() async {
     final lockFile = File(
       '${Constants.configDataFolderPath.path}/running.lock',
     );
-    if (lockFile.existsSync()) {
+    if (await lockFile.exists()) {
       didPreviousSessionCrash = true;
       Fimber.w("Previous session did not exit cleanly (running.lock found).");
     }
     // Write lock file for this session.
-    lockFile.writeAsStringSync(DateTime.now().toIso8601String());
+    await lockFile.writeAsString(DateTime.now().toIso8601String());
   } catch (e) {
     Fimber.w("Error managing running.lock file: $e");
   }
 
   // Migrate old cache files into the new cache/ subdirectory.
-  _migrateCacheFiles();
+  await _migrateCacheFiles();
 
   try {
     final locale = PlatformDispatcher.instance.locale;
@@ -342,7 +342,7 @@ void main() async {
 
 /// Moves legacy cache files from [Constants.configDataFolderPath] into the
 /// `cache/` subdirectory so all caches live in one place.
-void _migrateCacheFiles() {
+Future<void> _migrateCacheFiles() async {
   const filesToMigrate = [
     'trios_version_checker_cache.json',
     'TriOS-VRAM_CheckerCache.json',
@@ -354,17 +354,17 @@ void _migrateCacheFiles() {
 
     for (final fileName in filesToMigrate) {
       final oldFile = File(p.join(configDir.path, fileName));
-      if (oldFile.existsSync()) {
-        if (!cacheDir.existsSync()) {
-          cacheDir.createSync(recursive: true);
+      if (await oldFile.exists()) {
+        if (!await cacheDir.exists()) {
+          await cacheDir.create(recursive: true);
         }
         final newFile = File(p.join(cacheDir.path, fileName));
-        if (!newFile.existsSync()) {
-          oldFile.renameSync(newFile.path);
+        if (!await newFile.exists()) {
+          await oldFile.rename(newFile.path);
           Fimber.i('Migrated $fileName to cache/');
         } else {
           // New file already exists, just delete the old one.
-          oldFile.deleteSync();
+          await oldFile.delete();
           Fimber.i('Deleted old $fileName (already exists in cache/)');
         }
       }
@@ -499,8 +499,8 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
       final lockFile = File(
         '${Constants.configDataFolderPath.path}/running.lock',
       );
-      if (lockFile.existsSync()) {
-        lockFile.deleteSync();
+      if (await lockFile.exists()) {
+        await lockFile.delete();
         Fimber.i("running.lock deleted on clean exit.");
       }
     } catch (e) {

@@ -302,8 +302,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           ExtractedModInfo modInfo = (
             extractedFile: modInfoFile,
             modInfo: ModInfoMapper.fromMap(
-              modInfoFile.extractedFile
-                  .readAsStringSyncAllowingMalformed()
+              (await modInfoFile.extractedFile.readAsStringAllowMalformed())
                   .parseJsonToMap(),
             ),
           );
@@ -516,9 +515,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             Fimber.i(
               "Moving files from highest version folder ($highestVersionFolder) to new versioned folder ($versionedNameForHighestVersion).",
             );
-            for (final folderItem in highestVersionFolder.listSync(
-              recursive: true,
-            )) {
+            final folderItems = await highestVersionFolder
+                .list(recursive: true)
+                .toList();
+            for (final folderItem in folderItems) {
               if (folderItem.isDirectory()) {
                 continue; // Directories will be created as needed.
               }
@@ -533,7 +533,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
               Fimber.d("Moving file: ${file.path} to $newFilePath");
               if (!dryRun) {
-                newFilePath.toFile().parent.createSync(recursive: true);
+                await newFilePath.toFile().parent.create(recursive: true);
                 await file.renameSafely(newFilePath.path);
               }
             }
@@ -1137,8 +1137,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     // Replace the game version in the mod_info.json file.
     // Don't use the code model, we want to keep any extra fields that might not be in the model.
-    final modInfoJson = await modInfoFile
-        .readAsStringSync()
+    final modInfoJson = await (await modInfoFile.readAsString())
         .parseJsonToMapAsync();
     modInfoJson["gameVersion"] = newGameVersion;
     modInfoJson["originalGameVersion"] = modVariant.modInfo.gameVersion;

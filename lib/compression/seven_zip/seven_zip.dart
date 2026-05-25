@@ -133,7 +133,7 @@ class SevenZip implements ArchiveInterface {
       // Clean up
       try {
         if (listFile.existsSync()) {
-          listFile.deleteSync();
+          await listFile.delete();
         }
       } catch (_) {
         // ignore
@@ -201,7 +201,7 @@ class SevenZip implements ArchiveInterface {
 
     try {
       if (listFile != null && listFile.existsSync()) {
-        listFile.deleteSync();
+        await listFile.delete();
       }
     } catch (_) {}
 
@@ -413,7 +413,7 @@ class SevenZip implements ArchiveInterface {
     } finally {
       try {
         if (tempFolder.toDirectory().existsSync()) {
-          tempFolder.toDirectory().deleteSync(recursive: true);
+          await tempFolder.toDirectory().delete(recursive: true);
         }
       } catch (ex, st) {
         Fimber.e(

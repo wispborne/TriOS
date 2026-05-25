@@ -27,10 +27,11 @@ Replace `*Sync()` dart:io calls with their async equivalents. Work file-by-file,
 ### Tiers (by impact)
 
 **Tier 1 — High impact (blocks UI or startup)**
-- `app_settings_logic.dart`: Convert `loadSync`/`writeSync` and the `protectSync` lock to async variants.
-- `main.dart`: Convert startup settings load and lock file operations.
-- `seven_zip.dart`: Convert `openSync`/`readSync`/`closeSync` file access and `Process.runSync` calls.
-- `mod_manager_logic.dart`: Convert directory listings and file reads during mod operations.
+- `main.dart`: Convert lock-file operations (`existsSync`/`writeAsStringSync`/`deleteSync` in `main()` and `onWindowClose()`) and the startup cache-file migration loop. The synchronous settings load stays sync (it feeds the sync settings Notifier — see Blocked).
+- `seven_zip.dart`: Convert the `existsSync`/`deleteSync` cleanup calls that already sit inside async methods. The constructor's `Process.runSync` and the `_describeArchiveError` static reader are sync-only — see Blocked.
+- `mod_manager_logic.dart`: Convert directory listings and file reads during mod operations (all in async methods). Keep `.toList()` materialization on the move loop — see Concurrency note.
+
+(`app_settings_logic.dart` is intentionally absent — see Blocked / out of scope.)
 
 **Tier 2 — Medium impact (occasional jank)**
 - `cached_json_fetcher.dart`: Async cache reads/writes.
@@ -51,16 +52,31 @@ Replace `*Sync()` dart:io calls with their async equivalents. Work file-by-file,
 
 1. **Skip trivial `existsSync` checks** — A lone `file.existsSync()` before reading a file is fast and converting it adds `await` noise. Convert only when it's part of a chain of sync operations.
 
-2. **Settings lock** — `app_settings_logic.dart` has a `protectSync` method using `synchronized` package. Replace with async `protect()` from the same package (it supports both).
+2. **Settings lock** — `app_settings_logic.dart` does *not* use the `synchronized` package; it uses a hand-rolled `SyncLock` class (a non-queuing mutex that throws `StateError` if already locked). The project's async lock is the `mutex` package (`Mutex`), used in `generic_settings_manager.dart`, `enabled_mods.dart`, `mod_variants.dart`, etc. Settings I/O stays synchronous in this change (see Blocked). *If* it is ever made async in a separate effort: swap `SyncLock` → `Mutex`, keep the entire read→serialize→write inside a single `mutex.protect()` so the lock is held across awaits, and make the debounce `Timer` callback in `_scheduleWriteSettings` `async` so it awaits the write *before* completing its `Completer` (otherwise the returned future resolves before bytes hit disk).
 
-3. **Extension methods** — Methods like `renameSafelySync` in `extensions.dart` are called from both sync and async contexts. Add async variants alongside and migrate callers incrementally. Remove sync variants once all callers are converted.
+3. **Extension methods** — Methods like `renameSafelySync` in `extensions.dart` are called from both sync and async contexts. Add async variants alongside and migrate callers incrementally. Remove a sync variant *only* when it has zero remaining callers. Note: `readAsStringSyncAllowingMalformed` must be **kept** — `ModVariant`'s constructor and its synchronous `iconFilePath` getter call it and cannot be made async (see Blocked). `readAsStringUtf8OrLatin1` is already async; its 6 callers already await it, so no work is needed there.
 
-4. **7-Zip file reading** — The `openSync`/`readSync` loop reads archive bytes in chunks. Convert to `await file.open()` and `await raf.read()`. The surrounding function is already async.
+4. **7-Zip file reading** — The `openSync`/`readSync`/`closeSync` loop lives in the `static` method `_describeArchiveError`, which reads ~512 diagnostic bytes only on an error path. It is *not* in an already-async function. Converting it would require making it an async instance method for negligible benefit, so it is out of scope (see Blocked). The convertible 7-Zip work is the `existsSync`/`deleteSync` cleanup that already sits inside async methods.
+
+## Blocked / out of scope (sync-only contexts)
+
+These cannot be converted without a refactor larger than this change allows. Leave them sync and do not treat them as mechanical swaps:
+
+- **Settings Notifier I/O** — `SettingsFileManager.loadSync`/`writeSync` feed `AppSettingNotifier.build()`, a synchronous Riverpod `Notifier.build()` watched app-wide. Making them async forces an `AsyncNotifier` migration (out of scope per proposal Non-Goals).
+- **`SevenZip()` constructor `Process.runSync`** (`uname`, `chmod` on Linux/macOS) — constructors cannot be async; would need a factory + async-init refactor.
+- **`SevenZip._describeArchiveError`** static `openSync`/`readSync`/`closeSync` reader — static error-path method, tiny read, not worth converting (see decision #4).
+- **`ModVariant` icon path** — `_calculateIconPath` (using `readAsStringSyncAllowingMalformed`/`existsSync`) is called from the `ModVariant` constructor and the synchronous `iconFilePath` getter. Both are sync-only, so the sync `readAsStringSyncAllowingMalformed` extension must be kept.
+
+## Concurrency note
+
+Each sync→async swap inserts an `await` suspension point, so code that today runs without yielding the event loop will now interleave with other tasks. Two consequences to respect:
+
+- **Multi-step "atomic" helpers** — `swapDirectoryWith` and `copyDirectory` in `extensions.dart` have no cross-`await` rollback guarantee; their async forms must be documented as non-atomic. (Both currently have zero callers, so immediate risk is low.)
+- **Do not convert the `mod_manager_logic.dart` move loop to a lazy stream.** It iterates a directory listing while renaming files into other folders; `listSync()` and `await list().toList()` both materialize a snapshot (safe), but switching to a lazy `list()` stream would introduce a concurrent-modification bug.
 
 ## Files changed
 
 Primary (Tier 1 + 2):
-- `lib/trios/settings/app_settings_logic.dart`
 - `lib/main.dart`
 - `lib/compression/seven_zip/seven_zip.dart`
 - `lib/mod_manager/mod_manager_logic.dart`

@@ -15,7 +15,7 @@ While some sync calls are harmless (e.g., a single `existsSync` check), others p
 
 Convert sync I/O calls to their async equivalents where the call site can support `await`. Prioritize by impact:
 
-1. **Settings persistence** — `app_settings_logic.dart` uses `protectSync`/`readAsStringSync`/`writeAsStringSync`. Convert to async lock + async I/O.
+1. **Settings persistence** — the already-async `GenericSettingsManager` path (`generic_settings_manager.dart`, `generic_settings_notifier.dart`) is where async settings I/O belongs; finish converting the few remaining sync calls there (e.g. `existsSync`/`lastModifiedSync` in the notifier's `build()`). `app_settings_logic.dart`'s `SettingsFileManager` file I/O may be tidied, but its `loadSync`/`writeSync` stay synchronous — see Non-Goals.
 2. **Directory listings** — `listSync()` calls in mod scanning, ship/weapon managers, self-updater. Convert to `list()` streams or `await list().toList()`.
 3. **File reads/writes in managers** — `readAsStringSync`/`writeAsStringSync` in cache, enabled mods, VM params, mod profiles.
 4. **Process execution** — `Process.runSync` calls for 7-Zip, `uname`, `chmod`. Convert to `Process.run`.
@@ -31,3 +31,4 @@ Convert sync I/O calls to their async equivalents where the call site can suppor
 - Moving I/O to separate isolates (that's a bigger effort).
 - Changing the settings architecture (just the I/O layer).
 - Refactoring call-site control flow beyond what's needed for `async`/`await`.
+- Migrating `AppSettingNotifier` from `Notifier` to `AsyncNotifier`. Its `build()` is synchronous and is watched throughout the app, so `SettingsFileManager.loadSync`/`writeSync` stay synchronous in this change. Making them async would turn every `ref.watch(appSettings)` into an `AsyncValue<Settings>` — a large ripple outside this change's scope.

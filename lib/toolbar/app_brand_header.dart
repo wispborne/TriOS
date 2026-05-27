@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart' show TriOSBuildContext;
 import 'package:trios/widgets/blur.dart';
@@ -7,7 +9,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
 /// App logo + name + version display, used in both sidebar and top toolbar AppBars.
-class AppBrandHeader extends StatelessWidget {
+class AppBrandHeader extends ConsumerWidget {
   /// `true` for sidebar AppBar (smaller icon, horizontal baseline row).
   /// `false` for top toolbar (larger icon, stacked column).
   final bool compact;
@@ -15,9 +17,12 @@ class AppBrandHeader extends StatelessWidget {
   const AppBrandHeader({super.key, this.compact = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final appName = context.appName;
+    final modifiers = ref.watch(
+      appSettings.select((s) => s.themeModifiers),
+    );
+    final appName = context.appNameWithModifiers(modifiers);
     final iconSize = compact ? 24.0 : 48.0;
     final blurRadius = compact ? 8.0 : 10.0;
 
@@ -39,7 +44,10 @@ class AppBrandHeader extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => showTriOSAboutDialog(context),
+                  onTap: () => showTriOSAboutDialog(
+                    context,
+                    appNameOverride: appName,
+                  ),
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: TriOSAppIcon(width: iconSize, height: iconSize),

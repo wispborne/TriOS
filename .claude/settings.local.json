@@ -211,7 +211,9 @@
       "Bash(dart compile *)",
       "mcp__idea__reformat_file",
       "Bash(Select-String -Pattern \"\\(All tests passed|Some tests failed|passed|failed\\)\")",
-      "PowerShell(head -30)"
+      "PowerShell(head -30)",
+      "Bash(findstr \"Highlightable\")",
+      "Bash(select-string \"Highlightable\")"
     ]
   }
 }

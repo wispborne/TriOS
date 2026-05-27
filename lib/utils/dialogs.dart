@@ -92,11 +92,14 @@ Future<void> showAlertDialog(
   );
 }
 
-Future<void> showTriOSAboutDialog(BuildContext context) async {
+Future<void> showTriOSAboutDialog(
+  BuildContext context, {
+  String? appNameOverride,
+}) async {
   return showAboutDialog(
     context: context,
     applicationIcon: const TriOSAppIcon(),
-    applicationName: "${context.appName} v${Constants.version}",
+    applicationName: "${appNameOverride ?? context.appName} v${Constants.version}",
     applicationVersion: "A Starsector toolkit\nby Wisp",
     children: [
       ConstrainedBox(

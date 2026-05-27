@@ -64,6 +64,10 @@ class LauncherButton extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+    final rainbowLaunchIcon = ref.watch(
+      appSettings.select((s) => s.themeModifiers.rainbowLaunchIcon),
+    );
+    final isRainbow = theme.rainbowAccent || rainbowLaunchIcon;
 
     final useCustomGameExe = ref.watch(
       appSettings.select((s) => s.useCustomGameExePath),
@@ -244,6 +248,7 @@ class LauncherButton extends HookConsumerWidget {
                           height: iconHeight,
                           width: iconWidth,
                           textOffset: iconOffset,
+                          isRainbow: isRainbow,
                         ),
                       );
                     },
@@ -743,6 +748,7 @@ class StarsectorIcon extends StatelessWidget {
     this.height = 28,
     this.width = 32,
     this.textOffset = Offset.zero,
+    this.isRainbow,
   });
 
   final Color? colorAnimation;
@@ -752,10 +758,13 @@ class StarsectorIcon extends StatelessWidget {
   final double width;
   final Offset textOffset;
 
+  /// When non-null, overrides the theme's `rainbowAccent` flag.
+  final bool? isRainbow;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final rainbow = theme.rainbowAccent;
+    final rainbow = isRainbow ?? theme.rainbowAccent;
 
     final prideBlue = theme.colorScheme.onSurface;
 

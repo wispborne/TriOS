@@ -236,17 +236,23 @@ class ChangelogButton extends StatelessWidget {
 }
 
 /// Opens the TriOS about dialog.
-class AboutButton extends StatelessWidget {
+class AboutButton extends ConsumerWidget {
   const AboutButton({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appName = context.appNameWithModifiers(
+      ref.watch(appSettings.select((s) => s.themeModifiers)),
+    );
     return MovingTooltipWidget.text(
       message: "About",
       child: IconButton(
         icon: const SvgImageIcon("assets/images/icon-info.svg"),
         color: Theme.of(context).iconTheme.color,
-        onPressed: () => showTriOSAboutDialog(context),
+        onPressed: () => showTriOSAboutDialog(
+          context,
+          appNameOverride: appName,
+        ),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 
 // import 'package:toml/toml.dart';
 import 'package:trios/themes/theme.dart';
+import 'package:trios/themes/theme_modifiers.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/thirdparty/yaml/yaml.dart';
 import 'package:trios/utils/logging.dart';
@@ -1291,4 +1292,12 @@ extension TriOSBuildContext on BuildContext {
   String get appName =>
       Theme.of(this).extension<TriOSThemeExtension>()?.appNameOverride ??
       Constants.appName;
+
+  /// App name with theme modifier override applied.
+  /// Use this for visual display (sidebar, about page).
+  /// Use [appName] for string interpolation in messages.
+  String appNameWithModifiers(ThemeModifiers modifiers) =>
+      modifiers.appNameOverride == AppNameOverride.hegOS
+          ? "HegOS"
+          : appName;
 }

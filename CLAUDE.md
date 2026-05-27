@@ -59,7 +59,7 @@ The Linux build needs `libcurl4-openssl-dev` installed (for Sentry). Don't use t
 
 - Align widgets using an 8.0 dip grid.
 - Use the new `spacing` parameter on `Row`/`Column` instead of `SizedBox` separators when spacing is even.
-- Prefer Dart's dot shorthand where it reads cleanly — e.g. `.all(8.0)` over `EdgeInsets.all(8.0)`.
+- Prefer Dart's dot shorthand — e.g. `.all(8.0)` over `EdgeInsets.all(8.0)`.
 - Instead of using `tooltip`, use `MovingTooltipWidget.text`.
 
 ## Common Widgets

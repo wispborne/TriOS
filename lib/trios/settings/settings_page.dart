@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'package:url_launcher/url_launcher_string.dart';
-import 'package:trios/widgets/snackbar.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,23 +17,25 @@ import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/game_paths_widget/game_paths_widget.dart';
-import 'package:trios/widgets/highlightable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/settings_group.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../models/version.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
+import '../../themes/theme_modifiers.dart';
 import '../../widgets/restartable_app.dart';
-import '../toasts/widgets/self_update_toast.dart';
-import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
-
+import '../../widgets/trios_dropdown_menu.dart';
 import '../../widgets/trios_expansion_tile.dart';
 import '../app_state.dart';
 import '../constants.dart';
+import '../toasts/widgets/self_update_toast.dart';
 import 'debug_section.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -127,9 +127,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 SettingsGroup(
                   name: "Starsector",
-                  children: [
-                    GamePathsWidget(),
-                  ],
+                  children: [GamePathsWidget()],
                 ),
                 SettingsGroup(
                   name: "${Constants.appName} Updates",
@@ -148,9 +146,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           ElevatedButton.icon(
                             icon: const Icon(Icons.open_in_new, size: 18),
                             label: const Text("Open Releases Page"),
-                            onPressed: () => launchUrlString(
-                              Constants.githubReleasesUrl,
-                            ),
+                            onPressed: () =>
+                                launchUrlString(Constants.githubReleasesUrl),
                           ),
                           const SizedBox(width: 8),
                           _showChangelogButton(context, ref),
@@ -220,6 +217,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   name: "Interface",
                   children: [
                     const _ThemeDropdownRow(),
+                    const SizedBox(height: 8),
+                    const _ThemeModifiersSection(),
                     const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
@@ -996,9 +995,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             ref
                                 .read(appSettings.notifier)
                                 .update(
-                                  (state) => state.copyWith(
-                                    debugMode: value ?? false,
-                                  ),
+                                  (state) =>
+                                      state.copyWith(debugMode: value ?? false),
                                 );
                           },
                           label: "Debug mode",
@@ -1161,8 +1159,7 @@ class CheckForUpdatesButton extends ConsumerStatefulWidget {
       _CheckForUpdatesButtonState();
 }
 
-class _CheckForUpdatesButtonState
-    extends ConsumerState<CheckForUpdatesButton> {
+class _CheckForUpdatesButtonState extends ConsumerState<CheckForUpdatesButton> {
   ScaffoldMessengerState? _scaffoldMessenger;
 
   @override
@@ -1200,8 +1197,8 @@ class _CheckForUpdatesButtonState
               label: "I don't believe you (show update prompt)",
               backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
               onPressed: () async {
-                final innerRelease =
-                    await selfUpdateNotifier.getLatestRelease();
+                final innerRelease = await selfUpdateNotifier
+                    .getLatestRelease();
                 if (innerRelease == null) {
                   Fimber.d("No release found");
                   return;
@@ -1245,8 +1242,7 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
 
     final entries = availableThemes
         .map((entry) {
-          final themeData =
-              ThemeManager.convertToThemeData(entry.value);
+          final themeData = ThemeManager.convertToThemeData(entry.value);
           return DropdownMenuEntry(
             value: entry.value,
             style: ButtonStyle(
@@ -1342,6 +1338,134 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ThemeModifiersSection extends ConsumerWidget {
+  const _ThemeModifiersSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final modifiers = ref.watch(appSettings.select((s) => s.themeModifiers));
+
+    return SizedBox(
+      width: 500,
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: TriOSExpansionTile(
+          title: const Text("Theme Modifiers"),
+          subtitle: const Text("Override parts of the active theme"),
+          children: [
+            Padding(
+              padding: .only(left: 16, right: 16, bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8,
+                children: [
+                  Row(
+                    spacing: 16,
+                    children: [
+                      MovingTooltipWidget.text(
+                        message:
+                            "Override the app icon regardless of the active theme.",
+                        child: Row(
+                          spacing: 8,
+                          children: [
+                            const Text("App icon"),
+                            TriOSDropdownMenu<AppIconOverride>(
+                              key: ValueKey(modifiers.appIconOverride),
+                              initialSelection: modifiers.appIconOverride,
+                              onSelected: (value) {
+                                if (value == null) return;
+                                ref
+                                    .read(appSettings.notifier)
+                                    .update(
+                                      (state) => state.copyWith(
+                                        themeModifiers: state.themeModifiers
+                                            .copyWith(appIconOverride: value),
+                                      ),
+                                    );
+                              },
+                              dropdownMenuEntries: const [
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.defaultIcon,
+                                  label: "Default",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.pride,
+                                  label: "Rainbow",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.hegemony,
+                                  label: "Hegemony",
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      MovingTooltipWidget.text(
+                        message:
+                            "Override the app name regardless of the active theme.",
+                        child: Row(
+                          spacing: 8,
+                          children: [
+                            const Text("App name"),
+                            TriOSDropdownMenu<AppNameOverride>(
+                              key: ValueKey(modifiers.appNameOverride),
+                              initialSelection: modifiers.appNameOverride,
+                              onSelected: (value) {
+                                if (value == null) return;
+                                ref
+                                    .read(appSettings.notifier)
+                                    .update(
+                                      (state) => state.copyWith(
+                                        themeModifiers: state.themeModifiers
+                                            .copyWith(appNameOverride: value),
+                                      ),
+                                    );
+                              },
+                              dropdownMenuEntries: const [
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.defaultName,
+                                  label: "Default",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.hegOS,
+                                  label: "HegOS",
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  MovingTooltipWidget.text(
+                    message:
+                        "Show a rainbow border on the Starsector launch button, regardless of the active theme.",
+                    child: CheckboxWithLabel(
+                      value: modifiers.rainbowLaunchIcon,
+                      onChanged: (value) => ref
+                          .read(appSettings.notifier)
+                          .update(
+                            (state) => state.copyWith(
+                              themeModifiers: state.themeModifiers.copyWith(
+                                rainbowLaunchIcon: value ?? false,
+                              ),
+                            ),
+                          ),
+                      label: "Rainbow launch button",
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

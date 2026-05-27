@@ -383,6 +383,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       MapperContainer.globals.use(_instance = SettingsMapper._());
       TriOSToolsMapper.ensureInitialized();
       NavOrderEntryMapper.ensureInitialized();
+      ThemeModifiersMapper.ensureInitialized();
       LaunchSettingsMapper.ensureInitialized();
       DashboardGridModUpdateVisibilityMapper.ensureInitialized();
       ModsGridUpdateVisibilityMapper.ensureInitialized();
@@ -521,6 +522,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'themeKey',
     _$themeKey,
     opt: true,
+  );
+  static ThemeModifiers _$themeModifiers(Settings v) => v.themeModifiers;
+  static const Field<Settings, ThemeModifiers> _f$themeModifiers = Field(
+    'themeModifiers',
+    _$themeModifiers,
+    opt: true,
+    def: const ThemeModifiers(),
+    hook: SafeDecodeHook(),
   );
   static bool? _$showChangelogNextLaunch(Settings v) =>
       v.showChangelogNextLaunch;
@@ -1102,6 +1111,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #navIconOrder: _f$navIconOrder,
     #vmparamsFilePaths: _f$vmparamsFilePaths,
     #themeKey: _f$themeKey,
+    #themeModifiers: _f$themeModifiers,
     #showChangelogNextLaunch: _f$showChangelogNextLaunch,
     #enableDirectLaunch: _f$enableDirectLaunch,
     #launchSettings: _f$launchSettings,
@@ -1198,6 +1208,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       navIconOrder: data.dec(_f$navIconOrder),
       vmparamsFilePaths: data.dec(_f$vmparamsFilePaths),
       themeKey: data.dec(_f$themeKey),
+      themeModifiers: data.dec(_f$themeModifiers),
       showChangelogNextLaunch: data.dec(_f$showChangelogNextLaunch),
       enableDirectLaunch: data.dec(_f$enableDirectLaunch),
       launchSettings: data.dec(_f$launchSettings),
@@ -1350,6 +1361,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
   get navIconOrder;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get vmparamsFilePaths;
+  ThemeModifiersCopyWith<$R, ThemeModifiers, ThemeModifiers> get themeModifiers;
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get weaponsGridState;
@@ -1433,6 +1445,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     List<NavOrderEntry>? navIconOrder,
     List<String>? vmparamsFilePaths,
     String? themeKey,
+    ThemeModifiers? themeModifiers,
     bool? showChangelogNextLaunch,
     bool? enableDirectLaunch,
     LaunchSettings? launchSettings,
@@ -1537,6 +1550,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v, t) => ObjectCopyWith(v, $identity, t),
     (v) => call(vmparamsFilePaths: v),
   );
+  @override
+  ThemeModifiersCopyWith<$R, ThemeModifiers, ThemeModifiers>
+  get themeModifiers =>
+      $value.themeModifiers.copyWith.$chain((v) => call(themeModifiers: v));
   @override
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings>
   get launchSettings =>
@@ -1690,6 +1707,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? navIconOrder = $none,
     List<String>? vmparamsFilePaths,
     Object? themeKey = $none,
+    ThemeModifiers? themeModifiers,
     Object? showChangelogNextLaunch = $none,
     bool? enableDirectLaunch,
     LaunchSettings? launchSettings,
@@ -1782,6 +1800,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (navIconOrder != $none) #navIconOrder: navIconOrder,
       if (vmparamsFilePaths != null) #vmparamsFilePaths: vmparamsFilePaths,
       if (themeKey != $none) #themeKey: themeKey,
+      if (themeModifiers != null) #themeModifiers: themeModifiers,
       if (showChangelogNextLaunch != $none)
         #showChangelogNextLaunch: showChangelogNextLaunch,
       if (enableDirectLaunch != null) #enableDirectLaunch: enableDirectLaunch,
@@ -1925,6 +1944,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.vmparamsFilePaths,
     ),
     themeKey: data.get(#themeKey, or: $value.themeKey),
+    themeModifiers: data.get(#themeModifiers, or: $value.themeModifiers),
     showChangelogNextLaunch: data.get(
       #showChangelogNextLaunch,
       or: $value.showChangelogNextLaunch,

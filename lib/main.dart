@@ -454,7 +454,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     }
 
     return MaterialApp(
-      title: "${context.appName}v${Constants.version}",
+      title: "${context.appNameWithModifiers(ref.watch(appSettings.select((s) => s.themeModifiers)))}v${Constants.version}",
       theme: currentTheme.themeData,
       themeMode: currentTheme.themeData.brightness == Brightness.light
           ? ThemeMode.light

@@ -15,6 +15,7 @@ import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/vram_estimator/selectors/referenced_assets_selector_config.dart';
 import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
+import 'package:trios/themes/theme_modifiers.dart';
 import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.dart';
 
 part 'settings.mapper.dart';
@@ -80,6 +81,8 @@ class Settings with SettingsMappable {
   final List<String> vmparamsFilePaths;
 
   final String? themeKey;
+  @MappableField(hook: SafeDecodeHook())
+  final ThemeModifiers themeModifiers;
   final bool? showChangelogNextLaunch;
 
   /// If true, TriOS acts as the launcher. If false, basically just clicks game exe.
@@ -201,6 +204,7 @@ class Settings with SettingsMappable {
     this.navIconOrder,
     this.vmparamsFilePaths = const [],
     this.themeKey,
+    this.themeModifiers = const ThemeModifiers(),
     this.showChangelogNextLaunch,
     this.enableDirectLaunch = false,
     this.launchSettings = const LaunchSettings(),

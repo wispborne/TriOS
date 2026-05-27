@@ -2431,25 +2431,12 @@ class FavoriteButton extends ConsumerWidget {
                         ),
                       );
                 },
-                child: Theme.of(context).rainbowAccent && isFavorited
-                    ? ShaderMask(
-                        shaderCallback: (bounds) => const SweepGradient(
-                          colors: rainbowColors,
-                          transform: GradientRotation(-pi / 2),
-                        ).createShader(bounds),
-                        blendMode: BlendMode.srcIn,
-                        child: const Icon(Icons.favorite),
-                      )
-                    : Icon(
-                        isFavorited ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorited
-                            ? Theme.of(
-                                context,
-                              ).colorScheme.secondary.withOpacity(0.6)
-                            : Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.6),
-                      ),
+                child: Icon(
+                  isFavorited ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorited
+                      ? Theme.of(context).colorScheme.secondary.withOpacity(0.6)
+                      : Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                ),
               ),
             ),
           ),

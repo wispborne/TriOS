@@ -25,6 +25,12 @@ final descriptionProvider =
 
 class DescriptionsNotifier
     extends StreamNotifier<Map<(String, String), DescriptionEntry>> {
+  static const _kVanillaKey = '__vanilla__';
+
+  final Map<String, Map<(String, String), DescriptionEntry>>
+      _cachedDescriptionsByVariant = {};
+  String? _cachedGameCorePath;
+
   @override
   Stream<Map<(String, String), DescriptionEntry>> build() async* {
     ref.read(isLoadingDescriptions.notifier).state = true;
@@ -48,37 +54,52 @@ class DescriptionsNotifier
         .nonNulls
         .toList();
 
+    // Invalidate vanilla cache if game path changed.
+    if (gameCorePath != _cachedGameCorePath) {
+      _cachedDescriptionsByVariant.remove(_kVanillaKey);
+      _cachedGameCorePath = gameCorePath;
+    }
+
+    // Prune cached entries for variants no longer needed.
+    final neededSmolIds = variants.map((v) => v.smolId).toSet();
+    _cachedDescriptionsByVariant.removeWhere(
+      (key, _) => key != _kVanillaKey && !neededSmolIds.contains(key),
+    );
+
     final allErrors = <String>[];
-    var allDescriptions = <(String, String), DescriptionEntry>{};
     const yieldInterval = Duration(milliseconds: 500);
     var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
     final currentTime = DateTime.now();
-    int filesProcessed = 0;
+    int filesParsedFresh = 0;
 
-    // Parse vanilla descriptions.
-    final coreResult = await _parseDescriptionsCsv(
-      Directory(gameCorePath),
-      null,
-    );
-    filesProcessed += coreResult.filesProcessed;
-    allDescriptions.addAll(coreResult.descriptions);
-    allErrors.addAll(coreResult.errors);
+    // Parse vanilla descriptions if not cached.
+    if (!_cachedDescriptionsByVariant.containsKey(_kVanillaKey)) {
+      final coreResult = await _parseDescriptionsCsv(
+        Directory(gameCorePath),
+        null,
+      );
+      filesParsedFresh += coreResult.filesProcessed;
+      _cachedDescriptionsByVariant[_kVanillaKey] = coreResult.descriptions;
+      allErrors.addAll(coreResult.errors);
+    }
 
-    // Parse each mod's descriptions.
+    // Parse each mod's descriptions if not cached.
     for (final variant in variants) {
+      if (_cachedDescriptionsByVariant.containsKey(variant.smolId)) continue;
+
       final modResult = await _parseDescriptionsCsv(variant.modFolder, variant);
-      filesProcessed += modResult.filesProcessed;
-      allDescriptions.addAll(modResult.descriptions);
+      filesParsedFresh += modResult.filesProcessed;
+      _cachedDescriptionsByVariant[variant.smolId] = modResult.descriptions;
       allErrors.addAll(modResult.errors);
 
       final now = DateTime.now();
       if (now.difference(lastYieldTime) >= yieldInterval) {
-        yield Map.unmodifiable(allDescriptions);
+        yield Map.unmodifiable(_composeDescriptions(variants));
         lastYieldTime = now;
       }
     }
 
-    yield Map.unmodifiable(allDescriptions);
+    yield Map.unmodifiable(_composeDescriptions(variants));
 
     if (allErrors.isNotEmpty) {
       Fimber.w('Descriptions parsing errors:\n${allErrors.join('\n')}');
@@ -86,10 +107,23 @@ class DescriptionsNotifier
 
     ref.read(isLoadingDescriptions.notifier).state = false;
     Fimber.i(
-      'Parsed ${allDescriptions.length} descriptions from '
-      '${variants.length + 1} sources and $filesProcessed files in '
-      '${DateTime.now().difference(currentTime).inMilliseconds}ms',
+      'Descriptions: ${_composeDescriptions(variants).length} entries from '
+      '${variants.length + 1} sources ($filesParsedFresh files parsed fresh) '
+      'in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
     );
+  }
+
+  Map<(String, String), DescriptionEntry> _composeDescriptions(
+    List<ModVariant> variants,
+  ) {
+    final result = <(String, String), DescriptionEntry>{};
+    final vanillaEntries = _cachedDescriptionsByVariant[_kVanillaKey];
+    if (vanillaEntries != null) result.addAll(vanillaEntries);
+    for (final variant in variants) {
+      final entries = _cachedDescriptionsByVariant[variant.smolId];
+      if (entries != null) result.addAll(entries);
+    }
+    return result;
   }
 }
 

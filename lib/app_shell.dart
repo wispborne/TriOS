@@ -268,7 +268,7 @@ class _AppShellState extends ConsumerState<AppShell>
 
   Widget _buildBody(BuildContext context, List<Widget> tabChildren) {
     return DragDropHandler(
-      child: Container(
+      child: Material(
         color: Theme.of(context).colorScheme.surface,
         child: Column(
           children: [

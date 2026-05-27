@@ -112,7 +112,17 @@ class TriOSExpansionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ExpansionTile(
+    final resolvedBgColor = _colorless
+        ? null
+        : (collapsedBackgroundColor ??
+            backgroundColor ??
+            theme.colorScheme.surfaceContainerLow);
+
+    final defaultShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+    );
+
+    Widget tile = ExpansionTile(
       leading: leading,
       title: title,
       subtitle: subtitle,
@@ -124,32 +134,12 @@ class TriOSExpansionTile extends StatelessWidget {
       expandedCrossAxisAlignment: expandedCrossAxisAlignment,
       expandedAlignment: expandedAlignment,
       childrenPadding: childrenPadding,
-      backgroundColor: _colorless
-          ? null
-          : backgroundColor ??
-                theme.colorScheme.surfaceContainerLow,
-      collapsedBackgroundColor: _colorless
-          ? null
-          : collapsedBackgroundColor ??
-                theme.colorScheme.surfaceContainerLow,
       textColor: textColor,
       collapsedTextColor: collapsedTextColor,
       iconColor: iconColor,
       collapsedIconColor: collapsedIconColor,
-      shape:
-          shape ??
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              TriOSThemeConstants.cornerRadius,
-            ),
-          ),
-      collapsedShape:
-          collapsedShape ??
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              TriOSThemeConstants.cornerRadius,
-            ),
-          ),
+      shape: shape ?? defaultShape,
+      collapsedShape: collapsedShape ?? defaultShape,
       clipBehavior: clipBehavior,
       controlAffinity: controlAffinity,
       controller: controller,
@@ -161,5 +151,18 @@ class TriOSExpansionTile extends StatelessWidget {
       expansionAnimationStyle: expansionAnimationStyle,
       children: children,
     );
+
+    if (resolvedBgColor != null) {
+      tile = Material(
+        color: resolvedBgColor,
+        borderRadius: BorderRadius.circular(
+          TriOSThemeConstants.cornerRadius,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: tile,
+      );
+    }
+
+    return tile;
   }
 }

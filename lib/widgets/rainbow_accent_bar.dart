@@ -23,7 +23,7 @@ class RainbowBorder extends StatelessWidget {
     required this.child,
     this.borderWidth = 2.0,
     this.borderRadius = TriOSThemeConstants.cornerRadius,
-    this.alpha = 0.7,
+    this.alpha = 0.4,
   });
 
   @override

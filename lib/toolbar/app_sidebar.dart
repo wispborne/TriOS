@@ -14,6 +14,8 @@ import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/themes/theme_modifiers.dart';
+import 'package:trios/widgets/glitter_background.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 const _collapsedWidth = 56.0;
@@ -59,64 +61,70 @@ class AppSidebar extends ConsumerWidget {
         color: theme.colorScheme.surfaceContainer,
         child: Stack(
           children: [
-            Column(
-              children: [
-                const SizedBox(height: 8),
-                _SidebarToggleButton(
-                  isCollapsed: isCollapsed,
-                  onToggle: onToggleCollapsed,
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: EdgeInsets.only(left: isCollapsed ? 0 : 16),
-                  child: Align(
-                    alignment: isCollapsed
-                        ? Alignment.center
-                        : Alignment.centerLeft,
-                    child: const LauncherButton(
-                      showTextInsteadOfIcon: false,
-                      fontSize: 20,
+            GlitterBackground(
+              location: GlitterLocation.sidebar,
+              speed: 0.15,
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  _SidebarToggleButton(
+                    isCollapsed: isCollapsed,
+                    onToggle: onToggleCollapsed,
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: EdgeInsets.only(left: isCollapsed ? 0 : 16),
+                    child: Align(
+                      alignment: isCollapsed
+                          ? Alignment.center
+                          : Alignment.centerLeft,
+                      child: const LauncherButton(
+                        showTextInsteadOfIcon: false,
+                        fontSize: 20,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Consumer(
-                  builder: (context, ref, _) {
-                    final settings = ref.watch(appSettings);
-                    final now = DateTime.now();
-                    final isAprilFools =
-                        now.month == 4 && now.day == 1 && now.year == 2026;
-                    final show =
-                        settings.forceShowAprilFools2026 == true ||
-                        (settings.showAprilFools2026 == true && isAprilFools);
-                    if (!show) return const SizedBox.shrink();
-                    return const ChatbotButton(size: 40, iconSize: 16);
-                  },
-                ),
-                // Reorderable nav list fills the remaining space.
-                Expanded(
-                  child: _ReorderableNavList(
-                    entries: navState.entries,
-                    isInDragMode: navState.isInDragMode,
-                    isCollapsed: isCollapsed,
-                    currentPage: currentPage,
-                    onTabChanged: onTabChanged,
-                    onReorder: controller.reorder,
+                  const SizedBox(height: 16),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final settings = ref.watch(appSettings);
+                      final now = DateTime.now();
+                      final isAprilFools =
+                          now.month == 4 && now.day == 1 && now.year == 2026;
+                      final show =
+                          settings.forceShowAprilFools2026 == true ||
+                          (settings.showAprilFools2026 == true && isAprilFools);
+                      if (!show) return const SizedBox.shrink();
+                      return const ChatbotButton(size: 40, iconSize: 16);
+                    },
                   ),
-                ),
-                if (navState.isInDragMode)
-                  _DragModeDoneBanner(onDone: () => controller.exitDragMode()),
-                _SidebarRulesHotReload(isCollapsed: isCollapsed),
-                const _SidebarDivider(),
-                _SidebarLayoutToggle(isCollapsed: isCollapsed),
-                _SidebarNavItem.fromTool(
-                  tool: TriOSTools.settings,
-                  isSelected: currentPage == TriOSTools.settings,
-                  isCollapsed: isCollapsed,
-                  onTap: () => onTabChanged(TriOSTools.settings),
-                ),
-                const SizedBox(height: 8),
-              ],
+                  // Reorderable nav list fills the remaining space.
+                  Expanded(
+                    child: _ReorderableNavList(
+                      entries: navState.entries,
+                      isInDragMode: navState.isInDragMode,
+                      isCollapsed: isCollapsed,
+                      currentPage: currentPage,
+                      onTabChanged: onTabChanged,
+                      onReorder: controller.reorder,
+                    ),
+                  ),
+                  if (navState.isInDragMode)
+                    _DragModeDoneBanner(
+                      onDone: () => controller.exitDragMode(),
+                    ),
+                  _SidebarRulesHotReload(isCollapsed: isCollapsed),
+                  const _SidebarDivider(),
+                  _SidebarLayoutToggle(isCollapsed: isCollapsed),
+                  _SidebarNavItem.fromTool(
+                    tool: TriOSTools.settings,
+                    isSelected: currentPage == TriOSTools.settings,
+                    isCollapsed: isCollapsed,
+                    onTap: () => onTabChanged(TriOSTools.settings),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
             if (navState.isInDragMode)
               Positioned(
@@ -366,9 +374,13 @@ class _SidebarNavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final rainbow = theme.rainbowAccent;
-    final activeColor = rainbow ? TriOSThemeConstants.prideActiveColor : theme.colorScheme.primary;
+    final activeColor = rainbow
+        ? TriOSThemeConstants.prideActiveColor
+        : theme.colorScheme.primary;
     final foreground = isSelected
-        ? (rainbow ? TriOSThemeConstants.prideIndicatorColor.lighter(30) : theme.colorScheme.primary)
+        ? (rainbow
+              ? TriOSThemeConstants.prideIndicatorColor.lighter(30)
+              : theme.colorScheme.primary)
         : theme.colorScheme.onSurface.withValues(alpha: 0.8);
 
     final content = SizedBox(
@@ -384,7 +396,9 @@ class _SidebarNavItem extends StatelessWidget {
             decoration: isSelected
                 ? BoxDecoration(
                     color: rainbow
-                        ? TriOSThemeConstants.prideIndicatorColor.withValues(alpha: 0.55)
+                        ? TriOSThemeConstants.prideIndicatorColor.withValues(
+                            alpha: 0.55,
+                          )
                         : activeColor.withValues(alpha: 0.1),
                     border: Border(
                       left: BorderSide(

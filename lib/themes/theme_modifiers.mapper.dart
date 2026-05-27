@@ -104,6 +104,56 @@ extension AppNameOverrideMapperExtension on AppNameOverride {
   }
 }
 
+class GlitterLocationMapper extends EnumMapper<GlitterLocation> {
+  GlitterLocationMapper._();
+
+  static GlitterLocationMapper? _instance;
+  static GlitterLocationMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = GlitterLocationMapper._());
+    }
+    return _instance!;
+  }
+
+  static GlitterLocation fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  GlitterLocation decode(dynamic value) {
+    switch (value) {
+      case r'sidebar':
+        return GlitterLocation.sidebar;
+      case r'toolbar':
+        return GlitterLocation.toolbar;
+      case r'tooltip':
+        return GlitterLocation.tooltip;
+      default:
+        return GlitterLocation.values[0];
+    }
+  }
+
+  @override
+  dynamic encode(GlitterLocation self) {
+    switch (self) {
+      case GlitterLocation.sidebar:
+        return r'sidebar';
+      case GlitterLocation.toolbar:
+        return r'toolbar';
+      case GlitterLocation.tooltip:
+        return r'tooltip';
+    }
+  }
+}
+
+extension GlitterLocationMapperExtension on GlitterLocation {
+  String toValue() {
+    GlitterLocationMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<GlitterLocation>(this) as String;
+  }
+}
+
 class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
   ThemeModifiersMapper._();
 
@@ -113,6 +163,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
       MapperContainer.globals.use(_instance = ThemeModifiersMapper._());
       AppIconOverrideMapper.ensureInitialized();
       AppNameOverrideMapper.ensureInitialized();
+      GlitterLocationMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -145,12 +196,37 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
     opt: true,
     def: false,
   );
+  static bool? _$enableGlitter(ThemeModifiers v) => v.enableGlitter;
+  static const Field<ThemeModifiers, bool> _f$enableGlitter = Field(
+    'enableGlitter',
+    _$enableGlitter,
+    opt: true,
+  );
+  static List<GlitterLocation> _$glitterLocations(ThemeModifiers v) =>
+      v.glitterLocations;
+  static const Field<ThemeModifiers, List<GlitterLocation>>
+  _f$glitterLocations = Field(
+    'glitterLocations',
+    _$glitterLocations,
+    opt: true,
+    def: GlitterLocation.values,
+    hook: SafeDecodeHook(),
+  );
+  static String? _$glitterThemeKey(ThemeModifiers v) => v.glitterThemeKey;
+  static const Field<ThemeModifiers, String> _f$glitterThemeKey = Field(
+    'glitterThemeKey',
+    _$glitterThemeKey,
+    opt: true,
+  );
 
   @override
   final MappableFields<ThemeModifiers> fields = const {
     #appIconOverride: _f$appIconOverride,
     #appNameOverride: _f$appNameOverride,
     #rainbowLaunchIcon: _f$rainbowLaunchIcon,
+    #enableGlitter: _f$enableGlitter,
+    #glitterLocations: _f$glitterLocations,
+    #glitterThemeKey: _f$glitterThemeKey,
   };
 
   static ThemeModifiers _instantiate(DecodingData data) {
@@ -158,6 +234,9 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
       appIconOverride: data.dec(_f$appIconOverride),
       appNameOverride: data.dec(_f$appNameOverride),
       rainbowLaunchIcon: data.dec(_f$rainbowLaunchIcon),
+      enableGlitter: data.dec(_f$enableGlitter),
+      glitterLocations: data.dec(_f$glitterLocations),
+      glitterThemeKey: data.dec(_f$glitterThemeKey),
     );
   }
 
@@ -223,10 +302,19 @@ extension ThemeModifiersValueCopy<$R, $Out>
 
 abstract class ThemeModifiersCopyWith<$R, $In extends ThemeModifiers, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<
+    $R,
+    GlitterLocation,
+    ObjectCopyWith<$R, GlitterLocation, GlitterLocation>
+  >
+  get glitterLocations;
   $R call({
     AppIconOverride? appIconOverride,
     AppNameOverride? appNameOverride,
     bool? rainbowLaunchIcon,
+    bool? enableGlitter,
+    List<GlitterLocation>? glitterLocations,
+    String? glitterThemeKey,
   });
   ThemeModifiersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -242,15 +330,32 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ThemeModifiers> $mapper =
       ThemeModifiersMapper.ensureInitialized();
   @override
+  ListCopyWith<
+    $R,
+    GlitterLocation,
+    ObjectCopyWith<$R, GlitterLocation, GlitterLocation>
+  >
+  get glitterLocations => ListCopyWith(
+    $value.glitterLocations,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(glitterLocations: v),
+  );
+  @override
   $R call({
     AppIconOverride? appIconOverride,
     AppNameOverride? appNameOverride,
     bool? rainbowLaunchIcon,
+    Object? enableGlitter = $none,
+    List<GlitterLocation>? glitterLocations,
+    Object? glitterThemeKey = $none,
   }) => $apply(
     FieldCopyWithData({
       if (appIconOverride != null) #appIconOverride: appIconOverride,
       if (appNameOverride != null) #appNameOverride: appNameOverride,
       if (rainbowLaunchIcon != null) #rainbowLaunchIcon: rainbowLaunchIcon,
+      if (enableGlitter != $none) #enableGlitter: enableGlitter,
+      if (glitterLocations != null) #glitterLocations: glitterLocations,
+      if (glitterThemeKey != $none) #glitterThemeKey: glitterThemeKey,
     }),
   );
   @override
@@ -261,6 +366,9 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
       #rainbowLaunchIcon,
       or: $value.rainbowLaunchIcon,
     ),
+    enableGlitter: data.get(#enableGlitter, or: $value.enableGlitter),
+    glitterLocations: data.get(#glitterLocations, or: $value.glitterLocations),
+    glitterThemeKey: data.get(#glitterThemeKey, or: $value.glitterThemeKey),
   );
 
   @override

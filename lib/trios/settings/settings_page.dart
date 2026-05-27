@@ -1302,6 +1302,7 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
             initialSelection: _cachedInitialSelection,
           ),
         ),
+        const SizedBox(width: 8),
         MovingTooltipWidget.text(
           message: "I'm feeling lucky",
           child: IconButton(
@@ -1349,6 +1350,8 @@ class _ThemeModifiersSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final modifiers = ref.watch(appSettings.select((s) => s.themeModifiers));
+    final activeThemeId = ref.watch(AppState.themeData).value?.currentTheme.id;
+    final motesEnabled = modifiers.motesEnabled(activeThemeId);
 
     return SizedBox(
       width: 500,
@@ -1460,11 +1463,205 @@ class _ThemeModifiersSection extends ConsumerWidget {
                       label: "Rainbow launch button",
                     ),
                   ),
+                  MovingTooltipWidget.text(
+                    message:
+                        "Show drifting motes behind containers that use the motes background.",
+                    child: CheckboxWithLabel(
+                      value: motesEnabled,
+                      onChanged: (value) => ref
+                          .read(appSettings.notifier)
+                          .update(
+                            (state) => state.copyWith(
+                              themeModifiers: state.themeModifiers.copyWith(
+                                enableGlitter: value ?? false,
+                              ),
+                            ),
+                          ),
+                      label: "Motes background",
+                    ),
+                  ),
+                  if (motesEnabled)
+                    Padding(
+                      padding: const .only(left: 16),
+                      child: Column(
+                        crossAxisAlignment: .start,
+                        spacing: 8,
+                        children: [
+                          _GlitterLocationsPicker(
+                            selected: modifiers.glitterLocations,
+                            onChanged: (locations) => ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    themeModifiers: state.themeModifiers
+                                        .copyWith(glitterLocations: locations),
+                                  ),
+                                ),
+                          ),
+                          _GlitterColorDropdown(
+                            selectedThemeKey: modifiers.glitterThemeKey,
+                            onChanged: (themeKey) => ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    themeModifiers: state.themeModifiers
+                                        .copyWith(glitterThemeKey: themeKey),
+                                  ),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _GlitterLocationsPicker extends StatelessWidget {
+  final List<GlitterLocation> selected;
+  final ValueChanged<List<GlitterLocation>> onChanged;
+
+  const _GlitterLocationsPicker({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final allSelected = GlitterLocation.values.every(
+      (l) => selected.contains(l),
+    );
+
+    Widget chip({
+      required bool checked,
+      required IconData icon,
+      required String label,
+      required ValueChanged<bool> onSelected,
+    }) {
+      return FilterChip(
+        label: Text(label, style: theme.textTheme.labelMedium),
+        selected: checked,
+        avatar: Icon(
+          icon,
+          size: 16,
+          color: checked
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+        onSelected: onSelected,
+        selectedColor: theme.colorScheme.primaryContainer,
+        backgroundColor: theme.colorScheme.surfaceContainer,
+        checkmarkColor: Colors.transparent,
+        showCheckmark: false,
+        side: BorderSide(
+          color: checked
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outline.withValues(alpha: 0.25),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        chip(
+          checked: allSelected,
+          icon: allSelected
+              ? Icons.check
+              : selected.isEmpty
+              ? Icons.check_box_outline_blank
+              : Icons.remove,
+          label: "All",
+          onSelected: (_) =>
+              onChanged(allSelected ? [] : List.of(GlitterLocation.values)),
+        ),
+        for (final loc in GlitterLocation.values)
+          chip(
+            checked: selected.contains(loc),
+            icon: selected.contains(loc)
+                ? Icons.check
+                : Icons.check_box_outline_blank,
+            label: loc.label,
+            onSelected: (on) {
+              final current = List.of(selected);
+              if (on) {
+                current.add(loc);
+              } else {
+                current.remove(loc);
+              }
+              onChanged(current);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _GlitterColorDropdown extends ConsumerWidget {
+  final String? selectedThemeKey;
+  final ValueChanged<String?> onChanged;
+
+  const _GlitterColorDropdown({
+    required this.selectedThemeKey,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themes = ref.watch(AppState.themeData).value?.availableThemes ?? {};
+
+    final entries = <DropdownMenuEntry<String?>>[
+      const DropdownMenuEntry(value: null, label: "Default"),
+      for (final entry in themes.entries)
+        DropdownMenuEntry(
+          value: entry.key,
+          label: entry.value.displayName,
+          labelWidget: Row(
+            children: [
+              for (final color in [
+                ThemeManager.convertToThemeData(
+                  entry.value,
+                ).colorScheme.primary,
+                ThemeManager.convertToThemeData(
+                  entry.value,
+                ).colorScheme.secondary,
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: ColoredBox(color: color),
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Text(entry.value.displayName),
+            ],
+          ),
+        ),
+    ];
+
+    return MovingTooltipWidget.text(
+      message:
+          "Which theme's colors the motes use. Default follows the active theme.",
+      child: Row(
+        spacing: 8,
+        children: [
+          const Text("Motes color"),
+          TriOSDropdownMenu<String?>(
+            key: ValueKey(selectedThemeKey),
+            initialSelection: selectedThemeKey,
+            dropdownMenuEntries: entries,
+            onSelected: onChanged,
+          ),
+        ],
       ),
     );
   }

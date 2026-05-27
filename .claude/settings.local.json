@@ -213,7 +213,8 @@
       "Bash(Select-String -Pattern \"\\(All tests passed|Some tests failed|passed|failed\\)\")",
       "PowerShell(head -30)",
       "Bash(findstr \"Highlightable\")",
-      "Bash(select-string \"Highlightable\")"
+      "Bash(select-string \"Highlightable\")",
+      "Bash(dir \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\\\\widgets\\\\rainbow\" /s)"
     ]
   }
 }

@@ -12,6 +12,8 @@ import 'package:trios/toolbar/nav_order_controller.dart';
 import 'package:trios/toolbar/nav_order_entry.dart';
 import 'package:trios/toolbar/nav_reorder_menu.dart';
 import 'package:trios/toolbar/tab_button.dart';
+import 'package:trios/themes/theme_modifiers.dart';
+import 'package:trios/widgets/glitter_background.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -90,7 +92,9 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
     ];
 
     final appBar = AppBar(
-      title: Row(
+      title: GlitterBackground(
+        location: GlitterLocation.toolbar,
+        child: Row(
         children: [
           const AppBrandHeader(compact: false),
           const LauncherButton(
@@ -207,6 +211,7 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
             ),
           ),
         ],
+      ),
       ),
     );
 

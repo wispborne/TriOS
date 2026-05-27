@@ -56,7 +56,6 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell>
     with SingleTickerProviderStateMixin {
   late TriOSTools _currentPage;
-  bool isNewGrid = true;
   bool _isResizeHandleHovered = false;
   final rightToolbarScrollController = ScrollController();
 

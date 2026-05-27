@@ -3,6 +3,8 @@ import 'package:trios/toolbar/activity_icon_button.dart';
 import 'package:trios/toolbar/app_action_buttons.dart';
 import 'package:trios/toolbar/app_brand_header.dart';
 import 'package:trios/toolbar/app_right_toolbar.dart';
+import 'package:trios/themes/theme_modifiers.dart';
+import 'package:trios/widgets/glitter_background.dart';
 
 /// Thin top bar used in sidebar layout mode.
 /// Contains brand header, launcher, action buttons, and right-side status items.
@@ -18,7 +20,9 @@ class CompactTopBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       toolbarHeight: preferredSize.height,
-      title: Row(
+      title: GlitterBackground(
+        location: GlitterLocation.toolbar,
+        child: Row(
         children: [
           const AppBrandHeader(compact: true),
           Expanded(
@@ -69,6 +73,7 @@ class CompactTopBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

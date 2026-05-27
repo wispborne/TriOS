@@ -5,6 +5,8 @@ import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/trios/constants_theme.dart';
 
 import '../themes/theme_manager.dart';
+import '../themes/theme_modifiers.dart';
+import 'glitter_background.dart';
 
 class TooltipFrame extends StatelessWidget {
   final Widget child;
@@ -48,7 +50,13 @@ class TooltipFrame extends StatelessWidget {
           wrapper: (child) => RainbowBorder(
             child: Container(color: resolvedBackgroundColor, child: child),
           ),
-          child: Padding(padding: padding, child: child),
+          child: Padding(
+            padding: padding,
+            child: GlitterBackground(
+              location: GlitterLocation.tooltip,
+              child: child,
+            ),
+          ),
         ),
       ),
     );

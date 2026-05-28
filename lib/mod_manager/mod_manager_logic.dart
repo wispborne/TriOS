@@ -17,7 +17,7 @@ import 'package:trios/mod_manager/services/_mod_variant_core.dart';
 import 'package:trios/mod_manager/utils/mod_file_utils.dart';
 import 'package:trios/mod_manager/utils/mod_list_exporter.dart' as exporter;
 import 'package:trios/mod_manager/version_checker.dart';
-import 'package:trios/mod_manager/widgets/mod_installation_dialog.dart';
+import 'package:trios/mod_manager/widgets/mod_install_selection_dialog.dart';
 import 'package:trios/mod_manager/widgets/mod_installation_error_dialog.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -82,9 +82,17 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         ref.read(AppState.modsFolder).value!,
         ref.read(AppState.mods),
         (modsBeingInstalled) {
-          return ModInstallationDialog.show(
+          return ModInstallSelectionDialog.show<ExtractedModInfo>(
             context,
-            candidates: modsBeingInstalled,
+            choices: modsBeingInstalled
+                .map(
+                  (candidate) => ModInstallChoice<ExtractedModInfo>(
+                    modInfo: candidate.modInfo,
+                    existingVariant: candidate.alreadyExistingVariant,
+                    tag: candidate.modInfo,
+                  ),
+                )
+                .toList(),
             gameVersion: ref.read(
               appSettings.select((s) => s.lastStarsectorVersion),
             ),
@@ -574,6 +582,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     String targetModFolderName, {
     bool dryRun = true,
     void Function(int completed, int total)? onProgress,
+    void Function(String phase)? onPhaseChanged,
   }) async {
     final modInfo = modInfoToInstall.modInfo;
     var existingMod = currentMods.firstWhereOrNull((it) => it.id == modInfo.id);
@@ -627,6 +636,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           return false;
         },
         onProgress: onProgress,
+        onPhaseChanged: onPhaseChanged,
       );
 
       final newModFolder = destinationFolder

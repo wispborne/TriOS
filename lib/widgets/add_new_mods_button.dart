@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/batch_installation/batch_installation_notifier.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/trios/app_state.dart';
@@ -67,27 +68,34 @@ class AddNewModsButton extends ConsumerWidget {
     FilePicker.platform.pickFiles(allowMultiple: true).then((value) async {
       if (value == null) return;
 
+      // Separate archives from loose mod_info.json (directory) picks.
+      final archiveFiles = <File>[];
+      final directoryInstalls = <File>[];
+
       for (final file in value.files) {
+        if (Constants.modInfoFileNames.contains(file.name)) {
+          directoryInstalls.add(File(file.path!));
+        } else {
+          archiveFiles.add(File(file.path!));
+        }
+      }
+
+      // Archives go through the batch system.
+      if (archiveFiles.isNotEmpty) {
+        ref.read(batchInstallationProvider.notifier).create(archiveFiles);
+      }
+
+      // Directory sources use the existing single-install path.
+      for (final file in directoryInstalls) {
         final download = ref
             .read(downloadManager.notifier)
-            .addInstallation(file.name, file.path!);
-        if (Constants.modInfoFileNames.contains(file.name)) {
-          await ref
-              .read(modManager.notifier)
-              .installModFromSourceWithDefaultUI(
-                DirectoryModInstallSource(
-                  Directory(File(file.path!).parent.path),
-                ),
-                installationDownload: download,
-              );
-        } else {
-          await ref
-              .read(modManager.notifier)
-              .installModFromSourceWithDefaultUI(
-                ArchiveModInstallSource(File(file.path!)),
-                installationDownload: download,
-              );
-        }
+            .addInstallation(file.uri.pathSegments.last, file.path);
+        await ref
+            .read(modManager.notifier)
+            .installModFromSourceWithDefaultUI(
+              DirectoryModInstallSource(Directory(file.parent.path)),
+              installationDownload: download,
+            );
       }
     });
   }

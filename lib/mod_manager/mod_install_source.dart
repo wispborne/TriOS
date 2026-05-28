@@ -28,6 +28,7 @@ abstract class ModInstallSource {
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace? st)? onError,
     void Function(int completed, int total)? onProgress,
+    void Function(String phase)? onPhaseChanged,
   });
 }
 
@@ -78,6 +79,7 @@ class ArchiveModInstallSource extends ModInstallSource {
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace? st)? onError,
     void Function(int completed, int total)? onProgress,
+    void Function(String phase)? onPhaseChanged,
   }) async {
     final fileList = (await archive.listFiles(
       _archive,
@@ -95,6 +97,7 @@ class ArchiveModInstallSource extends ModInstallSource {
                   : null,
               onError: onError,
               onProgress: onProgress,
+              onPhaseChanged: onPhaseChanged,
             )).nonNulls
             .map(
               (it) => SourcedFile(
@@ -181,6 +184,7 @@ class DirectoryModInstallSource extends ModInstallSource {
     String Function(String path)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
     void Function(int completed, int total)? onProgress,
+    void Function(String phase)? onPhaseChanged,
   }) async {
     List<SourcedFile> sourcedFiles = [];
     try {

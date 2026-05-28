@@ -528,6 +528,53 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 16),
+                        Builder(
+                          builder: (context) {
+                            final concurrentExtractions = ref.watch(
+                              appSettings.select(
+                                (s) => s.concurrentExtractions,
+                              ),
+                            );
+                            return MovingTooltipWidget.text(
+                              message:
+                                  "Number of mod archives to extract at the same time during batch installation.\n"
+                                  "Higher values install faster but use more CPU and disk I/O.",
+                              child: Row(
+                                children: [
+                                  const Text("Concurrent extractions"),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 200,
+                                    child: Slider(
+                                      value: concurrentExtractions
+                                          .clamp(1, 6)
+                                          .toDouble(),
+                                      min: 1,
+                                      max: 6,
+                                      divisions: 5,
+                                      label: "$concurrentExtractions",
+                                      onChanged: (value) {
+                                        ref
+                                            .read(appSettings.notifier)
+                                            .update(
+                                              (s) => s.copyWith(
+                                                concurrentExtractions: value
+                                                    .round(),
+                                              ),
+                                            );
+                                      },
+                                    ),
+                                  ),
+                                  Text(
+                                    "$concurrentExtractions",
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     );
                   },

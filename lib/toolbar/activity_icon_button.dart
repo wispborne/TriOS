@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/themes/theme.dart';
+import 'package:trios/mod_manager/batch_installation/batch_installation.dart';
+import 'package:trios/mod_manager/batch_installation/batch_installation_notifier.dart';
+import 'package:trios/trios/activity_panel/activity_entry.dart';
+import 'package:trios/trios/activity_panel/activity_item_tile.dart';
 import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
+import 'package:trios/trios/activity_panel/batch_activity_tile.dart';
 import 'package:trios/trios/constants_theme.dart' show TriOSThemeConstants;
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/download_status.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
@@ -23,6 +26,24 @@ class ActivityIconButton extends ConsumerWidget {
     final unseenCount = ref.watch(activityUnseenCount);
     final isOpen = ref.watch(appSettings.select((s) => s.isActivityPanelOpen));
 
+    final batch = ref.watch(batchInstallationProvider);
+    final activeBatchEntries =
+        batch?.entries
+            .where(
+              (e) =>
+                  e.status == BatchEntryStatus.queued ||
+                  e.status == BatchEntryStatus.scanning ||
+                  e.status == BatchEntryStatus.scanned ||
+                  e.status == BatchEntryStatus.extracting,
+            )
+            .toList() ??
+        const [];
+
+    final history = ref.watch(activityHistoryStore).value;
+    final unseenEntries = (history != null && unseenCount > 0)
+        ? history.entries.take(unseenCount).toList()
+        : const <ActivityEntry>[];
+
     final inProgress = downloads.where((d) {
       final status = d.task.status.value;
       if (status == DownloadStatus.failed ||
@@ -33,41 +54,117 @@ class ActivityIconButton extends ConsumerWidget {
           (!d.installComplete.value && !d.installCancelled.value);
     }).toList();
 
-    return MovingTooltipWidget.text(
-      message: 'Installation Activity',
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          if (inProgress.isNotEmpty || unseenCount > 0)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _AggregateProgressRing(
-                downloads: inProgress,
-                allComplete: inProgress.isEmpty && unseenCount > 0,
-              ),
-            ),
-          IconButton(
-            icon: Icon(Icons.file_download, size: 18),
-            onPressed: () => toggleActivityPanel(ref),
-            style: IconButton.styleFrom(
-              minimumSize: const Size(20, 20),
-              shape: RoundedRectangleBorder(
-                borderRadius: .circular(TriOSThemeConstants.cornerRadius),
-              ),
-              padding: .all(4),
-              backgroundColor: isOpen
-                  ? Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.08)
-                  : null,
+    final hasActivity =
+        activeBatchEntries.isNotEmpty ||
+        inProgress.isNotEmpty ||
+        unseenEntries.isNotEmpty;
+
+    Widget iconStack = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        if (activeBatchEntries.isNotEmpty ||
+            inProgress.isNotEmpty ||
+            unseenCount > 0)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _AggregateProgressRing(
+              downloads: inProgress,
+              allComplete:
+                  activeBatchEntries.isEmpty &&
+                  inProgress.isEmpty &&
+                  unseenCount > 0,
             ),
           ),
-          // Badge count (unseen completions).
-          if (unseenCount > 0)
-            Positioned(right: -2, top: -2, child: _Badge(count: unseenCount)),
-        ],
+        IconButton(
+          icon: Icon(Icons.file_download, size: 18),
+          onPressed: () => toggleActivityPanel(ref),
+          style: IconButton.styleFrom(
+            minimumSize: const Size(20, 20),
+            shape: RoundedRectangleBorder(
+              borderRadius: .circular(TriOSThemeConstants.cornerRadius),
+            ),
+            padding: .all(4),
+            backgroundColor: isOpen
+                ? Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.08)
+                : null,
+          ),
+        ),
+        // Badge count (unseen completions).
+        if (unseenCount > 0)
+          Positioned(right: -2, top: -1, child: _Badge(count: unseenCount)),
+      ],
+    );
+
+    if (hasActivity) {
+      return MovingTooltipWidget.framed(
+        padding: .zero,
+        tooltipWidgetBuilder: (_) => _ActivityTooltipContent(),
+        child: iconStack,
+      );
+    }
+
+    return MovingTooltipWidget.text(
+      message: 'Installation Activity',
+      child: iconStack,
+    );
+  }
+}
+
+class _ActivityTooltipContent extends ConsumerWidget {
+  const _ActivityTooltipContent();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final downloads = ref.watch(downloadManager).value ?? [];
+    final unseenCount = ref.watch(activityUnseenCount);
+    final batch = ref.watch(batchInstallationProvider);
+
+    final activeBatchEntries =
+        batch?.entries
+            .where(
+              (e) =>
+                  e.status == BatchEntryStatus.queued ||
+                  e.status == BatchEntryStatus.scanning ||
+                  e.status == BatchEntryStatus.scanned ||
+                  e.status == BatchEntryStatus.extracting,
+            )
+            .toList() ??
+        const [];
+
+    final history = ref.watch(activityHistoryStore).value;
+    final unseenEntries = (history != null && unseenCount > 0)
+        ? history.entries.take(unseenCount).toList()
+        : const <ActivityEntry>[];
+
+    final inProgress = downloads.where((d) {
+      final status = d.task.status.value;
+      if (status == DownloadStatus.failed ||
+          status == DownloadStatus.canceled) {
+        return false;
+      }
+      return !status.isCompleted ||
+          (!d.installComplete.value && !d.installCancelled.value);
+    }).toList();
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 400),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Installation Activity'),
+            for (final entry in activeBatchEntries) BatchEntryTile(entry: entry),
+            for (final d in inProgress) InProgressActivityTile(download: d),
+            for (final e in unseenEntries)
+              CompletedActivityTile(entry: e, showActions: false),
+          ],
+        ),
       ),
     );
   }
@@ -151,8 +248,8 @@ class _AggregateProgressRingState extends State<_AggregateProgressRing> {
     }
 
     return SizedBox(
-      height: 4,
-      child: ThemedLinearProgressIndicator(value: value, alpha: 200),
+      height: 2,
+      child: ThemedLinearProgressIndicator(value: value, alpha: 175),
     );
   }
 }
@@ -165,7 +262,7 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: .symmetric(horizontal: 4, vertical: 1),
+      padding: .symmetric(horizontal: 3, vertical: 0),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary,
         borderRadius: BorderRadius.circular(8),

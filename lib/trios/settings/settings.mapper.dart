@@ -1019,6 +1019,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: ActivityPanelMode.pinned,
   );
+  static int _$concurrentExtractions(Settings v) => v.concurrentExtractions;
+  static const Field<Settings, int> _f$concurrentExtractions = Field(
+    'concurrentExtractions',
+    _$concurrentExtractions,
+    opt: true,
+    def: 2,
+  );
   static bool _$debugMode(Settings v) => v.debugMode;
   static const Field<Settings, bool> _f$debugMode = Field(
     'debugMode',
@@ -1176,6 +1183,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #isActivityPanelOpen: _f$isActivityPanelOpen,
     #activityPanelWidth: _f$activityPanelWidth,
     #activityPanelMode: _f$activityPanelMode,
+    #concurrentExtractions: _f$concurrentExtractions,
     #debugMode: _f$debugMode,
     #weaponsSearchHistory: _f$weaponsSearchHistory,
     #shipsSearchHistory: _f$shipsSearchHistory,
@@ -1282,6 +1290,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       isActivityPanelOpen: data.dec(_f$isActivityPanelOpen),
       activityPanelWidth: data.dec(_f$activityPanelWidth),
       activityPanelMode: data.dec(_f$activityPanelMode),
+      concurrentExtractions: data.dec(_f$concurrentExtractions),
       debugMode: data.dec(_f$debugMode),
       weaponsSearchHistory: data.dec(_f$weaponsSearchHistory),
       shipsSearchHistory: data.dec(_f$shipsSearchHistory),
@@ -1509,6 +1518,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? isActivityPanelOpen,
     double? activityPanelWidth,
     ActivityPanelMode? activityPanelMode,
+    int? concurrentExtractions,
     bool? debugMode,
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
@@ -1771,6 +1781,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? isActivityPanelOpen,
     double? activityPanelWidth,
     ActivityPanelMode? activityPanelMode,
+    int? concurrentExtractions,
     bool? debugMode,
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
@@ -1899,6 +1910,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         #isActivityPanelOpen: isActivityPanelOpen,
       if (activityPanelWidth != null) #activityPanelWidth: activityPanelWidth,
       if (activityPanelMode != null) #activityPanelMode: activityPanelMode,
+      if (concurrentExtractions != null)
+        #concurrentExtractions: concurrentExtractions,
       if (debugMode != null) #debugMode: debugMode,
       if (weaponsSearchHistory != null)
         #weaponsSearchHistory: weaponsSearchHistory,
@@ -2163,6 +2176,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     activityPanelMode: data.get(
       #activityPanelMode,
       or: $value.activityPanelMode,
+    ),
+    concurrentExtractions: data.get(
+      #concurrentExtractions,
+      or: $value.concurrentExtractions,
     ),
     debugMode: data.get(#debugMode, or: $value.debugMode),
     weaponsSearchHistory: data.get(

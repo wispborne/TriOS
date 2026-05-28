@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -12,6 +13,8 @@ import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/download_status.dart';
 import 'package:trios/utils/relative_timestamp.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
+import 'package:trios/mod_manager/mod_context_menu.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -22,8 +25,13 @@ const _activityRowPadding = EdgeInsets.symmetric(horizontal: 16, vertical: 6);
 /// Displays a single completed/failed activity entry as a dense row.
 class CompletedActivityTile extends ConsumerWidget {
   final ActivityEntry entry;
+  final bool showActions;
 
-  const CompletedActivityTile({super.key, required this.entry});
+  const CompletedActivityTile({
+    super.key,
+    required this.entry,
+    this.showActions = true,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,11 +48,17 @@ class CompletedActivityTile extends ConsumerWidget {
     final variant = mod?.findHighestVersion;
     final isEnabled = mod?.isEnabledInGame == true;
 
+    final gameVersion = ref.watch(AppState.starsectorVersion).value;
+    final compatWithGame = variant != null
+        ? compareGameVersions(variant.modInfo.gameVersion, gameVersion)
+        : null;
+    final compatTextColor = compatWithGame?.getGameCompatibilityColor();
+
     final hasIcon = variant?.iconFilePath != null;
     // Inset the tap highlight without shifting content: the inset lives on an
     // outer Padding and is subtracted back out of the inner content Padding.
     const highlightInset = EdgeInsets.symmetric(horizontal: 8);
-    return Padding(
+    Widget tile = Padding(
       padding: highlightInset,
       child: Material(
         type: MaterialType.transparency,
@@ -114,24 +128,44 @@ class CompletedActivityTile extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          MovingTooltipWidget.text(
-                            message: 'Clear',
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                iconSize: 14,
-                                icon: Icon(
-                                  Icons.close,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                          if (showActions && !isFailed && !isCancelled && variant != null)
+                            MovingTooltipWidget.text(
+                              message: 'Open mod folder',
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  iconSize: 14,
+                                  icon: Icon(
+                                    Icons.folder_open,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  onPressed: () {
+                                    launchUrlString(variant.modFolder.path);
+                                  },
                                 ),
-                                onPressed: () => ref
-                                    .read(activityHistoryStore.notifier)
-                                    .removeEntry(entry.id),
                               ),
                             ),
-                          ),
+                          if (showActions)
+                            MovingTooltipWidget.text(
+                              message: 'Clear',
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  iconSize: 14,
+                                  icon: Icon(
+                                    Icons.close,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  onPressed: () => ref
+                                      .read(activityHistoryStore.notifier)
+                                      .removeEntry(entry.id),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                       if (isFailed && entry.errorMessage != null)
@@ -148,7 +182,7 @@ class CompletedActivityTile extends ConsumerWidget {
                           ),
                         ),
                       Padding(
-                        padding: .only(top: 4),
+                        padding: .only(top: 2),
                         child: Row(
                           spacing: 4,
                           children: [
@@ -182,41 +216,7 @@ class CompletedActivityTile extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (!isFailed && !isCancelled && variant != null)
-                              MovingTooltipWidget.text(
-                                message: 'Open mod folder',
-                                child: SizedBox(
-                                  height: 15,
-                                  child: IconButton(
-                                    onPressed: () {
-                                      launchUrlString(variant.modFolder.path);
-                                    },
-                                    icon: Icon(
-                                      Icons.folder_open,
-                                      size: 14,
-                                      color: theme.colorScheme.onSurface,
-                                    ),
-                                    // label: Text(
-                                    //   'Open',
-                                    //   style: theme.textTheme.bodySmall?.copyWith(
-                                    //     color: theme.colorScheme.onSurface,
-                                    //     fontSize: 11,
-                                    //   ),
-                                    // ),
-                                    padding: .zero,
-                                    style: ElevatedButton.styleFrom(
-                                      padding: .symmetric(
-                                        horizontal: 6,
-                                        vertical: 1,
-                                      ),
-                                      minimumSize: Size.zero,
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            if (!isFailed && !isCancelled && variant != null)
+                            if (showActions && !isFailed && !isCancelled && variant != null)
                               if (!isEnabled && mod != null)
                                 MovingTooltipWidget.text(
                                   message: 'Enable this mod',
@@ -243,6 +243,7 @@ class CompletedActivityTile extends ConsumerWidget {
                                         horizontal: 6,
                                         vertical: 4,
                                       ),
+                                      iconColor: theme.iconTheme.color,
                                       minimumSize: Size.zero,
                                       tapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
@@ -261,6 +262,32 @@ class CompletedActivityTile extends ConsumerWidget {
         ),
       ),
     );
+
+    if (variant != null) {
+      tile = MovingTooltipWidget.framed(
+        position: TooltipPosition.topLeft,
+        padding: .zero,
+        tooltipWidgetBuilder: (context) => SizedBox(
+          width: 400,
+          child: ModSummaryWidget(
+            modVariant: variant,
+            compatWithGame: compatWithGame,
+            compatTextColor: compatTextColor,
+            showIconTip: false,
+          ),
+        ),
+        child: tile,
+      );
+    }
+
+    if (mod != null) {
+      tile = ContextMenuRegion(
+        contextMenu: buildModContextMenu(mod, ref, context),
+        child: tile,
+      );
+    }
+
+    return tile;
   }
 }
 

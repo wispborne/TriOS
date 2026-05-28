@@ -170,6 +170,10 @@ class Settings with SettingsMappable {
   final double activityPanelWidth;
   final ActivityPanelMode activityPanelMode;
 
+  /// Number of mod archives to extract in parallel during batch installation.
+  /// Range: 1–6, default 2.
+  final int concurrentExtractions;
+
   final bool debugMode;
 
   final List<String> weaponsSearchHistory;
@@ -288,6 +292,7 @@ class Settings with SettingsMappable {
     this.isActivityPanelOpen = false,
     this.activityPanelWidth = 320,
     this.activityPanelMode = ActivityPanelMode.pinned,
+    this.concurrentExtractions = 2,
     this.debugMode = false,
     this.weaponsSearchHistory = const [],
     this.shipsSearchHistory = const [],

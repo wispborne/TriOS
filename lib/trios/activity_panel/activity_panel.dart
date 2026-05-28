@@ -1,9 +1,15 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:trios/mod_manager/batch_installation/batch_installation.dart';
+import 'package:trios/mod_manager/batch_installation/batch_installation_notifier.dart';
+import 'package:trios/trios/activity_panel/activity_entry.dart';
 import 'package:trios/trios/activity_panel/activity_item_tile.dart';
 import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
+import 'package:trios/trios/activity_panel/batch_activity_tile.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/download_status.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -25,6 +31,9 @@ class ActivityPanel extends ConsumerStatefulWidget {
 class _ActivityPanelState extends ConsumerState<ActivityPanel> {
   /// Refreshes relative timestamps ("5 seconds ago" → "1 minute ago").
   Timer? _timestampTimer;
+
+  /// Which date groups are currently collapsed.
+  final Set<String> _collapsedGroups = {};
 
   @override
   void initState() {
@@ -59,11 +68,92 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
     );
   }
 
+  /// Groups history entries by date label, preserving insertion order.
+  List<(String label, List<ActivityEntry> entries)> _groupByDate(
+    List<ActivityEntry> entries,
+  ) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dateFormat = DateFormat.MMMd();
+
+    String labelFor(DateTime ts) {
+      final date = DateTime(ts.year, ts.month, ts.day);
+      if (date == today) return 'Today';
+      if (date == yesterday) return 'Yesterday';
+      if (date.year != today.year) return DateFormat.yMMMd().format(ts);
+      return dateFormat.format(ts);
+    }
+
+    return groupBy(entries, (e) => labelFor(e.timestamp))
+        .entries
+        .map((e) => (e.key, e.value))
+        .toList();
+  }
+
+  Widget _dateGroupHeader(String label, bool isCollapsed, ThemeData theme) {
+    return InkWell(
+      onTap: () => setState(() {
+        isCollapsed
+            ? _collapsedGroups.remove(label)
+            : _collapsedGroups.add(label);
+      }),
+      child: Padding(
+        padding: .fromLTRB(8, 4, 16, 0),
+        child: Row(
+          children: [
+            SizedBox(
+              height: 20,
+              width: 20,
+              child: Icon(
+                isCollapsed
+                    ? Icons.keyboard_arrow_right
+                    : Icons.keyboard_arrow_down,
+                size: 14,
+              ),
+            ),
+            Padding(
+              padding: .only(left: 2, right: 8),
+              child: Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Divider(
+                color: theme.colorScheme.outlineVariant,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final downloads = ref.watch(downloadManager).value ?? [];
     final history = ref.watch(activityHistoryStore).value?.entries ?? [];
+    final batch = ref.watch(batchInstallationProvider);
+
+    // Batch entries that are still in flight (queued, scanning, or extracting),
+    // in their original order. Completed/failed/skipped entries move to the
+    // "Recent" history instead.
+    final activeBatchEntries =
+        batch?.entries
+            .where(
+              (e) =>
+                  e.status == BatchEntryStatus.queued ||
+                  e.status == BatchEntryStatus.scanning ||
+                  e.status == BatchEntryStatus.scanned ||
+                  e.status == BatchEntryStatus.extracting,
+            )
+            .toList() ??
+        const [];
 
     // Split downloads into in-progress vs done.
     // A download is "done" if:
@@ -80,7 +170,7 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
     }).toList();
 
     final hasHistory = history.isNotEmpty;
-    final hasInProgress = inProgress.isNotEmpty;
+    final hasInProgress = inProgress.isNotEmpty || activeBatchEntries.isNotEmpty;
     final isPinned =
         ref.watch(appSettings.select((s) => s.activityPanelMode)) ==
         ActivityPanelMode.pinned;
@@ -169,20 +259,38 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
                       // In-progress section.
                       if (hasInProgress) ...[
                         _sectionHeader('In Progress', theme),
+                        for (final (i, entry)
+                            in activeBatchEntries.indexed) ...[
+                          if (i > 0) const SizedBox(height: 8),
+                          BatchEntryTile(
+                            key: ValueKey(entry.id),
+                            entry: entry,
+                          ),
+                        ],
+                        if (activeBatchEntries.isNotEmpty &&
+                            inProgress.isNotEmpty)
+                          const SizedBox(height: 8),
                         for (final (i, download) in inProgress.indexed) ...[
                           if (i > 0) const SizedBox(height: 8),
                           InProgressActivityTile(download: download),
                         ],
                         if (hasHistory) const SizedBox(height: 8),
                       ],
-                      // Completed section.
-                      if (hasHistory) ...[
-                        _sectionHeader('Recent', theme),
-                        for (final (i, entry) in history.indexed) ...[
-                          if (i > 0) const SizedBox(height: 8),
-                          CompletedActivityTile(entry: entry),
+                      // Completed section, grouped by date.
+                      if (hasHistory)
+                        for (final (label, groupEntries)
+                            in _groupByDate(history)) ...[
+                          _dateGroupHeader(
+                            label,
+                            _collapsedGroups.contains(label),
+                            theme,
+                          ),
+                          if (!_collapsedGroups.contains(label))
+                            for (final (i, entry) in groupEntries.indexed) ...[
+                              if (i > 0) const SizedBox(height: 8),
+                              CompletedActivityTile(entry: entry),
+                            ],
                         ],
-                      ],
                     ],
                   ),
           ),

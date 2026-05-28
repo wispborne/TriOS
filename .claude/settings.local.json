@@ -214,7 +214,11 @@
       "PowerShell(head -30)",
       "Bash(findstr \"Highlightable\")",
       "Bash(select-string \"Highlightable\")",
-      "Bash(dir \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\\\\widgets\\\\rainbow\" /s)"
+      "Bash(dir \"F:\\\\Code\\\\Starsector\\\\TriOS\\\\lib\\\\widgets\\\\rainbow\" /s)",
+      "Bash(talon)",
+      "Bash(xyphos)",
+      "Bash(glaive)",
+      "Bash(warden\" | head -20)"
     ]
   }
 }

@@ -1,9 +1,11 @@
 # 1.6.0
 - Added
   - Factions Viewer
+  - Installation Activity panel, like web browsers' download pages.
   - May now filter for ships with built-ins on Ship Viewer page.
   - Ship Viewer dialog: built-in weapons are now shown on the mount tooltips.
   - May now use some elements of Hegemony & Pride themes on any theme.
+  - Optional animated motes on some UI elements. Enable below the Themes dropdown.
 - Fixed
   - Built-in weapons not showing on ship tooltips.
   - Ship skins not applying weapon slot changes.

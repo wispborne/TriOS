@@ -318,6 +318,7 @@ class SevenZip implements ArchiveInterface {
     String Function(SevenZipEntry entry)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
     void Function(int completed, int total)? onProgress,
+    void Function(String phase)? onPhaseChanged,
   }) async {
     final maxRenameRetries = 10;
     final renameRetryDelay = Duration(milliseconds: 200);
@@ -337,6 +338,7 @@ class SevenZip implements ArchiveInterface {
 
     final results = <SevenZipExtractedFile?>[];
 
+    onPhaseChanged?.call("Extracting");
     final baseArgs = ['x', archivePath.path, '-y', '-bb1', '-sccUTF-8', '-o$tempFolder'];
     final inArchivePaths = toExtract.map((e) => e.path).toList();
 
@@ -359,6 +361,7 @@ class SevenZip implements ArchiveInterface {
           ),
         );
       }
+      onPhaseChanged?.call("Moving into place");
       final oldFiles = toExtract
           .map((entry) => File('$tempFolder/${entry.path}'))
           .toList();

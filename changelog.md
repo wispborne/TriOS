@@ -11,8 +11,10 @@
   - Portrait Replacer.
   - Ship skins not applying weapon slot changes.
   - Column visibility indicator showing hidden columns as visible.
+  - Aliasing on mod icons.
 - Changed
   - May now hide the layout toggle button.
+  - Mod context menu now always uses the more powerful Category submenu.
 
 # 1.5.1
 - Added

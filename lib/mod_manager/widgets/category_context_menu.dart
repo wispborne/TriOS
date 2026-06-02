@@ -26,6 +26,18 @@ ContextMenu buildCategoryCellContextMenu({
     return ContextMenu(entries: []);
   }
 
+  return ContextMenu(
+    maxHeight: MediaQuery.of(context).size.height * 0.8,
+    entries: buildCategoryMenuItems(modId: modId, ref: ref, context: context),
+    padding: const EdgeInsets.all(8.0),
+  );
+}
+
+List<ContextMenuEntry> buildCategoryMenuItems({
+  required String modId,
+  required WidgetRef ref,
+  required BuildContext context,
+}) {
   final notifier = ref.read(categoryManagerProvider.notifier);
   final allCategories = notifier.getAllCategories();
   final assignments = notifier.getAssignmentsForMod(modId);
@@ -40,85 +52,82 @@ ContextMenu buildCategoryCellContextMenu({
     (c) => c.id == primaryId,
   );
   final mod = ref.read(AppState.mods).firstWhere((mod) => mod.id == modId);
-
-  return ContextMenu(
-    maxHeight: MediaQuery.of(context).size.height * 0.8,
-    entries: [
-      if (mod != null) ...[
-        MenuHeader(
-          text: mod.findFirstEnabledOrHighestVersion!.modInfo.nameOrId,
-          disableUppercase: false,
-        ),
-        const MenuDivider(),
-      ],
-      if (assignedIds.isNotEmpty) ...[
-        MenuHeader(text: 'Set Primary Category'),
-        ...allCategories
-            .where((c) => assignedIds.contains(c.id))
-            .map(
-              (category) => MenuItem(
-                label: category.name,
-                icon: category.id == primaryId ? Icons.check : null,
-                onSelected: () {
-                  notifier.setPrimaryCategory(modId, category.id);
-                },
-              ),
-            ),
-        const MenuDivider(),
-        MenuHeader(text: primaryCategory != null
-            ? "Manage: ${primaryCategory.name}"
-            : "(please select a primary category)"),
-        ..._buildPrimaryManagementItems(
-          mod: mod,
-          primaryId: primaryId,
-          notifier: notifier,
-          allCategories: allCategories,
-          context: context,
-          ref: ref,
-        ),
-        const MenuDivider(),
-      ],
-      MenuItem(
-        label: 'Add Category...',
-        icon: Icons.add,
-        onSelected: () {
-          showCreateCategoryDialog(
-            context: context,
-            ref: ref,
-            onCreated: (category) {
-              notifier.addCategoryToMod(modId, category.id, isPrimary: true);
-            },
-            mod: mod,
-          );
-        },
-      ),
-      MenuItem(
-        label: 'Manage Categories...',
-        icon: Icons.settings,
-        onSelected: () {
-          showCategoryManagementPopup(context: context, ref: ref, mod: mod);
-        },
+  return [
+    if (mod != null) ...[
+      MenuHeader(
+        text: mod.findFirstEnabledOrHighestVersion!.modInfo.nameOrId,
+        disableUppercase: false,
       ),
       const MenuDivider(),
-      MenuHeader(text: 'Choose Categories'),
-      ...allCategories.map((category) {
-        final isAssigned = assignedIds.contains(category.id);
-        return CheckableMenuItem(
-          label: category.name,
-          leading: _buildCategoryLeading(category),
-          isChecked: isAssigned,
-          onSelected: () {
-            if (isAssigned) {
-              notifier.removeCategoryFromMod(modId, category.id);
-            } else {
-              notifier.addCategoryToMod(modId, category.id);
-            }
-          },
-        );
-      }),
     ],
-    padding: const EdgeInsets.all(8.0),
-  );
+    if (assignedIds.isNotEmpty) ...[
+      MenuHeader(text: 'Set Primary Category'),
+      ...allCategories
+          .where((c) => assignedIds.contains(c.id))
+          .map(
+            (category) => MenuItem(
+              label: category.name,
+              icon: category.id == primaryId ? Icons.check : null,
+              onSelected: () {
+                notifier.setPrimaryCategory(modId, category.id);
+              },
+            ),
+          ),
+      const MenuDivider(),
+      MenuHeader(
+        text: primaryCategory != null
+            ? "Manage: ${primaryCategory.name}"
+            : "(please select a primary category)",
+      ),
+      ..._buildPrimaryManagementItems(
+        mod: mod,
+        primaryId: primaryId,
+        notifier: notifier,
+        allCategories: allCategories,
+        context: context,
+        ref: ref,
+      ),
+      const MenuDivider(),
+    ],
+    MenuItem(
+      label: 'Add Category...',
+      icon: Icons.add,
+      onSelected: () {
+        showCreateCategoryDialog(
+          context: context,
+          ref: ref,
+          onCreated: (category) {
+            notifier.addCategoryToMod(modId, category.id, isPrimary: true);
+          },
+          mod: mod,
+        );
+      },
+    ),
+    MenuItem(
+      label: 'Manage Categories...',
+      icon: Icons.settings,
+      onSelected: () {
+        showCategoryManagementPopup(context: context, ref: ref, mod: mod);
+      },
+    ),
+    const MenuDivider(),
+    MenuHeader(text: 'Choose Categories'),
+    ...allCategories.map((category) {
+      final isAssigned = assignedIds.contains(category.id);
+      return CheckableMenuItem(
+        label: category.name,
+        leading: _buildCategoryLeading(category),
+        isChecked: isAssigned,
+        onSelected: () {
+          if (isAssigned) {
+            notifier.removeCategoryFromMod(modId, category.id);
+          } else {
+            notifier.addCategoryToMod(modId, category.id);
+          }
+        },
+      );
+    }),
+  ];
 }
 
 /// Builds a context menu for batch category operations on multiple mods.
@@ -156,7 +165,8 @@ List<ContextMenuEntry> buildCategoryBatchMenuEntries({
   Set<String> assignedToAllIds() {
     if (modIds.isEmpty) return {};
     final sets = modIds.map(
-      (id) => notifier.getAssignmentsForMod(id).map((a) => a.categoryId).toSet(),
+      (id) =>
+          notifier.getAssignmentsForMod(id).map((a) => a.categoryId).toSet(),
     );
     return sets.reduce((a, b) => a.intersection(b));
   }
@@ -371,9 +381,7 @@ List<CategoryIcon> _getUnusedIcons(CategoryStore? store, Category current) {
       .where((c) => c.id != current.id && c.icon != null)
       .map((c) => c.icon!)
       .toSet();
-  return allCategoryIcons
-      .where((icon) => !usedIcons.contains(icon))
-      .toList();
+  return allCategoryIcons.where((icon) => !usedIcons.contains(icon)).toList();
 }
 
 /// Custom context menu entry that renders a colored square swatch.
@@ -490,4 +498,3 @@ final class _CategoryIconMenuItem extends ContextMenuItem<void> {
   String get debugLabel =>
       "[${hashCode.toString().substring(0, 5)}] icon:$categoryIcon";
 }
-

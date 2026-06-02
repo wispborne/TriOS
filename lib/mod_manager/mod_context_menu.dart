@@ -322,22 +322,7 @@ MenuItem _buildCategorySubmenu(
   return MenuItem.submenu(
     label: 'Categories',
     icon: Icons.category,
-    items: [
-      ...allCategories.map((category) {
-        final isAssigned = assignedIds.contains(category.id);
-        return CheckableMenuItem(
-          label: category.name,
-          isChecked: isAssigned,
-          onSelected: () {
-            if (isAssigned) {
-              notifier.removeCategoryFromMod(modId, category.id);
-            } else {
-              notifier.addCategoryToMod(modId, category.id);
-            }
-          },
-        );
-      }),
-    ],
+    items: buildCategoryMenuItems(modId: modId, ref: ref, context: context),
   );
 }
 

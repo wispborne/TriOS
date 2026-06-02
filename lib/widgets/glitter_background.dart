@@ -65,7 +65,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
   /// Glitter colors come from [themeKey]'s theme, or the active theme when
   /// null. The Pride theme uses the rainbow palette instead of its swatch, and
   /// renders less transparent (a higher [opacityScale]).
-  ({List<Color> colors, double opacityScale}) _resolveColors(
+  ({List<Color> colors, double opacityScale, bool isRainbow}) _resolveColors(
     BuildContext context,
     String? themeKey,
   ) {
@@ -74,8 +74,8 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
         ? themeState?.availableThemes[themeKey]
         : themeState?.currentTheme;
 
-    if (theme?.id == "Pride") {
-      return (colors: rainbowColors, opacityScale: 2.0);
+    if (theme?.rainbowAccent == true) {
+      return (colors: rainbowColors, opacityScale: 2.0, isRainbow: true);
     }
 
     final colorScheme = theme != null
@@ -88,6 +88,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
         colorScheme.tertiary,
       ],
       opacityScale: 1.0,
+      isRainbow: false,
     );
   }
 
@@ -131,6 +132,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
                     clustering: widget.clustering,
                     coverage: widget.coverage,
                     opacityScale: resolved.opacityScale,
+                    useCircles: !resolved.isRainbow,
                   ),
                 );
               },
@@ -192,6 +194,7 @@ class _GlitterPainter extends CustomPainter {
   final double clustering;
   final double coverage;
   final double opacityScale;
+  final bool useCircles;
   final _paint = Paint()..style = PaintingStyle.fill;
 
   _GlitterPainter({
@@ -202,6 +205,7 @@ class _GlitterPainter extends CustomPainter {
     required this.clustering,
     required this.coverage,
     required this.opacityScale,
+    required this.useCircles,
   });
 
   @override
@@ -248,20 +252,24 @@ class _GlitterPainter extends CustomPainter {
       final colorIndex = (p.colorSeed * colors.length).floor() % colors.length;
       _paint.color = colors[colorIndex].withValues(alpha: opacity);
 
-      final rotation = p.initialRotation + pt * p.rotationSpeed;
-      final path = Path();
-      for (var i = 0; i < p.sides; i++) {
-        final angle = rotation + (2 * pi * i / p.sides);
-        final vx = x + p.radius * cos(angle);
-        final vy = y + p.radius * sin(angle);
-        if (i == 0) {
-          path.moveTo(vx, vy);
-        } else {
-          path.lineTo(vx, vy);
+      if (useCircles) {
+        canvas.drawCircle(Offset(x, y), p.radius, _paint);
+      } else {
+        final rotation = p.initialRotation + pt * p.rotationSpeed;
+        final path = Path();
+        for (var j = 0; j < p.sides; j++) {
+          final angle = rotation + (2 * pi * j / p.sides);
+          final vx = x + p.radius * cos(angle);
+          final vy = y + p.radius * sin(angle);
+          if (j == 0) {
+            path.moveTo(vx, vy);
+          } else {
+            path.lineTo(vx, vy);
+          }
         }
+        path.close();
+        canvas.drawPath(path, _paint);
       }
-      path.close();
-      canvas.drawPath(path, _paint);
     }
   }
 

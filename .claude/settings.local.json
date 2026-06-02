@@ -218,7 +218,9 @@
       "Bash(talon)",
       "Bash(xyphos)",
       "Bash(glaive)",
-      "Bash(warden\" | head -20)"
+      "Bash(warden\" | head -20)",
+      "Bash(git log *)",
+      "PowerShell(flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1)"
     ]
   }
 }

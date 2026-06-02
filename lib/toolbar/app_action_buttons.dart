@@ -167,18 +167,47 @@ class ToolbarLayoutToggle extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(appSettings.select((s) => s.showLayoutToggle))) {
+      return const SizedBox.shrink();
+    }
     final useTopToolbar = ref.watch(appSettings.select((s) => s.useTopToolbar));
-    return MovingTooltipWidget.text(
-      message: useTopToolbar ? "Switch to sidebar layout" : "Switch to top toolbar layout",
-      child: IconButton(
-        icon: Transform.flip(
-          flipX: true,
-          child: Icon(useTopToolbar ? Icons.view_sidebar : Icons.web),
+    return GestureDetector(
+      onSecondaryTapDown: (details) async {
+        final result = await showMenu<String>(
+          context: context,
+          position: RelativeRect.fromLTRB(
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+          ),
+          items: [
+            const PopupMenuItem<String>(
+              value: 'hide',
+              child: Text('Hide layout toggle'),
+            ),
+          ],
+        );
+        if (result == 'hide') {
+          ref
+              .read(appSettings.notifier)
+              .update((s) => s.copyWith(showLayoutToggle: false));
+        }
+      },
+      child: MovingTooltipWidget.text(
+        message: useTopToolbar
+            ? "Switch to sidebar layout"
+            : "Switch to top toolbar layout",
+        child: IconButton(
+          icon: Transform.flip(
+            flipX: true,
+            child: Icon(useTopToolbar ? Icons.view_sidebar : Icons.web),
+          ),
+          color: Theme.of(context).iconTheme.color,
+          onPressed: () => ref
+              .read(appSettings.notifier)
+              .update((s) => s.copyWith(useTopToolbar: !useTopToolbar)),
         ),
-        color: Theme.of(context).iconTheme.color,
-        onPressed: () => ref
-            .read(appSettings.notifier)
-            .update((s) => s.copyWith(useTopToolbar: !useTopToolbar)),
       ),
     );
   }

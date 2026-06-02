@@ -8,8 +8,11 @@
   - Optional animated motes on some UI elements. Enable below the Themes dropdown.
 - Fixed
   - Built-in weapons not showing on ship tooltips.
+  - Portrait Replacer.
   - Ship skins not applying weapon slot changes.
   - Column visibility indicator showing hidden columns as visible.
+- Changed
+  - May now hide the layout toggle button.
 
 # 1.5.1
 - Added

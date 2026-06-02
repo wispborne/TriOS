@@ -104,6 +104,53 @@ extension AppNameOverrideMapperExtension on AppNameOverride {
   }
 }
 
+class LaunchButtonOverrideMapper extends EnumMapper<LaunchButtonOverride> {
+  LaunchButtonOverrideMapper._();
+
+  static LaunchButtonOverrideMapper? _instance;
+  static LaunchButtonOverrideMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = LaunchButtonOverrideMapper._());
+    }
+    return _instance!;
+  }
+
+  static LaunchButtonOverride fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  LaunchButtonOverride decode(dynamic value) {
+    switch (value) {
+      case r'defaultStyle':
+        return LaunchButtonOverride.defaultStyle;
+      case r'pride':
+        return LaunchButtonOverride.pride;
+      default:
+        return LaunchButtonOverride.values[0];
+    }
+  }
+
+  @override
+  dynamic encode(LaunchButtonOverride self) {
+    switch (self) {
+      case LaunchButtonOverride.defaultStyle:
+        return r'defaultStyle';
+      case LaunchButtonOverride.pride:
+        return r'pride';
+    }
+  }
+}
+
+extension LaunchButtonOverrideMapperExtension on LaunchButtonOverride {
+  String toValue() {
+    LaunchButtonOverrideMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<LaunchButtonOverride>(this)
+        as String;
+  }
+}
+
 class GlitterLocationMapper extends EnumMapper<GlitterLocation> {
   GlitterLocationMapper._();
 
@@ -163,6 +210,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
       MapperContainer.globals.use(_instance = ThemeModifiersMapper._());
       AppIconOverrideMapper.ensureInitialized();
       AppNameOverrideMapper.ensureInitialized();
+      LaunchButtonOverrideMapper.ensureInitialized();
       GlitterLocationMapper.ensureInitialized();
     }
     return _instance!;
@@ -189,12 +237,14 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
         opt: true,
         def: AppNameOverride.defaultName,
       );
-  static bool _$rainbowLaunchIcon(ThemeModifiers v) => v.rainbowLaunchIcon;
-  static const Field<ThemeModifiers, bool> _f$rainbowLaunchIcon = Field(
-    'rainbowLaunchIcon',
-    _$rainbowLaunchIcon,
+  static LaunchButtonOverride _$launchButtonOverride(ThemeModifiers v) =>
+      v.launchButtonOverride;
+  static const Field<ThemeModifiers, LaunchButtonOverride>
+  _f$launchButtonOverride = Field(
+    'launchButtonOverride',
+    _$launchButtonOverride,
     opt: true,
-    def: false,
+    def: LaunchButtonOverride.defaultStyle,
   );
   static bool? _$enableGlitter(ThemeModifiers v) => v.enableGlitter;
   static const Field<ThemeModifiers, bool> _f$enableGlitter = Field(
@@ -223,7 +273,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
   final MappableFields<ThemeModifiers> fields = const {
     #appIconOverride: _f$appIconOverride,
     #appNameOverride: _f$appNameOverride,
-    #rainbowLaunchIcon: _f$rainbowLaunchIcon,
+    #launchButtonOverride: _f$launchButtonOverride,
     #enableGlitter: _f$enableGlitter,
     #glitterLocations: _f$glitterLocations,
     #glitterThemeKey: _f$glitterThemeKey,
@@ -233,7 +283,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
     return ThemeModifiers(
       appIconOverride: data.dec(_f$appIconOverride),
       appNameOverride: data.dec(_f$appNameOverride),
-      rainbowLaunchIcon: data.dec(_f$rainbowLaunchIcon),
+      launchButtonOverride: data.dec(_f$launchButtonOverride),
       enableGlitter: data.dec(_f$enableGlitter),
       glitterLocations: data.dec(_f$glitterLocations),
       glitterThemeKey: data.dec(_f$glitterThemeKey),
@@ -311,7 +361,7 @@ abstract class ThemeModifiersCopyWith<$R, $In extends ThemeModifiers, $Out>
   $R call({
     AppIconOverride? appIconOverride,
     AppNameOverride? appNameOverride,
-    bool? rainbowLaunchIcon,
+    LaunchButtonOverride? launchButtonOverride,
     bool? enableGlitter,
     List<GlitterLocation>? glitterLocations,
     String? glitterThemeKey,
@@ -344,7 +394,7 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
   $R call({
     AppIconOverride? appIconOverride,
     AppNameOverride? appNameOverride,
-    bool? rainbowLaunchIcon,
+    LaunchButtonOverride? launchButtonOverride,
     Object? enableGlitter = $none,
     List<GlitterLocation>? glitterLocations,
     Object? glitterThemeKey = $none,
@@ -352,7 +402,8 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
     FieldCopyWithData({
       if (appIconOverride != null) #appIconOverride: appIconOverride,
       if (appNameOverride != null) #appNameOverride: appNameOverride,
-      if (rainbowLaunchIcon != null) #rainbowLaunchIcon: rainbowLaunchIcon,
+      if (launchButtonOverride != null)
+        #launchButtonOverride: launchButtonOverride,
       if (enableGlitter != $none) #enableGlitter: enableGlitter,
       if (glitterLocations != null) #glitterLocations: glitterLocations,
       if (glitterThemeKey != $none) #glitterThemeKey: glitterThemeKey,
@@ -362,9 +413,9 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
   ThemeModifiers $make(CopyWithData data) => ThemeModifiers(
     appIconOverride: data.get(#appIconOverride, or: $value.appIconOverride),
     appNameOverride: data.get(#appNameOverride, or: $value.appNameOverride),
-    rainbowLaunchIcon: data.get(
-      #rainbowLaunchIcon,
-      or: $value.rainbowLaunchIcon,
+    launchButtonOverride: data.get(
+      #launchButtonOverride,
+      or: $value.launchButtonOverride,
     ),
     enableGlitter: data.get(#enableGlitter, or: $value.enableGlitter),
     glitterLocations: data.get(#glitterLocations, or: $value.glitterLocations),

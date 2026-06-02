@@ -160,6 +160,7 @@ class Settings with SettingsMappable {
   final bool showForceUpdateWarning;
   final bool showDonationButton;
   final bool showReportBugButton;
+  final bool showLayoutToggle;
   final bool allowInsecureConnections;
   final bool shouldLoadWebView;
 
@@ -285,6 +286,7 @@ class Settings with SettingsMappable {
     this.showForceUpdateWarning = true,
     this.showDonationButton = true,
     this.showReportBugButton = true,
+    this.showLayoutToggle = true,
     this.allowInsecureConnections = false,
     this.shouldLoadWebView = false,
     this.showAprilFools2026 = false,

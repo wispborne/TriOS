@@ -484,15 +484,42 @@ class _SidebarLayoutToggle extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _SidebarNavItem(
-      isSelected: false,
-      isCollapsed: isCollapsed,
-      onTap: () => ref
-          .read(appSettings.notifier)
-          .update((s) => s.copyWith(useTopToolbar: !s.useTopToolbar)),
-      icon: Icon(Icons.web, size: 20),
-      label: "Switch layout",
-      tooltip: "Switch to top toolbar",
+    if (!ref.watch(appSettings.select((s) => s.showLayoutToggle))) {
+      return const SizedBox.shrink();
+    }
+    return GestureDetector(
+      onSecondaryTapDown: (details) async {
+        final result = await showMenu<String>(
+          context: context,
+          position: RelativeRect.fromLTRB(
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+          ),
+          items: [
+            const PopupMenuItem<String>(
+              value: 'hide',
+              child: Text('Hide layout toggle'),
+            ),
+          ],
+        );
+        if (result == 'hide') {
+          ref
+              .read(appSettings.notifier)
+              .update((s) => s.copyWith(showLayoutToggle: false));
+        }
+      },
+      child: _SidebarNavItem(
+        isSelected: false,
+        isCollapsed: isCollapsed,
+        onTap: () => ref
+            .read(appSettings.notifier)
+            .update((s) => s.copyWith(useTopToolbar: !s.useTopToolbar)),
+        icon: Icon(Icons.web, size: 20),
+        label: "Switch layout",
+        tooltip: "Switch to top toolbar",
+      ),
     );
   }
 }

@@ -9,6 +9,9 @@ enum AppIconOverride { defaultIcon, pride, hegemony }
 @MappableEnum(defaultValue: AppNameOverride.defaultName)
 enum AppNameOverride { defaultName, hegOS }
 
+@MappableEnum(defaultValue: LaunchButtonOverride.defaultStyle)
+enum LaunchButtonOverride { defaultStyle, pride }
+
 @MappableEnum(defaultValue: GlitterLocation.sidebar)
 enum GlitterLocation {
   sidebar,
@@ -26,7 +29,7 @@ enum GlitterLocation {
 class ThemeModifiers with ThemeModifiersMappable {
   final AppIconOverride appIconOverride;
   final AppNameOverride appNameOverride;
-  final bool rainbowLaunchIcon;
+  final LaunchButtonOverride launchButtonOverride;
 
   /// Whether the motes background is enabled. Null = follow the theme default
   /// (on for Pride, off otherwise); an explicit value overrides that.
@@ -40,7 +43,7 @@ class ThemeModifiers with ThemeModifiersMappable {
   const ThemeModifiers({
     this.appIconOverride = AppIconOverride.defaultIcon,
     this.appNameOverride = AppNameOverride.defaultName,
-    this.rainbowLaunchIcon = false,
+    this.launchButtonOverride = LaunchButtonOverride.defaultStyle,
     this.enableGlitter,
     this.glitterLocations = GlitterLocation.values,
     this.glitterThemeKey,

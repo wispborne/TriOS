@@ -85,7 +85,30 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
       entry.selectedMods = entry.scanResult?.allModInfos;
       _notify();
 
-      // If extraction is already running, it'll pick up this new entry next.
+      // If _extractAll is still running, it'll pick up this scanned entry.
+      // But if extraction already finished, we must handle it ourselves.
+      final extractionDone = batch.status == BatchStatus.installing &&
+          !batch.entries.any((e) => e.status == BatchEntryStatus.extracting);
+      final batchComplete = batch.status == BatchStatus.complete;
+
+      if ((extractionDone || batchComplete) &&
+          entry.status == BatchEntryStatus.scanned) {
+        final modsFolder = ref.read(AppState.modsFolder).value!;
+        final modManagerNotifier = ref.read(modManager.notifier);
+        final folderSetting = ref.read(
+          appSettings.select((s) => s.folderNamingSetting),
+        );
+        entry.status = BatchEntryStatus.extracting;
+        _notify();
+        await _extractSingleEntry(
+          entry,
+          modsFolder,
+          modManagerNotifier,
+          folderSetting,
+        );
+        _notify();
+        await _finalize(batch);
+      }
     } else {
       // No active batch — create a batch-of-1, skip dialog.
       await create([file]);
@@ -302,11 +325,11 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
 
     final installSource = entry.installSource!;
     final archiveFileList = entry.scanResult!.archiveFileList ?? const [];
-    final currentMods = ref.read(AppState.mods);
+    var currentMods = ref.read(AppState.mods);
     // Variants from before this batch; used to check for already-installed mods.
     final existingVariants = ref.read(AppState.modVariants).value ?? [];
 
-    var anyFailed = false;
+    final errors = <String>[];
     var modsDone = 0;
 
     for (final mod in mods) {
@@ -331,12 +354,21 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
               ex: e,
               stacktrace: st,
             );
-            anyFailed = true;
-            entry
-              ..error = e
-              ..errorDetail = "Failed to remove existing installation: $e";
+            entry.error ??= e;
+            errors.add("${mod.modInfo.nameOrId}: Failed to remove existing installation: $e");
             continue;
           }
+
+          // Remove the deleted variant from currentMods so installMod
+          // doesn't see a stale enabled variant and brick the new one.
+          currentMods = currentMods.map((m) {
+            if (m.id != mod.modInfo.id) return m;
+            return m.copyWith(
+              modVariants: m.modVariants
+                  .where((v) => v.smolId != existingVariant.smolId)
+                  .toList(),
+            );
+          }).toList();
         }
 
         final fallbackFolderName =
@@ -372,10 +404,8 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         );
 
         if (result.err != null) {
-          anyFailed = true;
-          entry
-            ..error = result.err
-            ..errorDetail = result.err.toString();
+          entry.error ??= result.err;
+          errors.add("${mod.modInfo.nameOrId}: ${result.err}");
         } else {
           entry.installedMods.add(mod.modInfo);
         }
@@ -385,10 +415,8 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
           ex: e,
           stacktrace: st,
         );
-        anyFailed = true;
-        entry
-          ..error = e
-          ..errorDetail = e.toString();
+        entry.error ??= e;
+        errors.add("${mod.modInfo.nameOrId}: $e");
       } finally {
         modsDone++;
         entry.extractionProgress = (modsDone, mods.length);
@@ -398,29 +426,38 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
 
     entry
       ..currentModName = null
-      ..status = anyFailed ? BatchEntryStatus.failed : BatchEntryStatus.done;
+      ..errorDetail = errors.isNotEmpty ? errors.join('\n') : null
+      ..status = errors.isNotEmpty ? BatchEntryStatus.failed : BatchEntryStatus.done;
   }
 
   Future<void> _finalize(BatchInstallation batch) async {
-    // Reload the mod list once if anything was actually installed.
-    final installedCount = batch.entries
+    // Only process entries whose history hasn't been recorded yet.
+    final unrecorded = batch.entries.where((e) => !e.historyRecorded).toList();
+    if (unrecorded.isEmpty) return;
+
+    // Reload the mod list once if anything new was actually installed.
+    final newInstalls = unrecorded
         .map((e) => e.installedMods.length)
         .fold(0, (a, b) => a + b);
 
-    if (installedCount > 0) {
+    if (newInstalls > 0) {
       Fimber.i(
-        "Batch complete: $installedCount mods installed. Reloading mod list.",
+        "Batch finalize: $newInstalls new mods installed. Reloading mod list.",
       );
       await ref.read(AppState.modVariants.notifier).reloadModVariants();
     }
 
-    // Save each installed mod (and each failed archive) to activity history
-    // so they show up in the "Recent" section after batch tiles disappear.
     final historyStore = ref.read(activityHistoryStore.notifier);
     var recordedCount = 0;
 
-    for (final entry in batch.entries) {
-      // One completed record per successfully installed mod.
+    for (final entry in unrecorded) {
+      // Only record finished entries (skip those still extracting).
+      if (entry.status != BatchEntryStatus.done &&
+          entry.status != BatchEntryStatus.failed &&
+          entry.status != BatchEntryStatus.skipped) {
+        continue;
+      }
+
       for (final modInfo in entry.installedMods) {
         await historyStore.recordCompletion(
           ActivityEntry(
@@ -437,7 +474,6 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         recordedCount++;
       }
 
-      // One failed record per archive that errored.
       if (entry.status == BatchEntryStatus.failed) {
         await historyStore.recordCompletion(
           ActivityEntry(
@@ -454,9 +490,10 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         );
         recordedCount++;
       }
+
+      entry.historyRecorded = true;
     }
 
-    // Update the unread badge if the activity panel is closed.
     final isOpen = ref.read(appSettings.select((s) => s.isActivityPanelOpen));
     if (!isOpen && recordedCount > 0) {
       for (var i = 0; i < recordedCount; i++) {

@@ -6,8 +6,9 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.6.0-preview03";
+  static const version = "1.6.0-preview04";
   static Version currentVersion = Version.parse(version);
+  static const companionModVersion = "1.0.4";
 
   static const appName = "TriOS";
   static const chatbotName = "Delta Core";
@@ -93,7 +94,6 @@ class Constants {
   static const companionModFolderName = "TriOS-Mod";
   static const companionModId = "wisp_trios_companion";
   static const gargoyleCharId = "gargoyle";
-  static const companionModVersion = "1.0.3";
 
   static const String modRepoUrl =
       "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/ModRepo.json";

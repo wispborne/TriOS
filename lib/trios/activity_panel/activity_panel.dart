@@ -74,7 +74,7 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
   ) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
+    final yesterday = DateTime(today.year, today.month, today.day - 1);
     final dateFormat = DateFormat.MMMd();
 
     String labelFor(DateTime ts) {

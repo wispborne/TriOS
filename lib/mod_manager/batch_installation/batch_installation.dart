@@ -73,6 +73,9 @@ class BatchEntry {
   /// Mods successfully installed from this archive.
   final List<ModInfo> installedMods = [];
 
+  /// Whether activity history has already been recorded for this entry.
+  bool historyRecorded = false;
+
   BatchEntry({
     required this.id,
     required this.archiveFile,
@@ -120,7 +123,7 @@ class BatchInstallation {
 
   /// Number of entries that can be installed (not broken from scan).
   int get installableCount => entries
-      .where((e) => e.status != BatchEntryStatus.failed || e.scanResult != null)
+      .where((e) => e.status != BatchEntryStatus.failed && e.scanResult != null)
       .length;
 
   /// Total entries.

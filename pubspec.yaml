@@ -151,6 +151,7 @@ flutter:
     - assets/common/TriOS-Mod/
     - assets/common/TriOS-Mod/jars/
     - assets/common/TriOS-Mod/data/console/
+    - assets/common/TriOS-Mod/data/strings/
 #          - path: assets/windows/7zip/
 #            platforms: [ windows ]
 #          - path: assets/linux/7zip/arm64/

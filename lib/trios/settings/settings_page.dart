@@ -284,6 +284,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         );
                       },
                     ),
+                    Builder(
+                      builder: (context) {
+                        final showLayoutToggle = ref.watch(
+                          appSettings.select((s) => s.showLayoutToggle),
+                        );
+                        return CheckboxWithLabel(
+                          value: showLayoutToggle,
+                          onChanged: (bool? value) => ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (state) => state.copyWith(
+                                  showLayoutToggle: value ?? true,
+                                ),
+                              ),
+                          label: "Show Layout Toggle Button",
+                        );
+                      },
+                    ),
                   ],
                 ),
                 Builder(
@@ -1495,24 +1513,42 @@ class _ThemeModifiersSection extends ConsumerWidget {
                   ),
                   MovingTooltipWidget.text(
                     message:
-                        "Show a rainbow border on the Starsector launch button, regardless of the active theme.",
-                    child: CheckboxWithLabel(
-                      value: modifiers.rainbowLaunchIcon,
-                      onChanged: (value) => ref
-                          .read(appSettings.notifier)
-                          .update(
-                            (state) => state.copyWith(
-                              themeModifiers: state.themeModifiers.copyWith(
-                                rainbowLaunchIcon: value ?? false,
-                              ),
+                        "Override the launch button style regardless of the active theme.",
+                    child: Row(
+                      spacing: 8,
+                      children: [
+                        const Text("Launch button"),
+                        TriOSDropdownMenu<LaunchButtonOverride>(
+                          key: ValueKey(modifiers.launchButtonOverride),
+                          initialSelection: modifiers.launchButtonOverride,
+                          onSelected: (value) {
+                            if (value == null) return;
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    themeModifiers: state.themeModifiers
+                                        .copyWith(launchButtonOverride: value),
+                                  ),
+                                );
+                          },
+                          dropdownMenuEntries: const [
+                            DropdownMenuEntry(
+                              value: LaunchButtonOverride.defaultStyle,
+                              label: "Default",
                             ),
-                          ),
-                      label: "Rainbow launch button",
+                            DropdownMenuEntry(
+                              value: LaunchButtonOverride.pride,
+                              label: "Rainbow",
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   MovingTooltipWidget.text(
                     message:
-                        "Show drifting motes behind containers that use the motes background.",
+                        "Show drifting motes when app is in foreground.",
                     child: CheckboxWithLabel(
                       value: motesEnabled,
                       onChanged: (value) => ref
@@ -1524,7 +1560,7 @@ class _ThemeModifiersSection extends ConsumerWidget {
                               ),
                             ),
                           ),
-                      label: "Motes background",
+                      label: "Animated motes",
                     ),
                   ),
                   if (motesEnabled)

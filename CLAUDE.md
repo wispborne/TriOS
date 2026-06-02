@@ -145,7 +145,7 @@ Reusable widgets in `lib/widgets/` and shared components. Use these before build
 
 ### Borders & Visual Effects
 
-- `RainbowBorder` (`lib/widgets/rainbow_accent_bar.dart`) — Rainbow gradient border wrapper, used when Pride theme is active.
+- `RainbowBorder` (`lib/widgets/rainbow_accent_bar.dart`) — Rainbow gradient border wrapper, used when `theme.rainbowAccent == true`.
 - `DottedBorder` (`lib/widgets/dotted_border.dart`) — Dotted/dashed border (Circle, RRect, Rect, Oval).
 - `AnimatedGradientBorder` (`lib/widgets/animated_gradient_border.dart`) — Animated gradient border effect.
 - `Blur` (`lib/widgets/blur.dart`) — Blur effect on child widget.

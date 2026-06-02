@@ -967,6 +967,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: true,
   );
+  static bool _$showLayoutToggle(Settings v) => v.showLayoutToggle;
+  static const Field<Settings, bool> _f$showLayoutToggle = Field(
+    'showLayoutToggle',
+    _$showLayoutToggle,
+    opt: true,
+    def: true,
+  );
   static bool _$allowInsecureConnections(Settings v) =>
       v.allowInsecureConnections;
   static const Field<Settings, bool> _f$allowInsecureConnections = Field(
@@ -1176,6 +1183,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #showForceUpdateWarning: _f$showForceUpdateWarning,
     #showDonationButton: _f$showDonationButton,
     #showReportBugButton: _f$showReportBugButton,
+    #showLayoutToggle: _f$showLayoutToggle,
     #allowInsecureConnections: _f$allowInsecureConnections,
     #shouldLoadWebView: _f$shouldLoadWebView,
     #showAprilFools2026: _f$showAprilFools2026,
@@ -1283,6 +1291,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       showForceUpdateWarning: data.dec(_f$showForceUpdateWarning),
       showDonationButton: data.dec(_f$showDonationButton),
       showReportBugButton: data.dec(_f$showReportBugButton),
+      showLayoutToggle: data.dec(_f$showLayoutToggle),
       allowInsecureConnections: data.dec(_f$allowInsecureConnections),
       shouldLoadWebView: data.dec(_f$shouldLoadWebView),
       showAprilFools2026: data.dec(_f$showAprilFools2026),
@@ -1511,6 +1520,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? showForceUpdateWarning,
     bool? showDonationButton,
     bool? showReportBugButton,
+    bool? showLayoutToggle,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
     bool? showAprilFools2026,
@@ -1774,6 +1784,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? showForceUpdateWarning,
     bool? showDonationButton,
     bool? showReportBugButton,
+    bool? showLayoutToggle,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
     Object? showAprilFools2026 = $none,
@@ -1900,6 +1911,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (showDonationButton != null) #showDonationButton: showDonationButton,
       if (showReportBugButton != null)
         #showReportBugButton: showReportBugButton,
+      if (showLayoutToggle != null) #showLayoutToggle: showLayoutToggle,
       if (allowInsecureConnections != null)
         #allowInsecureConnections: allowInsecureConnections,
       if (shouldLoadWebView != null) #shouldLoadWebView: shouldLoadWebView,
@@ -2149,6 +2161,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       #showReportBugButton,
       or: $value.showReportBugButton,
     ),
+    showLayoutToggle: data.get(#showLayoutToggle, or: $value.showLayoutToggle),
     allowInsecureConnections: data.get(
       #allowInsecureConnections,
       or: $value.allowInsecureConnections,

@@ -28,6 +28,7 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../themes/theme_manager.dart';
+import '../themes/theme_modifiers.dart';
 
 class LaunchPrecheckError {
   final String message;
@@ -64,10 +65,13 @@ class LauncherButton extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
-    final rainbowLaunchIcon = ref.watch(
-      appSettings.select((s) => s.themeModifiers.rainbowLaunchIcon),
+    final launchButtonOverride = ref.watch(
+      appSettings.select((s) => s.themeModifiers.launchButtonOverride),
     );
-    final isRainbow = theme.rainbowAccent || rainbowLaunchIcon;
+    final isRainbow = switch (launchButtonOverride) {
+      LaunchButtonOverride.defaultStyle => theme.rainbowAccent,
+      LaunchButtonOverride.pride => true,
+    };
 
     final useCustomGameExe = ref.watch(
       appSettings.select((s) => s.useCustomGameExePath),

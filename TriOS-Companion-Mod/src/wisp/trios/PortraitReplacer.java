@@ -116,17 +116,7 @@ public class PortraitReplacer {
      * @return An Optional containing the JSONArray if successful, empty otherwise
      */
     private static Optional<JSONArray> loadConfigFile() {
-        // Cheap existence check first so we don't touch the resource resolver at all on default installs.
-        try {
-            if (!Global.getSettings().fileExistsInCommon(CONFIG_PATH)) {
-                log.debug("Portrait replacement configuration file not found, not replacing any portraits.");
-                return Optional.empty();
-            }
-        } catch (Exception ex) {
-            log.debug("fileExistsInCommon check failed, falling through to loadJSON", ex);
-        }
-
-        log.info("Loading portrait replacement configuration from " + CONFIG_PATH);
+        log.debug("Loading portrait replacement configuration from " + CONFIG_PATH);
 
         try {
             // Try to load using the game's built-in JSON loader
@@ -148,7 +138,7 @@ public class PortraitReplacer {
                 log.debug("Portrait replacement configuration file not found");
             }
         } catch (JSONException e) {
-            log.warn("Error loading portrait replacement configuration file", e);
+            log.warn("Error loading extant portrait replacement configuration file", e);
         }
 
         return Optional.empty();
@@ -232,29 +222,28 @@ public class PortraitReplacer {
      * @param source The sprite whose texture will be used as replacement
      */
     private static void replaceTexture(SpriteAPI target, SpriteAPI source) {
-        // IMPORTANT: SpriteAPI.getWidth()/getHeight() return the sprite's *render* size, which is
-        // mutable via setWidth()/setHeight() and can diverge from the backing GL texture's actual
-        // dimensions. glGetTexImage reads the entire bound texture at mip 0, so sizing the buffer
-        // from the render size lets the driver write past the end of the buffer, crashing the JVM
-        // in nvoglv64.dll. Use getTextureWidth()/getTextureHeight() — those return the real
-        // backing texture dimensions.
-        int srcW = (int) source.getTextureWidth();
-        int srcH = (int) source.getTextureHeight();
-        int dstW = (int) target.getTextureWidth();
-        int dstH = (int) target.getTextureHeight();
+        // Query actual GPU-side dimensions after binding. SpriteAPI.getTextureWidth()/getTextureHeight()
+        // can return 1 during onApplicationLoad before texture metadata is populated, but the real
+        // GPU texture is larger — sizing the buffer from those values causes glGetTexImage to write
+        // past the buffer end, crashing in nvoglv64.dll.
+        source.bindTexture();
+        int srcW = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
+        int srcH = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
 
-        log.debug("Replacing texture: source backing " + srcW + "x" + srcH
-                + ", target backing " + dstW + "x" + dstH);
+        target.bindTexture();
+        int dstW = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
+        int dstH = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
 
-        if (srcW <= 0 || srcH <= 0 || dstW <= 0 || dstH <= 0) {
-            log.warn("Invalid texture dimensions, skipping replacement (source " + srcW + "x" + srcH
-                    + ", target " + dstW + "x" + dstH + ")");
+        log.debug("Replacing texture: source GL " + srcW + "x" + srcH
+                + ", target GL " + dstW + "x" + dstH);
+
+        if (srcW <= 1 || srcH <= 1 || dstW <= 1 || dstH <= 1) {
+            log.warn("Texture not loaded on GPU (source " + srcW + "x" + srcH
+                    + ", target " + dstW + "x" + dstH + "), skipping replacement");
             return;
         }
 
         if (srcW != dstW || srcH != dstH) {
-            // Uploading a smaller source over a larger target (or vice-versa) would scramble an
-            // atlas or read out-of-bounds data. Refuse rather than crash or corrupt state.
             log.warn("Texture size mismatch between source (" + srcW + "x" + srcH
                     + ") and target (" + dstW + "x" + dstH + "), skipping replacement");
             return;
@@ -264,11 +253,9 @@ public class PortraitReplacer {
             int bufferSize = srcW * srcH * 4;
             FloatBuffer buffer = BufferUtils.createFloatBuffer(bufferSize);
 
-            // Read the entire source backing texture.
             source.bindTexture();
             GL11.glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer);
 
-            // Upload into the target backing texture at matching dimensions.
             target.bindTexture();
             GL11.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                     srcW, srcH,
@@ -277,7 +264,7 @@ public class PortraitReplacer {
             log.debug("Texture replacement completed successfully");
         } catch (Exception e) {
             log.warn("OpenGL error during texture replacement", e);
-            throw e; // Re-throw to be handled by the caller
+            throw e;
         }
     }
 }

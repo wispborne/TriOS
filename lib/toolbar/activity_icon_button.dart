@@ -187,7 +187,12 @@ class _ActivityTooltipContent extends ConsumerWidget {
           children: [
             Text('Installation Activity'),
             for (final entry in data.activeBatchEntries) BatchEntryTile(entry: entry),
-            for (final d in data.inProgress) InProgressActivityTile(download: d),
+            for (final d in data.inProgress)
+              InProgressActivityTile(
+                download: d,
+                onCancel: () =>
+                    ref.read(downloadManager.notifier).cancelDownload(d),
+              ),
             for (final e in data.unseenEntries)
               CompletedActivityTile(entry: e, showActions: false),
           ],

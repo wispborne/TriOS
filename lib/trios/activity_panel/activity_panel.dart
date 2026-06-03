@@ -272,7 +272,12 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
                           const SizedBox(height: 8),
                         for (final (i, download) in inProgress.indexed) ...[
                           if (i > 0) const SizedBox(height: 8),
-                          InProgressActivityTile(download: download),
+                          InProgressActivityTile(
+                            download: download,
+                            onCancel: () => ref
+                                .read(downloadManager.notifier)
+                                .cancelDownload(download),
+                          ),
                         ],
                         if (hasHistory) const SizedBox(height: 8),
                       ],

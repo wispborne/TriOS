@@ -314,7 +314,7 @@ Filter values: `null` (indifferent), `true` (include), `false` (exclude). If any
 
 - **Mod** — groups all variants of a mod by ID
 - **ModVariant** — a specific version/installation of a mod
-- **SmolId** — compact identifier for mod variants: `{id6chars}-{version9chars}-{hash}`
+- **SmolId** — compact identifier for mod variants based on the mod id + mod version: `{id6chars}-{version9chars}-{hash}`
 - **TriOSTools** — enum of all app tools/pages (dashboard, modManager, ships, weapons, etc.)
 
 ## Starsector Game Code

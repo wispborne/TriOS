@@ -36,6 +36,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -2008,73 +2009,102 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               ),
                             ),
                           )
-                        : MovingTooltipWidget(
-                            tooltipWidget:
-                                ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
-                                  mod,
-                                  null,
-                                  versionCheckComparison?.comparisonInt,
-                                  localVersionCheck,
-                                  remoteVersionCheck,
-                                ),
-                            child: Disable(
-                              isEnabled: !isGameRunning,
-                              child: InkWell(
-                                onTap: () {
-                                  if (remoteVersionCheck?.remoteVersion !=
-                                          null &&
-                                      versionCheckComparison?.comparisonInt ==
-                                          -1) {
-                                    ref
-                                        .read(downloadManager.notifier)
-                                        .downloadUpdateViaBrowser(
-                                          remoteVersionCheck!.remoteVersion!,
-                                          activateVariantOnComplete: false,
-                                          modInfo: bestVersion.modInfo,
-                                        );
-                                  } else {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        content:
-                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                              mod,
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison
-                                                  ?.comparisonInt,
-                                            ),
-                                      ),
-                                    );
-                                  }
-                                },
-                                onSecondaryTap: () => showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    content:
-                                        ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                          mod,
-                                          changelogUrl,
-                                          localVersionCheck,
-                                          remoteVersionCheck,
-                                          versionCheckComparison?.comparisonInt,
-                                        ),
-                                  ),
-                                ),
+                        : () {
+                            final updateUrl = remoteVersionCheck
+                                ?.remoteVersion
+                                ?.directDownloadURL;
+                            final isUpdateDownloading =
+                                updateUrl != null &&
+                                (ref.watch(downloadManager).value ?? []).any(
+                                  (d) =>
+                                      d.task.request.url ==
+                                          updateUrl.fixModDownloadUrl() &&
+                                      d.isInProgress,
+                                );
+                            if (isUpdateDownloading) {
+                              return MovingTooltipWidget.text(
+                                message: 'Downloading...',
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 5.0,
+                                  padding: const EdgeInsets.only(left: 2),
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   ),
-                                  child: VersionCheckIcon.fromComparison(
-                                    comparison: versionCheckComparison,
-                                    modId: mod.id,
-                                    theme: theme,
+                                ),
+                              );
+                            }
+                            return MovingTooltipWidget(
+                              tooltipWidget:
+                                  ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
+                                    mod,
+                                    null,
+                                    versionCheckComparison?.comparisonInt,
+                                    localVersionCheck,
+                                    remoteVersionCheck,
+                                  ),
+                              child: Disable(
+                                isEnabled: !isGameRunning,
+                                child: InkWell(
+                                  onTap: () {
+                                    if (remoteVersionCheck?.remoteVersion !=
+                                            null &&
+                                        versionCheckComparison?.comparisonInt ==
+                                            -1) {
+                                      ref
+                                          .read(downloadManager.notifier)
+                                          .downloadUpdateViaBrowser(
+                                            remoteVersionCheck!.remoteVersion!,
+                                            activateVariantOnComplete: false,
+                                            modInfo: bestVersion.modInfo,
+                                          );
+                                    } else {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          content:
+                                              ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                                mod,
+                                                changelogUrl,
+                                                localVersionCheck,
+                                                remoteVersionCheck,
+                                                versionCheckComparison
+                                                    ?.comparisonInt,
+                                              ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  onSecondaryTap: () => showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      content:
+                                          ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                            mod,
+                                            changelogUrl,
+                                            localVersionCheck,
+                                            remoteVersionCheck,
+                                            versionCheckComparison
+                                                ?.comparisonInt,
+                                          ),
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5.0,
+                                    ),
+                                    child: VersionCheckIcon.fromComparison(
+                                      comparison: versionCheckComparison,
+                                      modId: mod.id,
+                                      theme: theme,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          }(),
                   ],
                   // ),
                 ),

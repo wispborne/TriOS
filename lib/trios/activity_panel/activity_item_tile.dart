@@ -295,8 +295,13 @@ class CompletedActivityTile extends ConsumerWidget {
 /// Listens to the download's ValueNotifiers for live progress updates.
 class InProgressActivityTile extends StatelessWidget {
   final Download download;
+  final VoidCallback? onCancel;
 
-  const InProgressActivityTile({super.key, required this.download});
+  const InProgressActivityTile({
+    super.key,
+    required this.download,
+    this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -400,6 +405,23 @@ class InProgressActivityTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (onCancel != null)
+                MovingTooltipWidget.text(
+                  message: 'Cancel',
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: IconButton(
+                      padding: .zero,
+                      iconSize: 16,
+                      icon: Icon(
+                        Icons.close,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      onPressed: onCancel,
+                    ),
+                  ),
+                ),
             ],
           ),
           if (progressValue != null)

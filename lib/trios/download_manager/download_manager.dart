@@ -115,6 +115,26 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     return download;
   }
 
+  bool isDownloadInProgress(String url) {
+    return _downloads.any(
+      (d) => d.task.request.url == url && d.isInProgress,
+    );
+  }
+
+  void cancelDownload(Download download) {
+    final status = download.task.status.value;
+    if (!status.isCompleted) {
+      ref
+          .read(downloadManagerInstance)
+          .cancelDownload(download.task.request.url);
+    } else if (status == DownloadStatus.completed &&
+        !download.installComplete.value) {
+      cancelInstallation(download);
+    }
+    _downloads.remove(download);
+    ref.invalidateSelf();
+  }
+
   /// Marks a [Download] as cancelled so the toast dismisses immediately.
   void cancelInstallation(Download download) {
     download.installCancelled.value = true;
@@ -127,12 +147,16 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     ModInfo? modInfo,
   }) {
     if (remoteVersion.directDownloadURL != null) {
-      downloadAndInstallMod(
-        "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
+      if (!isDownloadInProgress(
         remoteVersion.directDownloadURL!.fixModDownloadUrl(),
-        activateVariantOnComplete: activateVariantOnComplete,
-        modInfo: modInfo,
-      );
+      )) {
+        downloadAndInstallMod(
+          "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
+          remoteVersion.directDownloadURL!.fixModDownloadUrl(),
+          activateVariantOnComplete: activateVariantOnComplete,
+          modInfo: modInfo,
+        );
+      }
     } else if (remoteVersion.modThreadId != null) {
       launchUrl(
         Uri.parse("${Constants.forumModPageUrl}${remoteVersion.modThreadId}"),
@@ -150,6 +174,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     required bool activateVariantOnComplete,
     ModInfo? modInfo,
   }) {
+    if (isDownloadInProgress(uri)) return;
     var tempFolder = Directory.systemTemp.createTempSync();
 
     addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((
@@ -271,6 +296,12 @@ class Download {
 
   /// Whether installation completed with an error.
   bool get hasInstallError => installComplete.value && task.error != null;
+
+  bool get isInProgress {
+    final status = task.status.value;
+    if (!status.isCompleted) return true;
+    return status == DownloadStatus.completed && !installComplete.value;
+  }
 }
 
 class ModDownload extends Download {

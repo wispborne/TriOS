@@ -799,28 +799,44 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
 
           // Update
           if (hasUpdate)
-            MovingTooltipWidget.text(
-              message: "Update available",
-              child: FilledButton.tonalIcon(
-                icon: const Icon(Icons.update, size: 18),
-                label: const Text("Update"),
-                onPressed: () {
-                  final directUrl =
-                      _variant?.versionCheckerInfo?.directDownloadURL;
-                  if (directUrl != null) {
-                    ref
-                        .read(downloadManager.notifier)
-                        .downloadAndInstallMod(
-                          _variant!.modInfo.nameOrId,
-                          directUrl,
-                          activateVariantOnComplete: false,
-                          modInfo: _variant!.modInfo,
-                        );
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-            ),
+            () {
+              final directUrl = _variant?.versionCheckerInfo?.directDownloadURL;
+              final isDownloading =
+                  directUrl != null &&
+                  (ref.watch(downloadManager).value ?? []).any(
+                    (d) => d.task.request.url == directUrl && d.isInProgress,
+                  );
+              return MovingTooltipWidget.text(
+                message: isDownloading
+                    ? "Download in progress"
+                    : "Update available",
+                child: FilledButton.tonalIcon(
+                  icon: isDownloading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.update, size: 18),
+                  label: const Text("Update"),
+                  onPressed: isDownloading
+                      ? null
+                      : () {
+                          if (directUrl != null) {
+                            ref
+                                .read(downloadManager.notifier)
+                                .downloadAndInstallMod(
+                                  _variant!.modInfo.nameOrId,
+                                  directUrl,
+                                  activateVariantOnComplete: false,
+                                  modInfo: _variant!.modInfo,
+                                );
+                            Navigator.of(context).pop();
+                          }
+                        },
+                ),
+              );
+            }(),
 
           // Open Folder
           MovingTooltipWidget.text(

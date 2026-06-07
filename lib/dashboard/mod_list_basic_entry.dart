@@ -24,6 +24,7 @@ import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
+import '../trios/download_manager/download_status.dart';
 import 'changelogs.dart';
 
 /// Displays just the mods specified.
@@ -326,27 +327,57 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                             final updateUrl = remoteVersionCheck
                                 ?.remoteVersion
                                 ?.directDownloadURL;
-                            final isUpdateDownloading =
-                                updateUrl != null &&
-                                (ref.watch(downloadManager).value ?? []).any(
-                                  (d) =>
-                                      d.task.request.url ==
-                                          updateUrl.fixModDownloadUrl() &&
-                                      d.isInProgress,
-                                );
-                            if (isUpdateDownloading) {
-                              return Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 4,
-                                  right: 10,
-                                ),
-                                child: SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
+                            final downloads =
+                                ref.watch(downloadManager).value ?? [];
+                            final activeDownload = updateUrl == null
+                                ? null
+                                : downloads
+                                      .where(
+                                        (d) =>
+                                            d.task.request.url ==
+                                                updateUrl
+                                                    .fixModDownloadUrl() &&
+                                            d.isInProgress,
+                                      )
+                                      .firstOrNull;
+                            if (activeDownload != null) {
+                              return ListenableBuilder(
+                                listenable: Listenable.merge([
+                                  activeDownload.task.status,
+                                  activeDownload.task.downloaded,
+                                  activeDownload.installProgress,
+                                ]),
+                                builder: (context, _) {
+                                  final status =
+                                      activeDownload.task.status.value;
+                                  final dlAmount =
+                                      activeDownload.task.downloaded.value;
+                                  final isInstalling =
+                                      status == DownloadStatus.completed &&
+                                      !activeDownload.installComplete.value;
+                                  double? progress;
+                                  if (isInstalling) {
+                                    progress = null;
+                                  } else if (status ==
+                                          DownloadStatus.downloading &&
+                                      dlAmount.totalBytes > 0) {
+                                    progress = dlAmount.progressRatio;
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4,
+                                      right: 10,
+                                    ),
+                                    child: SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        value: progress,
+                                      ),
+                                    ),
+                                  );
+                                },
                               );
                             }
                             return Disable(

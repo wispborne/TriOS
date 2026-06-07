@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/compression/archive.dart';
 import 'package:trios/mod_manager/batch_installation/batch_installation.dart';
@@ -445,6 +446,43 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         "Batch finalize: $newInstalls new mods installed. Reloading mod list.",
       );
       await ref.read(AppState.modVariants.notifier).reloadModVariants();
+
+      // Activate newly installed variants when the mod was already enabled,
+      // matching the behavior of installModFromSourceWithDefaultUI.
+      if (ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==
+          ModUpdateBehavior.switchToNewVersionIfWasEnabled) {
+        final mods = ref.read(AppState.mods);
+        final refreshedVariants =
+            ref.read(AppState.modVariants).value ?? [];
+        final modManagerNotifier = ref.read(modManager.notifier);
+
+        final installedModInfos =
+            unrecorded.expand((e) => e.installedMods).toList();
+
+        for (final modInfo in installedModInfos) {
+          final actualVariant = refreshedVariants.firstWhereOrNull(
+            (variant) => variant.smolId == modInfo.smolId,
+          );
+          try {
+            if (actualVariant != null &&
+                actualVariant.mod(mods)?.isEnabledInGame == true) {
+              await modManagerNotifier.changeActiveModVariant(
+                actualVariant.mod(mods)!,
+                actualVariant,
+              );
+            }
+          } catch (ex) {
+            Fimber.w(
+              "Batch finalize: failed to activate ${modInfo.smolId} after installing: $ex",
+            );
+          }
+        }
+
+        // Reload again after activation changes.
+        await ref
+            .read(AppState.modVariants.notifier)
+            .reloadModVariants();
+      }
     }
 
     final historyStore = ref.read(activityHistoryStore.notifier);

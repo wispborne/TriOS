@@ -36,6 +36,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/download_manager/download_status.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -2013,27 +2014,60 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             final updateUrl = remoteVersionCheck
                                 ?.remoteVersion
                                 ?.directDownloadURL;
-                            final isUpdateDownloading =
-                                updateUrl != null &&
-                                (ref.watch(downloadManager).value ?? []).any(
-                                  (d) =>
-                                      d.task.request.url ==
-                                          updateUrl.fixModDownloadUrl() &&
-                                      d.isInProgress,
-                                );
-                            if (isUpdateDownloading) {
-                              return MovingTooltipWidget.text(
-                                message: 'Downloading...',
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 2),
-                                  child: SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                            final downloads =
+                                ref.watch(downloadManager).value ?? [];
+                            final activeDownload = updateUrl == null
+                                ? null
+                                : downloads
+                                      .where(
+                                        (d) =>
+                                            d.task.request.url ==
+                                                updateUrl
+                                                    .fixModDownloadUrl() &&
+                                            d.isInProgress,
+                                      )
+                                      .firstOrNull;
+                            if (activeDownload != null) {
+                              return ListenableBuilder(
+                                listenable: Listenable.merge([
+                                  activeDownload.task.status,
+                                  activeDownload.task.downloaded,
+                                  activeDownload.installProgress,
+                                ]),
+                                builder: (context, _) {
+                                  final status =
+                                      activeDownload.task.status.value;
+                                  final dlAmount =
+                                      activeDownload.task.downloaded.value;
+                                  final isInstalling =
+                                      status == DownloadStatus.completed &&
+                                      !activeDownload.installComplete.value;
+                                  double? progress;
+                                  if (isInstalling) {
+                                    progress = null;
+                                  } else if (status ==
+                                          DownloadStatus.downloading &&
+                                      dlAmount.totalBytes > 0) {
+                                    progress = dlAmount.progressRatio;
+                                  }
+                                  return MovingTooltipWidget.text(
+                                    message: isInstalling
+                                        ? 'Installing...'
+                                        : 'Downloading...',
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.only(left: 2),
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          value: progress,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                },
                               );
                             }
                             return MovingTooltipWidget(

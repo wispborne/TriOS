@@ -346,6 +346,41 @@ class FactionViewerController extends Notifier<FactionViewerState> {
         'Doctrine aggression level',
         (f) => f.doctrine?.aggression,
       ),
+      SearchField.numeric(
+        'warships',
+        'Doctrine warship weight',
+        (f) => f.doctrine?.warships,
+      ),
+      SearchField.numeric(
+        'carriers',
+        'Doctrine carrier weight',
+        (f) => f.doctrine?.carriers,
+      ),
+      SearchField.numeric(
+        'phase',
+        'Doctrine phase ship weight',
+        (f) => f.doctrine?.phaseShips,
+      ),
+      SearchField.numeric(
+        'fleetsize',
+        'Doctrine fleet size (number of ships)',
+        (f) => f.doctrine?.numShips,
+      ),
+      SearchField.numeric(
+        'shipsize',
+        'Doctrine ship size preference',
+        (f) => f.doctrine?.shipSize,
+      ),
+      SearchField.numeric(
+        'officerquality',
+        'Doctrine officer quality',
+        (f) => f.doctrine?.officerQuality,
+      ),
+      SearchField.numeric(
+        'shipquality',
+        'Doctrine ship quality',
+        (f) => f.doctrine?.shipQuality,
+      ),
     ];
   }
 }

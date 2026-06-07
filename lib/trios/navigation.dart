@@ -104,7 +104,7 @@ extension TriOSToolsUI on TriOSTools {
         "assets/images/icon-onslaught.svg",
         height: size,
         width: size,
-        color: color,
+      color: color,
       ),
     ),
     TriOSTools.modProfiles => SvgImageIcon(

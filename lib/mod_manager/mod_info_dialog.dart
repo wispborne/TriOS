@@ -13,6 +13,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/download_manager/download_status.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
@@ -801,39 +802,72 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
           if (hasUpdate)
             () {
               final directUrl = _variant?.versionCheckerInfo?.directDownloadURL;
-              final isDownloading =
-                  directUrl != null &&
-                  (ref.watch(downloadManager).value ?? []).any(
-                    (d) => d.task.request.url == directUrl && d.isInProgress,
-                  );
-              return MovingTooltipWidget.text(
-                message: isDownloading
-                    ? "Download in progress"
-                    : "Update available",
-                child: FilledButton.tonalIcon(
-                  icon: isDownloading
-                      ? const SizedBox(
+              final activeDownload = directUrl == null
+                  ? null
+                  : (ref.watch(downloadManager).value ?? [])
+                        .where(
+                          (d) =>
+                              d.task.request.url == directUrl && d.isInProgress,
+                        )
+                        .firstOrNull;
+              if (activeDownload != null) {
+                return ListenableBuilder(
+                  listenable: Listenable.merge([
+                    activeDownload.task.status,
+                    activeDownload.task.downloaded,
+                    activeDownload.installProgress,
+                  ]),
+                  builder: (context, _) {
+                    final status = activeDownload.task.status.value;
+                    final dlAmount = activeDownload.task.downloaded.value;
+                    final isInstalling =
+                        status == DownloadStatus.completed &&
+                        !activeDownload.installComplete.value;
+                    double? progress;
+                    if (isInstalling) {
+                      progress = null;
+                    } else if (status == DownloadStatus.downloading &&
+                        dlAmount.totalBytes > 0) {
+                      progress = dlAmount.progressRatio;
+                    }
+                    return MovingTooltipWidget.text(
+                      message: isInstalling
+                          ? "Installing..."
+                          : "Downloading...",
+                      child: FilledButton.tonalIcon(
+                        icon: SizedBox(
                           width: 18,
                           height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.update, size: 18),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            value: progress,
+                          ),
+                        ),
+                        label: const Text("Update"),
+                        onPressed: null,
+                      ),
+                    );
+                  },
+                );
+              }
+              return MovingTooltipWidget.text(
+                message: "Update available",
+                child: FilledButton.tonalIcon(
+                  icon: const Icon(Icons.update, size: 18),
                   label: const Text("Update"),
-                  onPressed: isDownloading
-                      ? null
-                      : () {
-                          if (directUrl != null) {
-                            ref
-                                .read(downloadManager.notifier)
-                                .downloadAndInstallMod(
-                                  _variant!.modInfo.nameOrId,
-                                  directUrl,
-                                  activateVariantOnComplete: false,
-                                  modInfo: _variant!.modInfo,
-                                );
-                            Navigator.of(context).pop();
-                          }
-                        },
+                  onPressed: () {
+                    if (directUrl != null) {
+                      ref
+                          .read(downloadManager.notifier)
+                          .downloadAndInstallMod(
+                            _variant!.modInfo.nameOrId,
+                            directUrl,
+                            activateVariantOnComplete: false,
+                            modInfo: _variant!.modInfo,
+                          );
+                      Navigator.of(context).pop();
+                    }
+                  },
                 ),
               );
             }(),

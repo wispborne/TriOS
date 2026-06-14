@@ -63,6 +63,15 @@ class WeaponsPageState with WeaponsPageStateMappable {
 @MappableEnum()
 enum WeaponSpoilerLevel { noSpoilers, showAllSpoilers }
 
+/// Whether [weapon] should be shown at the given spoiler [level].
+/// Shared by the weapons page and the faction profile dialog.
+bool weaponMatchesSpoilerLevel(Weapon weapon, WeaponSpoilerLevel level) {
+  if (level == WeaponSpoilerLevel.showAllSpoilers) return true;
+  final tags =
+      weapon.tags?.split(',').map((t) => t.trim().toLowerCase()) ?? const [];
+  return !tags.contains('codex_unlockable');
+}
+
 final weaponsPageControllerProvider =
     NotifierProvider<WeaponsPageController, WeaponsPageState>(
       () => WeaponsPageController(),
@@ -239,12 +248,8 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     return FilterScopeController<Weapon>(scope: _scope, groups: groups);
   }
 
-  bool _spoilerMatches(Weapon weapon, WeaponSpoilerLevel level) {
-    if (level == WeaponSpoilerLevel.showAllSpoilers) return true;
-    final tags =
-        weapon.tags?.split(',').map((t) => t.trim().toLowerCase()) ?? const [];
-    return !tags.contains('codex_unlockable');
-  }
+  bool _spoilerMatches(Weapon weapon, WeaponSpoilerLevel level) =>
+      weaponMatchesSpoilerLevel(weapon, level);
 
   String _spoilerLabel(WeaponSpoilerLevel e) => switch (e) {
     WeaponSpoilerLevel.noSpoilers => 'No spoilers',

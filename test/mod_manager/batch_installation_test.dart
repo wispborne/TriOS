@@ -27,7 +27,7 @@ BatchEntry _entry({
 }) =>
     BatchEntry(
       id: id,
-      archiveFile: File(path),
+      source: File(path),
       status: status,
       scanResult: scanResult,
     );
@@ -303,7 +303,7 @@ void main() {
       await scanner.scanArchive(entry);
 
       expect(entry.status, BatchEntryStatus.failed);
-      expect(entry.errorDetail, contains('File does not exist'));
+      expect(entry.errorDetail, contains('Source does not exist'));
     });
 
     test('fails when archive has no mod_info.json', () async {

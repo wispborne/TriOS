@@ -14,8 +14,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../mod_manager/mod_install_source.dart';
-import '../../mod_manager/mod_manager_logic.dart';
+import '../../mod_manager/batch_installation/batch_installation_notifier.dart';
 import '../../mod_records/mod_record.dart';
 import '../../mod_records/mod_record_source.dart';
 import '../../mod_records/mod_records_store.dart';
@@ -211,44 +210,19 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
         }
         try {
           final downloadedFile = (await tempFolder.list().first).toFile();
-          final installedVariants = await ref
-              .read(modManager.notifier)
-              .installModFromSourceWithDefaultUI(
-                ArchiveModInstallSource(downloadedFile),
-                installationDownload: value,
-              );
+          // addLateEntry returns once the entry has settled (installed,
+          // failed, or skipped) — not merely once it has been queued.
+          await ref
+              .read(batchInstallationProvider.notifier)
+              .addLateEntry(downloadedFile, download: value);
 
-          // todo add a setting for this.
-          if (tempFolder.existsSync() &&
-              !installedVariants.any((it) => it.err != null)) {
+          // Clean up the temp folder only after a successful install; on
+          // failure, keep the archive so the user can install it manually.
+          if (value.task.error == null && tempFolder.existsSync()) {
             tempFolder.deleteSync(recursive: true);
             Fimber.i(
               "Cleaned up downloaded file ${tempFolder.name} at ${tempFolder.path}",
             );
-          }
-
-          if (activateVariantOnComplete) {
-            // final variants =
-            //     ref.read(AppState.modVariants).value ?? [];
-
-            // for (final installed in installedVariants) {
-            // Find the variant post-install so we can activate it.
-            // final actualVariant = variants.firstWhereOrNull(
-            //     (variant) => variant.smolId == installed.modInfo.smolId);
-            // try {
-            // If the mod existed and was enabled, switch to the newly downloaded version.
-            // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
-
-            // if (actualVariant != null &&
-            //     actualVariant.mod(mods)?.isEnabledInGame == true) {
-            //   changeActiveModVariant(
-            //       actualVariant.mod(mods)!, actualVariant, ref);
-            // }
-            // } catch (ex) {
-            //   Fimber.w(
-            //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
-            // }
-            // }
           }
         } catch (e) {
           Fimber.e("Error installing mod from archive", ex: e);
@@ -258,8 +232,6 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           );
         } finally {
           // Ensure installComplete is always set so the toast can react.
-          // (installModFromSourceWithDefaultUI sets it in its own finally,
-          // but errors before that call — or if it's never reached — need this.)
           if (!value.installComplete.value) {
             value.installComplete.value = true;
           }
@@ -318,9 +290,9 @@ extension DownloadVariantResolution on Download {
     if (!task.status.value.isCompleted) return null;
     if (this is ModDownload) {
       final modDownload = this as ModDownload;
-      // Prefer installedVariant.value (set by installModFromSourceWithDefaultUI
-      // to the newly installed variant) over the smolId search, which may match
-      // an older version that still exists on disk during an update.
+      // Prefer installedVariant.value (set by the batch installer to the newly
+      // installed variant) over the smolId search, which may match an older
+      // version that still exists on disk during an update.
       return installedVariant.value ??
           ref
               .read(AppState.modVariants)
@@ -338,9 +310,9 @@ extension DownloadVariantResolution on Download {
     if (!task.status.value.isCompleted) return null;
     if (this is ModDownload) {
       final modDownload = this as ModDownload;
-      // Prefer installedVariant.value (set by installModFromSourceWithDefaultUI
-      // to the newly installed variant) over the smolId search, which may match
-      // an older version that still exists on disk during an update.
+      // Prefer installedVariant.value (set by the batch installer to the newly
+      // installed variant) over the smolId search, which may match an older
+      // version that still exists on disk during an update.
       return installedVariant.value ??
           ref
               .watch(AppState.modVariants)

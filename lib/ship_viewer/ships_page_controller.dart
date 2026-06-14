@@ -91,10 +91,26 @@ class ShipsPageStatePersisted with ShipsPageStatePersistedMappable {
 @MappableEnum()
 enum SpoilerLevel { showNone, showSlightSpoilers, showAllSpoilers }
 
+const _slightSpoilerTags = ["codex_unlockable"];
+const _spoilerTags = ["threat", "dweller"];
+
+/// Whether [ship] should be shown at the given spoiler [level].
+/// Shared by the ships page and the faction profile dialog.
+bool shipMatchesSpoilerLevel(Ship ship, SpoilerLevel level) {
+  if (level == SpoilerLevel.showAllSpoilers) return true;
+  final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
+  final tags = ship.tags.orEmpty().map((t) => t.toLowerCase());
+  final hidden = hints.contains('hide_in_codex');
+  final isSlightSpoiler = tags.any(_slightSpoilerTags.contains);
+  final isSpoiler = tags.any(_spoilerTags.contains);
+  if (level == SpoilerLevel.showSlightSpoilers) {
+    return !hidden && !isSpoiler;
+  }
+  return !hidden && !isSlightSpoiler && !isSpoiler;
+}
+
 /// Controller for the ships page using Notifier (synchronous)
 class ShipsPageController extends Notifier<ShipsPageState> {
-  final slightSpoilerTags = ["codex_unlockable"];
-  final spoilerTags = ["threat", "dweller"];
   final vanillaName = 'Vanilla';
 
   static final _scope = const FilterScope(kShipsPageId);
@@ -397,18 +413,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     return FilterScopeController<Ship>(scope: _scope, groups: groups);
   }
 
-  bool _spoilerMatches(Ship ship, SpoilerLevel level) {
-    if (level == SpoilerLevel.showAllSpoilers) return true;
-    final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
-    final tags = ship.tags.orEmpty().map((t) => t.toLowerCase());
-    final hidden = hints.contains('hide_in_codex');
-    final isSlightSpoiler = tags.any(slightSpoilerTags.contains);
-    final isSpoiler = tags.any(spoilerTags.contains);
-    if (level == SpoilerLevel.showSlightSpoilers) {
-      return !hidden && !isSpoiler;
-    }
-    return !hidden && !isSlightSpoiler && !isSpoiler;
-  }
+  bool _spoilerMatches(Ship ship, SpoilerLevel level) =>
+      shipMatchesSpoilerLevel(ship, level);
 
   String _spoilerLabel(SpoilerLevel e) =>
       switch (e) {

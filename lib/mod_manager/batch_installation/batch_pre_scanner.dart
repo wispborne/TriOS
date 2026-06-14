@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
@@ -21,34 +22,44 @@ class BatchPreScanner {
 
   BatchPreScanner({required this.archive, required this.existingVariants});
 
-  /// Scan a single archive file. Mutates [entry] in place: populates
-  /// [scanResult] on success, or sets [status] to failed with details.
+  /// Scan a single source (archive or folder). Mutates [entry] in place:
+  /// populates [scanResult] on success, or sets [status] to failed with details.
   Future<void> scanArchive(BatchEntry entry) async {
     try {
       entry.status = BatchEntryStatus.scanning;
 
-      final file = entry.archiveFile;
+      final source = entry.source;
 
-      // Verify it looks like a supported archive.
-      if (!Constants.supportedArchiveExtensions.any(
-        (ext) => file.path.toLowerCase().endsWith(ext),
-      )) {
+      if (!source.existsSync()) {
         entry
           ..status = BatchEntryStatus.failed
-          ..errorDetail = "Not a supported archive format";
+          ..errorDetail = "Source does not exist";
         return;
       }
 
-      if (!file.existsSync()) {
-        entry
-          ..status = BatchEntryStatus.failed
-          ..errorDetail = "File does not exist";
-        return;
-      }
+      final ModInstallSource installSource;
+      final List<String> filePaths;
 
-      // List all files in the archive.
-      final archiveEntries = await archive.listFiles(file);
-      final filePaths = archiveEntries.map((e) => e.path).toList();
+      if (source is Directory) {
+        // Folder source — use DirectoryModInstallSource.
+        installSource = DirectoryModInstallSource(source);
+        filePaths = await installSource.listFilePaths(archive);
+      } else {
+        final file = source as File;
+        // Verify it looks like a supported archive.
+        if (!Constants.supportedArchiveExtensions.any(
+          (ext) => file.path.toLowerCase().endsWith(ext),
+        )) {
+          entry
+            ..status = BatchEntryStatus.failed
+            ..errorDetail = "Not a supported archive format";
+          return;
+        }
+
+        installSource = ArchiveModInstallSource(file);
+        final archiveEntries = await archive.listFiles(file);
+        filePaths = archiveEntries.map((e) => e.path).toList();
+      }
 
       // Find mod_info.json files.
       final modInfoPaths = filePaths
@@ -64,12 +75,11 @@ class BatchPreScanner {
       if (modInfoPaths.isEmpty) {
         entry
           ..status = BatchEntryStatus.failed
-          ..errorDetail = "No mod_info.json found in archive";
+          ..errorDetail = "No mod_info.json found in source";
         return;
       }
 
-      // Extract only the mod_info.json file(s) to a temp dir for parsing.
-      final installSource = ArchiveModInstallSource(file);
+      // Extract/read the mod_info.json file(s) for parsing.
       final extractedModInfoFiles = await installSource.getActualFiles(
         modInfoPaths,
         archive,
@@ -84,14 +94,14 @@ class BatchPreScanner {
           final modInfo = ModInfoMapper.fromMap(jsonString.parseJsonToMap());
           parsedModInfos.add((extractedFile: sourcedFile, modInfo: modInfo));
         } catch (e) {
-          Fimber.w("Failed to parse mod_info.json from ${file.path}: $e");
+          Fimber.w("Failed to parse mod_info.json from ${source.path}: $e");
         }
       }
 
       if (parsedModInfos.isEmpty) {
         entry
           ..status = BatchEntryStatus.failed
-          ..errorDetail = "Could not parse any mod_info.json in archive";
+          ..errorDetail = "Could not parse any mod_info.json in source";
         return;
       }
 
@@ -117,7 +127,7 @@ class BatchPreScanner {
         );
     } catch (e, st) {
       Fimber.e(
-        "Error scanning archive ${entry.archiveFile.path}",
+        "Error scanning source ${entry.source.path}",
         ex: e,
         stacktrace: st,
       );

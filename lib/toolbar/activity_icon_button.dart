@@ -85,8 +85,6 @@ class ActivityIconButton extends ConsumerWidget {
         data.inProgress.isNotEmpty ||
         data.unseenEntries.isNotEmpty;
 
-    final hasHistory = history?.entries.isNotEmpty ?? false;
-
     Widget iconStack = Stack(
       clipBehavior: Clip.none,
       children: [
@@ -141,16 +139,18 @@ class ActivityIconButton extends ConsumerWidget {
       );
     }
 
-    if (!hasHistory) return result;
+    // Only offer dismissing the badge when there's an unseen notification
+    // (one or more mods finished while the panel was closed).
+    if (unseenCount == 0) return result;
 
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: [
           MenuItem(
-            label: 'Clear all',
-            value: 'clear_all',
+            label: 'Dismiss notification',
+            value: 'dismiss',
             onSelected: () {
-              ref.read(activityHistoryStore.notifier).clearHistory();
+              ref.read(activityUnseenCount.notifier).clearUnseen();
             },
           ),
         ],

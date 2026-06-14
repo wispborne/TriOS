@@ -428,9 +428,6 @@ class _SidebarNavItem extends StatelessWidget {
                       style: TextStyle(
                         color: foreground,
                         fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,

@@ -161,7 +161,7 @@ class _ModInstallSelectionDialogState<T>
     final selectedCount = _selected.length;
 
     return AlertDialog(
-      title: Text(widget.title ?? "Install $selectedCount mods"),
+      title: Text(widget.title ?? "Install $selectedCount of ${widget.choices.length} mods"),
       content: ConstrainedBox(
         constraints: const BoxConstraints(
           minWidth: 400,

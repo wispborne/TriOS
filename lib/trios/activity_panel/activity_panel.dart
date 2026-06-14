@@ -133,6 +133,35 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
     );
   }
 
+  /// Asks for confirmation before permanently clearing activity history.
+  Future<void> _confirmClearHistory(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear All Activity?'),
+        content: const Text(
+          'This permanently clears the installation activity history. '
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton.icon(
+            onPressed: () => Navigator.of(context).pop(true),
+            label: const Text('Clear All'),
+            icon: const Icon(Icons.clear_all),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      ref.read(activityHistoryStore.notifier).clearHistory();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -142,15 +171,17 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
 
     // Batch entries that are still in flight (queued, scanning, or extracting),
     // in their original order. Completed/failed/skipped entries move to the
-    // "Recent" history instead.
+    // "Recent" history instead. Entries with a Download are already shown as
+    // a download tile, so exclude them to avoid a duplicate row.
     final activeBatchEntries =
         batch?.entries
             .where(
               (e) =>
-                  e.status == BatchEntryStatus.queued ||
+                  e.download == null &&
+                  (e.status == BatchEntryStatus.queued ||
                   e.status == BatchEntryStatus.scanning ||
                   e.status == BatchEntryStatus.scanned ||
-                  e.status == BatchEntryStatus.extracting,
+                  e.status == BatchEntryStatus.extracting),
             )
             .toList() ??
         const [];
@@ -203,21 +234,6 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
                   style: theme.textTheme.titleSmall,
                 ),
                 const Spacer(),
-                if (hasHistory)
-                  MovingTooltipWidget.text(
-                    message: "Permanently clears history",
-                    child: TextButton.icon(
-                      onPressed: () => ref
-                          .read(activityHistoryStore.notifier)
-                          .clearHistory(),
-                      label: const Text('Clear'),
-                      icon: const Icon(Icons.clear_all),
-                      style: TextButton.styleFrom(
-                        foregroundColor: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 4),
                 MovingTooltipWidget.text(
                   message: isPinned ? 'Unpin (overlay)' : 'Pin (side panel)',
                   child: IconButton(
@@ -299,6 +315,34 @@ class _ActivityPanelState extends ConsumerState<ActivityPanel> {
                     ],
                   ),
           ),
+          // Bottom action strip.
+          if (hasHistory)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: theme.colorScheme.outlineVariant),
+                ),
+              ),
+              child: Padding(
+                padding: .symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    MovingTooltipWidget.text(
+                      message: "Permanently clears history",
+                      child: TextButton.icon(
+                        onPressed: () => _confirmClearHistory(context),
+                        label: const Text('Clear All'),
+                        icon: const Icon(Icons.clear_all),
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

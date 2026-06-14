@@ -8,9 +8,15 @@ import 'package:trios/mod_manager/batch_installation/batch_installation.dart';
 import 'package:trios/mod_manager/batch_installation/batch_pre_scanner.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/widgets/mod_install_selection_dialog.dart';
+import 'package:trios/mod_manager/widgets/mod_installation_error_dialog.dart';
+import 'package:trios/mod_records/mod_record.dart';
+import 'package:trios/mod_records/mod_record_source.dart';
+import 'package:trios/mod_records/mod_records_store.dart';
+import 'package:trios/models/download_progress.dart';
 import 'package:trios/trios/activity_panel/activity_entry.dart';
 import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -44,12 +50,31 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     BatchInstallation? next,
   ) => true;
 
-  /// Start a batch installation from a list of local archive files.
-  Future<void> create(List<File> files) async {
-    if (files.isEmpty) return;
+  /// Start a batch installation from a list of local sources (archives or folders).
+  Future<void> create(
+    List<FileSystemEntity> sources, {
+    Download? download,
+  }) async {
+    if (sources.isEmpty) return;
 
-    final entries = files
-        .map((f) => BatchEntry(id: const Uuid().v4(), archiveFile: f))
+    // A batch is already running — merge into it instead of replacing it,
+    // which would orphan the in-flight batch and hide its UI.
+    final existing = state;
+    if (existing != null && !existing.isFinished) {
+      for (final source in sources) {
+        await addLateEntry(source, download: download);
+      }
+      return;
+    }
+
+    final entries = sources
+        .map(
+          (s) => BatchEntry(
+            id: const Uuid().v4(),
+            source: s,
+            download: download,
+          ),
+        )
         .toList();
 
     final batch = BatchInstallation(id: const Uuid().v4(), entries: entries);
@@ -61,16 +86,35 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     } catch (e, st) {
       Fimber.e("Batch installation failed", ex: e, stacktrace: st);
       batch.status = BatchStatus.complete;
+      // Settle every entry the pipeline left behind so downloads (toasts)
+      // and anyone awaiting [BatchEntry.settled] don't hang forever.
+      for (final entry in batch.entries) {
+        if (!entry.settledCompleter.isCompleted) {
+          if (!entry.status.isTerminal) {
+            entry.status = BatchEntryStatus.failed;
+            entry.error ??= e;
+            entry.errorDetail ??= e.toString();
+          }
+          _settleEntry(entry);
+        }
+      }
       _notify();
     }
   }
 
-  /// Add a single file to an active batch (e.g. a URL that just finished
+  /// Add a single source to an active batch (e.g. a URL that just finished
   /// downloading). If no batch is active, creates a new one.
-  Future<void> addLateEntry(File file) async {
+  Future<void> addLateEntry(
+    FileSystemEntity source, {
+    Download? download,
+  }) async {
     final batch = state;
     if (batch != null && !batch.isFinished) {
-      final entry = BatchEntry(id: const Uuid().v4(), archiveFile: file);
+      final entry = BatchEntry(
+        id: const Uuid().v4(),
+        source: source,
+        download: download,
+      );
       batch.entries.add(entry);
       _notify();
 
@@ -82,6 +126,16 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         existingVariants: existingVariants,
       );
       await scanner.scanArchive(entry);
+      if (entry.status == BatchEntryStatus.failed) {
+        // Surface the scan failure on the download (toast/history) instead of
+        // silently leaving the entry behind.
+        Fimber.w(
+          "Late entry '${entry.displayName}' failed scan: ${entry.errorDetail}",
+        );
+        _settleEntry(entry);
+        _notify();
+        return;
+      }
       // Late entries (e.g. completed URL downloads) install all contained mods.
       entry.selectedMods = entry.scanResult?.allModInfos;
       _notify();
@@ -109,10 +163,15 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         );
         _notify();
         await _finalize(batch);
+      } else {
+        // The running pipeline will extract this entry. Don't return until it
+        // has — callers (e.g. the download manager) treat our completion as
+        // "the install is finished" and clean up the source archive.
+        await entry.settled;
       }
     } else {
       // No active batch — create a batch-of-1, skip dialog.
-      await create([file]);
+      await create([source], download: download);
     }
   }
 
@@ -136,6 +195,14 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
       onEntryScanned: (_) => _notify(),
     );
 
+    // Entries that failed the scan are terminal — settle their downloads now
+    // so toasts/Activity Panel show the failure instead of spinning forever.
+    for (final entry in batch.entries) {
+      if (entry.status == BatchEntryStatus.failed) {
+        _settleEntry(entry);
+      }
+    }
+
     // Phase 2: Confirmation dialog (if 2+ entries, or 1 with problems).
     final needsDialog =
         batch.entries.length > 1 ||
@@ -156,6 +223,12 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
 
       final context = ref.read(AppState.appContext);
       if (context == null || !context.mounted) {
+        for (final entry in batch.entries.where(
+          (e) => e.status == BatchEntryStatus.scanned,
+        )) {
+          entry.status = BatchEntryStatus.skipped;
+          _settleEntry(entry, cancelled: true);
+        }
         batch.status = BatchStatus.complete;
         _notify();
         return;
@@ -176,7 +249,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
                 existingVariants,
               ),
               sourceLabel: showSource
-                  ? entry.archiveFile.uri.pathSegments.last
+                  ? entry.source.uri.pathSegments.last
                   : null,
               tag: BatchModRef(entry, mod),
             ),
@@ -188,7 +261,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
           .where((e) => e.status == BatchEntryStatus.failed)
           .map(
             (e) => InvalidInstallItem(
-              name: e.archiveFile.uri.pathSegments.last,
+              name: e.source.uri.pathSegments.last,
               detail: e.errorDetail,
             ),
           )
@@ -204,9 +277,13 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
       );
 
       if (selected == null) {
-        // User cancelled — skip everything still pending.
-        for (final entry in scannedEntries) {
+        // User cancelled — skip everything still pending (including late
+        // entries added after the dialog opened, so they don't hang).
+        for (final entry in batch.entries.where(
+          (e) => e.status == BatchEntryStatus.scanned,
+        )) {
           entry.status = BatchEntryStatus.skipped;
+          _settleEntry(entry, cancelled: true);
         }
         batch.status = BatchStatus.complete;
         _notify();
@@ -220,7 +297,9 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
             .map((ref) => ref.modInfo)
             .toList();
         if (mods.isEmpty) {
+          // User deselected every mod in this entry — treat as cancelled.
           entry.status = BatchEntryStatus.skipped;
+          _settleEntry(entry, cancelled: true);
         } else {
           entry.selectedMods = mods;
         }
@@ -321,6 +400,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         entry.selectedMods ?? entry.scanResult?.allModInfos ?? const [];
     if (mods.isEmpty) {
       entry.status = BatchEntryStatus.skipped;
+      _settleEntry(entry);
       return;
     }
 
@@ -330,7 +410,6 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     // Variants from before this batch; used to check for already-installed mods.
     final existingVariants = ref.read(AppState.modVariants).value ?? [];
 
-    final errors = <String>[];
     var modsDone = 0;
 
     for (final mod in mods) {
@@ -356,7 +435,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
               stacktrace: st,
             );
             entry.error ??= e;
-            errors.add("${mod.modInfo.nameOrId}: Failed to remove existing installation: $e");
+            entry.failedMods.add((modInfo: mod.modInfo, err: e, st: st));
             continue;
           }
 
@@ -396,6 +475,11 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
           dryRun: false,
           onProgress: (completed, total) {
             entry.extractionProgress = (completed, total);
+            entry.download?.installProgress.value = TriOSDownloadProgress(
+              completed,
+              total,
+              customStatus: "$completed / $total files",
+            );
             _notify();
           },
           onPhaseChanged: (phase) {
@@ -406,9 +490,16 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
 
         if (result.err != null) {
           entry.error ??= result.err;
-          errors.add("${mod.modInfo.nameOrId}: ${result.err}");
+          entry.failedMods.add((
+            modInfo: mod.modInfo,
+            err: result.err!,
+            st: result.st,
+          ));
         } else {
           entry.installedMods.add(mod.modInfo);
+          entry.installedFolders.add(
+            modsFolder.resolve(targetModFolderName).toDirectory(),
+          );
         }
       } catch (e, st) {
         Fimber.e(
@@ -417,7 +508,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
           stacktrace: st,
         );
         entry.error ??= e;
-        errors.add("${mod.modInfo.nameOrId}: $e");
+        entry.failedMods.add((modInfo: mod.modInfo, err: e, st: st));
       } finally {
         modsDone++;
         entry.extractionProgress = (modsDone, mods.length);
@@ -427,8 +518,60 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
 
     entry
       ..currentModName = null
-      ..errorDetail = errors.isNotEmpty ? errors.join('\n') : null
-      ..status = errors.isNotEmpty ? BatchEntryStatus.failed : BatchEntryStatus.done;
+      ..errorDetail = entry.failedMods.isNotEmpty
+          ? entry.failedMods
+              .map((f) => "${f.modInfo.nameOrId}: ${f.err}")
+              .join('\n')
+          : null
+      ..status = entry.failedMods.isNotEmpty
+          ? BatchEntryStatus.failed
+          : BatchEntryStatus.done;
+
+    // Drive the Download notification immediately after extraction.
+    if (entry.download != null && entry.installedMods.isNotEmpty) {
+      entry.download!.installProgress.value = TriOSDownloadProgress(
+        0,
+        0,
+        isIndeterminate: true,
+        customStatus: "Finalizing...",
+      );
+      // Only reload the folders this entry installed into — a full rescan per
+      // entry races concurrent extractions and is wasted work.
+      await ref
+          .read(AppState.modVariants.notifier)
+          .reloadModVariantsFromFolders(onlyFolders: entry.installedFolders);
+      final refreshedVariants = ref.read(AppState.modVariants).value ?? [];
+      final installedSmolId = entry.installedMods.first.smolId;
+      final variant = refreshedVariants.firstWhereOrNull(
+        (v) => v.smolId == installedSmolId,
+      );
+      if (variant != null) {
+        entry.download!.installedVariant.value = variant;
+      }
+    }
+    _settleEntry(entry);
+  }
+
+  /// Settles an entry that has reached a terminal status: surfaces a failure
+  /// on its [Download] (if any), marks the download finished so the toast and
+  /// Activity Panel resolve, and completes [BatchEntry.settled].
+  /// Safe to call more than once.
+  void _settleEntry(BatchEntry entry, {bool cancelled = false}) {
+    final download = entry.download;
+    if (download != null) {
+      if (entry.status == BatchEntryStatus.failed) {
+        download.task.error ??=
+            entry.error ?? Exception(entry.errorDetail ?? "Install failed");
+      }
+      if (cancelled) {
+        ref.read(downloadManager.notifier).cancelInstallation(download);
+      } else if (!download.installComplete.value) {
+        download.installComplete.value = true;
+      }
+    }
+    if (!entry.settledCompleter.isCompleted) {
+      entry.settledCompleter.complete();
+    }
   }
 
   Future<void> _finalize(BatchInstallation batch) async {
@@ -436,8 +579,12 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     final unrecorded = batch.entries.where((e) => !e.historyRecorded).toList();
     if (unrecorded.isEmpty) return;
 
-    // Reload the mod list once if anything new was actually installed.
-    final newInstalls = unrecorded
+    // Reload the mod list once if anything new was actually installed,
+    // but skip entries that already did their own reload (Download-bearing).
+    final entriesNeedingReload = unrecorded.where(
+      (e) => e.download == null && e.installedMods.isNotEmpty,
+    );
+    final newInstalls = entriesNeedingReload
         .map((e) => e.installedMods.length)
         .fold(0, (a, b) => a + b);
 
@@ -446,53 +593,96 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         "Batch finalize: $newInstalls new mods installed. Reloading mod list.",
       );
       await ref.read(AppState.modVariants.notifier).reloadModVariants();
+    }
 
-      // Activate newly installed variants when the mod was already enabled,
-      // matching the behavior of installModFromSourceWithDefaultUI.
-      if (ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==
-          ModUpdateBehavior.switchToNewVersionIfWasEnabled) {
-        final mods = ref.read(AppState.mods);
-        final refreshedVariants =
-            ref.read(AppState.modVariants).value ?? [];
-        final modManagerNotifier = ref.read(modManager.notifier);
+    // Activate newly installed variants when the mod was already enabled.
+    final allInstalledModInfos =
+        unrecorded.expand((e) => e.installedMods).toList();
+    if (allInstalledModInfos.isNotEmpty &&
+        ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==
+            ModUpdateBehavior.switchToNewVersionIfWasEnabled) {
+      final mods = ref.read(AppState.mods);
+      final refreshedVariants = ref.read(AppState.modVariants).value ?? [];
+      final modManagerNotifier = ref.read(modManager.notifier);
+      var anyActivated = false;
 
-        final installedModInfos =
-            unrecorded.expand((e) => e.installedMods).toList();
-
-        for (final modInfo in installedModInfos) {
-          final actualVariant = refreshedVariants.firstWhereOrNull(
-            (variant) => variant.smolId == modInfo.smolId,
-          );
-          try {
-            if (actualVariant != null &&
-                actualVariant.mod(mods)?.isEnabledInGame == true) {
-              await modManagerNotifier.changeActiveModVariant(
-                actualVariant.mod(mods)!,
-                actualVariant,
-              );
-            }
-          } catch (ex) {
-            Fimber.w(
-              "Batch finalize: failed to activate ${modInfo.smolId} after installing: $ex",
+      for (final modInfo in allInstalledModInfos) {
+        final actualVariant = refreshedVariants.firstWhereOrNull(
+          (variant) => variant.smolId == modInfo.smolId,
+        );
+        try {
+          if (actualVariant != null &&
+              actualVariant.mod(mods)?.isEnabledInGame == true) {
+            await modManagerNotifier.changeActiveModVariant(
+              actualVariant.mod(mods)!,
+              actualVariant,
             );
+            anyActivated = true;
           }
+        } catch (ex) {
+          Fimber.w(
+            "Batch finalize: failed to activate ${modInfo.smolId} after installing: $ex",
+          );
         }
+      }
 
+      if (anyActivated) {
         // Reload again after activation changes.
-        await ref
-            .read(AppState.modVariants.notifier)
-            .reloadModVariants();
+        await ref.read(AppState.modVariants.notifier).reloadModVariants();
       }
     }
 
+    // Write mod records (InstalledSource + catalog merge) for all installed mods.
+    final refreshedVariants = ref.read(AppState.modVariants).value ?? [];
+    try {
+      final store = ref.read(modRecordsStore.notifier);
+      for (final entry in unrecorded) {
+        for (final modInfo in entry.installedMods) {
+          final modId = modInfo.id;
+          final now = DateTime.now();
+
+          final syntheticKey = ModRecord.syntheticKey(modInfo.nameOrId);
+          if (store.lookupByModId(modId) == null &&
+              store.state.valueOrNull?.records.containsKey(syntheticKey) ==
+                  true) {
+            await store.mergeSyntheticIntoReal(syntheticKey, modId);
+          }
+
+          final variant = refreshedVariants.firstWhereOrNull(
+            (v) => v.smolId == modInfo.smolId,
+          );
+          await store.updateRecord(modId, (existing) {
+            final base = existing ??
+                ModRecord(recordKey: modId, modId: modId, firstSeen: now);
+            final updatedSources = Map<String, ModRecordSource>.of(
+              base.sources,
+            );
+            updatedSources['installed'] = InstalledSource(
+              name: modInfo.name,
+              author: modInfo.author,
+              installPath: variant?.modFolder.path,
+              version: modInfo.version?.toString(),
+              lastSeen: now,
+            );
+            return base.copyWith(modId: modId, sources: updatedSources);
+          });
+        }
+      }
+    } catch (e) {
+      Fimber.w("Failed to update mod records on batch install: $e");
+    }
+
+    // Record activity history — skip Download-bearing entries (ToastDisplayer
+    // records those).
     final historyStore = ref.read(activityHistoryStore.notifier);
     var recordedCount = 0;
 
     for (final entry in unrecorded) {
-      // Only record finished entries (skip those still extracting).
-      if (entry.status != BatchEntryStatus.done &&
-          entry.status != BatchEntryStatus.failed &&
-          entry.status != BatchEntryStatus.skipped) {
+      if (!entry.status.isTerminal) continue;
+
+      // Download-bearing entries have their history recorded by ToastDisplayer.
+      if (entry.download != null) {
+        entry.historyRecorded = true;
         continue;
       }
 
@@ -504,7 +694,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
             modId: modInfo.id,
             modVersion: modInfo.version?.toString(),
             sourceType: ActivitySourceType.archive,
-            sourceDetail: entry.archiveFile.path,
+            sourceDetail: entry.source.path,
             timestamp: DateTime.now(),
             status: ActivityStatus.completed,
           ),
@@ -520,7 +710,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
             modId: entry.scanResult?.modInfo.id,
             modVersion: entry.scanResult?.modInfo.version?.toString(),
             sourceType: ActivitySourceType.archive,
-            sourceDetail: entry.archiveFile.path,
+            sourceDetail: entry.source.path,
             timestamp: DateTime.now(),
             status: ActivityStatus.failed,
             errorMessage: entry.errorDetail,
@@ -536,6 +726,38 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     if (!isOpen && recordedCount > 0) {
       for (var i = 0; i < recordedCount; i++) {
         ref.read(activityUnseenCount.notifier).increment();
+      }
+    }
+
+    // Show error dialog for failed entries, blaming only the mods that
+    // actually failed (not every mod in the archive).
+    final failedWithErrors = unrecorded
+        .where(
+          (e) =>
+              e.status == BatchEntryStatus.failed && e.failedMods.isNotEmpty,
+        )
+        .toList();
+    if (failedWithErrors.isNotEmpty) {
+      final context = ref.read(AppState.appContext);
+      final destinationFolder = ref.read(AppState.modsFolder).value;
+      if (context != null && context.mounted && destinationFolder != null) {
+        final errorResults = failedWithErrors
+            .expand<InstallModResult>(
+              (e) => e.failedMods.map((failure) {
+                final err = failure.err;
+                return (
+                  sourceFileEntity: File(e.source.path),
+                  destinationFolder: destinationFolder,
+                  modInfo: failure.modInfo,
+                  err: err is Exception ? err : Exception(err.toString()),
+                  st: failure.st,
+                );
+              }),
+            )
+            .toList();
+        if (errorResults.isNotEmpty) {
+          await ModInstallationErrorDialog.show(context, errorResults);
+        }
       }
     }
   }

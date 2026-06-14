@@ -8,8 +8,6 @@ import 'package:super_clipboard/src/reader.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:trios/chipper/chipper_state.dart';
 import 'package:trios/mod_manager/batch_installation/batch_installation_notifier.dart';
-import 'package:trios/mod_manager/mod_install_source.dart';
-import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
@@ -319,18 +317,16 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
       ref.read(batchInstallationProvider.notifier).create(archiveFiles);
     }
 
-    // Directories use the existing single-install path.
+    // Directories also go through the batch system.
     for (final dir in directoryDrops) {
       try {
         final download = ref
             .read(downloadManager.notifier)
             .addInstallation(dir.toFile().nameWithExtension, dir.path);
-        ref
-            .read(modManager.notifier)
-            .installModFromSourceWithDefaultUI(
-              DirectoryModInstallSource(Directory(dir.path)),
-              installationDownload: download,
-            );
+        ref.read(batchInstallationProvider.notifier).create(
+          [Directory(dir.path)],
+          download: download,
+        );
       } catch (e, st) {
         Fimber.e("Failed to install mod from directory", ex: e, stacktrace: st);
       }

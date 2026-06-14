@@ -15,6 +15,7 @@
 - Changed
   - May now hide the layout toggle button.
   - Mod context menu now always uses the more powerful Category submenu.
+  - Refactored mod installation code to support installing multiple mods at once.
 
 # 1.5.1
 - Added

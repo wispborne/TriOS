@@ -5,10 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_tag_manager/category.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/utils/extensions.dart';
 
 import 'wisp_grid_state.dart';
 
@@ -61,27 +60,20 @@ class _WispGridRowState<T extends WispGridItem>
   Widget build(BuildContext context) {
     final itemsInGroup = widget.itemsInGroup;
     final sortValue = widget.groupSortValue;
-    final groupName = widget.itemsInGroup.firstOrNull?.let(
-          (mod) => widget.grouping.getGroupName(
-            mod,
-            groupSortValue: sortValue,
-          ),
+    final groupName =
+        widget.itemsInGroup.firstOrNull?.let(
+          (mod) => widget.grouping.getGroupName(mod, groupSortValue: sortValue),
         ) ??
         "";
     final groupColor = widget.itemsInGroup.firstOrNull?.let(
-      (mod) => widget.grouping.getGroupColor(
-        mod,
-        groupSortValue: sortValue,
-      ),
+      (mod) => widget.grouping.getGroupColor(mod, groupSortValue: sortValue),
     );
     final groupIcon = widget.itemsInGroup.firstOrNull?.let(
-      (mod) => widget.grouping.getGroupIcon(
-        mod,
-        groupSortValue: sortValue,
-      ),
+      (mod) => widget.grouping.getGroupIcon(mod, groupSortValue: sortValue),
     );
 
-    final headerStyle = widget.headerStyleOverride ??
+    final headerStyle =
+        widget.headerStyleOverride ??
         widget.gridState.groupingSetting?.headerStyle ??
         GroupHeaderStyle.small;
 
@@ -199,7 +191,7 @@ class _WispGridRowState<T extends WispGridItem>
                     "${groupName.trim()} (${itemsInGroup.length})",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.robotoSlab(
+                    style: GoogleFonts.roboto(
                       textStyle: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
@@ -276,7 +268,7 @@ class _WispGridRowState<T extends WispGridItem>
                     "${groupName.trim()} (${itemsInGroup.length})",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.robotoSlab(
+                    style: GoogleFonts.roboto(
                       textStyle: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
@@ -356,7 +348,7 @@ class _WispGridRowState<T extends WispGridItem>
                     "${groupName.trim()} (${itemsInGroup.length})",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.robotoSlab(
+                    style: GoogleFonts.roboto(
                       textStyle: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
@@ -388,15 +380,13 @@ class _WispGridRowState<T extends WispGridItem>
 
   ContextMenu _buildGroupHeaderContextMenu() {
     final groupingSetting = widget.gridState.groupingSetting;
-    final currentStyle =
-        groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
+    final currentStyle = groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
     final currentPrimaryKey = groupingSetting?.currentGroupedByKey;
     final currentSecondaryKey = groupingSetting?.secondaryGroupedByKey;
     final thenByCandidates = widget.groups
         .where((g) => g.key != currentPrimaryKey)
         .toList();
-    final showThenBy =
-        widget.groups.length > 1 && thenByCandidates.isNotEmpty;
+    final showThenBy = widget.groups.length > 1 && thenByCandidates.isNotEmpty;
 
     return ContextMenu(
       entries: [
@@ -412,25 +402,22 @@ class _WispGridRowState<T extends WispGridItem>
                         ? Icons.check
                         : null,
                     onSelected: () {
-                      widget.updateGridState(
-                        (WispGridState state) {
-                          final existing = state.groupingSetting ??
-                              GroupingSetting(
-                                currentGroupedByKey: group.key,
-                              );
-                          // Clear secondary when primary collides with it.
-                          final clearSecondary =
-                              existing.secondaryGroupedByKey == group.key;
-                          return state.copyWith(
-                            groupingSetting: existing.copyWith(
-                              currentGroupedByKey: group.key,
-                              secondaryGroupedByKey: clearSecondary
-                                  ? null
-                                  : existing.secondaryGroupedByKey,
-                            ),
-                          );
-                        },
-                      );
+                      widget.updateGridState((WispGridState state) {
+                        final existing =
+                            state.groupingSetting ??
+                            GroupingSetting(currentGroupedByKey: group.key);
+                        // Clear secondary when primary collides with it.
+                        final clearSecondary =
+                            existing.secondaryGroupedByKey == group.key;
+                        return state.copyWith(
+                          groupingSetting: existing.copyWith(
+                            currentGroupedByKey: group.key,
+                            secondaryGroupedByKey: clearSecondary
+                                ? null
+                                : existing.secondaryGroupedByKey,
+                          ),
+                        );
+                      });
                     },
                   ),
                 )
@@ -445,16 +432,15 @@ class _WispGridRowState<T extends WispGridItem>
                 label: 'None',
                 icon: currentSecondaryKey == null ? Icons.check : null,
                 onSelected: () {
-                  widget.updateGridState(
-                    (WispGridState state) {
-                      final existing = state.groupingSetting;
-                      if (existing == null) return state;
-                      return state.copyWith(
-                        groupingSetting:
-                            existing.copyWith(secondaryGroupedByKey: null),
-                      );
-                    },
-                  );
+                  widget.updateGridState((WispGridState state) {
+                    final existing = state.groupingSetting;
+                    if (existing == null) return state;
+                    return state.copyWith(
+                      groupingSetting: existing.copyWith(
+                        secondaryGroupedByKey: null,
+                      ),
+                    );
+                  });
                 },
               ),
               ...thenByCandidates.map(
@@ -462,17 +448,15 @@ class _WispGridRowState<T extends WispGridItem>
                   label: group.displayName,
                   icon: currentSecondaryKey == group.key ? Icons.check : null,
                   onSelected: () {
-                    widget.updateGridState(
-                      (WispGridState state) {
-                        final existing = state.groupingSetting;
-                        if (existing == null) return state;
-                        return state.copyWith(
-                          groupingSetting: existing.copyWith(
-                            secondaryGroupedByKey: group.key,
-                          ),
-                        );
-                      },
-                    );
+                    widget.updateGridState((WispGridState state) {
+                      final existing = state.groupingSetting;
+                      if (existing == null) return state;
+                      return state.copyWith(
+                        groupingSetting: existing.copyWith(
+                          secondaryGroupedByKey: group.key,
+                        ),
+                      );
+                    });
                   },
                 ),
               ),

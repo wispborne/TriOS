@@ -197,35 +197,42 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               // Removing Est. VRAM button because it's on the mod groups now.
                               // Maybe should add it to an overflow menu, though.
                               if (false) buildEstimateVramButton(theme),
-                              const Spacer(),
-                              SizedBox(
-                                height: 30,
-                                width: 300,
-                                child: SmartSearchBar(
-                                  fields: ref
-                                      .watch(
-                                        modsGridSearchControllerProvider
-                                            .notifier,
-                                      )
-                                      .searchFieldsMeta,
-                                  recentHistory: ref.watch(
-                                    appSettings.select(
-                                      (s) => s.modsSearchHistory,
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 300,
+                                      maxHeight: 30,
+                                    ),
+                                    child: SmartSearchBar(
+                                      fields: ref
+                                          .watch(
+                                            modsGridSearchControllerProvider
+                                                .notifier,
+                                          )
+                                          .searchFieldsMeta,
+                                      recentHistory: ref.watch(
+                                        appSettings.select(
+                                          (s) => s.modsSearchHistory,
+                                        ),
+                                      ),
+                                      initialValue:
+                                          searchState.currentSearchQuery,
+                                      onChanged: (query) => ref
+                                          .read(
+                                            modsGridSearchControllerProvider
+                                                .notifier,
+                                          )
+                                          .updateSearchQuery(query),
+                                      onSubmitted: () => ref
+                                          .read(
+                                            modsGridSearchControllerProvider
+                                                .notifier,
+                                          )
+                                          .submitSearchQuery(),
                                     ),
                                   ),
-                                  initialValue: searchState.currentSearchQuery,
-                                  onChanged: (query) => ref
-                                      .read(
-                                        modsGridSearchControllerProvider
-                                            .notifier,
-                                      )
-                                      .updateSearchQuery(query),
-                                  onSubmitted: () => ref
-                                      .read(
-                                        modsGridSearchControllerProvider
-                                            .notifier,
-                                      )
-                                      .submitSearchQuery(),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -2022,8 +2029,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                       .where(
                                         (d) =>
                                             d.task.request.url ==
-                                                updateUrl
-                                                    .fixModDownloadUrl() &&
+                                                updateUrl.fixModDownloadUrl() &&
                                             d.isInProgress,
                                       )
                                       .firstOrNull;
@@ -2055,8 +2061,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                         ? 'Installing...'
                                         : 'Downloading...',
                                     child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(left: 2),
+                                      padding: const EdgeInsets.only(left: 2),
                                       child: SizedBox(
                                         width: 24,
                                         height: 24,

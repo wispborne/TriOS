@@ -11,13 +11,16 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/ship_systems_manager/ship_systems_manager.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
+import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
+import 'package:trios/weapon_viewer/weapons_page_controller.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/widgets/display_chip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -79,7 +82,13 @@ class FactionProfileDialog extends ConsumerWidget {
                 ],
                 _sectionTitle('Fleet', theme),
                 const SizedBox(height: 8),
-                Theme(data: theme, child: _buildFleetSection(theme, ref)),
+                Theme(
+                  data: theme,
+                  child: _FleetSection(
+                    faction: faction,
+                    gameCoreDir: gameCoreDir,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 if (faction.malePortraits.isNotEmpty ||
                     faction.femalePortraits.isNotEmpty) ...[
@@ -320,205 +329,6 @@ class FactionProfileDialog extends ConsumerWidget {
     );
   }
 
-  Widget _buildFleetSection(ThemeData theme, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 4,
-      children: [
-        _BlueprintSection<Ship>(
-          label: 'Known Ships',
-          ids: faction.knownShipIds,
-          attributionKey: 'knownShips.hulls',
-          sectionAttributions: faction.sectionAttributions,
-          itemAttributions: faction.itemAttributions,
-          provider: shipListNotifierProvider,
-          ref: ref,
-          theme: theme,
-          gameCoreDir: gameCoreDir,
-          getName: (s) => s.name ?? s.id,
-          getThumbnail: (s) =>
-              s.spriteFile != null ? File(s.spriteFile!) : null,
-          buildTooltip: (item, child) => _shipTooltip(ref, item, child),
-          onTap: (context, ship) => _showShipDialog(context, ref, ship),
-        ),
-        _BlueprintSection<Weapon>(
-          label: 'Known Weapons',
-          ids: faction.knownWeaponIds,
-          attributionKey: 'knownWeapons.weapons',
-          sectionAttributions: faction.sectionAttributions,
-          itemAttributions: faction.itemAttributions,
-          provider: weaponListNotifierProvider,
-          ref: ref,
-          theme: theme,
-          gameCoreDir: gameCoreDir,
-          getName: (w) => w.name ?? w.id,
-          getThumbnail: (w) {
-            final sprite = w.turretSprite ?? w.hardpointSprite;
-            if (sprite == null || gameCoreDir == null) return null;
-            return File(p.join(gameCoreDir!.path, sprite));
-          },
-          buildTooltip: (item, child) =>
-              WeaponCodexCard.tooltip(weapon: item, child: child),
-          onTap: (context, weapon) => _showWeaponDialog(context, weapon),
-        ),
-        _BlueprintSection<Ship>(
-          label: 'Known Fighters',
-          ids: faction.knownFighterIds,
-          attributionKey: 'knownFighters.fighters',
-          sectionAttributions: faction.sectionAttributions,
-          itemAttributions: faction.itemAttributions,
-          provider: shipListNotifierProvider,
-          ref: ref,
-          theme: theme,
-          gameCoreDir: gameCoreDir,
-          getName: (s) => s.name ?? s.id,
-          getThumbnail: (s) =>
-              s.spriteFile != null ? File(s.spriteFile!) : null,
-          buildTooltip: (item, child) => _shipTooltip(ref, item, child),
-          onTap: (context, ship) => _showShipDialog(context, ref, ship),
-        ),
-        _BlueprintSection<Hullmod>(
-          label: 'Known Hullmods',
-          ids: faction.knownHullModIds,
-          attributionKey: 'knownHullMods.hullMods',
-          sectionAttributions: faction.sectionAttributions,
-          itemAttributions: faction.itemAttributions,
-          provider: hullmodListNotifierProvider,
-          ref: ref,
-          theme: theme,
-          gameCoreDir: gameCoreDir,
-          getName: (h) => h.name ?? h.id,
-          getThumbnail: (h) {
-            if (h.sprite == null || gameCoreDir == null) return null;
-            return File(p.join(gameCoreDir!.path, h.sprite!));
-          },
-          buildTooltip: (item, child) =>
-              HullmodCodexCard.tooltip(hullmod: item, child: child),
-          onTap: (context, hullmod) => _showHullmodDialog(context, hullmod),
-        ),
-      ],
-    );
-  }
-
-  void _showShipDialog(BuildContext context, WidgetRef ref, Ship ship) {
-    final shipSystems = ref.read(shipSystemsStreamProvider).valueOrNull ?? [];
-    final shipSystemsMap = {for (final s in shipSystems) s.id: s};
-    final weapons = ref.read(weaponListNotifierProvider).valueOrNull ?? [];
-    final weaponsMap = {for (final w in weapons) w.id: w};
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Padding(
-            padding: .all(16),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ShipCodexCard.create(
-                    ship: ship,
-                    shipSystemsMap: shipSystemsMap,
-                    weaponsMap: weaponsMap,
-                    useAbbreviations: false,
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text('Close'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showWeaponDialog(BuildContext context, Weapon weapon) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Padding(
-            padding: .all(16),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  WeaponCodexCard.create(
-                    weapon: weapon,
-                    useAbbreviations: false,
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text('Close'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showHullmodDialog(BuildContext context, Hullmod hullmod) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
-            padding: .all(16),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  HullmodCodexCard.create(hullmod: hullmod),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text('Close'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _shipTooltip(WidgetRef ref, Ship ship, Widget child) {
-    final shipSystems = ref.watch(shipSystemsStreamProvider).valueOrNull ?? [];
-    final shipSystemsMap = {for (final s in shipSystems) s.id: s};
-    final weapons = ref.watch(weaponListNotifierProvider).valueOrNull ?? [];
-    final weaponsMap = {for (final w in weapons) w.id: w};
-    return ShipCodexCard.tooltip(
-      ship: ship,
-      shipSystemsMap: shipSystemsMap,
-      weaponsMap: weaponsMap,
-      child: child,
-    );
-  }
-
   Widget _buildPortraitsSection(ThemeData theme, WidgetRef ref) {
     final allPortraits = [...faction.malePortraits, ...faction.femalePortraits];
     final count = allPortraits.length;
@@ -656,6 +466,306 @@ class FactionProfileDialog extends ConsumerWidget {
   }
 }
 
+/// Fleet section of the faction profile, holding the known ships/weapons/etc.
+/// Stateful so its spoiler-level dropdowns can filter the lists in place.
+class _FleetSection extends ConsumerStatefulWidget {
+  final Faction faction;
+  final Directory? gameCoreDir;
+
+  const _FleetSection({required this.faction, required this.gameCoreDir});
+
+  @override
+  ConsumerState<_FleetSection> createState() => _FleetSectionState();
+}
+
+class _FleetSectionState extends ConsumerState<_FleetSection> {
+  SpoilerLevel _shipSpoilerLevel = SpoilerLevel.showNone;
+  WeaponSpoilerLevel _weaponSpoilerLevel = WeaponSpoilerLevel.noSpoilers;
+
+  Faction get faction => widget.faction;
+  Directory? get gameCoreDir => widget.gameCoreDir;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 4,
+      children: [
+        _buildSpoilerControls(theme),
+        _BlueprintSection<Ship>(
+          label: 'Known Ships',
+          ids: faction.knownShipIds,
+          attributionKey: 'knownShips.hulls',
+          sectionAttributions: faction.sectionAttributions,
+          itemAttributions: faction.itemAttributions,
+          provider: shipListNotifierProvider,
+          ref: ref,
+          theme: theme,
+          gameCoreDir: gameCoreDir,
+          getName: (s) => s.name ?? s.id,
+          getThumbnail: (s) =>
+              s.spriteFile != null ? File(s.spriteFile!) : null,
+          buildTooltip: (item, child) => _shipTooltip(item, child),
+          onTap: (context, ship) => _showShipDialog(context, ship),
+          spoilerFilter: (s) => shipMatchesSpoilerLevel(s, _shipSpoilerLevel),
+        ),
+        _BlueprintSection<Weapon>(
+          label: 'Known Weapons',
+          ids: faction.knownWeaponIds,
+          attributionKey: 'knownWeapons.weapons',
+          sectionAttributions: faction.sectionAttributions,
+          itemAttributions: faction.itemAttributions,
+          provider: weaponListNotifierProvider,
+          ref: ref,
+          theme: theme,
+          gameCoreDir: gameCoreDir,
+          getName: (w) => w.name ?? w.id,
+          getThumbnail: (w) {
+            final sprite = w.turretSprite ?? w.hardpointSprite;
+            if (sprite == null || gameCoreDir == null) return null;
+            return File(p.join(gameCoreDir!.path, sprite));
+          },
+          buildTooltip: (item, child) =>
+              WeaponCodexCard.tooltip(weapon: item, child: child),
+          onTap: (context, weapon) => _showWeaponDialog(context, weapon),
+          spoilerFilter: (w) =>
+              weaponMatchesSpoilerLevel(w, _weaponSpoilerLevel),
+        ),
+        _BlueprintSection<Ship>(
+          label: 'Known Fighters',
+          ids: faction.knownFighterIds,
+          attributionKey: 'knownFighters.fighters',
+          sectionAttributions: faction.sectionAttributions,
+          itemAttributions: faction.itemAttributions,
+          provider: shipListNotifierProvider,
+          ref: ref,
+          theme: theme,
+          gameCoreDir: gameCoreDir,
+          getName: (s) => s.name ?? s.id,
+          getThumbnail: (s) =>
+              s.spriteFile != null ? File(s.spriteFile!) : null,
+          buildTooltip: (item, child) => _shipTooltip(item, child),
+          onTap: (context, ship) => _showShipDialog(context, ship),
+          spoilerFilter: (s) => shipMatchesSpoilerLevel(s, _shipSpoilerLevel),
+        ),
+        _BlueprintSection<Hullmod>(
+          label: 'Known Hullmods',
+          ids: faction.knownHullModIds,
+          attributionKey: 'knownHullMods.hullMods',
+          sectionAttributions: faction.sectionAttributions,
+          itemAttributions: faction.itemAttributions,
+          provider: hullmodListNotifierProvider,
+          ref: ref,
+          theme: theme,
+          gameCoreDir: gameCoreDir,
+          getName: (h) => h.name ?? h.id,
+          getThumbnail: (h) {
+            if (h.sprite == null || gameCoreDir == null) return null;
+            return File(p.join(gameCoreDir!.path, h.sprite!));
+          },
+          buildTooltip: (item, child) =>
+              HullmodCodexCard.tooltip(hullmod: item, child: child),
+          onTap: (context, hullmod) => _showHullmodDialog(context, hullmod),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpoilerControls(ThemeData theme) {
+    return Wrap(
+      spacing: 16,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _spoilerDropdown<SpoilerLevel>(
+          theme: theme,
+          label: 'Ship spoilers',
+          value: _shipSpoilerLevel,
+          options: SpoilerLevel.values,
+          optionLabel: (e) => switch (e) {
+            SpoilerLevel.showNone => 'No spoilers',
+            SpoilerLevel.showSlightSpoilers => 'Slight spoilers',
+            SpoilerLevel.showAllSpoilers => 'All spoilers',
+          },
+          optionIcon: (e) => switch (e) {
+            SpoilerLevel.showNone => Icons.visibility_off,
+            SpoilerLevel.showSlightSpoilers => Icons.visibility,
+            SpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
+          },
+          onSelected: (v) => setState(() => _shipSpoilerLevel = v),
+        ),
+        _spoilerDropdown<WeaponSpoilerLevel>(
+          theme: theme,
+          label: 'Weapon spoilers',
+          value: _weaponSpoilerLevel,
+          options: WeaponSpoilerLevel.values,
+          optionLabel: (e) => switch (e) {
+            WeaponSpoilerLevel.noSpoilers => 'No spoilers',
+            WeaponSpoilerLevel.showAllSpoilers => 'All spoilers',
+          },
+          optionIcon: (e) => switch (e) {
+            WeaponSpoilerLevel.noSpoilers => Icons.visibility_off,
+            WeaponSpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
+          },
+          onSelected: (v) => setState(() => _weaponSpoilerLevel = v),
+        ),
+      ],
+    );
+  }
+
+  Widget _spoilerDropdown<E extends Enum>({
+    required ThemeData theme,
+    required String label,
+    required E value,
+    required List<E> options,
+    required String Function(E) optionLabel,
+    required IconData Function(E) optionIcon,
+    required ValueChanged<E> onSelected,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 8,
+      children: [
+        Text(label, style: theme.textTheme.bodySmall),
+        TriOSDropdownMenu<E>(
+          initialSelection: value,
+          onSelected: (v) {
+            if (v != null) onSelected(v);
+          },
+          dropdownMenuEntries: [
+            for (final option in options)
+              DropdownMenuEntry<E>(
+                value: option,
+                label: optionLabel(option),
+                leadingIcon: Icon(optionIcon(option), size: 20),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _showShipDialog(BuildContext context, Ship ship) {
+    final shipSystems = ref.read(shipSystemsStreamProvider).valueOrNull ?? [];
+    final shipSystemsMap = {for (final s in shipSystems) s.id: s};
+    final weapons = ref.read(weaponListNotifierProvider).valueOrNull ?? [];
+    final weaponsMap = {for (final w in weapons) w.id: w};
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Padding(
+            padding: .all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ShipCodexCard.create(
+                    ship: ship,
+                    shipSystemsMap: shipSystemsMap,
+                    weaponsMap: weaponsMap,
+                    useAbbreviations: false,
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWeaponDialog(BuildContext context, Weapon weapon) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Padding(
+            padding: .all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  WeaponCodexCard.create(
+                    weapon: weapon,
+                    useAbbreviations: false,
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showHullmodDialog(BuildContext context, Hullmod hullmod) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Padding(
+            padding: .all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  HullmodCodexCard.create(hullmod: hullmod),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _shipTooltip(Ship ship, Widget child) {
+    final shipSystems = ref.watch(shipSystemsStreamProvider).valueOrNull ?? [];
+    final shipSystemsMap = {for (final s in shipSystems) s.id: s};
+    final weapons = ref.watch(weaponListNotifierProvider).valueOrNull ?? [];
+    final weaponsMap = {for (final w in weapons) w.id: w};
+    return ShipCodexCard.tooltip(
+      ship: ship,
+      shipSystemsMap: shipSystemsMap,
+      weaponsMap: weaponsMap,
+      child: child,
+    );
+  }
+}
+
 class _BlueprintSection<T> extends StatelessWidget {
   final String label;
   final List<String> ids;
@@ -671,6 +781,10 @@ class _BlueprintSection<T> extends StatelessWidget {
   final Widget Function(T item, Widget child)? buildTooltip;
   final void Function(BuildContext context, T item)? onTap;
 
+  /// When set, hides resolved items that fail the predicate (spoiler filter).
+  /// Ids that don't resolve to a loaded item are kept (can't be evaluated).
+  final bool Function(T item)? spoilerFilter;
+
   const _BlueprintSection({
     required this.label,
     required this.ids,
@@ -685,14 +799,33 @@ class _BlueprintSection<T> extends StatelessWidget {
     required this.getThumbnail,
     this.buildTooltip,
     this.onTap,
+    this.spoilerFilter,
   });
+
+  /// Applies [spoilerFilter] (if any) to [ids] using items from [provider].
+  List<String> _visibleIds() {
+    if (spoilerFilter == null) return ids;
+    final allItems = ref.watch(provider).valueOrNull ?? [];
+    final itemMap = <String, T>{
+      for (final item in allItems) (item as dynamic).id as String: item,
+    };
+    return ids.where((id) {
+      final item = itemMap[id];
+      return item == null || spoilerFilter!(item);
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (ids.isEmpty) {
+    final visibleIds = _visibleIds();
+    final total = ids.length;
+    final shown = visibleIds.length;
+
+    if (visibleIds.isEmpty) {
+      final text = total == 0 ? '$label: 0' : '$label: $total (0 shown)';
       return Padding(
         padding: .symmetric(vertical: 4),
-        child: Text('$label: 0', style: theme.textTheme.bodySmall),
+        child: Text(text, style: theme.textTheme.bodySmall),
       );
     }
 
@@ -703,7 +836,7 @@ class _BlueprintSection<T> extends StatelessWidget {
       childrenPadding: .only(left: 16, bottom: 8),
       dense: true,
       title: Text(
-        '$label (${ids.length})',
+        shown == total ? '$label: $total' : '$label: $total ($shown shown)',
         style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
       ),
       children: [
@@ -713,10 +846,10 @@ class _BlueprintSection<T> extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: .start,
                 children: hasMultipleSources
-                    ? _buildGrouped(attribution)
+                    ? _buildGrouped(attribution, visibleIds)
                     : [
                         _BlueprintWrap<T>(
-                          ids: ids,
+                          ids: visibleIds,
                           provider: provider,
                           ref: ref,
                           theme: theme,
@@ -734,7 +867,10 @@ class _BlueprintSection<T> extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildGrouped(List<SourceContribution> attribution) {
+  List<Widget> _buildGrouped(
+    List<SourceContribution> attribution,
+    List<String> ids,
+  ) {
     final perItem = itemAttributions[attributionKey] ?? {};
     final sourceOrder = attribution.map((c) => c.source).toList();
 

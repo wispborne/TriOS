@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 
 /// Status of the overall batch operation.
 enum BatchStatus { pending, scanning, confirming, installing, complete }
@@ -16,7 +18,9 @@ enum BatchEntryStatus {
   extracting,
   done,
   failed,
-  skipped,
+  skipped;
+
+  bool get isTerminal => this == done || this == failed || this == skipped;
 }
 
 /// Result of pre-scanning a single archive.
@@ -48,10 +52,10 @@ class ScannedArchive {
   });
 }
 
-/// A single entry in a batch installation (one archive).
+/// A single entry in a batch installation (one archive or folder).
 class BatchEntry {
   final String id;
-  final File archiveFile;
+  final FileSystemEntity source;
   BatchEntryStatus status;
   ScannedArchive? scanResult;
   (int, int)? extractionProgress;
@@ -73,12 +77,27 @@ class BatchEntry {
   /// Mods successfully installed from this archive.
   final List<ModInfo> installedMods = [];
 
+  /// Folders that mods from this entry were installed into.
+  final List<Directory> installedFolders = [];
+
+  /// Per-mod installation failures (for the error dialog).
+  final List<({ModInfo modInfo, Object err, StackTrace? st})> failedMods = [];
+
+  /// Completes when this entry reaches a terminal status (done, failed, or
+  /// skipped) and its [download] (if any) has been settled.
+  final Completer<void> settledCompleter = Completer();
+
+  Future<void> get settled => settledCompleter.future;
+
   /// Whether activity history has already been recorded for this entry.
   bool historyRecorded = false;
 
+  /// Optional download associated with this entry (for notification driving).
+  Download? download;
+
   BatchEntry({
     required this.id,
-    required this.archiveFile,
+    required this.source,
     this.status = BatchEntryStatus.queued,
     this.scanResult,
     this.extractionProgress,
@@ -86,14 +105,18 @@ class BatchEntry {
     this.errorDetail,
     this.installSource,
     this.selectedMods,
+    this.download,
   });
 
+  /// Whether this source is a directory (not an archive).
+  bool get isDirectory => source is Directory;
+
   /// Display name: current mod being extracted, mod name from scan result, or
-  /// archive filename as fallback.
+  /// source filename as fallback.
   String get displayName =>
       currentModName ??
       scanResult?.modInfo.nameOrId ??
-      archiveFile.uri.pathSegments.last;
+      source.uri.pathSegments.last;
 
   /// Whether this mod is already installed.
   bool get hasConflict => scanResult?.existingVariant != null;
@@ -112,14 +135,8 @@ class BatchInstallation {
   });
 
   /// Number of entries that have finished (done, failed, or skipped).
-  int get completedCount => entries
-      .where(
-        (e) =>
-            e.status == BatchEntryStatus.done ||
-            e.status == BatchEntryStatus.failed ||
-            e.status == BatchEntryStatus.skipped,
-      )
-      .length;
+  int get completedCount =>
+      entries.where((e) => e.status.isTerminal).length;
 
   /// Number of entries that can be installed (not broken from scan).
   int get installableCount => entries
@@ -130,12 +147,7 @@ class BatchInstallation {
   int get totalCount => entries.length;
 
   /// Whether every entry is done (installed, failed, or skipped).
-  bool get isFinished => entries.every(
-    (e) =>
-        e.status == BatchEntryStatus.done ||
-        e.status == BatchEntryStatus.failed ||
-        e.status == BatchEntryStatus.skipped,
-  );
+  bool get isFinished => entries.every((e) => e.status.isTerminal);
 
   /// Entries that are ready to install (scanned, no problems or user chose to install).
   List<BatchEntry> get entriesToInstall =>

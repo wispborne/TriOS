@@ -308,15 +308,18 @@ class _AppShellState extends ConsumerState<AppShell>
                             Positioned.fill(
                               child: IgnorePointer(
                                 ignoring: !isOpen,
-                                child: GestureDetector(
-                                  onTap: () => ref
+                                // Translucent so clicks/scrolls still reach the
+                                // app behind it; an outside press just dismisses
+                                // the panel, like a non-modal popup menu.
+                                child: Listener(
+                                  onPointerDown: (_) => ref
                                       .read(appSettings.notifier)
                                       .update(
                                         (s) => s.copyWith(
                                           isActivityPanelOpen: false,
                                         ),
                                       ),
-                                  behavior: HitTestBehavior.opaque,
+                                  behavior: HitTestBehavior.translucent,
                                   child: const SizedBox.expand(),
                                 ),
                               ),

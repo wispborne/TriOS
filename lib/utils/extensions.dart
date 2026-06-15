@@ -1068,9 +1068,11 @@ extension IntExt on int {
     return this & (MIN_VALUE >>> numberOfLeadingZeros());
   }
 
-  String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(2)} MB";
+  String bytesAsReadableGB() => "${(this / 1073741824).toStringAsFixed(2)} GB";
 
-  String bytesAsReadableKB() => "${(this / 1000).toStringAsFixed(2)} KB";
+  String bytesAsReadableMB() => "${(this / 1048576).toStringAsFixed(2)} MB";
+
+  String bytesAsReadableKB() => "${(this / 1024).toStringAsFixed(2)} KB";
 
   /// Compact human-readable byte count: "B" below 1 KB, "KB" below 1 MB,
   /// "MB" otherwise.
@@ -1280,10 +1282,12 @@ extension ColorFromObject on Object {
 extension TriOSBuildContextTheme on ThemeData {
   bool get rainbowAccent =>
       extension<TriOSThemeExtension>()?.rainbowAccent ?? false;
+
   String? get iconAsset => extension<TriOSThemeExtension>()?.iconAsset;
 
   /// Access semantic status colors from the current theme.
   TriOSThemeExtension get statusColors => extension<TriOSThemeExtension>()!;
+
   TriOSThemeExtension get triosExtensions => extension<TriOSThemeExtension>()!;
 }
 
@@ -1297,7 +1301,5 @@ extension TriOSBuildContext on BuildContext {
   /// Use this for visual display (sidebar, about page).
   /// Use [appName] for string interpolation in messages.
   String appNameWithModifiers(ThemeModifiers modifiers) =>
-      modifiers.appNameOverride == AppNameOverride.hegOS
-          ? "HegOS"
-          : appName;
+      modifiers.appNameOverride == AppNameOverride.hegOS ? "HegOS" : appName;
 }

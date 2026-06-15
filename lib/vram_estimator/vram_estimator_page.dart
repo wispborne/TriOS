@@ -8,21 +8,24 @@ import 'package:intl/intl.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/selectors/selector_registry.dart';
 import 'package:trios/vram_estimator/selectors/vram_selector_id.dart';
 import 'package:trios/vram_estimator/vram_checker_explanation.dart';
+import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
+import 'package:trios/vram_estimator/vram_usage_estimate.dart';
 import 'package:trios/vram_estimator/widgets/reference_scan_debug_panel.dart';
 import 'package:trios/vram_estimator/widgets/scan_progress_panel.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/graph_radio_selector.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
-import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/viewer_search_box.dart';
 
 import 'charts/bar_chart.dart';
@@ -216,6 +219,19 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         !isScanning &&
         modVramInfoToShow.isNotEmpty;
 
+    // Total VRAM, shown only when reliably known. Estimated usage uses the same
+    // shared calculation as the scan progress panel's "Enabled" cohort, so the
+    // bar and the panel always agree.
+    final totalVram = ref.watch(AppState.gpuInfo).valueOrNull?.freeVRAM;
+    final estimatedVramBytes = estimateVramUsageForMods(
+      ref.watch(AppState.mods).where((m) => m.isEnabledOnUi).toList(),
+      vramState.modVramInfo,
+      graphicsLibConfig: graphicsLibConfig,
+      vanillaBytes:
+          vramState.vanillaVramBytes ??
+          VramChecker.VANILLA_GAME_VRAM_USAGE_IN_BYTES.toInt(),
+    ).totalBytes;
+
     return Column(
       children: <Widget>[
         Padding(
@@ -232,6 +248,11 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: ReferenceScanDebugPanel(),
+          ),
+        if (totalVram != null)
+          Padding(
+            padding: const .symmetric(horizontal: 12, vertical: 8),
+            child: _buildVramUsageBar(context, estimatedVramBytes, totalVram),
           ),
         if (modVramInfo.isNotEmpty)
           Expanded(
@@ -287,6 +308,41 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
               ),
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildVramUsageBar(
+    BuildContext context,
+    int estimatedBytes,
+    double totalVram,
+  ) {
+    final theme = Theme.of(context);
+    final fraction = totalVram > 0
+        ? (estimatedBytes / totalVram).clamp(0.0, 1.0).toDouble()
+        : 0.0;
+    final barColor = fraction >= 0.9
+        ? TriOSThemeConstants.vanillaErrorColor
+        : fraction >= 0.8
+        ? TriOSThemeConstants.vanillaWarningColor
+        : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Estimated VRAM Usage: "
+          "${estimatedBytes.bytesAsReadableGB()} / ${totalVram.toInt().bytesAsReadableGB()}",
+          style: theme.textTheme.labelLarge,
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: ThemedLinearProgressIndicator(
+            value: fraction,
+            minHeight: 8,
+            color: barColor,
+          ),
+        ),
       ],
     );
   }
@@ -536,7 +592,9 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
             onTap: () {
               ref
                   .read(appSettings.notifier)
-                  .update((s) => s.copyWith(vramEstimatorSelectorId: option.id));
+                  .update(
+                    (s) => s.copyWith(vramEstimatorSelectorId: option.id),
+                  );
               ref
                   .read(AppState.vramEstimatorProvider.notifier)
                   .onSelectorOrConfigChanged();

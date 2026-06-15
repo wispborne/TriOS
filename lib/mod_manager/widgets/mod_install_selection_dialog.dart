@@ -161,7 +161,10 @@ class _ModInstallSelectionDialogState<T>
     final selectedCount = _selected.length;
 
     return AlertDialog(
-      title: Text(widget.title ?? "Install $selectedCount of ${widget.choices.length} mods"),
+      title: Text(
+        widget.title ??
+            "Install $selectedCount of ${widget.choices.length} mods",
+      ),
       content: ConstrainedBox(
         constraints: const BoxConstraints(
           minWidth: 400,
@@ -255,7 +258,9 @@ class _ModInstallSelectionDialogState<T>
                 }
               : null,
           child: Text(
-            "Install $selectedCount mod${selectedCount == 1 ? '' : 's'}",
+            selectedCount == 0
+                ? 'No mods selected'
+                : "Install $selectedCount mod${selectedCount == 1 ? '' : 's'}",
           ),
         ),
       ],
@@ -310,7 +315,13 @@ class _ModInstallSelectionDialogState<T>
               spacing: 4,
               children: [
                 if (choice.existingVariant != null)
-                  ModIcon.fromVariant(choice.existingVariant, size: 16),
+                  Padding(
+                    padding: const .only(right: 8),
+                    child: ModIcon.fromVariant(
+                      choice.existingVariant,
+                      size: 16,
+                    ),
+                  ),
                 Flexible(
                   child: Text(
                     modInfo.nameOrId,
@@ -321,7 +332,8 @@ class _ModInstallSelectionDialogState<T>
             ),
             // Version + game version.
             TextWithIcon(
-              leading: Icon(Icons.info, size: iconSize, color: iconColor),
+              leading: Icon(Icons.numbers, size: iconSize, color: iconColor),
+              leadingPadding: const EdgeInsets.only(right: 8),
               widget: Text.rich(
                 TextSpan(
                   children: [
@@ -330,7 +342,7 @@ class _ModInstallSelectionDialogState<T>
                       style: const TextStyle(fontSize: subtitleSize),
                     ),
                     TextSpan(
-                      text: " • ",
+                      text: "  •  ",
                       style: TextStyle(
                         fontSize: subtitleSize,
                         color: iconColor,
@@ -384,7 +396,7 @@ class _ModInstallSelectionDialogState<T>
               Text(
                 isSelected
                     ? "(existing mod will be replaced)"
-                    : "(already installed${choice.existingVariant!.modInfo.version != null ? ' — v${choice.existingVariant!.modInfo.version}' : ''})",
+                    : "(already installed${choice.existingVariant!.modInfo.version != null ? ': v${choice.existingVariant!.modInfo.version}' : ''})",
                 style: TextStyle(
                   color: TriOSThemeConstants.vanillaWarningColor,
                   fontSize: 12,

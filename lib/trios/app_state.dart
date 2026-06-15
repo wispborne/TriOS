@@ -35,6 +35,7 @@ import 'package:trios/trios/process_detection/win32_process_detector.dart';
 import 'package:trios/trios/process_detection/wmic_process_detector.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/utils/util.dart';
+import 'package:trios/vram_estimator/models/gpu_info.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 
 import '../mod_manager/audit_log.dart';
@@ -78,6 +79,10 @@ class AppState {
       );
 
   static var skipCacheOnNextVersionCheck = false;
+
+  /// Total GPU VRAM (and adapter name), detected once and cached.
+  /// Value is null when VRAM can't be reliably determined.
+  static final gpuInfo = FutureProvider<GPUInfo?>((ref) => getGPUInfo());
 
   static List<Mod> getModsFromVariants(
     List<ModVariant> modVariants,

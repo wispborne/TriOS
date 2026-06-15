@@ -6,6 +6,7 @@
   - Ship Viewer dialog: built-in weapons are now shown on the mount tooltips.
   - May now use some elements of Hegemony & Pride themes on any theme.
   - Optional animated motes on some UI elements. Enable below the Themes dropdown.
+  - VRAM Estimator now shows your PC's total VRAM and how much of it you'll use.
 - Fixed
   - Built-in weapons not showing on ship tooltips.
   - Portrait Replacer.
@@ -16,6 +17,8 @@
   - May now hide the layout toggle button.
   - Mod context menu now always uses the more powerful Category submenu.
   - Refactored mod installation code to support installing multiple mods at once.
+  - Now using base 2 instead of 10 for VRAM/folder sizes (1kb = 1024 instead of 1000).
+    - This is so that your PC's VRAM shows as expected: 24GB instead of 25.7GB on a RTX 3090, for example.
 
 # 1.5.1
 - Added

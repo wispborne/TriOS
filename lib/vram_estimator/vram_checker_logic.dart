@@ -561,7 +561,8 @@ class VramChecker {
       "    Edit 'config.properties' to choose your GraphicsLib settings.",
     );
     try {
-      getGPUInfo()?.also((info) {
+      final info = await getGPUInfo();
+      if (info != null) {
         summaryText.writeln("  System");
         summaryText.writeln(
           info.gpuString?.joinToString(
@@ -570,15 +571,17 @@ class VramChecker {
           ),
         );
 
-        // If expected VRAM after loading game and mods is less than 300 MB, show warning
-        if (info.freeVRAM - (totalBytesOfEnabledMods + vanillaTotal) <
-            300000) {
+        // If expected VRAM after loading game and mods is less than 300 MB, show
+        // warning. Skip when total VRAM is unknown to avoid a bogus warning.
+        final vram = info.freeVRAM;
+        if (vram != null &&
+            vram - (totalBytesOfEnabledMods + vanillaTotal) < 300000) {
           summaryText.writeln();
           summaryText.writeln(
             "WARNING: You may not have enough free VRAM to run your current modlist.",
           );
         }
-      });
+      }
     } catch (it, st) {
       summaryText.writeln();
       summaryText.writeln(

@@ -12,6 +12,7 @@ import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
+import 'package:trios/vram_estimator/vram_usage_estimate.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -421,62 +422,23 @@ _CohortSummary _buildCohort({
   required GraphicsLibConfig? gfxConfig,
   required int vanillaBytes,
 }) {
-  final variants = mods
-      .map((m) => m.findFirstEnabledOrHighestVersion)
-      .nonNulls
-      .toList();
-  final estimates = variants.map((v) => vramMap[v.smolId]).nonNulls.toList();
-
-  final modsBytes = estimates
-      .map((e) => e.imagesNotIncludingGraphicsLib().sum())
-      .sum;
-  final modsImageCount = estimates
-      .map((e) => e.imagesNotIncludingGraphicsLib().length)
-      .sum;
-
-  final preloadAll = gfxConfig?.preloadAllMaps == true;
-  int gfxBytes;
-  int gfxImageCount;
-  bool isApproxGfx;
-  if (preloadAll) {
-    final gfxBytesList = estimates
-        .expand(
-          (mod) => List.generate(
-            mod.images.length,
-            (i) => ModImageView(i, mod.images),
-          ),
-        )
-        .where(
-          (view) =>
-              view.graphicsLibType != null &&
-              view.isUsedBasedOnGraphicsLibConfig(gfxConfig),
-        )
-        .map((view) => view.bytesUsed)
-        .toList();
-    gfxBytes = gfxBytesList.sum();
-    gfxImageCount = gfxBytesList.length;
-    isApproxGfx = false;
-  } else if (gfxConfig != null && gfxConfig.areAnyEffectsEnabled) {
-    // Same heuristic as _vramSummaryOverlayWidget when preloadAllMaps=false.
-    gfxBytes = 200000000;
-    gfxImageCount = 0;
-    isApproxGfx = true;
-  } else {
-    gfxBytes = 0;
-    gfxImageCount = 0;
-    isApproxGfx = false;
-  }
+  final estimate = estimateVramUsageForMods(
+    mods,
+    vramMap,
+    graphicsLibConfig: gfxConfig,
+    vanillaBytes: vanillaBytes,
+  );
 
   return _CohortSummary(
     label: label,
-    totalMods: mods.length,
-    scannedCount: estimates.length,
-    modsBytes: modsBytes.toInt(),
-    modsImageCount: modsImageCount.toInt(),
-    gfxBytes: gfxBytes,
-    gfxImageCount: gfxImageCount,
-    isApproxGfx: isApproxGfx,
-    vanillaBytes: vanillaBytes,
+    totalMods: estimate.totalMods,
+    scannedCount: estimate.scannedCount,
+    modsBytes: estimate.modsBytes,
+    modsImageCount: estimate.modsImageCount,
+    gfxBytes: estimate.gfxBytes,
+    gfxImageCount: estimate.gfxImageCount,
+    isApproxGfx: estimate.isApproxGfx,
+    vanillaBytes: estimate.vanillaBytes,
   );
 }
 

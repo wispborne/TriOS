@@ -226,6 +226,19 @@ class VramModMapper extends ClassMapperBase<VramMod> {
       v.graphicsLibEntries;
   static const Field<VramMod, List<GraphicsLibInfo>> _f$graphicsLibEntries =
       Field('graphicsLibEntries', _$graphicsLibEntries);
+  static ModImageTable? _$unreferencedImages(VramMod v) => v.unreferencedImages;
+  static const Field<VramMod, ModImageTable> _f$unreferencedImages = Field(
+    'unreferencedImages',
+    _$unreferencedImages,
+    opt: true,
+    hook: ModImageTableHook(),
+  );
+  static DateTime? _$scannedAt(VramMod v) => v.scannedAt;
+  static const Field<VramMod, DateTime> _f$scannedAt = Field(
+    'scannedAt',
+    _$scannedAt,
+    opt: true,
+  );
 
   @override
   final MappableFields<VramMod> fields = const {
@@ -233,6 +246,8 @@ class VramModMapper extends ClassMapperBase<VramMod> {
     #isEnabled: _f$isEnabled,
     #images: _f$images,
     #graphicsLibEntries: _f$graphicsLibEntries,
+    #unreferencedImages: _f$unreferencedImages,
+    #scannedAt: _f$scannedAt,
   };
 
   static VramMod _instantiate(DecodingData data) {
@@ -241,6 +256,8 @@ class VramModMapper extends ClassMapperBase<VramMod> {
       data.dec(_f$isEnabled),
       data.dec(_f$images),
       data.dec(_f$graphicsLibEntries),
+      unreferencedImages: data.dec(_f$unreferencedImages),
+      scannedAt: data.dec(_f$scannedAt),
     );
   }
 
@@ -313,6 +330,8 @@ abstract class VramModCopyWith<$R, $In extends VramMod, $Out>
     bool? isEnabled,
     ModImageTable? images,
     List<GraphicsLibInfo>? graphicsLibEntries,
+    ModImageTable? unreferencedImages,
+    DateTime? scannedAt,
   });
   VramModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -347,12 +366,16 @@ class _VramModCopyWithImpl<$R, $Out>
     bool? isEnabled,
     ModImageTable? images,
     Object? graphicsLibEntries = $none,
+    Object? unreferencedImages = $none,
+    Object? scannedAt = $none,
   }) => $apply(
     FieldCopyWithData({
       if (info != null) #info: info,
       if (isEnabled != null) #isEnabled: isEnabled,
       if (images != null) #images: images,
       if (graphicsLibEntries != $none) #graphicsLibEntries: graphicsLibEntries,
+      if (unreferencedImages != $none) #unreferencedImages: unreferencedImages,
+      if (scannedAt != $none) #scannedAt: scannedAt,
     }),
   );
   @override
@@ -361,6 +384,11 @@ class _VramModCopyWithImpl<$R, $Out>
     data.get(#isEnabled, or: $value.isEnabled),
     data.get(#images, or: $value.images),
     data.get(#graphicsLibEntries, or: $value.graphicsLibEntries),
+    unreferencedImages: data.get(
+      #unreferencedImages,
+      or: $value.unreferencedImages,
+    ),
+    scannedAt: data.get(#scannedAt, or: $value.scannedAt),
   );
 
   @override

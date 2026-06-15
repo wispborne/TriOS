@@ -11,8 +11,11 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_trios.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../vmparams/ram_changer.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+
 import '../widgets/disable_if_cannot_write_game_folder.dart';
 
 class GamePerformanceWidget extends ConsumerStatefulWidget {
@@ -113,25 +116,29 @@ class ChangeRamWidget extends ConsumerWidget {
                         child: const Icon(
                           Icons.warning_amber_rounded,
                           size: 24,
-                          color: ThemeManager.vanillaWarningColor,
+                          color: TriOSThemeConstants.vanillaWarningColor,
                         ),
                       ),
-                    StyledText(
-                      text: ramAmount == null
-                          ? "No vmparams file found."
-                          : hasMultipleWithDifferentRam
-                          ? "<b>Warning</b>: Not all vmparams files"
-                                "\nare set to use the same amount of RAM."
-                                "\nPick one RAM option below to set all"
-                                "\nto the same value."
-                          : "Assigned: <b>$ramAmount MB</b> in <b>${ref.watch(vmparamsManagerProvider).value?.detectedVmparamsFiles.length}</b> files",
-                      tags: {
-                        "b": StyledTextTag(
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      },
-                      style: Theme.of(context).textTheme.labelLarge,
+                    MovingTooltipWidget.text(
+                      message:
+                          "vmparams files:\n${ref.watch(vmparamsManagerProvider).value?.detectedVmparamsFiles.joinToString(separator: "\n", transform: (file) => file.nameWithExtension)}",
+                      child: StyledText(
+                        text: ramAmount == null
+                            ? "No vmparams file found."
+                            : hasMultipleWithDifferentRam
+                            ? "<b>Warning</b>: Not all vmparams files"
+                                  "\nare set to use the same amount of RAM."
+                                  "\nPick one RAM option below to set all"
+                                  "\nto the same value."
+                            : "Assigned: <b>$ramAmount MB</b> in <b>${ref.watch(vmparamsManagerProvider).value?.detectedVmparamsFiles.length}</b> files",
+                        tags: {
+                          "b": StyledTextTag(
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        },
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
                     ),
                   ],
                 ),
@@ -185,17 +192,15 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
       });
     }
 
+    final gameSettingsPvdr = ref.watch(gameSettingsProvider);
     return Card(
       child: Padding(
         padding: EdgeInsets.all(16),
-        child: Builder(
-          builder: (context) {
-            final gameSettingsPvdr = ref.watch(gameSettingsProvider);
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Stack(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Stack(
                     children: [
                       Center(
                         child: Text(
@@ -259,7 +264,7 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(
                                     fontStyle: FontStyle.italic,
-                                    color: ThemeManager.vanillaWarningColor,
+                                    color: TriOSThemeConstants.vanillaWarningColor,
                                   ),
                             )
                           : Row(
@@ -324,26 +329,23 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(
                                     fontStyle: FontStyle.italic,
-                                    color: ThemeManager.vanillaWarningColor,
+                                    color: TriOSThemeConstants.vanillaWarningColor,
                                   ),
                             )
                           : MovingTooltipWidget.text(
                               message:
                                   "Vsync reduces screen tearing but introduces a tiny input delay.",
-                              child: Transform.translate(
-                                offset: Offset(0, 0),
-                                child: CheckboxWithLabel(
-                                  label: "Use Vsync",
-                                  value: gameSettings.vsync!,
-                                  labelStyle: Theme.of(
-                                    context,
-                                  ).textTheme.labelLarge,
-                                  onChanged: (value) {
-                                    ref
-                                        .read(gameSettingsProvider.notifier)
-                                        .setVsync(value == true);
-                                  },
-                                ),
+                              child: CheckboxWithLabel(
+                                label: "Use Vsync",
+                                value: gameSettings.vsync!,
+                                labelStyle: Theme.of(
+                                  context,
+                                ).textTheme.labelLarge,
+                                onChanged: (value) {
+                                  ref
+                                      .read(gameSettingsProvider.notifier)
+                                      .setVsync(value == true);
+                                },
                               ),
                             ),
                     ],
@@ -352,12 +354,10 @@ class _ChangeSettingsWidgetState extends ConsumerState<ChangeSettingsWidget> {
                     "Error: $err",
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
-                  loading: () => CircularProgressIndicator(),
+                  loading: () => ThemedCircularProgressIndicator(),
                 ),
               ],
-            );
-          },
-        ),
+            ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 class CheckboxWithLabel extends StatelessWidget {
   final String? label;
@@ -94,7 +95,7 @@ class CheckboxWithLabel extends StatelessWidget {
       hoverColor: showInkwell ? null : Colors.transparent,
       splashColor: showInkwell ? null : Colors.transparent,
       highlightColor: showInkwell ? null : Colors.transparent,
-      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+      borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       child: Padding(
         padding: const EdgeInsets.only(right: 7),
         child: Row(

@@ -12,6 +12,27 @@ import '../../models/version.dart';
 
 part 'vram_checker_models.mapper.dart';
 
+/// Rounds up to the next power of two, matching the game's algorithm
+/// (`byte var2 = 2; while(var2 < var1) var2 *= 2`). Minimum result is 2.
+int nextPowerOfTwo(int dim) {
+  if (dim <= 2) return 2;
+  return (dim - 1).highestOneBit() * 2;
+}
+
+/// Exact sum of all mipmap levels in bytes (4 bytes/pixel).
+int mipmapChainBytes(int width, int height) {
+  int total = 0;
+  int w = width;
+  int h = height;
+  while (true) {
+    total += w * h * 4;
+    if (w == 1 && h == 1) break;
+    if (w > 1) w ~/= 2;
+    if (h > 1) h ~/= 2;
+  }
+  return total;
+}
+
 /// Represents the type of an image asset.
 @MappableEnum()
 enum ImageType { texture, background, unused }
@@ -29,6 +50,16 @@ class ModImageTable {
   final List<ImageType> imageTypes;
   final List<MapType?> graphicsLibTypes;
 
+  /// Per-row list of parser ids that referenced the file. Null entries are
+  /// normal — folder-scan assets don't have attribution, and (in reference
+  /// mode) the unreferenced bucket has no referrers by definition.
+  final List<List<String>?> referencedBys;
+
+  /// Per-row vanilla replacement cost in bytes. When a mod image replaces a
+  /// vanilla asset at the same relative path, this holds the vanilla image's
+  /// bytesUsed so the aggregation can subtract it. 0 for non-replacements.
+  final List<int> vanillaReplacementCosts;
+
   ModImageTable._(
     this.filePaths,
     this.textureHeights,
@@ -36,6 +67,8 @@ class ModImageTable {
     this.bitsInAllChannelsSums,
     this.imageTypes,
     this.graphicsLibTypes,
+    this.referencedBys,
+    this.vanillaReplacementCosts,
   );
 
   /// Constructs a [ModImageTable] from a list of maps (typically parsed from JSON).
@@ -51,6 +84,8 @@ class ModImageTable {
       growable: false,
     );
     final gfxTypes = List<MapType?>.filled(length, null, growable: false);
+    final refBys = List<List<String>?>.filled(length, null, growable: false);
+    final vanillaCosts = List<int>.filled(length, 0, growable: false);
 
     for (int i = 0; i < length; i++) {
       final row = rows[i];
@@ -75,12 +110,33 @@ class ModImageTable {
           (m) => m.name == gfxTypeStr,
         );
       }
+
+      // Optional per-row attribution (parser ids that referenced this file).
+      final refByRaw = row['referencedBy'];
+      if (refByRaw is List && refByRaw.isNotEmpty) {
+        refBys[i] = List<String>.unmodifiable(refByRaw.cast<String>());
+      }
+
+      vanillaCosts[i] = (row['vanillaReplacementCost'] as int?) ?? 0;
     }
 
-    return ModImageTable._(filePaths, heights, widths, bits, types, gfxTypes);
+    return ModImageTable._(
+      filePaths,
+      heights,
+      widths,
+      bits,
+      types,
+      gfxTypes,
+      refBys,
+      vanillaCosts,
+    );
   }
 
   /// Converts the columnar data back into a list of maps for JSON serialization.
+  ///
+  /// Kept for tests and any other consumer that wants the row shape; the
+  /// serialization hook now uses [toColumnar] to avoid repeating the
+  /// field-name keys for every image.
   List<Map<String, dynamic>> toRows() {
     final rows = <Map<String, dynamic>>[];
     for (int i = 0; i < filePaths.length; i++) {
@@ -91,9 +147,99 @@ class ModImageTable {
         'bitsInAllChannelsSum': bitsInAllChannelsSums[i],
         'imageType': imageTypes[i].name,
         'graphicsLibType': graphicsLibTypes[i]?.name,
+        if (referencedBys[i] != null) 'referencedBy': referencedBys[i],
+        if (vanillaReplacementCosts[i] != 0)
+          'vanillaReplacementCost': vanillaReplacementCosts[i],
       });
     }
     return rows;
+  }
+
+  /// Serializes this table as parallel arrays — one key per column instead
+  /// of one map per row. Shrinks the cache dramatically on image-heavy
+  /// mods because neither msgpack nor JSON dedupes repeated map keys.
+  Map<String, dynamic> toColumnar() {
+    final allRefsNull = referencedBys.every((r) => r == null);
+    final allVanillaZero = vanillaReplacementCosts.every((c) => c == 0);
+    return {
+      'filePaths': filePaths,
+      'textureHeights': textureHeights,
+      'textureWidths': textureWidths,
+      'bitsInAllChannelsSums': bitsInAllChannelsSums,
+      'imageTypes': [for (final t in imageTypes) t.name],
+      'graphicsLibTypes': [for (final t in graphicsLibTypes) t?.name],
+      if (!allRefsNull) 'referencedBys': referencedBys,
+      if (!allVanillaZero) 'vanillaReplacementCosts': vanillaReplacementCosts,
+    };
+  }
+
+  /// Inverse of [toColumnar].
+  factory ModImageTable.fromColumnar(Map<String, dynamic> data) {
+    final filePathsRaw = data['filePaths'] as List;
+    final length = filePathsRaw.length;
+
+    final filePaths = List<String>.from(
+      filePathsRaw.cast<String>(),
+      growable: false,
+    );
+    final heights = List<int>.from(
+      (data['textureHeights'] as List).cast<int>(),
+      growable: false,
+    );
+    final widths = List<int>.from(
+      (data['textureWidths'] as List).cast<int>(),
+      growable: false,
+    );
+    final bits = List<int>.from(
+      (data['bitsInAllChannelsSums'] as List).cast<int>(),
+      growable: false,
+    );
+
+    final imageTypeNames = (data['imageTypes'] as List);
+    final types = List<ImageType>.generate(length, (i) {
+      final s = imageTypeNames[i] as String?;
+      if (s == null) return ImageType.texture;
+      return ImageType.values.firstWhere(
+        (e) => e.name == s,
+        orElse: () => ImageType.texture,
+      );
+    }, growable: false);
+
+    final gfxTypeNames = (data['graphicsLibTypes'] as List);
+    final gfxTypes = List<MapType?>.generate(length, (i) {
+      final s = gfxTypeNames[i] as String?;
+      if (s == null) return null;
+      return MapType.values.firstWhereOrNull((m) => m.name == s);
+    }, growable: false);
+
+    // `referencedBys` is optional on disk — absent means "no attribution".
+    final refBysRaw = data['referencedBys'];
+    final refBys = List<List<String>?>.generate(length, (i) {
+      if (refBysRaw is! List) return null;
+      final raw = refBysRaw[i];
+      if (raw is List && raw.isNotEmpty) {
+        return List<String>.unmodifiable(raw.cast<String>());
+      }
+      return null;
+    }, growable: false);
+
+    // Optional — old caches without this column default to 0.
+    final vanillaCostsRaw = data['vanillaReplacementCosts'];
+    final vanillaCosts = List<int>.generate(length, (i) {
+      if (vanillaCostsRaw is! List) return 0;
+      return (vanillaCostsRaw[i] as int?) ?? 0;
+    }, growable: false);
+
+    return ModImageTable._(
+      filePaths,
+      heights,
+      widths,
+      bits,
+      types,
+      gfxTypes,
+      refBys,
+      vanillaCosts,
+    );
   }
 
   List<ModImageView> toImageViews() =>
@@ -122,27 +268,39 @@ class ModImageView {
 
   MapType? get graphicsLibType => table.graphicsLibTypes[index];
 
+  /// Parser ids that referenced this image (reference mode, with
+  /// attribution tracking). Null for folder-scan rows and unreferenced-
+  /// bucket rows.
+  List<String>? get referencedBy => table.referencedBys[index];
+
+  /// Vanilla asset bytes at this image's relative path, or 0 if this image
+  /// does not replace a vanilla asset.
+  int get vanillaReplacementCost => table.vanillaReplacementCosts[index];
+
   File get file => File(filePath);
 
-  /// Returns the memory multiplier (125% for mipmaps; 100% for backgrounds).
-  double get multiplier =>
-      (imageType == ImageType.background) ? 1.0 : (4.0 / 3.0);
+  /// Whether the GPU generates mipmaps for this texture (both POT dims <= 1024).
+  bool get hasMipmaps => textureWidth <= 1024 && textureHeight <= 1024;
 
   /// Computes the memory usage (in bytes) of the image.
   int get bytesUsed {
     const vanillaBackgroundTextSizeInBytes = 12582912.0;
+    final totalBytes = hasMipmaps
+        ? mipmapChainBytes(textureWidth, textureHeight)
+        : textureWidth * textureHeight * 4;
     final rawSize =
-        (textureHeight *
-            textureWidth *
-            (bitsInAllChannelsSum / 8) *
-            multiplier) -
+        totalBytes -
         ((imageType == ImageType.background)
             ? vanillaBackgroundTextSizeInBytes
             : 0.0);
-    return rawSize.ceil();
+    return rawSize.ceil().coerceAtLeast(0);
   }
 
   /// Determines if the image is used based on the provided graphics library configuration.
+  ///
+  /// `preloadAllMaps` must be true for maps to count toward VRAM. When
+  /// false, GraphicsLib streams maps in and out dynamically, so they do
+  /// not contribute meaningfully to steady-state VRAM usage.
   bool isUsedBasedOnGraphicsLibConfig(GraphicsLibConfig? cfg) {
     if (cfg == null) {
       return graphicsLibType == null;
@@ -166,12 +324,19 @@ class ModImageView {
   }
 }
 
-/// A custom mapping hook for converting between a [ModImageTable] and its JSON representation.
+/// A custom mapping hook for converting between a [ModImageTable] and its
+/// serialized representation. Encoding emits the columnar form; decoding
+/// accepts either columnar (current) or the legacy list-of-rows shape so
+/// older caches still load.
 class ModImageTableHook extends MappingHook {
   const ModImageTableHook();
 
   @override
   dynamic beforeDecode(dynamic value) {
+    if (value == null) return null;
+    if (value is Map) {
+      return ModImageTable.fromColumnar(value.cast<String, dynamic>());
+    }
     if (value is List) {
       return ModImageTable.fromRows(value.cast<Map<String, dynamic>>());
     }
@@ -180,8 +345,9 @@ class ModImageTableHook extends MappingHook {
 
   @override
   dynamic beforeEncode(dynamic value) {
+    if (value == null) return null;
     if (value is ModImageTable) {
-      return value.toRows();
+      return value.toColumnar();
     }
     throw Exception('ModImageTableHook: Invalid type: $value');
   }
@@ -216,11 +382,31 @@ class VramMod with VramModMappable {
   @MappableField(hook: ModImageTableHook())
   final ModImageTable images;
 
-  VramMod(this.info, this.isEnabled, this.images, this.graphicsLibEntries);
+  /// Images the selector saw but did not count. Populated only by
+  /// reference-based selectors; always null for folder-scan output and for
+  /// reference-mode scans where `suppressUnreferenced` is enabled.
+  /// Advisory — never summed into headline totals.
+  @MappableField(hook: ModImageTableHook())
+  final ModImageTable? unreferencedImages;
+
+  /// When this mod was last scanned. Null for entries loaded from a
+  /// pre-`scannedAt` cache.
+  final DateTime? scannedAt;
+
+  VramMod(
+    this.info,
+    this.isEnabled,
+    this.images,
+    this.graphicsLibEntries, {
+    this.unreferencedImages,
+    this.scannedAt,
+  });
 
   ModImageView getModViewForIndex(int index) => ModImageView(index, images);
 
   List<int>? _cache;
+  int? _sumCache;
+  List<ModImageView>? _imagesSortedByBytesDesc;
 
   /// Each value is the usage by one of the images.GraphicsLib() {
   List<int> imagesNotIncludingGraphicsLib() {
@@ -237,5 +423,40 @@ class VramMod with VramModMappable {
     return _cache!;
   }
 
-  int bytesNotIncludingGraphicsLib() => imagesNotIncludingGraphicsLib().sum();
+  // Sort keys in the VRAM page call this O(N log N) times per rebuild;
+  // without this cache it was ~44% of CPU during a scan.
+  int bytesNotIncludingGraphicsLib() =>
+      _sumCache ??= imagesNotIncludingGraphicsLib().sum();
+
+  /// Top images by `bytesUsed`, filtered by [config] and capped at [take].
+  /// The full sort over all images is cached on the [VramMod] instance —
+  /// repeated calls (e.g. tooltip rebuilds while scrolling) only redo the
+  /// O(N) filter + take.
+  List<ModImageView> topImagesByBytesUsed(
+    GraphicsLibConfig? config, {
+    int take = 10,
+  }) {
+    final sorted = _imagesSortedByBytesDesc ??= List.generate(
+      images.length,
+      getModViewForIndex,
+    ).sortedByDescending<num>((image) => image.bytesUsed);
+    return sorted
+        .where((view) => view.isUsedBasedOnGraphicsLibConfig(config))
+        .take(take)
+        .toList();
+  }
+
+  /// Sum of bytes for the unreferenced bucket, excluding GraphicsLib-tagged
+  /// images (same rule as [bytesNotIncludingGraphicsLib]). Returns 0 when
+  /// [unreferencedImages] is null (folder-scan mode) or empty.
+  int unreferencedBytesNotIncludingGraphicsLib() {
+    final table = unreferencedImages;
+    if (table == null || table.length == 0) return 0;
+    var sum = 0;
+    for (int i = 0; i < table.length; i++) {
+      final view = ModImageView(i, table);
+      if (view.graphicsLibType == null) sum += view.bytesUsed;
+    }
+    return sum;
+  }
 }

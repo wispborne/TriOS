@@ -6,6 +6,8 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 
 import '../mod_manager/version_checker.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+
 import '../models/version_checker_info.dart';
 
 class Changelogs extends ConsumerStatefulWidget {
@@ -13,6 +15,7 @@ class Changelogs extends ConsumerStatefulWidget {
   final VersionCheckerInfo? localVersionCheck;
   final RemoteVersionCheckResult? remoteVersionCheck;
   final bool withTitle;
+  final bool showVersionChips;
 
   const Changelogs(
     this.mod,
@@ -20,6 +23,7 @@ class Changelogs extends ConsumerStatefulWidget {
     this.remoteVersionCheck, {
     super.key,
     this.withTitle = true,
+    this.showVersionChips = true,
   });
 
   @override
@@ -29,6 +33,7 @@ class Changelogs extends ConsumerStatefulWidget {
 class _ChangelogsState extends ConsumerState<Changelogs> {
   ModChangelog? modChangelog;
   bool isLoading = false;
+  String? _selectedVersion;
 
   @override
   void initState() {
@@ -71,6 +76,7 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
               decoration: TextDecoration.underline,
             ),
           ),
+        if (!isLoading && widget.showVersionChips) _buildVersionChips(context),
         Expanded(
           child: !isLoading
               ? Builder(
@@ -79,7 +85,13 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
 
                     if (modChangelog?.parsedVersions.isNotNullOrEmpty() ==
                         true) {
-                      final versions = modChangelog!.parsedVersions!;
+                      var versions = modChangelog!.parsedVersions!;
+                      if (_selectedVersion != null) {
+                        final idx = versions.indexWhere(
+                          (v) => v.version.toString() == _selectedVersion,
+                        );
+                        if (idx >= 0) versions = versions.sublist(idx);
+                      }
                       for (final version in versions) {
                         textSpans.add(
                           buildVersionText(version.version.toString(), context),
@@ -89,7 +101,17 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
                         );
                       }
                     } else {
-                      final lines = modChangelog?.changelog.split('\n') ?? [];
+                      var lines = modChangelog?.changelog.split('\n') ?? [];
+                      if (_selectedVersion != null) {
+                        final idx = lines.indexWhere(
+                          (line) =>
+                              line.trimLeft().toLowerCase().startsWith(
+                                'version',
+                              ) &&
+                              line.contains(_selectedVersion!),
+                        );
+                        if (idx >= 0) lines = lines.sublist(idx);
+                      }
                       textSpans = lines.map((line) {
                         if (line.trimLeft().toLowerCase().startsWith(
                           'version',
@@ -104,9 +126,56 @@ class _ChangelogsState extends ConsumerState<Changelogs> {
                     return SelectableText.rich(TextSpan(children: textSpans));
                   },
                 )
-              : const Center(child: CircularProgressIndicator()),
+              : Center(child: ThemedCircularProgressIndicator()),
         ),
       ],
+    );
+  }
+
+  Widget _buildVersionChips(BuildContext context) {
+    final List<String> versionLabels;
+
+    if (modChangelog?.parsedVersions.isNotNullOrEmpty() == true) {
+      versionLabels =
+          modChangelog!.parsedVersions!
+              .map((v) => v.version.toString())
+              .toList();
+    } else {
+      final lines = modChangelog?.changelog.split('\n') ?? [];
+      versionLabels =
+          lines
+              .where(
+                (line) => line.trimLeft().toLowerCase().startsWith('version'),
+              )
+              .map((line) => line.trim())
+              .toList();
+    }
+
+    if (versionLabels.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 40,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          spacing: 8,
+          children: [
+            for (final version in versionLabels)
+              ActionChip(
+                label: Text(version),
+                backgroundColor: _selectedVersion == version
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : null,
+                onPressed: () {
+                  setState(() {
+                    _selectedVersion =
+                        _selectedVersion == version ? null : version;
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 

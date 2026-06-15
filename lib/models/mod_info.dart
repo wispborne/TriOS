@@ -63,7 +63,7 @@ class ModInfo with ModInfoMappable {
   String get formattedNameVersion =>
       "$nameOrId${version != null ? " $version" : ""}";
 
-  List<ModType> get modTypes => [
+  late final List<ModType> modTypes = [
     if (isUtility) ModType.utility,
     if (isTotalConversion) ModType.totalConversion,
   ];

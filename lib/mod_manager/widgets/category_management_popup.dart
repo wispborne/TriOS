@@ -9,7 +9,7 @@ import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/mod_tag_manager/category_store.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 /// Shows a popup for bulk management of all categories.
 /// Supports drag-to-reorder, inline rename, inline color/icon pickers,
@@ -74,7 +74,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
 
   void _initNewCatColor() {
     final store = widget.ref.read(categoryManagerProvider).value;
-    if (store != null && store.autoColorNewCategories) {
+    if (store != null) {
       _newCatColor = pickAutoColor(store.categories);
     }
   }
@@ -109,7 +109,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
       clipBehavior: Clip.antiAlias,
       insetPadding: const .symmetric(horizontal: 48, vertical: 32),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -154,7 +154,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
                           return Material(
                             elevation: 4,
                             borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
+                              TriOSThemeConstants.cornerRadius,
                             ),
                             child: child,
                           );
@@ -254,17 +254,20 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
               ),
 
               // Color circle.
-              _ColorCircle(
-                color: category.color,
-                isSelected: _expandedColorCategoryId == category.id,
-                onTap: () => setState(() {
-                  if (_expandedColorCategoryId == category.id) {
-                    _expandedColorCategoryId = null;
-                  } else {
-                    _collapseAllPickers();
-                    _expandedColorCategoryId = category.id;
-                  }
-                }),
+              Padding(
+                padding: const .only(left: 4),
+                child: _ColorCircle(
+                  color: category.color,
+                  isSelected: _expandedColorCategoryId == category.id,
+                  onTap: () => setState(() {
+                    if (_expandedColorCategoryId == category.id) {
+                      _expandedColorCategoryId = null;
+                    } else {
+                      _collapseAllPickers();
+                      _expandedColorCategoryId = category.id;
+                    }
+                  }),
+                ),
               ),
 
               // Icon indicator.
@@ -323,7 +326,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
+                              TriOSThemeConstants.cornerRadius,
                             ),
                           ),
                         ),
@@ -422,17 +425,14 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Cancel'),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-              foregroundColor: Theme.of(ctx).colorScheme.onError,
-            ),
+          FilledButton.icon(
+            icon: const Icon(Icons.delete),
             onPressed: () {
               _notifier.deleteCategory(category.id);
               Navigator.of(ctx).pop();
               setState(() {});
             },
-            child: const Text('Delete'),
+            label: const Text('Delete'),
           ),
         ],
       ),
@@ -461,7 +461,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
             spacing: 8,
             children: [
               // Spacer matching drag-handle width.
-              const SizedBox(width: 20),
+              const SizedBox(width: 24),
 
               // Color circle for new category.
               _ColorCircle(
@@ -500,14 +500,14 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
                   style: theme.textTheme.bodyMedium,
                   decoration: InputDecoration(
                     isDense: true,
-                    hintText: 'New category...',
+                    hintText: 'Add category...',
                     contentPadding: const .symmetric(
                       horizontal: 8,
                       vertical: 6,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
+                        TriOSThemeConstants.cornerRadius,
                       ),
                     ),
                   ),
@@ -587,9 +587,7 @@ class _CategoryManagementPopupState extends State<_CategoryManagementPopup> {
       _newCatIcon = null;
       _showNewCatColorPicker = false;
       _showNewCatIconPicker = false;
-      _newCatColor = (store?.autoColorNewCategories ?? false)
-          ? pickAutoColor(_notifier.getAllCategories())
-          : null;
+      _newCatColor = pickAutoColor(_notifier.getAllCategories());
     });
   }
 
@@ -637,8 +635,8 @@ class _ColorCircle extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Container(
-          width: 20,
-          height: 20,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
             color: color ?? Colors.transparent,
             shape: BoxShape.circle,
@@ -675,14 +673,14 @@ class _IconIndicator extends StatelessWidget {
     return Tooltip(
       message: 'Change icon',
       child: InkWell(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         onTap: onTap,
         child: Container(
-          width: 20,
-          height: 20,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
             color: isSelected ? colorScheme.surfaceContainer : null,
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+            borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
             border: Border.all(
               color: colorScheme.outlineVariant,
               width: isSelected ? 0 : 1,
@@ -690,7 +688,7 @@ class _IconIndicator extends StatelessWidget {
           ),
           child: Center(
             child:
-                icon?.toWidget(size: 18, color: color) ??
+                icon?.toWidget(size: 20, color: color) ??
                 Icon(
                   placeholderIcon,
                   size: 16,
@@ -722,7 +720,7 @@ class _SmallIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: 20),
       iconSize: 18,
       tooltip: tooltip,
       color: color,
@@ -856,7 +854,7 @@ class _InlineColorPicker extends StatelessWidget {
             runSpacing: 8,
             children: [
               _StrikethroughCircle(
-                size: 20,
+                size: 24,
                 iconColor: selectedColor,
                 isSelected: selectedColor == null,
                 onTap: onClear,
@@ -866,8 +864,8 @@ class _InlineColorPicker extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   onTap: () => onColorSelected(color),
                   child: Container(
-                    width: 20,
-                    height: 20,
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
                       color: color,
                       shape: BoxShape.circle,
@@ -923,7 +921,7 @@ class _InlineIconPicker extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(
-                    ThemeManager.cornerRadius,
+                    TriOSThemeConstants.cornerRadius,
                   ),
                   border: currentIcon == null
                       ? Border.all(color: iconColor, width: 2)
@@ -931,7 +929,7 @@ class _InlineIconPicker extends StatelessWidget {
                 ),
                 child: Center(
                   child: _StrikethroughCircle(
-                    size: 20,
+                    size: 24,
                     iconColor: iconColor,
                     isSelected: currentIcon == null,
                     onTap: onClear,
@@ -962,15 +960,15 @@ class _InlineIconPicker extends StatelessWidget {
     CategoryIcon icon,
     ThemeData theme,
   ) {
-    final isSelected = _isIconSelected(icon);
+    final isSelected = currentIcon == icon;
     return InkWell(
-      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+      borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       onTap: () => onIconSelected(icon),
       child: Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           border: isSelected
               ? Border.all(color: iconColor, width: 2)
               : Border.all(color: theme.colorScheme.outlineVariant),
@@ -978,15 +976,5 @@ class _InlineIconPicker extends StatelessWidget {
         child: Center(child: icon.toWidget(size: 20, color: iconColor)),
       ),
     );
-  }
-
-  bool _isIconSelected(CategoryIcon icon) {
-    if (currentIcon == null) return false;
-    return switch ((currentIcon!, icon)) {
-      (MaterialCategoryIcon a, MaterialCategoryIcon b) =>
-        a.codePoint == b.codePoint,
-      (SvgCategoryIcon a, SvgCategoryIcon b) => a.assetPath == b.assetPath,
-      _ => false,
-    };
   }
 }

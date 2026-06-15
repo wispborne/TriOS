@@ -17,6 +17,7 @@ import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_context_menu.dart';
@@ -24,7 +25,7 @@ import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
-import '../utils/search.dart';
+import '../utils/mod_search.dart';
 import '../widgets/add_new_mods_button.dart';
 import '../widgets/refresh_mods_button.dart';
 import 'mod_list_basic_entry.dart';
@@ -687,11 +688,11 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                   ],
                 );
               },
-              loading: () => const Center(
+              loading: () => Center(
                 child: SizedBox(
                   width: 48,
                   height: 48,
-                  child: CircularProgressIndicator(),
+                  child: ThemedCircularProgressIndicator(),
                 ),
               ),
               error: (error, stackTrace) => Text('Error: $error'),

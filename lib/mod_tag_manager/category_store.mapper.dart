@@ -41,27 +41,17 @@ class CategoryStoreMapper extends ClassMapperBase<CategoryStore> {
     opt: true,
     def: const {},
   );
-  static bool _$autoColorNewCategories(CategoryStore v) =>
-      v.autoColorNewCategories;
-  static const Field<CategoryStore, bool> _f$autoColorNewCategories = Field(
-    'autoColorNewCategories',
-    _$autoColorNewCategories,
-    opt: true,
-    def: true,
-  );
 
   @override
   final MappableFields<CategoryStore> fields = const {
     #categories: _f$categories,
     #modAssignments: _f$modAssignments,
-    #autoColorNewCategories: _f$autoColorNewCategories,
   };
 
   static CategoryStore _instantiate(DecodingData data) {
     return CategoryStore(
       categories: data.dec(_f$categories),
       modAssignments: data.dec(_f$modAssignments),
-      autoColorNewCategories: data.dec(_f$autoColorNewCategories),
     );
   }
 
@@ -139,7 +129,6 @@ abstract class CategoryStoreCopyWith<$R, $In extends CategoryStore, $Out>
   $R call({
     List<Category>? categories,
     Map<String, List<ModCategoryAssignment>>? modAssignments,
-    bool? autoColorNewCategories,
   });
   CategoryStoreCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -175,23 +164,16 @@ class _CategoryStoreCopyWithImpl<$R, $Out>
   $R call({
     List<Category>? categories,
     Map<String, List<ModCategoryAssignment>>? modAssignments,
-    bool? autoColorNewCategories,
   }) => $apply(
     FieldCopyWithData({
       if (categories != null) #categories: categories,
       if (modAssignments != null) #modAssignments: modAssignments,
-      if (autoColorNewCategories != null)
-        #autoColorNewCategories: autoColorNewCategories,
     }),
   );
   @override
   CategoryStore $make(CopyWithData data) => CategoryStore(
     categories: data.get(#categories, or: $value.categories),
     modAssignments: data.get(#modAssignments, or: $value.modAssignments),
-    autoColorNewCategories: data.get(
-      #autoColorNewCategories,
-      or: $value.autoColorNewCategories,
-    ),
   );
 
   @override

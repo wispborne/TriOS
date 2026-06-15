@@ -205,10 +205,13 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       folders.add(modsFolder);
     }
 
+    final sb = StringBuffer();
+    final sbe = StringBuffer();
+
     for (final modFolder in folders) {
       try {
-        var progressText = StringBuffer();
-        var modInfo = await getModInfo(modFolder, progressText);
+        final progressText = StringBuffer();
+        final modInfo = await getModInfo(modFolder, progressText);
         if (modInfo == null) {
           continue;
         }
@@ -225,15 +228,21 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
           gameCoreFolder: gameCoreFolder,
         );
 
-        Fimber.d("Found mod ${modVariant.smolId} in folder ${modFolder.name}");
+
+        sb.write("Found mod ${modVariant.smolId} in folder ${modFolder.name}\n");
 
         // Screenshot mode
         // if (modVariant.modInfo.isCompatibleWithGame("0.97a-RC10") == GameCompatibility.compatible || (Random().nextBool() && Random().nextBool())) {
         mods.add(modVariant);
         // }
       } catch (e, st) {
-        Fimber.w("Unable to read mod in ${modFolder.absolute}. ($e)\n$st");
+        sbe.write("Unable to read mod in ${modFolder.absolute}. ($e)\n$st\n");
       }
+    }
+
+    Fimber.d(sb.toString());
+    if (sbe.isNotEmpty) {
+      Fimber.w(sbe.toString());
     }
 
     return mods.whereType<ModVariant>().toList();

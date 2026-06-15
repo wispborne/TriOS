@@ -2,10 +2,19 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
+import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
+
+/// Dark background color used for image/blueprint preview tooltip cards.
+const kDarkTooltipBackground = Color.from(
+  red: 0.05,
+  green: 0.05,
+  blue: 0.05,
+  alpha: 1,
+);
 
 enum TooltipPosition { topLeft, topRight, bottomLeft, bottomRight }
 
@@ -130,6 +139,9 @@ class _TooltipRenderBox extends RenderShiftedBox {
         break;
     }
 
+    if (left.isNaN) left = _windowEdgePadding;
+    if (top.isNaN) top = _windowEdgePadding;
+
     final childParentData = child?.parentData as BoxParentData?;
     if (childParentData != null) {
       childParentData.offset = Offset(left, top);
@@ -140,7 +152,9 @@ class _TooltipRenderBox extends RenderShiftedBox {
   void paint(PaintingContext context, Offset offset) {
     if (child != null) {
       final childParentData = child!.parentData as BoxParentData;
-      context.paintChild(child!, childParentData.offset + offset);
+      final resolved = childParentData.offset + offset;
+      if (resolved.dx.isNaN || resolved.dy.isNaN) return;
+      context.paintChild(child!, resolved);
     }
   }
 }
@@ -190,7 +204,13 @@ enum TooltipWarningLevel { none, warning, error }
 
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
-  final Widget tooltipWidget;
+  final Widget? tooltipWidget;
+
+  /// Builder variant of [tooltipWidget]. When provided, the tooltip widget is
+  /// only constructed on hover, not during the parent's build. Use this for
+  /// expensive tooltip content to avoid paying the cost on every parent
+  /// rebuild (e.g. while scrolling lists).
+  final WidgetBuilder? tooltipWidgetBuilder;
   final double windowEdgePadding;
   final Size offset;
   final TooltipPosition position;
@@ -198,11 +218,15 @@ class MovingTooltipWidget extends StatefulWidget {
   const MovingTooltipWidget({
     super.key,
     required this.child,
-    required this.tooltipWidget,
+    this.tooltipWidget,
+    this.tooltipWidgetBuilder,
     this.windowEdgePadding = 10.0,
     this.offset = const Size(5, 5),
     this.position = TooltipPosition.bottomRight,
-  });
+  }) : assert(
+         (tooltipWidget == null) != (tooltipWidgetBuilder == null),
+         'Exactly one of tooltipWidget or tooltipWidgetBuilder must be provided',
+       );
 
   static Widget text({
     Key? key,
@@ -214,10 +238,25 @@ class MovingTooltipWidget extends StatefulWidget {
     double windowEdgePadding = 10.0,
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
+    double? maxWidth,
   }) {
     return message.isNotNullOrBlank
         ? Builder(
             builder: (context) {
+              final text = Text(
+                message!,
+                style: (textStyle ?? Theme.of(context).textTheme.bodySmall)
+                    ?.copyWith(
+                      color: switch (warningLevel) {
+                        null => textStyle?.color,
+                        TooltipWarningLevel.none => null,
+                        TooltipWarningLevel.warning =>
+                          TriOSThemeConstants.vanillaWarningColor,
+                        TooltipWarningLevel.error =>
+                          TriOSThemeConstants.vanillaErrorColor,
+                      },
+                    ),
+              );
               return MovingTooltipWidget(
                 key: key,
                 tooltipWidget: TooltipFrame(
@@ -229,20 +268,12 @@ class MovingTooltipWidget extends StatefulWidget {
                       context,
                     ).colorScheme.onSecondaryContainer.withOpacity(0.5),
                   },
-                  child: Text(
-                    message!,
-                    style: (textStyle ?? Theme.of(context).textTheme.bodySmall)
-                        ?.copyWith(
-                          color: switch (warningLevel) {
-                            null => textStyle?.color,
-                            TooltipWarningLevel.none => null,
-                            TooltipWarningLevel.warning =>
-                              ThemeManager.vanillaWarningColor,
-                            TooltipWarningLevel.error =>
-                              ThemeManager.vanillaErrorColor,
-                          },
-                        ),
-                  ),
+                  child: maxWidth != null
+                      ? ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxWidth),
+                          child: text,
+                        )
+                      : text,
                 ),
                 windowEdgePadding: windowEdgePadding,
                 offset: offset,
@@ -256,6 +287,46 @@ class MovingTooltipWidget extends StatefulWidget {
 
   static Widget framed({
     Key? key,
+    Widget? tooltipWidget,
+    WidgetBuilder? tooltipWidgetBuilder,
+    TooltipWarningLevel? warningLevel,
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(8),
+    double windowEdgePadding = 10.0,
+    Size offset = const Size(5, 5),
+    TooltipPosition position = TooltipPosition.bottomRight,
+  }) {
+    if (tooltipWidget == null && tooltipWidgetBuilder == null) return child;
+    return Builder(
+      builder: (context) {
+        Widget frame(Widget content) => TooltipFrame(
+          padding: padding,
+          borderColor: switch (warningLevel) {
+            null || TooltipWarningLevel.none => null,
+            TooltipWarningLevel.warning ||
+            TooltipWarningLevel.error => Theme.of(
+              context,
+            ).colorScheme.onSecondaryContainer.withOpacity(0.5),
+          },
+          child: content,
+        );
+        return MovingTooltipWidget(
+          key: key,
+          tooltipWidget: tooltipWidget == null ? null : frame(tooltipWidget),
+          tooltipWidgetBuilder: tooltipWidgetBuilder == null
+              ? null
+              : (ctx) => frame(tooltipWidgetBuilder(ctx)),
+          windowEdgePadding: windowEdgePadding,
+          offset: offset,
+          position: position,
+          child: child,
+        );
+      },
+    );
+  }
+
+  static Widget starsector({
+    Key? key,
     required Widget? tooltipWidget,
     TooltipWarningLevel? warningLevel,
     required Widget child,
@@ -267,18 +338,37 @@ class MovingTooltipWidget extends StatefulWidget {
     if (tooltipWidget == null) return child;
     return Builder(
       builder: (context) {
+        final theme = Theme.of(context);
         return MovingTooltipWidget(
           key: key,
           tooltipWidget: TooltipFrame(
             padding: padding,
             borderColor: switch (warningLevel) {
-              null || TooltipWarningLevel.none => null,
-              TooltipWarningLevel.warning ||
-              TooltipWarningLevel.error => Theme.of(
-                context,
-              ).colorScheme.onSecondaryContainer.withOpacity(0.5),
+              null || TooltipWarningLevel.none =>
+                context.theme.colorScheme.secondary.withAlpha(150),
+              TooltipWarningLevel.warning || TooltipWarningLevel.error =>
+                theme.colorScheme.onSecondaryContainer.withOpacity(0.5),
             },
-            child: tooltipWidget,
+            backgroundColor: theme.colorScheme.surfaceContainerLowest.withAlpha(
+              230,
+            ),
+            child: Theme(
+              data: theme.copyWith(
+                textTheme: theme.textTheme.copyWith(
+                  bodyMedium: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.brightness == .dark
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onInverseSurface,
+                  ),
+                  bodySmall: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.brightness == .dark
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onInverseSurface,
+                  ),
+                ),
+              ),
+              child: tooltipWidget,
+            ),
           ),
           windowEdgePadding: windowEdgePadding,
           offset: offset,
@@ -293,17 +383,29 @@ class MovingTooltipWidget extends StatefulWidget {
     Key? key,
     double padding = 16,
     Color? backgroundColor,
+    bool showPathAsLabel = true,
     required String path,
     required Widget child,
   }) {
+    final file = path.toFile();
+    if (!file.existsSync()) return child;
     return MovingTooltipWidget(
       tooltipWidget: Card(
-        color:
-            backgroundColor ??
-            Color.from(red: 0.05, green: 0.05, blue: 0.05, alpha: 1),
+        color: backgroundColor ?? kDarkTooltipBackground,
         child: Padding(
           padding: EdgeInsets.all(padding),
-          child: Image.file(path.toFile(), fit: BoxFit.contain),
+          child: Column(
+            crossAxisAlignment: .start,
+            mainAxisSize: .min,
+            children: [
+              Image.file(file, fit: BoxFit.contain),
+              if (showPathAsLabel)
+                Text(
+                  file.nameWithExtension,
+                  style: TextStyle(fontSize: 12),
+                ),
+            ],
+          ),
         ),
       ),
       child: child,
@@ -316,6 +418,7 @@ class MovingTooltipWidget extends StatefulWidget {
 
 class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   OverlayEntry? _overlayEntry;
+  Widget? _builtTooltip;
   late final int _depth;
   bool _blockTooltip = false; // Prevents parent tooltip from activating
   _MovingTooltipWidgetState? _parentState; // Cache parent reference
@@ -348,6 +451,9 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     _latestGlobalMousePosition = globalPosition;
     _parentState?._setTooltipBlock(true); // Disable parent tooltip
 
+    _builtTooltip =
+        widget.tooltipWidget ?? widget.tooltipWidgetBuilder!(context);
+
     _overlayEntry = OverlayEntry(
       builder: (_) => Stack(
         children: [
@@ -356,7 +462,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
             windowEdgePadding: widget.windowEdgePadding,
             offset: widget.offset,
             position: widget.position,
-            child: IgnorePointer(child: widget.tooltipWidget),
+            child: IgnorePointer(child: _builtTooltip!),
           ),
         ],
       ),
@@ -382,6 +488,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     if (_overlayEntry != null) {
       _overlayEntry!.remove();
       _overlayEntry = null;
+      _builtTooltip = null;
     }
     _parentState?._setTooltipBlock(false); // Re-enable parent's tooltip
   }

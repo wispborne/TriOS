@@ -104,23 +104,41 @@ class PortraitScanner {
     Directory gameCoreFolder,
   ) async {
     if (variant != null && !await variant.modFolder.exists()) return [];
+    if (_isGraphicsLib(variant)) return [];
 
-    final portraits = <Portrait>[];
-    final uniqueHashes = <String>{};
-
+    // Phase 1: Collect candidate files
+    final candidateFiles = <File>[];
     await for (final entity in (variant?.modFolder ?? gameCoreFolder).list(
       recursive: true,
     )) {
       if (entity is File &&
-          !_isGraphicsLib(variant) &&
           !_isBlocklisted(variant, entity.path) &&
           await _isValidImageFile(entity)) {
-        final portrait = await _processImageFile(
-          entity,
-          variant,
-          gameCoreFolder,
-          skipSizeCheck: false,
-        );
+        candidateFiles.add(entity);
+      }
+    }
+
+    // Phase 2: Process files in parallel batches
+    const batchSize = 20;
+    final portraits = <Portrait>[];
+    final uniqueHashes = <String>{};
+
+    for (var i = 0; i < candidateFiles.length; i += batchSize) {
+      final end = (i + batchSize).clamp(0, candidateFiles.length);
+      final batch = candidateFiles.sublist(i, end);
+
+      final results = await Future.wait(
+        batch.map(
+          (file) => _processImageFile(
+            file,
+            variant,
+            gameCoreFolder,
+            skipSizeCheck: false,
+          ),
+        ),
+      );
+
+      for (final portrait in results) {
         if (portrait != null && uniqueHashes.add(portrait.hash)) {
           portraits.add(portrait);
         }

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
@@ -31,13 +33,17 @@ import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/download_manager/download_status.dart';
+import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
+import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
 import 'package:trios/widgets/disable.dart';
@@ -47,23 +53,25 @@ import 'package:trios/widgets/mod_type_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/popup_style_menu_anchor.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/widgets/refresh_mods_button.dart';
+import 'package:trios/widgets/smart_search/smart_search_bar.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/text_with_icon.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../mod_profiles/mod_profiles_manager.dart';
 import '../mod_profiles/models/mod_profile.dart';
-import '../utils/search.dart';
-import 'filter_mods_search_view.dart';
 import 'homebrew_grid/wispgrid_group.dart';
 import 'homebrew_grid/wispgrid_header_row_view.dart';
-import 'vram_checker_explanation.dart';
+import 'mods_grid_page_controller.dart';
 
-final modsGridSearchQuery = StateProvider.autoDispose<String>((ref) => "");
-final _vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
+final vramColumnHovered = StateProvider.autoDispose<bool>((ref) => false);
 
 class ModsGridPage extends ConsumerStatefulWidget {
   const ModsGridPage({super.key});
@@ -77,7 +85,6 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
   @override
   bool get wantKeepAlive => true;
   Mod? selectedMod;
-  final _searchController = SearchController();
   AnimationController? animationController;
   List<Mod> filteredMods = [];
   WispGridController<Mod>? controller;
@@ -102,8 +109,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     // (e.g. drag-and-drop between category groups, context menu reassignment).
     ref.watch(categoryManagerProvider);
 
-    final query = _searchController.value.text;
-    final modsMatchingSearch = searchMods(allMods, query) ?? [];
+    final searchState = ref.watch(modsGridSearchControllerProvider);
+    final modsMatchingSearch = searchState.filteredMods;
     final modsMetadata = ref.watch(AppState.modsMetadata).value;
     final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
     final modsGridUpdateVisibility = ref.watch(
@@ -177,18 +184,55 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               ),
                               const SizedBox(width: 8),
                               buildProfileSelector(isGameRunning),
+                              Padding(
+                                padding: const .symmetric(vertical: 8),
+                                child: VerticalDivider(
+                                  color: theme.dividerColor.withAlpha(150),
+                                ),
+                              ),
+                              buildGroupBySelector(gridState),
+                              const SizedBox(width: 8),
+                              buildThenBySelector(gridState),
                               const SizedBox(width: 8),
                               // Removing Est. VRAM button because it's on the mod groups now.
                               // Maybe should add it to an overflow menu, though.
                               if (false) buildEstimateVramButton(theme),
-                              const Spacer(),
-                              SizedBox(
-                                height: 30,
-                                width: 300,
-                                child: FilterModsSearchBar(
-                                  searchController: _searchController,
-                                  query: ref.watch(modsGridSearchQuery),
-                                  ref: ref,
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 300,
+                                      maxHeight: 30,
+                                    ),
+                                    child: SmartSearchBar(
+                                      fields: ref
+                                          .watch(
+                                            modsGridSearchControllerProvider
+                                                .notifier,
+                                          )
+                                          .searchFieldsMeta,
+                                      recentHistory: ref.watch(
+                                        appSettings.select(
+                                          (s) => s.modsSearchHistory,
+                                        ),
+                                      ),
+                                      initialValue:
+                                          searchState.currentSearchQuery,
+                                      onChanged: (query) => ref
+                                          .read(
+                                            modsGridSearchControllerProvider
+                                                .notifier,
+                                          )
+                                          .updateSearchQuery(query),
+                                      onSubmitted: () => ref
+                                          .read(
+                                            modsGridSearchControllerProvider
+                                                .notifier,
+                                          )
+                                          .submitSearchQuery(),
+                                    ),
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -337,31 +381,30 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     ),
                     MenuItem(
                       label: 'Only show enabled mods',
-                      icon:
-                          modsGridUpdatesShowDisabledMods ? null : Icons.check,
+                      icon: modsGridUpdatesShowDisabledMods
+                          ? null
+                          : Icons.check,
                       onSelected: () {
-                        ref.read(appSettings.notifier).update(
-                          (s) => s.copyWith(
-                            modsGridUpdatesShowDisabledMods:
-                                !s.modsGridUpdatesShowDisabledMods,
-                          ),
-                        );
+                        ref
+                            .read(appSettings.notifier)
+                            .update(
+                              (s) => s.copyWith(
+                                modsGridUpdatesShowDisabledMods:
+                                    !s.modsGridUpdatesShowDisabledMods,
+                              ),
+                            );
                       },
                     ),
                     MenuDivider(),
                   ],
-                  scrollbarConfig: ScrollbarConfig(),
+                  scrollbarConfig: ScrollbarConfig(
+                    showLeftScrollbar: .never,
+                    showRightScrollbar: .always,
+                  ),
                   selectedItem: selectedMod,
                   defaultGrouping: EnabledStateModGridGroup(),
                   defaultSortField: ModGridSortField.name.name,
-                  groups: [
-                    UngroupedModGridGroup(),
-                    EnabledStateModGridGroup(),
-                    AuthorModGridGroup(),
-                    CategoryModGridGroup(ref),
-                    ModTypeModGridGroup(),
-                    GameVersionModGridGroup(),
-                  ],
+                  groups: _allGroupOptions,
                   preSortComparator: (left, right) {
                     final leftMetadata = modsMetadata?.getMergedModMetadata(
                       left.id,
@@ -717,8 +760,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         ModGridHeader.categories,
                         modifiers,
                       ).child,
-                      itemCellBuilder: (mod, modifiers) =>
-                          CategoryCell(modId: mod.id),
+                      itemCellBuilder: (mod, modifiers) => CategoryCell(
+                        modId: mod.id,
+                        checkedModIds: controller?.checkedItemIdsReadonly ?? {},
+                      ),
                       csvValue: (mod) {
                         final notifier = ref.read(
                           categoryManagerProvider.notifier,
@@ -768,7 +813,8 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                         GameCompatibility.perfectMatch
                                     ? theme.textTheme.labelLarge
                                     : theme.textTheme.labelLarge?.copyWith(
-                                        color: ThemeManager.vanillaErrorColor,
+                                        color: TriOSThemeConstants
+                                            .vanillaErrorColor,
                                       ),
                               ),
                             ),
@@ -881,13 +927,16 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         if (selectedMod != null)
           Align(
             alignment: Alignment.topRight,
-            child: SizedBox(
-              width: 400,
-              child: ModSummaryPanel(selectedMod, () {
-                setState(() {
-                  selectedMod = null;
-                });
-              }),
+            child: Padding(
+              padding: const .only(top: 56.0),
+              child: SizedBox(
+                width: 400,
+                child: ModSummaryPanel(selectedMod, () {
+                  setState(() {
+                    selectedMod = null;
+                  });
+                }),
+              ),
             ),
           ),
       ],
@@ -998,7 +1047,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 }
               },
               tooltip: "",
-              borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+              borderRadius: BorderRadius.circular(
+                TriOSThemeConstants.cornerRadius,
+              ),
               initialValue: activeProfile,
               itemBuilder: (BuildContext context) =>
                   profiles?.modProfiles
@@ -1049,7 +1100,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   width: 175,
                   child: Builder(
                     builder: (context) {
-                      return DropdownButton(
+                      return TriOSDropdownButton(
                         value: profiles?.modProfiles.firstWhereOrNull(
                           (p) => p.id == activeProfileId,
                         ),
@@ -1087,6 +1138,188 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ],
         );
       },
+    );
+  }
+
+  static final List<WispGridGroup<Mod>> _groupOptions = [
+    UngroupedModGridGroup(),
+    EnabledStateModGridGroup(),
+    AuthorModGridGroup(),
+  ];
+
+  List<WispGridGroup<Mod>> get _allGroupOptions => [
+    ..._groupOptions,
+    CategoryModGridGroup(ref),
+    ModTypeModGridGroup(),
+    GameVersionModGridGroup(),
+  ];
+
+  Widget buildGroupBySelector(WispGridState gridState) {
+    final groups = _allGroupOptions;
+    final currentKey =
+        gridState.groupingSetting?.currentGroupedByKey ??
+        EnabledStateModGridGroup().key;
+    final currentGroup =
+        groups.firstWhereOrNull((g) => g.key == currentKey) ?? groups[1];
+
+    return SizedBox(
+      height: 36,
+      child: MovingTooltipWidget.text(
+        message: "Change how mods are grouped in the grid.",
+        child: PopupMenuButton<WispGridGroup<Mod>>(
+          onSelected: (group) {
+            ref.read(appSettings.notifier).update((state) {
+              final existing =
+                  state.modsGridState.groupingSetting ??
+                  const GroupingSetting(currentGroupedByKey: 'enabledState');
+              return state.copyWith(
+                modsGridState: state.modsGridState.copyWith(
+                  groupingSetting: existing.copyWith(
+                    currentGroupedByKey: group.key,
+                  ),
+                ),
+              );
+            });
+          },
+          tooltip: "",
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+          itemBuilder: (BuildContext context) => groups
+              .map(
+                (g) => PopupMenuItem<WispGridGroup<Mod>>(
+                  value: g,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        child: g.key == currentKey
+                            ? const Icon(Icons.check, size: 16)
+                            : null,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(g.displayName, style: const TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Group By",
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                Text(
+                  currentGroup.displayName,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontSize: 8),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildThenBySelector(WispGridState gridState) {
+    final groups = _allGroupOptions;
+    final currentPrimaryKey =
+        gridState.groupingSetting?.currentGroupedByKey ??
+        EnabledStateModGridGroup().key;
+    final currentSecondaryKey =
+        gridState.groupingSetting?.secondaryGroupedByKey;
+    final candidates = groups.where((g) => g.key != currentPrimaryKey).toList();
+
+    // Hide the selector entirely when "Then By" would be meaningless.
+    if (groups.length <= 1 || candidates.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final currentSecondary = candidates.firstWhereOrNull(
+      (g) => g.key == currentSecondaryKey,
+    );
+
+    void updateSecondary(String? newKey) {
+      ref.read(appSettings.notifier).update((state) {
+        final existing = state.modsGridState.groupingSetting;
+        if (existing == null) return state;
+        return state.copyWith(
+          modsGridState: state.modsGridState.copyWith(
+            groupingSetting: existing.copyWith(secondaryGroupedByKey: newKey),
+          ),
+        );
+      });
+    }
+
+    return SizedBox(
+      height: 36,
+      child: MovingTooltipWidget.text(
+        message: "Add a second level of grouping under the primary group.",
+        child: PopupMenuButton<Object>(
+          onSelected: (value) {
+            if (value is WispGridGroup<Mod>) {
+              updateSecondary(value.key);
+            } else {
+              updateSecondary(null);
+            }
+          },
+          tooltip: "",
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+          itemBuilder: (BuildContext context) => [
+            PopupMenuItem<Object>(
+              value: 'none',
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    child: currentSecondaryKey == null
+                        ? const Icon(Icons.check, size: 16)
+                        : null,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('None', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+            ),
+            ...candidates.map(
+              (g) => PopupMenuItem<Object>(
+                value: g,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      child: g.key == currentSecondaryKey
+                          ? const Icon(Icons.check, size: 16)
+                          : null,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(g.displayName, style: const TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Then By", style: Theme.of(context).textTheme.labelMedium),
+                Text(
+                  currentSecondary?.displayName ?? 'None',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontSize: 8),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -1131,8 +1364,30 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   .read(appSettings.notifier)
                   .update((s) => s.copyWith(modsGridColorful: !current));
             },
-            child: const Text("Colorful"),
+            child: MovingTooltipWidget.text(
+              message:
+                  "If a mod has an icon, use its colors to style the mod row.",
+              child: const Text("Colorful"),
+            ),
           ),
+          if (ref.watch(
+            appSettings.select(
+              (s) =>
+                  s.modsGridState.groupingSetting?.currentGroupedByKey ==
+                  'category',
+            ),
+          ))
+            PopupStyleMenuAnchor.checkboxItem(
+              value: ref.watch(
+                appSettings.select((s) => s.modsGridShowModInAllCategories),
+              ),
+              onPressed: () => toggleShowModInAllCategories(ref),
+              child: MovingTooltipWidget.text(
+                message:
+                    "If a mod is in multiple categories, show the mod in each category rather than only in its primary category.",
+                child: const Text("Repeat Mods In Each Category"),
+              ),
+            ),
           Divider(),
           SubmenuButton(
             leadingIcon: PopupStyleMenuAnchor.paddedIcon(
@@ -1201,12 +1456,17 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                 child: const Text("Don't show updates"),
               ),
             ],
-            child: Text(switch (modsGridUpdateVisibility) {
-              ModsGridUpdateVisibility.showUnmuted => "Showing Updates section",
-              ModsGridUpdateVisibility.showAll =>
-                "Showing Updates section (incl. muted)",
-              ModsGridUpdateVisibility.hide => "Not showing Update section",
-            }),
+            child: MovingTooltipWidget.text(
+              message:
+                  "Whether to show a section at the top of the page containing only mods with updates.",
+              child: Text(switch (modsGridUpdateVisibility) {
+                ModsGridUpdateVisibility.showUnmuted =>
+                  "Showing Updates section",
+                ModsGridUpdateVisibility.showAll =>
+                  "Showing Updates section (incl. muted)",
+                ModsGridUpdateVisibility.hide => "Not showing Update section",
+              }),
+            ),
           ),
           Divider(),
           MenuItemButton(
@@ -1472,9 +1732,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   Constants.illustratedEntitiesId;
 
               return MovingTooltipWidget.framed(
-                tooltipWidget: vramEstimate == null
+                tooltipWidgetBuilder: vramEstimate == null
                     ? null
-                    : IntrinsicWidth(
+                    : (_) => IntrinsicWidth(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1518,9 +1778,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                     : null,
                 child: MouseRegion(
                   onEnter: (_) =>
-                      ref.read(_vramColumnHovered.notifier).state = true,
+                      ref.read(vramColumnHovered.notifier).state = true,
                   onExit: (_) =>
-                      ref.read(_vramColumnHovered.notifier).state = false,
+                      ref.read(vramColumnHovered.notifier).state = false,
                   child: Align(
                     alignment: .centerLeft,
                     child: Stack(
@@ -1532,7 +1792,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8.0,
                               ),
-                              child: LinearProgressIndicator(
+                              child: ThemedLinearProgressIndicator(
                                 value: ratio.isNaN || ratio.isInfinite
                                     ? 0
                                     : ratio,
@@ -1543,7 +1803,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           ),
                         if (vramEstimate?.imagesNotIncludingGraphicsLib() !=
                                 null &&
-                            ref.watch(_vramColumnHovered))
+                            ref.watch(vramColumnHovered))
                           Align(
                             alignment: .topLeft,
                             child: Padding(
@@ -1707,6 +1967,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                     mod,
                                     localVersionCheck,
                                     remoteVersionCheck,
+                                    showVersionChips: false,
                                   ),
                                 ),
                               ],
@@ -1722,6 +1983,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   mod,
                                   localVersionCheck,
                                   remoteVersionCheck,
+                                  showVersionChips: true,
                                 ),
                               ),
                             );
@@ -1755,73 +2017,133 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               ),
                             ),
                           )
-                        : MovingTooltipWidget(
-                            tooltipWidget:
-                                ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
-                                  mod,
-                                  null,
-                                  versionCheckComparison?.comparisonInt,
-                                  localVersionCheck,
-                                  remoteVersionCheck,
-                                ),
-                            child: Disable(
-                              isEnabled: !isGameRunning,
-                              child: InkWell(
-                                onTap: () {
-                                  if (remoteVersionCheck?.remoteVersion !=
-                                          null &&
-                                      versionCheckComparison?.comparisonInt ==
-                                          -1) {
-                                    ref
-                                        .read(downloadManager.notifier)
-                                        .downloadUpdateViaBrowser(
-                                          remoteVersionCheck!.remoteVersion!,
-                                          activateVariantOnComplete: false,
-                                          modInfo: bestVersion.modInfo,
-                                        );
-                                  } else {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        content:
-                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                              mod,
-                                              changelogUrl,
-                                              localVersionCheck,
-                                              remoteVersionCheck,
-                                              versionCheckComparison
-                                                  ?.comparisonInt,
-                                            ),
-                                      ),
-                                    );
+                        : () {
+                            final updateUrl = remoteVersionCheck
+                                ?.remoteVersion
+                                ?.directDownloadURL;
+                            final downloads =
+                                ref.watch(downloadManager).value ?? [];
+                            final activeDownload = updateUrl == null
+                                ? null
+                                : downloads
+                                      .where(
+                                        (d) =>
+                                            d.task.request.url ==
+                                                updateUrl.fixModDownloadUrl() &&
+                                            d.isInProgress,
+                                      )
+                                      .firstOrNull;
+                            if (activeDownload != null) {
+                              return ListenableBuilder(
+                                listenable: Listenable.merge([
+                                  activeDownload.task.status,
+                                  activeDownload.task.downloaded,
+                                  activeDownload.installProgress,
+                                ]),
+                                builder: (context, _) {
+                                  final status =
+                                      activeDownload.task.status.value;
+                                  final dlAmount =
+                                      activeDownload.task.downloaded.value;
+                                  final isInstalling =
+                                      status == DownloadStatus.completed &&
+                                      !activeDownload.installComplete.value;
+                                  double? progress;
+                                  if (isInstalling) {
+                                    progress = null;
+                                  } else if (status ==
+                                          DownloadStatus.downloading &&
+                                      dlAmount.totalBytes > 0) {
+                                    progress = dlAmount.progressRatio;
                                   }
-                                },
-                                onSecondaryTap: () => showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    content:
-                                        ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                          mod,
-                                          changelogUrl,
-                                          localVersionCheck,
-                                          remoteVersionCheck,
-                                          versionCheckComparison?.comparisonInt,
+                                  return MovingTooltipWidget.text(
+                                    message: isInstalling
+                                        ? 'Installing...'
+                                        : 'Downloading...',
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 2),
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          value: progress,
                                         ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+                            return MovingTooltipWidget(
+                              tooltipWidget:
+                                  ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
+                                    mod,
+                                    null,
+                                    versionCheckComparison?.comparisonInt,
+                                    localVersionCheck,
+                                    remoteVersionCheck,
                                   ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 5.0,
+                              child: Disable(
+                                isEnabled: !isGameRunning,
+                                child: InkWell(
+                                  onTap: () {
+                                    if (remoteVersionCheck?.remoteVersion !=
+                                            null &&
+                                        versionCheckComparison?.comparisonInt ==
+                                            -1) {
+                                      ref
+                                          .read(downloadManager.notifier)
+                                          .downloadUpdateViaBrowser(
+                                            remoteVersionCheck!.remoteVersion!,
+                                            activateVariantOnComplete: false,
+                                            modInfo: bestVersion.modInfo,
+                                          );
+                                    } else {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          content:
+                                              ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                                mod,
+                                                changelogUrl,
+                                                localVersionCheck,
+                                                remoteVersionCheck,
+                                                versionCheckComparison
+                                                    ?.comparisonInt,
+                                              ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  onSecondaryTap: () => showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      content:
+                                          ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                            mod,
+                                            changelogUrl,
+                                            localVersionCheck,
+                                            remoteVersionCheck,
+                                            versionCheckComparison
+                                                ?.comparisonInt,
+                                          ),
+                                    ),
                                   ),
-                                  child: VersionCheckIcon.fromComparison(
-                                    comparison: versionCheckComparison,
-                                    modId: mod.id,
-                                    theme: theme,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5.0,
+                                    ),
+                                    child: VersionCheckIcon.fromComparison(
+                                      comparison: versionCheckComparison,
+                                      modId: mod.id,
+                                      theme: theme,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          }(),
                   ],
                   // ),
                 ),
@@ -1896,7 +2218,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         );
 
                         return MovingTooltipWidget.framed(
-                          tooltipWidget: Column(
+                          tooltipWidgetBuilder: (context) => Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: mod.modVariants
@@ -1943,7 +2265,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             ?.getMergedModMetadata(mod.id)
             ?.color;
 
-        final nameText = TextTriOS(
+        final nameText = Text(
           bestVersion.modInfo.name ?? "(no name)",
           style: GoogleFonts.roboto(
             textStyle: theme.textTheme.labelLarge?.copyWith(
@@ -1981,7 +2303,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         return MovingTooltipWidget.framed(
           // position: TooltipPosition.topLeft,
           padding: const EdgeInsets.all(0),
-          tooltipWidget: SizedBox(
+          tooltipWidgetBuilder: (context) => SizedBox(
             width: 400,
             child: ModSummaryWidget(
               modVariant: bestVersion,
@@ -2056,7 +2378,7 @@ class MissingDependencyButton extends ConsumerWidget {
       minimumSize: const Size(60, 34),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(
-          ThemeManager.cornerRadius,
+          TriOSThemeConstants.cornerRadius,
         ), // Rounded corners
       ),
     );
@@ -2224,8 +2546,11 @@ class _ModGridRowState extends ConsumerState<_ModGridRow>
     final isColorfulModeOn = ref.watch(
       appSettings.select((s) => s.modsGridColorful),
     );
-    final paletteTheme = isColorfulModeOn
-        ? paletteGenerator?.createPaletteTheme(context)
+    final paletteTriosTheme = isColorfulModeOn
+        ? paletteGenerator?.toTriOSTheme(context)
+        : null;
+    final paletteTheme = paletteTriosTheme != null
+        ? ThemeManager.convertToThemeData(paletteTriosTheme)
         : null;
     final paletteBg = paletteTheme?.colorScheme.surfaceDim;
     final paletteAccent = paletteTheme?.colorScheme.onSurface;
@@ -2233,7 +2558,7 @@ class _ModGridRowState extends ConsumerState<_ModGridRow>
     final backgroundBaseColor = isColorfulModeOn
         ? (paletteBg?.withValues(alpha: 0.3) ?? Colors.transparent)
         : widget.isFavorited
-        ? theme.colorScheme.primary.withValues(alpha: 0.3)
+        ? theme.colorScheme.primary.withValues(alpha: 0.08)
         : Colors.transparent;
 
     // Mix in any hover/checked overlay color, but only when there is one.

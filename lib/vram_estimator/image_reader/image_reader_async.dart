@@ -1,44 +1,21 @@
-import 'dart:io';
-
-import 'package:image/image.dart' as img;
-
+import 'gif_header.dart';
+import 'jpeg_header.dart';
 import 'png_chatgpt.dart';
+import 'webp_header.dart';
 
 class ReadImageHeaders {
   Future<ImageHeader?> readImageDeterminingBest(String path) async {
-    if (path.toLowerCase().endsWith(".png")) {
-      return await readPng(path);
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) {
+      return readPngFileHeaders(path);
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      return readJpegFileHeaders(path);
+    } else if (lower.endsWith('.gif')) {
+      return readGifFileHeaders(path);
+    } else if (lower.endsWith('.webp')) {
+      return readWebpFileHeaders(path);
     } else {
-      return await readGeneric(path);
+      throw Exception('Not an image.');
     }
-  }
-
-  Future<ImageHeader?> readPng(String path) async {
-    return readPngFileHeaders(path);
-  }
-
-  Future<ImageHeader?> readGeneric(String path) async {
-    final file = File(path);
-
-    if (img.findDecoderForNamedImage(file.path) == null) {
-      throw Exception("Not an image.");
-    }
-
-    final image =
-        (await (img.Command()
-                  ..decodeNamedImage(file.path, file.readAsBytesSync()))
-                .executeThread())
-            .outputImage;
-
-    if (image == null) {
-      throw Exception("Failed to read image.");
-    }
-
-    return ImageHeader(
-      image.width,
-      image.height,
-      image.bitsPerChannel,
-      image.numChannels,
-    );
   }
 }

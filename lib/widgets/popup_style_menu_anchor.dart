@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trios/themes/theme_manager.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 /// A wrapper around [MenuAnchor] that applies styling to match [PopupMenuButton]'s
 /// visual appearance (padding, elevation, shape).
@@ -33,7 +34,7 @@ class PopupStyleMenuAnchor extends StatelessWidget {
       padding: const WidgetStatePropertyAll(.symmetric(vertical: 8)),
       shape: WidgetStatePropertyAll(
         RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         ),
       ),
       backgroundColor: WidgetStatePropertyAll(

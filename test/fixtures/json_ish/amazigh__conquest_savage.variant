@@ -1,0 +1,83 @@
+{
+  "variantId": "A_S-F_conquest_savage",
+  "hullId": "conquest",
+  "displayName": "Savage",
+  "goalVariant": false,
+  "fluxCapacitors": 19,
+  "fluxVents": 50,
+  "quality": 1,
+  "permaMods": [],
+  "hullMods": [
+    "targetingunit",
+    "auxiliarythrusters",
+    "fluxbreakers"
+  ],
+  "weaponGroups": [
+    {
+      "autofire": false,
+      "mode": "ALTERNATING",
+      "weapons": {
+        "WS 002": "hydra"
+      }
+    },
+    {
+      "autofire": false,
+      "mode": "ALTERNATING",
+      "weapons": {
+        "WS 019": "gorgonpod",
+        "WS 020": "gorgonpod"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "ALTERNATING",
+      "weapons": {
+        "WS 001": "pilum_large"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS 012": "mjolnir",
+        "WS 014": "mjolnir"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS 022": "phasebeam",
+        "WS 023": "phasebeam"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS 011": "devastator",
+        "WS 013": "devastator",
+        "WS 015": "A_S-F_quicksand",
+        "WS 016": "A_S-F_quicksand",
+        "WS 017": "A_S-F_quicksand",
+        "WS 018": "A_S-F_quicksand"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS 003": "pdlaser",
+        "WS 004": "pdlaser",
+        "WS 005": "pdlaser",
+        "WS 006": "pdlaser",
+        "WS 007": "pdlaser",
+        "WS 008": "pdlaser",
+        "WS 009": "pdlaser",
+        "WS 010": "pdlaser"
+      }
+    }
+  ],
+  "modules": [],
+  "wings": []
+}

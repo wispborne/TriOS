@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 // import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -32,7 +33,8 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
-import 'package:trios/widgets/post_update_toast.dart';
+import 'package:trios/trios/toasts/widgets/april_fools_2026_toast.dart';
+import 'package:trios/trios/toasts/widgets/post_update_toast.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:window_size/window_size.dart';
@@ -124,7 +126,7 @@ void main() async {
         shouldDebugRiverpod: shouldDebugRiverpod,
       ),
     );
-    Fimber.i("${Constants.appTitle} logging started.");
+    Fimber.i("${Constants.appName} v${Constants.version} logging started.");
     Fimber.i(
       "Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}.",
     );
@@ -164,18 +166,18 @@ void main() async {
     final lockFile = File(
       '${Constants.configDataFolderPath.path}/running.lock',
     );
-    if (lockFile.existsSync()) {
+    if (await lockFile.exists()) {
       didPreviousSessionCrash = true;
       Fimber.w("Previous session did not exit cleanly (running.lock found).");
     }
     // Write lock file for this session.
-    lockFile.writeAsStringSync(DateTime.now().toIso8601String());
+    await lockFile.writeAsString(DateTime.now().toIso8601String());
   } catch (e) {
     Fimber.w("Error managing running.lock file: $e");
   }
 
   // Migrate old cache files into the new cache/ subdirectory.
-  _migrateCacheFiles();
+  await _migrateCacheFiles();
 
   try {
     final locale = PlatformDispatcher.instance.locale;
@@ -251,6 +253,25 @@ void main() async {
   } catch (e) {
     Fimber.w("Error checking for changelog notification.", ex: e);
   }
+
+  // April Fools 2026: Show Delta Core toast on April 1st if user hasn't seen it.
+  try {
+    final now = DateTime.now();
+    if (settings?.showAprilFools2026 == null &&
+        now.month == 4 &&
+        now.day == 1 &&
+        now.year == 2026) {
+      onAppLoadedActions.add((context) async {
+        toastification.showCustom(
+          context: context,
+          builder: (context, item) => AprilFools2026Toast(item),
+        );
+      });
+    }
+  } catch (e) {
+    Fimber.w("Error checking for April Fools toast.", ex: e);
+  }
+
   if (settings != null) {
     try {
       fileManager.writeSync(settings.copyWith(showChangelogNextLaunch: false));
@@ -262,7 +283,9 @@ void main() async {
   // Set up Sentry
   try {
     allowCrashReporting = settings?.allowCrashReporting ?? false;
-    modifyLoggingSettings((s) => s.copyWith(allowSentryReporting: allowCrashReporting));
+    modifyLoggingSettings(
+      (s) => s.copyWith(allowSentryReporting: allowCrashReporting),
+    );
   } catch (e) {
     Fimber.w("Error reading crash reporting setting.", ex: e);
   }
@@ -361,7 +384,7 @@ void main() async {
 
 /// Moves legacy cache files from [Constants.configDataFolderPath] into the
 /// `cache/` subdirectory so all caches live in one place.
-void _migrateCacheFiles() {
+Future<void> _migrateCacheFiles() async {
   const filesToMigrate = [
     'trios_version_checker_cache.json',
     'TriOS-VRAM_CheckerCache.json',
@@ -373,17 +396,17 @@ void _migrateCacheFiles() {
 
     for (final fileName in filesToMigrate) {
       final oldFile = File(p.join(configDir.path, fileName));
-      if (oldFile.existsSync()) {
-        if (!cacheDir.existsSync()) {
-          cacheDir.createSync(recursive: true);
+      if (await oldFile.exists()) {
+        if (!await cacheDir.exists()) {
+          await cacheDir.create(recursive: true);
         }
         final newFile = File(p.join(cacheDir.path, fileName));
-        if (!newFile.existsSync()) {
-          oldFile.renameSync(newFile.path);
+        if (!await newFile.exists()) {
+          await oldFile.rename(newFile.path);
           Fimber.i('Migrated $fileName to cache/');
         } else {
           // New file already exists, just delete the old one.
-          oldFile.deleteSync();
+          await oldFile.delete();
           Fimber.i('Deleted old $fileName (already exists in cache/)');
         }
       }
@@ -421,12 +444,24 @@ class TriOSApp extends ConsumerStatefulWidget {
 }
 
 class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
+  /// Guards against saving window position during startup, before the window
+  /// has been fully positioned. The "show" event can fire before the restored
+  /// position from [setWindowFrame] is applied, which would overwrite the
+  /// correct saved position with stale/default coordinates.
+  bool _startupComplete = false;
+
   @override
   void initState() {
     super.initState();
 
     // Initialize deep link handler (listens for URIs, processes pending cold-start link).
     ref.read(deepLinkHandlerProvider);
+
+    // Allow window position saving after a short delay so that startup
+    // events ("show", etc.) don't overwrite the restored position.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) _startupComplete = true;
+    });
 
     ref.listenManual(AppState.mods, (_, variants) {
       if (ref.read(
@@ -464,7 +499,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     }
 
     return MaterialApp(
-      title: Constants.appTitle,
+      title: "${context.appNameWithModifiers(ref.watch(appSettings.select((s) => s.themeModifiers)))}v${Constants.version}",
       theme: currentTheme.themeData,
       themeMode: currentTheme.themeData.brightness == Brightness.light
           ? ThemeMode.light
@@ -490,43 +525,60 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
   @override
   void onWindowClose() async {
+    // Use the already-cached window state from settings instead of querying
+    // native window properties. On Linux/GTK, the underlying widget may already
+    // be partially destroyed by the time onWindowClose fires, causing
+    // gtk_window_is_maximized() to segfault (GTK_IS_WIDGET assertion failure).
+    // The state is kept current by _saveWindowPosition() which runs on every
+    // relevant window event (move, resize, maximize, etc.).
+    try {
+      final currentSettings = ref.read(appSettings);
+      SettingsFileManager().writeSync(currentSettings);
+      Fimber.i("Window position flushed to disk on close.");
+    } catch (e) {
+      Fimber.w("Error saving window position on close: $e");
+    }
+
     await windowManager.hide();
     try {
       final lockFile = File(
         '${Constants.configDataFolderPath.path}/running.lock',
       );
-      if (lockFile.existsSync()) {
-        lockFile.deleteSync();
+      if (await lockFile.exists()) {
+        await lockFile.delete();
         Fimber.i("running.lock deleted on clean exit.");
       }
     } catch (e) {
       Fimber.w("Error deleting running.lock: $e");
-    } finally {
-      await windowManager.destroy();
+    }
+    if (Platform.isWindows) {
+      // TLDR; fixes crash-on-quit that was blowing up Sentry and Event Viewer.
+      // Neither exit(0) nor windowManager.destroy() exits cleanly on Windows:
+      //   - exit(0) → CRT atexit chain crashes in dcomp.dll because the engine's
+      //     DirectComposition swap chain is still alive at teardown.
+      //   - destroy() → flutter_windows.dll access-violates during WindowProc
+      //     teardown (0xc000041d fatal user-callback exception).
+      // On Windows, Process.killPid(pid, sigkill) calls TerminateProcess, which
+      // skips CRT atexit, DLL_PROCESS_DETACH, and static destructors entirely.
+      Process.killPid(pid, ProcessSignal.sigkill);
+    } else {
+      exit(0);
     }
   }
 
   void _saveWindowPosition() async {
+    if (!_startupComplete) return;
+
     final windowFrame = await windowManager.getBounds();
     final isMaximized = await windowManager.isMaximized();
 
-    // Don't save window size is minimized, we want to restore to the previous size.
+    // Don't save window size if minimized, we want to restore to the previous size.
     if (!await windowManager.isMinimized()) {
-      ref.read(appSettings.notifier).update((state) {
-        if (isMaximized) {
-          // If maximizing/maximized, we want to keep the non-maximized size the same
-          // so that un-maximizing it doesn't result in a screen-sized window.
-          return state.copyWith(isMaximized: isMaximized);
-        } else {
-          return state.copyWith(
-            windowXPos: windowFrame.left,
-            windowYPos: windowFrame.top,
-            windowWidth: windowFrame.width,
-            windowHeight: windowFrame.height,
-            isMaximized: isMaximized,
+      ref
+          .read(appSettings.notifier)
+          .update(
+            (state) => _applyWindowFrame(state, windowFrame, isMaximized),
           );
-        }
-      });
     }
 
     // try {
@@ -543,6 +595,26 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     // } catch (e) {
     //   Fimber.e("Error saving window position to config file.", ex: e);
     // }
+  }
+
+  /// Returns [current] settings with window frame values applied.
+  /// If maximized, only the maximized flag is updated so that restoring the
+  /// window keeps the previous non-maximized size.
+  static Settings _applyWindowFrame(
+    Settings current,
+    Rect windowFrame,
+    bool isMaximized,
+  ) {
+    if (isMaximized) {
+      return current.copyWith(isMaximized: isMaximized);
+    }
+    return current.copyWith(
+      windowXPos: windowFrame.left,
+      windowYPos: windowFrame.top,
+      windowWidth: windowFrame.width,
+      windowHeight: windowFrame.height,
+      isMaximized: isMaximized,
+    );
   }
 
   @override

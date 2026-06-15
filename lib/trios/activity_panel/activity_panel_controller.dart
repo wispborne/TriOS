@@ -1,0 +1,96 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/activity_panel/activity_entry.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/generic_settings_manager.dart';
+import 'package:trios/utils/generic_settings_notifier.dart';
+
+const int _maxHistoryEntries = 100;
+
+/// Persisted activity history (completed/failed installs and downloads).
+final activityHistoryStore =
+    AsyncNotifierProvider<ActivityHistoryStore, ActivityHistory>(
+      ActivityHistoryStore.new,
+    );
+
+class ActivityHistoryStore
+    extends GenericSettingsAsyncNotifier<ActivityHistory> {
+  @override
+  GenericAsyncSettingsManager<ActivityHistory> createSettingsManager() =>
+      _ActivityHistoryManager();
+
+  @override
+  ActivityHistory createDefaultState() => const ActivityHistory();
+
+  /// Adds an entry to the history, evicting the oldest if over the cap.
+  Future<void> recordCompletion(ActivityEntry entry) async {
+    await updateState((current) {
+      final updated = List<ActivityEntry>.of(current.entries)..insert(0, entry);
+      // FIFO eviction.
+      if (updated.length > _maxHistoryEntries) {
+        updated.removeRange(_maxHistoryEntries, updated.length);
+      }
+      return ActivityHistory(entries: updated);
+    });
+  }
+
+  /// Removes a single entry by id.
+  Future<void> removeEntry(String id) async {
+    await updateState((current) {
+      final updated = current.entries.where((e) => e.id != id).toList();
+      return ActivityHistory(entries: updated);
+    });
+  }
+
+  /// Removes all completed/failed entries from history.
+  Future<void> clearHistory() async {
+    await updateState((_) => const ActivityHistory());
+  }
+}
+
+class _ActivityHistoryManager
+    extends GenericAsyncSettingsManager<ActivityHistory> {
+  @override
+  FileFormat get fileFormat => FileFormat.json;
+
+  @override
+  String get fileName => 'trios_activity_history-v1.${fileFormat.name}';
+
+  @override
+  ActivityHistory Function(Map<String, dynamic> map) get fromMap =>
+      (json) => ActivityHistoryMapper.fromMap(json);
+
+  @override
+  Map<String, dynamic> Function(ActivityHistory) get toMap =>
+      (state) => state.toMap();
+}
+
+/// Ephemeral count of completions the user hasn't seen yet.
+/// Clears when the panel is opened.
+final activityUnseenCount =
+    NotifierProvider<ActivityUnseenCountNotifier, int>(
+      ActivityUnseenCountNotifier.new,
+    );
+
+class ActivityUnseenCountNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() => state = state + 1;
+
+  /// Called when the user opens the panel.
+  void clearUnseen() => state = 0;
+}
+
+/// Convenience: toggle panel open state (persisted in Settings).
+void toggleActivityPanel(WidgetRef ref) {
+  final wasOpen = ref.read(
+    appSettings.select((s) => s.isActivityPanelOpen),
+  );
+  ref
+      .read(appSettings.notifier)
+      .update((s) => s.copyWith(isActivityPanelOpen: !wasOpen));
+  if (!wasOpen) {
+    // Opening the panel clears unseen count.
+    ref.read(activityUnseenCount.notifier).clearUnseen();
+  }
+}

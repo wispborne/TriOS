@@ -8,6 +8,7 @@ import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../mod_manager/version_checker.dart';
@@ -112,7 +113,7 @@ class VersionCheckIcon extends ConsumerWidget {
                   child: Icon(
                     Icons.error_outline,
                     size: updateIconSize,
-                    color: ThemeManager.vanillaWarningColor.withOpacity(0.5),
+                    color: TriOSThemeConstants.vanillaWarningColor.withOpacity(0.5),
                   ),
                 ),
               if (localVersionCheck?.modVersion == null)

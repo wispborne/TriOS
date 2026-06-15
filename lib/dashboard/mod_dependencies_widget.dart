@@ -4,6 +4,7 @@ import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/enabled_mods.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../themes/theme_manager.dart';
@@ -79,7 +80,7 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
               Text(
                 "Original game version",
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: ThemeManager.vanillaWarningColor.withOpacity(0.8),
+                  color: TriOSThemeConstants.vanillaWarningColor.withOpacity(0.8),
                 ),
               ),
               Padding(
@@ -87,7 +88,7 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
                 child: Text(
                   modInfo.originalGameVersion ?? "",
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: ThemeManager.vanillaWarningColor,
+                    color: TriOSThemeConstants.vanillaWarningColor,
                   ),
                 ),
               ),
@@ -137,12 +138,12 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: switch (dependencyState) {
                       Satisfied _ => null,
-                      Missing _ => ThemeManager.vanillaErrorColor,
+                      Missing _ => TriOSThemeConstants.vanillaErrorColor,
                       Disabled _ =>
-                        ThemeManager
+                        TriOSThemeConstants
                             .vanillaWarningColor, // Disabled means it's present, so we can just enable it.
-                      VersionInvalid _ => ThemeManager.vanillaErrorColor,
-                      VersionWarning _ => ThemeManager.vanillaWarningColor,
+                      VersionInvalid _ => TriOSThemeConstants.vanillaErrorColor,
+                      VersionWarning _ => TriOSThemeConstants.vanillaWarningColor,
                     },
                   ),
                 ),
@@ -158,7 +159,7 @@ class _ModDependenciesWidgetState extends ConsumerState<ModDependenciesWidget> {
           Text(
             "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
             style: theme.textTheme.labelMedium?.copyWith(
-              color: ThemeManager.vanillaErrorColor,
+              color: TriOSThemeConstants.vanillaErrorColor,
             ),
           ),
       ],

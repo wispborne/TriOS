@@ -5,10 +5,10 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: 3.10.7
-  flutter: '3.38.6'
+  sdk: ^3.12.0
+  flutter: '3.44.2'
 
-# To automatically upgrade your package dependencies to the latest versions
+# To automatically upgrade your package dependencies to the latest versions,
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
@@ -17,16 +17,18 @@ dependencies:
   flutter:
     sdk: flutter
   app_links: ^7.0.0
-  collection: ^1.19.0
+  archive: ^4.0.9
+  async_task: ^1.1.2
+  collection: ^1.19.1
   # Copied to thirdparty/flutter_context_menu to be able to customize. Was abandoned lib.
   #  flutter_context_menu: ^0.2.0
-  cross_file: ^0.3.4+2
-  crypto: ^3.0.6
-  csv: ^6.0.0
+  cross_file: ^0.3.5+2
+  crypto: ^3.0.7
+  csv: ^6.0.0 # should upgrade to v8 when possible, but it's breaking.
   dart_extensions_methods: ^2.0.0
-  dart_mappable: ^4.6.1
+  dart_mappable: ^4.8.0
   defer_pointer: ^0.0.2
-  desktop_drop: ^0.7.0
+  desktop_drop: ^0.7.1
   dropdown_button2: ^3.0.0-beta.22
   dynamic_library: ^0.9.0
   ffi: ^2.1.5
@@ -35,17 +37,17 @@ dependencies:
   flutter_animate: ^4.5.2
   flutter_color: ^2.1.0
   google_fonts: ^7.0.0
+  material_color_utilities: ^0.13.0
   hooks_riverpod: ^2.6.1
   hashlib: ^2.3.0
   html: ^0.15.6
-  image: ^4.7.2
   flutter_inappwebview: 6.1.5
   intl: ^0.20.2
-  json_annotation: ^4.9.0
+  json_annotation: ^4.12.0
   ktx: ^1.1.6
   flutter_linkify: ^6.0.0
   logger: ^2.5.0
-  flutter_markdown: ^0.7.7+1
+  flutter_markdown_plus: ^1.0.7
   msgpack_dart: ^1.0.1
   multi_split_view: ^3.6.0
   mutex: ^3.1.0
@@ -86,7 +88,6 @@ dependencies:
       path: plugins/window_size
       ref: 5c51870ced62a00e809ba4b81a846a052d241c9f
   #  windows_single_instance: ^1.0.1
-  windows_system_info: ^0.0.4
   xml: ^6.6.1
 #  yaml: ^3.1.3
 
@@ -102,11 +103,14 @@ dev_dependencies:
 
   # The lint set provided by the package is activated in the `analysis_options.yaml` file.
   flutter_lints: ^6.0.0
-  build_runner: ^2.5.4
-  dart_mappable_builder: ^4.6.3
+  # Used only by VRAM image-header parity tests in
+  # test/vram_estimator/image_reader/. Not imported anywhere in lib/.
+  image: ^4.8.0
+  build_runner: ^2.15.0
+  dart_mappable_builder: ^4.8.0
   flutter_launcher_icons: ^0.14.3
   ffigen: ^20.1.1
-  json_serializable: ^6.11.3
+  json_serializable: ^6.14.0
   msix: ^3.16.9
 
 flutter_launcher_icons:
@@ -137,6 +141,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/chipper/
+    - assets/fonts/
     - assets/themes.json
     - assets/common/
     - assets/windows/7zip/
@@ -145,6 +150,8 @@ flutter:
     - assets/macos/7zip/
     - assets/common/TriOS-Mod/
     - assets/common/TriOS-Mod/jars/
+    - assets/common/TriOS-Mod/data/console/
+    - assets/common/TriOS-Mod/data/strings/
 #          - path: assets/windows/7zip/
 #            platforms: [ windows ]
 #          - path: assets/linux/7zip/arm64/

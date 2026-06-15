@@ -12,7 +12,10 @@ part 'portrait_model.mapper.dart';
 /// Represents a portrait image found in a mod
 @MappableClass()
 class Portrait with PortraitMappable {
-  final ModVariant? modVariant;
+  /// Back-reference to the source mod variant. Mutable so the viewer cache
+  /// can null it out before encoding (variant data is not worth serializing —
+  /// it's rehydrated from the current mod list on decode).
+  ModVariant? modVariant;
   @MappableField(hook: FileHook())
   final File imageFile;
 
@@ -22,6 +25,8 @@ class Portrait with PortraitMappable {
   final int height;
   String hash;
 
+  final int fileSizeInBytes;
+
   Portrait({
     this.modVariant,
     required this.imageFile,
@@ -29,6 +34,7 @@ class Portrait with PortraitMappable {
     required this.width,
     required this.height,
     required this.hash,
+    this.fileSizeInBytes = 0,
   });
 
   Portrait.fromBytes({
@@ -38,7 +44,8 @@ class Portrait with PortraitMappable {
     required this.width,
     required this.height,
     required Uint8List imageBytes,
-  }) : hash = hashImagesBytes(imageBytes);
+  }) : hash = hashImagesBytes(imageBytes),
+       fileSizeInBytes = imageBytes.length;
 
   static String hashImagesBytes(Uint8List imageBytes) =>
       crc64.convert(imageBytes).toString();

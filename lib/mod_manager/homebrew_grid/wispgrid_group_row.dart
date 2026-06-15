@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_tag_manager/category.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
 
 import 'wisp_grid_state.dart';
@@ -24,6 +24,16 @@ class WispGridGroupRowView<T extends WispGridItem>
   final Function(WispGridState? Function(WispGridState)) updateGridState;
   final List<ContextMenuEntry> additionalContextMenuEntries;
 
+  /// The sort value key for this group, passed through to [getGroupName] etc.
+  /// so multi-group items resolve the correct group identity.
+  final Comparable? groupSortValue;
+
+  /// Overrides the resolved header style. When null, falls back to
+  /// `gridState.groupingSetting?.headerStyle`. Used to force secondary group
+  /// headers to render in [GroupHeaderStyle.small] regardless of user
+  /// preference.
+  final GroupHeaderStyle? headerStyleOverride;
+
   const WispGridGroupRowView({
     super.key,
     required this.grouping,
@@ -36,6 +46,8 @@ class WispGridGroupRowView<T extends WispGridItem>
     required this.gridState,
     required this.updateGridState,
     this.additionalContextMenuEntries = const [],
+    this.groupSortValue,
+    this.headerStyleOverride,
   });
 
   @override
@@ -47,18 +59,23 @@ class _WispGridRowState<T extends WispGridItem>
   @override
   Widget build(BuildContext context) {
     final itemsInGroup = widget.itemsInGroup;
+    final sortValue = widget.groupSortValue;
     final groupName =
-        widget.itemsInGroup.firstOrNull?.let(widget.grouping.getGroupName) ??
+        widget.itemsInGroup.firstOrNull?.let(
+          (mod) => widget.grouping.getGroupName(mod, groupSortValue: sortValue),
+        ) ??
         "";
     final groupColor = widget.itemsInGroup.firstOrNull?.let(
-      widget.grouping.getGroupColor,
+      (mod) => widget.grouping.getGroupColor(mod, groupSortValue: sortValue),
     );
     final groupIcon = widget.itemsInGroup.firstOrNull?.let(
-      widget.grouping.getGroupIcon,
+      (mod) => widget.grouping.getGroupIcon(mod, groupSortValue: sortValue),
     );
 
     final headerStyle =
-        widget.gridState.groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
+        widget.headerStyleOverride ??
+        widget.gridState.groupingSetting?.headerStyle ??
+        GroupHeaderStyle.small;
 
     final overlayData = widget.grouping.overlayWidget(
       context,
@@ -69,6 +86,7 @@ class _WispGridRowState<T extends WispGridItem>
       horizontalPaddingOffset: headerStyle == GroupHeaderStyle.small
           ? 16.0
           : 0.0,
+      isSecondaryHeader: widget.headerStyleOverride != null,
     );
 
     final headerContent = switch (headerStyle) {
@@ -127,7 +145,7 @@ class _WispGridRowState<T extends WispGridItem>
         },
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Stack(
@@ -173,7 +191,7 @@ class _WispGridRowState<T extends WispGridItem>
                     "${groupName.trim()} (${itemsInGroup.length})",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.robotoSlab(
+                    style: GoogleFonts.roboto(
                       textStyle: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
@@ -204,7 +222,7 @@ class _WispGridRowState<T extends WispGridItem>
         },
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
           child: Stack(
@@ -250,7 +268,7 @@ class _WispGridRowState<T extends WispGridItem>
                     "${groupName.trim()} (${itemsInGroup.length})",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.robotoSlab(
+                    style: GoogleFonts.roboto(
                       textStyle: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
@@ -330,7 +348,7 @@ class _WispGridRowState<T extends WispGridItem>
                     "${groupName.trim()} (${itemsInGroup.length})",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.robotoSlab(
+                    style: GoogleFonts.roboto(
                       textStyle: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
@@ -362,8 +380,13 @@ class _WispGridRowState<T extends WispGridItem>
 
   ContextMenu _buildGroupHeaderContextMenu() {
     final groupingSetting = widget.gridState.groupingSetting;
-    final currentStyle =
-        groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
+    final currentStyle = groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
+    final currentPrimaryKey = groupingSetting?.currentGroupedByKey;
+    final currentSecondaryKey = groupingSetting?.secondaryGroupedByKey;
+    final thenByCandidates = widget.groups
+        .where((g) => g.key != currentPrimaryKey)
+        .toList();
+    final showThenBy = widget.groups.length > 1 && thenByCandidates.isNotEmpty;
 
     return ContextMenu(
       entries: [
@@ -379,19 +402,65 @@ class _WispGridRowState<T extends WispGridItem>
                         ? Icons.check
                         : null,
                     onSelected: () {
-                      widget.updateGridState(
-                        (WispGridState state) => state.copyWith(
-                          groupingSetting: (state.groupingSetting ??
-                                  GroupingSetting(
-                                    currentGroupedByKey: group.key,
-                                  ))
-                              .copyWith(currentGroupedByKey: group.key),
-                        ),
-                      );
+                      widget.updateGridState((WispGridState state) {
+                        final existing =
+                            state.groupingSetting ??
+                            GroupingSetting(currentGroupedByKey: group.key);
+                        // Clear secondary when primary collides with it.
+                        final clearSecondary =
+                            existing.secondaryGroupedByKey == group.key;
+                        return state.copyWith(
+                          groupingSetting: existing.copyWith(
+                            currentGroupedByKey: group.key,
+                            secondaryGroupedByKey: clearSecondary
+                                ? null
+                                : existing.secondaryGroupedByKey,
+                          ),
+                        );
+                      });
                     },
                   ),
                 )
                 .toList(),
+          ),
+        if (showThenBy)
+          MenuItem.submenu(
+            label: 'Then By',
+            icon: Icons.subdirectory_arrow_right,
+            items: [
+              MenuItem(
+                label: 'None',
+                icon: currentSecondaryKey == null ? Icons.check : null,
+                onSelected: () {
+                  widget.updateGridState((WispGridState state) {
+                    final existing = state.groupingSetting;
+                    if (existing == null) return state;
+                    return state.copyWith(
+                      groupingSetting: existing.copyWith(
+                        secondaryGroupedByKey: null,
+                      ),
+                    );
+                  });
+                },
+              ),
+              ...thenByCandidates.map(
+                (group) => MenuItem(
+                  label: group.displayName,
+                  icon: currentSecondaryKey == group.key ? Icons.check : null,
+                  onSelected: () {
+                    widget.updateGridState((WispGridState state) {
+                      final existing = state.groupingSetting;
+                      if (existing == null) return state;
+                      return state.copyWith(
+                        groupingSetting: existing.copyWith(
+                          secondaryGroupedByKey: group.key,
+                        ),
+                      );
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
         MenuItem.submenu(
           label: 'Header Style',

@@ -30,6 +30,8 @@ public class PortraitReplacer {
     private static final int GL_RGBA = GL11.GL_RGBA;
     private static final int GL_FLOAT = GL11.GL_FLOAT;
 
+    private static boolean alreadyRan = false;
+
     static {
         log.setLevel(Level.DEBUG);
         log.info("PortraitReplacer initialized");
@@ -64,6 +66,12 @@ public class PortraitReplacer {
      * Performs texture replacements based on the configuration file at `data/config/trios_image_replacements.json`
      */
     public static void replaceImagesBasedOnConfig() {
+        if (alreadyRan) {
+            log.debug("PortraitReplacer already ran this process, skipping");
+            return;
+        }
+        alreadyRan = true;
+
         log.info("Starting texture replacement process");
 
         try {
@@ -108,7 +116,7 @@ public class PortraitReplacer {
      * @return An Optional containing the JSONArray if successful, empty otherwise
      */
     private static Optional<JSONArray> loadConfigFile() {
-        log.info("Loading portrait replacement configuration from " + CONFIG_PATH);
+        log.debug("Loading portrait replacement configuration from " + CONFIG_PATH);
 
         try {
             // Try to load using the game's built-in JSON loader
@@ -130,7 +138,7 @@ public class PortraitReplacer {
                 log.debug("Portrait replacement configuration file not found");
             }
         } catch (JSONException e) {
-            log.warn("Error loading portrait replacement configuration file", e);
+            log.warn("Error loading extant portrait replacement configuration file", e);
         }
 
         return Optional.empty();
@@ -199,7 +207,7 @@ public class PortraitReplacer {
                         log.info("Successfully replaced texture: " + replacement.originalTexture);
                         stats.compute("success", (k, v) -> v + 1);
                     } catch (Exception e) {
-                        log.warn("Error replacing texture: " + replacement.originalTexture, e);
+                        log.warn("Error replacing texture: " + replacement.originalTexture);
                         stats.compute("failure", (k, v) -> v + 1);
                     }
                 },
@@ -214,27 +222,49 @@ public class PortraitReplacer {
      * @param source The sprite whose texture will be used as replacement
      */
     private static void replaceTexture(SpriteAPI target, SpriteAPI source) {
-        log.debug("Replacing texture: width=" + source.getWidth() + ", height=" + source.getHeight());
+        // Query actual GPU-side dimensions after binding. SpriteAPI.getTextureWidth()/getTextureHeight()
+        // can return 1 during onApplicationLoad before texture metadata is populated, but the real
+        // GPU texture is larger — sizing the buffer from those values causes glGetTexImage to write
+        // past the buffer end, crashing in nvoglv64.dll.
+        source.bindTexture();
+        int srcW = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
+        int srcH = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
+
+        target.bindTexture();
+        int dstW = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_WIDTH);
+        int dstH = GL11.glGetTexLevelParameteri(GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_HEIGHT);
+
+        log.debug("Replacing texture: source GL " + srcW + "x" + srcH
+                + ", target GL " + dstW + "x" + dstH);
+
+        if (srcW <= 1 || srcH <= 1 || dstW <= 1 || dstH <= 1) {
+            log.warn("Texture not loaded on GPU (source " + srcW + "x" + srcH
+                    + ", target " + dstW + "x" + dstH + "), skipping replacement");
+            return;
+        }
+
+        if (srcW != dstW || srcH != dstH) {
+            log.warn("Texture size mismatch between source (" + srcW + "x" + srcH
+                    + ") and target (" + dstW + "x" + dstH + "), skipping replacement");
+            return;
+        }
 
         try {
-            // Create a buffer to hold the texture data
-            int bufferSize = (int) (source.getWidth() * source.getHeight() * 4);
+            int bufferSize = srcW * srcH * 4;
             FloatBuffer buffer = BufferUtils.createFloatBuffer(bufferSize);
 
-            // Get the source texture data
             source.bindTexture();
             GL11.glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer);
 
-            // Replace the target texture
             target.bindTexture();
             GL11.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                    (int) source.getWidth(), (int) source.getHeight(),
+                    srcW, srcH,
                     0, GL_RGBA, GL_FLOAT, buffer);
 
             log.debug("Texture replacement completed successfully");
         } catch (Exception e) {
             log.warn("OpenGL error during texture replacement", e);
-            throw e; // Re-throw to be handled by the caller
+            throw e;
         }
     }
 }

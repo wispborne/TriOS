@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +9,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/relative_timestamp.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:trios/widgets/text_trios.dart';
 
 import '../chipper/chipper_state.dart';
 import '../chipper/views/chipper_log.dart';
@@ -30,18 +31,16 @@ class _DashboardState extends ConsumerState<Dashboard>
   @override
   bool get wantKeepAlive => true;
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  bool _logLoadTriggered = false;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
     // For startup performance, wait to load until after mods have loaded.
-    if (ref.watch(AppState.mods).isNotEmpty) {
+    if (!_logLoadTriggered && ref.watch(AppState.mods).isNotEmpty) {
       if (ref.read(ChipperState.logRawContents).value == null) {
+        _logLoadTriggered = true;
         ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
       }
     }
@@ -73,9 +72,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: TriOSExpansionTile(
-                                title: const Text(
-                                  "RAM and Game Settings",
-                                ),
+                                title: const Text("RAM and Game Settings"),
                                 leading:
                                     (ref
                                             .watch(vmparamsManagerProvider)
@@ -85,8 +82,8 @@ class _DashboardState extends ConsumerState<Dashboard>
                                     ? const Icon(
                                         Icons.warning_amber_rounded,
                                         size: 32,
-                                        color:
-                                            ThemeManager.vanillaWarningColor,
+                                        color: TriOSThemeConstants
+                                            .vanillaWarningColor,
                                       )
                                     : const Icon(Icons.speed, size: 32),
                                 subtitle: Text(
@@ -115,6 +112,11 @@ class _DashboardState extends ConsumerState<Dashboard>
                               .watch(ChipperState.logRawContents)
                               .value;
                           final theme = Theme.of(context);
+                          final logButtonStyle = ButtonStyle(
+                            foregroundColor: WidgetStateProperty.all(
+                              theme.colorScheme.onSurface,
+                            ),
+                          );
                           return Column(
                             children: [
                               Padding(
@@ -157,18 +159,23 @@ class _DashboardState extends ConsumerState<Dashboard>
                                         ],
                                       ),
                                     ),
-                                    const Spacer(),
-                                    MovingTooltipWidget.text(
-                                      message: logfile?.path ?? "",
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          "${logfile?.nameWithExtension ?? ""} • last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
-                                          style: theme.textTheme.labelSmall,
+                                    Expanded(
+                                      child: MovingTooltipWidget.text(
+                                        message: logfile?.path ?? "",
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 8,
+                                            top: 4,
+                                          ),
+                                          child: TextTriOS(
+                                            "${logfile?.nameWithExtension ?? ""} •   last updated ${errors?.lastUpdated?.relativeTimestamp() ?? "unknown"}",
+                                            style: theme.textTheme.labelSmall,
+                                            maxLines: 1,
+                                            overflow: .ellipsis,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                    const Spacer(),
                                     Padding(
                                       padding: const EdgeInsets.only(
                                         left: 16,
@@ -176,27 +183,17 @@ class _DashboardState extends ConsumerState<Dashboard>
                                       ),
                                       child: TextButton.icon(
                                         onPressed: () {
-                                          final path = ref
+                                          ref
                                               .read(ChipperState.logRawContents)
                                               .value
-                                              ?.filepath;
-                                          if (path != null) {
-                                            final file = File(path);
-                                            launchUrlString(
-                                              file.absolute.normalize.path,
-                                            );
-                                          }
+                                              ?.filepath
+                                              ?.openAsUriInBrowser();
                                         },
                                         icon: Icon(
                                           Icons.launch_rounded,
                                           color: theme.colorScheme.onSurface,
                                         ),
-                                        style: ButtonStyle(
-                                          foregroundColor:
-                                              WidgetStateProperty.all(
-                                                theme.colorScheme.onSurface,
-                                              ),
-                                        ),
+                                        style: logButtonStyle,
                                         label: const Text("Open"),
                                       ),
                                     ),
@@ -219,12 +216,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                           Icons.refresh,
                                           color: theme.colorScheme.onSurface,
                                         ),
-                                        style: ButtonStyle(
-                                          foregroundColor:
-                                              WidgetStateProperty.all(
-                                                theme.colorScheme.onSurface,
-                                              ),
-                                        ),
+                                        style: logButtonStyle,
                                         label: const Text("Reload"),
                                       ),
                                     ),
@@ -249,9 +241,7 @@ class _DashboardState extends ConsumerState<Dashboard>
                                       )
                                     : const SizedBox(
                                         width: 350,
-                                        child: Column(
-                                          children: [Text("No log loaded")],
-                                        ),
+                                        child: Text("No log loaded"),
                                       ),
                               ),
                               Padding(

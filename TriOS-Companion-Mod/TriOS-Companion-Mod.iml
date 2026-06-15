@@ -16,11 +16,21 @@
           <root url="jar://C:/Program Files (x86)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/lwjgl.jar!/" />
           <root url="jar://C:/Program Files (x86)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/lwjgl_util.jar!/" />
           <root url="jar://C:/Program Files (x86)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/json.jar!/" />
+          <root url="jar://C:/Program Files (x86)/Fractal Softworks/Starsector-0.98a-RC5/mods/Console Commands/jars/lw_Console.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://C:/Program Files (x86)/Fractal Softworks/Starsector-0.98a-RC5/starsector-core/starfarer.api.zip!/" />
         </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$STARSECTOR_INSTALL_DIR$/mods/Console Commands-4.0.9/jars/lw_Console.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
       </library>
     </orderEntry>
   </component>

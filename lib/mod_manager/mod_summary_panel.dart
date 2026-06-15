@@ -9,6 +9,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 import '../models/mod.dart';
 import '../models/mod_variant.dart';
@@ -52,7 +53,10 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
         : <Mod>[];
     const buttonsOpacity = 0.8;
 
-    final paletteTheme = paletteGenerator.createPaletteTheme(context);
+    final paletteTriosTheme = paletteGenerator.toTriOSTheme(context);
+    final paletteTheme = paletteTriosTheme != null
+        ? ThemeManager.convertToThemeData(paletteTriosTheme)
+        : Theme.of(context);
 
     return Builder(
       builder: (context) {
@@ -65,7 +69,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
               topLeft: Radius.circular(8),
               bottomLeft: Radius.circular(8),
             ),
-            boxShadow: [ThemeManager.boxShadow],
+            boxShadow: [TriOSThemeConstants.boxShadow],
             border: Border(
               top: BorderSide(
                 color: theme.colorScheme.onSurface.withOpacity(0.15),
@@ -134,7 +138,7 @@ class _ModSummaryPanelState extends ConsumerState<ModSummaryPanel>
                                 shape: const RoundedRectangleBorder(
                                   borderRadius: BorderRadius.only(
                                     topLeft: Radius.circular(
-                                      ThemeManager.cornerRadius,
+                                      TriOSThemeConstants.cornerRadius,
                                     ),
                                     topRight: Radius.zero,
                                     bottomLeft: Radius.zero,

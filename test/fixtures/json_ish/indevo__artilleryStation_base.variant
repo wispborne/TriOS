@@ -1,0 +1,31 @@
+{
+  "variantId": "IndEvo_artilleryStation_base_variant",
+  "hullId": "IndEvo_artilleryStation_base",
+  "displayName": "Artillery Station Base",
+  "goalVariant": false,
+  "fluxCapacitors": 50,
+  "fluxVents": 50,
+  "quality": 1,
+  "permaMods": [],
+  "hullMods": [],
+  "weaponGroups": [],
+  "modules": [
+    {
+      "WS0001": "IndEvo_artilleryStation_gunModule_variant"
+    },
+    {
+      "WS0002": "IndEvo_artilleryStation_hangarModule_variant"
+    },
+    {
+      "WS0004": "IndEvo_artilleryStation_hangarModule_variant"
+    },
+    {
+      "WS0003": "IndEvo_artilleryStation_gunModule_variant"
+    },
+    {
+      "WS0006": "IndEvo_MortarDecoModule_variant"
+    },
+
+  ],
+  "wings": []
+}

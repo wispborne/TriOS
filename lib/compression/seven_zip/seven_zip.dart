@@ -133,7 +133,7 @@ class SevenZip implements ArchiveInterface {
       // Clean up
       try {
         if (listFile.existsSync()) {
-          listFile.deleteSync();
+          await listFile.delete();
         }
       } catch (_) {
         // ignore
@@ -201,7 +201,7 @@ class SevenZip implements ArchiveInterface {
 
     try {
       if (listFile != null && listFile.existsSync()) {
-        listFile.deleteSync();
+        await listFile.delete();
       }
     } catch (_) {}
 
@@ -227,9 +227,12 @@ class SevenZip implements ArchiveInterface {
 
     if (result.exitCode != 0) {
       throw Exception(
-        '7z list failed (exit code: ${result.exitCode}).\n'
-        'stdout: ${result.stdout}\n'
-        'stderr: ${result.stderr}',
+        _describeArchiveError(
+          archiveFile,
+          '7z list failed (exit code: ${result.exitCode}).',
+          result.stdout?.toString(),
+          result.stderr?.toString(),
+        ),
       );
     }
 
@@ -263,9 +266,12 @@ class SevenZip implements ArchiveInterface {
 
     if (result.exitCode != 0) {
       throw Exception(
-        '7z extraction (all) failed (exit code: ${result.exitCode}).\n'
-        'stdout: ${result.stdout}\n'
-        'stderr: ${result.stderr}',
+        _describeArchiveError(
+          archiveFile,
+          '7z extraction failed (exit code: ${result.exitCode}).',
+          result.stdout?.toString(),
+          result.stderr?.toString(),
+        ),
       );
     }
   }
@@ -312,6 +318,7 @@ class SevenZip implements ArchiveInterface {
     String Function(SevenZipEntry entry)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
     void Function(int completed, int total)? onProgress,
+    void Function(String phase)? onPhaseChanged,
   }) async {
     final maxRenameRetries = 10;
     final renameRetryDelay = Duration(milliseconds: 200);
@@ -331,6 +338,7 @@ class SevenZip implements ArchiveInterface {
 
     final results = <SevenZipExtractedFile?>[];
 
+    onPhaseChanged?.call("Extracting");
     final baseArgs = ['x', archivePath.path, '-y', '-bb1', '-sccUTF-8', '-o$tempFolder'];
     final inArchivePaths = toExtract.map((e) => e.path).toList();
 
@@ -345,11 +353,15 @@ class SevenZip implements ArchiveInterface {
     try {
       if (extractionResult.exitCode != 0) {
         throw Exception(
-          '7z extraction failed (exit code: ${extractionResult.exitCode}).\n'
-          'stdout: ${extractionResult.stdout}\n'
-          'stderr: ${extractionResult.stderr}',
+          _describeArchiveError(
+            archivePath,
+            '7z extraction failed (exit code: ${extractionResult.exitCode}).',
+            extractionResult.stdout?.toString(),
+            extractionResult.stderr?.toString(),
+          ),
         );
       }
+      onPhaseChanged?.call("Moving into place");
       final oldFiles = toExtract
           .map((entry) => File('$tempFolder/${entry.path}'))
           .toList();
@@ -404,7 +416,7 @@ class SevenZip implements ArchiveInterface {
     } finally {
       try {
         if (tempFolder.toDirectory().existsSync()) {
-          tempFolder.toDirectory().deleteSync(recursive: true);
+          await tempFolder.toDirectory().delete(recursive: true);
         }
       } catch (ex, st) {
         Fimber.e(
@@ -594,5 +606,67 @@ class SevenZip implements ArchiveInterface {
       }
     }
     return results;
+  }
+
+  /// Produces a user-friendly error message when 7z cannot open a file.
+  /// Reads the file's first bytes to detect if it's text/HTML instead of an archive.
+  static String _describeArchiveError(
+    File archiveFile,
+    String baseMessage,
+    String? stdout,
+    String? stderr,
+  ) {
+    final buffer = StringBuffer(baseMessage);
+
+    if (stderr != null && stderr.trim().isNotEmpty) {
+      buffer.writeln('\n7z stderr: ${stderr.trim()}');
+    }
+
+    try {
+      final fileSize = archiveFile.lengthSync();
+      buffer.writeln(
+        '\nFile size: ${(fileSize / 1024).toStringAsFixed(1)} KB',
+      );
+
+      // Read the first 512 bytes to detect content type.
+      final raf = archiveFile.openSync();
+      try {
+        final bytesToRead = fileSize < 512 ? fileSize : 512;
+        final bytes = raf.readSync(bytesToRead);
+
+        // Try to decode as UTF-8 text.
+        try {
+          final text = utf8.decode(bytes, allowMalformed: false);
+          final trimmedText = text.trim().toLowerCase();
+          if (trimmedText.startsWith('<!doctype') ||
+              trimmedText.startsWith('<html') ||
+              trimmedText.contains('<head') ||
+              trimmedText.contains('<body')) {
+            buffer.writeln(
+              '\nError: The file appears to be a web page (HTML), not an archive.',
+            );
+          } else {
+            buffer.writeln(
+              '\nError: The file appears to be a text file, not an archive.',
+            );
+          }
+          // Show a preview of the content.
+          final preview =
+              text.length > 200 ? '${text.substring(0, 200)}...' : text;
+          buffer.writeln('\nDownloaded file:\n--------\n$preview');
+        } catch (_) {
+          // Not valid UTF-8 — it's binary but not a recognized archive.
+          buffer.writeln(
+            '\nError: The file does not appear to be a valid archive.',
+          );
+        }
+      } finally {
+        raf.closeSync();
+      }
+    } catch (_) {
+      // Could not read the file at all.
+    }
+
+    return buffer.toString();
   }
 }

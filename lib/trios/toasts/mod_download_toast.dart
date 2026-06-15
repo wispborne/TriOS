@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,8 +10,11 @@ import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/trios/toasts/toast_countdown_mixin.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -38,11 +40,19 @@ class ModDownloadToast extends ConsumerStatefulWidget {
   ConsumerState<ModDownloadToast> createState() => _ModDownloadToastState();
 }
 
-class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
+class _ModDownloadToastState extends ConsumerState<ModDownloadToast>
+    with ToastCountdownMixin {
   PaletteGenerator? palette;
   bool _isHovering = false;
   ModVariant? _lastInstalledMod;
   int? _installedSizeBytes;
+
+  @override
+  ToastificationItem get toastItem => widget.item;
+  @override
+  int get toastDurationMillis => widget.toastDurationMillis;
+  @override
+  bool get isHovering => _isHovering;
 
   Future<void> _computeInstalledSize(ModVariant mod) async {
     final dir = mod.modFolder;
@@ -70,24 +80,32 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
   @override
   void initState() {
     super.initState();
-    widget.item.pause();
-    // loop to update the time remaining every 5ms
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(milliseconds: 5));
-      if (mounted) {
-        setState(() {});
-      }
-      return mounted;
-    });
 
-    // Listen for installComplete to trigger auto-dismiss for install-only entries.
+    widget.download.task.status.addListener(_onStatusChanged);
     widget.download.installComplete.addListener(_onInstallComplete);
     widget.download.installProgress.addListener(_onInstallProgressChanged);
     widget.download.installedVariant.addListener(_onInstalledVariantChanged);
+    widget.download.installCancelled.addListener(_onInstallCancelled);
+  }
+
+  void _onStatusChanged() {
+    if (mounted) {
+      setState(() {});
+      _checkCountdown();
+    }
   }
 
   void _onInstallComplete() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      _checkCountdown();
+    }
+  }
+
+  void _onInstallCancelled() {
+    if (mounted && widget.download.installCancelled.value) {
+      toastification.dismiss(widget.item);
+    }
   }
 
   void _onInstallProgressChanged() {
@@ -95,14 +113,30 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
   }
 
   void _onInstalledVariantChanged() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      _checkCountdown();
+    }
+  }
+
+  void _checkCountdown() {
+    final download = widget.download;
+    if (!download.task.status.value.isCompleted) return;
+
+    final installedMod = download.resolveInstalledVariant(ref);
+    final ready = !download.hasInstallError &&
+        (installedMod != null || download.installComplete.value);
+    tryStartCountdown(isReadyToAutoDismiss: ready);
   }
 
   @override
   void dispose() {
+    disposeCountdown();
+    widget.download.task.status.removeListener(_onStatusChanged);
     widget.download.installComplete.removeListener(_onInstallComplete);
     widget.download.installProgress.removeListener(_onInstallProgressChanged);
     widget.download.installedVariant.removeListener(_onInstalledVariantChanged);
+    widget.download.installCancelled.removeListener(_onInstallCancelled);
     super.dispose();
   }
 
@@ -111,16 +145,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
     final download = widget.download;
     final item = widget.item;
     final downloadTask = download.task;
-    var installedMod = download is ModDownload
-        ? ref
-              .watch(AppState.modVariants)
-              .value
-              .orEmpty()
-              .firstWhereOrNull(
-                (ModVariant element) =>
-                    element.smolId == download.modInfo.smolId,
-              )
-        : download.installedVariant.value;
+    var installedMod = download.watchInstalledVariant(ref);
     final modString = installedMod?.modInfo.name ?? download.displayName;
     if (palette == null && installedMod != null) {
       _generatePalette(installedMod);
@@ -132,8 +157,10 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
     final currentlyEnabled = installedMod
         ?.mod(ref.read(AppState.mods))
         ?.findFirstEnabled;
-    final timeElapsed = (widget.item.elapsedDuration?.inMilliseconds ?? 0);
-    final timeTotal = (widget.item.originalDuration?.inMilliseconds ?? 1000);
+    final timeElapsed = countdownStopwatch.elapsedMilliseconds;
+    final timeTotal = widget.toastDurationMillis;
+
+    final paletteTriosTheme = palette.toTriOSTheme(context);
 
     return Padding(
       padding: const EdgeInsets.only(top: 4, right: 32),
@@ -148,23 +175,20 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
           ],
         ),
         child: Theme(
-          data: palette.createPaletteTheme(context),
+          data: paletteTriosTheme != null
+              ? ThemeManager.convertToThemeData(paletteTriosTheme)
+              : Theme.of(context),
           child: Builder(
             builder: (context) {
               final theme = Theme.of(context);
               return MouseRegion(
                 onEnter: (_) {
                   setState(() => _isHovering = true);
-                  widget.item.pause();
+                  pauseCountdown();
                 },
                 onExit: (_) {
                   setState(() => _isHovering = false);
-                  final isReadyToAutoDismiss =
-                      installedMod != null || download.installComplete.value;
-                  if (downloadTask.status.value.isCompleted &&
-                      isReadyToAutoDismiss) {
-                    widget.item.start();
-                  }
+                  resumeCountdown();
                 },
                 child: Card(
                   clipBehavior: Clip.antiAlias,
@@ -174,17 +198,6 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                     child: ValueListenableBuilder(
                       valueListenable: downloadTask.status,
                       builder: (context, status, child) {
-                        final isStopped = (!item.isRunning || !item.isStarted);
-                        // Don't auto-dismiss while installing. Wait for the
-                        // mod variant to appear (ModDownload) or
-                        // installComplete (install-only Download).
-                        final isReadyToAutoDismiss =
-                            installedMod != null ||
-                            download.installComplete.value;
-                        if (isStopped && isReadyToAutoDismiss && !_isHovering) {
-                          item.start();
-                        }
-
                         return Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -225,7 +238,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                         DownloadStatus
                                                             .completed &&
                                                     installedMod == null
-                                                ? "Installing..."
+                                                ? download.hasInstallError
+                                                      ? "Installation failed"
+                                                      : "Installing..."
                                                 : status.displayString,
                                             child: Icon(
                                               size: 40,
@@ -233,7 +248,9 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                           DownloadStatus
                                                               .completed &&
                                                       installedMod == null
-                                                  ? Icons.install_desktop
+                                                  ? download.hasInstallError
+                                                        ? Icons.error
+                                                        : Icons.install_desktop
                                                   : switch (status) {
                                                       DownloadStatus.queued =>
                                                         Icons.schedule,
@@ -252,24 +269,33 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                         Icons.circle,
                                                       _ => Icons.downloading,
                                                     },
-                                              color: switch (status) {
-                                                DownloadStatus.queued =>
-                                                  theme.iconTheme.color,
-                                                DownloadStatus
-                                                    .retrievingFileInfo =>
-                                                  theme.iconTheme.color,
-                                                DownloadStatus.downloading =>
-                                                  theme.iconTheme.color,
-                                                DownloadStatus.completed =>
-                                                  theme.colorScheme.secondary,
-                                                DownloadStatus.failed =>
-                                                  ThemeManager
-                                                      .vanillaErrorColor,
-                                                DownloadStatus.canceled =>
-                                                  ThemeManager
-                                                      .vanillaErrorColor,
-                                                _ => theme.iconTheme.color,
-                                              },
+                                              color:
+                                                  status ==
+                                                          DownloadStatus
+                                                              .completed &&
+                                                      download.hasInstallError
+                                                  ? TriOSThemeConstants.vanillaErrorColor
+                                                  : switch (status) {
+                                                      DownloadStatus.queued =>
+                                                        theme.iconTheme.color,
+                                                      DownloadStatus
+                                                          .retrievingFileInfo =>
+                                                        theme.iconTheme.color,
+                                                      DownloadStatus
+                                                          .downloading =>
+                                                        theme.iconTheme.color,
+                                                      DownloadStatus
+                                                          .completed =>
+                                                        theme
+                                                            .colorScheme
+                                                            .secondary,
+                                                      DownloadStatus.failed =>
+                                                        TriOSThemeConstants.vanillaErrorColor,
+                                                      DownloadStatus.canceled =>
+                                                        TriOSThemeConstants.vanillaErrorColor,
+                                                      _ =>
+                                                        theme.iconTheme.color,
+                                                    },
                                             ),
                                           ),
                                   ),
@@ -453,50 +479,74 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                           ),
                                                     ),
                                                   ),
-                                                  const SizedBox(width: 8),
-                                                  Builder(
-                                                    builder: (context) {
-                                                      final mod = installedMod
-                                                          .mod(
-                                                            ref.read(
-                                                              AppState.mods,
-                                                            ),
-                                                          );
-                                                      return ElevatedButton.icon(
-                                                        onPressed: () async {
-                                                          if (mod == null) {
-                                                            Fimber.w(
-                                                              "Cannot enable, mod not found for variant ${installedMod.smolId}",
+                                                  if (currentlyEnabled?.smolId !=
+                                                      installedMod.smolId) ...[
+                                                    const SizedBox(width: 8),
+                                                    Builder(
+                                                      builder: (context) {
+                                                        final mod = installedMod
+                                                            .mod(
+                                                              ref.read(
+                                                                AppState.mods,
+                                                              ),
                                                             );
-                                                            return;
-                                                          }
-                                                          await ref
-                                                              .read(
-                                                                modManager
-                                                                    .notifier,
-                                                              )
-                                                              .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
-                                                                mod,
-                                                                installedMod,
+                                                        return ElevatedButton.icon(
+                                                          onPressed: () async {
+                                                            if (mod == null) {
+                                                              Fimber.w(
+                                                                "Cannot enable, mod not found for variant ${installedMod.smolId}",
                                                               );
-                                                          toastification
-                                                              .dismiss(item);
-                                                        },
-                                                        icon: const SizedBox(
-                                                          width: 24,
-                                                          height: 24,
-                                                          child: Icon(
-                                                            Icons
-                                                                .power_settings_new,
+                                                              return;
+                                                            }
+                                                            await ref
+                                                                .read(
+                                                                  modManager
+                                                                      .notifier,
+                                                                )
+                                                                .changeActiveModVariantWithForceModGameVersionDialogIfNeeded(
+                                                                  mod,
+                                                                  installedMod,
+                                                                );
+                                                            toastification
+                                                                .dismiss(item);
+                                                          },
+                                                          icon: const SizedBox(
+                                                            width: 24,
+                                                            height: 24,
+                                                            child: Icon(
+                                                              Icons
+                                                                  .power_settings_new,
+                                                            ),
                                                           ),
-                                                        ),
-                                                        label: const Text(
-                                                          "Enable",
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
+                                                          label: const Text(
+                                                            "Enable",
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                                  ],
                                                 ],
+                                              ),
+                                            ),
+                                          ] else if (status ==
+                                                  DownloadStatus.completed &&
+                                              download.hasInstallError) ...[
+                                            // --- Installation failed state ---
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 8,
+                                              ),
+                                              child: TextTriOS(
+                                                downloadTask.error.toString(),
+                                                maxLines: 5,
+                                                overflow: .fade,
+                                                warningLevel: .error,
+                                                style: theme
+                                                    .textTheme
+                                                    .labelMedium
+                                                    ?.copyWith(
+                                                      color: TriOSThemeConstants.vanillaErrorColor,
+                                                    ),
                                               ),
                                             ),
                                           ] else if (status ==
@@ -567,8 +617,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                       .textTheme
                                                       .labelMedium
                                                       ?.copyWith(
-                                                        color: ThemeManager
-                                                            .vanillaErrorColor,
+                                                        color: TriOSThemeConstants.vanillaErrorColor,
                                                       ),
                                                 ),
                                               ),
@@ -592,8 +641,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                                         status ==
                                                             DownloadStatus
                                                                 .failed
-                                                        ? ThemeManager
-                                                              .vanillaErrorColor
+                                                        ? TriOSThemeConstants.vanillaErrorColor
                                                         : null,
                                                     value:
                                                         TriOSDownloadProgress(
@@ -620,7 +668,7 @@ class _ModDownloadToastState extends ConsumerState<ModDownloadToast> {
                                 ],
                               ),
                             ),
-                            LinearProgressIndicator(
+                            ThemedLinearProgressIndicator(
                               value: ((timeTotal - timeElapsed) / timeTotal)
                                   .clamp(0.0, 1.0),
                               minHeight: 3,

@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version-file: pubspec.yaml
+          architecture: x64
+          cache: true
+
+      - run: flutter --version
+
+      - run: flutter pub get
+
+      - name: Run tests
+        run: flutter test --exclude-tags local-only --reporter expanded

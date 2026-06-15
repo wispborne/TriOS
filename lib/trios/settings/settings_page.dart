@@ -17,20 +17,25 @@ import 'package:trios/widgets/changelog_viewer.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/game_paths_widget/game_paths_widget.dart';
-import 'package:trios/widgets/highlightable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/settings_group.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../models/version.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
+import '../../themes/theme_modifiers.dart';
 import '../../widgets/restartable_app.dart';
-import '../../widgets/self_update_toast.dart';
+import '../../widgets/trios_dropdown_menu.dart';
 import '../../widgets/trios_expansion_tile.dart';
 import '../app_state.dart';
 import '../constants.dart';
+import '../toasts/widgets/self_update_toast.dart';
 import 'debug_section.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -59,6 +64,44 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         .toStringAsFixed(1);
   }
 
+  Widget _showChangelogButton(BuildContext context, WidgetRef ref) {
+    return ElevatedButton(
+      child: const Text("Show Changelog"),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              content: SizedBox(
+                width: 600,
+                height: 1200,
+                child: TriOSChangelogViewer(
+                  lastestVersionToShow:
+                      ref.read(
+                            appSettings.select(
+                              (value) => value.updateToPrereleases,
+                            ),
+                          ) ==
+                          true
+                      ? null
+                      : Constants.currentVersion,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Close"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -84,137 +127,98 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 SettingsGroup(
                   name: "Starsector",
-                  children: [
-                    GamePathsWidget(),
-                  ],
+                  children: [GamePathsWidget()],
                 ),
                 SettingsGroup(
                   name: "${Constants.appName} Updates",
                   children: [
-                    // CheckboxWithLabel(
-                    //   value: ref.watch(appSettings.select(
-                    //       (value) => value.shouldAutoUpdateOnLaunch)),
-                    //   onChanged: (value) {
-                    //     ref.read(appSettings.notifier).update((state) =>
-                    //         state.copyWith(
-                    //             shouldAutoUpdateOnLaunch: value ?? false));
-                    //   },
-                    //   label: "Auto-update ${Constants.appName} on launch",
-                    // ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: MovingTooltipWidget.text(
-                        message:
-                            "Play with fire."
-                            "\n"
-                            "\nEnabling this will include Previews when checking for updates."
-                            "\nPreviews are *usually* stable, but no guarantees. They contain bugfixes and often add a feature or two that may not be totally finished.",
-                        child: CheckboxWithLabel(
-                          value: ref.watch(
-                            appSettings.select(
-                              (value) => value.updateToPrereleases,
-                            ),
+                    if (Platform.isMacOS) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "Self-update is not available on macOS. Please download new versions from the Releases page.",
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.open_in_new, size: 18),
+                            label: const Text("Open Releases Page"),
+                            onPressed: () =>
+                                launchUrlString(Constants.githubReleasesUrl),
                           ),
-                          onChanged: (value) {
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (state) => state.copyWith(
-                                    updateToPrereleases: value ?? false,
-                                  ),
-                                );
-                          },
-                          labelWidget: TextWithIcon(
-                            text:
-                                "Enable ${Constants.appName} preview releases",
-                            trailing: Transform.rotate(
-                              angle: 0.8,
-                              child: SvgImageIcon(
-                                "assets/images/icon-experimental.svg",
-                                width: 20,
-                                color: iconColor,
+                          const SizedBox(width: 8),
+                          _showChangelogButton(context, ref),
+                        ],
+                      ),
+                    ] else ...[
+                      // CheckboxWithLabel(
+                      //   value: ref.watch(appSettings.select(
+                      //       (value) => value.shouldAutoUpdateOnLaunch)),
+                      //   onChanged: (value) {
+                      //     ref.read(appSettings.notifier).update((state) =>
+                      //         state.copyWith(
+                      //             shouldAutoUpdateOnLaunch: value ?? false));
+                      //   },
+                      //   label: "Auto-update ${Constants.appName} on launch",
+                      // ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: MovingTooltipWidget.text(
+                          message:
+                              "Play with fire."
+                              "\n"
+                              "\nEnabling this will include Previews when checking for updates."
+                              "\nPreviews are *usually* stable, but no guarantees. They contain bugfixes and often add a feature or two that may not be totally finished.",
+                          child: CheckboxWithLabel(
+                            value: ref.watch(
+                              appSettings.select(
+                                (value) => value.updateToPrereleases,
                               ),
                             ),
-                            // Stack(
-                            //   children: [
-                            //     Transform.rotate(
-                            //       angle: 1.2,
-                            //       child: SvgImageIcon(
-                            //         "assets/images/icon-experimental.svg",
-                            //         width: 24,
-                            //         color: iconColor,
-                            //       ),
-                            //     ),
-                            //     Padding(
-                            //       padding: const EdgeInsets.only(
-                            //         left: 12,
-                            //         top: 12,
-                            //       ),
-                            //       child: Transform.scale(
-                            //         scaleX: 0.8,
-                            //         scaleY: 1.2,
-                            //         child: TriOSAppIcon(
-                            //           height: 24,
-                            //           color: iconColor,
-                            //         ),
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
+                            onChanged: (value) {
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      updateToPrereleases: value ?? false,
+                                    ),
+                                  );
+                            },
+                            labelWidget: TextWithIcon(
+                              text:
+                                  "Enable ${Constants.appName} preview releases",
+                              trailing: Transform.rotate(
+                                angle: 0.8,
+                                child: SvgImageIcon(
+                                  "assets/images/icon-experimental.svg",
+                                  width: 20,
+                                  color: iconColor,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        CheckForUpdatesButton(ref: ref),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          child: const Text("Show Changelog"),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  content: SizedBox(
-                                    width: 600,
-                                    height: 1200,
-                                    child: TriOSChangelogViewer(
-                                      url: Constants.changelogUrl,
-                                      lastestVersionToShow:
-                                          ref.read(
-                                                appSettings.select(
-                                                  (value) =>
-                                                      value.updateToPrereleases,
-                                                ),
-                                              ) ==
-                                              true
-                                          ? null
-                                          : Constants.currentVersion,
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text("Close"),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          CheckForUpdatesButton(),
+                          const SizedBox(width: 8),
+                          _showChangelogButton(context, ref),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
                 SettingsGroup(
                   name: "Interface",
                   children: [
                     const _ThemeDropdownRow(),
+                    const SizedBox(height: 8),
+                    const _ThemeModifiersSection(),
                     const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
@@ -277,6 +281,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 ),
                             label: "Show Report Bug Button",
                           ),
+                        );
+                      },
+                    ),
+                    Builder(
+                      builder: (context) {
+                        final showLayoutToggle = ref.watch(
+                          appSettings.select((s) => s.showLayoutToggle),
+                        );
+                        return CheckboxWithLabel(
+                          value: showLayoutToggle,
+                          onChanged: (bool? value) => ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (state) => state.copyWith(
+                                  showLayoutToggle: value ?? true,
+                                ),
+                              ),
+                          label: "Show Layout Toggle Button",
                         );
                       },
                     ),
@@ -459,7 +481,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
                                         ),
-                                        child: DropdownButton<int>(
+                                        child: TriOSDropdownButton<int>(
                                           value: lastNVersionsSetting,
                                           items: [
                                             for (int i = 1; i <= 10; i++)
@@ -523,6 +545,53 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 16),
+                        Builder(
+                          builder: (context) {
+                            final concurrentExtractions = ref.watch(
+                              appSettings.select(
+                                (s) => s.concurrentExtractions,
+                              ),
+                            );
+                            return MovingTooltipWidget.text(
+                              message:
+                                  "Number of mod archives to extract at the same time during batch installation.\n"
+                                  "Higher values install faster but use more CPU and disk I/O.",
+                              child: Row(
+                                children: [
+                                  const Text("Concurrent extractions"),
+                                  const SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 200,
+                                    child: Slider(
+                                      value: concurrentExtractions
+                                          .clamp(1, 6)
+                                          .toDouble(),
+                                      min: 1,
+                                      max: 6,
+                                      divisions: 5,
+                                      label: "$concurrentExtractions",
+                                      onChanged: (value) {
+                                        ref
+                                            .read(appSettings.notifier)
+                                            .update(
+                                              (s) => s.copyWith(
+                                                concurrentExtractions: value
+                                                    .round(),
+                                              ),
+                                            );
+                                      },
+                                    ),
+                                  ),
+                                  Text(
+                                    "$concurrentExtractions",
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ],
                     );
@@ -618,7 +687,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     SizedBox(
                                       width: 24,
                                       height: 24,
-                                      child: const CircularProgressIndicator(),
+                                      child: ThemedCircularProgressIndicator(),
                                     ),
                                 ],
                               ),
@@ -978,6 +1047,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ),
                     Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: MovingTooltipWidget.text(
+                        message:
+                            "Shows internal diagnostics in the toolbar, including"
+                            "\nprocess detection status and cache statistics.",
+                        child: CheckboxWithLabel(
+                          value: ref.watch(
+                            appSettings.select((value) => value.debugMode),
+                          ),
+                          onChanged: (value) {
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) =>
+                                      state.copyWith(debugMode: value ?? false),
+                                );
+                          },
+                          label: "Debug mode",
+                        ),
+                      ),
+                    ),
+                    Padding(
                       padding: const EdgeInsets.only(top: 24),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1038,6 +1129,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: CheckboxWithLabel(
+                        value: ref.watch(
+                          appSettings.select((value) => value.useTopToolbar),
+                        ),
+                        onChanged: (value) {
+                          ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (state) => state.copyWith(
+                                  useTopToolbar: value ?? false,
+                                ),
+                              );
+                        },
+                        label: "Use top toolbar instead of sidebar",
                       ),
                     ),
                     if (Platform.isLinux)
@@ -1107,61 +1216,73 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 }
 
-class CheckForUpdatesButton extends StatelessWidget {
-  const CheckForUpdatesButton({super.key, required this.ref});
+class CheckForUpdatesButton extends ConsumerStatefulWidget {
+  const CheckForUpdatesButton({super.key});
 
-  final WidgetRef ref;
+  @override
+  ConsumerState<CheckForUpdatesButton> createState() =>
+      _CheckForUpdatesButtonState();
+}
+
+class _CheckForUpdatesButtonState extends ConsumerState<CheckForUpdatesButton> {
+  ScaffoldMessengerState? _scaffoldMessenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scaffoldMessenger = ScaffoldMessenger.of(context);
+  }
+
+  @override
+  void dispose() {
+    _scaffoldMessenger?.hideCurrentSnackBar();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        ref.watch(AppState.selfUpdate.notifier).getLatestRelease().then((
-          release,
-        ) {
-          if (release == null) {
-            showSnackBar(
-              context: context,
-              content: const Text("No new release found"),
-            );
-            return;
-          } else if (Version.parse(release.tagName, sanitizeInput: true) <=
-              Version.parse(Constants.version, sanitizeInput: true)) {
-            showSnackBar(
-              context: context,
-              content: Text(
-                "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})",
-              ),
-              action: SnackBarAction(
-                label: "I don't believe you (show update prompt)",
-                backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                onPressed: () {
-                  ref
-                      .watch(AppState.selfUpdate.notifier)
-                      .getLatestRelease()
-                      .then((release) {
-                        if (release == null) {
-                          Fimber.d("No release found");
-                          return;
-                        }
-
-                        toastification.showCustom(
-                          context: context,
-                          builder: (context, item) =>
-                              SelfUpdateToast(release, item),
-                        );
-                      });
-                },
-              ),
-            );
-            return;
-          } else {
-            toastification.showCustom(
-              context: context,
-              builder: (context, item) => SelfUpdateToast(release, item),
-            );
-          }
-        });
+        final selfUpdateNotifier = ref.read(AppState.selfUpdate.notifier);
+        final release = await selfUpdateNotifier.getLatestRelease();
+        if (!mounted) return;
+        if (release == null) {
+          showSnackBar(
+            context: context,
+            content: const Text("No new release found"),
+          );
+        } else if (Version.parse(release.tagName, sanitizeInput: true) <=
+            Version.parse(Constants.version, sanitizeInput: true)) {
+          showSnackBar(
+            context: context,
+            content: Text(
+              "You are already on the latest version (current: ${Constants.version}, found: ${release.tagName}${release.prerelease ? " (prerelease)" : ""})",
+            ),
+            action: SnackBarAction(
+              label: "I don't believe you (show update prompt)",
+              backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              onPressed: () async {
+                final innerRelease = await selfUpdateNotifier
+                    .getLatestRelease();
+                if (innerRelease == null) {
+                  Fimber.d("No release found");
+                  return;
+                }
+                if (!context.mounted) return;
+                toastification.showCustom(
+                  context: context,
+                  builder: (context, item) =>
+                      SelfUpdateToast(innerRelease, item),
+                );
+              },
+            ),
+          );
+        } else {
+          toastification.showCustom(
+            context: context,
+            builder: (context, item) => SelfUpdateToast(release, item),
+          );
+        }
       },
       child: const Text('Check for update'),
     );
@@ -1186,9 +1307,7 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
 
     final entries = availableThemes
         .map((entry) {
-          final themeData = ref
-              .read(AppState.themeData.notifier)
-              .convertToThemeData(entry.value);
+          final themeData = ThemeManager.convertToThemeData(entry.value);
           return DropdownMenuEntry(
             value: entry.value,
             style: ButtonStyle(
@@ -1248,6 +1367,7 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
             initialSelection: _cachedInitialSelection,
           ),
         ),
+        const SizedBox(width: 8),
         MovingTooltipWidget.text(
           message: "I'm feeling lucky",
           child: IconButton(
@@ -1284,6 +1404,348 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ThemeModifiersSection extends ConsumerWidget {
+  const _ThemeModifiersSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final modifiers = ref.watch(appSettings.select((s) => s.themeModifiers));
+    final activeThemeId = ref.watch(AppState.themeData).value?.currentTheme.id;
+    final motesEnabled = modifiers.motesEnabled(activeThemeId);
+
+    return SizedBox(
+      width: 500,
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: TriOSExpansionTile(
+          title: const Text("Theme Modifiers"),
+          subtitle: const Text("Override parts of the active theme"),
+          children: [
+            Padding(
+              padding: .only(left: 16, right: 16, bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8,
+                children: [
+                  Row(
+                    spacing: 16,
+                    children: [
+                      MovingTooltipWidget.text(
+                        message:
+                            "Override the app icon regardless of the active theme.",
+                        child: Row(
+                          spacing: 8,
+                          children: [
+                            const Text("App icon"),
+                            TriOSDropdownMenu<AppIconOverride>(
+                              key: ValueKey(modifiers.appIconOverride),
+                              initialSelection: modifiers.appIconOverride,
+                              onSelected: (value) {
+                                if (value == null) return;
+                                ref
+                                    .read(appSettings.notifier)
+                                    .update(
+                                      (state) => state.copyWith(
+                                        themeModifiers: state.themeModifiers
+                                            .copyWith(appIconOverride: value),
+                                      ),
+                                    );
+                              },
+                              dropdownMenuEntries: const [
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.defaultIcon,
+                                  label: "Default",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.pride,
+                                  label: "Rainbow",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.hegemony,
+                                  label: "Hegemony",
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      MovingTooltipWidget.text(
+                        message:
+                            "Override the app name regardless of the active theme.",
+                        child: Row(
+                          spacing: 8,
+                          children: [
+                            const Text("App name"),
+                            TriOSDropdownMenu<AppNameOverride>(
+                              key: ValueKey(modifiers.appNameOverride),
+                              initialSelection: modifiers.appNameOverride,
+                              onSelected: (value) {
+                                if (value == null) return;
+                                ref
+                                    .read(appSettings.notifier)
+                                    .update(
+                                      (state) => state.copyWith(
+                                        themeModifiers: state.themeModifiers
+                                            .copyWith(appNameOverride: value),
+                                      ),
+                                    );
+                              },
+                              dropdownMenuEntries: const [
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.defaultName,
+                                  label: "Default",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.hegOS,
+                                  label: "HegOS",
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  MovingTooltipWidget.text(
+                    message:
+                        "Override the launch button style regardless of the active theme.",
+                    child: Row(
+                      spacing: 8,
+                      children: [
+                        const Text("Launch button"),
+                        TriOSDropdownMenu<LaunchButtonOverride>(
+                          key: ValueKey(modifiers.launchButtonOverride),
+                          initialSelection: modifiers.launchButtonOverride,
+                          onSelected: (value) {
+                            if (value == null) return;
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    themeModifiers: state.themeModifiers
+                                        .copyWith(launchButtonOverride: value),
+                                  ),
+                                );
+                          },
+                          dropdownMenuEntries: const [
+                            DropdownMenuEntry(
+                              value: LaunchButtonOverride.defaultStyle,
+                              label: "Default",
+                            ),
+                            DropdownMenuEntry(
+                              value: LaunchButtonOverride.pride,
+                              label: "Rainbow",
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  MovingTooltipWidget.text(
+                    message:
+                        "Show drifting motes when app is in foreground.",
+                    child: CheckboxWithLabel(
+                      value: motesEnabled,
+                      onChanged: (value) => ref
+                          .read(appSettings.notifier)
+                          .update(
+                            (state) => state.copyWith(
+                              themeModifiers: state.themeModifiers.copyWith(
+                                enableGlitter: value ?? false,
+                              ),
+                            ),
+                          ),
+                      label: "Animated motes",
+                    ),
+                  ),
+                  if (motesEnabled)
+                    Padding(
+                      padding: const .only(left: 16),
+                      child: Column(
+                        crossAxisAlignment: .start,
+                        spacing: 8,
+                        children: [
+                          _GlitterLocationsPicker(
+                            selected: modifiers.glitterLocations,
+                            onChanged: (locations) => ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    themeModifiers: state.themeModifiers
+                                        .copyWith(glitterLocations: locations),
+                                  ),
+                                ),
+                          ),
+                          _GlitterColorDropdown(
+                            selectedThemeKey: modifiers.glitterThemeKey,
+                            onChanged: (themeKey) => ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    themeModifiers: state.themeModifiers
+                                        .copyWith(glitterThemeKey: themeKey),
+                                  ),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GlitterLocationsPicker extends StatelessWidget {
+  final List<GlitterLocation> selected;
+  final ValueChanged<List<GlitterLocation>> onChanged;
+
+  const _GlitterLocationsPicker({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final allSelected = GlitterLocation.values.every(
+      (l) => selected.contains(l),
+    );
+
+    Widget chip({
+      required bool checked,
+      required IconData icon,
+      required String label,
+      required ValueChanged<bool> onSelected,
+    }) {
+      return FilterChip(
+        label: Text(label, style: theme.textTheme.labelMedium),
+        selected: checked,
+        avatar: Icon(
+          icon,
+          size: 16,
+          color: checked
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+        onSelected: onSelected,
+        selectedColor: theme.colorScheme.primaryContainer,
+        backgroundColor: theme.colorScheme.surfaceContainer,
+        checkmarkColor: Colors.transparent,
+        showCheckmark: false,
+        side: BorderSide(
+          color: checked
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outline.withValues(alpha: 0.25),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        chip(
+          checked: allSelected,
+          icon: allSelected
+              ? Icons.check
+              : selected.isEmpty
+              ? Icons.check_box_outline_blank
+              : Icons.remove,
+          label: "All",
+          onSelected: (_) =>
+              onChanged(allSelected ? [] : List.of(GlitterLocation.values)),
+        ),
+        for (final loc in GlitterLocation.values)
+          chip(
+            checked: selected.contains(loc),
+            icon: selected.contains(loc)
+                ? Icons.check
+                : Icons.check_box_outline_blank,
+            label: loc.label,
+            onSelected: (on) {
+              final current = List.of(selected);
+              if (on) {
+                current.add(loc);
+              } else {
+                current.remove(loc);
+              }
+              onChanged(current);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _GlitterColorDropdown extends ConsumerWidget {
+  final String? selectedThemeKey;
+  final ValueChanged<String?> onChanged;
+
+  const _GlitterColorDropdown({
+    required this.selectedThemeKey,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themes = ref.watch(AppState.themeData).value?.availableThemes ?? {};
+
+    final entries = <DropdownMenuEntry<String?>>[
+      const DropdownMenuEntry(value: null, label: "Default"),
+      for (final entry in themes.entries)
+        DropdownMenuEntry(
+          value: entry.key,
+          label: entry.value.displayName,
+          labelWidget: Row(
+            children: [
+              for (final color in [
+                ThemeManager.convertToThemeData(
+                  entry.value,
+                ).colorScheme.primary,
+                ThemeManager.convertToThemeData(
+                  entry.value,
+                ).colorScheme.secondary,
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: ColoredBox(color: color),
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Text(entry.value.displayName),
+            ],
+          ),
+        ),
+    ];
+
+    return MovingTooltipWidget.text(
+      message:
+          "Which theme's colors the motes use. Default follows the active theme.",
+      child: Row(
+        spacing: 8,
+        children: [
+          const Text("Motes color"),
+          TriOSDropdownMenu<String?>(
+            key: ValueKey(selectedThemeKey),
+            initialSelection: selectedThemeKey,
+            dropdownMenuEntries: entries,
+            onSelected: onChanged,
+          ),
+        ],
+      ),
     );
   }
 }

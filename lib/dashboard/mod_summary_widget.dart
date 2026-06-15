@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
-import '../themes/theme_manager.dart';
 import '../trios/app_state.dart';
 import '../widgets/fancy_mod_tooltip_header.dart';
 
@@ -91,7 +91,6 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                                 (modVariant.iconFilePath ?? "").toFile(),
                                 isAntiAlias: true,
                                 cacheWidth: iconSize,
-                                cacheHeight: iconSize,
                               )
                             : Container(),
                       ),
@@ -99,7 +98,8 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                   ),
                 ),
               ),
-              Padding(
+              Expanded(
+                child: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,6 +114,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                     ),
                   ],
                 ),
+              ),
               ),
             ],
           ),
@@ -201,7 +202,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                     Text(
                       "Original game version",
                       style: theme.textTheme.labelMedium?.copyWith(
-                        color: ThemeManager.vanillaWarningColor.withOpacity(
+                        color: TriOSThemeConstants.vanillaWarningColor.withOpacity(
                           0.8,
                         ),
                       ),
@@ -211,7 +212,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                       child: Text(
                         modInfo.originalGameVersion ?? "",
                         style: theme.textTheme.labelMedium?.copyWith(
-                          color: ThemeManager.vanillaWarningColor,
+                          color: TriOSThemeConstants.vanillaWarningColor,
                         ),
                       ),
                     ),
@@ -276,7 +277,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                 Text(
                   "Warning: this mod requires a different version of a mod that you have installed, but might run with this one.",
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: ThemeManager.vanillaErrorColor,
+                    color: TriOSThemeConstants.vanillaErrorColor,
                   ),
                 ),
               if (widget.showIconTip)

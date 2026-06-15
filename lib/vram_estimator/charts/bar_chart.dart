@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/app_state.dart';
@@ -7,10 +6,11 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/graphics_lib_config_provider.dart';
 import 'package:trios/vram_estimator/models/graphics_lib_config.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
+import 'package:trios/vram_estimator/widgets/vram_mod_breakdown_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
-import '../../../utils/util.dart';
 import '../models/vram_checker_models.dart';
 // ...  (Import extensions, any custom models, and util as in your existing code)
 
@@ -34,41 +34,28 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
     final theme = Theme.of(context);
     graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
     final realMods = ref.watch(AppState.mods);
+    final realModsById = {for (final m in realMods) m.id: m};
+    final vramState = ref.watch(AppState.vramEstimatorProvider).value;
+    final isGlobalScanning = vramState?.isScanning ?? false;
+    final scanningName = vramState?.currentlyScanningModName;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Padding(
-        //   padding: const EdgeInsets.only(bottom: 8.0),
-        //   child: Text(
-        //     "Total System VRAM: ${getGPUInfo()?.freeVRAM.bytesAsReadableMB() ?? "unknown"}",
-        //     style: theme.textTheme.labelLarge,
-        //   ),
-        // ),
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-          child: Text(
-            "For VRAM totals, see the Mods tab.",
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ),
         Expanded(
           child: LayoutBuilder(
             builder: (context, layoutConstraints) {
               return mods.isEmpty
-                  ? const CircularProgressIndicator()
+                  ? ThemedCircularProgressIndicator()
                   : ListView.builder(
                       itemCount: mods.length,
                       itemBuilder: (context, index) {
                         if (index > mods.length - 1) return const SizedBox();
                         final mod = mods[index];
-                        final realMod = realMods.firstWhereOrNull(
-                          (vramMod) => vramMod.id == mod.info.modInfo.id,
-                        );
-                        final percentOfMax =
-                            mod.bytesNotIncludingGraphicsLib() / maxVramUsed;
+                        final realMod = realModsById[mod.info.modInfo.id];
+                        final percentOfMax = maxVramUsed > 0
+                            ? mod.bytesNotIncludingGraphicsLib() / maxVramUsed
+                            : 0.0;
                         final width = layoutConstraints.maxWidth * percentOfMax;
 
                         final iconFilePath = realMod
@@ -76,7 +63,7 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                             ?.iconFilePath;
 
                         return MovingTooltipWidget.framed(
-                          tooltipWidget:
+                          tooltipWidgetBuilder: (_) =>
                               VramEstimatorPage.buildVramTopFilesTableWidget(
                                 theme,
                                 mod,
@@ -84,64 +71,84 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
                               ),
                           child: Card(
                             clipBehavior: Clip.antiAlias,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      if (iconFilePath != null)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 8.0,
+                            child: InkWell(
+                              onTap: () =>
+                                  VramModBreakdownDialog.show(context, mod),
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        if (iconFilePath != null)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 8.0,
+                                            ),
+                                            child: ModIcon(
+                                              iconFilePath,
+                                              size: 28,
+                                            ),
                                           ),
-                                          child: ModIcon(
-                                            iconFilePath,
-                                            size: 28,
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8.0,
+                                                    ),
+                                                child: Text(
+                                                  mod.info.formattedName,
+                                                  style: theme
+                                                      .textTheme
+                                                      .labelLarge,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8.0,
+                                                    ),
+                                                child: _ModBytesLabel(
+                                                  mod: mod,
+                                                  theme: theme,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8.0,
-                                            ),
-                                            child: Text(
-                                              mod.info.formattedName,
-                                              style: theme.textTheme.labelLarge,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8.0,
-                                            ),
-                                            child: Text(
-                                              mod
-                                                  .bytesNotIncludingGraphicsLib()
-                                                  .bytesAsReadableMB(),
-                                              style:
-                                                  theme.textTheme.labelMedium,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  Opacity(
-                                    opacity: 0.6,
-                                    child: Container(
-                                      width: width,
-                                      height: 10,
-                                      color: ColorGenerator.generateFromColor(
-                                        mod.info.smolId,
-                                        baseColor,
-                                      ).createMaterialColor().shade700,
+                                        _RowRescanButton(
+                                          isScanningThisMod:
+                                              isGlobalScanning &&
+                                              scanningName ==
+                                                  (mod.info.name ??
+                                                      mod.info.modId),
+                                          canRescan: !isGlobalScanning,
+                                          onRescan: () => _rescanThisMod(mod),
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
                                     ),
-                                  ),
-                                ],
+                                    Opacity(
+                                      opacity: 0.6,
+                                      child: Container(
+                                        width: width,
+                                        height: 10,
+                                        color: theme.colorScheme.secondary,
+                                      ),
+                                    ),
+                                    if (mod.unreferencedImages != null)
+                                      _UnreferencedBar(
+                                        mod: mod,
+                                        maxVramUsed: maxVramUsed,
+                                        layoutConstraints: layoutConstraints,
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -155,6 +162,16 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
     );
   }
 
+  Future<void> _rescanThisMod(VramMod mod) async {
+    final mods = ref.read(AppState.mods);
+    final modEntry = mods.firstWhereOrNull((m) => m.id == mod.info.modId);
+    final variant = modEntry?.findFirstEnabledOrHighestVersion;
+    if (variant == null) return;
+    await ref
+        .read(AppState.vramEstimatorProvider.notifier)
+        .startEstimating(variantsToCheck: [variant]);
+  }
+
   double _calculateMostVramUse() {
     return widget.modVramInfo
             .maxByOrNull<num>((mod) => mod.bytesNotIncludingGraphicsLib())
@@ -162,55 +179,146 @@ class VramBarChartState extends ConsumerState<VramBarChart> {
             .toDouble() ??
         0;
   }
+}
 
-  FlTitlesData _buildTitlesData() => FlTitlesData(
-    show: true,
-    bottomTitles: AxisTitles(
-      sideTitles: SideTitles(
-        showTitles: true,
-        reservedSize: 30, // Allocate space for labels
-        getTitlesWidget: (value, meta) => _buildBottomLabel(value, meta),
-      ),
-    ),
-    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true)),
+/// Displays a mod's referenced bytes and, in reference mode, a secondary
+/// advisory line for the unreferenced bucket.
+class _ModBytesLabel extends StatelessWidget {
+  final VramMod mod;
+  final ThemeData theme;
+
+  const _ModBytesLabel({required this.mod, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    final refBytes = mod.bytesNotIncludingGraphicsLib();
+    final hasUnref = mod.unreferencedImages != null;
+    final unrefBytes = mod.unreferencedBytesNotIncludingGraphicsLib();
+    final mutedColor = theme.textTheme.labelMedium?.color?.withValues(
+      alpha: 0.6,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(refBytes.bytesAsReadableMB(), style: theme.textTheme.labelMedium),
+        if (hasUnref)
+          MovingTooltipWidget.text(
+            message:
+                'Advisory — images on disk that no parsed reference points to. '
+                'May be dev leftovers, or loaded via dynamic paths the parsers '
+                "can't detect.",
+            child: Text(
+              '+${unrefBytes.bytesAsReadableMB()} unreferenced',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: mutedColor,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _RowRescanButton extends StatefulWidget {
+  final bool isScanningThisMod;
+  final bool canRescan;
+  final VoidCallback onRescan;
+
+  const _RowRescanButton({
+    required this.isScanningThisMod,
+    required this.canRescan,
+    required this.onRescan,
+  });
+
+  @override
+  State<_RowRescanButton> createState() => _RowRescanButtonState();
+}
+
+class _RowRescanButtonState extends State<_RowRescanButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _anim = AnimationController(
+    duration: const Duration(seconds: 1),
+    vsync: this,
   );
 
-  Widget _buildBottomLabel(double value, TitleMeta meta) {
-    int modIndex = value.toInt();
-    if (modIndex >= 0 && modIndex < widget.modVramInfo.length) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8.0),
-        child: Text(
-          widget.modVramInfo[modIndex].info.name ?? '(no name)',
-          style: const TextStyle(fontSize: 10),
-        ),
-      );
-    } else {
-      return const Text('');
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isScanningThisMod) _anim.repeat();
+  }
+
+  @override
+  void didUpdateWidget(_RowRescanButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isScanningThisMod && !_anim.isAnimating) {
+      _anim.repeat();
+    } else if (!widget.isScanningThisMod && _anim.isAnimating) {
+      _anim.stop();
+      _anim.value = 0;
     }
   }
 
-  List<BarChartGroupData> _buildBarGroups(BuildContext context) {
-    final baseColor = Theme.of(context).colorScheme.primary;
-    return widget.modVramInfo
-        .where((element) => element.bytesNotIncludingGraphicsLib() > 0)
-        .map(
-          (mod) => BarChartGroupData(
-            x: widget.modVramInfo.indexOf(mod),
-            barRods: [
-              BarChartRodData(
-                toY: mod
-                    .bytesNotIncludingGraphicsLib()
-                    .toDouble(), // Y-axis value
-                color: ColorGenerator.generateFromColor(
-                  mod.info.smolId,
-                  baseColor,
-                ).createMaterialColor().shade700,
-                width: 12, // Adjust bar width
-              ),
-            ],
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltip = widget.isScanningThisMod
+        ? 'Rescanning this mod…'
+        : widget.canRescan
+        ? 'Rescan this mod'
+        : 'Scan in progress — rescan unavailable';
+    return MovingTooltipWidget.text(
+      message: tooltip,
+      child: IconButton(
+        onPressed: widget.canRescan ? widget.onRescan : null,
+        icon: AnimatedBuilder(
+          animation: _anim,
+          builder: (_, child) => Transform.rotate(
+            angle: _anim.value * 2.0 * 3.141592,
+            child: child,
           ),
-        )
-        .toList();
+          child: const Icon(Icons.refresh),
+        ),
+      ),
+    );
+  }
+}
+
+/// A secondary, muted bar alongside the primary referenced bar, drawn
+/// proportionally so the unreferenced figure is visible at a glance.
+class _UnreferencedBar extends StatelessWidget {
+  final VramMod mod;
+  final double maxVramUsed;
+  final BoxConstraints layoutConstraints;
+
+  const _UnreferencedBar({
+    required this.mod,
+    required this.maxVramUsed,
+    required this.layoutConstraints,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final unref = mod.unreferencedBytesNotIncludingGraphicsLib();
+    if (unref <= 0) return const SizedBox.shrink();
+    final percent = maxVramUsed > 0 ? unref / maxVramUsed : 0.0;
+    final width = layoutConstraints.maxWidth * percent;
+    return Padding(
+      padding: const EdgeInsets.only(top: 2.0),
+      child: Opacity(
+        opacity: 0.35,
+        child: Container(
+          width: width,
+          height: 6,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+    );
   }
 }

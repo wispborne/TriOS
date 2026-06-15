@@ -126,8 +126,14 @@ class DownloadManager {
 
       // Ensure there's a file to download
       if (await isDownloadableFile(url, headersMap, httpClient) == false) {
+        final contentType = headersMap['content-type'] ?? 'unknown';
+        final disposition = headersMap['content-disposition'] ?? 'none';
         throw Exception(
-          "No file to download found at '$url'.\nPlease contact the mod author.",
+          "No downloadable file found at '$url'.\n"
+          "Content-Type: $contentType\n"
+          "Content-Disposition: $disposition\n\n"
+          "The URL may point to a web page instead of a mod file.\n"
+          "Please contact the mod author.",
         );
       }
       Fimber.d(

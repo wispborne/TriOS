@@ -1,0 +1,9 @@
+{
+	"baseHullId":"champion",
+	"skinHullId":"sotf_champion_warhorn",
+	"systemId":"fortressshield",
+	#"hullName":"",
+	"hullDesignation":"Hullcrusher",
+	"descriptionId":"sotf_champion_warhorn",
+	"addHints":["HIDE_IN_CODEX"],
+}

@@ -46,6 +46,13 @@ class PortraitMapper extends ClassMapperBase<Portrait> {
   static const Field<Portrait, int> _f$height = Field('height', _$height);
   static String _$hash(Portrait v) => v.hash;
   static const Field<Portrait, String> _f$hash = Field('hash', _$hash);
+  static int _$fileSizeInBytes(Portrait v) => v.fileSizeInBytes;
+  static const Field<Portrait, int> _f$fileSizeInBytes = Field(
+    'fileSizeInBytes',
+    _$fileSizeInBytes,
+    opt: true,
+    def: 0,
+  );
 
   @override
   final MappableFields<Portrait> fields = const {
@@ -55,6 +62,7 @@ class PortraitMapper extends ClassMapperBase<Portrait> {
     #width: _f$width,
     #height: _f$height,
     #hash: _f$hash,
+    #fileSizeInBytes: _f$fileSizeInBytes,
   };
 
   static Portrait _instantiate(DecodingData data) {
@@ -65,6 +73,7 @@ class PortraitMapper extends ClassMapperBase<Portrait> {
       width: data.dec(_f$width),
       height: data.dec(_f$height),
       hash: data.dec(_f$hash),
+      fileSizeInBytes: data.dec(_f$fileSizeInBytes),
     );
   }
 
@@ -133,6 +142,7 @@ abstract class PortraitCopyWith<$R, $In extends Portrait, $Out>
     int? width,
     int? height,
     String? hash,
+    int? fileSizeInBytes,
   });
   PortraitCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -156,6 +166,7 @@ class _PortraitCopyWithImpl<$R, $Out>
     int? width,
     int? height,
     String? hash,
+    int? fileSizeInBytes,
   }) => $apply(
     FieldCopyWithData({
       if (modVariant != $none) #modVariant: modVariant,
@@ -164,6 +175,7 @@ class _PortraitCopyWithImpl<$R, $Out>
       if (width != null) #width: width,
       if (height != null) #height: height,
       if (hash != null) #hash: hash,
+      if (fileSizeInBytes != null) #fileSizeInBytes: fileSizeInBytes,
     }),
   );
   @override
@@ -174,6 +186,7 @@ class _PortraitCopyWithImpl<$R, $Out>
     width: data.get(#width, or: $value.width),
     height: data.get(#height, or: $value.height),
     hash: data.get(#hash, or: $value.hash),
+    fileSizeInBytes: data.get(#fileSizeInBytes, or: $value.fileSizeInBytes),
   );
 
   @override

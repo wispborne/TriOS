@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/chatbot/chatbot_dialog.dart';
+import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
@@ -15,7 +17,7 @@ import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
-import 'package:trios/shipViewer/ship_manager.dart';
+import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -24,17 +26,19 @@ import 'package:trios/utils/dialogs.dart' show showAlertDialog;
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/network_util.dart';
-import 'package:trios/weaponViewer/weapons_manager.dart';
+import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/download_progress_indicator.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/restartable_app.dart';
 
+import '../../mod_records/mod_records_store.dart';
 import '../../utils/util.dart';
-import '../../widgets/self_update_toast.dart';
+import '../toasts/widgets/self_update_toast.dart';
 import '../app_state.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../mod_tag_manager/category_manager.dart';
 import '../download_manager/download_manager.dart';
 import '../download_manager/download_request.dart';
 import '../download_manager/download_status.dart';
@@ -249,10 +253,14 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           },
           label: const Text('Open ${Constants.appName} Settings Folder'),
         ),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.chat_bubble_outline),
-          onPressed: () => ChatbotDialog.show(context),
-          label: const Text('Open Debug Chatbot'),
+        CheckboxWithLabel(
+          value: ref.watch(appSettings.select((s) => s.forceShowAprilFools2026)) ?? false,
+          onChanged: (value) {
+            ref.read(appSettings.notifier).update(
+              (state) => state.copyWith(forceShowAprilFools2026: value ?? false),
+            );
+          },
+          label: "Force Enable April Fools 2026 (${Constants.chatbotName})",
         ),
         ElevatedButton.icon(
           icon: const Icon(Icons.restart_alt),
@@ -416,6 +424,39 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           label: const Text('Wipe Settings'),
         ),
         ElevatedButton.icon(
+          icon: const Icon(Icons.category),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Reset Categories?"),
+                  content: const Text(
+                    "This will reset categories to defaults, removing any user-created categories."
+                    "\nMod assignments to default categories will be kept.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        ref
+                            .read(categoryManagerProvider.notifier)
+                            .resetCategoriesToDefaults();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Reset'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          label: const Text('Reset Categories to Defaults'),
+        ),
+        ElevatedButton.icon(
           icon: const Icon(Icons.nearby_error),
           onPressed: () {
             throw Exception("This is a test error");
@@ -563,6 +604,159 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             }
           },
         ),
+        DebugSettingsGroup(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              Text(
+                "Forum Data",
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              Builder(
+                builder: (context) {
+                  final cacheTime = forumDataFetcher.getCacheTimestamp();
+                  final forumBundle =
+                      ref.watch(forumDataProvider).valueOrNull;
+                  final entryCount = forumBundle?.index.length;
+                  final String status;
+                  if (cacheTime != null) {
+                    final age = DateTime.now().difference(cacheTime);
+                    final ageStr = age.inHours > 0
+                        ? '${age.inHours}h ago'
+                        : '${age.inMinutes}m ago';
+                    status = entryCount != null
+                        ? 'Cached $ageStr, $entryCount entries'
+                        : 'Cached $ageStr';
+                  } else {
+                    status = 'Not cached';
+                  }
+                  return Text(status,
+                      style: Theme.of(context).textTheme.bodySmall);
+                },
+              ),
+              Row(
+                spacing: 8,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Force Refresh'),
+                    onPressed: () async {
+                      try {
+                        await forumDataFetcher.fetch(bypassCache: true);
+                        ref.invalidate(forumDataProvider);
+                        if (context.mounted) {
+                          showSnackBar(
+                            context: context,
+                            content: const Text(
+                              'Forum data refreshed.',
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          showSnackBar(
+                            context: context,
+                            content: Text('Refresh failed: $e'),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Clear Cache'),
+                    onPressed: () {
+                      forumDataFetcher.clearCache();
+                      ref.invalidate(forumDataProvider);
+                      showSnackBar(
+                        context: context,
+                        content: const Text('Forum data cache cleared.'),
+                      );
+                    },
+                  ),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.info_outline),
+                    label: const Text('Show Forum Data'),
+                    onPressed: () {
+                      final bundle =
+                          ref.read(forumDataProvider).valueOrNull;
+                      final records =
+                          ref.read(modRecordsStore).valueOrNull;
+                      final matchedCount = records?.records.values
+                              .where(
+                                (r) => r.forumData != null,
+                              )
+                              .length ??
+                          0;
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Forum Data'),
+                          content: SizedBox(
+                            width: 600,
+                            height: 500,
+                            child: bundle == null
+                                ? const Center(
+                                    child: Text('No forum data loaded.'),
+                                  )
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Updated: ${bundle.updatedAt.toIso8601String()}',
+                                      ),
+                                      Text(
+                                        'Total entries: ${bundle.index.length}',
+                                      ),
+                                      Text(
+                                        'Matched to ModRecords: $matchedCount',
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          itemCount: bundle.index.length,
+                                          itemBuilder: (context, index) {
+                                            final entry =
+                                                bundle.index[index];
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 1,
+                                              ),
+                                              child: SelectableText(
+                                                '#${entry.topicId}  '
+                                                '${entry.title}  '
+                                                '(${entry.views} views, '
+                                                '${entry.replies} replies)',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(context).pop(),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(8),
@@ -605,6 +799,22 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   const SizedBox(height: 8),
                   Text(
                     "Max RAM usage: ${ProcessInfo.maxRss.bytesAsReadableMB()}",
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "TriOS version: ${Constants.version}",
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Dart version: ${Platform.version}",
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "OS: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}",
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Processors: ${Platform.numberOfProcessors}",
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
@@ -735,7 +945,7 @@ class DebugSettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+      borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       child: Container(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         padding: const EdgeInsets.all(8),

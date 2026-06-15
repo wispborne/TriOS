@@ -10,10 +10,4 @@ public class TriosCompanionModPlugin extends BaseModPlugin {
         PortraitReplacer.replaceImagesBasedOnConfig();
     }
 
-    @Override
-    public void onGameLoad(boolean newGame) {
-        super.onGameLoad(newGame);
-
-        PortraitReplacer.replaceImagesBasedOnConfig();
-    }
 }

@@ -1,0 +1,10 @@
+{
+	"muzzleFlashSpec":{
+                        "length":40.0, 
+                        "spread":12.0,
+                        "particleSizeMin":12.0,
+                        "particleSizeRange":18.0,
+                        "particleDuration":0.05,
+                        "particleCount":10,
+                        "particleColor":[255,255,255,240]},
+}

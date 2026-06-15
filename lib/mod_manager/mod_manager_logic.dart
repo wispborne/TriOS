@@ -7,24 +7,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/compression/archive.dart';
-import 'package:trios/models/download_progress.dart';
-import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/mod_manager/audit_log.dart';
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/services/_mod_variant_core.dart';
-import 'package:trios/mod_manager/utils/mod_file_utils.dart';
 import 'package:trios/mod_manager/utils/mod_list_exporter.dart' as exporter;
 import 'package:trios/mod_manager/version_checker.dart';
-import 'package:trios/mod_manager/widgets/mod_installation_dialog.dart';
-import 'package:trios/mod_manager/widgets/mod_installation_error_dialog.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
@@ -54,341 +48,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     return null;
   }
 
-  Future<List<InstallModResult>> installModFromSourceWithDefaultUI(
-    ModInstallSource modInstallSource, {
-    bool forceDontEnableModUpdates = false,
-    Download? installationDownload,
-  }) async {
-    final context = ref.read(AppState.appContext);
-    if (context == null) {
-      return Future.value([]);
-    }
 
-    void onProgress(int completed, int total) {
-      installationDownload?.installProgress.value = TriOSDownloadProgress(
-        completed,
-        total,
-        customStatus: "$completed / $total files",
-      );
-    }
-
-    try {
-      final installModsResult = await installModFromDisk(
-        modInstallSource,
-        ref.read(AppState.modsFolder).value!,
-        ref.read(AppState.mods),
-        (modsBeingInstalled) {
-          return ModInstallationDialog.show(
-            context,
-            candidates: modsBeingInstalled,
-            gameVersion: ref.read(
-              appSettings.select((s) => s.lastStarsectorVersion),
-            ),
-          );
-        },
-        onProgress: installationDownload != null ? onProgress : null,
-      );
-
-      if (installModsResult.isEmpty) {
-        return [];
-      }
-
-      // Extraction complete; signal the post-extraction reload phase so the
-      // toast shows an indeterminate "Finalizing..." bar instead of freezing
-      // at 100% while reloadModVariants() reads mod data from disk.
-      installationDownload?.installProgress.value = TriOSDownloadProgress(
-        0,
-        0,
-        isIndeterminate: true,
-        customStatus: "Finalizing...",
-      );
-
-      await ref.read(AppState.modVariants.notifier).reloadModVariants();
-      final refreshedVariants = ref.read(AppState.modVariants).value ?? [];
-
-      // For plain Download installs (file picker / drag-drop), connect the
-      // installed variant so ModDownloadToast can reach the installed visual state.
-      if (installationDownload != null && installModsResult.isNotEmpty) {
-        for (final result in installModsResult.where((r) => r.err == null)) {
-          final variant = refreshedVariants.firstWhereOrNull(
-            (v) => v.smolId == result.modInfo.smolId,
-          );
-          if (variant != null) {
-            installationDownload.installedVariant.value = variant;
-            break;
-          }
-        }
-      }
-
-      if (!forceDontEnableModUpdates &&
-          ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==
-              ModUpdateBehavior.switchToNewVersionIfWasEnabled) {
-        final mods = ref.read(AppState.mods);
-        final successfulUpdates = installModsResult.where(
-          (it) => it.err == null,
-        );
-        final enabledVariants = <ModVariant>[];
-
-        for (final installed in successfulUpdates) {
-          // Find the variant post-install so we can activate it.
-          final actualVariant = refreshedVariants.firstWhereOrNull(
-            (variant) => variant.smolId == installed.modInfo.smolId,
-          );
-          try {
-            // If the mod existed and was enabled, switch to the newly downloaded version.
-
-            if (actualVariant != null &&
-                actualVariant.mod(mods)?.isEnabledInGame == true) {
-              enabledVariants.add(actualVariant);
-              // Should check for wrong game version here, but it requires a `ref` that we don't have.
-              await changeActiveModVariant(
-                actualVariant.mod(mods)!,
-                actualVariant,
-              );
-            }
-          } catch (ex) {
-            Fimber.w(
-              "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex",
-            );
-            // }
-          }
-        }
-
-        // Refresh all variants of touched mods.
-        // final modifiedVariants = enabledVariants
-        //     .map((it) => it.mod(mods))
-        //     .nonNulls
-        //     .toSet()
-        //     .flatMap((it) => it.modVariants)
-        //     .toList();
-        await ref.read(AppState.modVariants.notifier).reloadModVariants();
-      }
-
-      final List<InstallModResult> errors = installModsResult
-          .where((it) => it.err != null)
-          .toList();
-      if (errors.isNotEmpty) {
-        await ModInstallationErrorDialog.show(context, errors);
-      }
-
-      return installModsResult;
-    } catch (e, st) {
-      Fimber.w("Error installing mod from archive: $e", ex: e, stacktrace: st);
-      if (!context.mounted) return [];
-      showAlertDialog(context, title: "Error installing mod", content: "$e");
-      return [];
-    } finally {
-      installationDownload?.installComplete.value = true;
-    }
-  }
-
-  /// Given an [InstallModResult], attempts to install the mod(s) contained within it.
-  /// If there are multiple mods in the source, or one or more mods are already installed, the user will be asked which mods to install/delete.
-  /// Returns a list of ModInfos and any errors that occurred when installing each.
-  /// userInputNeededHandler should return the list of SmolIds to install.
-  /// [modInstallSource] should be an archive file or a folder.
-  /// [destinationFolder] is the game's mods folder.
-  /// [currentMods] is a list of all installed mods.
-  Future<List<InstallModResult>> installModFromDisk(
-    ModInstallSource modInstallSource,
-    Directory destinationFolder,
-    List<Mod> currentMods,
-    Future<List<ExtractedModInfo>?> Function(
-      List<({ExtractedModInfo modInfo, ModVariant? alreadyExistingVariant})>
-      modInfosFound,
-    )
-    userInputNeededHandler, {
-    bool dryRun = false,
-    void Function(int completed, int total)? onProgress,
-  }) async {
-    Fimber.i(
-      "Installing mod from ${modInstallSource.runtimeType}: ${modInstallSource.entity.path} to ${destinationFolder.path}",
-    );
-
-    if (!modInstallSource.entity.existsSync()) {
-      throw Exception("File does not exist: ${modInstallSource.entity.path}");
-    }
-    final results = <InstallModResult>[];
-    final archive = ref.read(archiveProvider).requireValue;
-
-    final archiveFileList = await modInstallSource.listFilePaths(archive);
-    final modInfoFiles = archiveFileList
-        .filter(
-          (it) =>
-              it.containsIgnoreCase(Constants.modInfoFileName) &&
-              !it.toFile().nameWithExtension
-              // avoid doing toFile() twice for each file
-              .let((name) => name.startsWith(".") || name.startsWith("_")),
-        )
-        .toList();
-
-    if (modInfoFiles.isEmpty) {
-      throw Exception(
-        "No mod_info.json file found in source:\n${modInstallSource.entity.path}",
-      );
-    }
-
-    Fimber.i(
-      "Found mod_info.json(s) file in source: ${modInfoFiles.map((it) => it).toList()}",
-    );
-
-    final extractedModInfos = await modInstallSource.getActualFiles(
-      modInfoFiles,
-      archive,
-    );
-
-    final List<ExtractedModInfo> modInfos = await Future.wait(
-      extractedModInfos.nonNulls.map((modInfoFile) async {
-        try {
-          ExtractedModInfo modInfo = (
-            extractedFile: modInfoFile,
-            modInfo: ModInfoMapper.fromJson(
-              modInfoFile.extractedFile
-                  .readAsStringSyncAllowingMalformed()
-                  .fixJson(),
-            ),
-          );
-          return modInfo;
-        } catch (e, st) {
-          Fimber.e(
-            "Error reading mod_info.json files: $e",
-            ex: e,
-            stacktrace: st,
-          );
-          return Future.error(
-            Exception("Error parsing '${modInfoFile.extractedFile.path}':\n$e"),
-            st,
-          );
-        }
-      }),
-    );
-
-    // Check for mods that are already installed.
-    var allModVariants = currentMods.variants;
-    final alreadyPresentModVariants = modInfos
-        .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-        .nonNulls
-        .toList();
-
-    if (alreadyPresentModVariants.isNotEmpty) {
-      Fimber.i(
-        "Mod already exists: ${alreadyPresentModVariants.map((it) => "${it.modInfo.id} ${it.modInfo.version}").toList()}",
-      );
-    }
-
-    // User can choose to install only some of the mods (if multiple were found).
-    var modInfosToInstall = modInfos;
-
-    // If there are multiple mod_info.json files or one or more mods were already installed, ask user for input.
-    if (alreadyPresentModVariants.isNotEmpty || modInfos.length > 1) {
-      final userInput = await userInputNeededHandler(
-        modInfos
-            .map(
-              (modInfo) => (
-                modInfo: modInfo,
-                alreadyExistingVariant: getModVariantForModInfo(
-                  modInfo.modInfo,
-                  alreadyPresentModVariants,
-                ),
-              ),
-            )
-            .toList(),
-      );
-      Fimber.i("User has chosen to install mods: $userInput");
-      if (userInput == null) {
-        return [];
-      }
-      // Grab just the modInfos that the user wants to install.
-      modInfosToInstall = userInput
-          .map(
-            (selectedModInfoToInstall) => modInfos.firstWhere(
-              (modInfo) => modInfo == selectedModInfoToInstall,
-            ),
-          )
-          .toList();
-
-      // Find any mods that are already installed.
-      final existingVariantsMatchingOneBeingInstalled = modInfosToInstall
-          .map((it) => getModVariantForModInfo(it.modInfo, allModVariants))
-          .nonNulls
-          .toList();
-
-      // If the same mod variant is already installed, delete it first.
-      for (var modToDelete in existingVariantsMatchingOneBeingInstalled) {
-        if (dryRun) {
-          Fimber.i(
-            "Dry run: Would delete mod folder ${modToDelete.modFolder} before reinstalling same variant.",
-          );
-          continue;
-        }
-
-        try {
-          modToDelete.modFolder.moveToTrash(deleteIfFailed: true);
-          Fimber.i(
-            "Deleted mod folder before reinstalling same variant: ${modToDelete.modFolder}",
-          );
-        } on Exception catch (e, st) {
-          Fimber.e(
-            "Error deleting mod folder: ${modToDelete.modFolder}",
-            ex: e,
-            stacktrace: st,
-          );
-          results.add((
-            sourceFileEntity: modInstallSource.entity.toFile(),
-            destinationFolder: destinationFolder,
-            modInfo: modToDelete.modInfo,
-            err: e,
-            st: st,
-          ));
-
-          // If there was an error deleting the mod folder, don't install the new version.
-          modInfosToInstall.removeWhere(
-            (it) => it.modInfo.smolId == modToDelete.modInfo.smolId,
-          );
-        }
-      }
-    }
-
-    final shouldPersistHighestVersionFolderName = ref.read(
-      appSettings.select((s) => s.folderNamingSetting),
-    );
-
-    // Start installing the mods one by one.
-    for (final modInfoToInstall in modInfosToInstall) {
-      final fallbackFolderName =
-          modInfoToInstall.extractedFile.originalFile.parent.path != "."
-          ? modInfoToInstall.extractedFile.originalFile.parent.name
-          : modInfoToInstall.modInfo.nameOrId.fixFilenameForFileSystem();
-
-      try {
-        String targetModFolderName = await setUpNewHighestModVersionFolder(
-          modInfoToInstall.modInfo,
-          fallbackFolderName,
-          shouldPersistHighestVersionFolderName,
-          currentMods,
-          destinationFolder,
-          dryRun: dryRun,
-        );
-        results.add(
-          await installMod(
-            modInfoToInstall,
-            currentMods,
-            archiveFileList,
-            modInstallSource,
-            destinationFolder,
-            targetModFolderName,
-            dryRun: dryRun,
-            onProgress: onProgress,
-          ),
-        );
-      } catch (e, st) {
-        Fimber.w("Error installing mod: $e", ex: e, stacktrace: st);
-        continue;
-      }
-    }
-
-    return results;
-  }
 
   /// Sets up the folder for the highest version of a mod.
   ///
@@ -457,9 +117,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             Fimber.i(
               "Moving files from highest version folder ($highestVersionFolder) to new versioned folder ($versionedNameForHighestVersion).",
             );
-            for (final folderItem in highestVersionFolder.listSync(
-              recursive: true,
-            )) {
+            final folderItems = await highestVersionFolder
+                .list(recursive: true)
+                .toList();
+            for (final folderItem in folderItems) {
               if (folderItem.isDirectory()) {
                 continue; // Directories will be created as needed.
               }
@@ -474,7 +135,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
               Fimber.d("Moving file: ${file.path} to $newFilePath");
               if (!dryRun) {
-                newFilePath.toFile().parent.createSync(recursive: true);
+                await newFilePath.toFile().parent.create(recursive: true);
                 await file.renameSafely(newFilePath.path);
               }
             }
@@ -515,6 +176,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     String targetModFolderName, {
     bool dryRun = true,
     void Function(int completed, int total)? onProgress,
+    void Function(String phase)? onPhaseChanged,
   }) async {
     final modInfo = modInfoToInstall.modInfo;
     var existingMod = currentMods.firstWhereOrNull((it) => it.id == modInfo.id);
@@ -568,6 +230,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
           return false;
         },
         onProgress: onProgress,
+        onPhaseChanged: onPhaseChanged,
       );
 
       final newModFolder = destinationFolder
@@ -742,14 +405,49 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       return;
     }
 
-    // We're going to make a batch of changes, wait until they're done to refresh modVariants.
-    // ref
-    //     .read(AppState.modVariants.notifier)
-    //     .shouldAutomaticallyReloadOnFilesChanged = false;
-
     // If enabling a variant, disable all other non-bricked mod variants
     // (except for the variant we want to actually enable, if that's already active).
-    for (var variant in modInfoEnabledVariants) {
+    // Extracted to a separate method to work around a Dart AOT compiler bug
+    // where `await` inside a for loop in this method generates a bad state machine.
+    await _disableOtherVariants(
+      modInfoEnabledVariants,
+      modVariant,
+      isDisablingMod: isDisablingMod,
+      mod: mod,
+    );
+
+    if (!isDisablingMod) {
+      await _enableModVariant(
+        modVariant,
+        mod,
+        enableInVanillaLauncher: true,
+        reason:
+            "You changed ${mod.id} to version ${modVariant.bestVersion} from ${mod.findFirstEnabled == null ? "disabled" : mod.findFirstEnabled?.bestVersion}.",
+      );
+    } else {
+      await _unbrickModInfoFiles(mod);
+    }
+
+    // TODO update ONLY the mod that changed and any dependents/dependencies.
+    if (notifyWatchers) {
+      await ref
+          .read(AppState.modVariants.notifier)
+          .reloadModVariants(
+            onlyVariants: mod.modVariants,
+          );
+    }
+    if (validateDependencies) {
+      await validateModDependencies(modsToFreeze: [mod.id]);
+    }
+  }
+
+  Future<void> _disableOtherVariants(
+    List<ModVariant> modInfoEnabledVariants,
+    ModVariant? modVariant, {
+    required bool isDisablingMod,
+    required Mod mod,
+  }) async {
+    for (final variant in modInfoEnabledVariants) {
       if (variant.smolId != modVariant?.smolId) {
         try {
           await _disableModVariant(
@@ -762,56 +460,31 @@ class ModManagerNotifier extends AsyncNotifier<void> {
             brickModInfo: !isDisablingMod && mod.modVariants.length > 1,
             reason: isDisablingMod
                 ? "You disabled ${mod.id} (${variant.modInfo.version} was enabled before)."
-                : "Changed ${mod.id} to ${modVariant.modInfo.version}, so ${variant.bestVersion} has to be disabled.",
+                : "Changed ${mod.id} to ${modVariant!.modInfo.version}, so ${variant.bestVersion} has to be disabled.",
           );
         } catch (e, st) {
           Fimber.e("Error disabling mod variant: $e", ex: e, stacktrace: st);
         }
       }
     }
+  }
 
-    if (!isDisablingMod) {
-      await _enableModVariant(
-        modVariant,
-        mod,
-        enableInVanillaLauncher: true,
-        reason:
-            "You changed ${mod.id} to version ${modVariant.bestVersion} from ${mod.findFirstEnabled == null ? "disabled" : mod.findFirstEnabled?.bestVersion}.",
-      );
-    } else {
-      // If mod is disabled in `enabled_mods.json`, set all the `mod_info.json` files to non-bricked.
-      // That makes things easier on the user & MOSS by mimicking vanilla behavior whenever possible.
-      final disabledModVariants = mod.modVariants
-          .where((v) => !v.isModInfoEnabled)
-          .toList();
-      for (final disabledVariant in disabledModVariants) {
-        try {
-          await _enableModInfoFile(disabledVariant);
-        } catch (e, st) {
-          Fimber.e(
-            "Error enabling mod_info.json file: $e",
-            ex: e,
-            stacktrace: st,
-          );
-        }
+  Future<void> _unbrickModInfoFiles(Mod mod) async {
+    // If mod is disabled in `enabled_mods.json`, set all the `mod_info.json` files to non-bricked.
+    // That makes things easier on the user & MOSS by mimicking vanilla behavior whenever possible.
+    final disabledModVariants = mod.modVariants
+        .where((v) => !v.isModInfoEnabled)
+        .toList();
+    for (final disabledVariant in disabledModVariants) {
+      try {
+        await _enableModInfoFile(disabledVariant);
+      } catch (e, st) {
+        Fimber.e(
+          "Error enabling mod_info.json file: $e",
+          ex: e,
+          stacktrace: st,
+        );
       }
-    }
-
-    // ref
-    //     .read(AppState.modVariants.notifier)
-    //     .shouldAutomaticallyReloadOnFilesChanged = true;
-
-    // TODO update ONLY the mod that changed and any dependents/dependencies.
-    if (notifyWatchers) {
-      await ref
-          .read(AppState.modVariants.notifier)
-          .reloadModVariants(
-            onlyVariants: mod.modVariants,
-          );
-    }
-
-    if (validateDependencies) {
-      await validateModDependencies(modsToFreeze: [mod.id]);
     }
   }
 
@@ -1068,8 +741,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
 
     // Replace the game version in the mod_info.json file.
     // Don't use the code model, we want to keep any extra fields that might not be in the model.
-    final modInfoJson = await modInfoFile
-        .readAsStringSync()
+    final modInfoJson = await (await modInfoFile.readAsString())
         .parseJsonToMapAsync();
     modInfoJson["gameVersion"] = newGameVersion;
     modInfoJson["originalGameVersion"] = modVariant.modInfo.gameVersion;
@@ -1522,4 +1194,42 @@ class VersionWarning extends ModDependencySatisfiedState {
 
 class Satisfied extends ModDependencySatisfiedState {
   Satisfied(ModVariant modVariant) : super(modVariant: modVariant);
+}
+
+Color? getStateColorForDependencyText(
+  ModDependencySatisfiedState dependencyState,
+) {
+  return switch (dependencyState) {
+    Satisfied _ => null,
+    Missing _ => TriOSThemeConstants.vanillaErrorColor,
+    Disabled _ =>
+      TriOSThemeConstants
+          .vanillaWarningColor, // Disabled means it's present, so we can just enable it.
+    VersionInvalid _ => TriOSThemeConstants.vanillaErrorColor,
+    VersionWarning _ => TriOSThemeConstants.vanillaWarningColor,
+  };
+}
+
+extension GameCompatibilityExt on GameCompatibility {
+  Color? getGameCompatibilityColor() {
+    switch (this) {
+      case GameCompatibility.incompatible:
+        return TriOSThemeConstants.vanillaErrorColor;
+      case GameCompatibility.warning:
+        return TriOSThemeConstants.vanillaWarningColor;
+      case _:
+        return null;
+    }
+  }
+}
+
+extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {
+  Color? getDependencySatisfiedColor() {
+    return switch (this) {
+      Satisfied _ => Colors.green,
+      Disabled _ => TriOSThemeConstants.vanillaWarningColor.withAlpha(200),
+      VersionWarning _ => TriOSThemeConstants.vanillaWarningColor.withAlpha(200),
+      _ => TriOSThemeConstants.vanillaErrorColor,
+    };
+  }
 }

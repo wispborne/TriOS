@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/catalog/forum_data_manager.dart';
+import 'package:trios/catalog/mod_browser_manager.dart';
+import 'package:trios/catalog/models/forum_mod_index.dart';
+import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_manager/widgets/category_context_menu.dart';
+import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
@@ -26,6 +33,7 @@ ContextMenu buildModContextMenu(
 
   return ContextMenu(
     entries: <ContextMenuEntry>[
+      if (false) _buildMenuItemViewModDetails(mod, ref, context),
       if (!isGameRunning && showSwapToVersion)
         buildMenuItemChangeVersion(mod, ref),
       buildMenuItemOpenFolder(mod),
@@ -51,8 +59,7 @@ ContextMenu buildModContextMenu(
           ref.watch(AppState.vramEstimatorProvider).value?.isScanning != true)
         buildMenuItemCheckVram(mod, ref),
       buildMenuItemToggleMuteUpdates(mod, ref),
-      if (false) // not done
-        buildMenuItemViewModWeapons(context, mod, ref),
+      buildMenuItemViewInViewer(mod, ref),
       // MenuHeader(text: "Debugging", disableUppercase: true),
       buildMenuItemDebugging(context, mod, ref, isGameRunning),
     ],
@@ -167,6 +174,17 @@ ContextMenu buildModBulkActionContextMenu(
         },
       ),
 
+      _buildBulkColorSubmenu(selectedMods, ref),
+      MenuItem.submenu(
+        label: 'Change Category',
+        icon: Icons.category,
+        items: buildCategoryBatchMenuEntries(
+          modIds: selectedMods.map((m) => m.id).toSet(),
+          ref: ref,
+          context: context,
+          includeHeader: false,
+        ),
+      ),
       menuItemDeleteMultipleMods(selectedMods, context, ref),
 
       if (selectedMods.any(
@@ -204,6 +222,53 @@ const _colorPresets = <(String, Color)>[
   ('Rose', Color(0xFFEC407A)),
 ];
 
+MenuItem _buildBulkColorSubmenu(List<Mod> selectedMods, WidgetRef ref) {
+  final metadata = ref.read(AppState.modsMetadata).value;
+  final colors = selectedMods.map(
+    (mod) => metadata?.getMergedModMetadata(mod.id)?.color?.toARGB32(),
+  );
+  // A preset is "selected" only if every selected mod has that exact color.
+  final allSameColor =
+      colors.isNotEmpty && colors.every((c) => c == colors.first)
+      ? colors.first
+      : null;
+
+  return MenuItem.submenu(
+    label: 'Mod Color',
+    icon: Icons.palette,
+    items: [
+      MenuItem(
+        label: '',
+        icon: Icons.clear,
+        padding: .only(left: 4),
+        onSelected: () {
+          ref
+              .read(AppState.modsMetadata.notifier)
+              .updateModsUserMetadata(
+                selectedMods.map((m) => m.id).toList(),
+                (old) => old.copyWith(color: null),
+              );
+        },
+      ),
+      ..._colorPresets.map(
+        (preset) => _ColorMenuItem(
+          label: preset.$1,
+          color: preset.$2,
+          isSelected: allSameColor == preset.$2.toARGB32(),
+          onSelected: () {
+            ref
+                .read(AppState.modsMetadata.notifier)
+                .updateModsUserMetadata(
+                  selectedMods.map((m) => m.id).toList(),
+                  (old) => old.copyWith(color: preset.$2),
+                );
+          },
+        ),
+      ),
+    ],
+  );
+}
+
 MenuItem _buildColorSubmenu(String modId, WidgetRef ref) {
   final currentColor = ref
       .read(AppState.modsMetadata)
@@ -212,7 +277,7 @@ MenuItem _buildColorSubmenu(String modId, WidgetRef ref) {
       ?.color;
 
   return MenuItem.submenu(
-    label: 'Color',
+    label: 'Mod Color',
     icon: Icons.palette,
     items: [
       MenuItem(
@@ -257,22 +322,68 @@ MenuItem _buildCategorySubmenu(
   return MenuItem.submenu(
     label: 'Categories',
     icon: Icons.category,
-    items: [
-      ...allCategories.map((category) {
-        final isAssigned = assignedIds.contains(category.id);
-        return CheckableMenuItem(
-          label: category.name,
-          isChecked: isAssigned,
-          onSelected: () {
-            if (isAssigned) {
-              notifier.removeCategoryFromMod(modId, category.id);
-            } else {
-              notifier.addCategoryToMod(modId, category.id);
-            }
-          },
+    items: buildCategoryMenuItems(modId: modId, ref: ref, context: context),
+  );
+}
+
+MenuItem _buildMenuItemViewModDetails(
+  Mod mod,
+  WidgetRef ref,
+  BuildContext context,
+) {
+  return MenuItem(
+    label: 'View Mod Details...',
+    icon: Icons.info_outline,
+    onSelected: () {
+      final variant = mod.findFirstEnabledOrHighestVersion!;
+      final versionChecks = ref.read(AppState.versionCheckResults).value;
+
+      VersionCheckComparison? comparison;
+      if (versionChecks != null) {
+        comparison = VersionCheckComparison(
+          variant,
+          versionChecks.versionCheckResultsBySmolId,
         );
-      }),
-    ],
+      }
+
+      // Look up forum data via thread ID from version checker
+      ForumModIndex? forumEntry;
+      final threadId = variant.versionCheckerInfo?.modThreadId;
+
+      if (threadId != null) {
+        final topicId = int.tryParse(threadId);
+        if (topicId != null) {
+          forumEntry = ref.read(forumDataByTopicId)[topicId];
+        }
+      }
+
+      // Look up ScrapedMod via ModRecord's catalog name
+      ScrapedMod? scrapedMod;
+      final modRecords = ref.read(modRecordsStore).valueOrNull;
+      final catalogItems = ref
+          .read(browseModsNotifierProvider)
+          .valueOrNull
+          ?.items;
+      if (modRecords != null && catalogItems != null) {
+        final record = modRecords.records[mod.id];
+        final catalogName = record?.catalog?.name;
+        if (catalogName != null) {
+          final key = catalogName.toLowerCase().trim();
+          scrapedMod = catalogItems.cast<ScrapedMod?>().firstWhere(
+            (s) => s!.name.toLowerCase().trim() == key,
+            orElse: () => null,
+          );
+        }
+      }
+
+      showModInfoDialog(
+        context,
+        mod: mod,
+        scrapedMod: scrapedMod,
+        forumModIndex: forumEntry,
+        versionCheckComparison: comparison,
+      );
+    },
   );
 }
 

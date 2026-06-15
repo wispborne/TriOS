@@ -17,6 +17,7 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/restartable_app.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
 
 import '../widgets/svg_image_icon.dart';
 
@@ -60,6 +61,13 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    textEditingController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Dialog(
       child: PopScope(
@@ -73,7 +81,20 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                 child: MovingTooltipWidget.text(
                   message: "ಠ_ಠ",
                   child: IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () async {
+                      // Persist allowCrashReporting: false so the onboarding
+                      // gate (allowCrashReporting == null) is satisfied —
+                      // otherwise closing here makes the dialog reappear every
+                      // launch.
+                      await ref
+                          .read(appSettings.notifier)
+                          .update(
+                            (state) =>
+                                state.copyWith(allowCrashReporting: false),
+                          );
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop();
+                    },
                     icon: const Icon(Icons.close),
                   ),
                 ),
@@ -238,7 +259,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                       const Text(" (up to "),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: DropdownButton<int>(
+                        child: TriOSDropdownButton<int>(
                           value: lastNVersionsSetting,
                           items: [
                             for (int i = 2; i <= 10; i++)
@@ -412,7 +433,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                     fontStyle: FontStyle.italic,
                     color: Theme.of(
                       context,
-                    ).textTheme.labelSmall?.color?.withOpacity(0.7),
+                    ).textTheme.labelSmall?.color?.withValues(alpha: 0.7),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -465,14 +486,14 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
                     child: ElevatedButton.icon(
                       icon: Icon(isLast ? Icons.check : Icons.arrow_forward),
                       iconAlignment: IconAlignment.end,
-                      onPressed: () {
+                      onPressed: () async {
                         if (!isLast) {
                           _pageController.nextPage(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOut,
                           );
                         } else {
-                          _saveSettings(context);
+                          await _saveSettings(context);
                         }
                       },
                       label: Text(isLast ? "Finish" : "Next"),
@@ -487,9 +508,14 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     );
   }
 
-  void _saveSettings(BuildContext context) {
+  Future<void> _saveSettings(BuildContext context) async {
     final settings = ref.read(appSettings.notifier);
-    settings.update(
+    // Must await: update() debounces the disk write 300ms, and softRestartApp
+    // tears down the ProviderScope. If we don't wait, the rebuilt notifier
+    // loads stale settings from disk and schedules its own write that races
+    // with — and clobbers — the onboarding write, leaving allowCrashReporting
+    // null and re-triggering the onboarding gate on next launch.
+    await settings.update(
       (state) => state.copyWith(
         gameDir: gameDirPath != null ? Directory(gameDirPath!) : null,
         modsDir: generateModsFolderPath(
@@ -508,6 +534,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
       ProtocolRegistration.unregister();
     }
 
+    if (!context.mounted) return;
     RestartableApp.softRestartApp(context);
     Navigator.of(context).pop();
   }

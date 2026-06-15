@@ -1,60 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:trios/themes/theme_manager.dart' show ThemeManager;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/widgets/filter_engine/filter_group.dart';
+import 'package:trios/widgets/filter_engine/filter_scope.dart';
+import 'package:trios/widgets/filter_group_persistence/filter_group_persist_button.dart';
+import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
-class GridFilter<T> {
-  final String name;
-  final String Function(T) valueGetter;
-
-  /// Optional getter that returns multiple values per item.
-  /// When provided, the filter panel shows each individual value as a separate
-  /// chip and matching checks whether *any* of the item's values match.
-  /// [valueGetter] is still required but may return an empty string when
-  /// [valuesGetter] is used.
-  final List<String> Function(T)? valuesGetter;
-
-  final String Function(String)? displayNameGetter;
-
-  /// Custom comparator for sorting filter chip values (raw IDs).
-  /// When set, takes precedence over [displayNameGetter]-based sorting.
-  final Comparator<String>? sortComparator;
-
-  /// If true, doesn't sort by display name or custom sort.
-  final bool useDefaultSort;
-
-  // Map of values to filter states:
-  // true = include, false = exclude, null = no filter
-  final Map<String, bool?> filterStates = {};
-
-  GridFilter({
-    required this.name,
-    required this.valueGetter,
-    this.valuesGetter,
-    this.displayNameGetter,
-    this.sortComparator,
-    this.useDefaultSort = false,
-  });
-
-  Set<String> get includedValues => filterStates.entries
-      .where((e) => e.value == true)
-      .map((e) => e.key)
-      .toSet();
-
-  Set<String> get excludedValues => filterStates.entries
-      .where((e) => e.value == false)
-      .map((e) => e.key)
-      .toSet();
-
-  bool get hasActiveFilters => filterStates.isNotEmpty;
-}
-
-class GridFilterWidget<T> extends StatefulWidget {
-  final GridFilter<T> filter;
+/// Widget rendering a single [ChipFilterGroup] with lock-button, tri-state
+/// chips, include/exclude counts and a collapsible header.
+class GridFilterWidget<T> extends ConsumerStatefulWidget {
+  final ChipFilterGroup<T> filter;
   final List<T> items;
   final Map<String, bool?> filterStates;
   final Function(Map<String, bool?>) onSelectionChanged;
+  final FilterScope scope;
 
   const GridFilterWidget({
     super.key,
@@ -62,15 +25,17 @@ class GridFilterWidget<T> extends StatefulWidget {
     required this.items,
     required this.filterStates,
     required this.onSelectionChanged,
+    required this.scope,
   });
 
   @override
-  State<GridFilterWidget<T>> createState() => _GridFilterWidgetState<T>();
+  ConsumerState<GridFilterWidget<T>> createState() =>
+      _GridFilterWidgetState<T>();
 }
 
-class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
+class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
   List<String> _uniqueValues = [];
-  bool _isExpanded = true;
+  late bool _isExpanded = !widget.filter.collapsedByDefault;
 
   @override
   void initState() {
@@ -81,9 +46,10 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
   @override
   void didUpdateWidget(GridFilterWidget<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.items != widget.items) {
-      _updateUniqueValues();
-    }
+    // Always recompute: `valuesGetter` may depend on external state (e.g.
+    // Catalog's Attributes group reads the controller's status map, which
+    // populates after modRecords load without changing `items`' identity).
+    _updateUniqueValues();
   }
 
   void _updateUniqueValues() {
@@ -116,20 +82,37 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
     _uniqueValues = values;
   }
 
+  /// If the group is currently locked, mirror the new selections to
+  /// persistence so settings reflect the latest state.
+  void _maybePersist(Map<String, bool?> newFilterStates) {
+    final key = FilterGroupPersistence.keyFor(widget.scope, widget.filter.id);
+    final isLocked = ref
+        .read(appSettings)
+        .persistedFilterGroups
+        .containsKey(key);
+    if (!isLocked) return;
+    ref
+        .read(filterGroupPersistenceProvider)
+        .write(widget.scope, widget.filter.id, newFilterStates);
+  }
+
+  void _emit(Map<String, bool?> newFilterStates) {
+    widget.onSelectionChanged(newFilterStates);
+    _maybePersist(newFilterStates);
+  }
+
   void _toggleValue(String value) {
-    // Create a copy of the current filter states
     final newFilterStates = Map<String, bool?>.from(widget.filterStates);
 
-    // Cycle through states: null -> true -> false -> null
     bool? currentState = widget.filterStates[value];
     bool? newState;
 
     if (currentState == null) {
-      newState = true; // Include
+      newState = true;
     } else if (currentState == true) {
-      newState = false; // Exclude
+      newState = false;
     } else {
-      newState = null; // No filter
+      newState = null;
     }
 
     if (newState == null) {
@@ -138,7 +121,7 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
       newFilterStates[value] = newState;
     }
 
-    widget.onSelectionChanged(newFilterStates);
+    _emit(newFilterStates);
   }
 
   void _selectAll() {
@@ -146,11 +129,11 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
     for (final value in _uniqueValues) {
       newFilterStates[value] = true;
     }
-    widget.onSelectionChanged(newFilterStates);
+    _emit(newFilterStates);
   }
 
   void _clearAll() {
-    widget.onSelectionChanged({});
+    _emit({});
   }
 
   int get includedCount =>
@@ -229,6 +212,7 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                       foregroundColor: theme.colorScheme.onSurface,
                     ),
                   ),
+                  const SizedBox(width: 4),
                   const Spacer(),
                   if (hasFilters)
                     Container(
@@ -236,13 +220,6 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                         horizontal: 8,
                         vertical: 2,
                       ),
-                      // decoration: BoxDecoration(
-                      //   // color: theme.colorScheme.primary.withOpacity(0.1),
-                      //   borderRadius: BorderRadius.circular(12),
-                      //   border: Border.all(
-                      //     color: theme.colorScheme.outline.withOpacity(0.3),
-                      //   ),
-                      // ),
                       child: Row(
                         children: [
                           if (includedCount > 0)
@@ -277,16 +254,15 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                                 ],
                               ),
                             ),
-                          // TextTriOS(
-                          //   '${includedCount}+ ${excludedCount}–',
-                          //   style: theme.textTheme.bodySmall?.copyWith(
-                          //     color: theme.colorScheme.primary,
-                          //     fontWeight: FontWeight.w500,
-                          //   ),
-                          // ),
                         ],
                       ),
                     ),
+                  FilterGridPersistButton(
+                    scope: widget.scope,
+                    filterGroupId: widget.filter.id,
+                    currentSelections: () =>
+                        Map<String, Object?>.from(widget.filterStates),
+                  ),
                 ],
               ),
             ),
@@ -306,13 +282,12 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                       children: _uniqueValues.map((value) {
                         final state = widget.filterStates[value];
 
-                        // Determine the visual style based on state
                         Color? chipColor;
                         Icon? leadingIcon;
                         BorderSide? side;
 
                         switch (state) {
-                          case true: // Include
+                          case true:
                             chipColor = theme.colorScheme.primaryContainer;
                             leadingIcon = Icon(
                               Icons.check,
@@ -321,7 +296,7 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                             );
                             side = BorderSide(color: theme.colorScheme.primary);
                             break;
-                          case false: // Exclude
+                          case false:
                             chipColor =
                                 theme.colorScheme.surfaceContainerLowest;
                             leadingIcon = Icon(
@@ -333,12 +308,12 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                               color: theme.colorScheme.secondary,
                             );
                             break;
-                          case null: // No filter
+                          case null:
                             chipColor = null;
                             leadingIcon = null;
                             side = BorderSide(
-                              color: theme.colorScheme.outline.withOpacity(
-                                0.25,
+                              color: theme.colorScheme.outline.withValues(
+                                alpha: 0.25,
                               ),
                             );
                             break;
@@ -362,7 +337,6 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
                             onSelected: (_) => _toggleValue(value),
                             selectedColor: chipColor,
                             checkmarkColor: Colors.transparent,
-                            // Hide the default checkmark
                             backgroundColor: theme.colorScheme.surfaceContainer,
                             side: side,
                             showCheckmark: false,
@@ -385,27 +359,12 @@ class _GridFilterWidgetState<T> extends State<GridFilterWidget<T>> {
 /// Renders the "Filters" header row (icon + label + active-count pill +
 /// optional "Clear All" button) above a scrollable column of [filterWidgets].
 class FiltersPanel extends StatefulWidget {
-  /// Called when the user taps the "Filters" header to collapse the panel.
   final VoidCallback onHide;
-
-  /// Total number of active filters across all filter types (grid, checkbox,
-  /// dropdown, etc.). Passed in by the caller so the widget stays generic.
   final int activeFilterCount;
-
-  /// Whether to show the "Clear All" button (typically true when any
-  /// [GridFilter] has active states).
   final bool showClearAll;
-
-  /// Called when the user taps "Clear All".
   final VoidCallback? onClearAll;
-
-  /// Filter content widgets rendered in the scrollable body (e.g.
-  /// a checkbox-filters card, then one [GridFilterWidget] per category).
   final List<Widget> filterWidgets;
-
   final ScrollController? scrollController;
-
-  /// Width of the panel. Defaults to 300.
   final double width;
 
   const FiltersPanel({
@@ -453,6 +412,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Card(
+          margin: .zero,
           child: Scrollbar(
             thumbVisibility: true,
             controller: _controller,
@@ -475,7 +435,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
                           child: InkWell(
                             onTap: widget.onHide,
                             borderRadius: BorderRadius.circular(
-                              ThemeManager.cornerRadius,
+                              TriOSThemeConstants.cornerRadius,
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(8),

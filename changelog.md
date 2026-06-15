@@ -1,20 +1,116 @@
+# 1.6.0
+- Added
+  - Factions Viewer
+  - Installation Activity panel, like web browsers' download pages.
+  - May now filter for ships with built-ins on Ship Viewer page.
+  - Ship Viewer dialog: built-in weapons are now shown on the mount tooltips.
+  - May now use some elements of Hegemony & Pride themes on any theme.
+  - Optional animated motes on some UI elements. Enable below the Themes dropdown.
+  - VRAM Estimator now shows your PC's total VRAM and how much of it you'll use.
+- Fixed
+  - Built-in weapons not showing on ship tooltips.
+  - Portrait Replacer.
+  - Ship skins not applying weapon slot changes.
+  - Column visibility indicator showing hidden columns as visible.
+  - Aliasing on mod icons.
+- Changed
+  - May now hide the layout toggle button.
+  - Mod context menu now always uses the more powerful Category submenu.
+  - Refactored mod installation code to support installing multiple mods at once.
+  - Now using base 2 instead of 10 for VRAM/folder sizes (1kb = 1024 instead of 1000).
+    - This is so that your PC's VRAM shows as expected: 24GB instead of 25.7GB on a RTX 3090, for example.
+
+# 1.5.1
+- Added
+  - Mods Catalog can now hide mods that you have installed already.
+- Fixed
+  - Mods could have a negative VRAM estimate (e.g. Ship Mastery System).
+    - Caused by miscategorizing small images as backgrounds.
+  - Ships Viewer: Stretch Icons To Fit now works.
+  - Invisible crash-on-quit that showed up in Event Viewer and used all my Sentry.io quota :') 
+- Changed
+  - Mod Index url now links to raw.github instead of github.
+    - Removes a redirect that might've been rarely causing the mod catalog to not load.
+
+# 1.5.0
+- Added
+  - Mod Catalog: category and game version dropdowns, sort options (name, newest, oldest, game version), and full-text search.
+    - Catalog cards now show installation status, available updates, and game version requirements.
+    - UI refresh.
+  - VRAM Estimator: new intelligent mode that tries to only include images that are actually used.
+    - Also added more detailed per-image breakdown on the VRAM estimator page.
+    - Optimized estimation time. Large modlists now take seconds.
+  - Toolbar icons can now be rearranged. Mostly.
+  - Mods page: two-layer grouping, such as grouping by categories and then by enabled status.
+  - Ship/Weapon/Hullmod Filters may now be remembered across app restarts (click save icon).
+  - Ship/Weapon/Hullmod Viewers now have advanced search, e.g. `size:medium damage:high_explosive range:>20`.
+  - Ships/Weapons Viewers: Added descriptions to the new tooltips.
+  - Ships Viewer: filter by stations.
+  - Ships Viewer: sensor stats now shown on tooltip.
+  - New theme: Hegemony.
+  - More.
+- Fixed
+  - Onboarding dialog appearing every launch.
+  - Portrait Replacer crashing Starsector if some cases where a portrait and its replacement were different sizes.
+  - Ships Viewer: DP is now calculated correctly.
+  - Improved .csv parsing to handle multi-line strings.
+  - Weapon, ship, and hullmod columns weren't read if they had mixed case headers.
+  - Log Viewer: incomplete logs would show `null, null` when copying mod info.
+  - Context menu could clip off the bottom of the screen.
+  - Ships Viewer: renamed Supplies/Rec to DP and added columns for ship builtins.
+  - Weapons Viewer: many fixes to the weapon tooltips. Wow the game has a lot of special code for this stuff.
+- Changed
+  - Cleaned up how a few themes look on the new ship/weapon tooltips.
+  - Refactored game detection and added a new default detection method on Windows that should be faster.
+  - MacOS: No longer appears to support self-update when it actually doesn't.
+  - Improved json parsing speed by ~60%.
+    - If a file is *valid* json, it will parse much faster than before.
+    - If it is ""Starsector json"" (has comments, unquoted strings, other invalid syntax) then it will parse at the same slow speed as before.
+  - Minor overall performance improvement by avoiding recalculation of computed values (e.g. enabled mod versions, ship mounts, etc).
+    - And other minor performance improvements (e.g. not prebuilding expensive tooltips)
+  - VRAM Estimator: cache is now stored as msgpack (smaller, faster)
+  - Bundled fonts rather than background downloading.
+
+# 1.4.1
+- Added
+  - Ships Viewer: overlays for mounts, modules, and bounds.
+  - Ships Viewer: new tooltip that matches in-game tooltip.
+  - Ships Viewer: filter by weapon slot parameters.
+  - Weapons Viewer: filter by hint.
+  - Weapons Viewer: new tooltip that matches in-game tooltip.
+- Fixed
+  - Broken Delta Core joke is now hidden as it should have been.
+    - If you want to experience the non-broken version of it, you can enable it from Settings - Debug - April Fools 2026.
+  - Notification after updating a mod had button that'd enable the previous mod version.
+  - Missing tooltip on rules.csv widget of new layout.
+  - Ship names not wrapping.
+
 # 1.4.0
 - Added
-  - Mod Categories
-    - IN PREVIEW. Expect things to change. Expect categories you make or modify to get reset.
-    - Current default categories are AI-gen placeholder and will change.
-    - Looking for feedback on how the changes look and feel, and what's missing.
-  - Mod Group layouts: Line and Small Card.
+  - **Mod Categories**
+    - Assign one or more categories to a mod.
+    - Group mods by category.
+    - Add and edit categories.
+  - **Mod color tagging**: show a color next to a mod's name as a mnemonic.
+  - New UI layout that moves most buttons to a left sidebar. 
+    - Optional, enable it from the toolbar.
+  - Mods page: new Header Styles: Line and Small Card.
     - Small Card is a shorter, more compact version of the previous mod group UI.
-  - Mod color tagging: show a color next to a mod's name as a mnemonic.
+    - Right-click on a mod group (e.g. Enabled) and select Header Style.
   - Hullmod Viewer.
-  - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
   - Dashboard: added edit button next to game launcher path to show that you can set a custom launch file (e.g. fr.bat).
   - Mods page: "Updates" group pinned to the top. May be configured/turned off.
+  - Mods page: Right-click shortcut to view a mod's ships/weapons/hullmods/portraits.
+  - Mods page: mod info tooltip on hovering the mod title.
+  - Ships viewer: .skin files are now shown (e.g. Falcon (P)).
+  - Ships/Weapons/Portraits Viewers: "# filters active" indicator.
+  - Two new themes: Turkey (real), Pride.
 - Fixed
   - Enabling a mod could leave multiple mod versions enabled (introduced in 1.3.4).
-  - Scroll position on theme selector menu would reset.
+  - Window position/size sometimes getting reset between restarts.
   - Light themes now suck slightly less and cleaned up a couple more themes.
+  - Scroll position on theme selector menu would reset.
+  - More cases of invalid json are now treated as valid, meaning more ships/weapons are loaded.
 - Changed
   - Removed JRE Manager.
     - Every Mikohime version uses a different file structure and installation method, which would require TriOS patches for compatibility.
@@ -28,8 +124,12 @@
   - VRAM Estimate on Mods page hides the exact VRAM estimates unless you hover over the VRAM column.
     - The new, smaller mod group UI made it look very messy with so many numbers visible.
   - Ships/Weapons Viewers: Moved some filters on the toolbar into the filter panel.
-  - Mods page: Mod description tooltip now appears when hovering a mod name.
+  - Mods page: When hovering a mod name, show mod info tooltip.
   - Ships/Weapons Viewers: Images smaller than the display area won't be scaled up by default.
+  - Improved error message when downloading a mod actually downloads a text file.
+  - Improved notification behavior even more.
+  - Ship Viewer: ship icons are less blurry.
+  - Too many other tiny tweaks to list.
 
 # 1.3.4
 - Added

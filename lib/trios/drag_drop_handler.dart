@@ -7,13 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_clipboard/src/reader.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:trios/chipper/chipper_state.dart';
-import 'package:trios/mod_manager/mod_install_source.dart';
-import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_manager/batch_installation/batch_installation_notifier.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/file_card.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 import '../chipper/views/chipper_home.dart';
 import 'constants.dart';
@@ -229,7 +229,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                         ? Colors.blue.withOpacity(0.4)
                         : Colors.transparent,
                     child: _inProgress
-                        ? const Center(child: CircularProgressIndicator())
+                        ? Center(child: ThemedCircularProgressIndicator())
                         : hoveredEvents != null
                         ? SizedBox(
                             width: double.infinity,
@@ -298,32 +298,37 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
     );
   }
 
-  /// Handles dropped files and folders from the file picker.
+  /// Handles dropped files and folders.
   void _handleDroppedModFilesAndFolders(List<FileSystemEntity> files) {
-    // Install each dropped archive in turn.
-    // Log any errors and continue with the next archive.
-    for (var file in files) {
+    // Separate archives from directory drops.
+    final archiveFiles = <File>[];
+    final directoryDrops = <FileSystemEntity>[];
+
+    for (final file in files) {
+      if (file.isFile()) {
+        archiveFiles.add(file.toFile());
+      } else {
+        directoryDrops.add(file);
+      }
+    }
+
+    // Archives go through the batch system.
+    if (archiveFiles.isNotEmpty) {
+      ref.read(batchInstallationProvider.notifier).create(archiveFiles);
+    }
+
+    // Directories also go through the batch system.
+    for (final dir in directoryDrops) {
       try {
         final download = ref
             .read(downloadManager.notifier)
-            .addInstallation(file.toFile().nameWithExtension, file.path);
-        if (file.isFile()) {
-          ref
-              .read(modManager.notifier)
-              .installModFromSourceWithDefaultUI(
-                ArchiveModInstallSource(File(file.path)),
-                installationDownload: download,
-              );
-        } else {
-          ref
-              .read(modManager.notifier)
-              .installModFromSourceWithDefaultUI(
-                DirectoryModInstallSource(Directory(file.path)),
-                installationDownload: download,
-              );
-        }
+            .addInstallation(dir.toFile().nameWithExtension, dir.path);
+        ref.read(batchInstallationProvider.notifier).create(
+          [Directory(dir.path)],
+          download: download,
+        );
       } catch (e, st) {
-        Fimber.e("Failed to install mod from archive", ex: e, stacktrace: st);
+        Fimber.e("Failed to install mod from directory", ex: e, stacktrace: st);
       }
     }
   }

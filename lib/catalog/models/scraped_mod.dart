@@ -42,12 +42,6 @@ class ScrapedMod with ScrapedModMappable {
 
   List<String> getAuthors() => authorsList ?? [];
 
-  List<String> getAuthorsWithAliases() => getAuthors()
-      .map((author) => ModRepoUtils.getOtherMatchingAliases(author))
-      .expand((aliases) => aliases)
-      .toSet()
-      .toList();
-
   List<String> getCategories() => categories ?? [];
 
   List<ModSource> getSources() => sources ?? [];
@@ -93,12 +87,4 @@ class ScrapedModImage with ScrapedModImageMappable {
     this.url,
     this.proxyUrl,
   });
-}
-
-class ModRepoUtils {
-  // Dummy implementation for `getOtherMatchingAliases`, which is referenced in Kotlin code.
-  static List<String> getOtherMatchingAliases(String author) {
-    // Replace with your alias matching logic
-    return [author];
-  }
 }

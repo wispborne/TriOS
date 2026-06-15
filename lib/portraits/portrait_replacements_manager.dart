@@ -256,7 +256,8 @@ extension SavedPortraitsMapExt on Map<String, SavedPortrait> {
     }
     return MapEntry(
       hashOfOriginal,
-      Portrait( // TODO not sure if this is a good idea, want to display when a portrait cannot be found in the UI
+      Portrait(
+        // TODO not sure if this is a good idea, want to display when a portrait cannot be found in the UI
         modVariant: null,
         hash: replacement.hash,
         imageFile: replacement.lastKnownFullPath.toFile(),

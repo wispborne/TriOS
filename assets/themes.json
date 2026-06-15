@@ -1,5 +1,19 @@
 {
   "themes": {
+    "HalloweenTriOSTheme": {
+      "isDark": true,
+      "primary": "#FF0000",
+      "secondary": "#FF671A",
+      "surface": "#272121",
+      "surfaceContainer": "#2F2929"
+    },
+    "XmasTriOSTheme": {
+      "isDark": true,
+      "primary": "#D81F28",
+      "secondary": "#8AD499",
+      "surface": "#0D2112",
+      "surfaceContainer": "#2B3227"
+    },
     "AlexAtheos, Creator of Starsector": {
       "isDark": true,
       "primary": "#00FF00",
@@ -86,6 +100,16 @@
       "surfaceContainer": "#282C34",
       "onPrimary": "#dadbe0"
     },
+    "Pride": {
+      "isDark": true,
+      "primary": "#ff00eb",
+      "secondary": "#444444",
+      "surface": "#161616",
+      "surfaceContainer": "#101010",
+      "onPrimary": "#FFFFFF",
+      "onSecondary": "#FFFFFF",
+      "rainbowAccent": true
+    },
     "Red Pain": {
       "isDark": true,
       "primary": "#F83A5B",
@@ -156,6 +180,17 @@
       "onSecondary": "#FFFFFF",
       "onSurface": "#FFFFFF"
     },
+    "Turkey (real)": {
+      "isDark": true,
+      "primary": "#FFFFFF",
+      "secondary": "#B22234",
+      "surface": "#780000",
+      "surfaceContainer": "#e30917",
+      "onPrimary": "#FFFFFF",
+      "onSecondary": "#FFFFFF",
+      "onSurface": "#FFFFFF",
+      "fontFamily": "Comic Sans MS"
+    },
     "VIC": {
       "isDark": true,
       "primary": "#EE9E00",
@@ -178,6 +213,19 @@
       "surface": "#32444F",
       "surfaceContainer": "#112633",
       "onPrimary": "#FDFDFD"
+    },
+    "Hegemony": {
+      "isDark": true,
+      "primary": "#D4A535",
+      "secondary": "#E8752A",
+      "surface": "#141010",
+      "surfaceContainer": "#1E1816",
+      "onPrimary": "#1A1207",
+      "iconAsset": "assets/images/hegemony_crest.png",
+      "appNameOverride": "HegOS",
+      "successSeed": "#8A9A3B",
+      "warningSeed": "#E8752A",
+      "infoSeed": "#D4A535"
     }
   }
 }

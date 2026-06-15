@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
 
 import '../core/utils/shortcuts/menu_shortcuts.dart';
 import 'context_menu_provider.dart';
@@ -54,11 +55,6 @@ class ContextMenuWidget extends StatelessWidget {
 
   /// Builds the context menu view.
   Widget _buildMenuView(BuildContext context, ContextMenuState state) {
-    // final parentItem = state.parentItem;
-    // if (parentItem?.isSubmenuItem == true) {
-    //   print(parentItem?.debugLabel);
-    // }
-
     var boxDecoration = BoxDecoration(
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       boxShadow: [
@@ -72,9 +68,25 @@ class ContextMenuWidget extends StatelessWidget {
       borderRadius: state.borderRadius ?? BorderRadius.circular(4.0),
       border: Border.all(
         width: 1.0,
-        color: Theme.of(context).colorScheme.primaryFixedDim.withValues(alpha: 0.2),
+        color: Theme.of(
+          context,
+        ).colorScheme.primaryFixedDim.withValues(alpha: 0.2),
       ),
     );
+
+    const safetyMargin = 8.0;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final availableHeight = screenHeight - state.position.dy - safetyMargin;
+    // During the invisible measurement frame, let the menu render at natural
+    // size so verifyPosition can see its true height and reposition upward
+    // when near the bottom of the screen.
+    final double effectiveMaxHeight;
+    if (!state.isPositionVerified) {
+      effectiveMaxHeight = state.maxHeight ?? screenHeight;
+    } else {
+      effectiveMaxHeight =
+          state.maxHeight ?? (availableHeight > 0 ? availableHeight : 0);
+    }
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.8, end: 1.0),
@@ -82,28 +94,38 @@ class ContextMenuWidget extends StatelessWidget {
       builder: (context, value, child) {
         final menu = Container(
           padding: state.padding,
-          constraints: BoxConstraints(maxWidth: state.maxWidth),
+          constraints: BoxConstraints(
+            maxWidth: state.maxWidth,
+            maxHeight: effectiveMaxHeight,
+          ),
           clipBehavior: state.clipBehavior,
           decoration: state.boxDecoration ?? boxDecoration,
           child: Material(
             type: MaterialType.transparency,
             child: IntrinsicWidth(
-              child: Column(
-                children: [
-                  for (final item in state.entries)
-                    MenuEntryWidget(entry: item),
-                ],
-              ),
+              child: _buildMenuContent(state, effectiveMaxHeight),
             ),
           ),
         );
         return menu;
-        // return Transform.scale(
-        //   alignment: state.spawnAnchor,
-        //   scale: value,
-        //   child: menu,
-        // );
       },
+    );
+  }
+
+  Widget _buildMenuContent(ContextMenuState state, double effectiveMaxHeight) {
+    final column = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final item in state.entries) MenuEntryWidget(entry: item),
+      ],
+    );
+
+    if (effectiveMaxHeight == double.infinity) {
+      return column;
+    }
+
+    return FadedScrollable(
+      child: SingleChildScrollView(child: column),
     );
   }
 }

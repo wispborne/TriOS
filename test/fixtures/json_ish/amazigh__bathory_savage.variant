@@ -1,0 +1,58 @@
+{
+  "variantId": "A_S-F_bathory_savage",
+  "hullId": "A_S-F_bathory",
+  "displayName": "Savage",
+  "goalVariant": false,
+  "fluxCapacitors": 4,
+  "fluxVents": 20,
+  "quality": 1,
+  "permaMods": [],
+  "hullMods": [
+    "autorepair",
+    "magazines",
+    "armoredweapons"
+  ],
+  "weaponGroups": [
+    {
+      "autofire": false,
+      "mode": "ALTERNATING",
+      "weapons": {
+        "WS0004": "gazer",
+        "WS0005": "gazer"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS0001": "heavymauler"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS0006": "railgun",
+        "WS0007": "railgun"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS0002": "heavyburst",
+        "WS0003": "heavyburst"
+      }
+    },
+    {
+      "autofire": true,
+      "mode": "LINKED",
+      "weapons": {
+        "WS0008": "pdburst",
+        "WS0009": "pdburst"
+      }
+    }
+  ],
+  "modules": [],
+  "wings": []
+}

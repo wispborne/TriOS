@@ -129,9 +129,6 @@ Future<void> configureLogging(LoggingSettings settings) async {
         ex: details.exception,
         stacktrace: details.stack,
       );
-      // if (details.stack != null) {
-      //   Fimber.e();
-      // }
     };
 
     _consoleLogger = Logger(
@@ -544,7 +541,7 @@ SentryFlutterOptions configureSentry(
         return null;
       }
 
-      if (event.exceptions?.firstOrNull is NetworkImageLoadException) {
+      if (event.exceptions?.firstOrNull?.type == 'NetworkImageLoadException') {
         return null;
       }
 

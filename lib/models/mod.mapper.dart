@@ -35,12 +35,57 @@ class ModMapper extends ClassMapperBase<Mod> {
     'modVariants',
     _$modVariants,
   );
+  static List<ModVariant> _$enabledVariants(Mod v) => v.enabledVariants;
+  static const Field<Mod, List<ModVariant>> _f$enabledVariants = Field(
+    'enabledVariants',
+    _$enabledVariants,
+    mode: FieldMode.member,
+  );
+  static ModVariant? _$findFirstEnabled(Mod v) => v.findFirstEnabled;
+  static const Field<Mod, ModVariant> _f$findFirstEnabled = Field(
+    'findFirstEnabled',
+    _$findFirstEnabled,
+    mode: FieldMode.member,
+  );
+  static ModVariant? _$findFirstDisabled(Mod v) => v.findFirstDisabled;
+  static const Field<Mod, ModVariant> _f$findFirstDisabled = Field(
+    'findFirstDisabled',
+    _$findFirstDisabled,
+    mode: FieldMode.member,
+  );
+  static ModVariant? _$findHighestVersion(Mod v) => v.findHighestVersion;
+  static const Field<Mod, ModVariant> _f$findHighestVersion = Field(
+    'findHighestVersion',
+    _$findHighestVersion,
+    mode: FieldMode.member,
+  );
+  static ModVariant? _$findFirstEnabledOrHighestVersion(Mod v) =>
+      v.findFirstEnabledOrHighestVersion;
+  static const Field<Mod, ModVariant> _f$findFirstEnabledOrHighestVersion =
+      Field(
+        'findFirstEnabledOrHighestVersion',
+        _$findFirstEnabledOrHighestVersion,
+        mode: FieldMode.member,
+      );
+  static ModVariant? _$findHighestEnabledVersion(Mod v) =>
+      v.findHighestEnabledVersion;
+  static const Field<Mod, ModVariant> _f$findHighestEnabledVersion = Field(
+    'findHighestEnabledVersion',
+    _$findHighestEnabledVersion,
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<Mod> fields = const {
     #id: _f$id,
     #isEnabledInGame: _f$isEnabledInGame,
     #modVariants: _f$modVariants,
+    #enabledVariants: _f$enabledVariants,
+    #findFirstEnabled: _f$findFirstEnabled,
+    #findFirstDisabled: _f$findFirstDisabled,
+    #findHighestVersion: _f$findHighestVersion,
+    #findFirstEnabledOrHighestVersion: _f$findFirstEnabledOrHighestVersion,
+    #findHighestEnabledVersion: _f$findHighestEnabledVersion,
   };
 
   static Mod _instantiate(DecodingData data) {

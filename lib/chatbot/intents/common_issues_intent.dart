@@ -66,7 +66,7 @@ class CommonIssuesIntent extends ChatIntent {
       '  Try "current ram" to see your setting, or "more ram" for a guide.\n'
       '\n'
       'Game won\'t start / Black screen\n'
-      '  Check that your JRE is configured correctly ("jre info").\n'
+      '  Verify the game install is intact and not blocked by antivirus.\n'
       '  Try disabling recently-added mods.\n'
       '  On Windows, try running as Administrator.\n'
       '\n'

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 
 /// Shared toolbar for viewer pages (Ships, Weapons, Hullmods, etc.).
@@ -15,6 +16,7 @@ class ViewerToolbar extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onRefresh;
   final Widget searchBox;
+  final List<Widget> leadingActions;
   final bool splitPane;
   final VoidCallback? onToggleSplitPane;
   final List<Widget> trailingActions;
@@ -27,6 +29,7 @@ class ViewerToolbar extends StatelessWidget {
     required this.isLoading,
     required this.onRefresh,
     required this.searchBox,
+    this.leadingActions = const [],
     this.splitPane = false,
     this.onToggleSplitPane,
     this.trailingActions = const [],
@@ -57,7 +60,7 @@ class ViewerToolbar extends StatelessWidget {
                     child: SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: ThemedCircularProgressIndicator(strokeWidth: 2),
                     ),
                   ),
                 if (!isLoading)
@@ -71,6 +74,7 @@ class ViewerToolbar extends StatelessWidget {
                       ),
                     ),
                   ),
+                ...leadingActions,
                 const SizedBox(width: 8),
                 ExpandingConstrainedAlignedWidget(
                   alignment: Alignment.centerRight,

@@ -6,10 +6,12 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.4.0-preview04";
+  static const version = "1.6.0-preview05";
   static Version currentVersion = Version.parse(version);
+  static const companionModVersion = "1.0.4";
 
   static const appName = "TriOS";
+  static const chatbotName = "Delta Core";
   static const appTitle = "$appName v$version";
   static String appSubtitle = [
     "Corporate Toolkit",
@@ -59,6 +61,7 @@ class Constants {
   ];
 
   static const versionCheckerCsvPath = "data/config/version/version_files.csv";
+  static const substitutionPlaceholder = '%s';
   static const versionCheckerFileEnding = ".version";
   static const forumUrl = "https://fractalsoftworks.com/forum/index.php";
   static const nexusModsPageUrl = "https://www.nexusmods.com/starsector/mods/";
@@ -70,8 +73,13 @@ class Constants {
   static const graphicsLibId = "shaderLib";
   static const lunalibId = "lunalib";
   static const illustratedEntitiesId = "illustrated_entities";
-  static const changelogUrl =
+  static const changelogReleasesApiUrl =
+      "https://api.github.com/repos/wispborne/TriOS/releases";
+  static const changelogFallbackUrl =
       "https://raw.githubusercontent.com/wispborne/TriOS/main/changelog.md";
+
+  static String changelogUrlForBranch(String branch) =>
+      "https://raw.githubusercontent.com/wispborne/TriOS/$branch/changelog.md";
   static const triosForumThread =
       "https://fractalsoftworks.com/forum/index.php?topic=29674.0";
   static const supportedArchiveExtensions = [
@@ -86,10 +94,13 @@ class Constants {
   static const companionModFolderName = "TriOS-Mod";
   static const companionModId = "wisp_trios_companion";
   static const gargoyleCharId = "gargoyle";
-  static const companionModVersion = "1.0.1";
 
   static const String modRepoUrl =
-      "https://github.com/wispborne/StarsectorModRepo/raw/refs/heads/main/ModRepo.json";
+      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/ModRepo.json";
+  static const String forumDataBundleUrl =
+      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/forum-data-bundle.json";
+
+  // "https://raw.githubusercontent.com/theRoastSuckling/QBForumModData/refs/heads/main/forum-data-bundle.json";
   static const String patreonUrl = "https://www.patreon.com/wispborne";
   static const String kofiUrl = "https://ko-fi.com/wispborne";
 
@@ -99,6 +110,9 @@ class Constants {
   /// Hardcoded per_page.
   static const String githubLatestRelease =
       "$githubBase/repos/wispborne/trios/releases?per_page=100";
+
+  static const String githubReleasesUrl =
+      "https://github.com/wispborne/trios/releases";
 
   /// Warning: DON'T ADD ANYTHING TO THIS DIRECTLY. It will mutate the shared instance.
   /// Creating a new one each time is expensive, and hardcoding the pattern will hardcode the locale.
@@ -116,7 +130,17 @@ class Constants {
   static Directory get cacheDirPath =>
       Directory(p.join(configDataFolderPath.path, 'cache'));
 
-  static final portraitsSupportedImageFileExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+  /// Root directory for viewer per-variant caches (ships, weapons, hullmods).
+  /// Created lazily on first write — do NOT create at startup.
+  static Directory get viewerCacheDirPath =>
+      Directory(p.join(configDataFolderPath.path, 'cache', 'viewer'));
+
+  static final portraitsSupportedImageFileExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+  ];
 
   static const modAuthorAliases = [
     ["RustyCabbage", "rubi", "ceruleanpancake"],

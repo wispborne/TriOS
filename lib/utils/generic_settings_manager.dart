@@ -19,10 +19,22 @@ enum FileFormat {
   msgpack,
 }
 
-final Duration _debounceDuration = Duration(milliseconds: 300);
+const Duration _defaultDebounceDuration = Duration(milliseconds: 500);
 
 /// Handles reading/writing settings from/to disk, and schedules those writes.
 abstract class GenericAsyncSettingsManager<T> {
+  /// How long to wait after the last `scheduleWrite` before flushing to
+  /// disk. Subclasses with large payloads (e.g. the VRAM cache) can
+  /// override this to coalesce many updates into a single write.
+  Duration get debounceDuration => _defaultDebounceDuration;
+
+  /// Backoff schedule for retrying transient Windows file-lock errors.
+  static const List<int> _retryDelaysMs = [50, 100, 200, 400, 800];
+
+  /// Windows sharing-violation error codes worth briefly retrying.
+  static const int _errSharingViolation = 32; // ERROR_SHARING_VIOLATION
+  static const int _errLockViolation = 33; // ERROR_LOCK_VIOLATION
+
   File settingsFile = File("");
 
   /// Updated whenever the state is read from or written to file.
@@ -90,7 +102,7 @@ abstract class GenericAsyncSettingsManager<T> {
     if (_writeCompleter == null || _writeCompleter!.isCompleted) {
       _writeCompleter = Completer<void>();
     }
-    _debounceTimer = Timer(_debounceDuration, () async {
+    _debounceTimer = Timer(debounceDuration, () async {
       try {
         await _performWriteSettingsToDisk(newState);
         _writeCompleter?.complete();
@@ -109,14 +121,77 @@ abstract class GenericAsyncSettingsManager<T> {
     return _writeCompleter!.future;
   }
 
-  /// Performs the actual write to disk.
+  /// Awaits any currently-in-flight or debounced write. If a debounce
+  /// timer is pending, fires it immediately so callers that need the
+  /// on-disk file up-to-date (e.g. before renaming or swapping) don't
+  /// have to wait out the full debounce interval.
+  Future<void> waitForPendingWrites() async {
+    if (_debounceTimer?.isActive ?? false) {
+      _debounceTimer?.cancel();
+      final state = lastKnownValue;
+      if (state != null) {
+        final completer = _writeCompleter;
+        try {
+          await _performWriteSettingsToDisk(state);
+          completer?.complete();
+        } catch (e, st) {
+          completer?.completeError(e, st);
+          rethrow;
+        } finally {
+          _writeCompleter = null;
+        }
+      }
+      return;
+    }
+    final completer = _writeCompleter;
+    if (completer != null && !completer.isCompleted) {
+      await completer.future;
+    }
+  }
+
+  /// Writes atomically via a sibling `.tmp` file + rename, and retries on
+  /// transient Windows sharing-violation errors (AV scans, Search indexer,
+  /// etc.) so a flaky file lock doesn't drop settings changes.
   Future<void> _performWriteSettingsToDisk(T stateToWrite) async {
     await _mutex.protect(() async {
-      final serializedData = await serialize(stateToWrite);
-      await settingsFile.writeAsBytes(serializedData);
-      lastKnownValue = stateToWrite;
-      Fimber.v(() => "$fileName successfully written to disk.");
+      final current = lastKnownValue ?? stateToWrite;
+      final bytes = await serialize(current);
+
+      final tempFile = File('${settingsFile.path}.tmp');
+      var attempt = 0;
+      while (true) {
+        try {
+          await tempFile.writeAsBytes(bytes, flush: true);
+          await tempFile.rename(settingsFile.path);
+          lastKnownValue = current;
+          Fimber.v(() => "$fileName successfully written to disk.");
+          return;
+        } catch (e) {
+          if (!_isTransientLockError(e) || attempt >= _retryDelaysMs.length) {
+            try {
+              await tempFile.delete();
+            } catch (_) {}
+            rethrow;
+          }
+          Fimber.w(
+            "Transient lock writing $fileName (attempt ${attempt + 1}): $e. "
+            "Retrying in ${_retryDelaysMs[attempt]}ms.",
+          );
+          await Future.delayed(
+            Duration(milliseconds: _retryDelaysMs[attempt]),
+          );
+          attempt++;
+        }
+      }
     });
+  }
+
+  /// Returns `true` for Windows sharing-violation errors that are worth
+  /// retrying briefly (another process holds the file open).
+  bool _isTransientLockError(Object e) {
+    if (e is! FileSystemException) return false;
+    final code = e.osError?.errorCode;
+    return code == _errSharingViolation || code == _errLockViolation;
   }
 
   /// Override to do custom serialization
@@ -139,12 +214,38 @@ abstract class GenericAsyncSettingsManager<T> {
     //   return fromMap(TomlDocument.parse(utf8.decode(contents)).toMap());
     // } else
     if (fileFormat == FileFormat.msgpack) {
-      return fromMap(
-        (m2.deserialize(contents) as Map<dynamic, dynamic>).cast(),
-      );
+      final raw = m2.deserialize(contents);
+      return fromMap(_coerceToStringKeyedMap(raw));
     } else {
       return fromMap(jsonDecode(utf8.decode(contents)) as Map<String, dynamic>);
     }
+  }
+
+  /// msgpack_dart decodes every map as `Map<dynamic, dynamic>`. `.cast()` on
+  /// a Map is shallow, so nested maps remain `Map<dynamic, dynamic>` and fail
+  /// dart_mappable's `Map<String, dynamic>` type checks. Walk the tree and
+  /// rebuild maps with the expected key type.
+  Map<String, dynamic> _coerceToStringKeyedMap(dynamic value) {
+    if (value is Map) {
+      return value.map(
+        (k, v) => MapEntry(k.toString(), _coerceDeep(v)),
+      );
+    }
+    throw StateError(
+      'Expected decoded msgpack payload to be a Map, got ${value.runtimeType}',
+    );
+  }
+
+  dynamic _coerceDeep(dynamic value) {
+    if (value is Map) {
+      return value.map(
+        (k, v) => MapEntry(k.toString(), _coerceDeep(v)),
+      );
+    }
+    if (value is List) {
+      return value.map(_coerceDeep).toList();
+    }
+    return value;
   }
 
   Future<void> createBackup() async {

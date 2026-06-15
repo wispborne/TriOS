@@ -1,23 +1,25 @@
-import 'dart:async';
 import 'dart:io';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
+import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_records/mod_record_sources_dialog.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/navigation.dart';
+import 'package:trios/trios/navigation_request.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/logging.dart';
-import 'package:trios/utils/platform_specific.dart';
 import 'package:trios/widgets/debug_info.dart';
 import 'package:trios/widgets/force_game_version_warning_dialog.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 MenuItem<dynamic> buildMenuItemForceChangeModGameVersion(
@@ -303,6 +305,15 @@ MenuItem buildMenuItemDebugging(
         icon: Icons.info_outline,
         onSelected: () => showDebugViewDialog(context, mod),
       ),
+      MenuItem(
+        label: "Mod Sources",
+        icon: Icons.source,
+        onSelected: () => showModRecordSourcesDialog(
+          context,
+          mod.id,
+          mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? mod.id,
+        ),
+      ),
       if (!isGameRunning)
         MenuItem(
           label: (redownloadEnabled)
@@ -393,18 +404,82 @@ MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
   );
 }
 
-MenuItem buildMenuItemViewModWeapons(
-  BuildContext context,
-  Mod mod,
-  WidgetRef ref,
-) {
-  return MenuItem(
-    label: 'View Mod Weapons',
-    icon: Icons.gps_fixed,
-    onSelected: () {
-      // Navigate to WeaponPage
-      // final appShell = context.findAncestorStateOfType<_AppShellState>();
-      // appShell?._changeTab(TriOSTools.weapons);
-    },
+MenuItem buildMenuItemViewInViewer(Mod mod, WidgetRef ref) {
+  final modName =
+      mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? mod.id;
+
+  void navigate(TriOSTools tool) {
+    ref.read(AppState.viewerFilterRequest.notifier).state = ViewerFilterRequest(
+      destination: tool,
+      modName: modName,
+    );
+    ref.read(AppState.navigationRequest.notifier).state = NavigationRequest(
+      destination: tool,
+    );
+  }
+
+  final factions = ref.read(factionListNotifierProvider).valueOrNull ?? [];
+  final modFactions = factions
+      .where((f) => f.sources.any((s) => s.name == modName))
+      .toList()
+    ..sort((a, b) => a.displayName.compareTo(b.displayName));
+
+  return MenuItem.submenu(
+    label: 'View...',
+    icon: Icons.search,
+    items: [
+      MenuItem(
+        label: 'Ships',
+        leading: SvgImageIcon("assets/images/icon-onslaught.svg"),
+        onSelected: () => navigate(TriOSTools.ships),
+      ),
+      MenuItem(
+        label: 'Weapons',
+        leading: SvgImageIcon("assets/images/icon-target.svg"),
+        onSelected: () => navigate(TriOSTools.weapons),
+      ),
+      MenuItem(
+        label: 'Hullmods',
+        leading: SvgImageIcon("assets/images/icon-hullmod.svg"),
+        onSelected: () => navigate(TriOSTools.hullmods),
+      ),
+      if (modFactions.isNotEmpty)
+        MenuItem.submenu(
+          label: 'Factions (${modFactions.length})',
+          icon: Icons.flag,
+          items: [
+            MenuItem(
+              label: 'View all in Faction Viewer',
+              icon: Icons.open_in_new,
+              onSelected: () => navigate(TriOSTools.factions),
+            ),
+            const MenuDivider(),
+            for (final faction in modFactions)
+              MenuItem(
+                label: faction.displayName,
+                leading: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: faction.factionColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                onSelected: () => navigate(TriOSTools.factions),
+              ),
+          ],
+        ),
+      if (modFactions.isEmpty)
+        MenuItem(
+          label: 'Factions',
+          icon: Icons.flag,
+          onSelected: () => navigate(TriOSTools.factions),
+        ),
+      MenuItem(
+        label: 'Portraits',
+        leading: SvgImageIcon("assets/images/icon-account-box-outline.svg"),
+        onSelected: () => navigate(TriOSTools.portraits),
+      ),
+    ],
   );
 }

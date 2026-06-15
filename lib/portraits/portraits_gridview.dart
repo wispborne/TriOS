@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,9 +11,9 @@ import 'package:trios/portraits/portrait_model.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -46,18 +47,15 @@ class PortraitsGridView extends ConsumerWidget {
     this.onAcceptDraggable,
   });
 
-  // Helper method to find replacement details
+  // Helper method to find replacement details using pre-built lookup map
   ({Portrait? replacementPortrait, ModVariant? replacementMod})?
   _findReplacementDetails(
     String replacementPath,
-    List<({Portrait image, ModVariant? variant})> allPortraits,
+    Map<String, ({Portrait image, ModVariant? variant})> portraitsByPath,
   ) {
-    for (final item in allPortraits) {
-      if (item.image.imageFile.path == replacementPath) {
-        return (replacementPortrait: item.image, replacementMod: item.variant);
-      }
-    }
-    return null;
+    final item = portraitsByPath[replacementPath];
+    if (item == null) return null;
+    return (replacementPortrait: item.image, replacementMod: item.variant);
   }
 
   /// Builds a widget displaying portrait metadata (gender, factions, ID).
@@ -104,6 +102,12 @@ class PortraitsGridView extends ConsumerWidget {
     final portraitMetadata = ref.watch(AppState.portraitMetadata).value ?? {};
     const gridSpacing = 8.0;
 
+    // Pre-build lookup map for replacement details (O(1) instead of O(n))
+    final portraitsByPath = <String, ({Portrait image, ModVariant? variant})>{};
+    for (final item in allPortraits) {
+      portraitsByPath[item.image.imageFile.path] = item;
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return GridView.builder(
@@ -121,14 +125,9 @@ class PortraitsGridView extends ConsumerWidget {
             final hasReplacement =
                 replacements.containsKey(portrait.hash) && replacement != null;
 
-            String bytesAsReadableKB = "unknown";
-            try {
-              bytesAsReadableKB = portrait.imageFile
-                  .lengthSync()
-                  .bytesAsReadableKB();
-            } catch (error) {
-              Fimber.w('Error reading file size: $error');
-            }
+            final bytesAsReadableKB = portrait.fileSizeInBytes > 0
+                ? portrait.fileSizeInBytes.bytesAsReadableKB()
+                : "unknown";
 
             // Get replacement details if replacement exists
             String? replacementBytesAsReadableKB;
@@ -138,17 +137,14 @@ class PortraitsGridView extends ConsumerWidget {
             if (hasReplacement) {
               replacementDetails = _findReplacementDetails(
                 replacement.imageFile.path,
-                allPortraits,
+                portraitsByPath,
               );
-              try {
-                final replacementFile = replacement.imageFile;
-                if (replacementFile.existsSync()) {
-                  replacementBytesAsReadableKB = replacementFile
-                      .lengthSync()
-                      .bytesAsReadableKB();
-                }
-              } catch (error) {
-                Fimber.w('Error reading replacement file size: $error');
+              if (replacementDetails?.replacementPortrait != null &&
+                  replacementDetails!.replacementPortrait!.fileSizeInBytes > 0) {
+                replacementBytesAsReadableKB = replacementDetails
+                    .replacementPortrait!
+                    .fileSizeInBytes
+                    .bytesAsReadableKB();
               }
             }
 
@@ -286,6 +282,13 @@ class PortraitsGridView extends ConsumerWidget {
                         launchUrlString(portrait.imageFile.parent.path);
                       },
                     ),
+                    if (mod != null)
+                      buildOpenSingleFolderMenuItem(
+                        mod.modFolder.absolute,
+                        label: 'Open Mod Folder',
+                      ),
+                    if (mod != null)
+                      buildMenuItemOpenForumPage(mod, context),
                   ],
                 ),
                 child: ConditionalWrap(
@@ -419,6 +422,7 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
             Image.file(
               portrait.imageFile,
               fit: BoxFit.cover,
+              cacheWidth: widget.size.toInt(),
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   color: Colors.grey[300],
@@ -534,6 +538,7 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
                   child: Image.file(
                     originalFile,
                     fit: BoxFit.cover,
+                    cacheWidth: widget.size.toInt(),
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         color: Colors.grey[400],
@@ -582,6 +587,7 @@ class _PortraitImageWidgetState extends ConsumerState<PortraitImageWidget> {
                       Image.file(
                         replacementFile,
                         fit: BoxFit.cover,
+                        cacheWidth: widget.size.toInt(),
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             color: Colors.grey[300],

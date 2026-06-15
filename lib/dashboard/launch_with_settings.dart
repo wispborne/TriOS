@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,34 +35,53 @@ class LaunchWithSettings extends ConsumerStatefulWidget {
 class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
   StarsectorVanillaLaunchPreferences? starsectorLaunchPrefs;
   Timer? _onClickedTimer;
+  late final TextEditingController _resControllerWidth;
+  late final TextEditingController _resControllerHeight;
 
   @override
   void initState() {
+    super.initState();
     try {
       starsectorLaunchPrefs = LauncherButton.getStarsectorLaunchPrefs();
     } catch (e) {
       Fimber.e("Failed to get default Starsector launch prefs", ex: e);
     }
-    super.initState();
+    _resControllerWidth = TextEditingController();
+    _resControllerHeight = TextEditingController();
+    _syncControllerTexts();
+  }
+
+  @override
+  void dispose() {
+    _resControllerWidth.dispose();
+    _resControllerHeight.dispose();
+    _onClickedTimer?.cancel();
+    super.dispose();
+  }
+
+  void _syncControllerTexts() {
+    final launchSettings = ref.read(appSettings).launchSettings;
+    final newWidth =
+        launchSettings.resolutionWidth?.toString() ??
+        starsectorLaunchPrefs?.resolution.split("x")[1] ??
+        '';
+    final newHeight =
+        launchSettings.resolutionHeight?.toString() ??
+        starsectorLaunchPrefs?.resolution.split("x")[0] ??
+        '';
+    if (_resControllerWidth.text != newWidth) {
+      _resControllerWidth.text = newWidth;
+    }
+    if (_resControllerHeight.text != newHeight) {
+      _resControllerHeight.text = newHeight;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final resControllerWidth = TextEditingController(
-      text:
-          ref
-              .watch(appSettings.select((value) => value.launchSettings))
-              .resolutionWidth
-              ?.toString() ??
-          starsectorLaunchPrefs?.resolution.split("x")[1],
-    );
-    final resControllerHeight = TextEditingController(
-      text:
-          ref
-              .watch(appSettings.select((value) => value.launchSettings))
-              .resolutionHeight
-              ?.toString() ??
-          starsectorLaunchPrefs?.resolution.split("x")[0],
+    ref.listen(
+      appSettings.select((value) => value.launchSettings),
+      (_, _) => _syncControllerTexts(),
     );
 
     final enableDirectLaunch = ref.watch(
@@ -75,70 +95,63 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
       child: Stack(
         children: [
           Positioned(
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16, top: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Tooltip(
-                      message:
-                          "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this."
-                          "\nPossible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.error,
-                        borderRadius: BorderRadius.circular(
-                          ThemeManager.cornerRadius,
-                        ),
-                      ),
-                      child: Opacity(
-                        opacity: enableDirectLaunch ? 1 : 0.8,
-                        child: CheckboxWithLabel(
-                          labelWidget: Row(
-                            children: [
-                              Text(
-                                "Skip Launcher",
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              if (enableDirectLaunch)
-                                Transform.rotate(
-                                  angle: .6,
-                                  child: SvgImageIcon(
-                                    "assets/images/icon-experimental.svg",
-                                    width: 20,
-                                    color: Theme.of(
-                                      context,
-                                    ).iconTheme.color?.withValues(alpha: 0.8),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          textPadding: const EdgeInsets.only(
-                            left: 12,
-                            bottom: 0,
-                          ),
-                          flipCheckboxAndLabel: true,
-                          value: enableDirectLaunch,
-                          showGlow: enableDirectLaunch,
-                          onChanged: (bool? value) {
-                            if (value == null) return;
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (s) => s.copyWith(enableDirectLaunch: value),
-                                );
-                          },
-                        ),
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Tooltip(
+                    message:
+                        "EXPERIMENTAL\nIf you encounter strange issues in-game, disable this."
+                        "\nPossible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
+                      borderRadius: BorderRadius.circular(
+                        TriOSThemeConstants.cornerRadius,
                       ),
                     ),
-                    // Padding(
-                    //   padding: const EdgeInsets.only(right: 42),
-                    //   child: Text("(experimental)", style: Theme.of(context).textTheme.labelSmall),
-                    // ),
-                  ],
-                ),
+                    child: Opacity(
+                      opacity: enableDirectLaunch ? 1 : 0.8,
+                      child: CheckboxWithLabel(
+                        labelWidget: Row(
+                          children: [
+                            Text(
+                              "Skip Launcher",
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            if (enableDirectLaunch)
+                              Transform.rotate(
+                                angle: .6,
+                                child: SvgImageIcon(
+                                  "assets/images/icon-experimental.svg",
+                                  width: 20,
+                                  color: Theme.of(
+                                    context,
+                                  ).iconTheme.color?.withValues(alpha: 0.8),
+                                ),
+                              ),
+                          ],
+                        ),
+                        textPadding: const EdgeInsets.only(left: 12, bottom: 0),
+                        flipCheckboxAndLabel: true,
+                        value: enableDirectLaunch,
+                        showGlow: enableDirectLaunch,
+                        onChanged: (bool? value) {
+                          if (value == null) return;
+                          ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (s) => s.copyWith(enableDirectLaunch: value),
+                              );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -148,91 +161,38 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
                       children: [
-                        true
-                            ? LauncherButton(showTextInsteadOfIcon: true)
-                            : Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(
-                                    ThemeManager.cornerRadius,
-                                  ),
-                                  border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                    strokeAlign: BorderSide.strokeAlignOutside,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    if (isRunning) return;
-                                    _onClickedTimer?.cancel();
-                                    _onClickedTimer = Timer(
-                                      const Duration(seconds: 5),
-                                      () => {},
-                                    );
-                                    LauncherButton.launchGame(ref, context);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        ThemeManager.cornerRadius,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isRunning ? "RUNNING..." : "LAUNCH",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontFamily: "Orbitron",
-                                      fontSize: 27,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                        LauncherButton(showTextInsteadOfIcon: true),
                         const SizedBox(height: 8),
                         Row(
                           spacing: 4,
                           children: [
-                            MovingTooltipWidget.text(
-                              message:
-                                  "${Constants.appName} is not required to launch the game.",
-                              child: Builder(
-                                builder: (context) {
-                                  final path = ref
-                                      .watch(AppState.gameExecutable)
-                                      .value
-                                      ?.absolute
-                                      .path
-                                      .let((p) {
-                                        return currentPlatform !=
-                                                TargetPlatform.macOS
-                                            ? p.let(
-                                                (p) => p.toFile().relativePath(
-                                                  ref
-                                                      .watch(
-                                                        AppState.gameFolder,
-                                                      )
-                                                      .value!,
-                                                ),
-                                              )
-                                            : File(p).nameWithExtension;
-                                      });
+                            Builder(
+                              builder: (context) {
+                                final path = ref
+                                    .watch(AppState.gameExecutable)
+                                    .value
+                                    ?.absolute
+                                    .path
+                                    .let((p) {
+                                      return currentPlatform !=
+                                              TargetPlatform.macOS
+                                          ? p.let(
+                                              (p) => p.toFile().relativePath(
+                                                ref
+                                                    .watch(AppState.gameFolder)
+                                                    .value!,
+                                              ),
+                                            )
+                                          : File(p).nameWithExtension;
+                                    });
 
-                                  return Text(
-                                    path ?? "No game exe",
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelMedium,
-                                  );
-                                },
-                              ),
+                                return Text(
+                                  path ?? "No game exe",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                );
+                              },
                             ),
                             SizedBox(
                               height: 16,
@@ -263,16 +223,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               "Starsector version unknown",
                           style: Theme.of(context).textTheme.labelMedium,
                         ),
-                        // Removed because it's shown on the JRE & RAM Settings tile now.
-                        // Builder(builder: (context) {
-                        //   final activeJre =
-                        //       ref.watch(AppState.activeJre).value?.version;
-                        //   return Text(
-                        //       activeJre != null
-                        //           ? "Java ${activeJre.versionString}"
-                        //           : "Java version unknown",
-                        //       style: Theme.of(context).textTheme.labelMedium);
-                        // }),
                         Text(
                           ref.watch(AppState.modsFolder).value?.path ??
                               "No mods folder!",
@@ -352,13 +302,12 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                     SizedBox(
                                       width: 50,
                                       child: TextField(
-                                        controller: resControllerHeight,
+                                        controller: _resControllerHeight,
                                         inputFormatters: <TextInputFormatter>[
                                           FilteringTextInputFormatter
                                               .digitsOnly,
                                         ],
                                         decoration: const InputDecoration(
-                                          // errorText: gamePathExists ? null : "Path does not exist",
                                           labelText: 'Width',
                                         ),
                                       ),
@@ -375,14 +324,13 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                     SizedBox(
                                       width: 50,
                                       child: TextField(
-                                        controller: resControllerWidth,
+                                        controller: _resControllerWidth,
                                         keyboardType: TextInputType.number,
                                         inputFormatters: <TextInputFormatter>[
                                           FilteringTextInputFormatter
                                               .digitsOnly,
                                         ],
                                         decoration: const InputDecoration(
-                                          // errorText: gamePathExists ? null : "Path does not exist",
                                           labelText: 'Height',
                                         ),
                                       ),
@@ -406,9 +354,6 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                                                       const LaunchSettings(),
                                                 ),
                                               );
-                                          setState(
-                                            () {},
-                                          ); // Force refresh widget to update text fields to default.
                                         },
                                         text: "Clear Custom Launch Settings",
                                         style: Theme.of(
@@ -437,7 +382,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               "If you encounter strange issues in-game, disable Skip Launcher.",
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
-                                    color: ThemeManager.vanillaWarningColor
+                                    color: TriOSThemeConstants
+                                        .vanillaWarningColor
                                         .withAlpha(200),
                                   ),
                             ),
@@ -445,7 +391,8 @@ class _LaunchWithSettingsState extends ConsumerState<LaunchWithSettings> {
                               "Possible issues include: invisible ships, zoomed-in combat, no Windows title bar, probably more.",
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
-                                    color: ThemeManager.vanillaWarningColor
+                                    color: TriOSThemeConstants
+                                        .vanillaWarningColor
                                         .withAlpha(200),
                                   ),
                             ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../themes/theme_manager.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 class TriOSExpansionTile extends StatelessWidget {
   final Widget? leading;
@@ -25,13 +24,14 @@ class TriOSExpansionTile extends StatelessWidget {
   final ShapeBorder? collapsedShape;
   final Clip? clipBehavior;
   final ListTileControlAffinity? controlAffinity;
-  final ExpansionTileController? controller;
+  final ExpansibleController? controller;
   final bool? dense;
   final VisualDensity? visualDensity;
   final double? minTileHeight;
   final bool enableFeedback;
   final bool enabled;
   final AnimationStyle? expansionAnimationStyle;
+  final bool _colorless;
 
   const TriOSExpansionTile({
     super.key,
@@ -64,7 +64,46 @@ class TriOSExpansionTile extends StatelessWidget {
     this.enableFeedback = true,
     this.enabled = true,
     this.expansionAnimationStyle,
-  }) : assert(
+  }) : _colorless = false,
+       assert(
+         expandedCrossAxisAlignment != CrossAxisAlignment.baseline,
+         'CrossAxisAlignment.baseline is not supported since the expanded children '
+         'are aligned in a column, not a row. Try to use another constant.',
+       );
+
+  const TriOSExpansionTile.colorless({
+    super.key,
+    this.leading,
+    required this.title,
+    this.subtitle,
+    this.onExpansionChanged,
+    this.children = const <Widget>[],
+    this.trailing,
+    this.initiallyExpanded = false,
+    this.maintainState = false,
+    this.tilePadding,
+    this.expandedCrossAxisAlignment,
+    this.expandedAlignment,
+    this.childrenPadding,
+    this.backgroundColor,
+    this.collapsedBackgroundColor,
+    this.textColor,
+    this.collapsedTextColor,
+    this.iconColor,
+    this.collapsedIconColor,
+    this.shape,
+    this.collapsedShape,
+    this.clipBehavior,
+    this.controlAffinity,
+    this.controller,
+    this.dense,
+    this.visualDensity = VisualDensity.compact,
+    this.minTileHeight,
+    this.enableFeedback = true,
+    this.enabled = true,
+    this.expansionAnimationStyle,
+  }) : _colorless = true,
+       assert(
          expandedCrossAxisAlignment != CrossAxisAlignment.baseline,
          'CrossAxisAlignment.baseline is not supported since the expanded children '
          'are aligned in a column, not a row. Try to use another constant.',
@@ -73,7 +112,17 @@ class TriOSExpansionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ExpansionTile(
+    final resolvedBgColor = _colorless
+        ? null
+        : (collapsedBackgroundColor ??
+            backgroundColor ??
+            theme.colorScheme.surfaceContainerLow);
+
+    final defaultShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+    );
+
+    Widget tile = ExpansionTile(
       leading: leading,
       title: title,
       subtitle: subtitle,
@@ -85,23 +134,12 @@ class TriOSExpansionTile extends StatelessWidget {
       expandedCrossAxisAlignment: expandedCrossAxisAlignment,
       expandedAlignment: expandedAlignment,
       childrenPadding: childrenPadding,
-      backgroundColor: backgroundColor ?? theme.colorScheme.surfaceContainerLow,
-      collapsedBackgroundColor:
-          collapsedBackgroundColor ?? theme.colorScheme.surfaceContainerLow,
       textColor: textColor,
       collapsedTextColor: collapsedTextColor,
       iconColor: iconColor,
       collapsedIconColor: collapsedIconColor,
-      shape:
-          shape ??
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-          ),
-      collapsedShape:
-          collapsedShape ??
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-          ),
+      shape: shape ?? defaultShape,
+      collapsedShape: collapsedShape ?? defaultShape,
       clipBehavior: clipBehavior,
       controlAffinity: controlAffinity,
       controller: controller,
@@ -113,5 +151,18 @@ class TriOSExpansionTile extends StatelessWidget {
       expansionAnimationStyle: expansionAnimationStyle,
       children: children,
     );
+
+    if (resolvedBgColor != null) {
+      tile = Material(
+        color: resolvedBgColor,
+        borderRadius: BorderRadius.circular(
+          TriOSThemeConstants.cornerRadius,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: tile,
+      );
+    }
+
+    return tile;
   }
 }

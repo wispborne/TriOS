@@ -30,7 +30,7 @@ import 'package:flutter/material.dart';
 ///   },
 /// );
 /// ```
-class WispAdaptiveGridView<T> extends StatelessWidget {
+class WispAdaptiveGridView<T> extends StatefulWidget {
   /// The items to display in the grid.
   final List<T> items;
 
@@ -50,8 +50,9 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
   final bool shrinkWrap;
 
   /// An optional scroll controller for the internal [ListView].
-  /// When provided, [primary] is set to false on the ListView so it does not
-  /// attach to the [PrimaryScrollController].
+  /// When omitted, the grid creates and owns its own controller rather than
+  /// attaching to the [PrimaryScrollController] (which would collide with other
+  /// kept-alive pages that also use a primary scrollable).
   final ScrollController? controller;
 
   /// Builds each item in the grid. You receive the [BuildContext], the item
@@ -71,7 +72,36 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
   });
 
   @override
+  State<WispAdaptiveGridView<T>> createState() =>
+      _WispAdaptiveGridViewState<T>();
+}
+
+class _WispAdaptiveGridViewState<T> extends State<WispAdaptiveGridView<T>> {
+  /// Owned controller used when the caller doesn't supply one. Keeps the grid
+  /// off the [PrimaryScrollController] so multiple grids can coexist.
+  final ScrollController _internalController = ScrollController();
+
+  @override
+  void dispose() {
+    _internalController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final items = widget.items;
+    final minItemWidth = widget.minItemWidth;
+    final horizontalSpacing = widget.horizontalSpacing;
+    final verticalSpacing = widget.verticalSpacing;
+    final padding = widget.padding;
+    final shrinkWrap = widget.shrinkWrap;
+    final itemBuilder = widget.itemBuilder;
+    // A shrink-wrapped grid is non-scrollable (nested in another scrollable),
+    // so it neither needs nor should claim a controller.
+    final controller = shrinkWrap
+        ? null
+        : (widget.controller ?? _internalController);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         // Adjust for horizontal padding to find actual available width.
@@ -93,7 +123,7 @@ class WispAdaptiveGridView<T> extends StatelessWidget {
         return ListView.builder(
           padding: padding,
           controller: controller,
-          primary: shrinkWrap || controller != null ? false : true,
+          primary: false,
           physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
           itemCount: totalRows,
           shrinkWrap: shrinkWrap,

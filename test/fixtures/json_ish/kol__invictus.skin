@@ -1,0 +1,21 @@
+{
+	"baseHullId":"invictus",
+	"skinHullId":"kol_invictus",
+	"hullName":"Invictus (KOL)",
+	"incompatibleWithBaseHull":false, # for the autofit dialog
+	"descriptionId":"invictus",
+	#"descriptionPrefix":"Built to the specifications of the 14th Domain Battlegroup which founded the Hegemony, this vessel is a prime example of the Domain Navy's 'decisive battle' doctrine, particularly exhibited by a series of radical structural modifications performed using pre-Collapse industrial technology.",
+	"tags":[],
+	"tech":"Knights of Ludd",
+	"fleetPoints":35,
+	"ordnancePoints":240,
+	"baseValueMult":1.1,
+	"spriteName":"graphics/kol/ships/kol_invictus.png",
+	"removeWeaponSlots":[], 		# ids
+	"removeEngineSlots":[], 		# indices, as engine slots have no id in the .ship file
+	"removeBuiltInMods":[], 		# hullmod ids
+	"removeBuiltInWeapons":[], 		# weapon slot ids
+	"builtInMods":[],
+	"builtInWeapons":{
+    },
+}

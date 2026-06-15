@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
@@ -8,7 +9,6 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:plist_parser/plist_parser.dart';
-import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -19,13 +19,16 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
+import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
+import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:win32_registry/win32_registry.dart';
 
 import '../themes/theme_manager.dart';
+import '../themes/theme_modifiers.dart';
 
 class LaunchPrecheckError {
   final String message;
@@ -44,13 +47,31 @@ class LaunchPrecheckError {
 
 class LauncherButton extends HookConsumerWidget {
   final bool showTextInsteadOfIcon;
+  final double? fontSize;
+  final double iconHeight;
+  final double iconWidth;
+  final Offset iconOffset;
 
-  const LauncherButton({super.key, required this.showTextInsteadOfIcon});
+  const LauncherButton({
+    super.key,
+    required this.showTextInsteadOfIcon,
+    this.fontSize,
+    this.iconHeight = 28,
+    this.iconWidth = 32,
+    this.iconOffset = Offset.zero,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     var theme = Theme.of(context);
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+    final launchButtonOverride = ref.watch(
+      appSettings.select((s) => s.themeModifiers.launchButtonOverride),
+    );
+    final isRainbow = switch (launchButtonOverride) {
+      LaunchButtonOverride.defaultStyle => theme.rainbowAccent,
+      LaunchButtonOverride.pride => true,
+    };
 
     final useCustomGameExe = ref.watch(
       appSettings.select((s) => s.useCustomGameExePath),
@@ -125,7 +146,7 @@ class LauncherButton extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "\n${Constants.appName} is not required to",
+                        "\nTip: ${context.appName} is never required to ",
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           color: theme.colorScheme.onSurface.withAlpha(180),
@@ -147,10 +168,11 @@ class LauncherButton extends HookConsumerWidget {
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
                         "Direct Launch is on."
-                            "\nInvisible ships, zoomed-in combat,"
-                            "\nand more may result.",
+                        "\nInvisible ships, zoomed-in combat,"
+                        "\nand more may result.",
                         style: TextStyle(
-                          color: ThemeManager.vanillaWarningColor.withAlpha(200),
+                          color: TriOSThemeConstants.vanillaWarningColor
+                              .withAlpha(200),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -164,7 +186,7 @@ class LauncherButton extends HookConsumerWidget {
             ? Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(
-                    ThemeManager.cornerRadius,
+                    TriOSThemeConstants.cornerRadius,
                   ),
                   border: Border.all(
                     color: Theme.of(context).colorScheme.secondary,
@@ -186,7 +208,7 @@ class LauncherButton extends HookConsumerWidget {
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
-                        ThemeManager.cornerRadius,
+                        TriOSThemeConstants.cornerRadius,
                       ),
                     ),
                   ),
@@ -226,6 +248,11 @@ class LauncherButton extends HookConsumerWidget {
                         child: StarsectorIcon(
                           colorAnimation: colorAnimation.value,
                           boxShadowAnimation: boxShadowAnimation.value,
+                          fontSize: fontSize,
+                          height: iconHeight,
+                          width: iconWidth,
+                          textOffset: iconOffset,
+                          isRainbow: isRainbow,
                         ),
                       );
                     },
@@ -721,61 +748,94 @@ class StarsectorIcon extends StatelessWidget {
     super.key,
     this.colorAnimation,
     this.boxShadowAnimation = 2,
+    this.fontSize,
+    this.height = 28,
+    this.width = 32,
+    this.textOffset = Offset.zero,
+    this.isRainbow,
   });
 
   final Color? colorAnimation;
   final double boxShadowAnimation;
+  final double? fontSize;
+  final double height;
+  final double width;
+  final Offset textOffset;
+
+  /// When non-null, overrides the theme's `rainbowAccent` flag.
+  final bool? isRainbow;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    final rainbow = isRainbow ?? theme.rainbowAccent;
+
+    final prideBlue = theme.colorScheme.onSurface;
+
+    final icon = Container(
       decoration: BoxDecoration(
         color: colorAnimation ?? theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
-        border: Border.all(
-          color: theme.colorScheme.primary.darker(15),
-          strokeAlign: BorderSide.strokeAlignOutside,
-          width: 2,
-        ),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+        border: rainbow
+            ? null
+            : Border.all(
+                color: theme.colorScheme.primary.darker(15),
+                strokeAlign: BorderSide.strokeAlignOutside,
+                width: 2,
+              ),
         boxShadow: [
           BoxShadow(
             blurRadius: boxShadowAnimation,
             blurStyle: BlurStyle.normal,
-            color: theme.colorScheme.primary.withOpacity(0.25),
+            color: (rainbow ? prideBlue : theme.colorScheme.primary)
+                .withOpacity(0.25),
             offset: Offset.zero,
             spreadRadius: 2,
           ),
           BoxShadow(
             blurRadius: 4,
             blurStyle: BlurStyle.normal,
-            color: Colors.black.mix(theme.colorScheme.primary, 0.5)!,
+            color: Colors.black.mix(
+              rainbow ? prideBlue : theme.colorScheme.primary,
+              0.5,
+            )!,
             offset: Offset.zero,
             spreadRadius: 1,
           ),
         ],
       ),
       child: SizedBox(
-        height: 38,
-        width: 42,
+        height: height,
+        width: width,
         child: Transform.translate(
-          offset: const Offset(0, -1),
+          offset: textOffset,
           child: Center(
             child: StrokeText(
               'S',
-              strokeWidth: 3,
+              strokeWidth: 2.5,
               borderOnTop: true,
               strokeColor: theme.colorScheme.surfaceTint.darker(70),
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontFamily: "Orbitron",
-                fontSize: 30,
-                color: theme.colorScheme.primary.darker(5),
+                fontSize: fontSize ?? 22,
+                color: rainbow
+                    ? prideBlue
+                    : theme.colorScheme.primary.darker(5),
               ),
             ),
           ),
         ),
       ),
+    );
+
+    if (!rainbow) return icon;
+
+    return RainbowBorder(
+      borderWidth: 2,
+      borderRadius: TriOSThemeConstants.cornerRadius + 2,
+      alpha: 0.8,
+      child: icon,
     );
   }
 }

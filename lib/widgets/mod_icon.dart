@@ -83,8 +83,8 @@ class _ModIconState extends ConsumerState<ModIcon> {
       widget.path!.toFile(),
       width: widget.size,
       height: widget.size,
-      cacheWidth: widget.size.toInt(),
-      cacheHeight: widget.size.toInt(),
+      cacheWidth: widget.size.toInt() * 2,
+      cacheHeight: widget.size.toInt() * 2,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
         return widget.takeUpSpaceIfNoIcon

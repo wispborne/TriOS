@@ -67,6 +67,7 @@ abstract class ArchiveInterface {
     String Function(ArchiveEntry entry)? pathTransform,
     bool Function(Object ex, StackTrace st)? onError,
     void Function(int completed, int total)? onProgress,
+    void Function(String phase)? onPhaseChanged,
   });
 
   /// Reads entries into memory from [archivePath].

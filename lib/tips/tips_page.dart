@@ -12,11 +12,12 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/dense_button.dart';
 import 'package:trios/widgets/disable.dart';
-import 'package:trios/widgets/expanding_constrained_aligned_widget.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
+import 'package:trios/trios/constants_theme.dart';
 
 /// Grouping mode, like in your Kotlin code.
 enum TipsGrouping { none, mod }
@@ -57,8 +58,11 @@ class _TipsPageState extends ConsumerState<TipsPage>
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.only(left: 8, right: 8),
-                child: Row(
-                  children: [
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     const SizedBox(width: 4),
                     Text(
                       'Tips',
@@ -175,25 +179,19 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     const SizedBox(width: 8),
                     _buildDeleteButton(context),
                     const SizedBox(width: 8),
-                    ExpandingConstrainedAlignedWidget(
-                      alignment: Alignment.centerLeft,
-                      minWidth: 150,
-                      child: buildSearchBox(),
-                    ),
+                    SizedBox(width: 300, child: buildSearchBox()),
                     const SizedBox(width: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: MovingTooltipWidget.text(
-                        message: 'Whether hidden tips are shown',
-                        child: TriOSToolbarCheckboxButton(
-                          onChanged: (newValue) =>
-                              setState(() => _showHidden = newValue ?? true),
-                          value: _showHidden,
-                          text: 'Show Hidden',
-                        ),
+                    MovingTooltipWidget.text(
+                      message: 'Whether hidden tips are shown',
+                      child: TriOSToolbarCheckboxButton(
+                        onChanged: (newValue) =>
+                            setState(() => _showHidden = newValue ?? true),
+                        value: _showHidden,
+                        text: 'Show Hidden',
                       ),
                     ),
                   ],
+                  ),
                 ),
               ),
             ),
@@ -204,7 +202,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
             data: (tips) {
               return _buildBody(tips, context);
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => Center(child: ThemedCircularProgressIndicator()),
             error: (err, st) {
               Fimber.e('Error loading tips: $err', ex: err, stacktrace: st);
               return Center(child: Text('Error: $err'));
@@ -606,7 +604,7 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                     : isHidden
                     ? theme.colorScheme.surfaceContainerLowest
                     : theme.colorScheme.surfaceContainer.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+                borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
               ),
               padding: const EdgeInsets.all(8.0),
               child: Column(

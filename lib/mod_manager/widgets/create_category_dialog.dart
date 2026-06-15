@@ -46,7 +46,7 @@ class _CreateCategoryDialogState extends State<_CreateCategoryDialog> {
     super.initState();
     // Preview the auto-color.
     final store = widget.ref.read(categoryManagerProvider).value;
-    if (store != null && store.autoColorNewCategories) {
+    if (store != null) {
       _selectedColor = pickAutoColor(store.categories);
     }
   }
@@ -60,7 +60,7 @@ class _CreateCategoryDialogState extends State<_CreateCategoryDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('New Category'),
+      title: const Text('Add Category'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

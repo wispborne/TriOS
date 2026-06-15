@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../chipper_home.dart';
+import '../chipper_app.dart';
 
 void showChipperAboutDialog(BuildContext context, ThemeData theme) {
   showAboutDialog(

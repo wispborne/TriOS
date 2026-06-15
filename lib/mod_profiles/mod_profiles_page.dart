@@ -14,7 +14,11 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
+import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 import 'package:uuid/uuid.dart';
+import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 import 'mod_profile_card.dart';
 import 'mod_profiles_manager.dart';
@@ -114,15 +118,14 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                             )
                             .reversed
                             .toList();
-                        return AlignedGridView.extent(
-                          crossAxisSpacing: axisSpacingForHeightHack,
-                          mainAxisSpacing: 10,
-                          maxCrossAxisExtent: 680,
+                        return WispAdaptiveGridView<ModProfile?>(
+                          items: [null, ...modProfiles],
+                          minItemWidth: 340,
+                          horizontalSpacing: actualAxisSpacing.toDouble(),
+                          verticalSpacing: 10,
                           padding: EdgeInsets.only(bottom: widget.pagePadding),
-                          // crossAxisCount: 2,
-                          itemCount: modProfiles.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == 0) {
+                          itemBuilder: (context, profile, index) {
+                            if (profile == null) {
                               return ConstrainedBox(
                                 constraints: const BoxConstraints(
                                   minHeight: minHeight,
@@ -132,26 +135,23 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                   child: _buildNewProfileCard(),
                                 ),
                               );
-                            } else {
-                              final profile = modProfiles[index - 1];
-
-                              return ModProfileCard(
-                                minHeight: minHeight,
-                                profile: profile,
-                                modProfiles: modProfiles,
-                                save: null,
-                                saves: null,
-                                cardPadding: cardPadding,
-                                actualAxisSpacing: actualAxisSpacing,
-                                axisSpacingForHeightHack:
-                                    axisSpacingForHeightHack,
-                              );
                             }
+
+                            return ModProfileCard(
+                              minHeight: minHeight,
+                              profile: profile,
+                              modProfiles: modProfiles,
+                              save: null,
+                              saves: null,
+                              cardPadding: cardPadding,
+                              actualAxisSpacing: actualAxisSpacing,
+                              axisSpacingForHeightHack: axisSpacingForHeightHack,
+                            );
                           },
                         );
                       },
                       loading: () =>
-                          const Center(child: CircularProgressIndicator()),
+                          Center(child: ThemedCircularProgressIndicator()),
                       error: (error, stackTrace) =>
                           Center(child: Text('Error: $error')),
                     ),
@@ -228,7 +228,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                           );
                         },
                         loading: () =>
-                            const Center(child: CircularProgressIndicator()),
+                            Center(child: ThemedCircularProgressIndicator()),
                         error: (error, stackTrace) =>
                             Center(child: Text('Error: $error')),
                       ),
@@ -245,7 +245,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                   // round edges
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(
-                      ThemeManager.cornerRadius,
+                      TriOSThemeConstants.cornerRadius,
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -355,7 +355,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                       "assets/images/icon-import-horiz.svg",
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    label: const Text('Import Profile'),
+                    label: const Text('Import'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -371,7 +371,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                       Icons.add,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    label: const Text('Create Profile'),
+                    label: const Text('New Profile'),
                   ),
                 ),
               ],

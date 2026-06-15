@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,12 +17,14 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 import '../mod_manager/mod_manager_logic.dart';
 import '../mod_manager/version_checker.dart';
 import '../models/mod.dart';
 import '../trios/app_state.dart';
 import '../trios/download_manager/download_manager.dart';
+import '../trios/download_manager/download_status.dart';
 import 'changelogs.dart';
 
 /// Displays just the mods specified.
@@ -66,6 +70,7 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
                               mod,
                               localVersionCheck,
                               remoteVersionCheck,
+                              showVersionChips: false,
                             ),
                           ),
                           Padding(
@@ -120,7 +125,12 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
               child: SizedBox(
                 width: 500,
                 height: 500,
-                child: Changelogs(mod, localVersionCheck, remoteVersionCheck),
+                child: Changelogs(
+                  mod,
+                  localVersionCheck,
+                  remoteVersionCheck,
+                  showVersionChips: true,
+                ),
               ),
             ),
           if (changelogUrl.isNotNullOrEmpty())
@@ -183,11 +193,19 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
         ? 0.55
         : 1.0;
 
-    final palette = isColorfulModeOn
-        ? paletteGenerator?.createPaletteTheme(context)
+    final paletteTriosTheme = isColorfulModeOn
+        ? paletteGenerator?.toTriOSTheme(context)
+        : null;
+    final palette = paletteTriosTheme != null
+        ? ThemeManager.convertToThemeData(paletteTriosTheme)
         : null;
     final paletteAccent = palette?.colorScheme.onSurface;
     final paletteBg = palette?.colorScheme.surface;
+    final modColor = ref
+        .watch(AppState.modsMetadata)
+        .value
+        ?.getMergedModMetadata(mod.id)
+        ?.color;
 
     const rowHeight = 25.0;
 
@@ -205,8 +223,8 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                 height: rowHeight,
                 child: MovingTooltipWidget.framed(
                   position: TooltipPosition.topLeft,
-                  padding: const EdgeInsets.all(0),
-                  tooltipWidget: SizedBox(
+                  padding: EdgeInsets.zero,
+                  tooltipWidgetBuilder: (context) => SizedBox(
                     width: 400,
                     child: ModSummaryWidget(
                       modVariant: modVariant,
@@ -228,7 +246,6 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                               child: modVariant.iconFilePath != null
                                   ? Image.file(
                                       (modVariant.iconFilePath ?? "").toFile(),
-                                      cacheHeight: rowHeight.toInt(),
                                       cacheWidth: rowHeight.toInt(),
                                       isAntiAlias: true,
                                     )
@@ -239,6 +256,18 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                         Expanded(
                           child: Row(
                             children: [
+                              if (modColor != null)
+                                Padding(
+                                  padding: const .only(right: 6),
+                                  child: Container(
+                                    width: 4.0,
+                                    height: 16.0,
+                                    decoration: BoxDecoration(
+                                      color: modColor,
+                                      borderRadius: BorderRadius.circular(4.0),
+                                    ),
+                                  ),
+                                ),
                               Expanded(
                                 child: Text(
                                   modInfo.nameOrId,
@@ -294,60 +323,119 @@ class _ModListBasicEntryState extends ConsumerState<ModListBasicEntry>
                                 localVersionCheck,
                                 remoteVersionCheck,
                               ),
-                          child: Disable(
-                            isEnabled: !widget.isDisabled,
-                            child: InkWell(
-                              onTap: () {
-                                if (remoteVersionCheck?.remoteVersion != null &&
-                                    versionCheckComparison == -1) {
-                                  ref
-                                      .read(downloadManager.notifier)
-                                      .downloadUpdateViaBrowser(
-                                        remoteVersionCheck!.remoteVersion!,
-                                        activateVariantOnComplete: false,
-                                        modInfo: modInfo,
-                                      );
-                                } else {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      content:
-                                          ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                            mod,
-                                            changelogUrl,
-                                            localVersionCheck,
-                                            remoteVersionCheck,
-                                            versionCheckComparison,
-                                          ),
+                          child: () {
+                            final updateUrl = remoteVersionCheck
+                                ?.remoteVersion
+                                ?.directDownloadURL;
+                            final downloads =
+                                ref.watch(downloadManager).value ?? [];
+                            final activeDownload = updateUrl == null
+                                ? null
+                                : downloads
+                                      .where(
+                                        (d) =>
+                                            d.task.request.url ==
+                                                updateUrl
+                                                    .fixModDownloadUrl() &&
+                                            d.isInProgress,
+                                      )
+                                      .firstOrNull;
+                            if (activeDownload != null) {
+                              return ListenableBuilder(
+                                listenable: Listenable.merge([
+                                  activeDownload.task.status,
+                                  activeDownload.task.downloaded,
+                                  activeDownload.installProgress,
+                                ]),
+                                builder: (context, _) {
+                                  final status =
+                                      activeDownload.task.status.value;
+                                  final dlAmount =
+                                      activeDownload.task.downloaded.value;
+                                  final isInstalling =
+                                      status == DownloadStatus.completed &&
+                                      !activeDownload.installComplete.value;
+                                  double? progress;
+                                  if (isInstalling) {
+                                    progress = null;
+                                  } else if (status ==
+                                          DownloadStatus.downloading &&
+                                      dlAmount.totalBytes > 0) {
+                                    progress = dlAmount.progressRatio;
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4,
+                                      right: 10,
+                                    ),
+                                    child: SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        value: progress,
+                                      ),
                                     ),
                                   );
-                                }
-                              },
-                              onSecondaryTap: () => showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  content:
-                                      ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                        mod,
-                                        changelogUrl,
-                                        localVersionCheck,
-                                        remoteVersionCheck,
-                                        versionCheckComparison,
+                                },
+                              );
+                            }
+                            return Disable(
+                              isEnabled: !widget.isDisabled,
+                              child: InkWell(
+                                onTap: () {
+                                  if (remoteVersionCheck?.remoteVersion !=
+                                          null &&
+                                      versionCheckComparison == -1) {
+                                    ref
+                                        .read(downloadManager.notifier)
+                                        .downloadUpdateViaBrowser(
+                                          remoteVersionCheck!.remoteVersion!,
+                                          activateVariantOnComplete: false,
+                                          modInfo: modInfo,
+                                        );
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        content:
+                                            ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                              mod,
+                                              changelogUrl,
+                                              localVersionCheck,
+                                              remoteVersionCheck,
+                                              versionCheckComparison,
+                                            ),
                                       ),
+                                    );
+                                  }
+                                },
+                                onSecondaryTap: () => showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    content:
+                                        ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
+                                          mod,
+                                          changelogUrl,
+                                          localVersionCheck,
+                                          remoteVersionCheck,
+                                          versionCheckComparison,
+                                        ),
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5.0,
+                                  ),
+                                  child: VersionCheckIcon.fromComparison(
+                                    comparison: versionCheckComparisonResult,
+                                    modId: modInfo.id,
+                                    theme: theme,
+                                  ),
                                 ),
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5.0,
-                                ),
-                                child: VersionCheckIcon.fromComparison(
-                                  comparison: versionCheckComparisonResult,
-                                  modId: modInfo.id,
-                                  theme: theme,
-                                ),
-                              ),
-                            ),
-                          ),
+                            );
+                          }(),
                         ),
                       ],
                     ),

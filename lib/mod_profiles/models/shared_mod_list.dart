@@ -363,9 +363,16 @@ int? _lastUnescapedVersionDelimiter(String s) {
   for (var i = s.length - 2; i >= 0; i--) {
     // need at least " v"
     if (s[i] == ' ' && s[i + 1] == 'v') {
-      // Check that this space wasn't escaped as "\ "
-      final prevIsEscape = i > 0 && s[i - 1] == r'\';
-      if (!prevIsEscape) return i;
+      // Count the run of backslashes immediately preceding the space.
+      // An even count (including zero) means the space is unescaped; an odd
+      // count means the final backslash escapes the space.
+      var backslashes = 0;
+      var j = i - 1;
+      while (j >= 0 && s[j] == r'\') {
+        backslashes++;
+        j--;
+      }
+      if (backslashes.isEven) return i;
     }
   }
   return null;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Three-dot icon button that displays a popup menu.
 class OverflowMenuButton extends StatelessWidget {
@@ -19,16 +20,19 @@ class OverflowMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
+    return MovingTooltipWidget.text(
       message: tooltip,
-      child: PopupMenuButton<int>(
-        tooltip: "",
-        icon: Icon(
-          buttonIcon ?? Icons.more_vert,
-          color: iconColor,
-          size: iconSize,
+      child: Tooltip(
+        message: "",
+        child: PopupMenuButton<int>(
+          tooltip: "",
+          icon: Icon(
+            buttonIcon ?? Icons.more_vert,
+            color: iconColor,
+            size: iconSize,
+          ),
+          itemBuilder: (context) => menuItems,
         ),
-        itemBuilder: (context) => menuItems,
       ),
     );
   }
@@ -57,6 +61,45 @@ class OverflowMenuItem {
       subtitle: subtitle != null ? Text(subtitle!) : null,
     ),
   );
+}
+
+/// Menu item that renders as a [CheckedPopupMenuItem] with a checkmark.
+class OverflowMenuCheckItem {
+  final String title;
+  final IconData icon;
+  final bool checked;
+  final VoidCallback onTap;
+  final String? tooltip;
+
+  const OverflowMenuCheckItem({
+    required this.title,
+    required this.icon,
+    required this.checked,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  PopupMenuEntry<int> toEntry(int? key) {
+    final content = Row(
+      spacing: 8,
+      children: [
+        SizedBox(
+          width: 24,
+          child: checked ? const Icon(Icons.check, size: 18) : null,
+        ),
+        Icon(icon, size: 18),
+        Text(title),
+      ],
+    );
+
+    return PopupMenuItem<int>(
+      value: key,
+      onTap: onTap,
+      child: tooltip != null
+          ? MovingTooltipWidget.text(message: tooltip!, child: content)
+          : content,
+    );
+  }
 }
 
 // Alternative version with confirmation dialogs support

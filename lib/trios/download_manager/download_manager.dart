@@ -1,18 +1,23 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../mod_manager/mod_install_source.dart';
-import '../../mod_manager/mod_manager_logic.dart';
+import '../../mod_manager/batch_installation/batch_installation_notifier.dart';
+import '../../mod_records/mod_record.dart';
+import '../../mod_records/mod_record_source.dart';
+import '../../mod_records/mod_records_store.dart';
 import '../../models/mod_info.dart';
 import '../../models/mod_variant.dart';
 import '../constants.dart';
@@ -86,6 +91,10 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
             }
             ref.invalidateSelf(); // Forces a call to build() to re-fetch the list of downloads
           });
+          // Also invalidate when install completes or is cancelled, so watchers
+          // (Activity Panel, icon badge) can re-filter in-progress vs completed.
+          download.installComplete.addListener(() => ref.invalidateSelf());
+          download.installCancelled.addListener(() => ref.invalidateSelf());
           return download;
         });
   }
@@ -98,9 +107,37 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     final task = DownloadTask(DownloadRequest(sourcePath, '', null));
     task.status.value = DownloadStatus.completed;
     final download = Download(id, displayName, task);
+    download.installComplete.addListener(() => ref.invalidateSelf());
+    download.installCancelled.addListener(() => ref.invalidateSelf());
     _downloads.add(download);
     state = AsyncValue.data(_downloads);
     return download;
+  }
+
+  bool isDownloadInProgress(String url) {
+    return _downloads.any(
+      (d) => d.task.request.url == url && d.isInProgress,
+    );
+  }
+
+  void cancelDownload(Download download) {
+    final status = download.task.status.value;
+    if (!status.isCompleted) {
+      ref
+          .read(downloadManagerInstance)
+          .cancelDownload(download.task.request.url);
+    } else if (status == DownloadStatus.completed &&
+        !download.installComplete.value) {
+      cancelInstallation(download);
+    }
+    _downloads.remove(download);
+    ref.invalidateSelf();
+  }
+
+  /// Marks a [Download] as cancelled so the toast dismisses immediately.
+  void cancelInstallation(Download download) {
+    download.installCancelled.value = true;
+    download.installComplete.value = true;
   }
 
   void downloadUpdateViaBrowser(
@@ -109,12 +146,16 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     ModInfo? modInfo,
   }) {
     if (remoteVersion.directDownloadURL != null) {
-      downloadAndInstallMod(
-        "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
+      if (!isDownloadInProgress(
         remoteVersion.directDownloadURL!.fixModDownloadUrl(),
-        activateVariantOnComplete: activateVariantOnComplete,
-        modInfo: modInfo,
-      );
+      )) {
+        downloadAndInstallMod(
+          "${remoteVersion.modName ?? "(no name"} ${remoteVersion.modVersion}",
+          remoteVersion.directDownloadURL!.fixModDownloadUrl(),
+          activateVariantOnComplete: activateVariantOnComplete,
+          modInfo: modInfo,
+        );
+      }
     } else if (remoteVersion.modThreadId != null) {
       launchUrl(
         Uri.parse("${Constants.forumModPageUrl}${remoteVersion.modThreadId}"),
@@ -132,62 +173,72 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     required bool activateVariantOnComplete,
     ModInfo? modInfo,
   }) {
+    if (isDownloadInProgress(uri)) return;
     var tempFolder = Directory.systemTemp.createTempSync();
 
-    addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((value) {
-      value?.task.whenDownloadComplete().then((status) {
-        if (status == DownloadStatus.completed) {
-          Fimber.d(
-            "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...",
-          );
-          try {
-            ref
-                .read(modManager.notifier)
-                .installModFromSourceWithDefaultUI(
-                  ArchiveModInstallSource(tempFolder.listSync().first.toFile()),
-                  installationDownload: value,
-                )
-                .then((installedVariants) {
-                  // todo add a setting for this.
-                  if (tempFolder.existsSync() &&
-                      !installedVariants.any((it) => it.err != null)) {
-                    tempFolder.deleteSync(recursive: true);
-                    Fimber.i(
-                      "Cleaned up downloaded file ${tempFolder.name} at ${tempFolder.path}",
-                    );
-                  }
-
-                  if (activateVariantOnComplete) {
-                    // final variants =
-                    //     ref.read(AppState.modVariants).value ?? [];
-
-                    // for (final installed in installedVariants) {
-                    // Find the variant post-install so we can activate it.
-                    // final actualVariant = variants.firstWhereOrNull(
-                    //     (variant) => variant.smolId == installed.modInfo.smolId);
-                    // try {
-                    // If the mod existed and was enabled, switch to the newly downloaded version.
-                    // Edit: changed my mind, see https://github.com/wispborne/TriOS/issues/28
-
-                    // if (actualVariant != null &&
-                    //     actualVariant.mod(mods)?.isEnabledInGame == true) {
-                    //   changeActiveModVariant(
-                    //       actualVariant.mod(mods)!, actualVariant, ref);
-                    // }
-                    // } catch (ex) {
-                    //   Fimber.w(
-                    //       "Failed to activate mod ${installed.modInfo.smolId} after updating: $ex");
-                    // }
-                    // }
-                  }
-                });
-          } catch (e) {
-            Fimber.e("Error installing mod from archive", ex: e);
-          }
-        } else {
-          Fimber.w("Download failed: $status");
+    addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((
+      value,
+    ) async {
+      if (value == null) return;
+      final status = await value.task.whenDownloadComplete();
+      if (status == DownloadStatus.completed) {
+        Fimber.d(
+          "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...",
+        );
+        // Record download source in mod records.
+        try {
+          final recordKey = modInfo?.id ?? displayName;
+          ref.read(modRecordsStore.notifier).updateRecord(recordKey, (existing) {
+            final now = DateTime.now();
+            final base = existing ?? ModRecord(
+              recordKey: recordKey,
+              modId: modInfo?.id,
+              firstSeen: now,
+            );
+            final updatedSources = Map<String, ModRecordSource>.of(
+              base.sources,
+            );
+            updatedSources['downloadHistory'] = DownloadHistorySource(
+              lastDownloadedFrom: uri,
+              lastDownloadedAt: now,
+              lastSeen: now,
+            );
+            return base.copyWith(sources: updatedSources);
+          });
+        } catch (e) {
+          Fimber.w("Failed to update mod record on download: $e");
         }
-      });
+        try {
+          final downloadedFile = (await tempFolder.list().first).toFile();
+          // addLateEntry returns once the entry has settled (installed,
+          // failed, or skipped) — not merely once it has been queued.
+          await ref
+              .read(batchInstallationProvider.notifier)
+              .addLateEntry(downloadedFile, download: value);
+
+          // Clean up the temp folder only after a successful install; on
+          // failure, keep the archive so the user can install it manually.
+          if (value.task.error == null && tempFolder.existsSync()) {
+            tempFolder.deleteSync(recursive: true);
+            Fimber.i(
+              "Cleaned up downloaded file ${tempFolder.name} at ${tempFolder.path}",
+            );
+          }
+        } catch (e) {
+          Fimber.e("Error installing mod from archive", ex: e);
+          value.task.error = Exception(
+            "Failed to install '$displayName'.\n"
+            "Download URL: $uri\n\n$e",
+          );
+        } finally {
+          // Ensure installComplete is always set so the toast can react.
+          if (!value.installComplete.value) {
+            value.installComplete.value = true;
+          }
+        }
+      } else {
+        Fimber.w("Download failed: $status");
+      }
     });
   }
 }
@@ -198,21 +249,79 @@ class Download {
   final DownloadTask task;
 
   /// Tracks file-count progress during mod installation (extraction).
-  final ValueNotifier<TriOSDownloadProgress?> installProgress =
-      ValueNotifier(null);
+  final ValueNotifier<TriOSDownloadProgress?> installProgress = ValueNotifier(
+    null,
+  );
 
   /// Set to true when installation (extraction) is complete.
   final ValueNotifier<bool> installComplete = ValueNotifier(false);
+
+  /// Set to true when the user cancelled the installation dialog without
+  /// installing anything. The toast should dismiss immediately.
+  final ValueNotifier<bool> installCancelled = ValueNotifier(false);
 
   /// Set to the installed [ModVariant] after installation completes (for plain
   /// [Download] objects that don't carry [ModInfo]).
   final ValueNotifier<ModVariant?> installedVariant = ValueNotifier(null);
 
   Download(this.id, this.displayName, this.task);
+
+  /// Whether installation completed with an error.
+  bool get hasInstallError => installComplete.value && task.error != null;
+
+  bool get isInProgress {
+    final status = task.status.value;
+    if (!status.isCompleted) return true;
+    return status == DownloadStatus.completed && !installComplete.value;
+  }
 }
 
 class ModDownload extends Download {
   final ModInfo modInfo;
 
   ModDownload(super.id, super.displayName, super.task, this.modInfo);
+}
+
+extension DownloadVariantResolution on Download {
+  /// Resolves the installed [ModVariant] for this download, gated on download
+  /// completion. Returns `null` while the download is still in progress to
+  /// prevent matching an already-installed old version during an update.
+  ModVariant? resolveInstalledVariant(WidgetRef ref) {
+    if (!task.status.value.isCompleted) return null;
+    if (this is ModDownload) {
+      final modDownload = this as ModDownload;
+      // Prefer installedVariant.value (set by the batch installer to the newly
+      // installed variant) over the smolId search, which may match an older
+      // version that still exists on disk during an update.
+      return installedVariant.value ??
+          ref
+              .read(AppState.modVariants)
+              .value
+              .orEmpty()
+              .firstWhereOrNull(
+                (v) => v.smolId == modDownload.modInfo.smolId,
+              );
+    }
+    return installedVariant.value;
+  }
+
+  /// Like [resolveInstalledVariant] but uses [ref.watch] for reactive rebuilds.
+  ModVariant? watchInstalledVariant(WidgetRef ref) {
+    if (!task.status.value.isCompleted) return null;
+    if (this is ModDownload) {
+      final modDownload = this as ModDownload;
+      // Prefer installedVariant.value (set by the batch installer to the newly
+      // installed variant) over the smolId search, which may match an older
+      // version that still exists on disk during an update.
+      return installedVariant.value ??
+          ref
+              .watch(AppState.modVariants)
+              .value
+              .orEmpty()
+              .firstWhereOrNull(
+                (v) => v.smolId == modDownload.modInfo.smolId,
+              );
+    }
+    return installedVariant.value;
+  }
 }

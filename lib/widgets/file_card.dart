@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:trios/trios/constants_theme.dart';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/dotted_border.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 class DragDropInstallModOverlay extends StatelessWidget {
   final List<FileSystemEntity> entities;
@@ -22,14 +24,14 @@ class DragDropInstallModOverlay extends StatelessWidget {
     return Card(
       elevation: 4.0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(ThemeManager.cornerRadius),
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
       ),
       // color: const Color(0xFF34556D),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: DottedBorder(
           color: theme.colorScheme.onSurface.withOpacity(0.5),
-          radius: const Radius.circular(ThemeManager.cornerRadius),
+          radius: const Radius.circular(TriOSThemeConstants.cornerRadius),
           strokeWidth: 3,
           dashPattern: const [12, 8],
           stackFit: StackFit.loose,
@@ -51,7 +53,7 @@ class DragDropInstallModOverlay extends StatelessWidget {
                       'Add to Starsector',
                       style: TextStyle(
                         fontSize: 16.0,
-                        fontFamily: ThemeManager.orbitron,
+                        fontFamily: TriOSThemeConstants.orbitron,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -114,7 +116,7 @@ class DragDropInstallModOverlay extends StatelessWidget {
       future: _getFileOrDirectorySize(entity),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
-          return const CircularProgressIndicator();
+          return ThemedCircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text(
             'Error: ${snapshot.error}',

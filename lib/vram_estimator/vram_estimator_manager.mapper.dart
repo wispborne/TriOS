@@ -19,6 +19,7 @@ class VramEstimatorManagerStateMapper
         _instance = VramEstimatorManagerStateMapper._(),
       );
       VramModMapper.ensureInitialized();
+      ActiveModScanMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -33,31 +34,112 @@ class VramEstimatorManagerStateMapper
   static DateTime? _$lastUpdated(VramEstimatorManagerState v) => v.lastUpdated;
   static const Field<VramEstimatorManagerState, DateTime> _f$lastUpdated =
       Field('lastUpdated', _$lastUpdated);
+  static int? _$lastScanDurationMs(VramEstimatorManagerState v) =>
+      v.lastScanDurationMs;
+  static const Field<VramEstimatorManagerState, int> _f$lastScanDurationMs =
+      Field('lastScanDurationMs', _$lastScanDurationMs, opt: true);
   static bool _$isScanning(VramEstimatorManagerState v) => v.isScanning;
   static const Field<VramEstimatorManagerState, bool> _f$isScanning = Field(
     'isScanning',
     _$isScanning,
-    mode: FieldMode.member,
+    opt: true,
+    def: false,
   );
   static bool _$isCancelled(VramEstimatorManagerState v) => v.isCancelled;
   static const Field<VramEstimatorManagerState, bool> _f$isCancelled = Field(
     'isCancelled',
     _$isCancelled,
-    mode: FieldMode.member,
+    opt: true,
+    def: false,
   );
+  static String? _$currentlyScanningModName(VramEstimatorManagerState v) =>
+      v.currentlyScanningModName;
+  static const Field<VramEstimatorManagerState, String>
+  _f$currentlyScanningModName = Field(
+    'currentlyScanningModName',
+    _$currentlyScanningModName,
+    opt: true,
+  );
+  static int _$totalModsToScan(VramEstimatorManagerState v) =>
+      v.totalModsToScan;
+  static const Field<VramEstimatorManagerState, int> _f$totalModsToScan = Field(
+    'totalModsToScan',
+    _$totalModsToScan,
+    opt: true,
+    def: 0,
+  );
+  static int _$modsScannedThisRun(VramEstimatorManagerState v) =>
+      v.modsScannedThisRun;
+  static const Field<VramEstimatorManagerState, int> _f$modsScannedThisRun =
+      Field('modsScannedThisRun', _$modsScannedThisRun, opt: true, def: 0);
+  static int _$currentModFilesScanned(VramEstimatorManagerState v) =>
+      v.currentModFilesScanned;
+  static const Field<VramEstimatorManagerState, int> _f$currentModFilesScanned =
+      Field(
+        'currentModFilesScanned',
+        _$currentModFilesScanned,
+        opt: true,
+        def: 0,
+      );
+  static int _$currentModTotalFiles(VramEstimatorManagerState v) =>
+      v.currentModTotalFiles;
+  static const Field<VramEstimatorManagerState, int> _f$currentModTotalFiles =
+      Field('currentModTotalFiles', _$currentModTotalFiles, opt: true, def: 0);
+  static String? _$currentlyScanningFilePath(VramEstimatorManagerState v) =>
+      v.currentlyScanningFilePath;
+  static const Field<VramEstimatorManagerState, String>
+  _f$currentlyScanningFilePath = Field(
+    'currentlyScanningFilePath',
+    _$currentlyScanningFilePath,
+    opt: true,
+  );
+  static Map<String, ActiveModScan> _$activeScans(
+    VramEstimatorManagerState v,
+  ) => v.activeScans;
+  static const Field<VramEstimatorManagerState, Map<String, ActiveModScan>>
+  _f$activeScans = Field(
+    'activeScans',
+    _$activeScans,
+    opt: true,
+    def: const {},
+  );
+  static int? _$vanillaVramBytes(VramEstimatorManagerState v) =>
+      v.vanillaVramBytes;
+  static const Field<VramEstimatorManagerState, int> _f$vanillaVramBytes =
+      Field('vanillaVramBytes', _$vanillaVramBytes, opt: true);
 
   @override
   final MappableFields<VramEstimatorManagerState> fields = const {
     #modVramInfo: _f$modVramInfo,
     #lastUpdated: _f$lastUpdated,
+    #lastScanDurationMs: _f$lastScanDurationMs,
     #isScanning: _f$isScanning,
     #isCancelled: _f$isCancelled,
+    #currentlyScanningModName: _f$currentlyScanningModName,
+    #totalModsToScan: _f$totalModsToScan,
+    #modsScannedThisRun: _f$modsScannedThisRun,
+    #currentModFilesScanned: _f$currentModFilesScanned,
+    #currentModTotalFiles: _f$currentModTotalFiles,
+    #currentlyScanningFilePath: _f$currentlyScanningFilePath,
+    #activeScans: _f$activeScans,
+    #vanillaVramBytes: _f$vanillaVramBytes,
   };
 
   static VramEstimatorManagerState _instantiate(DecodingData data) {
     return VramEstimatorManagerState(
       modVramInfo: data.dec(_f$modVramInfo),
       lastUpdated: data.dec(_f$lastUpdated),
+      lastScanDurationMs: data.dec(_f$lastScanDurationMs),
+      isScanning: data.dec(_f$isScanning),
+      isCancelled: data.dec(_f$isCancelled),
+      currentlyScanningModName: data.dec(_f$currentlyScanningModName),
+      totalModsToScan: data.dec(_f$totalModsToScan),
+      modsScannedThisRun: data.dec(_f$modsScannedThisRun),
+      currentModFilesScanned: data.dec(_f$currentModFilesScanned),
+      currentModTotalFiles: data.dec(_f$currentModTotalFiles),
+      currentlyScanningFilePath: data.dec(_f$currentlyScanningFilePath),
+      activeScans: data.dec(_f$activeScans),
+      vanillaVramBytes: data.dec(_f$vanillaVramBytes),
     );
   }
 
@@ -137,7 +219,28 @@ abstract class VramEstimatorManagerStateCopyWith<
     implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<$R, String, VramMod, VramModCopyWith<$R, VramMod, VramMod>>
   get modVramInfo;
-  $R call({Map<String, VramMod>? modVramInfo, DateTime? lastUpdated});
+  MapCopyWith<
+    $R,
+    String,
+    ActiveModScan,
+    ActiveModScanCopyWith<$R, ActiveModScan, ActiveModScan>
+  >
+  get activeScans;
+  $R call({
+    Map<String, VramMod>? modVramInfo,
+    DateTime? lastUpdated,
+    int? lastScanDurationMs,
+    bool? isScanning,
+    bool? isCancelled,
+    String? currentlyScanningModName,
+    int? totalModsToScan,
+    int? modsScannedThisRun,
+    int? currentModFilesScanned,
+    int? currentModTotalFiles,
+    String? currentlyScanningFilePath,
+    Map<String, ActiveModScan>? activeScans,
+    int? vanillaVramBytes,
+  });
   VramEstimatorManagerStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -160,18 +263,90 @@ class _VramEstimatorManagerStateCopyWithImpl<$R, $Out>
     (v) => call(modVramInfo: v),
   );
   @override
-  $R call({Map<String, VramMod>? modVramInfo, Object? lastUpdated = $none}) =>
-      $apply(
-        FieldCopyWithData({
-          if (modVramInfo != null) #modVramInfo: modVramInfo,
-          if (lastUpdated != $none) #lastUpdated: lastUpdated,
-        }),
-      );
+  MapCopyWith<
+    $R,
+    String,
+    ActiveModScan,
+    ActiveModScanCopyWith<$R, ActiveModScan, ActiveModScan>
+  >
+  get activeScans => MapCopyWith(
+    $value.activeScans,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(activeScans: v),
+  );
+  @override
+  $R call({
+    Map<String, VramMod>? modVramInfo,
+    Object? lastUpdated = $none,
+    Object? lastScanDurationMs = $none,
+    bool? isScanning,
+    bool? isCancelled,
+    Object? currentlyScanningModName = $none,
+    int? totalModsToScan,
+    int? modsScannedThisRun,
+    int? currentModFilesScanned,
+    int? currentModTotalFiles,
+    Object? currentlyScanningFilePath = $none,
+    Map<String, ActiveModScan>? activeScans,
+    Object? vanillaVramBytes = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (modVramInfo != null) #modVramInfo: modVramInfo,
+      if (lastUpdated != $none) #lastUpdated: lastUpdated,
+      if (lastScanDurationMs != $none) #lastScanDurationMs: lastScanDurationMs,
+      if (isScanning != null) #isScanning: isScanning,
+      if (isCancelled != null) #isCancelled: isCancelled,
+      if (currentlyScanningModName != $none)
+        #currentlyScanningModName: currentlyScanningModName,
+      if (totalModsToScan != null) #totalModsToScan: totalModsToScan,
+      if (modsScannedThisRun != null) #modsScannedThisRun: modsScannedThisRun,
+      if (currentModFilesScanned != null)
+        #currentModFilesScanned: currentModFilesScanned,
+      if (currentModTotalFiles != null)
+        #currentModTotalFiles: currentModTotalFiles,
+      if (currentlyScanningFilePath != $none)
+        #currentlyScanningFilePath: currentlyScanningFilePath,
+      if (activeScans != null) #activeScans: activeScans,
+      if (vanillaVramBytes != $none) #vanillaVramBytes: vanillaVramBytes,
+    }),
+  );
   @override
   VramEstimatorManagerState $make(CopyWithData data) =>
       VramEstimatorManagerState(
         modVramInfo: data.get(#modVramInfo, or: $value.modVramInfo),
         lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated),
+        lastScanDurationMs: data.get(
+          #lastScanDurationMs,
+          or: $value.lastScanDurationMs,
+        ),
+        isScanning: data.get(#isScanning, or: $value.isScanning),
+        isCancelled: data.get(#isCancelled, or: $value.isCancelled),
+        currentlyScanningModName: data.get(
+          #currentlyScanningModName,
+          or: $value.currentlyScanningModName,
+        ),
+        totalModsToScan: data.get(#totalModsToScan, or: $value.totalModsToScan),
+        modsScannedThisRun: data.get(
+          #modsScannedThisRun,
+          or: $value.modsScannedThisRun,
+        ),
+        currentModFilesScanned: data.get(
+          #currentModFilesScanned,
+          or: $value.currentModFilesScanned,
+        ),
+        currentModTotalFiles: data.get(
+          #currentModTotalFiles,
+          or: $value.currentModTotalFiles,
+        ),
+        currentlyScanningFilePath: data.get(
+          #currentlyScanningFilePath,
+          or: $value.currentlyScanningFilePath,
+        ),
+        activeScans: data.get(#activeScans, or: $value.activeScans),
+        vanillaVramBytes: data.get(
+          #vanillaVramBytes,
+          or: $value.vanillaVramBytes,
+        ),
       );
 
   @override

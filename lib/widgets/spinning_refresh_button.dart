@@ -28,6 +28,9 @@ class SpinningRefreshButtonState extends State<SpinningRefreshButton>
       duration: const Duration(seconds: 1),
       vsync: this,
     );
+    if (widget.isScanning) {
+      _animationController.repeat();
+    }
   }
 
   @override

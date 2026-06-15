@@ -116,6 +116,19 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     updateState((s) => s.copyWith(userMetadata: userMetadata));
   }
 
+  void updateModsUserMetadata(
+    List<String> modIds,
+    ModMetadata Function(ModMetadata oldMetadata) metadataUpdater,
+  ) {
+    final userMetadata = state.value?.userMetadata.toMap() ?? {};
+    for (final modId in modIds) {
+      userMetadata[modId] = metadataUpdater(
+        userMetadata[modId] ?? ModMetadata.empty(),
+      );
+    }
+    updateState((s) => s.copyWith(userMetadata: userMetadata));
+  }
+
   void updateModBaseMetadata(
     String modId,
     ModMetadata Function(ModMetadata oldMetadata) metadataUpdater,

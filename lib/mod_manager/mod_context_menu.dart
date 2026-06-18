@@ -39,6 +39,7 @@ ContextMenu buildModContextMenu(
       buildMenuItemOpenFolder(mod),
       buildMenuItemOpenModInfoFile(mod),
       buildMenuItemOpenForumPage(modVariant, context),
+      buildMenuItemCopyInstallLink(modVariant, context),
       _buildCategorySubmenu(mod.id, ref, context),
       _buildColorSubmenu(mod.id, ref),
       if (isModGameVersionIncorrect(

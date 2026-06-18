@@ -1599,14 +1599,6 @@ packages:
       url: "https://github.com/google/flutter-desktop-embedding.git"
     source: git
     version: "0.1.0"
-  windows_system_info:
-    dependency: "direct main"
-    description:
-      name: windows_system_info
-      sha256: a4577ee4ca784362940a51267155bacbf27109b282c6157127dcc715177f1b13
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.4"
   xdg_directories:
     dependency: transitive
     description:

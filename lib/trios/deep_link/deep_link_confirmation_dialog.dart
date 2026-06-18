@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/disable.dart';
 
 /// Information about a resolved mod entry for display in the dialog.
 class ResolvedModEntry {
@@ -31,50 +34,64 @@ class ResolvedModEntry {
     this.error,
   });
 
-  String get displayName =>
-      modName ?? entry.url.host;
+  String get displayName => modName ?? _nameFromUrl(entry.url);
 
   String get displayDetail {
-    if (error != null) return 'Error: $error';
+    // Already-installed wins over a download error: if we already have it, the
+    // missing/invalid download link doesn't matter.
     if (alreadyInstalled) return 'Already installed';
+    if (error != null) return error!;
     final parts = <String>[];
     if (modVersion != null) parts.add('v$modVersion');
-    parts.add(entry.url.host);
+    // Show the actual download host (where bytes come from), which for a
+    // .version link differs from the .version file's own host.
+    parts.add(downloadUrl.host);
     return parts.join(' · ');
+  }
+
+  /// Falls back to the URL's filename (sans extension) when the mod name isn't
+  /// known — e.g. "RandomAssortmentOfThings" from ".../RandomAssortmentOfThings.version",
+  /// which is far more recognizable than the bare host.
+  static String _nameFromUrl(Uri url) {
+    final segments = url.pathSegments.where((s) => s.isNotEmpty).toList();
+    if (segments.isEmpty) return url.host;
+    var name = segments.last;
+    final dot = name.lastIndexOf('.');
+    if (dot > 0) name = name.substring(0, dot);
+    return name.isEmpty ? url.host : name;
   }
 }
 
-/// Shows the deep link confirmation dialog.
+/// Live contents of the confirmation dialog. The dialog rebuilds when this
+/// changes, so links clicked while it's open merge into the same dialog.
+class DeepLinkConfirmData {
+  final List<ResolvedModEntry> mods;
+  final List<ResolvedModEntry> dependencies;
+
+  const DeepLinkConfirmData({required this.mods, required this.dependencies});
+}
+
+/// Shows the deep link confirmation dialog, driven by [data] so it updates live
+/// as more links are added to the same install.
 ///
-/// Returns `true` if user confirmed, `false` if cancelled.
-Future<bool> showDeepLinkConfirmationDialog(
+/// Returns the entries the user chose to install, or `null` if cancelled.
+Future<List<ResolvedModEntry>?> showDeepLinkConfirmationDialog(
   BuildContext context, {
-  required ResolvedModEntry mainMod,
-  required List<ResolvedModEntry> dependencies,
-  required WidgetRef ref,
-}) async {
-  final result = await showDialog<bool>(
+  required ValueListenable<DeepLinkConfirmData> data,
+  required Ref ref,
+}) {
+  return showDialog<List<ResolvedModEntry>>(
     context: context,
     barrierDismissible: false,
-    builder: (context) => _DeepLinkConfirmationDialog(
-      mainMod: mainMod,
-      dependencies: dependencies,
-      ref: ref,
-    ),
+    builder: (context) => _DeepLinkConfirmationDialog(data: data, ref: ref),
   );
-  return result ?? false;
 }
 
 class _DeepLinkConfirmationDialog extends StatefulWidget {
-  final ResolvedModEntry mainMod;
-  final List<ResolvedModEntry> dependencies;
-  final WidgetRef ref;
+  final ValueListenable<DeepLinkConfirmData> data;
+  final Ref ref;
 
-  const _DeepLinkConfirmationDialog({
-    required this.mainMod,
-    required this.dependencies,
-    required this.ref,
-  });
+  const _DeepLinkConfirmationDialog({required this.data, required this.ref});
 
   @override
   State<_DeepLinkConfirmationDialog> createState() =>
@@ -85,95 +102,170 @@ class _DeepLinkConfirmationDialogState
     extends State<_DeepLinkConfirmationDialog> {
   bool _dontAskAgain = false;
 
+  /// Selected entries, by stable key (the source URL).
+  final Set<String> _selected = {};
+
+  /// Entries the default-selection rule has already been applied to, so links
+  /// merged in later get pre-selected once without overriding the user's picks.
+  final Set<String> _defaultsApplied = {};
+
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    _applyDefaultSelection();
+    widget.data.addListener(_onDataChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.data.removeListener(_onDataChanged);
+    super.dispose();
+  }
+
+  void _onDataChanged() => setState(_applyDefaultSelection);
+
+  /// Pre-select installable entries that aren't already present (same mod id +
+  /// version). Errored and already-installed entries start unchecked.
+  void _applyDefaultSelection() {
+    final data = widget.data.value;
+    for (final e in [...data.mods, ...data.dependencies]) {
+      final key = _keyOf(e);
+      if (_defaultsApplied.add(key) && e.error == null && !e.alreadyInstalled) {
+        _selected.add(key);
+      }
+    }
+  }
+
+  String _keyOf(ResolvedModEntry e) => e.entry.url.toString();
+
+  void _toggle(String key, bool selected) {
+    setState(() {
+      if (selected) {
+        _selected.add(key);
+      } else {
+        _selected.remove(key);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _buildDialog(context, widget.data.value);
+
+  Widget _buildDialog(BuildContext context, DeepLinkConfirmData data) {
     final theme = Theme.of(context);
-    final depsToInstall =
-        widget.dependencies.where((d) => !d.alreadyInstalled).toList();
-    final depsAlreadyInstalled =
-        widget.dependencies.where((d) => d.alreadyInstalled).toList();
+    // Group by role: main mods first, then dependencies. Within each role,
+    // sort by status: to-install, then couldn't-load, then already-installed.
+    // Dependencies that are also main mods were already dropped upstream
+    // (deduped by URL in the handler).
+    List<ResolvedModEntry> byStatus(List<ResolvedModEntry> list) => [
+      ...list.where((e) => !e.alreadyInstalled && e.error == null),
+      ...list.where((e) => !e.alreadyInstalled && e.error != null),
+      ...list.where((e) => e.alreadyInstalled),
+    ];
+    final mainMods = byStatus(data.mods);
+    final deps = byStatus(data.dependencies);
+
+    final allEntries = [...data.mods, ...data.dependencies];
+    final installCount = allEntries
+        .where((e) => !e.alreadyInstalled && e.error == null)
+        .length;
+    final selectedCount = _selected.length;
+    final hasProblems = allEntries.any(
+      (e) => !e.alreadyInstalled && e.error != null,
+    );
+    final intro = installCount > 0
+        ? (installCount == 1
+              ? 'A link is requesting to install a mod:'
+              : 'A link is requesting to install $installCount mods:')
+        : hasProblems
+        ? "TriOS can't install anything from this link:"
+        : 'You already have everything from this link.';
 
     return AlertDialog(
-      title: const Text('Install Mod from Link'),
-      content: SizedBox(
-        width: 450,
+      title: Text(
+        installCount > 1 ? 'Install Mods from Link' : 'Install Mod from Link',
+      ),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 400, maxWidth: 620),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('A link is requesting to install a mod:', style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 16),
-            // Main mod
-            _buildModTile(
-              context,
-              entry: widget.mainMod,
-              isMain: true,
+            Text(intro, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Main mods first.
+                    ...mainMods.map(
+                      (mod) => _buildModTile(context, entry: mod, isMain: true),
+                    ),
+                    // Then dependencies (already excludes any that are main mods).
+                    if (deps.isNotEmpty) ...[
+                      _sectionHeader(
+                        'Dependencies (${deps.length})',
+                        theme.textTheme.titleSmall,
+                      ),
+                      ...deps.map(
+                        (dep) =>
+                            _buildModTile(context, entry: dep, isMain: false),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            // Dependencies to install
-            if (depsToInstall.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Dependencies (${depsToInstall.length})',
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              ...depsToInstall.map(
-                (dep) => _buildModTile(context, entry: dep, isMain: false),
-              ),
-            ],
-            // Already installed deps
-            if (depsAlreadyInstalled.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Already installed (${depsAlreadyInstalled.length})',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...depsAlreadyInstalled.map(
-                (dep) => _buildModTile(context, entry: dep, isMain: false),
-              ),
-            ],
-            const SizedBox(height: 16),
-            // Don't ask again checkbox
-            Row(
-              children: [
-                Checkbox(
-                  value: _dontAskAgain,
-                  onChanged: (value) =>
-                      setState(() => _dontAskAgain = value ?? false),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    "Don't ask again for deep links",
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
-              ],
+            const Divider(),
+            CheckboxWithLabel(
+              value: _dontAskAgain,
+              onChanged: (value) =>
+                  setState(() => _dontAskAgain = value ?? false),
+              label: "Always install new mods without confirming",
+              labelStyle: theme.textTheme.bodySmall,
             ),
           ],
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
+          onPressed: () => Navigator.of(context).pop(null),
           child: const Text('Cancel'),
         ),
         FilledButton.icon(
-          onPressed: () {
-            if (_dontAskAgain) {
-              widget.ref.read(appSettings.notifier).update(
-                (s) => s.copyWith(deepLinkSkipConfirmation: true),
-              );
-            }
-            Navigator.of(context).pop(true);
-          },
+          onPressed: selectedCount == 0
+              ? null
+              : () {
+                  if (_dontAskAgain) {
+                    widget.ref
+                        .read(appSettings.notifier)
+                        .update(
+                          (s) => s.copyWith(deepLinkSkipConfirmation: true),
+                        );
+                  }
+                  final selectedEntries = allEntries
+                      .where((e) => _selected.contains(_keyOf(e)))
+                      .toList();
+                  Navigator.of(context).pop(selectedEntries);
+                },
           icon: const Icon(Icons.download),
-          label: const Text('Download & Install'),
+          label: Text(
+            selectedCount == 0
+                ? 'No mods selected'
+                : 'Download & Install ($selectedCount)',
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _sectionHeader(String text, TextStyle? style) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4, left: 4),
+      child: Text(text, style: style),
     );
   }
 
@@ -183,49 +275,128 @@ class _DeepLinkConfirmationDialogState
     required bool isMain,
   }) {
     final theme = Theme.of(context);
-    final hasError = entry.error != null;
+    // Errored entries can't be installed, so they aren't selectable.
+    final selectable = entry.error == null;
+    final key = _keyOf(entry);
+    final isSelected = selectable && _selected.contains(key);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(
-            entry.alreadyInstalled
-                ? Icons.check_circle
-                : hasError
-                    ? Icons.error
-                    : isMain
-                        ? Icons.extension
-                        : Icons.subdirectory_arrow_right,
-            size: 20,
-            color: entry.alreadyInstalled
-                ? theme.colorScheme.primary
-                : hasError
-                    ? theme.colorScheme.error
-                    : null,
+    return Card.outlined(
+      margin: const EdgeInsets.only(bottom: 6),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(
+          color: isSelected
+              ? theme.colorScheme.primary.withAlpha(200)
+              : theme.colorScheme.outline.withValues(alpha: 0.25),
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: selectable
+          ? Disable(
+              isEnabled: selectable,
+              child: CheckboxListTile(
+                value: isSelected,
+                onChanged: (value) => _toggle(key, value ?? false),
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: const EdgeInsets.only(left: 4, right: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                title: _modContent(context, entry, isMain: isMain),
+              ),
+            )
+          : ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
+              // Already-installed but not re-downloadable → it's satisfied, not a
+              // problem; only a genuinely-missing mod gets the error icon.
+              leading: Icon(
+                entry.alreadyInstalled
+                    ? Icons.check_circle
+                    : Icons.error_outline,
+                color: entry.alreadyInstalled
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.error,
+              ),
+              title: _modContent(context, entry, isMain: isMain),
+            ),
+    );
+  }
+
+  /// Shared tile body: name, status/detail, and provenance URL lines.
+  Widget _modContent(
+    BuildContext context,
+    ResolvedModEntry entry, {
+    required bool isMain,
+  }) {
+    final theme = Theme.of(context);
+    // Already-installed takes precedence, so don't style it as an error.
+    final hasError = entry.error != null && !entry.alreadyInstalled;
+
+    final isVersionFile = entry.entry.source == DeepLinkModSource.versionFile;
+    final sourceUrl = entry.entry.url.toString();
+    final resolvedUrl = entry.downloadUrl.toString();
+    final showResolved = isVersionFile && resolvedUrl != sourceUrl;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 2,
+      children: [
+        Text(
+          entry.displayName,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: isMain ? FontWeight.w600 : FontWeight.normal,
           ),
-          const SizedBox(width: 8),
+        ),
+        Text(
+          entry.displayDetail,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: hasError
+                ? theme.colorScheme.error
+                : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        // If a mod is already installed but its link couldn't be downloaded,
+        // displayDetail shows "Already installed" — surface the reason here so
+        // the user understands why it has no checkbox (rather than nothing).
+        if (entry.alreadyInstalled && entry.error != null)
+          Text(
+            entry.error!,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+        if (entry.entry.modId != null)
+          _urlLine(theme, Icons.tag, 'id: ${entry.entry.modId}'),
+        _urlLine(
+          theme,
+          isVersionFile ? Icons.description_outlined : Icons.link,
+          sourceUrl,
+        ),
+        if (showResolved) _urlLine(theme, Icons.download, resolvedUrl),
+      ],
+    );
+  }
+
+  /// A small, selectable provenance line (icon + URL) so the user can read or
+  /// copy exactly which link / version-checker file was used, for debugging.
+  Widget _urlLine(ThemeData theme, IconData icon, String url) {
+    final color = theme.colorScheme.onSurface.withValues(alpha: 0.5);
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2, right: 6),
+            child: Icon(icon, size: 13, color: color),
+          ),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.displayName,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: isMain ? FontWeight.bold : FontWeight.normal,
-                    decoration:
-                        entry.alreadyInstalled ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-                Text(
-                  entry.displayDetail,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: hasError
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
+            child: SelectableText(
+              url,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 11,
+                color: color,
+              ),
             ),
           ),
         ],

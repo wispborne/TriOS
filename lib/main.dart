@@ -24,6 +24,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/deep_link/deep_link_handler.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/deep_link/protocol_registration.dart';
+import 'package:trios/trios/deep_link/single_instance_manager.dart';
 import 'package:trios/trios/self_updater/script_generator.dart';
 import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -93,7 +94,7 @@ Future<void> _ensureWindowIsVisible() async {
 
 final shouldDebugRiverpod = false;
 
-void main() async {
+void main(List<String> args) async {
   double scaleFactorCallback(Size deviceSize) {
     return 1;
   }
@@ -135,45 +136,47 @@ void main() async {
     loggingError = ex;
   }
 
-  // Deep link: initialize AppLinks and check for single-instance forwarding.
+  // Deep link reception. Windows/Linux deliver the launch URI on argv (the
+  // native runner forwards it); macOS delivers it via app_links (openURLs).
   appLinks = AppLinks();
-  try {
-    final initialLink = await appLinks.getInitialLink();
-    if (initialLink != null &&
-        initialLink.scheme == deepLinkScheme) {
-      final lockFile = File(
-        '${Constants.configDataFolderPath.path}/running.lock',
-      );
-      if (lockFile.existsSync()) {
-        // Another instance is running — forward the URI and exit.
-        Fimber.i(
-          'Forwarding deep link to running instance: $initialLink',
-        );
-        File('${Constants.configDataFolderPath.path}/pending_deeplink')
-            .writeAsStringSync(initialLink.toString());
-        exit(0);
+  String? launchDeepLink;
+  if (Platform.isMacOS) {
+    try {
+      final initialLink = await appLinks.getInitialLink();
+      if (initialLink != null && initialLink.scheme == deepLinkScheme) {
+        launchDeepLink = initialLink.toString();
       }
-      // Cold start with a deep link — store for later processing.
-      pendingDeepLinkUri = initialLink.toString();
-      Fimber.i('Cold-start deep link: $pendingDeepLinkUri');
+      // macOS single-instances .app bundles at the OS level, so no manual
+      // forwarding is needed; app_links' uriLinkStream delivers warm-start URIs.
+    } catch (e) {
+      Fimber.w('Error checking initial deep link: $e');
     }
-  } catch (e) {
-    Fimber.w('Error checking initial deep link: $e');
+  } else {
+    launchDeepLink = SingleInstanceManager.extractDeepLinkFromArgs(args);
   }
 
-  // Crash detection: if running.lock exists, previous session didn't exit cleanly.
+  // Single-instance + crash detection via running.lock (contains the owner PID).
+  // On Windows/Linux a deep-link launch that finds a live instance forwards the
+  // link to it and exits; this also serializes two simultaneous cold launches.
   try {
-    final lockFile = File(
-      '${Constants.configDataFolderPath.path}/running.lock',
+    final lockResult = SingleInstanceManager.acquireLockOrForward(
+      deepLink: Platform.isMacOS ? null : launchDeepLink,
     );
-    if (await lockFile.exists()) {
-      didPreviousSessionCrash = true;
-      Fimber.w("Previous session did not exit cleanly (running.lock found).");
+    if (lockResult == LockAcquisition.forwardedAndShouldExit) {
+      exit(0);
     }
-    // Write lock file for this session.
-    await lockFile.writeAsString(DateTime.now().toIso8601String());
+    didPreviousSessionCrash = lockResult == LockAcquisition.tookOverStaleLock;
+    if (didPreviousSessionCrash) {
+      Fimber.w("Previous session did not exit cleanly (stale running.lock).");
+    }
   } catch (e) {
     Fimber.w("Error managing running.lock file: $e");
+  }
+
+  if (launchDeepLink != null) {
+    // Cold start with a deep link — store for processing once the app loads.
+    pendingDeepLinkUri = launchDeepLink;
+    Fimber.i('Cold-start deep link: $pendingDeepLinkUri');
   }
 
   // Migrate old cache files into the new cache/ subdirectory.
@@ -499,7 +502,9 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
     }
 
     return MaterialApp(
-      title: "${context.appNameWithModifiers(ref.watch(appSettings.select((s) => s.themeModifiers)))}v${Constants.version}",
+      navigatorKey: rootNavigatorKey,
+      title:
+          "${context.appNameWithModifiers(ref.watch(appSettings.select((s) => s.themeModifiers)))}v${Constants.version}",
       theme: currentTheme.themeData,
       themeMode: currentTheme.themeData.brightness == Brightness.light
           ? ThemeMode.light
@@ -544,7 +549,9 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
       final lockFile = File(
         '${Constants.configDataFolderPath.path}/running.lock',
       );
-      if (await lockFile.exists()) {
+      // Only delete the lock if we own it — a coexisting instance must not
+      // remove the primary's lock.
+      if (await lockFile.exists() && SingleInstanceManager.ownsLock()) {
         await lockFile.delete();
         Fimber.i("running.lock deleted on clean exit.");
       }
@@ -678,18 +685,26 @@ class _DeepLinkRegistrationToast extends ConsumerWidget {
                       children: [
                         TextButton(
                           onPressed: () {
-                            ref.read(appSettings.notifier).update(
-                              (s) => s.copyWith(deepLinkProtocolRegistered: false),
-                            );
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (s) => s.copyWith(
+                                    deepLinkProtocolRegistered: false,
+                                  ),
+                                );
                             toastification.dismiss(item);
                           },
                           child: const Text('No thanks'),
                         ),
                         FilledButton(
                           onPressed: () {
-                            ref.read(appSettings.notifier).update(
-                              (s) => s.copyWith(deepLinkProtocolRegistered: true),
-                            );
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (s) => s.copyWith(
+                                    deepLinkProtocolRegistered: true,
+                                  ),
+                                );
                             ProtocolRegistration.register();
                             toastification.dismiss(item);
                           },

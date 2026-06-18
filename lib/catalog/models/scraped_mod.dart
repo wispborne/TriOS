@@ -42,6 +42,15 @@ class ScrapedMod with ScrapedModMappable {
 
   List<String> getAuthors() => authorsList ?? [];
 
+  /// Authors with case-insensitive duplicates merged, keeping the first
+  /// occurrence's casing and order (e.g. ["Wisp", "wisp"] -> ["Wisp"]).
+  List<String> getAuthorsDeduplicated() {
+    final seen = <String>{};
+    return getAuthors()
+        .where((author) => seen.add(author.toLowerCase()))
+        .toList();
+  }
+
   List<String> getCategories() => categories ?? [];
 
   List<ModSource> getSources() => sources ?? [];

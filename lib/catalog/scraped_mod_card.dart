@@ -221,7 +221,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                                   ),
                                   if (mod.authorsList?.isNotEmpty == true)
                                     Text(
-                                      mod.authorsList!.join(', '),
+                                      mod.getAuthorsDeduplicated().join(', '),
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
                                             fontSize: 10,

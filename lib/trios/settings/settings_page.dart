@@ -244,6 +244,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                     Builder(
                       builder: (context) {
+                        final skipDeepLinkConfirmation = ref.watch(
+                          appSettings.select((s) => s.deepLinkSkipConfirmation),
+                        );
+                        return MovingTooltipWidget.text(
+                          message:
+                              "When enabled, mods opened via a 'Open with TriOS' link install immediately, skipping the confirmation dialog.",
+                          child: CheckboxWithLabel(
+                            value: skipDeepLinkConfirmation,
+                            onChanged: (bool? value) => ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    deepLinkSkipConfirmation: value ?? false,
+                                  ),
+                                ),
+                            label:
+                                "Always install mods from 'Open with TriOS' links without confirming",
+                          ),
+                        );
+                      },
+                    ),
+                    Builder(
+                      builder: (context) {
                         final showDonationButton = ref.watch(
                           appSettings.select((s) => s.showDonationButton),
                         );
@@ -1547,8 +1570,7 @@ class _ThemeModifiersSection extends ConsumerWidget {
                     ),
                   ),
                   MovingTooltipWidget.text(
-                    message:
-                        "Show drifting motes when app is in foreground.",
+                    message: "Show drifting motes when app is in foreground.",
                     child: CheckboxWithLabel(
                       value: motesEnabled,
                       onChanged: (value) => ref

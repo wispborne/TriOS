@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:trios/widgets/snackbar.dart';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
@@ -77,6 +80,51 @@ MenuItem<dynamic> buildMenuItemOpenForumPage(
           ),
         );
       }
+    },
+  );
+}
+
+/// Builds a `starsector-mod://install?mod=<json>` deep link for [modVariant] and
+/// copies it to the clipboard, so mod authors can publish a one-click install
+/// link. Prefers the Version Checker `.version` URL (self-updating); falls back
+/// to a direct download URL. Embeds the mod id so the manager can reliably tell
+/// whether it's already installed (even when several mods share a forum thread).
+///
+/// Note: the copied link works when pasted into the OS run dialog / browser
+/// address bar or used via the launcher landing page, but a raw scheme link
+/// does NOT work when clicked directly from a forum post (the forum opens it in
+/// a new window, which browsers block from launching a protocol handler).
+MenuItem<dynamic> buildMenuItemCopyInstallLink(
+  ModVariant modVariant,
+  BuildContext context,
+) {
+  final vci = modVariant.versionCheckerInfo;
+  final url = vci?.masterVersionFile ?? vci?.directDownloadURL;
+  final hasUrl = url != null && url.isNotEmpty;
+  return MenuItem(
+    label: hasUrl ? 'Copy install link' : 'Copy install link (unavailable)',
+    icon: Icons.link,
+    iconOpacity: hasUrl ? 1 : 0.5,
+    onSelected: () {
+      if (!hasUrl) {
+        showSnackBar(
+          context: context,
+          type: SnackBarType.warn,
+          content: const Text(
+            "This mod has no Version Checker URL or direct download link to build an install link from.",
+          ),
+        );
+        return;
+      }
+      final entry = jsonEncode({'url': url, 'id': modVariant.modInfo.id});
+      final link =
+          '$deepLinkScheme://install?mod=${Uri.encodeComponent(entry)}';
+      Clipboard.setData(ClipboardData(text: link));
+      showSnackBar(
+        context: context,
+        type: SnackBarType.info,
+        content: const Text('Install link copied to clipboard.'),
+      );
     },
   );
 }
@@ -419,10 +467,9 @@ MenuItem buildMenuItemViewInViewer(Mod mod, WidgetRef ref) {
   }
 
   final factions = ref.read(factionListNotifierProvider).valueOrNull ?? [];
-  final modFactions = factions
-      .where((f) => f.sources.any((s) => s.name == modName))
-      .toList()
-    ..sort((a, b) => a.displayName.compareTo(b.displayName));
+  final modFactions =
+      factions.where((f) => f.sources.any((s) => s.name == modName)).toList()
+        ..sort((a, b) => a.displayName.compareTo(b.displayName));
 
   return MenuItem.submenu(
     label: 'View...',

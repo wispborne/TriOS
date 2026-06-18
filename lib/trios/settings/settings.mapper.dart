@@ -8,6 +8,52 @@
 
 part of 'settings.dart';
 
+class ActivityPanelModeMapper extends EnumMapper<ActivityPanelMode> {
+  ActivityPanelModeMapper._();
+
+  static ActivityPanelModeMapper? _instance;
+  static ActivityPanelModeMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ActivityPanelModeMapper._());
+    }
+    return _instance!;
+  }
+
+  static ActivityPanelMode fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  ActivityPanelMode decode(dynamic value) {
+    switch (value) {
+      case r'pinned':
+        return ActivityPanelMode.pinned;
+      case r'overlay':
+        return ActivityPanelMode.overlay;
+      default:
+        return ActivityPanelMode.values[0];
+    }
+  }
+
+  @override
+  dynamic encode(ActivityPanelMode self) {
+    switch (self) {
+      case ActivityPanelMode.pinned:
+        return r'pinned';
+      case ActivityPanelMode.overlay:
+        return r'overlay';
+    }
+  }
+}
+
+extension ActivityPanelModeMapperExtension on ActivityPanelMode {
+  String toValue() {
+    ActivityPanelModeMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<ActivityPanelMode>(this) as String;
+  }
+}
+
 class FolderNamingSettingMapper extends EnumMapper<FolderNamingSetting> {
   FolderNamingSettingMapper._();
 
@@ -336,6 +382,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = SettingsMapper._());
       TriOSToolsMapper.ensureInitialized();
+      NavOrderEntryMapper.ensureInitialized();
+      ThemeModifiersMapper.ensureInitialized();
       LaunchSettingsMapper.ensureInitialized();
       DashboardGridModUpdateVisibilityMapper.ensureInitialized();
       ModsGridUpdateVisibilityMapper.ensureInitialized();
@@ -343,10 +391,18 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       ShipsPageStatePersistedMapper.ensureInitialized();
       WeaponsPageStatePersistedMapper.ensureInitialized();
       HullmodsPageStatePersistedMapper.ensureInitialized();
+      PortraitsPageStatePersistedMapper.ensureInitialized();
+      FactionViewerStatePersistedMapper.ensureInitialized();
+      PersistedFilterGroupMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
       DashboardModListSortMapper.ensureInitialized();
       CompressionLibMapper.ensureInitialized();
+      CatalogCardClickActionMapper.ensureInitialized();
+      CatalogPageStatePersistedMapper.ensureInitialized();
+      ActivityPanelModeMapper.ensureInitialized();
+      VramSelectorIdMapper.ensureInitialized();
+      ReferencedAssetsSelectorConfigMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -433,6 +489,27 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: TriOSTools.dashboard,
   );
+  static bool _$isSidebarCollapsed(Settings v) => v.isSidebarCollapsed;
+  static const Field<Settings, bool> _f$isSidebarCollapsed = Field(
+    'isSidebarCollapsed',
+    _$isSidebarCollapsed,
+    opt: true,
+    def: true,
+  );
+  static bool _$useTopToolbar(Settings v) => v.useTopToolbar;
+  static const Field<Settings, bool> _f$useTopToolbar = Field(
+    'useTopToolbar',
+    _$useTopToolbar,
+    opt: true,
+    def: false,
+  );
+  static List<NavOrderEntry>? _$navIconOrder(Settings v) => v.navIconOrder;
+  static const Field<Settings, List<NavOrderEntry>> _f$navIconOrder = Field(
+    'navIconOrder',
+    _$navIconOrder,
+    opt: true,
+    hook: SafeDecodeHook(),
+  );
   static List<String> _$vmparamsFilePaths(Settings v) => v.vmparamsFilePaths;
   static const Field<Settings, List<String>> _f$vmparamsFilePaths = Field(
     'vmparamsFilePaths',
@@ -445,6 +522,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'themeKey',
     _$themeKey,
     opt: true,
+  );
+  static ThemeModifiers _$themeModifiers(Settings v) => v.themeModifiers;
+  static const Field<Settings, ThemeModifiers> _f$themeModifiers = Field(
+    'themeModifiers',
+    _$themeModifiers,
+    opt: true,
+    def: const ThemeModifiers(),
+    hook: SafeDecodeHook(),
   );
   static bool? _$showChangelogNextLaunch(Settings v) =>
       v.showChangelogNextLaunch;
@@ -555,6 +640,42 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     hook: SafeDecodeHook(),
   );
+  static PortraitsPageStatePersisted? _$portraitsPageState(Settings v) =>
+      v.portraitsPageState;
+  static const Field<Settings, PortraitsPageStatePersisted>
+  _f$portraitsPageState = Field(
+    'portraitsPageState',
+    _$portraitsPageState,
+    opt: true,
+    hook: SafeDecodeHook(),
+  );
+  static FactionViewerStatePersisted? _$factionViewerState(Settings v) =>
+      v.factionViewerState;
+  static const Field<Settings, FactionViewerStatePersisted>
+  _f$factionViewerState = Field(
+    'factionViewerState',
+    _$factionViewerState,
+    opt: true,
+    hook: SafeDecodeHook(),
+  );
+  static WispGridState _$factionsGridState(Settings v) => v.factionsGridState;
+  static const Field<Settings, WispGridState> _f$factionsGridState = Field(
+    'factionsGridState',
+    _$factionsGridState,
+    opt: true,
+    def: const WispGridState(groupingSetting: null, columnsState: {}),
+  );
+  static Map<String, PersistedFilterGroup> _$persistedFilterGroups(
+    Settings v,
+  ) => v.persistedFilterGroups;
+  static const Field<Settings, Map<String, PersistedFilterGroup>>
+  _f$persistedFilterGroups = Field(
+    'persistedFilterGroups',
+    _$persistedFilterGroups,
+    opt: true,
+    def: const {},
+    hook: SafeDecodeHook(),
+  );
   static String? _$customGameExePath(Settings v) => v.customGameExePath;
   static const Field<Settings, String> _f$customGameExePath = Field(
     'customGameExePath',
@@ -635,6 +756,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$modsGridUpdatesShowDisabledMods,
     opt: true,
     def: true,
+  );
+  static bool _$modsGridShowModInAllCategories(Settings v) =>
+      v.modsGridShowModInAllCategories;
+  static const Field<Settings, bool> _f$modsGridShowModInAllCategories = Field(
+    'modsGridShowModInAllCategories',
+    _$modsGridShowModInAllCategories,
+    opt: true,
+    def: false,
   );
   static bool _$shouldAutoUpdateOnLaunch(Settings v) =>
       v.shouldAutoUpdateOnLaunch;
@@ -764,6 +893,53 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$hasHiddenForumDarkModeTip,
     opt: true,
   );
+  static bool _$catalogBrowserPanelOpen(Settings v) =>
+      v.catalogBrowserPanelOpen;
+  static const Field<Settings, bool> _f$catalogBrowserPanelOpen = Field(
+    'catalogBrowserPanelOpen',
+    _$catalogBrowserPanelOpen,
+    opt: true,
+    def: false,
+  );
+  static double? _$catalogBrowserPanelWidth(Settings v) =>
+      v.catalogBrowserPanelWidth;
+  static const Field<Settings, double> _f$catalogBrowserPanelWidth = Field(
+    'catalogBrowserPanelWidth',
+    _$catalogBrowserPanelWidth,
+    opt: true,
+  );
+  static CatalogCardClickAction _$catalogCardClickAction(Settings v) =>
+      v.catalogCardClickAction;
+  static const Field<Settings, CatalogCardClickAction>
+  _f$catalogCardClickAction = Field(
+    'catalogCardClickAction',
+    _$catalogCardClickAction,
+    opt: true,
+    def: CatalogCardClickAction.forumDialog,
+  );
+  static double _$catalogMinItemWidth(Settings v) => v.catalogMinItemWidth;
+  static const Field<Settings, double> _f$catalogMinItemWidth = Field(
+    'catalogMinItemWidth',
+    _$catalogMinItemWidth,
+    opt: true,
+    def: 390,
+  );
+  static double _$catalogCardSpacing(Settings v) => v.catalogCardSpacing;
+  static const Field<Settings, double> _f$catalogCardSpacing = Field(
+    'catalogCardSpacing',
+    _$catalogCardSpacing,
+    opt: true,
+    def: 4,
+  );
+  static CatalogPageStatePersisted? _$catalogPageState(Settings v) =>
+      v.catalogPageState;
+  static const Field<Settings, CatalogPageStatePersisted> _f$catalogPageState =
+      Field(
+        'catalogPageState',
+        _$catalogPageState,
+        opt: true,
+        hook: SafeDecodeHook(),
+      );
   static String? _$activeModProfileId(Settings v) => v.activeModProfileId;
   static const Field<Settings, String> _f$activeModProfileId = Field(
     'activeModProfileId',
@@ -788,6 +964,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
   static const Field<Settings, bool> _f$showReportBugButton = Field(
     'showReportBugButton',
     _$showReportBugButton,
+    opt: true,
+    def: true,
+  );
+  static bool _$showLayoutToggle(Settings v) => v.showLayoutToggle;
+  static const Field<Settings, bool> _f$showLayoutToggle = Field(
+    'showLayoutToggle',
+    _$showLayoutToggle,
     opt: true,
     def: true,
   );
@@ -821,6 +1004,122 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool? _$showAprilFools2026(Settings v) => v.showAprilFools2026;
+  static const Field<Settings, bool> _f$showAprilFools2026 = Field(
+    'showAprilFools2026',
+    _$showAprilFools2026,
+    opt: true,
+    def: false,
+  );
+  static bool? _$forceShowAprilFools2026(Settings v) =>
+      v.forceShowAprilFools2026;
+  static const Field<Settings, bool> _f$forceShowAprilFools2026 = Field(
+    'forceShowAprilFools2026',
+    _$forceShowAprilFools2026,
+    opt: true,
+    def: false,
+  );
+  static bool _$isActivityPanelOpen(Settings v) => v.isActivityPanelOpen;
+  static const Field<Settings, bool> _f$isActivityPanelOpen = Field(
+    'isActivityPanelOpen',
+    _$isActivityPanelOpen,
+    opt: true,
+    def: false,
+  );
+  static double _$activityPanelWidth(Settings v) => v.activityPanelWidth;
+  static const Field<Settings, double> _f$activityPanelWidth = Field(
+    'activityPanelWidth',
+    _$activityPanelWidth,
+    opt: true,
+    def: 320,
+  );
+  static ActivityPanelMode _$activityPanelMode(Settings v) =>
+      v.activityPanelMode;
+  static const Field<Settings, ActivityPanelMode> _f$activityPanelMode = Field(
+    'activityPanelMode',
+    _$activityPanelMode,
+    opt: true,
+    def: ActivityPanelMode.pinned,
+  );
+  static int _$concurrentExtractions(Settings v) => v.concurrentExtractions;
+  static const Field<Settings, int> _f$concurrentExtractions = Field(
+    'concurrentExtractions',
+    _$concurrentExtractions,
+    opt: true,
+    def: 2,
+  );
+  static bool _$debugMode(Settings v) => v.debugMode;
+  static const Field<Settings, bool> _f$debugMode = Field(
+    'debugMode',
+    _$debugMode,
+    opt: true,
+    def: false,
+  );
+  static List<String> _$weaponsSearchHistory(Settings v) =>
+      v.weaponsSearchHistory;
+  static const Field<Settings, List<String>> _f$weaponsSearchHistory = Field(
+    'weaponsSearchHistory',
+    _$weaponsSearchHistory,
+    opt: true,
+    def: const [],
+  );
+  static List<String> _$shipsSearchHistory(Settings v) => v.shipsSearchHistory;
+  static const Field<Settings, List<String>> _f$shipsSearchHistory = Field(
+    'shipsSearchHistory',
+    _$shipsSearchHistory,
+    opt: true,
+    def: const [],
+  );
+  static List<String> _$hullmodsSearchHistory(Settings v) =>
+      v.hullmodsSearchHistory;
+  static const Field<Settings, List<String>> _f$hullmodsSearchHistory = Field(
+    'hullmodsSearchHistory',
+    _$hullmodsSearchHistory,
+    opt: true,
+    def: const [],
+  );
+  static List<String> _$modsSearchHistory(Settings v) => v.modsSearchHistory;
+  static const Field<Settings, List<String>> _f$modsSearchHistory = Field(
+    'modsSearchHistory',
+    _$modsSearchHistory,
+    opt: true,
+    def: const [],
+  );
+  static List<String> _$factionSearchHistory(Settings v) =>
+      v.factionSearchHistory;
+  static const Field<Settings, List<String>> _f$factionSearchHistory = Field(
+    'factionSearchHistory',
+    _$factionSearchHistory,
+    opt: true,
+    def: const [],
+  );
+  static VramSelectorId _$vramEstimatorSelectorId(Settings v) =>
+      v.vramEstimatorSelectorId;
+  static const Field<Settings, VramSelectorId> _f$vramEstimatorSelectorId =
+      Field(
+        'vramEstimatorSelectorId',
+        _$vramEstimatorSelectorId,
+        opt: true,
+        def: VramSelectorId.referenced,
+      );
+  static ReferencedAssetsSelectorConfig _$referencedAssetsSelectorConfig(
+    Settings v,
+  ) => v.referencedAssetsSelectorConfig;
+  static const Field<Settings, ReferencedAssetsSelectorConfig>
+  _f$referencedAssetsSelectorConfig = Field(
+    'referencedAssetsSelectorConfig',
+    _$referencedAssetsSelectorConfig,
+    opt: true,
+    def: ReferencedAssetsSelectorConfig.allEnabled,
+  );
+  static bool _$vramEstimatorMultithreaded(Settings v) =>
+      v.vramEstimatorMultithreaded;
+  static const Field<Settings, bool> _f$vramEstimatorMultithreaded = Field(
+    'vramEstimatorMultithreaded',
+    _$vramEstimatorMultithreaded,
+    opt: true,
+    def: true,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -836,8 +1135,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #isMaximized: _f$isMaximized,
     #isMinimized: _f$isMinimized,
     #defaultTool: _f$defaultTool,
+    #isSidebarCollapsed: _f$isSidebarCollapsed,
+    #useTopToolbar: _f$useTopToolbar,
+    #navIconOrder: _f$navIconOrder,
     #vmparamsFilePaths: _f$vmparamsFilePaths,
     #themeKey: _f$themeKey,
+    #themeModifiers: _f$themeModifiers,
     #showChangelogNextLaunch: _f$showChangelogNextLaunch,
     #enableDirectLaunch: _f$enableDirectLaunch,
     #launchSettings: _f$launchSettings,
@@ -851,6 +1154,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #weaponsPageState: _f$weaponsPageState,
     #hullmodsGridState: _f$hullmodsGridState,
     #hullmodsPageState: _f$hullmodsPageState,
+    #portraitsPageState: _f$portraitsPageState,
+    #factionViewerState: _f$factionViewerState,
+    #factionsGridState: _f$factionsGridState,
+    #persistedFilterGroups: _f$persistedFilterGroups,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
     #customSavesPath: _f$customSavesPath,
@@ -862,6 +1169,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #dashboardModListColorful: _f$dashboardModListColorful,
     #modsGridColorful: _f$modsGridColorful,
     #modsGridUpdatesShowDisabledMods: _f$modsGridUpdatesShowDisabledMods,
+    #modsGridShowModInAllCategories: _f$modsGridShowModInAllCategories,
     #shouldAutoUpdateOnLaunch: _f$shouldAutoUpdateOnLaunch,
     #secondsBetweenModFolderChecks: _f$secondsBetweenModFolderChecks,
     #toastDurationSeconds: _f$toastDurationSeconds,
@@ -880,14 +1188,36 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #enableAccessibilitySemanticsOnLinux:
         _f$enableAccessibilitySemanticsOnLinux,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
+    #catalogBrowserPanelOpen: _f$catalogBrowserPanelOpen,
+    #catalogBrowserPanelWidth: _f$catalogBrowserPanelWidth,
+    #catalogCardClickAction: _f$catalogCardClickAction,
+    #catalogMinItemWidth: _f$catalogMinItemWidth,
+    #catalogCardSpacing: _f$catalogCardSpacing,
+    #catalogPageState: _f$catalogPageState,
     #activeModProfileId: _f$activeModProfileId,
     #showForceUpdateWarning: _f$showForceUpdateWarning,
     #showDonationButton: _f$showDonationButton,
     #showReportBugButton: _f$showReportBugButton,
+    #showLayoutToggle: _f$showLayoutToggle,
     #allowInsecureConnections: _f$allowInsecureConnections,
     #shouldLoadWebView: _f$shouldLoadWebView,
     #deepLinkProtocolRegistered: _f$deepLinkProtocolRegistered,
     #deepLinkSkipConfirmation: _f$deepLinkSkipConfirmation,
+    #showAprilFools2026: _f$showAprilFools2026,
+    #forceShowAprilFools2026: _f$forceShowAprilFools2026,
+    #isActivityPanelOpen: _f$isActivityPanelOpen,
+    #activityPanelWidth: _f$activityPanelWidth,
+    #activityPanelMode: _f$activityPanelMode,
+    #concurrentExtractions: _f$concurrentExtractions,
+    #debugMode: _f$debugMode,
+    #weaponsSearchHistory: _f$weaponsSearchHistory,
+    #shipsSearchHistory: _f$shipsSearchHistory,
+    #hullmodsSearchHistory: _f$hullmodsSearchHistory,
+    #modsSearchHistory: _f$modsSearchHistory,
+    #factionSearchHistory: _f$factionSearchHistory,
+    #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
+    #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
+    #vramEstimatorMultithreaded: _f$vramEstimatorMultithreaded,
   };
   @override
   final bool ignoreNull = true;
@@ -906,8 +1236,12 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       isMaximized: data.dec(_f$isMaximized),
       isMinimized: data.dec(_f$isMinimized),
       defaultTool: data.dec(_f$defaultTool),
+      isSidebarCollapsed: data.dec(_f$isSidebarCollapsed),
+      useTopToolbar: data.dec(_f$useTopToolbar),
+      navIconOrder: data.dec(_f$navIconOrder),
       vmparamsFilePaths: data.dec(_f$vmparamsFilePaths),
       themeKey: data.dec(_f$themeKey),
+      themeModifiers: data.dec(_f$themeModifiers),
       showChangelogNextLaunch: data.dec(_f$showChangelogNextLaunch),
       enableDirectLaunch: data.dec(_f$enableDirectLaunch),
       launchSettings: data.dec(_f$launchSettings),
@@ -923,6 +1257,10 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       weaponsPageState: data.dec(_f$weaponsPageState),
       hullmodsGridState: data.dec(_f$hullmodsGridState),
       hullmodsPageState: data.dec(_f$hullmodsPageState),
+      portraitsPageState: data.dec(_f$portraitsPageState),
+      factionViewerState: data.dec(_f$factionViewerState),
+      factionsGridState: data.dec(_f$factionsGridState),
+      persistedFilterGroups: data.dec(_f$persistedFilterGroups),
       customGameExePath: data.dec(_f$customGameExePath),
       useCustomGameExePath: data.dec(_f$useCustomGameExePath),
       customSavesPath: data.dec(_f$customSavesPath),
@@ -935,6 +1273,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       modsGridColorful: data.dec(_f$modsGridColorful),
       modsGridUpdatesShowDisabledMods: data.dec(
         _f$modsGridUpdatesShowDisabledMods,
+      ),
+      modsGridShowModInAllCategories: data.dec(
+        _f$modsGridShowModInAllCategories,
       ),
       shouldAutoUpdateOnLaunch: data.dec(_f$shouldAutoUpdateOnLaunch),
       secondsBetweenModFolderChecks: data.dec(_f$secondsBetweenModFolderChecks),
@@ -957,14 +1298,38 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         _f$enableAccessibilitySemanticsOnLinux,
       ),
       hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
+      catalogBrowserPanelOpen: data.dec(_f$catalogBrowserPanelOpen),
+      catalogBrowserPanelWidth: data.dec(_f$catalogBrowserPanelWidth),
+      catalogCardClickAction: data.dec(_f$catalogCardClickAction),
+      catalogMinItemWidth: data.dec(_f$catalogMinItemWidth),
+      catalogCardSpacing: data.dec(_f$catalogCardSpacing),
+      catalogPageState: data.dec(_f$catalogPageState),
       activeModProfileId: data.dec(_f$activeModProfileId),
       showForceUpdateWarning: data.dec(_f$showForceUpdateWarning),
       showDonationButton: data.dec(_f$showDonationButton),
       showReportBugButton: data.dec(_f$showReportBugButton),
+      showLayoutToggle: data.dec(_f$showLayoutToggle),
       allowInsecureConnections: data.dec(_f$allowInsecureConnections),
       shouldLoadWebView: data.dec(_f$shouldLoadWebView),
       deepLinkProtocolRegistered: data.dec(_f$deepLinkProtocolRegistered),
       deepLinkSkipConfirmation: data.dec(_f$deepLinkSkipConfirmation),
+      showAprilFools2026: data.dec(_f$showAprilFools2026),
+      forceShowAprilFools2026: data.dec(_f$forceShowAprilFools2026),
+      isActivityPanelOpen: data.dec(_f$isActivityPanelOpen),
+      activityPanelWidth: data.dec(_f$activityPanelWidth),
+      activityPanelMode: data.dec(_f$activityPanelMode),
+      concurrentExtractions: data.dec(_f$concurrentExtractions),
+      debugMode: data.dec(_f$debugMode),
+      weaponsSearchHistory: data.dec(_f$weaponsSearchHistory),
+      shipsSearchHistory: data.dec(_f$shipsSearchHistory),
+      hullmodsSearchHistory: data.dec(_f$hullmodsSearchHistory),
+      modsSearchHistory: data.dec(_f$modsSearchHistory),
+      factionSearchHistory: data.dec(_f$factionSearchHistory),
+      vramEstimatorSelectorId: data.dec(_f$vramEstimatorSelectorId),
+      referencedAssetsSelectorConfig: data.dec(
+        _f$referencedAssetsSelectorConfig,
+      ),
+      vramEstimatorMultithreaded: data.dec(_f$vramEstimatorMultithreaded),
     );
   }
 
@@ -1025,8 +1390,15 @@ extension SettingsValueCopy<$R, $Out> on ObjectCopyWith<$R, Settings, $Out> {
 
 abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<
+    $R,
+    NavOrderEntry,
+    NavOrderEntryCopyWith<$R, NavOrderEntry, NavOrderEntry>
+  >?
+  get navIconOrder;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get vmparamsFilePaths;
+  ThemeModifiersCopyWith<$R, ThemeModifiers, ThemeModifiers> get themeModifiers;
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get weaponsGridState;
@@ -1050,6 +1422,48 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     HullmodsPageStatePersisted
   >?
   get hullmodsPageState;
+  PortraitsPageStatePersistedCopyWith<
+    $R,
+    PortraitsPageStatePersisted,
+    PortraitsPageStatePersisted
+  >?
+  get portraitsPageState;
+  FactionViewerStatePersistedCopyWith<
+    $R,
+    FactionViewerStatePersisted,
+    FactionViewerStatePersisted
+  >?
+  get factionViewerState;
+  WispGridStateCopyWith<$R, WispGridState, WispGridState> get factionsGridState;
+  MapCopyWith<
+    $R,
+    String,
+    PersistedFilterGroup,
+    PersistedFilterGroupCopyWith<$R, PersistedFilterGroup, PersistedFilterGroup>
+  >
+  get persistedFilterGroups;
+  CatalogPageStatePersistedCopyWith<
+    $R,
+    CatalogPageStatePersisted,
+    CatalogPageStatePersisted
+  >?
+  get catalogPageState;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get weaponsSearchHistory;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get shipsSearchHistory;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get hullmodsSearchHistory;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get modsSearchHistory;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get factionSearchHistory;
+  ReferencedAssetsSelectorConfigCopyWith<
+    $R,
+    ReferencedAssetsSelectorConfig,
+    ReferencedAssetsSelectorConfig
+  >
+  get referencedAssetsSelectorConfig;
   $R call({
     Directory? gameDir,
     Directory? gameCoreDir,
@@ -1063,8 +1477,12 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? isMaximized,
     bool? isMinimized,
     TriOSTools? defaultTool,
+    bool? isSidebarCollapsed,
+    bool? useTopToolbar,
+    List<NavOrderEntry>? navIconOrder,
     List<String>? vmparamsFilePaths,
     String? themeKey,
+    ThemeModifiers? themeModifiers,
     bool? showChangelogNextLaunch,
     bool? enableDirectLaunch,
     LaunchSettings? launchSettings,
@@ -1078,6 +1496,10 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     WeaponsPageStatePersisted? weaponsPageState,
     WispGridState? hullmodsGridState,
     HullmodsPageStatePersisted? hullmodsPageState,
+    PortraitsPageStatePersisted? portraitsPageState,
+    FactionViewerStatePersisted? factionViewerState,
+    WispGridState? factionsGridState,
+    Map<String, PersistedFilterGroup>? persistedFilterGroups,
     String? customGameExePath,
     bool? useCustomGameExePath,
     Directory? customSavesPath,
@@ -1089,6 +1511,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? dashboardModListColorful,
     bool? modsGridColorful,
     bool? modsGridUpdatesShowDisabledMods,
+    bool? modsGridShowModInAllCategories,
     bool? shouldAutoUpdateOnLaunch,
     int? secondsBetweenModFolderChecks,
     int? toastDurationSeconds,
@@ -1106,14 +1529,36 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     double? windowScaleFactor,
     bool? enableAccessibilitySemanticsOnLinux,
     bool? hasHiddenForumDarkModeTip,
+    bool? catalogBrowserPanelOpen,
+    double? catalogBrowserPanelWidth,
+    CatalogCardClickAction? catalogCardClickAction,
+    double? catalogMinItemWidth,
+    double? catalogCardSpacing,
+    CatalogPageStatePersisted? catalogPageState,
     String? activeModProfileId,
     bool? showForceUpdateWarning,
     bool? showDonationButton,
     bool? showReportBugButton,
+    bool? showLayoutToggle,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
     bool? deepLinkProtocolRegistered,
     bool? deepLinkSkipConfirmation,
+    bool? showAprilFools2026,
+    bool? forceShowAprilFools2026,
+    bool? isActivityPanelOpen,
+    double? activityPanelWidth,
+    ActivityPanelMode? activityPanelMode,
+    int? concurrentExtractions,
+    bool? debugMode,
+    List<String>? weaponsSearchHistory,
+    List<String>? shipsSearchHistory,
+    List<String>? hullmodsSearchHistory,
+    List<String>? modsSearchHistory,
+    List<String>? factionSearchHistory,
+    VramSelectorId? vramEstimatorSelectorId,
+    ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
+    bool? vramEstimatorMultithreaded,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1127,12 +1572,29 @@ class _SettingsCopyWithImpl<$R, $Out>
   late final ClassMapperBase<Settings> $mapper =
       SettingsMapper.ensureInitialized();
   @override
+  ListCopyWith<
+    $R,
+    NavOrderEntry,
+    NavOrderEntryCopyWith<$R, NavOrderEntry, NavOrderEntry>
+  >?
+  get navIconOrder => $value.navIconOrder != null
+      ? ListCopyWith(
+          $value.navIconOrder!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(navIconOrder: v),
+        )
+      : null;
+  @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get vmparamsFilePaths => ListCopyWith(
     $value.vmparamsFilePaths,
     (v, t) => ObjectCopyWith(v, $identity, t),
     (v) => call(vmparamsFilePaths: v),
   );
+  @override
+  ThemeModifiersCopyWith<$R, ThemeModifiers, ThemeModifiers>
+  get themeModifiers =>
+      $value.themeModifiers.copyWith.$chain((v) => call(themeModifiers: v));
   @override
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings>
   get launchSettings =>
@@ -1179,6 +1641,95 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(hullmodsPageState: v),
   );
   @override
+  PortraitsPageStatePersistedCopyWith<
+    $R,
+    PortraitsPageStatePersisted,
+    PortraitsPageStatePersisted
+  >?
+  get portraitsPageState => $value.portraitsPageState?.copyWith.$chain(
+    (v) => call(portraitsPageState: v),
+  );
+  @override
+  FactionViewerStatePersistedCopyWith<
+    $R,
+    FactionViewerStatePersisted,
+    FactionViewerStatePersisted
+  >?
+  get factionViewerState => $value.factionViewerState?.copyWith.$chain(
+    (v) => call(factionViewerState: v),
+  );
+  @override
+  WispGridStateCopyWith<$R, WispGridState, WispGridState>
+  get factionsGridState => $value.factionsGridState.copyWith.$chain(
+    (v) => call(factionsGridState: v),
+  );
+  @override
+  MapCopyWith<
+    $R,
+    String,
+    PersistedFilterGroup,
+    PersistedFilterGroupCopyWith<$R, PersistedFilterGroup, PersistedFilterGroup>
+  >
+  get persistedFilterGroups => MapCopyWith(
+    $value.persistedFilterGroups,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(persistedFilterGroups: v),
+  );
+  @override
+  CatalogPageStatePersistedCopyWith<
+    $R,
+    CatalogPageStatePersisted,
+    CatalogPageStatePersisted
+  >?
+  get catalogPageState => $value.catalogPageState?.copyWith.$chain(
+    (v) => call(catalogPageState: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get weaponsSearchHistory => ListCopyWith(
+    $value.weaponsSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(weaponsSearchHistory: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get shipsSearchHistory => ListCopyWith(
+    $value.shipsSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(shipsSearchHistory: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get hullmodsSearchHistory => ListCopyWith(
+    $value.hullmodsSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(hullmodsSearchHistory: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get modsSearchHistory => ListCopyWith(
+    $value.modsSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(modsSearchHistory: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get factionSearchHistory => ListCopyWith(
+    $value.factionSearchHistory,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(factionSearchHistory: v),
+  );
+  @override
+  ReferencedAssetsSelectorConfigCopyWith<
+    $R,
+    ReferencedAssetsSelectorConfig,
+    ReferencedAssetsSelectorConfig
+  >
+  get referencedAssetsSelectorConfig => $value
+      .referencedAssetsSelectorConfig
+      .copyWith
+      .$chain((v) => call(referencedAssetsSelectorConfig: v));
+  @override
   $R call({
     Object? gameDir = $none,
     Object? gameCoreDir = $none,
@@ -1192,8 +1743,12 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? isMaximized = $none,
     Object? isMinimized = $none,
     TriOSTools? defaultTool,
+    bool? isSidebarCollapsed,
+    bool? useTopToolbar,
+    Object? navIconOrder = $none,
     List<String>? vmparamsFilePaths,
     Object? themeKey = $none,
+    ThemeModifiers? themeModifiers,
     Object? showChangelogNextLaunch = $none,
     bool? enableDirectLaunch,
     LaunchSettings? launchSettings,
@@ -1207,6 +1762,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? weaponsPageState = $none,
     WispGridState? hullmodsGridState,
     Object? hullmodsPageState = $none,
+    Object? portraitsPageState = $none,
+    Object? factionViewerState = $none,
+    WispGridState? factionsGridState,
+    Map<String, PersistedFilterGroup>? persistedFilterGroups,
     Object? customGameExePath = $none,
     bool? useCustomGameExePath,
     Object? customSavesPath = $none,
@@ -1218,6 +1777,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? dashboardModListColorful,
     bool? modsGridColorful,
     bool? modsGridUpdatesShowDisabledMods,
+    bool? modsGridShowModInAllCategories,
     bool? shouldAutoUpdateOnLaunch,
     int? secondsBetweenModFolderChecks,
     int? toastDurationSeconds,
@@ -1235,14 +1795,36 @@ class _SettingsCopyWithImpl<$R, $Out>
     double? windowScaleFactor,
     bool? enableAccessibilitySemanticsOnLinux,
     Object? hasHiddenForumDarkModeTip = $none,
+    bool? catalogBrowserPanelOpen,
+    Object? catalogBrowserPanelWidth = $none,
+    CatalogCardClickAction? catalogCardClickAction,
+    double? catalogMinItemWidth,
+    double? catalogCardSpacing,
+    Object? catalogPageState = $none,
     Object? activeModProfileId = $none,
     bool? showForceUpdateWarning,
     bool? showDonationButton,
     bool? showReportBugButton,
+    bool? showLayoutToggle,
     bool? allowInsecureConnections,
     bool? shouldLoadWebView,
     Object? deepLinkProtocolRegistered = $none,
     bool? deepLinkSkipConfirmation,
+    Object? showAprilFools2026 = $none,
+    Object? forceShowAprilFools2026 = $none,
+    bool? isActivityPanelOpen,
+    double? activityPanelWidth,
+    ActivityPanelMode? activityPanelMode,
+    int? concurrentExtractions,
+    bool? debugMode,
+    List<String>? weaponsSearchHistory,
+    List<String>? shipsSearchHistory,
+    List<String>? hullmodsSearchHistory,
+    List<String>? modsSearchHistory,
+    List<String>? factionSearchHistory,
+    VramSelectorId? vramEstimatorSelectorId,
+    ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
+    bool? vramEstimatorMultithreaded,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1258,8 +1840,12 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (isMaximized != $none) #isMaximized: isMaximized,
       if (isMinimized != $none) #isMinimized: isMinimized,
       if (defaultTool != null) #defaultTool: defaultTool,
+      if (isSidebarCollapsed != null) #isSidebarCollapsed: isSidebarCollapsed,
+      if (useTopToolbar != null) #useTopToolbar: useTopToolbar,
+      if (navIconOrder != $none) #navIconOrder: navIconOrder,
       if (vmparamsFilePaths != null) #vmparamsFilePaths: vmparamsFilePaths,
       if (themeKey != $none) #themeKey: themeKey,
+      if (themeModifiers != null) #themeModifiers: themeModifiers,
       if (showChangelogNextLaunch != $none)
         #showChangelogNextLaunch: showChangelogNextLaunch,
       if (enableDirectLaunch != null) #enableDirectLaunch: enableDirectLaunch,
@@ -1277,6 +1863,11 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (weaponsPageState != $none) #weaponsPageState: weaponsPageState,
       if (hullmodsGridState != null) #hullmodsGridState: hullmodsGridState,
       if (hullmodsPageState != $none) #hullmodsPageState: hullmodsPageState,
+      if (portraitsPageState != $none) #portraitsPageState: portraitsPageState,
+      if (factionViewerState != $none) #factionViewerState: factionViewerState,
+      if (factionsGridState != null) #factionsGridState: factionsGridState,
+      if (persistedFilterGroups != null)
+        #persistedFilterGroups: persistedFilterGroups,
       if (customGameExePath != $none) #customGameExePath: customGameExePath,
       if (useCustomGameExePath != null)
         #useCustomGameExePath: useCustomGameExePath,
@@ -1294,6 +1885,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (modsGridColorful != null) #modsGridColorful: modsGridColorful,
       if (modsGridUpdatesShowDisabledMods != null)
         #modsGridUpdatesShowDisabledMods: modsGridUpdatesShowDisabledMods,
+      if (modsGridShowModInAllCategories != null)
+        #modsGridShowModInAllCategories: modsGridShowModInAllCategories,
       if (shouldAutoUpdateOnLaunch != null)
         #shouldAutoUpdateOnLaunch: shouldAutoUpdateOnLaunch,
       if (secondsBetweenModFolderChecks != null)
@@ -1325,12 +1918,23 @@ class _SettingsCopyWithImpl<$R, $Out>
             enableAccessibilitySemanticsOnLinux,
       if (hasHiddenForumDarkModeTip != $none)
         #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
+      if (catalogBrowserPanelOpen != null)
+        #catalogBrowserPanelOpen: catalogBrowserPanelOpen,
+      if (catalogBrowserPanelWidth != $none)
+        #catalogBrowserPanelWidth: catalogBrowserPanelWidth,
+      if (catalogCardClickAction != null)
+        #catalogCardClickAction: catalogCardClickAction,
+      if (catalogMinItemWidth != null)
+        #catalogMinItemWidth: catalogMinItemWidth,
+      if (catalogCardSpacing != null) #catalogCardSpacing: catalogCardSpacing,
+      if (catalogPageState != $none) #catalogPageState: catalogPageState,
       if (activeModProfileId != $none) #activeModProfileId: activeModProfileId,
       if (showForceUpdateWarning != null)
         #showForceUpdateWarning: showForceUpdateWarning,
       if (showDonationButton != null) #showDonationButton: showDonationButton,
       if (showReportBugButton != null)
         #showReportBugButton: showReportBugButton,
+      if (showLayoutToggle != null) #showLayoutToggle: showLayoutToggle,
       if (allowInsecureConnections != null)
         #allowInsecureConnections: allowInsecureConnections,
       if (shouldLoadWebView != null) #shouldLoadWebView: shouldLoadWebView,
@@ -1338,6 +1942,30 @@ class _SettingsCopyWithImpl<$R, $Out>
         #deepLinkProtocolRegistered: deepLinkProtocolRegistered,
       if (deepLinkSkipConfirmation != null)
         #deepLinkSkipConfirmation: deepLinkSkipConfirmation,
+      if (showAprilFools2026 != $none) #showAprilFools2026: showAprilFools2026,
+      if (forceShowAprilFools2026 != $none)
+        #forceShowAprilFools2026: forceShowAprilFools2026,
+      if (isActivityPanelOpen != null)
+        #isActivityPanelOpen: isActivityPanelOpen,
+      if (activityPanelWidth != null) #activityPanelWidth: activityPanelWidth,
+      if (activityPanelMode != null) #activityPanelMode: activityPanelMode,
+      if (concurrentExtractions != null)
+        #concurrentExtractions: concurrentExtractions,
+      if (debugMode != null) #debugMode: debugMode,
+      if (weaponsSearchHistory != null)
+        #weaponsSearchHistory: weaponsSearchHistory,
+      if (shipsSearchHistory != null) #shipsSearchHistory: shipsSearchHistory,
+      if (hullmodsSearchHistory != null)
+        #hullmodsSearchHistory: hullmodsSearchHistory,
+      if (modsSearchHistory != null) #modsSearchHistory: modsSearchHistory,
+      if (factionSearchHistory != null)
+        #factionSearchHistory: factionSearchHistory,
+      if (vramEstimatorSelectorId != null)
+        #vramEstimatorSelectorId: vramEstimatorSelectorId,
+      if (referencedAssetsSelectorConfig != null)
+        #referencedAssetsSelectorConfig: referencedAssetsSelectorConfig,
+      if (vramEstimatorMultithreaded != null)
+        #vramEstimatorMultithreaded: vramEstimatorMultithreaded,
     }),
   );
   @override
@@ -1357,11 +1985,18 @@ class _SettingsCopyWithImpl<$R, $Out>
     isMaximized: data.get(#isMaximized, or: $value.isMaximized),
     isMinimized: data.get(#isMinimized, or: $value.isMinimized),
     defaultTool: data.get(#defaultTool, or: $value.defaultTool),
+    isSidebarCollapsed: data.get(
+      #isSidebarCollapsed,
+      or: $value.isSidebarCollapsed,
+    ),
+    useTopToolbar: data.get(#useTopToolbar, or: $value.useTopToolbar),
+    navIconOrder: data.get(#navIconOrder, or: $value.navIconOrder),
     vmparamsFilePaths: data.get(
       #vmparamsFilePaths,
       or: $value.vmparamsFilePaths,
     ),
     themeKey: data.get(#themeKey, or: $value.themeKey),
+    themeModifiers: data.get(#themeModifiers, or: $value.themeModifiers),
     showChangelogNextLaunch: data.get(
       #showChangelogNextLaunch,
       or: $value.showChangelogNextLaunch,
@@ -1395,6 +2030,22 @@ class _SettingsCopyWithImpl<$R, $Out>
     hullmodsPageState: data.get(
       #hullmodsPageState,
       or: $value.hullmodsPageState,
+    ),
+    portraitsPageState: data.get(
+      #portraitsPageState,
+      or: $value.portraitsPageState,
+    ),
+    factionViewerState: data.get(
+      #factionViewerState,
+      or: $value.factionViewerState,
+    ),
+    factionsGridState: data.get(
+      #factionsGridState,
+      or: $value.factionsGridState,
+    ),
+    persistedFilterGroups: data.get(
+      #persistedFilterGroups,
+      or: $value.persistedFilterGroups,
     ),
     customGameExePath: data.get(
       #customGameExePath,
@@ -1430,6 +2081,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     modsGridUpdatesShowDisabledMods: data.get(
       #modsGridUpdatesShowDisabledMods,
       or: $value.modsGridUpdatesShowDisabledMods,
+    ),
+    modsGridShowModInAllCategories: data.get(
+      #modsGridShowModInAllCategories,
+      or: $value.modsGridShowModInAllCategories,
     ),
     shouldAutoUpdateOnLaunch: data.get(
       #shouldAutoUpdateOnLaunch,
@@ -1496,6 +2151,27 @@ class _SettingsCopyWithImpl<$R, $Out>
       #hasHiddenForumDarkModeTip,
       or: $value.hasHiddenForumDarkModeTip,
     ),
+    catalogBrowserPanelOpen: data.get(
+      #catalogBrowserPanelOpen,
+      or: $value.catalogBrowserPanelOpen,
+    ),
+    catalogBrowserPanelWidth: data.get(
+      #catalogBrowserPanelWidth,
+      or: $value.catalogBrowserPanelWidth,
+    ),
+    catalogCardClickAction: data.get(
+      #catalogCardClickAction,
+      or: $value.catalogCardClickAction,
+    ),
+    catalogMinItemWidth: data.get(
+      #catalogMinItemWidth,
+      or: $value.catalogMinItemWidth,
+    ),
+    catalogCardSpacing: data.get(
+      #catalogCardSpacing,
+      or: $value.catalogCardSpacing,
+    ),
+    catalogPageState: data.get(#catalogPageState, or: $value.catalogPageState),
     activeModProfileId: data.get(
       #activeModProfileId,
       or: $value.activeModProfileId,
@@ -1512,6 +2188,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       #showReportBugButton,
       or: $value.showReportBugButton,
     ),
+    showLayoutToggle: data.get(#showLayoutToggle, or: $value.showLayoutToggle),
     allowInsecureConnections: data.get(
       #allowInsecureConnections,
       or: $value.allowInsecureConnections,
@@ -1527,6 +2204,63 @@ class _SettingsCopyWithImpl<$R, $Out>
     deepLinkSkipConfirmation: data.get(
       #deepLinkSkipConfirmation,
       or: $value.deepLinkSkipConfirmation,
+    ),
+    showAprilFools2026: data.get(
+      #showAprilFools2026,
+      or: $value.showAprilFools2026,
+    ),
+    forceShowAprilFools2026: data.get(
+      #forceShowAprilFools2026,
+      or: $value.forceShowAprilFools2026,
+    ),
+    isActivityPanelOpen: data.get(
+      #isActivityPanelOpen,
+      or: $value.isActivityPanelOpen,
+    ),
+    activityPanelWidth: data.get(
+      #activityPanelWidth,
+      or: $value.activityPanelWidth,
+    ),
+    activityPanelMode: data.get(
+      #activityPanelMode,
+      or: $value.activityPanelMode,
+    ),
+    concurrentExtractions: data.get(
+      #concurrentExtractions,
+      or: $value.concurrentExtractions,
+    ),
+    debugMode: data.get(#debugMode, or: $value.debugMode),
+    weaponsSearchHistory: data.get(
+      #weaponsSearchHistory,
+      or: $value.weaponsSearchHistory,
+    ),
+    shipsSearchHistory: data.get(
+      #shipsSearchHistory,
+      or: $value.shipsSearchHistory,
+    ),
+    hullmodsSearchHistory: data.get(
+      #hullmodsSearchHistory,
+      or: $value.hullmodsSearchHistory,
+    ),
+    modsSearchHistory: data.get(
+      #modsSearchHistory,
+      or: $value.modsSearchHistory,
+    ),
+    factionSearchHistory: data.get(
+      #factionSearchHistory,
+      or: $value.factionSearchHistory,
+    ),
+    vramEstimatorSelectorId: data.get(
+      #vramEstimatorSelectorId,
+      or: $value.vramEstimatorSelectorId,
+    ),
+    referencedAssetsSelectorConfig: data.get(
+      #referencedAssetsSelectorConfig,
+      or: $value.referencedAssetsSelectorConfig,
+    ),
+    vramEstimatorMultithreaded: data.get(
+      #vramEstimatorMultithreaded,
+      or: $value.vramEstimatorMultithreaded,
     ),
   );
 

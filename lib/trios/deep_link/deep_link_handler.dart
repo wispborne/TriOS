@@ -8,9 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/deep_link/deep_link_confirmation_dialog.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
+import 'package:trios/trios/deep_link/single_instance_manager.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
@@ -21,21 +21,42 @@ import 'package:window_manager/window_manager.dart';
 /// Global [AppLinks] instance, initialized once in main().
 late final AppLinks appLinks;
 
+/// Navigator key for the root [MaterialApp] (set on it in main.dart). Lets this
+/// non-widget handler obtain a [BuildContext] to show dialogs reliably.
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 /// Pending deep link URI from cold start (set before runApp).
 String? pendingDeepLinkUri;
 
-/// Minimum interval between processing deep links (ms).
-const _minDeepLinkInterval = 2000;
-int _lastDeepLinkTimestamp = 0;
+/// Ignore a URI seen again within this window — collapses the same link
+/// arriving via multiple channels without dropping a different mod.
+const _deepLinkDedupeWindow = Duration(seconds: 5);
 
 /// Provider that manages deep link handling.
-final deepLinkHandlerProvider =
-    NotifierProvider<DeepLinkHandler, void>(DeepLinkHandler.new);
+final deepLinkHandlerProvider = NotifierProvider<DeepLinkHandler, void>(
+  DeepLinkHandler.new,
+);
 
 class DeepLinkHandler extends Notifier<void> {
   StreamSubscription<Uri>? _linkSubscription;
   StreamSubscription<FileSystemEvent>? _fileWatchSubscription;
   Timer? _pollTimer;
+
+  /// URIs awaiting the next drain.
+  final List<String> _queuedUris = [];
+
+  /// URI -> last-seen epoch millis, for identity de-duplication.
+  final Map<String, int> _recentlySeenMillis = {};
+
+  /// Serializes the resolve/append section so concurrent batches don't race.
+  bool _resolving = false;
+
+  /// Live data behind the open confirmation dialog (null when none is open).
+  /// New links merge into this so they appear in the same dialog.
+  ValueNotifier<DeepLinkConfirmData>? _session;
+
+  /// URLs already shown in the current dialog session (avoids duplicate rows).
+  final Set<String> _sessionSeenUrls = {};
 
   @override
   void build() {
@@ -64,143 +85,214 @@ class DeepLinkHandler extends Notifier<void> {
   }
 
   void _startFileWatcher() {
-    final watchDir = Constants.configDataFolderPath;
+    // Deep links are forwarded to the lock owner's PID, so only the primary
+    // (lock-owning) instance may drain the pending dir. A coexisting instance
+    // (e.g. dev + release running together) must not also consume them, or the
+    // two race and a link meant for the primary gets handled by the wrong one.
+    if (!SingleInstanceManager.ownsLock()) {
+      Fimber.i('Not the lock owner; skipping forwarded deep-link watcher.');
+      return;
+    }
+    final dir = SingleInstanceManager.pendingDeepLinkDir;
+    if (!dir.existsSync()) {
+      try {
+        dir.createSync(recursive: true);
+      } catch (e) {
+        Fimber.w('Could not create pending deep link dir: $e');
+      }
+    }
 
-    // Check if there's already a pending file (race condition safety).
-    _checkPendingFile();
+    // Drain anything already waiting (links forwarded during our startup).
+    _drainPendingDir();
 
     try {
-      _fileWatchSubscription = watchDir
+      _fileWatchSubscription = dir
           .watch(events: FileSystemEvent.create | FileSystemEvent.modify)
-          .listen((event) {
-        if (event.path.endsWith('pending_deeplink')) {
-          _checkPendingFile();
-        }
-      });
+          .listen((_) => _drainPendingDir());
     } catch (e) {
       Fimber.w('FileSystemEntity.watch() failed, falling back to polling: $e');
     }
 
-    // Fallback polling every 2 seconds.
+    // Fallback polling every 2 seconds (some Linux setups have inotify limits).
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      _checkPendingFile();
+      _drainPendingDir();
     });
   }
 
-  void _checkPendingFile() {
-    final file = _pendingDeepLinkFile;
-    if (file.existsSync()) {
-      try {
-        final uri = file.readAsStringSync().trim();
-        file.deleteSync();
-        if (uri.isNotEmpty) {
-          // Bring window to foreground.
-          windowManager.show();
-          windowManager.focus();
-          _onUri(uri);
-        }
-      } catch (e) {
-        Fimber.w('Error reading pending_deeplink: $e');
-      }
+  void _drainPendingDir() {
+    final uris = SingleInstanceManager.drainPendingDeepLinks();
+    if (uris.isEmpty) return;
+    // A forwarded link means the user clicked while we were running — surface us.
+    windowManager.show();
+    windowManager.focus();
+    for (final uri in uris) {
+      _onUri(uri);
     }
   }
-
-  File get _pendingDeepLinkFile =>
-      File('${Constants.configDataFolderPath.path}/pending_deeplink');
 
   void _onUri(String rawUri) {
-    // Rate limiting.
     final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - _lastDeepLinkTimestamp < _minDeepLinkInterval) {
-      Fimber.d('Deep link rate-limited: $rawUri');
+
+    // Identity de-dupe: collapse the same link arriving via multiple channels
+    // (cold-start + stream), without dropping a *different* mod clicked moments
+    // later (which the old time-only gate did).
+    final lastSeen = _recentlySeenMillis[rawUri];
+    if (lastSeen != null &&
+        now - lastSeen < _deepLinkDedupeWindow.inMilliseconds) {
+      Fimber.d('Deep link de-duplicated: $rawUri');
       return;
     }
-    _lastDeepLinkTimestamp = now;
+    _recentlySeenMillis[rawUri] = now;
+    _recentlySeenMillis.removeWhere(
+      (_, t) => now - t > _deepLinkDedupeWindow.inMilliseconds,
+    );
 
     Fimber.i('Deep link received: $rawUri');
+    _queuedUris.add(rawUri);
 
-    final request = parseDeepLink(rawUri);
-    if (request == null) {
-      Fimber.w('Failed to parse deep link: $rawUri');
-      return;
-    }
-
-    switch (request.action) {
-      case DeepLinkAction.install:
-        _handleInstall(request);
-    }
+    // Hop to a microtask so a same-turn burst (e.g. several files drained from
+    // the pending dir at once) all queue before the drain runs. The drain loop
+    // + `_resolving` guard coalesce the rest; no timer/latency needed.
+    scheduleMicrotask(_drainAndProcess);
   }
 
-  Future<void> _handleInstall(DeepLinkRequest request) async {
-    // Guard: check if game is running.
-    final isGameRunning = ref.read(AppState.isGameRunning).value == true;
-    if (isGameRunning) {
-      Fimber.w('Deep link install blocked: game is running.');
-      _showError('Cannot install mods while Starsector is running.');
-      return;
+  Future<void> _drainAndProcess() async {
+    // Serialize resolve/append so concurrent batches don't race. The
+    // confirmation dialog itself is shown OUTSIDE this lock (below), so links
+    // clicked while it's open can still be resolved and merged into it.
+    if (_resolving) return;
+    if (_queuedUris.isEmpty) return;
+    _resolving = true;
+    bool createdSession = false;
+    try {
+      while (_queuedUris.isNotEmpty) {
+        final uris = List<String>.from(_queuedUris);
+        _queuedUris.clear();
+        final requests = uris
+            .map(parseDeepLink)
+            .whereType<DeepLinkRequest>()
+            .where((r) => r.action == DeepLinkAction.install)
+            .toList();
+        if (requests.isEmpty) continue;
+
+        // Guards (cheap; re-checked per batch).
+        if (ref.read(AppState.isGameRunning).value == true) {
+          Fimber.w('Deep link install blocked: game is running.');
+          _showError('Cannot install mods while Starsector is running.');
+          continue;
+        }
+        if (ref.read(AppState.modsFolder).value == null) {
+          Fimber.w('Deep link install blocked: mods folder not configured.');
+          _showError(
+            'Please configure your Starsector game directory before installing mods via links.',
+          );
+          continue;
+        }
+
+        // New entries this batch: each link's `mod` is a primary, its `dep`s
+        // are deps. Skip URLs already shown this session (no duplicate rows);
+        // a primary wins over a dependency.
+        final batchPrimaryUrls = <String>{
+          for (final r in requests) r.mainMod.url.toString(),
+        };
+        final newPrimaries = <DeepLinkModEntry>[];
+        final newDeps = <DeepLinkModEntry>[];
+        for (final r in requests) {
+          if (_sessionSeenUrls.add(r.mainMod.url.toString())) {
+            newPrimaries.add(r.mainMod);
+          }
+        }
+        for (final r in requests) {
+          for (final dep in r.dependencies) {
+            final key = dep.url.toString();
+            if (batchPrimaryUrls.contains(key)) continue;
+            if (_sessionSeenUrls.add(key)) newDeps.add(dep);
+          }
+        }
+        if (newPrimaries.isEmpty && newDeps.isEmpty) continue;
+
+        final httpClient = ref.read(triOSHttpClient);
+        final resolvedMods = await Future.wait(
+          newPrimaries.map((e) => _resolveModEntry(e, httpClient)),
+        );
+        final resolvedDeps = await Future.wait(
+          newDeps.map((e) => _resolveModEntry(e, httpClient)),
+        );
+
+        final skipConfirmation = ref.read(
+          appSettings.select((s) => s.deepLinkSkipConfirmation),
+        );
+        if (skipConfirmation) {
+          for (final e in [...resolvedMods, ...resolvedDeps]) {
+            if (!e.alreadyInstalled && e.error == null) _downloadAndInstall(e);
+          }
+          // No dialog session exists in skip mode, so the row-dedupe set has no
+          // session to scope it to; release these URLs now, or the same link
+          // would only ever install once per app run.
+          for (final e in [...newPrimaries, ...newDeps]) {
+            _sessionSeenUrls.remove(e.url.toString());
+          }
+          continue;
+        }
+
+        if (_session == null) {
+          // First batch: create the session; this flush will show the dialog.
+          _session = ValueNotifier(
+            DeepLinkConfirmData(mods: resolvedMods, dependencies: resolvedDeps),
+          );
+          createdSession = true;
+        } else {
+          // A dialog is already open — merge into it so it updates live.
+          final cur = _session!.value;
+          _session!.value = DeepLinkConfirmData(
+            mods: [...cur.mods, ...resolvedMods],
+            dependencies: [...cur.dependencies, ...resolvedDeps],
+          );
+        }
+      }
+    } finally {
+      _resolving = false;
     }
 
-    // Guard: check mods folder is configured.
-    final modsFolder = ref.read(AppState.modsFolder).value;
-    if (modsFolder == null) {
-      Fimber.w('Deep link install blocked: mods folder not configured.');
-      _showError(
-        'Please configure your Starsector game directory before installing mods via links.',
-      );
-      return;
-    }
-
-    // Resolve all mod entries (fetch .version files, check if installed).
-    final httpClient = ref.read(triOSHttpClient);
-    final mainMod = await _resolveModEntry(request.mainMod, httpClient);
-    final deps = await Future.wait(
-      request.dependencies.map((dep) => _resolveModEntry(dep, httpClient)),
-    );
-
-    // Check if we should skip the confirmation dialog.
-    final skipConfirmation = ref.read(
-      appSettings.select((s) => s.deepLinkSkipConfirmation),
-    );
-
-    if (!skipConfirmation) {
-      // We need a BuildContext. Use the navigator key from the app.
-      final context = _findContext();
-      if (context == null) {
+    // Only the flush that created the session shows the dialog (others merged).
+    if (createdSession) {
+      final session = _session!;
+      final context = rootNavigatorKey.currentContext;
+      List<ResolvedModEntry>? selected;
+      if (context == null || !context.mounted) {
         Fimber.w('No BuildContext available for deep link dialog.');
-        return;
+      } else {
+        // The dialog returns exactly the entries the user chose to install.
+        selected = await showDeepLinkConfirmationDialog(
+          context,
+          data: session,
+          ref: ref,
+        );
+      }
+      _session = null;
+      _sessionSeenUrls.clear();
+
+      if (selected != null && selected.isNotEmpty) {
+        for (final e in selected) {
+          _downloadAndInstall(e);
+        }
+      } else {
+        Fimber.i('Deep link install cancelled or nothing selected.');
       }
 
-      final confirmed = await showDeepLinkConfirmationDialog(
-        context,
-        mainMod: mainMod,
-        dependencies: deps,
-        ref: ref as WidgetRef,
-      );
-      if (!confirmed) {
-        Fimber.i('Deep link install cancelled by user.');
-        return;
-      }
-    }
-
-    // Install main mod.
-    if (!mainMod.alreadyInstalled && mainMod.error == null) {
-      _downloadAndInstall(mainMod);
-    }
-
-    // Install dependencies that aren't already installed.
-    for (final dep in deps) {
-      if (!dep.alreadyInstalled && dep.error == null) {
-        _downloadAndInstall(dep);
-      }
+      // Links that arrived after the dialog closed start a fresh session.
+      if (_queuedUris.isNotEmpty) Future.microtask(_drainAndProcess);
     }
   }
 
   void _downloadAndInstall(ResolvedModEntry entry) {
-    ref.read(downloadManager.notifier).downloadAndInstallMod(
-      entry.displayName,
-      entry.downloadUrl.toString().fixModDownloadUrl(),
-      activateVariantOnComplete: false,
-    );
+    ref
+        .read(downloadManager.notifier)
+        .downloadAndInstallMod(
+          entry.displayName,
+          entry.downloadUrl.toString().fixModDownloadUrl(),
+          activateVariantOnComplete: false,
+        );
   }
 
   Future<ResolvedModEntry> _resolveModEntry(
@@ -208,10 +300,7 @@ class DeepLinkHandler extends Notifier<void> {
     TriOSHttpClient httpClient,
   ) async {
     if (entry.source == DeepLinkModSource.directDownload) {
-      return ResolvedModEntry(
-        entry: entry,
-        downloadUrl: entry.url,
-      );
+      return ResolvedModEntry(entry: entry, downloadUrl: entry.url);
     }
 
     // Fetch .version file.
@@ -230,15 +319,23 @@ class DeepLinkHandler extends Notifier<void> {
         return ResolvedModEntry(
           entry: entry,
           downloadUrl: entry.url,
-          error: 'HTTP ${response.statusCode}',
+          error:
+              "Couldn't fetch the mod's version file (HTTP "
+              '${response.statusCode}).',
         );
       }
 
       final String body = data;
-      final versionInfo = VersionCheckerInfoMapper.fromJson(body.fixJson());
+      final versionInfo = VersionCheckerInfoMapper.fromMap(
+        body.parseJsonToMap(),
+      );
 
       // Check if already installed.
-      final isInstalled = _isModAlreadyInstalled(versionInfo);
+      final isInstalled = _isModAlreadyInstalled(
+        versionInfo,
+        entry.url,
+        entry.modId,
+      );
 
       if (!versionInfo.hasDirectDownload) {
         return ResolvedModEntry(
@@ -247,7 +344,22 @@ class DeepLinkHandler extends Notifier<void> {
           modVersion: versionInfo.modVersion?.toString(),
           downloadUrl: entry.url,
           alreadyInstalled: isInstalled,
-          error: 'No direct download URL in .version file',
+          error:
+              "The mod's version file has no download link and cannot be automatically installed.",
+        );
+      }
+
+      // The .version file is fetched from the network and otherwise trusted —
+      // re-validate its download URL is http/https before we'll download it.
+      final resolvedUrl = validateHttpUrl(versionInfo.directDownloadURL!);
+      if (resolvedUrl == null) {
+        return ResolvedModEntry(
+          entry: entry,
+          modName: versionInfo.modName,
+          modVersion: versionInfo.modVersion?.toString(),
+          downloadUrl: entry.url,
+          alreadyInstalled: isInstalled,
+          error: "The mod's download link isn't a valid http/https URL.",
         );
       }
 
@@ -255,7 +367,7 @@ class DeepLinkHandler extends Notifier<void> {
         entry: entry,
         modName: versionInfo.modName,
         modVersion: versionInfo.modVersion?.toString(),
-        downloadUrl: Uri.parse(versionInfo.directDownloadURL!),
+        downloadUrl: resolvedUrl,
         alreadyInstalled: isInstalled,
       );
     } catch (e) {
@@ -263,53 +375,57 @@ class DeepLinkHandler extends Notifier<void> {
       return ResolvedModEntry(
         entry: entry,
         downloadUrl: entry.url,
-        error: e.toString(),
+        error: "Couldn't read the mod's version file.",
       );
     }
   }
 
-  bool _isModAlreadyInstalled(VersionCheckerInfo versionInfo) {
-    if (versionInfo.modName == null) return false;
+  bool _isModAlreadyInstalled(
+    VersionCheckerInfo versionInfo,
+    Uri linkUrl,
+    String? modId,
+  ) {
+    // Identify the local mod by, in order of reliability:
+    //  1. mod id, when the link supplied one (exact; unaffected by shared
+    //     forum threads), else
+    //  2. the mod's own Version Checker (.version) URL — the clicked link or
+    //     its declared masterVersionFile.
+    // Deliberately NOT matched by forum thread id (authors host several mods on
+    // one thread) or mod name (can collide) — both cause false matches.
+    final linkUrlStr = linkUrl.toString();
+    final remoteMaster = versionInfo.masterVersionFile;
+    final remoteVersion = versionInfo.modVersion;
     final mods = ref.read(AppState.mods);
 
-    // Try to find a mod that matches by checking version checker info.
     for (final mod in mods) {
-      for (final variant in mod.modVariants) {
-        final localVci = variant.versionCheckerInfo;
-        if (localVci == null) continue;
-        // Match by masterVersionFile URL if available.
-        if (localVci.masterVersionFile != null &&
-            versionInfo.masterVersionFile != null &&
-            localVci.masterVersionFile == versionInfo.masterVersionFile) {
-          // Compare versions — if local is >= remote, it's already installed.
-          if (versionInfo.modVersion != null &&
-              localVci.modVersion != null &&
-              localVci.modVersion!.compareTo(versionInfo.modVersion!) >= 0) {
-            return true;
-          }
-        }
+      final matched =
+          (modId != null && mod.id == modId) ||
+          mod.modVariants.any((v) {
+            final localMaster = v.versionCheckerInfo?.masterVersionFile;
+            return localMaster != null &&
+                (localMaster == linkUrlStr ||
+                    (remoteMaster != null && localMaster == remoteMaster));
+          });
+      if (!matched) continue;
+
+      // Matched. "Already installed" only when a local version is >= the remote
+      // one (otherwise it's an update and should download). With no remote
+      // version, or no comparable local version, treat the match as installed.
+      if (remoteVersion == null) return true;
+      var sawLocalVersion = false;
+      for (final v in mod.modVariants) {
+        final localVersion = v.versionCheckerInfo?.modVersion;
+        if (localVersion == null) continue;
+        sawLocalVersion = true;
+        if (localVersion.compareTo(remoteVersion) >= 0) return true;
       }
+      return !sawLocalVersion;
     }
     return false;
   }
 
-  BuildContext? _findContext() {
-    // Walk the element tree to find a valid context.
-    // This is a best-effort approach for showing dialogs from a non-widget context.
-    BuildContext? result;
-    try {
-      final binding = WidgetsBinding.instance;
-      void visitor(Element element) {
-        result = element;
-      }
-
-      binding.rootElement?.visitChildren(visitor);
-    } catch (_) {}
-    return result;
-  }
-
   void _showError(String message) {
-    final context = _findContext();
+    final context = rootNavigatorKey.currentContext;
     if (context == null) return;
     showDialog(
       context: context,

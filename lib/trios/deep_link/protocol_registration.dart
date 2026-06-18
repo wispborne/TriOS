@@ -119,7 +119,7 @@ class ProtocolRegistration {
   static Future<void> _registerLinux() async {
     final desktopEntry = '''[Desktop Entry]
 Name=TriOS
-Exec=${Platform.resolvedExecutable} %u
+Exec="${Platform.resolvedExecutable}" %u
 Type=Application
 MimeType=x-scheme-handler/$deepLinkScheme;
 NoDisplay=true

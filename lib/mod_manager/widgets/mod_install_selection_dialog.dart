@@ -160,11 +160,16 @@ class _ModInstallSelectionDialogState<T>
     final hasConflicts = _conflictIndices.isNotEmpty;
     final selectedCount = _selected.length;
 
+    // When nothing could be read there's nothing to "install N of M" — title it
+    // as the error it is instead of "Install 0 of 0 mods".
+    final defaultTitle = widget.choices.isEmpty && widget.invalidItems.isNotEmpty
+        ? (widget.invalidItems.length == 1
+              ? "Couldn't install this file"
+              : "Couldn't install these files")
+        : "Install $selectedCount of ${widget.choices.length} mods";
+
     return AlertDialog(
-      title: Text(
-        widget.title ??
-            "Install $selectedCount of ${widget.choices.length} mods",
-      ),
+      title: Text(widget.title ?? defaultTitle),
       content: ConstrainedBox(
         constraints: const BoxConstraints(
           minWidth: 400,
@@ -210,12 +215,16 @@ class _ModInstallSelectionDialogState<T>
                         ),
                       ),
                     if (widget.invalidItems.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      // Only separate from the list above when there is one;
+                      // on its own the divider would just float.
+                      if (widget.choices.isNotEmpty) const Divider(height: 24),
                       Padding(
-                        padding: .symmetric(vertical: 8),
+                        padding: .only(left: 4, bottom: 4),
                         child: Text(
-                          "Invalid",
-                          style: theme.textTheme.labelSmall?.copyWith(
+                          widget.invalidItems.length == 1
+                              ? "Couldn't be installed:"
+                              : "Couldn't be installed (${widget.invalidItems.length}):",
+                          style: theme.textTheme.labelMedium?.copyWith(
                             color: theme.colorScheme.error,
                           ),
                         ),

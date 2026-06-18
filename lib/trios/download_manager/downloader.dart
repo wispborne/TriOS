@@ -128,12 +128,16 @@ class DownloadManager {
       if (await isDownloadableFile(url, headersMap, httpClient) == false) {
         final contentType = headersMap['content-type'] ?? 'unknown';
         final disposition = headersMap['content-disposition'] ?? 'none';
+        // Keep the technical details in the log; show the user something they
+        // can act on (this is surfaced verbatim in the download toast).
+        Fimber.w(
+          "Not a downloadable file: '$url' "
+          "(Content-Type: $contentType, Content-Disposition: $disposition).",
+        );
         throw Exception(
-          "No downloadable file found at '$url'.\n"
-          "Content-Type: $contentType\n"
-          "Content-Disposition: $disposition\n\n"
-          "The URL may point to a web page instead of a mod file.\n"
-          "Please contact the mod author.",
+          "This link points to a web page or folder, not a mod file.\n\n"
+          "If it's a Google Drive or Dropbox share, link directly to the "
+          "mod's .zip or .7z file rather than to a folder.",
         );
       }
       Fimber.d(
@@ -656,14 +660,51 @@ class DownloadManager {
     try {
       Fimber.d("Getting filename from url: $url");
       Fimber.d("Url $url has headers:\n$headers");
-      final contentDisposition = headers?['Content-Disposition'];
+      // HTTP header names are case-insensitive; the headers map is built from
+      // HttpHeaders.forEach, which lowercases names, so look it up in lowercase.
+      // (A capitalized key here always missed, dropping back to the URL path and
+      // losing the archive extension for hosts that only name the file in the
+      // Content-Disposition header — e.g. Dropbox/Drive/forum attachment links.)
+      final filename = _filenameFromContentDisposition(
+        headers?['content-disposition'],
+      );
 
-      return contentDisposition?.fixFilenameForFileSystem() ??
+      return filename?.fixFilenameForFileSystem() ??
           Uri.parse(url).pathSegments.last.fixFilenameForFileSystem();
     } catch (e) {
       Fimber.w("Error getting filename from url: $e");
       return Uri.parse(url).pathSegments.last.fixFilenameForFileSystem();
     }
+  }
+
+  /// Extracts the filename from a `Content-Disposition` header value, or null if
+  /// there isn't one. Handles the RFC 5987 extended `filename*=UTF-8''…` form
+  /// (preferred when present) and the quoted/bare `filename=…` form. Returning
+  /// just the filename — not the whole header — keeps the archive extension at
+  /// the end of the name, which the installer relies on to detect the format.
+  static String? _filenameFromContentDisposition(String? contentDisposition) {
+    if (contentDisposition == null) return null;
+
+    final extended = RegExp(
+      r"filename\*\s*=\s*[^']*'[^']*'([^;]+)",
+      caseSensitive: false,
+    ).firstMatch(contentDisposition);
+    if (extended != null) {
+      final raw = extended.group(1)!.trim();
+      try {
+        return Uri.decodeComponent(raw);
+      } catch (_) {
+        return raw;
+      }
+    }
+
+    final plain = RegExp(
+      r'filename\s*=\s*"?([^";]+)"?',
+      caseSensitive: false,
+    ).firstMatch(contentDisposition);
+    if (plain != null) return plain.group(1)!.trim();
+
+    return null;
   }
 
   /// Sends a HEAD request to the given URL and returns the response headers.
@@ -895,6 +936,13 @@ class DownloadManager {
     TriOSHttpClient httpClient,
   ) async {
     try {
+      // A Drive *folder* link (…/drive/folders/…) is a web page listing many
+      // files, never a single downloadable archive. Its HTML happens to contain
+      // the word "download", so the heuristic below would wrongly accept it —
+      // reject it explicitly so the caller reports a useful error.
+      if (url.contains('/drive/folders/')) {
+        return false;
+      }
       if (url.contains('export=download')) {
         return true;
       }

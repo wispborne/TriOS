@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
@@ -174,13 +175,9 @@ class _DeepLinkConfirmationDialogState
     final hasProblems = allEntries.any(
       (e) => !e.alreadyInstalled && e.error != null,
     );
-    final intro = installCount > 0
-        ? (installCount == 1
-              ? 'A link is requesting to install a mod:'
-              : 'A link is requesting to install $installCount mods:')
-        : hasProblems
-        ? "TriOS can't install anything from this link:"
-        : 'You already have everything from this link.';
+    final intro =  allEntries.isNotEmpty
+              ? 'A link is requesting to install a mod.'
+              : 'A link is requesting to install ${allEntries.length} mods.';
 
     return AlertDialog(
       title: Text(
@@ -306,15 +303,12 @@ class _DeepLinkConfirmationDialogState
             )
           : ListTile(
               contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
-              // Already-installed but not re-downloadable → it's satisfied, not a
-              // problem; only a genuinely-missing mod gets the error icon.
+              // This branch is only reached for errored entries (selectable ==
+              // entry.error == null), so the icon always signals a problem —
+              // even for an already-installed mod whose link can't be used.
               leading: Icon(
-                entry.alreadyInstalled
-                    ? Icons.check_circle
-                    : Icons.error_outline,
-                color: entry.alreadyInstalled
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.error,
+                Icons.error_outline,
+                color: theme.colorScheme.error,
               ),
               title: _modContent(context, entry, isMain: isMain),
             ),

@@ -10,6 +10,7 @@
   - VRAM Estimator now shows your PC's total VRAM and how much of it you'll use.
   - Weapons Viewer now shows all layers of a weapon, including glows.
     - May also right-click to copy a full weapon sprite to clipboard.
+  - Ships show engine glows, too.
 - Fixed
   - Built-in weapons not showing on ship tooltips.
   - Portrait Replacer.

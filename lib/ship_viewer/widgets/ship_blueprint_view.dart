@@ -1,12 +1,17 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/ship_viewer/engine_styles_manager.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
+import 'package:trios/ship_viewer/models/ship_engine_slot.dart';
+import 'package:trios/ship_viewer/models/ship_engine_style_spec.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
+import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/ship_viewer/utils/polygon_utils.dart';
@@ -42,6 +47,11 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
   /// Whether to render turret angle indicator lines.
   final bool initialShowAngleIndicators;
 
+  /// Whether to render the additive engine glow. In the interactive view this
+  /// is the toolbar toggle's initial state; thumbnails reveal glow on hover
+  /// (or always, per the ships-page setting) regardless of this value.
+  final bool initialShowEngineGlow;
+
   /// Whether to show tooltips on slot hover.
   final bool showSlotTooltips;
 
@@ -53,6 +63,14 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
 
   /// Whether zoom/pan and hover interactions are enabled.
   final bool interactive;
+
+  /// Whether to clip non-interactive (thumbnail) content to its bounds. Set
+  /// false so hovered engine glow can overflow a small grid-row cell.
+  final bool clipContent;
+
+  /// Externally forces the engine glow on (non-interactive views only), e.g.
+  /// driven by WispGrid row hover so the whole row reveals the glow.
+  final bool forceEngineGlow;
 
   /// Optional resize width in logical pixels for the decoded image cache.
   /// When set, all sprite images (parent + modules) are decoded at this
@@ -73,10 +91,13 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     this.initialShowMounts = true,
     this.initialShowArcs = true,
     this.initialShowAngleIndicators = true,
+    this.initialShowEngineGlow = false,
     this.showSlotTooltips = true,
     this.showPath = true,
     this.showToolbar = true,
     this.interactive = true,
+    this.clipContent = true,
+    this.forceEngineGlow = false,
     this.cacheWidth,
     this.fit = BoxFit.contain,
   });
@@ -94,10 +115,13 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     bool initialShowMounts = false,
     bool initialShowArcs = false,
     bool initialShowAngleIndicators = false,
+    bool initialShowEngineGlow = false,
     bool showSlotTooltips = false,
     bool showPath = false,
     bool showToolbar = false,
     bool interactive = false,
+    bool clipContent = true,
+    bool forceEngineGlow = false,
     int? cacheWidth,
     BoxFit fit = BoxFit.contain,
   }) {
@@ -109,10 +133,13 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
       initialShowMounts: initialShowMounts,
       initialShowArcs: initialShowArcs,
       initialShowAngleIndicators: initialShowAngleIndicators,
+      initialShowEngineGlow: initialShowEngineGlow,
       showSlotTooltips: showSlotTooltips,
       showPath: showPath,
       showToolbar: showToolbar,
       interactive: interactive,
+      clipContent: clipContent,
+      forceEngineGlow: forceEngineGlow,
       cacheWidth: cacheWidth,
       fit: fit,
     );
@@ -122,7 +149,8 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
   ConsumerState<ShipBlueprintView> createState() => _ShipBlueprintViewState();
 }
 
-class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
+class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
+    with SingleTickerProviderStateMixin {
   int? _hoveredIndex;
   int? _hoveredModuleIndex;
   int? _hoveredModuleSlotIndex;
@@ -130,6 +158,22 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
   late bool _showBounds;
   late bool _showMounts;
   late bool _showArcs;
+
+  /// Toolbar toggle state (interactive view). Thumbnails ignore this and use
+  /// hover / the always-on setting instead.
+  late bool _showEngineGlow;
+  bool _engineGlowHovering = false;
+  bool _alwaysShowEngineGlow = false;
+
+  /// Drives the engine glow fade and repaints the painter while animating.
+  late final AnimationController _engineGlowController;
+
+  /// Engine data resolved from providers each build, read by the glow overlay.
+  Map<String, EngineStyleSpec> _engineStyles = const {};
+  EngineGlowSprites? _engineGlowSprites;
+
+  /// Fallback flame tint for engine styles missing from `engine_styles.json`.
+  static const Color _defaultEngineColor = Color(0xFFFFA94D);
   Size? _imageSize;
   double? _viewportWidth;
   bool _hasAppliedInitialTransform = false;
@@ -175,13 +219,33 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     _showBounds = widget.initialShowBounds;
     _showMounts = widget.initialShowMounts;
     _showArcs = widget.initialShowArcs;
+    _showEngineGlow = widget.initialShowEngineGlow;
+    _engineGlowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+      value: _showEngineGlow ? 1.0 : 0.0,
+    );
     _resolveImageSize();
   }
 
   @override
   void dispose() {
+    _engineGlowController.dispose();
     _transformController?.dispose();
     super.dispose();
+  }
+
+  /// Animate the glow toward shown. The interactive (dialog) view is driven
+  /// solely by its toolbar toggle; thumbnails use hover and the ships-page
+  /// "always show" setting (which deliberately doesn't affect the dialog).
+  void _updateEngineGlow() {
+    final show = widget.interactive
+        ? _showEngineGlow
+        : (_showEngineGlow ||
+              _alwaysShowEngineGlow ||
+              _engineGlowHovering ||
+              widget.forceEngineGlow);
+    _engineGlowController.animateTo(show ? 1.0 : 0.0);
   }
 
   @override
@@ -190,6 +254,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     if (oldWidget.ship.spriteFile != widget.ship.spriteFile) {
       _hasAppliedInitialTransform = false;
       _resolveImageSize();
+    }
+    if (oldWidget.forceEngineGlow != widget.forceEngineGlow) {
+      _updateEngineGlow();
     }
   }
 
@@ -307,9 +374,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
             left + (mc != null && mc.length >= 2 ? mc[0] : modSize.width / 2);
         double sprCy =
             top +
-                (mc != null && mc.length >= 2
-                    ? modSize.height - mc[1]
-                    : modSize.height / 2);
+            (mc != null && mc.length >= 2
+                ? modSize.height - mc[1]
+                : modSize.height / 2);
 
         if (angleDeg != 0) {
           final dx = sprCx - slotX;
@@ -329,13 +396,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
         angleDeg == 0
             ? Rect.fromLTWH(left, top, modSize.width, modSize.height)
             : rotatedBounds(
-          left,
-          top,
-          modSize.width,
-          modSize.height,
-          angleRad,
-          Offset(anchorX, anchorY),
-        ),
+                left,
+                top,
+                modSize.width,
+                modSize.height,
+                angleRad,
+                Offset(anchorX, anchorY),
+              ),
       );
       layouts.add(
         _ModuleSpriteLayout(
@@ -423,10 +490,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     ];
   }
 
-  Widget _buildModuleSpriteWidget(int index,
-      _ModuleSpriteLayout layout,
-      double dx,
-      double dy,) {
+  Widget _buildModuleSpriteWidget(
+    int index,
+    _ModuleSpriteLayout layout,
+    double dx,
+    double dy,
+  ) {
     final isHovered = _hoveredModuleIndex == index;
 
     Widget sprite = ColorFiltered(
@@ -477,6 +546,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     final originDx = -combinedRect.left;
     final originDy = -combinedRect.top;
 
+    final engineGlow = _engineGlowPositioned(originDx, originDy, imgW, imgH);
+
     return SizedBox(
       width: combinedRect.width,
       height: combinedRect.height,
@@ -496,7 +567,46 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
             ),
           ),
           if (_showModules) ..._buildModuleSpritesOffset(originDx, originDy),
+          ?engineGlow,
         ],
+      ),
+    );
+  }
+
+  /// Builds the additive engine glow overlay positioned over the parent hull
+  /// sprite, or null when there's nothing to draw (no glow sprites yet, no
+  /// sprite center, or the hull has no engines). Shared by both render paths.
+  Widget? _engineGlowPositioned(
+    double originDx,
+    double originDy,
+    double imgW,
+    double imgH,
+  ) {
+    final sprites = _engineGlowSprites;
+    if (sprites == null) return null;
+    final ship = widget.ship;
+    final center = ship.center;
+    if (center == null || center.length < 2) return null;
+    if (ship.engineSlotsParsed.isEmpty) return null;
+
+    return Positioned(
+      left: originDx,
+      top: originDy,
+      width: imgW,
+      height: imgH,
+      child: CustomPaint(
+        size: Size(imgW, imgH),
+        painter: _EngineGlowPainter(
+          slots: ship.engineSlotsParsed,
+          styles: _engineStyles,
+          hullStyle: ship.style,
+          flame: sprites.flame,
+          glow: sprites.glow,
+          imgH: imgH,
+          center: center,
+          opacity: _engineGlowController,
+          defaultColor: _defaultEngineColor,
+        ),
       ),
     );
   }
@@ -516,6 +626,24 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     final center = ship.center;
     final modules = ref.watch(resolvedModulesProvider(ship.id));
     final theme = context.theme;
+
+    // Engine glow inputs (cached providers; cheap after first load).
+    final hasEngines = ship.engineSlotsParsed.isNotEmpty;
+    if (hasEngines) {
+      _engineStyles = ref.watch(engineStylesProvider).value ?? const {};
+      _engineGlowSprites = ref.watch(engineGlowSpritesProvider).value;
+    }
+
+    // Pin glow on (or release to hover/toggle) when the ships-page setting flips.
+    final alwaysShowEngineGlow = ref.watch(
+      shipsPageControllerProvider.select((s) => s.alwaysShowEngineGlow),
+    );
+    if (alwaysShowEngineGlow != _alwaysShowEngineGlow) {
+      _alwaysShowEngineGlow = alwaysShowEngineGlow;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _updateEngineGlow();
+      });
+    }
 
     // Detect module changes from Riverpod and trigger image size resolution.
     if (!identical(_lastModules, modules)) {
@@ -542,14 +670,32 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
 
     // --- Fast path for non-interactive (thumbnail) mode ---
     if (!widget.interactive) {
-      return RepaintBoundary(
-        child: ClipRect(
-          child: FittedBox(
-            fit: widget.fit,
-            child: _buildMinimalContent(imgW, imgH),
-          ),
-        ),
+      Widget content = FittedBox(
+        fit: widget.fit,
+        child: _buildMinimalContent(imgW, imgH),
       );
+      // Optionally clip to bounds. Disabled for grid-row icons so hovered
+      // engine glow can overflow the small cell instead of being cut off.
+      if (widget.clipContent) {
+        content = ClipRect(child: content);
+      }
+      Widget thumbnail = RepaintBoundary(child: content);
+      // Reveal engine glow on hover (like the weapon viewer's hover glow).
+      if (hasEngines && _engineGlowSprites != null && hasCenter) {
+        thumbnail = MouseRegion(
+          opaque: false,
+          onEnter: (_) {
+            _engineGlowHovering = true;
+            _updateEngineGlow();
+          },
+          onExit: (_) {
+            _engineGlowHovering = false;
+            _updateEngineGlow();
+          },
+          child: thumbnail,
+        );
+      }
+      return thumbnail;
     }
 
     final effectiveSlots = (slots != null && slots.isNotEmpty && hasCenter)
@@ -578,12 +724,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
         ? 0.0
         : effectiveSlots.map((s) => _radiusForSize(s.size) * 5).reduce(max);
     final moduleArcRadius =
-    (_showModules &&
-        _cachedModuleGeometry != null &&
-        _cachedModuleGeometry!.transformedSlots.isNotEmpty)
+        (_showModules &&
+            _cachedModuleGeometry != null &&
+            _cachedModuleGeometry!.transformedSlots.isNotEmpty)
         ? _cachedModuleGeometry!.transformedSlots
-        .map((ts) => _radiusForSize(ts.slot.size) * 5)
-        .reduce(max)
+              .map((ts) => _radiusForSize(ts.slot.size) * 5)
+              .reduce(max)
         : 0.0;
     final maxArcRadius = max(parentArcRadius, moduleArcRadius);
     final pad = maxArcRadius;
@@ -610,31 +756,31 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
           child: MouseRegion(
             hitTestBehavior: HitTestBehavior.translucent,
             onHover:
-            widget.interactive &&
-                _showModules &&
-                _cachedModuleGeometry != null
+                widget.interactive &&
+                    _showModules &&
+                    _cachedModuleGeometry != null
                 ? (event) {
-              final cGeom = _cachedModuleGeometry!;
-              // Adjust hit-test position for the origin offset.
-              final pos =
-                  event.localPosition - Offset(originDx, originDy);
-              for (var i = cGeom.polygons.length - 1; i >= 0; i--) {
-                final poly = cGeom.polygons[i];
-                final hit = poly.isNotEmpty
-                    ? polygonContainsPoint(poly, pos)
-                    : i < cGeom.rects.length &&
-                    cGeom.rects[i].contains(pos);
-                if (hit) {
-                  if (_hoveredModuleIndex != i) {
-                    setState(() => _hoveredModuleIndex = i);
+                    final cGeom = _cachedModuleGeometry!;
+                    // Adjust hit-test position for the origin offset.
+                    final pos =
+                        event.localPosition - Offset(originDx, originDy);
+                    for (var i = cGeom.polygons.length - 1; i >= 0; i--) {
+                      final poly = cGeom.polygons[i];
+                      final hit = poly.isNotEmpty
+                          ? polygonContainsPoint(poly, pos)
+                          : i < cGeom.rects.length &&
+                                cGeom.rects[i].contains(pos);
+                      if (hit) {
+                        if (_hoveredModuleIndex != i) {
+                          setState(() => _hoveredModuleIndex = i);
+                        }
+                        return;
+                      }
+                    }
+                    if (_hoveredModuleIndex != null) {
+                      setState(() => _hoveredModuleIndex = null);
+                    }
                   }
-                  return;
-                }
-              }
-              if (_hoveredModuleIndex != null) {
-                setState(() => _hoveredModuleIndex = null);
-              }
-            }
                 : null,
             onExit: (_) {
               if (_hoveredModuleIndex != null) {
@@ -666,6 +812,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                   ),
                   if (_showModules)
                     ..._buildModuleSpritesOffset(originDx, originDy),
+                  ?_engineGlowPositioned(originDx, originDy, imgW, imgH),
                   if (_showBounds)
                     Positioned(
                       left: originDx,
@@ -676,14 +823,14 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                         size: Size(imgW, imgH),
                         painter: _BoundsPainter(
                           parentBoundsPolygon:
-                          ship.bounds != null &&
-                              ship.bounds!.length >= 6 &&
-                              hasCenter
+                              ship.bounds != null &&
+                                  ship.bounds!.length >= 6 &&
+                                  hasCenter
                               ? parseBoundsToPolygon(
-                            ship.bounds!,
-                            center[0],
-                            imgH - center[1],
-                          )
+                                  ship.bounds!,
+                                  center[0],
+                                  imgH - center[1],
+                                )
                               : null,
                           moduleBoundsPolygons: _showModules
                               ? (_cachedModuleGeometry?.polygons ?? const [])
@@ -695,8 +842,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                       (effectiveSlots.isNotEmpty ||
                           (_showModules &&
                               (_cachedModuleGeometry
-                                  ?.transformedSlots
-                                  .isNotEmpty ??
+                                      ?.transformedSlots
+                                      .isNotEmpty ??
                                   false))))
                     Positioned(
                       left: originDx,
@@ -709,7 +856,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                           slots: effectiveSlots,
                           moduleSlots: _showModules
                               ? (_cachedModuleGeometry?.transformedSlots ??
-                              const [])
+                                    const [])
                               : const [],
                           imgH: imgH,
                           center: center!,
@@ -738,9 +885,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                       _showModules &&
                       _cachedModuleGeometry != null)
                     for (
-                    var i = 0;
-                    i < _cachedModuleGeometry!.transformedSlots.length;
-                    i++
+                      var i = 0;
+                      i < _cachedModuleGeometry!.transformedSlots.length;
+                      i++
                     )
                       _buildModuleSlotHitAreaOffset(
                         i,
@@ -760,7 +907,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
             if (event is PointerScrollEvent) {
               GestureBinding.instance.pointerSignalResolver.register(
                 event,
-                    (event) {},
+                (event) {},
               );
             }
           },
@@ -787,7 +934,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                   top: 4,
                   child: _compactIconButton(
                     onPressed: () =>
-                    _controller.value = _computeCenteringTransform(),
+                        _controller.value = _computeCenteringTransform(),
                     icon: Icons.fit_screen_outlined,
                     tooltip: 'Reset zoom',
                   ),
@@ -828,11 +975,19 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
                         isActive: _showArcs,
                         tooltip: 'Show arcs',
                       ),
+                      if (hasEngines)
+                        _compactIconButton(
+                          onPressed: () {
+                            setState(() => _showEngineGlow = !_showEngineGlow);
+                            _updateEngineGlow();
+                          },
+                          icon: Icons.local_fire_department,
+                          isActive: _showEngineGlow,
+                          tooltip: 'Show engine glow',
+                        ),
                       Flexible(
                         child: TextTriOS(
-                          ship.spriteFile
-                              ?.split(Platform.pathSeparator)
-                              .last ??
+                          ship.spriteFile?.split(Platform.pathSeparator).last ??
                               "",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -864,28 +1019,30 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
   }) {
     return isActive
         ? IconButton.filledTonal(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      iconSize: 16,
-      style: _compactButtonStyle,
-      tooltip: tooltip,
-    )
+            onPressed: onPressed,
+            icon: Icon(icon, size: 16),
+            iconSize: 16,
+            style: _compactButtonStyle,
+            tooltip: tooltip,
+          )
         : IconButton.outlined(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      iconSize: 16,
-      style: _compactButtonStyle,
-      tooltip: tooltip,
-    );
+            onPressed: onPressed,
+            icon: Icon(icon, size: 16),
+            iconSize: 16,
+            style: _compactButtonStyle,
+            tooltip: tooltip,
+          );
   }
 
-  Widget _buildSlotHitAreaOffset(int index,
-      ShipWeaponSlot slot,
-      double imgH,
-      BuildContext context,
-      List<ResolvedModule> modules,
-      double dx,
-      double dy,) {
+  Widget _buildSlotHitAreaOffset(
+    int index,
+    ShipWeaponSlot slot,
+    double imgH,
+    BuildContext context,
+    List<ResolvedModule> modules,
+    double dx,
+    double dy,
+  ) {
     final pos = _slotScreenPos(slot, imgH);
     final radius = _radiusForSize(slot.size);
     final hitSize = (radius + 6) * 2;
@@ -903,11 +1060,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
       height: hitSize,
       child: widget.showSlotTooltips
           ? MovingTooltipWidget(
-        tooltipWidget: TooltipFrame(
-          child: _buildSlotTooltipContent(slot, context, modules),
-        ),
-        child: hitRegion,
-      )
+              tooltipWidget: TooltipFrame(
+                child: _buildSlotTooltipContent(slot, context, modules),
+              ),
+              child: hitRegion,
+            )
           : hitRegion,
     );
   }
@@ -915,9 +1072,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
   /// Resolves a built-in weapon ID to its display name, falling back to the
   /// raw ID if the weapons list hasn't loaded yet.
   String _builtInWeaponName(String weaponId) {
-    final weapons = ref
-        .read(weaponListNotifierProvider)
-        .valueOrNull;
+    final weapons = ref.read(weaponListNotifierProvider).valueOrNull;
     if (weapons != null) {
       final weapon = weapons.firstWhereOrNull((w) => w.id == weaponId);
       if (weapon?.name != null) return weapon!.name!;
@@ -925,9 +1080,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     return weaponId;
   }
 
-  Widget _buildSlotTooltipContent(ShipWeaponSlot slot,
-      BuildContext context,
-      List<ResolvedModule> modules,) {
+  Widget _buildSlotTooltipContent(
+    ShipWeaponSlot slot,
+    BuildContext context,
+    List<ResolvedModule> modules,
+  ) {
     final theme = Theme.of(context);
     final color = _colorForType(slot.type);
     final mountLabel = slot.mount.toUpperCase() == 'HARDPOINT'
@@ -986,19 +1143,18 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
           Text('Station Module', style: theme.textTheme.bodySmall),
           if (moduleName != null)
             Text('Module: $moduleName', style: theme.textTheme.bodySmall),
-        ] else
-          ...[
+        ] else ...[
+          Text(
+            '${slot.sizeUppercase} $mountLabel',
+            style: theme.textTheme.bodySmall,
+          ),
+          Text('Type: ${slot.type}', style: theme.textTheme.bodySmall),
+          if (slot.arc > 0)
             Text(
-              '${slot.sizeUppercase} $mountLabel',
+              'Arc: ${slot.arc.toStringAsFixed(0)}°',
               style: theme.textTheme.bodySmall,
             ),
-            Text('Type: ${slot.type}', style: theme.textTheme.bodySmall),
-            if (slot.arc > 0)
-              Text(
-                'Arc: ${slot.arc.toStringAsFixed(0)}°',
-                style: theme.textTheme.bodySmall,
-              ),
-          ],
+        ],
         Text(
           'Angle: ${slot.angle.toStringAsFixed(0)}°',
           style: theme.textTheme.bodySmall,
@@ -1007,11 +1163,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
     );
   }
 
-  Widget _buildModuleSlotHitAreaOffset(int index,
-      _TransformedSlot ts,
-      BuildContext context,
-      double dx,
-      double dy,) {
+  Widget _buildModuleSlotHitAreaOffset(
+    int index,
+    _TransformedSlot ts,
+    BuildContext context,
+    double dx,
+    double dy,
+  ) {
     final radius = _radiusForSize(ts.slot.size);
     final hitSize = (radius + 6) * 2;
 
@@ -1028,17 +1186,19 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView> {
       height: hitSize,
       child: widget.showSlotTooltips
           ? MovingTooltipWidget(
-        tooltipWidget: TooltipFrame(
-          child: _buildModuleSlotTooltipContent(ts, context),
-        ),
-        child: hitRegion,
-      )
+              tooltipWidget: TooltipFrame(
+                child: _buildModuleSlotTooltipContent(ts, context),
+              ),
+              child: hitRegion,
+            )
           : hitRegion,
     );
   }
 
-  Widget _buildModuleSlotTooltipContent(_TransformedSlot ts,
-      BuildContext context,) {
+  Widget _buildModuleSlotTooltipContent(
+    _TransformedSlot ts,
+    BuildContext context,
+  ) {
     final theme = Theme.of(context);
     final slot = ts.slot;
     final color = _colorForType(slot.typeUppercase);
@@ -1210,13 +1370,15 @@ class _WeaponSlotPainter extends CustomPainter {
     }
   }
 
-  void _drawFiringArc(Canvas canvas,
-      Offset pos,
-      double angleDeg,
-      double arcDeg,
-      Color color,
-      double radius,
-      bool isHovered,) {
+  void _drawFiringArc(
+    Canvas canvas,
+    Offset pos,
+    double angleDeg,
+    double arcDeg,
+    Color color,
+    double radius,
+    bool isHovered,
+  ) {
     final arcRadius = radius * 5;
     final arcRect = Rect.fromCircle(center: pos, radius: arcRadius);
 
@@ -1250,13 +1412,15 @@ class _WeaponSlotPainter extends CustomPainter {
     canvas.drawPath(path, outlinePaint);
   }
 
-  void _drawSlotMarker(Canvas canvas,
-      Offset pos,
-      double angleDeg,
-      ShipWeaponSlot slot,
-      Color color,
-      double radius,
-      bool isHovered,) {
+  void _drawSlotMarker(
+    Canvas canvas,
+    Offset pos,
+    double angleDeg,
+    ShipWeaponSlot slot,
+    Color color,
+    double radius,
+    bool isHovered,
+  ) {
     final isHardpoint = slot.mount.toUpperCase() == 'HARDPOINT';
     final coloredStrokeWidth = isHovered ? 2.0 : 1.2;
 
@@ -1360,12 +1524,13 @@ class _BoundsPainter extends CustomPainter {
     }
   }
 
-  void _drawPolygon(Canvas canvas,
-      List<Offset> vertices,
-      Paint stroke,
-      Paint fill,) {
-    final path = Path()
-      ..moveTo(vertices[0].dx, vertices[0].dy);
+  void _drawPolygon(
+    Canvas canvas,
+    List<Offset> vertices,
+    Paint stroke,
+    Paint fill,
+  ) {
+    final path = Path()..moveTo(vertices[0].dx, vertices[0].dy);
     for (var i = 1; i < vertices.length; i++) {
       path.lineTo(vertices[i].dx, vertices[i].dy);
     }
@@ -1380,6 +1545,130 @@ class _BoundsPainter extends CustomPainter {
         !identical(oldDelegate.moduleBoundsPolygons, moduleBoundsPolygons);
   }
 }
+
+/// Draws each engine slot's flame + round base glow, additively tinted by the
+/// engine style color. Mirrors how the weapon viewer renders glow sprites.
+class _EngineGlowPainter extends CustomPainter {
+  final List<ShipEngineSlot> slots;
+  final Map<String, EngineStyleSpec> styles;
+  final String? hullStyle;
+  final ui.Image flame;
+  final ui.Image glow;
+  final double imgH;
+  final List<double> center;
+
+  /// Current glow fade, 0 (hidden) to 1 (full). Drives repaint while animating.
+  final Animation<double> opacity;
+  final Color defaultColor;
+
+  _EngineGlowPainter({
+    required this.slots,
+    required this.styles,
+    required this.hullStyle,
+    required this.flame,
+    required this.glow,
+    required this.imgH,
+    required this.center,
+    required this.opacity,
+    required this.defaultColor,
+  }) : super(repaint: opacity);
+
+  EngineStyleSpec? _specFor(ShipEngineSlot s) => styles[s.style ?? hullStyle];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final op = opacity.value;
+    if (op <= 0) return;
+
+    final cx = center[0];
+    final cy = imgH - center[1];
+
+    final flameSrc = Rect.fromLTWH(
+      0,
+      0,
+      flame.width.toDouble(),
+      flame.height.toDouble(),
+    );
+    final glowSrc = Rect.fromLTWH(
+      0,
+      0,
+      glow.width.toDouble(),
+      glow.height.toDouble(),
+    );
+
+    for (final s in slots) {
+      // Same ship-space → screen transform as the weapon slot markers.
+      final pos = Offset(cx - s.location[1], cy - s.location[0]);
+
+      final spec = _specFor(s);
+      final paint = _engineGlowPaint(spec?.engineColor ?? defaultColor, op);
+
+      final engineWidth = s.width > 0 ? s.width : 10.0;
+      final maxLength = s.length > 0
+          ? s.length
+          : (s.contrailSize ?? engineWidth * 4);
+      // The `.ship` length is the full-burn flame length (e.g. 64px on an 80px
+      // hull). We render engines at rest, so use a fraction of it. We also
+      // ignore glowSizeMult — styles like COBRA_BOMBER (3.5) otherwise dwarf
+      // small hulls (drone_terminator, armaa_guppy).
+      final flameLength = maxLength * 0.55;
+      final flameWidth = engineWidth * 0.9;
+
+      // The flame sprite points +x (base at left), so rotating the canvas to
+      // the slot's facing aims it outward. angle 180 = aft = downward here.
+      final phi = -pi / 2 - s.angle * (pi / 180);
+
+      canvas.save();
+      canvas.translate(pos.dx, pos.dy);
+      canvas.rotate(phi);
+
+      // Round bloom at the nozzle, sized off the engine width.
+      final g = engineWidth * 0.95;
+      canvas.drawImageRect(
+        glow,
+        glowSrc,
+        Rect.fromCenter(center: Offset.zero, width: g, height: g),
+        paint,
+      );
+
+      // Flame extending outward from the nozzle along +x (post-rotation).
+      canvas.drawImageRect(
+        flame,
+        flameSrc,
+        Rect.fromLTWH(
+          -flameLength * 0.1,
+          -flameWidth / 2,
+          flameLength * 1.1,
+          flameWidth,
+        ),
+        paint,
+      );
+
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_EngineGlowPainter oldDelegate) =>
+      !identical(oldDelegate.slots, slots) ||
+      !identical(oldDelegate.flame, flame) ||
+      !identical(oldDelegate.glow, glow) ||
+      oldDelegate.defaultColor != defaultColor;
+}
+
+/// Additive glow paint, scaled by [op] (0–1) so the glow can fade in/out.
+Paint _engineGlowPaint(Color tint, double op) => Paint()
+  ..blendMode = BlendMode.plus
+  ..filterQuality = FilterQuality.high
+  ..colorFilter = ColorFilter.mode(
+    Color.from(
+      alpha: tint.a * op,
+      red: tint.r * op,
+      green: tint.g * op,
+      blue: tint.b * op,
+    ),
+    BlendMode.modulate,
+  );
 
 class _ModuleGeometry {
   final List<_ModuleSpriteLayout> layouts;

@@ -750,6 +750,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           fit: controllerState.useContainFit
               ? BoxFit.contain
               : BoxFit.scaleDown,
+          rowHovered: modifiers.isHovering,
         ),
         csvValue: (weapon) => weapon.allSpriteFiles.join(","),
         defaultState: WispGridColumnState(position: position++, width: 40),
@@ -1113,11 +1114,15 @@ class WeaponImageCell extends ConsumerStatefulWidget {
   final BoxFit fit;
   final double size;
 
+  /// Whether the grid row is hovered; reveals the glow for the whole row.
+  final bool rowHovered;
+
   const WeaponImageCell({
     super.key,
     required this.weapon,
     this.fit = BoxFit.scaleDown,
     this.size = 40,
+    this.rowHovered = false,
   });
 
   @override
@@ -1140,9 +1145,12 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
 
   static const double _deg2rad = math.pi / 180.0;
 
-  /// Animate the glow toward fully shown when hovered or always-on, else hidden.
+  /// Animate the glow toward fully shown when hovered (sprite or row) or
+  /// always-on, else hidden.
   void _updateGlow() {
-    _glowController.animateTo((_alwaysShowGlow || _hovering) ? 1.0 : 0.0);
+    _glowController.animateTo(
+      (_alwaysShowGlow || _hovering || widget.rowHovered) ? 1.0 : 0.0,
+    );
   }
 
   @override
@@ -1167,6 +1175,9 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
     if (oldWidget.weapon.id != widget.weapon.id) {
       _loaded = false;
       _build();
+    }
+    if (oldWidget.rowHovered != widget.rowHovered) {
+      _updateGlow();
     }
   }
 

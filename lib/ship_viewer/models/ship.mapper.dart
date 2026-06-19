@@ -479,6 +479,14 @@ class ShipMapper extends ClassMapperBase<Ship> {
   );
   static Color? _$color(Ship v) => v.color;
   static const Field<Ship, Color> _f$color = Field('color', _$color, opt: true);
+  static List<ShipEngineSlot> _$engineSlotsParsed(Ship v) =>
+      v.engineSlotsParsed;
+  static const Field<Ship, List<ShipEngineSlot>> _f$engineSlotsParsed = Field(
+    'engineSlotsParsed',
+    _$engineSlotsParsed,
+    key: r'engineslotsparsed',
+    mode: FieldMode.member,
+  );
   static ModVariant? _$modVariant(Ship v) => v.modVariant;
   static const Field<Ship, ModVariant> _f$modVariant = Field(
     'modVariant',
@@ -615,6 +623,7 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #isSkin: _f$isSkin,
     #baseHullId: _f$baseHullId,
     #color: _f$color,
+    #engineSlotsParsed: _f$engineSlotsParsed,
     #modVariant: _f$modVariant,
     #csvFile: _f$csvFile,
     #dataFile: _f$dataFile,

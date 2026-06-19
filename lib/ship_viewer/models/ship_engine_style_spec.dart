@@ -1,43 +1,42 @@
-// import 'package:json_annotation/json_annotation.dart';
-//
-// part '../generated/models/ship_engine_style_spec.g.dart';
-//
-// @JsonSerializable()
-// class EngineStyleSpec {
-//   final String type;
-//   final String mode;
-//   final List<double>? engineColor;
-//   final List<double>? engineCampaignColor;
-//   final double contrailParticleSizeMult;
-//   final double contrailParticleFinalSizeMult;
-//   final double contrailParticleDuration;
-//   final double contrailMaxSpeedMult;
-//   final double contrailAngularVelocityMult;
-//   final List<double>? contrailColor;
-//   final List<double>? contrailCampaignColor;
-//
-//   EngineStyleSpec(
-//       {this.type = "",
-//       this.mode = "",
-//       this.engineColor,
-//       this.engineCampaignColor,
-//       this.contrailParticleSizeMult = 0,
-//       this.contrailParticleFinalSizeMult = 0,
-//       this.contrailParticleDuration = 0,
-//       this.contrailMaxSpeedMult = 0,
-//       this.contrailAngularVelocityMult = 0,
-//       this.contrailColor,
-//       this.contrailCampaignColor});
-//
-//   /// Connect the generated function to the `fromJson`
-//   /// factory.
-//   factory EngineStyleSpec.fromJson(Map<String, dynamic> json) => _$EngineStyleSpecFromJson(json);
-//
-//   /// Connect the generated function to the `toJson` method.
-//   Map<String, dynamic> toJson() => _$EngineStyleSpecToJson(this);
-//
-//   @override
-//   String toString() {
-//     return 'EngineStyleSpec{type: $type, mode: $mode, engineColor: $engineColor, engineCampaignColor: $engineCampaignColor, contrailParticleSizeMult: $contrailParticleSizeMult, contrailParticleFinalSizeMult: $contrailParticleFinalSizeMult, contrailParticleDuration: $contrailParticleDuration, contrailMaxSpeedMult: $contrailMaxSpeedMult, contrailAngularVelocityMult: $contrailAngularVelocityMult, contrailColor: $contrailColor, contrailCampaignColor: $contrailCampaignColor}';
-//   }
-// }
+import 'package:flutter/material.dart';
+
+/// A single entry from `data/config/engine_styles.json`.
+///
+/// We only keep what the ship viewer needs to render a static engine glow:
+/// the flame [engineColor] and the relative size of the round base glow.
+class EngineStyleSpec {
+  /// Flame tint. Parsed from the `[r, g, b, a]` `engineColor` array (0–255).
+  final Color? engineColor;
+
+  /// Multiplier on the round base glow size (`COBRA_BOMBER` uses 3.5, etc.).
+  final double glowSizeMult;
+
+  const EngineStyleSpec({this.engineColor, this.glowSizeMult = 1.0});
+
+  static EngineStyleSpec fromJson(Map<dynamic, dynamic> json) {
+    return EngineStyleSpec(
+      engineColor: _color(json['engineColor']),
+      glowSizeMult: _toDouble(json['glowSizeMult']) ?? 1.0,
+    );
+  }
+
+  static Color? _color(dynamic value) {
+    if (value is! List || value.length < 3) return null;
+    final c = value
+        .map((e) => (_toDouble(e)?.toInt() ?? 0).clamp(0, 255))
+        .toList();
+    return Color.fromARGB(c.length >= 4 ? c[3] : 255, c[0], c[1], c[2]);
+  }
+
+  static final _floatSuffix = RegExp(r'[fF]$');
+
+  /// Coerces a JSON value to a double, tolerating Starsector's `0.5f`-style
+  /// number literals (which arrive as strings) and plain numeric strings.
+  static double? _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value.replaceAll(_floatSuffix, '').trim());
+    }
+    return null;
+  }
+}

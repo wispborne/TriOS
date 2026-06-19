@@ -53,6 +53,8 @@ class ShipsPageState with ShipsPageStateMappable {
 
   bool get useContainFit => persisted.useContainFit;
 
+  bool get alwaysShowEngineGlow => persisted.alwaysShowEngineGlow;
+
   const ShipsPageState({
     this.persisted = const ShipsPageStatePersisted(),
     this.shipSearchIndices = const {},
@@ -80,11 +82,13 @@ class ShipsPageStatePersisted with ShipsPageStatePersistedMappable {
   final bool splitPane;
   final bool showFilters;
   final bool useContainFit;
+  final bool alwaysShowEngineGlow;
 
   const ShipsPageStatePersisted({
     this.splitPane = false,
     this.showFilters = false,
     this.useContainFit = false,
+    this.alwaysShowEngineGlow = false,
   });
 }
 
@@ -236,6 +240,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             splitPane: saved?.splitPane ?? false,
             showFilters: saved?.showFilters ?? false,
             useContainFit: saved?.useContainFit ?? false,
+            alwaysShowEngineGlow: saved?.alwaysShowEngineGlow ?? false,
           ),
         ))
         .copyWith(
@@ -443,6 +448,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
                 splitPane: newState.splitPane,
                 showFilters: newState.showFilters,
                 useContainFit: newState.useContainFit,
+                alwaysShowEngineGlow: newState.alwaysShowEngineGlow,
               ),
             ),
       );
@@ -521,6 +527,16 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   void toggleUseContainFit() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(useContainFit: !state.useContainFit),
+    );
+    state = updatedState;
+    _persistState(state);
+  }
+
+  void toggleAlwaysShowEngineGlow() {
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(
+        alwaysShowEngineGlow: !state.alwaysShowEngineGlow,
+      ),
     );
     state = updatedState;
     _persistState(state);

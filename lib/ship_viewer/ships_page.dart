@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:super_clipboard/super_clipboard.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/descriptions/description_entry.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
@@ -154,9 +156,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         onChanged: (query) => ref
             .read(shipsPageControllerProvider.notifier)
             .updateSearchQuery(query),
-        onSubmitted: () => ref
-            .read(shipsPageControllerProvider.notifier)
-            .submitSearchQuery(),
+        onSubmitted: () =>
+            ref.read(shipsPageControllerProvider.notifier).submitSearchQuery(),
       ),
       splitPane: controllerState.splitPane,
       onToggleSplitPane: () {
@@ -405,12 +406,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         key: 'sprite',
         name: '',
         isSortable: false,
-        itemCellBuilder: (item, _) => ShipImageCell(
+        itemCellBuilder: (item, modifiers) => ShipImageCell(
           imagePath: _getPathForSpriteName(item, gameCoreDir).path,
           ship: item,
           fit: controllerState.useContainFit
               ? BoxFit.contain
               : BoxFit.scaleDown,
+          rowHovered: modifiers.isHovering,
         ),
         csvValue: (ship) => _getPathForSpriteName(ship, gameCoreDir).path,
         defaultState: WispGridColumnState(position: position++, width: 50),
@@ -419,7 +421,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         key: 'hullName',
         isSortable: true,
         name: 'Name',
-        getSortValue: (ship) => ship.hullNameForDisplay().replaceAll(_nonAlphanumeric, ''),
+        getSortValue: (ship) =>
+            ship.hullNameForDisplay().replaceAll(_nonAlphanumeric, ''),
         itemCellBuilder: (item, _) => Row(
           children: [
             Flexible(
@@ -484,8 +487,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         getSortValue: (ship) => ship.builtInWeapons?.length ?? 0,
         itemCellBuilder: (item, _) =>
             Text('${item.builtInWeapons?.length ?? 0}'),
-        csvValue: (ship) =>
-            (ship.builtInWeapons?.length ?? 0).toString(),
+        csvValue: (ship) => (ship.builtInWeapons?.length ?? 0).toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -493,10 +495,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         name: 'Built-in Mods',
         isSortable: true,
         getSortValue: (ship) => ship.builtInMods?.length ?? 0,
-        itemCellBuilder: (item, _) =>
-            Text('${item.builtInMods?.length ?? 0}'),
-        csvValue: (ship) =>
-            (ship.builtInMods?.length ?? 0).toString(),
+        itemCellBuilder: (item, _) => Text('${item.builtInMods?.length ?? 0}'),
+        csvValue: (ship) => (ship.builtInMods?.length ?? 0).toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -504,10 +504,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         name: 'Built-in Wings',
         isSortable: true,
         getSortValue: (ship) => ship.builtInWings?.length ?? 0,
-        itemCellBuilder: (item, _) =>
-            Text('${item.builtInWings?.length ?? 0}'),
-        csvValue: (ship) =>
-            (ship.builtInWings?.length ?? 0).toString(),
+        itemCellBuilder: (item, _) => Text('${item.builtInWings?.length ?? 0}'),
+        csvValue: (ship) => (ship.builtInWings?.length ?? 0).toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),
@@ -610,6 +608,12 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           checked: controllerState.useContainFit,
           onTap: () => controller.toggleUseContainFit(),
         ).toEntry(1),
+        OverflowMenuCheckItem(
+          title: 'Always show engine glow',
+          icon: Icons.local_fire_department,
+          checked: controllerState.alwaysShowEngineGlow,
+          onTap: () => controller.toggleAlwaysShowEngineGlow(),
+        ).toEntry(2),
       ],
     );
   }
@@ -979,11 +983,15 @@ class ShipImageCell extends StatefulWidget {
   final Ship? ship;
   final BoxFit fit;
 
+  /// Whether the grid row is hovered; reveals the engine glow on the icon.
+  final bool rowHovered;
+
   const ShipImageCell({
     super.key,
     required this.imagePath,
     this.ship,
     this.fit = BoxFit.scaleDown,
+    this.rowHovered = false,
   });
 
   @override
@@ -1025,17 +1033,23 @@ class _ShipImageCellState extends State<ShipImageCell> {
         child: Icon(Icons.image_not_supported),
       );
     }
+    final shipW = (widget.ship?.width ?? 80).toDouble();
+    final shipH = (widget.ship?.height ?? 80).toDouble();
+    final longest = (shipW > shipH ? shipW : shipH).clamp(1.0, double.infinity);
+    final previewLong = longest;
+    final previewScale = previewLong / longest;
+
     final tooltipWidget = Card(
       color: kDarkTooltipBackground,
       child: Padding(
         padding: .all(16),
         child: widget.ship != null
             ? SizedBox(
-                width: 300,
-                height: 300,
+                width: shipW * previewScale,
+                height: shipH * previewScale,
                 child: ShipBlueprintView.minimal(
                   ship: widget.ship!,
-                  fit: BoxFit.scaleDown,
+                  fit: BoxFit.contain,
                 ),
               )
             : Image.file(_extantPath!.toFile(), fit: BoxFit.contain),
@@ -1044,29 +1058,84 @@ class _ShipImageCellState extends State<ShipImageCell> {
 
     return MovingTooltipWidget(
       tooltipWidget: tooltipWidget,
-      child: InkWell(
-        onTap: () {
-          _extantPath?.toFile().showInExplorer();
-        },
-        child: widget.ship != null
-            ? SizedBox(
-                width: size,
-                height: size,
-                child: ShipBlueprintView.minimal(
-                  ship: widget.ship!,
+      child: ContextMenuRegion(
+        contextMenu: ContextMenu(
+          entries: <ContextMenuEntry>[
+            MenuItem(
+              label: 'Copy sprite to clipboard',
+              icon: Icons.copy,
+              onSelected: _copySpriteToClipboard,
+            ),
+            MenuItem(
+              label: 'Open sprite folder',
+              icon: Icons.folder_open,
+              onSelected: () => _extantPath?.toFile().showInExplorer(),
+            ),
+          ],
+          padding: const EdgeInsets.all(8.0),
+        ),
+        child: InkWell(
+          onTap: () {
+            _extantPath?.toFile().showInExplorer();
+          },
+          child: widget.ship != null
+              ? SizedBox(
+                  width: size,
+                  height: size,
+                  child: ShipBlueprintView.minimal(
+                    ship: widget.ship!,
+                    cacheWidth: size.toInt(),
+                    fit: widget.fit,
+                    clipContent: false,
+                    forceEngineGlow: widget.rowHovered,
+                  ),
+                )
+              : Image.file(
+                  File(_extantPath!),
+                  width: size,
+                  height: size,
                   cacheWidth: size.toInt(),
                   fit: widget.fit,
                 ),
-              )
-            : Image.file(
-                File(_extantPath!),
-                width: size,
-                height: size,
-                cacheWidth: size.toInt(),
-                fit: widget.fit,
-              ),
+        ),
       ),
     );
+  }
+
+  /// Copies the ship's hull sprite (a PNG file) to the clipboard.
+  Future<void> _copySpriteToClipboard() async {
+    final path = _extantPath;
+    if (path == null) return;
+
+    final clipboard = SystemClipboard.instance;
+    if (clipboard == null) {
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        type: SnackBarType.warn,
+        content: const Text('Copying images is not supported on this platform.'),
+      );
+      return;
+    }
+
+    try {
+      final bytes = await File(path).readAsBytes();
+      final item = DataWriterItem()..add(Formats.png(bytes));
+      await clipboard.write([item]);
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        type: SnackBarType.info,
+        content: const Text('Copied sprite to clipboard.'),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        type: SnackBarType.error,
+        content: Text('Failed to copy sprite: $e'),
+      );
+    }
   }
 }
 

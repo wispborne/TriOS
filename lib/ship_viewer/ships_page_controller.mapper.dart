@@ -472,12 +472,22 @@ class ShipsPageStatePersistedMapper
     opt: true,
     def: false,
   );
+  static bool _$alwaysShowEngineGlow(ShipsPageStatePersisted v) =>
+      v.alwaysShowEngineGlow;
+  static const Field<ShipsPageStatePersisted, bool> _f$alwaysShowEngineGlow =
+      Field(
+        'alwaysShowEngineGlow',
+        _$alwaysShowEngineGlow,
+        opt: true,
+        def: false,
+      );
 
   @override
   final MappableFields<ShipsPageStatePersisted> fields = const {
     #splitPane: _f$splitPane,
     #showFilters: _f$showFilters,
     #useContainFit: _f$useContainFit,
+    #alwaysShowEngineGlow: _f$alwaysShowEngineGlow,
   };
 
   static ShipsPageStatePersisted _instantiate(DecodingData data) {
@@ -485,6 +495,7 @@ class ShipsPageStatePersistedMapper
       splitPane: data.dec(_f$splitPane),
       showFilters: data.dec(_f$showFilters),
       useContainFit: data.dec(_f$useContainFit),
+      alwaysShowEngineGlow: data.dec(_f$alwaysShowEngineGlow),
     );
   }
 
@@ -558,7 +569,12 @@ abstract class ShipsPageStatePersistedCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? splitPane, bool? showFilters, bool? useContainFit});
+  $R call({
+    bool? splitPane,
+    bool? showFilters,
+    bool? useContainFit,
+    bool? alwaysShowEngineGlow,
+  });
   ShipsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -574,11 +590,18 @@ class _ShipsPageStatePersistedCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ShipsPageStatePersisted> $mapper =
       ShipsPageStatePersistedMapper.ensureInitialized();
   @override
-  $R call({bool? splitPane, bool? showFilters, bool? useContainFit}) => $apply(
+  $R call({
+    bool? splitPane,
+    bool? showFilters,
+    bool? useContainFit,
+    bool? alwaysShowEngineGlow,
+  }) => $apply(
     FieldCopyWithData({
       if (splitPane != null) #splitPane: splitPane,
       if (showFilters != null) #showFilters: showFilters,
       if (useContainFit != null) #useContainFit: useContainFit,
+      if (alwaysShowEngineGlow != null)
+        #alwaysShowEngineGlow: alwaysShowEngineGlow,
     }),
   );
   @override
@@ -586,6 +609,10 @@ class _ShipsPageStatePersistedCopyWithImpl<$R, $Out>
     splitPane: data.get(#splitPane, or: $value.splitPane),
     showFilters: data.get(#showFilters, or: $value.showFilters),
     useContainFit: data.get(#useContainFit, or: $value.useContainFit),
+    alwaysShowEngineGlow: data.get(
+      #alwaysShowEngineGlow,
+      or: $value.alwaysShowEngineGlow,
+    ),
   );
 
   @override

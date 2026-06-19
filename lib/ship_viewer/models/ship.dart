@@ -4,6 +4,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/ship_viewer/models/ship_engine_slot.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
@@ -125,6 +126,10 @@ class Ship with ShipMappable implements WispGridItem {
   // Raw mod data
   final List<dynamic>? engineSlots;
   final List<ShipWeaponSlot>? weaponSlots;
+
+  /// Typed view of [engineSlots], parsed lazily for engine glow rendering.
+  late final List<ShipEngineSlot> engineSlotsParsed =
+      engineSlots?.map(ShipEngineSlot.fromRaw).nonNulls.toList() ?? const [];
 
   final Map<String, String>? builtInWeapons;
   final List<String>? builtInMods;

@@ -369,6 +369,105 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'hardpointgunsprite',
     opt: true,
   );
+  static String? _$turretUnderSprite(Weapon v) => v.turretUnderSprite;
+  static const Field<Weapon, String> _f$turretUnderSprite = Field(
+    'turretUnderSprite',
+    _$turretUnderSprite,
+    key: r'turretundersprite',
+    opt: true,
+  );
+  static String? _$hardpointUnderSprite(Weapon v) => v.hardpointUnderSprite;
+  static const Field<Weapon, String> _f$hardpointUnderSprite = Field(
+    'hardpointUnderSprite',
+    _$hardpointUnderSprite,
+    key: r'hardpointundersprite',
+    opt: true,
+  );
+  static String? _$turretGlowSprite(Weapon v) => v.turretGlowSprite;
+  static const Field<Weapon, String> _f$turretGlowSprite = Field(
+    'turretGlowSprite',
+    _$turretGlowSprite,
+    key: r'turretglowsprite',
+    opt: true,
+  );
+  static String? _$hardpointGlowSprite(Weapon v) => v.hardpointGlowSprite;
+  static const Field<Weapon, String> _f$hardpointGlowSprite = Field(
+    'hardpointGlowSprite',
+    _$hardpointGlowSprite,
+    key: r'hardpointglowsprite',
+    opt: true,
+  );
+  static List<double>? _$glowColor(Weapon v) => v.glowColor;
+  static const Field<Weapon, List<double>> _f$glowColor = Field(
+    'glowColor',
+    _$glowColor,
+    key: r'glowcolor',
+    opt: true,
+  );
+  static List<String>? _$renderHints(Weapon v) => v.renderHints;
+  static const Field<Weapon, List<String>> _f$renderHints = Field(
+    'renderHints',
+    _$renderHints,
+    key: r'renderhints',
+    opt: true,
+  );
+  static String? _$projectileSpecId(Weapon v) => v.projectileSpecId;
+  static const Field<Weapon, String> _f$projectileSpecId = Field(
+    'projectileSpecId',
+    _$projectileSpecId,
+    key: r'projectilespecid',
+    opt: true,
+  );
+  static List<double>? _$turretOffsets(Weapon v) => v.turretOffsets;
+  static const Field<Weapon, List<double>> _f$turretOffsets = Field(
+    'turretOffsets',
+    _$turretOffsets,
+    key: r'turretoffsets',
+    opt: true,
+  );
+  static List<double>? _$hardpointOffsets(Weapon v) => v.hardpointOffsets;
+  static const Field<Weapon, List<double>> _f$hardpointOffsets = Field(
+    'hardpointOffsets',
+    _$hardpointOffsets,
+    key: r'hardpointoffsets',
+    opt: true,
+  );
+  static List<double>? _$turretAngleOffsets(Weapon v) => v.turretAngleOffsets;
+  static const Field<Weapon, List<double>> _f$turretAngleOffsets = Field(
+    'turretAngleOffsets',
+    _$turretAngleOffsets,
+    key: r'turretangleoffsets',
+    opt: true,
+  );
+  static List<double>? _$hardpointAngleOffsets(Weapon v) =>
+      v.hardpointAngleOffsets;
+  static const Field<Weapon, List<double>> _f$hardpointAngleOffsets = Field(
+    'hardpointAngleOffsets',
+    _$hardpointAngleOffsets,
+    key: r'hardpointangleoffsets',
+    opt: true,
+  );
+  static String? _$loadedMissileSprite(Weapon v) => v.loadedMissileSprite;
+  static const Field<Weapon, String> _f$loadedMissileSprite = Field(
+    'loadedMissileSprite',
+    _$loadedMissileSprite,
+    key: r'loadedmissilesprite',
+    opt: true,
+  );
+  static List<double>? _$loadedMissileSize(Weapon v) => v.loadedMissileSize;
+  static const Field<Weapon, List<double>> _f$loadedMissileSize = Field(
+    'loadedMissileSize',
+    _$loadedMissileSize,
+    key: r'loadedmissilesize',
+    opt: true,
+  );
+  static List<double>? _$loadedMissileCenter(Weapon v) => v.loadedMissileCenter;
+  static const Field<Weapon, List<double>> _f$loadedMissileCenter = Field(
+    'loadedMissileCenter',
+    _$loadedMissileCenter,
+    key: r'loadedmissilecenter',
+    opt: true,
+  );
   static String? _$mountTypeOverride(Weapon v) => v.mountTypeOverride;
   static const Field<Weapon, String> _f$mountTypeOverride = Field(
     'mountTypeOverride',
@@ -488,11 +587,18 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'hassustaineddps',
     mode: FieldMode.member,
   );
-  static List<String> _$spritesForWeapon(Weapon v) => v.spritesForWeapon;
-  static const Field<Weapon, List<String>> _f$spritesForWeapon = Field(
-    'spritesForWeapon',
-    _$spritesForWeapon,
-    key: r'spritesforweapon',
+  static List<String> _$spriteLayers(Weapon v) => v.spriteLayers;
+  static const Field<Weapon, List<String>> _f$spriteLayers = Field(
+    'spriteLayers',
+    _$spriteLayers,
+    key: r'spritelayers',
+    mode: FieldMode.member,
+  );
+  static List<String> _$allSpriteFiles(Weapon v) => v.allSpriteFiles;
+  static const Field<Weapon, List<String>> _f$allSpriteFiles = Field(
+    'allSpriteFiles',
+    _$allSpriteFiles,
+    key: r'allspritefiles',
     mode: FieldMode.member,
   );
 
@@ -555,6 +661,20 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #turretGunSprite: _f$turretGunSprite,
     #hardpointSprite: _f$hardpointSprite,
     #hardpointGunSprite: _f$hardpointGunSprite,
+    #turretUnderSprite: _f$turretUnderSprite,
+    #hardpointUnderSprite: _f$hardpointUnderSprite,
+    #turretGlowSprite: _f$turretGlowSprite,
+    #hardpointGlowSprite: _f$hardpointGlowSprite,
+    #glowColor: _f$glowColor,
+    #renderHints: _f$renderHints,
+    #projectileSpecId: _f$projectileSpecId,
+    #turretOffsets: _f$turretOffsets,
+    #hardpointOffsets: _f$hardpointOffsets,
+    #turretAngleOffsets: _f$turretAngleOffsets,
+    #hardpointAngleOffsets: _f$hardpointAngleOffsets,
+    #loadedMissileSprite: _f$loadedMissileSprite,
+    #loadedMissileSize: _f$loadedMissileSize,
+    #loadedMissileCenter: _f$loadedMissileCenter,
     #mountTypeOverride: _f$mountTypeOverride,
     #modVariant: _f$modVariant,
     #csvFile: _f$csvFile,
@@ -572,7 +692,8 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #sustainedFluxPerSecond: _f$sustainedFluxPerSecond,
     #empPerActivation: _f$empPerActivation,
     #hasSustainedDps: _f$hasSustainedDps,
-    #spritesForWeapon: _f$spritesForWeapon,
+    #spriteLayers: _f$spriteLayers,
+    #allSpriteFiles: _f$allSpriteFiles,
   };
 
   static Weapon _instantiate(DecodingData data) {
@@ -634,6 +755,20 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       turretGunSprite: data.dec(_f$turretGunSprite),
       hardpointSprite: data.dec(_f$hardpointSprite),
       hardpointGunSprite: data.dec(_f$hardpointGunSprite),
+      turretUnderSprite: data.dec(_f$turretUnderSprite),
+      hardpointUnderSprite: data.dec(_f$hardpointUnderSprite),
+      turretGlowSprite: data.dec(_f$turretGlowSprite),
+      hardpointGlowSprite: data.dec(_f$hardpointGlowSprite),
+      glowColor: data.dec(_f$glowColor),
+      renderHints: data.dec(_f$renderHints),
+      projectileSpecId: data.dec(_f$projectileSpecId),
+      turretOffsets: data.dec(_f$turretOffsets),
+      hardpointOffsets: data.dec(_f$hardpointOffsets),
+      turretAngleOffsets: data.dec(_f$turretAngleOffsets),
+      hardpointAngleOffsets: data.dec(_f$hardpointAngleOffsets),
+      loadedMissileSprite: data.dec(_f$loadedMissileSprite),
+      loadedMissileSize: data.dec(_f$loadedMissileSize),
+      loadedMissileCenter: data.dec(_f$loadedMissileCenter),
       mountTypeOverride: data.dec(_f$mountTypeOverride),
     );
   }
@@ -684,6 +819,20 @@ extension WeaponValueCopy<$R, $Out> on ObjectCopyWith<$R, Weapon, $Out> {
 
 abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>? get glowColor;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get renderHints;
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get turretOffsets;
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get hardpointOffsets;
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get turretAngleOffsets;
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get hardpointAngleOffsets;
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get loadedMissileSize;
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get loadedMissileCenter;
   $R call({
     String? name,
     String? id,
@@ -742,6 +891,20 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     String? turretGunSprite,
     String? hardpointSprite,
     String? hardpointGunSprite,
+    String? turretUnderSprite,
+    String? hardpointUnderSprite,
+    String? turretGlowSprite,
+    String? hardpointGlowSprite,
+    List<double>? glowColor,
+    List<String>? renderHints,
+    String? projectileSpecId,
+    List<double>? turretOffsets,
+    List<double>? hardpointOffsets,
+    List<double>? turretAngleOffsets,
+    List<double>? hardpointAngleOffsets,
+    String? loadedMissileSprite,
+    List<double>? loadedMissileSize,
+    List<double>? loadedMissileCenter,
     String? mountTypeOverride,
   });
   WeaponCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
@@ -753,6 +916,78 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
 
   @override
   late final ClassMapperBase<Weapon> $mapper = WeaponMapper.ensureInitialized();
+  @override
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>? get glowColor =>
+      $value.glowColor != null
+      ? ListCopyWith(
+          $value.glowColor!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(glowColor: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
+  get renderHints => $value.renderHints != null
+      ? ListCopyWith(
+          $value.renderHints!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(renderHints: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get turretOffsets => $value.turretOffsets != null
+      ? ListCopyWith(
+          $value.turretOffsets!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(turretOffsets: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get hardpointOffsets => $value.hardpointOffsets != null
+      ? ListCopyWith(
+          $value.hardpointOffsets!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(hardpointOffsets: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get turretAngleOffsets => $value.turretAngleOffsets != null
+      ? ListCopyWith(
+          $value.turretAngleOffsets!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(turretAngleOffsets: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get hardpointAngleOffsets => $value.hardpointAngleOffsets != null
+      ? ListCopyWith(
+          $value.hardpointAngleOffsets!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(hardpointAngleOffsets: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get loadedMissileSize => $value.loadedMissileSize != null
+      ? ListCopyWith(
+          $value.loadedMissileSize!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(loadedMissileSize: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>>?
+  get loadedMissileCenter => $value.loadedMissileCenter != null
+      ? ListCopyWith(
+          $value.loadedMissileCenter!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(loadedMissileCenter: v),
+        )
+      : null;
   @override
   $R call({
     Object? name = $none,
@@ -812,6 +1047,20 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     Object? turretGunSprite = $none,
     Object? hardpointSprite = $none,
     Object? hardpointGunSprite = $none,
+    Object? turretUnderSprite = $none,
+    Object? hardpointUnderSprite = $none,
+    Object? turretGlowSprite = $none,
+    Object? hardpointGlowSprite = $none,
+    Object? glowColor = $none,
+    Object? renderHints = $none,
+    Object? projectileSpecId = $none,
+    Object? turretOffsets = $none,
+    Object? hardpointOffsets = $none,
+    Object? turretAngleOffsets = $none,
+    Object? hardpointAngleOffsets = $none,
+    Object? loadedMissileSprite = $none,
+    Object? loadedMissileSize = $none,
+    Object? loadedMissileCenter = $none,
     Object? mountTypeOverride = $none,
   }) => $apply(
     FieldCopyWithData({
@@ -872,6 +1121,25 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
       if (turretGunSprite != $none) #turretGunSprite: turretGunSprite,
       if (hardpointSprite != $none) #hardpointSprite: hardpointSprite,
       if (hardpointGunSprite != $none) #hardpointGunSprite: hardpointGunSprite,
+      if (turretUnderSprite != $none) #turretUnderSprite: turretUnderSprite,
+      if (hardpointUnderSprite != $none)
+        #hardpointUnderSprite: hardpointUnderSprite,
+      if (turretGlowSprite != $none) #turretGlowSprite: turretGlowSprite,
+      if (hardpointGlowSprite != $none)
+        #hardpointGlowSprite: hardpointGlowSprite,
+      if (glowColor != $none) #glowColor: glowColor,
+      if (renderHints != $none) #renderHints: renderHints,
+      if (projectileSpecId != $none) #projectileSpecId: projectileSpecId,
+      if (turretOffsets != $none) #turretOffsets: turretOffsets,
+      if (hardpointOffsets != $none) #hardpointOffsets: hardpointOffsets,
+      if (turretAngleOffsets != $none) #turretAngleOffsets: turretAngleOffsets,
+      if (hardpointAngleOffsets != $none)
+        #hardpointAngleOffsets: hardpointAngleOffsets,
+      if (loadedMissileSprite != $none)
+        #loadedMissileSprite: loadedMissileSprite,
+      if (loadedMissileSize != $none) #loadedMissileSize: loadedMissileSize,
+      if (loadedMissileCenter != $none)
+        #loadedMissileCenter: loadedMissileCenter,
       if (mountTypeOverride != $none) #mountTypeOverride: mountTypeOverride,
     }),
   );
@@ -942,6 +1210,44 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     hardpointGunSprite: data.get(
       #hardpointGunSprite,
       or: $value.hardpointGunSprite,
+    ),
+    turretUnderSprite: data.get(
+      #turretUnderSprite,
+      or: $value.turretUnderSprite,
+    ),
+    hardpointUnderSprite: data.get(
+      #hardpointUnderSprite,
+      or: $value.hardpointUnderSprite,
+    ),
+    turretGlowSprite: data.get(#turretGlowSprite, or: $value.turretGlowSprite),
+    hardpointGlowSprite: data.get(
+      #hardpointGlowSprite,
+      or: $value.hardpointGlowSprite,
+    ),
+    glowColor: data.get(#glowColor, or: $value.glowColor),
+    renderHints: data.get(#renderHints, or: $value.renderHints),
+    projectileSpecId: data.get(#projectileSpecId, or: $value.projectileSpecId),
+    turretOffsets: data.get(#turretOffsets, or: $value.turretOffsets),
+    hardpointOffsets: data.get(#hardpointOffsets, or: $value.hardpointOffsets),
+    turretAngleOffsets: data.get(
+      #turretAngleOffsets,
+      or: $value.turretAngleOffsets,
+    ),
+    hardpointAngleOffsets: data.get(
+      #hardpointAngleOffsets,
+      or: $value.hardpointAngleOffsets,
+    ),
+    loadedMissileSprite: data.get(
+      #loadedMissileSprite,
+      or: $value.loadedMissileSprite,
+    ),
+    loadedMissileSize: data.get(
+      #loadedMissileSize,
+      or: $value.loadedMissileSize,
+    ),
+    loadedMissileCenter: data.get(
+      #loadedMissileCenter,
+      or: $value.loadedMissileCenter,
     ),
     mountTypeOverride: data.get(
       #mountTypeOverride,

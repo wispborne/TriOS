@@ -34,11 +34,16 @@ class WeaponMountIndicator extends StatelessWidget {
               weaponSize: weapon.size?.toUpperCase() ?? 'SMALL',
             ),
           ),
-          // Weapon sprite on top.
-          if (weapon.spritesForWeapon.firstOrNull != null)
+          // Weapon sprite on top, scaled to fill the mount frame like the
+          // in-game codex. 0.7 ≈ 1/√2 so the 45°-rotated sprite fits the tile.
+          if (weapon.spriteLayers.isNotEmpty)
             Transform.rotate(
               angle: 0.785,
-              child: WeaponImageCell(imagePaths: weapon.spritesForWeapon, fit: .none,),
+              child: WeaponImageCell(
+                weapon: weapon,
+                fit: BoxFit.contain,
+                size: size * 0.7,
+              ),
             ),
         ],
       ),
@@ -72,8 +77,10 @@ class _MountShapePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size canvasSize) {
     final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
-    final baseRadius = canvasSize.width / 2;
     const strokeWeight = 3.5;
+    // Inset by the full stroke width so the outermost shape's stroke (centered
+    // on the path) stays inside the canvas instead of bleeding past the edge.
+    final baseRadius = (canvasSize.width / 2) - strokeWeight;
     const baseAlpha = 0.5;
 
     final color = _mountColors[weaponType] ?? Colors.white;

@@ -212,6 +212,12 @@ Future<ParseResult> _parseWeaponsCsv(
       .where((file) => file.path.endsWith('.wpn'))
       .toList();
 
+  // Index missile projectile specs in this folder so launchers with the
+  // RENDER_LOADED_MISSILES hint can show their loaded missiles. Resolved
+  // within the weapon's own mod folder (cross-mod projectile references are
+  // not handled — those launchers simply won't show missiles).
+  final missileSpecs = await _indexMissileSpecs(folder);
+
   final wpnDataMap = <String, Map<String, dynamic>>{};
 
   for (final wpnFile in wpnFiles) {
@@ -229,28 +235,62 @@ Future<ParseResult> _parseWeaponsCsv(
           'mountTypeOverride': jsonData['mountTypeOverride'],
           'size': jsonData['size'],
           'damageType': jsonData['damageType'],
-          'turretSprite': p
-              .join(folder.path, jsonData['turretSprite'])
-              .toFile()
-              .normalize
-              .path,
-          'turretGunSprite': p
-              .join(folder.path, jsonData['turretGunSprite'])
-              .toFile()
-              .normalize
-              .path,
-          'hardpointSprite': p
-              .join(folder.path, jsonData['hardpointSprite'])
-              .toFile()
-              .normalize
-              .path,
-          'hardpointGunSprite': p
-              .join(folder.path, jsonData['hardpointGunSprite'])
-              .toFile()
-              .normalize
-              .path,
+          'turretSprite': _resolveSpritePath(folder, jsonData['turretSprite']),
+          'turretGunSprite': _resolveSpritePath(
+            folder,
+            jsonData['turretGunSprite'],
+          ),
+          'hardpointSprite': _resolveSpritePath(
+            folder,
+            jsonData['hardpointSprite'],
+          ),
+          'hardpointGunSprite': _resolveSpritePath(
+            folder,
+            jsonData['hardpointGunSprite'],
+          ),
+          'turretUnderSprite': _resolveSpritePath(
+            folder,
+            jsonData['turretUnderSprite'],
+          ),
+          'hardpointUnderSprite': _resolveSpritePath(
+            folder,
+            jsonData['hardpointUnderSprite'],
+          ),
+          'turretGlowSprite': _resolveSpritePath(
+            folder,
+            jsonData['turretGlowSprite'],
+          ),
+          'hardpointGlowSprite': _resolveSpritePath(
+            folder,
+            jsonData['hardpointGlowSprite'],
+          ),
+          'glowColor': _toDoubleList(jsonData['glowColor']),
+          'renderHints': _toStringList(jsonData['renderHints']),
+          'projectileSpecId': jsonData['projectileSpecId'],
+          'turretOffsets': _toDoubleList(jsonData['turretOffsets']),
+          'hardpointOffsets': _toDoubleList(jsonData['hardpointOffsets']),
+          'turretAngleOffsets': _toDoubleList(jsonData['turretAngleOffsets']),
+          'hardpointAngleOffsets': _toDoubleList(
+            jsonData['hardpointAngleOffsets'],
+          ),
           'wpnFile': wpnFile,
         };
+
+        // Resolve loaded-missile render data for launchers.
+        final hints = (wpnFields['renderHints'] as List<String>?) ?? const [];
+        final projId = jsonData['projectileSpecId'] as String?;
+        if (projId != null &&
+            hints.any(
+              (h) => h.toUpperCase().contains('RENDER_LOADED_MISSILES'),
+            )) {
+          final missile = missileSpecs[projId];
+          if (missile != null) {
+            wpnFields['loadedMissileSprite'] = missile.sprite;
+            wpnFields['loadedMissileSize'] = missile.size;
+            wpnFields['loadedMissileCenter'] = missile.center;
+          }
+        }
+
         wpnDataMap[weaponId] = wpnFields;
       } else {
         errors.add('[$modName] .wpn file ${wpnFile.path} missing "id" field');
@@ -364,6 +404,76 @@ Future<ParseResult> _parseWeaponsCsv(
   }
 
   return ParseResult(weapons, errors, infos, filesProcessed);
+}
+
+/// Joins a mod-relative sprite path to an absolute, normalized path.
+/// Returns null when the source value is missing, so absent layers stay null
+/// (joining a null would otherwise yield the mod folder path).
+String? _resolveSpritePath(Directory folder, dynamic relativePath) {
+  if (relativePath is! String || relativePath.trim().isEmpty) return null;
+  return p.join(folder.path, relativePath).toFile().normalize.path;
+}
+
+List<double>? _toDoubleList(dynamic value) {
+  if (value is! List) return null;
+  final result = <double>[];
+  for (final e in value) {
+    if (e is num) {
+      result.add(e.toDouble());
+    } else {
+      final parsed = num.tryParse(e.toString());
+      if (parsed != null) result.add(parsed.toDouble());
+    }
+  }
+  return result.isEmpty ? null : result;
+}
+
+List<String>? _toStringList(dynamic value) {
+  if (value is! List) return null;
+  return value.map((e) => e.toString()).toList();
+}
+
+/// Resolved render data for a loaded missile, from a `.proj` spec.
+class _MissileSpec {
+  final String sprite;
+  final List<double>? size;
+  final List<double>? center;
+
+  _MissileSpec(this.sprite, this.size, this.center);
+}
+
+/// Scans `data/weapons` (recursively, to catch the `proj/` subfolder) and
+/// builds a `projectileSpecId -> _MissileSpec` index for missile-type
+/// projectiles defined in this folder.
+Future<Map<String, _MissileSpec>> _indexMissileSpecs(Directory folder) async {
+  final result = <String, _MissileSpec>{};
+  final projDir = p.join(folder.path, 'data/weapons').toDirectory();
+  if (!await projDir.exists()) return result;
+
+  final projFiles = projDir
+      .listSync(recursive: true)
+      .whereType<File>()
+      .where((file) => file.path.endsWith('.proj'));
+
+  for (final projFile in projFiles) {
+    try {
+      final content = await projFile.readAsString(encoding: utf8);
+      final json = await content.removeJsonComments().parseJsonToMapAsync();
+      final id = json['id'] as String?;
+      final specClass = (json['specClass'] as String?)?.toLowerCase();
+      if (id == null || specClass != 'missile') continue;
+      final sprite = _resolveSpritePath(folder, json['sprite']);
+      if (sprite == null) continue;
+      result[id] = _MissileSpec(
+        sprite,
+        _toDoubleList(json['size']),
+        _toDoubleList(json['center']),
+      );
+    } catch (_) {
+      // Ignore unparseable .proj files; missiles are best-effort decoration.
+    }
+  }
+  return result;
 }
 
 // Helper class to hold parsing results

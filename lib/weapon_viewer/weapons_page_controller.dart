@@ -25,11 +25,13 @@ class WeaponsPageStatePersisted with WeaponsPageStatePersistedMappable {
   final bool splitPane;
   final bool useContainFit;
   final bool showFilters;
+  final bool alwaysShowGlow;
 
   const WeaponsPageStatePersisted({
     this.splitPane = false,
     this.useContainFit = false,
     this.showFilters = false,
+    this.alwaysShowGlow = false,
   });
 }
 
@@ -48,6 +50,8 @@ class WeaponsPageState with WeaponsPageStateMappable {
   bool get useContainFit => persisted.useContainFit;
 
   bool get showFilters => persisted.showFilters;
+
+  bool get alwaysShowGlow => persisted.alwaysShowGlow;
 
   const WeaponsPageState({
     this.persisted = const WeaponsPageStatePersisted(),
@@ -146,6 +150,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
                     splitPane: saved?.splitPane ?? false,
                     useContainFit: saved?.useContainFit ?? false,
                     showFilters: saved?.showFilters ?? false,
+                    alwaysShowGlow: saved?.alwaysShowGlow ?? false,
                   ),
                 ))
             .copyWith(
@@ -271,6 +276,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
             splitPane: newState.splitPane,
             useContainFit: newState.useContainFit,
             showFilters: newState.showFilters,
+            alwaysShowGlow: newState.alwaysShowGlow,
           ),
         );
       });
@@ -375,6 +381,16 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   void toggleUseContainFit() {
     final updatedState = state.copyWith(
       persisted: state.persisted.copyWith(useContainFit: !state.useContainFit),
+    );
+    state = updatedState;
+    _persistState(state);
+  }
+
+  void toggleAlwaysShowGlow() {
+    final updatedState = state.copyWith(
+      persisted: state.persisted.copyWith(
+        alwaysShowGlow: !state.alwaysShowGlow,
+      ),
     );
     state = updatedState;
     _persistState(state);

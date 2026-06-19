@@ -96,6 +96,35 @@ class Weapon with WeaponMappable implements WispGridItem {
   final String? turretGunSprite;
   final String? hardpointSprite;
   final String? hardpointGunSprite;
+  final String? turretUnderSprite;
+  final String? hardpointUnderSprite;
+  final String? turretGlowSprite;
+  final String? hardpointGlowSprite;
+
+  /// `[r, g, b, a]` from the .wpn, used to tint the (additive) glow sprite.
+  final List<double>? glowColor;
+
+  /// Raw `renderHints` list from the .wpn, e.g. `RENDER_BARREL_BELOW`,
+  /// `RENDER_LOADED_MISSILES`.
+  final List<String>? renderHints;
+
+  /// Projectile fired by this weapon; used to look up loaded-missile sprites.
+  final String? projectileSpecId;
+
+  /// Fire-point offsets, flat `[x1, y1, x2, y2, ...]` (one pair per barrel/tube).
+  /// `x` is along the barrel (weapon-forward), `y` is lateral.
+  final List<double>? turretOffsets;
+  final List<double>? hardpointOffsets;
+  final List<double>? turretAngleOffsets;
+  final List<double>? hardpointAngleOffsets;
+
+  /// Loaded-missile render data, resolved from the `.proj` at parse time
+  /// (only set when the weapon has the `RENDER_LOADED_MISSILES` hint and the
+  /// projectile spec was found in the weapon's own mod folder).
+  final String? loadedMissileSprite;
+  final List<double>? loadedMissileSize;
+  final List<double>? loadedMissileCenter;
+
   final String? mountTypeOverride;
 
   /// Returns the effective mount type, considering mountTypeOverride.
@@ -168,6 +197,20 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.turretGunSprite,
     this.hardpointSprite,
     this.hardpointGunSprite,
+    this.turretUnderSprite,
+    this.hardpointUnderSprite,
+    this.turretGlowSprite,
+    this.hardpointGlowSprite,
+    this.glowColor,
+    this.renderHints,
+    this.projectileSpecId,
+    this.turretOffsets,
+    this.hardpointOffsets,
+    this.turretAngleOffsets,
+    this.hardpointAngleOffsets,
+    this.loadedMissileSprite,
+    this.loadedMissileSize,
+    this.loadedMissileCenter,
     this.mountTypeOverride,
   });
 
@@ -303,10 +346,51 @@ class Weapon with WeaponMappable implements WispGridItem {
     return false;
   }
 
-  late final List<String> spritesForWeapon = [
-    hardpointGunSprite,
-    hardpointSprite,
-    turretGunSprite,
+  bool get renderBarrelBelow =>
+      renderHints?.any((h) => h.toUpperCase().contains('RENDER_BARREL_BELOW')) ??
+      false;
+
+  bool get renderLoadedMissiles =>
+      renderHints?.any(
+        (h) => h.toUpperCase().contains('RENDER_LOADED_MISSILES'),
+      ) ??
+      false;
+
+  /// Prefer the turret form (what the in-game codex shows); fall back to
+  /// hardpoint when no turret main sprite exists.
+  late final bool _useTurret = turretSprite != null;
+
+  String? get _underSprite =>
+      _useTurret ? turretUnderSprite : hardpointUnderSprite;
+  String? get mainSprite => _useTurret ? turretSprite : hardpointSprite;
+  String? get _gunSprite => _useTurret ? turretGunSprite : hardpointGunSprite;
+  String? get glowSprite => _useTurret ? turretGlowSprite : hardpointGlowSprite;
+
+  /// Fire-point offsets for the preferred mount.
+  List<double>? get mountOffsets => _useTurret ? turretOffsets : hardpointOffsets;
+  List<double>? get mountAngleOffsets =>
+      _useTurret ? turretAngleOffsets : hardpointAngleOffsets;
+
+  /// Full-frame sprite layers for the preferred mount, back (first) to front
+  /// (last), matching the game's at-rest draw order. Glow and loaded missiles
+  /// are handled separately by the painter.
+  late final List<String> spriteLayers = [
+    _underSprite,
+    if (renderBarrelBelow) _gunSprite,
+    mainSprite,
+    if (!renderBarrelBelow) _gunSprite,
+  ].whereType<String>().toList();
+
+  /// Flat list of every sprite file (both mounts), for the detail dialog's
+  /// per-file view.
+  late final List<String> allSpriteFiles = [
+    turretUnderSprite,
     turretSprite,
+    turretGunSprite,
+    turretGlowSprite,
+    hardpointUnderSprite,
+    hardpointSprite,
+    hardpointGunSprite,
+    hardpointGlowSprite,
   ].whereType<String>().toList();
 }

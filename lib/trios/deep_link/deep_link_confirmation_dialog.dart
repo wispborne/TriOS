@@ -173,9 +173,9 @@ class _DeepLinkConfirmationDialogState
     final hasProblems = allEntries.any(
       (e) => !e.alreadyInstalled && e.error != null,
     );
-    final intro =  allEntries.isNotEmpty
-              ? 'A link is requesting to install a mod.'
-              : 'A link is requesting to install ${allEntries.length} mods.';
+    final intro = allEntries.isNotEmpty
+        ? 'A link is requesting to install a mod.'
+        : 'A link is requesting to install ${allEntries.length} mods.';
 
     return AlertDialog(
       title: Text(

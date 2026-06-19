@@ -292,6 +292,7 @@ class MovingTooltipWidget extends StatefulWidget {
     TooltipWarningLevel? warningLevel,
     required Widget child,
     EdgeInsetsGeometry padding = const EdgeInsets.all(8),
+    Color? backgroundColor,
     double windowEdgePadding = 10.0,
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
@@ -301,6 +302,7 @@ class MovingTooltipWidget extends StatefulWidget {
       builder: (context) {
         Widget frame(Widget content) => TooltipFrame(
           padding: padding,
+          backgroundColor: backgroundColor,
           borderColor: switch (warningLevel) {
             null || TooltipWarningLevel.none => null,
             TooltipWarningLevel.warning ||

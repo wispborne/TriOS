@@ -92,12 +92,20 @@ class WeaponsPageStatePersistedMapper
     opt: true,
     def: false,
   );
+  static bool _$alwaysShowGlow(WeaponsPageStatePersisted v) => v.alwaysShowGlow;
+  static const Field<WeaponsPageStatePersisted, bool> _f$alwaysShowGlow = Field(
+    'alwaysShowGlow',
+    _$alwaysShowGlow,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<WeaponsPageStatePersisted> fields = const {
     #splitPane: _f$splitPane,
     #useContainFit: _f$useContainFit,
     #showFilters: _f$showFilters,
+    #alwaysShowGlow: _f$alwaysShowGlow,
   };
 
   static WeaponsPageStatePersisted _instantiate(DecodingData data) {
@@ -105,6 +113,7 @@ class WeaponsPageStatePersistedMapper
       splitPane: data.dec(_f$splitPane),
       useContainFit: data.dec(_f$useContainFit),
       showFilters: data.dec(_f$showFilters),
+      alwaysShowGlow: data.dec(_f$alwaysShowGlow),
     );
   }
 
@@ -182,7 +191,12 @@ abstract class WeaponsPageStatePersistedCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? splitPane, bool? useContainFit, bool? showFilters});
+  $R call({
+    bool? splitPane,
+    bool? useContainFit,
+    bool? showFilters,
+    bool? alwaysShowGlow,
+  });
   WeaponsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -198,11 +212,17 @@ class _WeaponsPageStatePersistedCopyWithImpl<$R, $Out>
   late final ClassMapperBase<WeaponsPageStatePersisted> $mapper =
       WeaponsPageStatePersistedMapper.ensureInitialized();
   @override
-  $R call({bool? splitPane, bool? useContainFit, bool? showFilters}) => $apply(
+  $R call({
+    bool? splitPane,
+    bool? useContainFit,
+    bool? showFilters,
+    bool? alwaysShowGlow,
+  }) => $apply(
     FieldCopyWithData({
       if (splitPane != null) #splitPane: splitPane,
       if (useContainFit != null) #useContainFit: useContainFit,
       if (showFilters != null) #showFilters: showFilters,
+      if (alwaysShowGlow != null) #alwaysShowGlow: alwaysShowGlow,
     }),
   );
   @override
@@ -211,6 +231,7 @@ class _WeaponsPageStatePersistedCopyWithImpl<$R, $Out>
         splitPane: data.get(#splitPane, or: $value.splitPane),
         useContainFit: data.get(#useContainFit, or: $value.useContainFit),
         showFilters: data.get(#showFilters, or: $value.showFilters),
+        alwaysShowGlow: data.get(#alwaysShowGlow, or: $value.alwaysShowGlow),
       );
 
   @override

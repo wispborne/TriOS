@@ -1,12 +1,15 @@
 # 1.6.0
 - Added
   - Factions Viewer
+  - 'Install With TriOS' button support for one-click installs from forum pages.
   - Installation Activity panel, like web browsers' download pages.
   - May now filter for ships with built-ins on Ship Viewer page.
   - Ship Viewer dialog: built-in weapons are now shown on the mount tooltips.
   - May now use some elements of Hegemony & Pride themes on any theme.
   - Optional animated motes on some UI elements. Enable below the Themes dropdown.
   - VRAM Estimator now shows your PC's total VRAM and how much of it you'll use.
+  - Weapons Viewer now shows all layers of a weapon, including glows.
+    - May also right-click to copy a full weapon sprite to clipboard.
 - Fixed
   - Built-in weapons not showing on ship tooltips.
   - Portrait Replacer.

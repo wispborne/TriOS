@@ -18,6 +18,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/text_trios.dart';
 
@@ -116,10 +117,10 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                           mod.getBestWebsiteUrl();
                       if (url != null) {
                         Clipboard.setData(ClipboardData(text: url));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Download URL copied to clipboard'),
-                          ),
+                        showSnackBar(
+                          context: context,
+                          type: SnackBarType.info,
+                          content: const Text('Download URL copied to clipboard'),
                         );
                       }
                     },
@@ -729,10 +730,10 @@ class DiscordIcon extends StatelessWidget {
             onSecondaryTap: () {
               // Copy to clipboard
               Clipboard.setData(ClipboardData(text: discordUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Discord URL copied to clipboard'),
-                ),
+              showSnackBar(
+                context: context,
+                type: SnackBarType.info,
+                content: const Text('Discord URL copied to clipboard'),
               );
             },
             child: SizedBox(

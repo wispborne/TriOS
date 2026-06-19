@@ -17,6 +17,8 @@ library;
 
 import 'dart:convert';
 
+import 'package:trios/mod_manager/version_checker.dart';
+
 const deepLinkScheme = 'starsector-mod';
 
 /// Parsed result of a `starsector-mod://` URI.
@@ -126,10 +128,11 @@ DeepLinkModEntry? _parseEntry(String raw) {
   return DeepLinkModEntry(url: url, source: _detectSource(url), modId: modId);
 }
 
-/// Only allow http/https URLs.
+/// Only allow http/https URLs. Normalizes via [fixUrl] first so a GitHub "blob"
+/// page or a Dropbox `dl=0` link resolves to its real downloadable form.
 Uri? validateHttpUrl(String? urlString) {
   if (urlString == null) return null;
-  final url = Uri.tryParse(urlString);
+  final url = Uri.tryParse(fixUrl(urlString));
   if (url == null) return null;
   if (url.scheme != 'http' && url.scheme != 'https') return null;
   if (url.host.isEmpty) return null;

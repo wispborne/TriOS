@@ -675,7 +675,8 @@ class _DeepLinkRegistrationToast extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Enable $deepLinkScheme:// links to install mods from the web?',
+                      'Enable support for "Install with TriOS" buttons on the forum?'
+                          '\nYou can always change this on the Settings page.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),

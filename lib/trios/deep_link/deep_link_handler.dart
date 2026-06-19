@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
@@ -13,6 +13,7 @@ import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/deep_link/single_instance_manager.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/logging.dart';
@@ -305,29 +306,9 @@ class DeepLinkHandler extends Notifier<void> {
 
     // Fetch .version file.
     try {
-      final response = await httpClient.get(
+      final versionInfo = await fetchRemoteVersionCheckerInfo(
         entry.url.toString(),
-        allowSelfSignedCertificates: true,
-      );
-
-      var data = response.data;
-      if (data is List<int>) {
-        data = utf8.decode(data);
-      }
-
-      if (response.statusCode != 200) {
-        return ResolvedModEntry(
-          entry: entry,
-          downloadUrl: entry.url,
-          error:
-              "Couldn't fetch the mod's version file (HTTP "
-              '${response.statusCode}).',
-        );
-      }
-
-      final String body = data;
-      final versionInfo = VersionCheckerInfoMapper.fromMap(
-        body.parseJsonToMap(),
+        httpClient,
       );
 
       // Check if already installed.
@@ -370,6 +351,12 @@ class DeepLinkHandler extends Notifier<void> {
         downloadUrl: resolvedUrl,
         alreadyInstalled: isInstalled,
       );
+    } on VersionFileFetchException catch (e) {
+      return ResolvedModEntry(
+        entry: entry,
+        downloadUrl: entry.url,
+        error: "Couldn't fetch the mod's version file (HTTP ${e.statusCode}).",
+      );
     } catch (e) {
       Fimber.w('Error fetching .version file: ${entry.url}', ex: e);
       return ResolvedModEntry(
@@ -392,8 +379,11 @@ class DeepLinkHandler extends Notifier<void> {
     //     its declared masterVersionFile.
     // Deliberately NOT matched by forum thread id (authors host several mods on
     // one thread) or mod name (can collide) — both cause false matches.
-    final linkUrlStr = linkUrl.toString();
-    final remoteMaster = versionInfo.masterVersionFile;
+    // Normalize all .version URLs with fixUrl before comparing so that a
+    // GitHub blob vs raw (or Dropbox dl=0 vs dl=1) form of the same link still
+    // matches.
+    final linkUrlStr = fixUrl(linkUrl.toString());
+    final remoteMaster = versionInfo.masterVersionFile?.let(fixUrl);
     final remoteVersion = versionInfo.modVersion;
     final mods = ref.read(AppState.mods);
 
@@ -401,7 +391,9 @@ class DeepLinkHandler extends Notifier<void> {
       final matched =
           (modId != null && mod.id == modId) ||
           mod.modVariants.any((v) {
-            final localMaster = v.versionCheckerInfo?.masterVersionFile;
+            final localMaster = v.versionCheckerInfo?.masterVersionFile?.let(
+              fixUrl,
+            );
             return localMaster != null &&
                 (localMaster == linkUrlStr ||
                     (remoteMaster != null && localMaster == remoteMaster));
@@ -413,11 +405,18 @@ class DeepLinkHandler extends Notifier<void> {
       // version, or no comparable local version, treat the match as installed.
       if (remoteVersion == null) return true;
       var sawLocalVersion = false;
+      final remoteResult = RemoteVersionCheckResult(null, versionInfo, null);
       for (final v in mod.modVariants) {
-        final localVersion = v.versionCheckerInfo?.modVersion;
-        if (localVersion == null) continue;
+        if (v.versionCheckerInfo?.modVersion == null) continue;
         sawLocalVersion = true;
-        if (localVersion.compareTo(remoteVersion) >= 0) return true;
+        // Reuse the canonical local-vs-remote comparison so "already installed"
+        // stays in sync with how the rest of the app decides updates
+        // (>= 0 ⇒ local is the same version or newer).
+        final cmp = VersionCheckComparison.compareLocalAndRemoteVersions(
+          v.versionCheckerInfo,
+          remoteResult,
+        );
+        if (cmp != null && cmp >= 0) return true;
       }
       return !sawLocalVersion;
     }
@@ -427,18 +426,6 @@ class DeepLinkHandler extends Notifier<void> {
   void _showError(String message) {
     final context = rootNavigatorKey.currentContext;
     if (context == null) return;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cannot Install Mod'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    showAlertDialog(context, title: 'Cannot Install Mod', content: message);
   }
 }

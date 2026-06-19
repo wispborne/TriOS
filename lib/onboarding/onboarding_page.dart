@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/deep_link/protocol_registration.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
@@ -16,6 +15,7 @@ import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/restartable_app.dart';
+import 'package:trios/widgets/trios_radio_tile.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
 
@@ -371,7 +371,7 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
           ),
           const SizedBox(height: 16),
           Text(
-            "${Constants.appName} can register as a handler for $deepLinkScheme:// links, "
+            "${Constants.appName} can handle 'Install with TriOS' links, "
             "allowing you to install mods with a single click from web pages and forums.",
             style: const TextStyle(fontSize: 14),
           ),
@@ -381,14 +381,8 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
             style: TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 16),
-          RadioListTile<bool>(
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle_outline),
-                SizedBox(width: 16),
-                Text("Enable one-click mod install"),
-              ],
-            ),
+          TriOSRadioTile<bool>(
+            title: const Text("Enable one-click mod install"),
             value: true,
             groupValue: enableDeepLinks,
             onChanged: (value) {
@@ -397,14 +391,8 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
               });
             },
           ),
-          RadioListTile<bool>(
-            title: const Row(
-              children: [
-                Icon(Icons.block),
-                SizedBox(width: 16),
-                Text("No thanks"),
-              ],
-            ),
+          TriOSRadioTile<bool>(
+            title: const Text("No thanks"),
             value: false,
             groupValue: enableDeepLinks,
             onChanged: (value) {

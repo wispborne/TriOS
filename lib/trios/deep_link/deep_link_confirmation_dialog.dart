@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -54,11 +55,8 @@ class ResolvedModEntry {
   /// known — e.g. "RandomAssortmentOfThings" from ".../RandomAssortmentOfThings.version",
   /// which is far more recognizable than the bare host.
   static String _nameFromUrl(Uri url) {
-    final segments = url.pathSegments.where((s) => s.isNotEmpty).toList();
-    if (segments.isEmpty) return url.host;
-    var name = segments.last;
-    final dot = name.lastIndexOf('.');
-    if (dot > 0) name = name.substring(0, dot);
+    // posix semantics: URL paths are '/'-separated regardless of host OS.
+    final name = p.posix.basenameWithoutExtension(url.path);
     return name.isEmpty ? url.host : name;
   }
 }

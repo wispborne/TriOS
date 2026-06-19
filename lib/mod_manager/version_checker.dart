@@ -279,41 +279,23 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
   ModVariant modVariant,
   TriOSHttpClient httpClient,
 ) async {
-  var remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
+  final remoteVersionUrl = modVariant.versionCheckerInfo?.masterVersionFile;
   if (remoteVersionUrl == null) {
     return RemoteVersionCheckResult(modVariant.versionCheckerInfo, null, null)
       ..smolId = modVariant.smolId
       ..error = Exception("No remote version URL for ${modVariant.modInfo.id}");
   }
-  final fixedUrl = fixUrl(remoteVersionUrl);
 
   try {
-    // TODO https://bitbucket.org/niatahl/trailer-moments/downloads/trailermoments.version doesn't work
-    final response = await httpClient.get(
-      fixedUrl,
-      // Having this header causes Version Checker to fail for Bitbucket repos. Didn't see any issues with any of my 0.97a mods.
-      // headers: {'Content-Type': 'application/json'},
-      allowSelfSignedCertificates: true,
+    final remoteInfo = await fetchRemoteVersionCheckerInfo(
+      remoteVersionUrl,
+      httpClient,
     );
-
-    var data = response.data;
-
-    if (data is List<int>) {
-      data = utf8.decode(data);
-    }
-
-    final String body = data;
-    if (response.statusCode == 200) {
-      return RemoteVersionCheckResult(
-        modVariant.versionCheckerInfo,
-        VersionCheckerInfoMapper.fromMap(await body.parseJsonToMapAsync()),
-        remoteVersionUrl,
-      )..smolId = modVariant.smolId;
-    } else {
-      throw Exception(
-        "Failed to fetch remote version info for ${modVariant.modInfo.id}: ${response.statusCode} - $body",
-      );
-    }
+    return RemoteVersionCheckResult(
+      modVariant.versionCheckerInfo,
+      remoteInfo,
+      remoteVersionUrl,
+    )..smolId = modVariant.smolId;
   } catch (e, st) {
     Fimber.w("Error fetching remote version info for ${modVariant.modInfo.id}");
     Fimber.v(() => '', ex: e, stacktrace: st);
@@ -327,9 +309,53 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
   }
 }
 
+/// Fetches a Version Checker `.version` file from [url] and parses it into a
+/// [VersionCheckerInfo].
+///
+/// Applies [fixUrl] first (GitHub blob / Dropbox `dl=0` fixups), then fetches
+/// and decodes the JSON-ish body. Throws [VersionFileFetchException] on a
+/// non-200 response; rethrows any network/parse error.
+///
+/// Shared by the update checker ([checkRemoteVersion]) and the deep-link
+/// installer so both read `.version` files the same way.
+Future<VersionCheckerInfo> fetchRemoteVersionCheckerInfo(
+  String url,
+  TriOSHttpClient httpClient,
+) async {
+  final response = await httpClient.get(
+    fixUrl(url),
+    // Sending a Content-Type header makes Version Checker fail for Bitbucket
+    // repos, so we deliberately don't set one here.
+    allowSelfSignedCertificates: true,
+  );
+
+  var data = response.data;
+  if (data is List<int>) {
+    data = utf8.decode(data);
+  }
+  final String body = data;
+
+  if (response.statusCode != 200) {
+    throw VersionFileFetchException(response.statusCode);
+  }
+
+  return VersionCheckerInfoMapper.fromMap(await body.parseJsonToMapAsync());
+}
+
+/// Thrown by [fetchRemoteVersionCheckerInfo] when the server returns a non-200
+/// status for a `.version` file request.
+class VersionFileFetchException implements Exception {
+  final int? statusCode;
+
+  VersionFileFetchException(this.statusCode);
+
+  @override
+  String toString() => 'Failed to fetch version file (HTTP $statusCode).';
+}
+
 /// User linked to the page for their version file on GitHub instead of to the raw file.
 final _githubFilePageRegex = RegExp(
-  r"https://github.com/.+/blob/.+/assets/.+.version",
+  r"https://github.com/.+/blob/.+\.version",
   caseSensitive: false,
 );
 

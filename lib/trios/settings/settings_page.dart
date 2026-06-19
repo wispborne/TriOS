@@ -7,6 +7,7 @@ import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
+import 'package:trios/trios/deep_link/protocol_registration.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/dialogs.dart';
@@ -244,29 +245,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                     Builder(
                       builder: (context) {
-                        final skipDeepLinkConfirmation = ref.watch(
-                          appSettings.select((s) => s.deepLinkSkipConfirmation),
-                        );
-                        return MovingTooltipWidget.text(
-                          message:
-                              "When enabled, mods opened via a 'Open with TriOS' link install immediately, skipping the confirmation dialog.",
-                          child: CheckboxWithLabel(
-                            value: skipDeepLinkConfirmation,
-                            onChanged: (bool? value) => ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (state) => state.copyWith(
-                                    deepLinkSkipConfirmation: value ?? false,
-                                  ),
-                                ),
-                            label:
-                                "Always install mods from 'Open with TriOS' links without confirming",
-                          ),
-                        );
-                      },
-                    ),
-                    Builder(
-                      builder: (context) {
                         final showDonationButton = ref.watch(
                           appSettings.select((s) => s.showDonationButton),
                         );
@@ -324,6 +302,84 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           label: "Show Layout Toggle Button",
                         );
                       },
+                    ),
+                    CheckboxWithLabel(
+                      value: ref.watch(
+                        appSettings.select((value) => value.useTopToolbar),
+                      ),
+                      onChanged: (value) {
+                        ref
+                            .read(appSettings.notifier)
+                            .update(
+                              (state) => state.copyWith(
+                            useTopToolbar: value ?? false,
+                          ),
+                        );
+                      },
+                      label: "Use top toolbar instead of sidebar",
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          MovingTooltipWidget.text(
+                            message:
+                            "Makes the UI larger or smaller."
+                                "\nMin 25%, max 300%.",
+                            child: SizedBox(
+                              width: 90,
+                              child: TextField(
+                                controller: _windowScaleTextController,
+                                decoration: InputDecoration(
+                                  border: const OutlineInputBorder(),
+                                  isDense: true,
+                                  labelText: "${Constants.appName} scale",
+                                  hintStyle: Theme.of(
+                                    context,
+                                  ).textTheme.labelLarge,
+                                  labelStyle: Theme.of(
+                                    context,
+                                  ).textTheme.labelLarge,
+                                ),
+                                onChanged: (newPath) {
+                                  final newScale =
+                                      double.parse(newPath) / 100.0;
+                                  newWindowScaleDouble = newScale;
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text("%"),
+                          const SizedBox(width: 8),
+                          MovingTooltipWidget.text(
+                            warningLevel: TooltipWarningLevel.warning,
+                            message:
+                            "Make small changes at a time."
+                                "\nTri-Tachyon is not responsible if you set it to 300% and it's so big you can't get to the setting to fix it.",
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (newWindowScaleDouble >= 0.50 &&
+                                    newWindowScaleDouble <= 3.0) {
+                                  Fimber.i(
+                                    "Setting window scale to $newWindowScaleDouble",
+                                  );
+                                  ref.read(appSettings.notifier).update((
+                                      state,
+                                      ) {
+                                    return state.copyWith(
+                                      windowScaleFactor: newWindowScaleDouble,
+                                    );
+                                  });
+                                }
+                                // RestartableApp.restartApp(context);
+                              },
+                              child: const Text("Apply UI Scaling"),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -800,7 +856,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     Padding(
                       padding: const EdgeInsets.only(
                         left: leftTextOptionPadding,
-                        top: 16,
                       ),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
@@ -848,7 +903,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     Padding(
                       padding: const EdgeInsets.only(
                         left: leftTextOptionPadding,
-                        top: 16,
                       ),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
@@ -890,22 +944,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: MovingTooltipWidget.text(
-                        message: "Opens the onboarding page again.",
-                        child: ElevatedButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => const OnboardingCarousel(),
-                              barrierDismissible: false,
-                            );
-                          },
-                          child: const Text('Open Onboarding'),
                         ),
                       ),
                     ),
@@ -978,200 +1016,120 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ],
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: MovingTooltipWidget.text(
-                        message:
-                            "Whether to check for mod dependencies and prevent launching if they aren't met."
-                            "\nDisable if ${Constants.appName} is getting them wrong, or you'd just like to use vanilla dependency check behavior.",
-                        child: CheckboxWithLabel(
-                          value: ref.watch(
-                            appSettings.select(
-                              (value) => value.enableLauncherPrecheck,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (state) => state.copyWith(
-                                    enableLauncherPrecheck: value ?? false,
-                                  ),
-                                );
-                          },
-                          label: "Enable Launch Precheck",
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Row(
-                        children: [
-                          MovingTooltipWidget.text(
-                            message:
-                                "Whether to check if the game is running and lock parts of ${Constants.appName}."
-                                "\nDisable if ${Constants.appName} is detecting incorrectly.",
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CheckboxWithLabel(
-                                  value: ref.watch(
-                                    appSettings.select(
-                                      (value) => value.checkIfGameIsRunning,
-                                    ),
-                                  ),
-                                  onChanged: (value) {
-                                    ref
-                                        .read(appSettings.notifier)
-                                        .update(
-                                          (state) => state.copyWith(
-                                            checkIfGameIsRunning:
-                                                value ?? false,
-                                          ),
-                                        );
-                                  },
-                                  label: "Check if game is running",
-                                ),
-                                if (ref
-                                        .watch(AppState.gameRunningCheckError)
-                                        .value
-                                        ?.isNotEmpty ==
-                                    true)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 48),
-                                    child: Text(
-                                      "Error checking if game is running!"
-                                      "\n${ref.watch(AppState.gameRunningCheckError).value?.join("\n")}",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.error,
-                                          ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          // IconButton(
-                          //   icon: const Icon(Icons.info),
-                          //   onPressed: () {
-                          //     showAlertDialog(
-                          //       context,
-                          //       title: "Check if game is running",
-                          //       content:
-                          //       "",
-                          //     );
-                          //   },
-                          // ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: MovingTooltipWidget.text(
-                        message:
-                            "Shows internal diagnostics in the toolbar, including"
-                            "\nprocess detection status and cache statistics.",
-                        child: CheckboxWithLabel(
-                          value: ref.watch(
-                            appSettings.select((value) => value.debugMode),
-                          ),
-                          onChanged: (value) {
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (state) =>
-                                      state.copyWith(debugMode: value ?? false),
-                                );
-                          },
-                          label: "Debug mode",
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          MovingTooltipWidget.text(
-                            message:
-                                "Makes the UI larger or smaller."
-                                "\nMin 25%, max 300%.",
-                            child: SizedBox(
-                              width: 90,
-                              child: TextField(
-                                controller: _windowScaleTextController,
-                                decoration: InputDecoration(
-                                  border: const OutlineInputBorder(),
-                                  isDense: true,
-                                  labelText: "${Constants.appName} scale",
-                                  hintStyle: Theme.of(
-                                    context,
-                                  ).textTheme.labelLarge,
-                                  labelStyle: Theme.of(
-                                    context,
-                                  ).textTheme.labelLarge,
-                                ),
-                                onChanged: (newPath) {
-                                  final newScale =
-                                      double.parse(newPath) / 100.0;
-                                  newWindowScaleDouble = newScale;
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text("%"),
-                          const SizedBox(width: 8),
-                          MovingTooltipWidget.text(
-                            warningLevel: TooltipWarningLevel.warning,
-                            message:
-                                "Make small changes at a time."
-                                "\nTri-Tachyon is not responsible if you set it to 300% and it's so big you can't get to the setting to fix it.",
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (newWindowScaleDouble >= 0.50 &&
-                                    newWindowScaleDouble <= 3.0) {
-                                  Fimber.i(
-                                    "Setting window scale to $newWindowScaleDouble",
-                                  );
-                                  ref.read(appSettings.notifier).update((
-                                    state,
-                                  ) {
-                                    return state.copyWith(
-                                      windowScaleFactor: newWindowScaleDouble,
-                                    );
-                                  });
-                                }
-                                // RestartableApp.restartApp(context);
-                              },
-                              child: const Text("Apply UI Scaling"),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
+                    MovingTooltipWidget.text(
+                      message:
+                          "Whether to check for mod dependencies and prevent launching if they aren't met."
+                          "\nDisable if ${Constants.appName} is getting them wrong, or you'd just like to use vanilla dependency check behavior.",
                       child: CheckboxWithLabel(
                         value: ref.watch(
-                          appSettings.select((value) => value.useTopToolbar),
+                          appSettings.select(
+                            (value) => value.enableLauncherPrecheck,
+                          ),
                         ),
                         onChanged: (value) {
                           ref
                               .read(appSettings.notifier)
                               .update(
                                 (state) => state.copyWith(
-                                  useTopToolbar: value ?? false,
+                                  enableLauncherPrecheck: value ?? false,
                                 ),
                               );
                         },
-                        label: "Use top toolbar instead of sidebar",
+                        label: "Enable Launch Precheck",
                       ),
                     ),
+                    Row(
+                      children: [
+                        MovingTooltipWidget.text(
+                          message:
+                              "Whether to check if the game is running and lock parts of ${Constants.appName}."
+                              "\nDisable if ${Constants.appName} is detecting incorrectly.",
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CheckboxWithLabel(
+                                value: ref.watch(
+                                  appSettings.select(
+                                    (value) => value.checkIfGameIsRunning,
+                                  ),
+                                ),
+                                onChanged: (value) {
+                                  ref
+                                      .read(appSettings.notifier)
+                                      .update(
+                                        (state) => state.copyWith(
+                                          checkIfGameIsRunning:
+                                              value ?? false,
+                                        ),
+                                      );
+                                },
+                                label: "Check if game is running",
+                              ),
+                              if (ref
+                                      .watch(AppState.gameRunningCheckError)
+                                      .value
+                                      ?.isNotEmpty ==
+                                  true)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 48),
+                                  child: Text(
+                                    "Error checking if game is running!"
+                                    "\n${ref.watch(AppState.gameRunningCheckError).value?.join("\n")}",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.error,
+                                        ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        // IconButton(
+                        //   icon: const Icon(Icons.info),
+                        //   onPressed: () {
+                        //     showAlertDialog(
+                        //       context,
+                        //       title: "Check if game is running",
+                        //       content:
+                        //       "",
+                        //     );
+                        //   },
+                        // ),
+                      ],
+                    ),
+                    if (!Platform.isMacOS)
+                    Builder(
+                      builder: (context) {
+                        final skipDeepLinkConfirmation = ref.watch(
+                          appSettings.select((s) => s.deepLinkSkipConfirmation),
+                        );
+                        return MovingTooltipWidget.text(
+                          message:
+                          "When enabled, mods opened via a 'Open with TriOS' link install immediately, skipping the confirmation dialog.",
+                          child: CheckboxWithLabel(
+                            value: skipDeepLinkConfirmation,
+                            onChanged: (bool? value) => ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                deepLinkSkipConfirmation: value ?? false,
+                              ),
+                            ),
+                            label:
+                            "Always install mods from 'Open with TriOS' links without confirming",
+                          ),
+                        );
+                      },
+                    ),
+                    if (!Platform.isMacOS)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: _DeepLinkRegistrationButton(),
+                      ),
                     if (Platform.isLinux)
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
@@ -1308,6 +1266,83 @@ class _CheckForUpdatesButtonState extends ConsumerState<CheckForUpdatesButton> {
         }
       },
       child: const Text('Check for update'),
+    );
+  }
+}
+
+/// Lets the user register or unregister TriOS as the handler for
+/// `starsector-mod://` links. Reflects the actual on-system registration state,
+/// not just the saved setting. Not shown on macOS, where registration is
+/// build-time via Info.plist.
+class _DeepLinkRegistrationButton extends ConsumerStatefulWidget {
+  const _DeepLinkRegistrationButton();
+
+  @override
+  ConsumerState<_DeepLinkRegistrationButton> createState() =>
+      _DeepLinkRegistrationButtonState();
+}
+
+class _DeepLinkRegistrationButtonState
+    extends ConsumerState<_DeepLinkRegistrationButton> {
+  bool? _isRegistered;
+  bool _isWorking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final registered = await ProtocolRegistration.isRegistered();
+    if (!mounted) return;
+    setState(() => _isRegistered = registered);
+  }
+
+  Future<void> _toggle() async {
+    final currentlyRegistered = _isRegistered ?? false;
+    setState(() => _isWorking = true);
+    try {
+      if (currentlyRegistered) {
+        await ProtocolRegistration.unregister();
+      } else {
+        await ProtocolRegistration.register();
+      }
+      await ref
+          .read(appSettings.notifier)
+          .update(
+            (state) => state.copyWith(
+              deepLinkProtocolRegistered: !currentlyRegistered,
+            ),
+          );
+      await _refresh();
+    } finally {
+      if (mounted) setState(() => _isWorking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isRegistered = _isRegistered ?? false;
+    return MovingTooltipWidget.text(
+      message:
+          "Registers or unregisters ${Constants.appName} as the handler for 'Install with ${Constants.appName}' links,"
+          "\nwhich lets you install mods with one click from web pages and forums.",
+      child: ElevatedButton.icon(
+        icon: _isWorking
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: ThemedCircularProgressIndicator(),
+              )
+            : Icon(isRegistered ? Icons.link_off : Icons.link),
+        label: Text(
+          isRegistered
+              ? "Disable 'Open with TriOS'"
+              : "Enable 'Open with TriOS'",
+        ),
+        onPressed: (_isRegistered == null || _isWorking) ? null : _toggle,
+      ),
     );
   }
 }

@@ -185,7 +185,10 @@ class _ActivityTooltipContent extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Installation Activity'),
+            Padding(
+              padding: const .only(bottom: 4),
+              child: Text('Installation Activity'),
+            ),
             for (final entry in data.activeBatchEntries) BatchEntryTile(entry: entry),
             for (final d in data.inProgress)
               InProgressActivityTile(

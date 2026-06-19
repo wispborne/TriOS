@@ -81,6 +81,25 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
       spacing: 8,
       children: [
         MovingTooltipWidget.text(
+          message:
+          "Shows internal diagnostics in the toolbar, including"
+              "\nprocess detection status and cache statistics.",
+          child: CheckboxWithLabel(
+            value: ref.watch(
+              appSettings.select((value) => value.debugMode),
+            ),
+            onChanged: (value) {
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (state) =>
+                    state.copyWith(debugMode: value ?? false),
+              );
+            },
+            label: "Debug mode",
+          ),
+        ),
+        MovingTooltipWidget.text(
           message: "If mods are failing to download or update, disabling verification of SSL certificates may help.",
           child: CheckboxWithLabel(
             value: ref.watch(appSettings.select((s) => s.allowInsecureConnections)),
@@ -271,7 +290,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               barrierDismissible: false,
             );
           },
-          label: const Text('Show Initial Setup Dialog'),
+          label: const Text('Re-open Onboarding dialog'),
         ),
         ElevatedButton.icon(
           icon: const Icon(Icons.play_arrow),

@@ -43,12 +43,10 @@ class ResolvedModEntry {
     // missing/invalid download link doesn't matter.
     if (alreadyInstalled) return 'Already installed';
     if (error != null) return error!;
-    final parts = <String>[];
-    if (modVersion != null) parts.add('v$modVersion');
-    // Show the actual download host (where bytes come from), which for a
-    // .version link differs from the .version file's own host.
-    parts.add(downloadUrl.host);
-    return parts.join(' · ');
+    // Version is shown on its own labeled line; here just show the actual
+    // download host (where bytes come from), which for a .version link differs
+    // from the .version file's own host.
+    return downloadUrl.host;
   }
 
   /// Falls back to the URL's filename (sans extension) when the mod name isn't
@@ -170,12 +168,6 @@ class _DeepLinkConfirmationDialogState
         .where((e) => !e.alreadyInstalled && e.error == null)
         .length;
     final selectedCount = _selected.length;
-    final hasProblems = allEntries.any(
-      (e) => !e.alreadyInstalled && e.error != null,
-    );
-    final intro = allEntries.isNotEmpty
-        ? 'A link is requesting to install a mod.'
-        : 'A link is requesting to install ${allEntries.length} mods.';
 
     return AlertDialog(
       title: Text(
@@ -187,8 +179,6 @@ class _DeepLinkConfirmationDialogState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(intro, style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 12),
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
@@ -296,7 +286,15 @@ class _DeepLinkConfirmationDialogState
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                title: _modContent(context, entry, isMain: isMain),
+                // The provenance lines are SelectableText, which would otherwise
+                // swallow taps (the tile flashes but doesn't toggle). Route a tap
+                // on them to the same toggle; drag-to-select still works.
+                title: _modContent(
+                  context,
+                  entry,
+                  isMain: isMain,
+                  onTap: () => _toggle(key, !isSelected),
+                ),
               ),
             )
           : ListTile(
@@ -318,6 +316,7 @@ class _DeepLinkConfirmationDialogState
     BuildContext context,
     ResolvedModEntry entry, {
     required bool isMain,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
     // Already-installed takes precedence, so don't style it as an error.
@@ -358,20 +357,29 @@ class _DeepLinkConfirmationDialogState
             ),
           ),
         if (entry.entry.modId != null)
-          _urlLine(theme, Icons.tag, 'id: ${entry.entry.modId}'),
+          _urlLine(theme, Icons.tag, '${entry.entry.modId}', onTap: onTap),
+        if (entry.modVersion != null)
+          _urlLine(theme, Icons.numbers, '${entry.modVersion}', onTap: onTap),
         _urlLine(
           theme,
-          isVersionFile ? Icons.description_outlined : Icons.link,
+          isVersionFile ? Icons.description_outlined : Icons.download,
           sourceUrl,
+          onTap: onTap,
         ),
-        if (showResolved) _urlLine(theme, Icons.download, resolvedUrl),
+        if (showResolved)
+          _urlLine(theme, Icons.download, resolvedUrl, onTap: onTap),
       ],
     );
   }
 
   /// A small, selectable provenance line (icon + URL) so the user can read or
   /// copy exactly which link / version-checker file was used, for debugging.
-  Widget _urlLine(ThemeData theme, IconData icon, String url) {
+  Widget _urlLine(
+    ThemeData theme,
+    IconData icon,
+    String url, {
+    VoidCallback? onTap,
+  }) {
     final color = theme.colorScheme.onSurface.withValues(alpha: 0.5);
     return Padding(
       padding: const EdgeInsets.only(top: 3),
@@ -385,6 +393,7 @@ class _DeepLinkConfirmationDialogState
           Expanded(
             child: SelectableText(
               url,
+              onTap: onTap,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 11,
                 color: color,

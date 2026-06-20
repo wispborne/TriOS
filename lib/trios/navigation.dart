@@ -98,14 +98,11 @@ extension TriOSToolsUI on TriOSTools {
 
   Widget icon({double size = 24, Color? color}) => switch (this) {
     TriOSTools.dashboard => Icon(Icons.dashboard, size: size, color: color),
-    TriOSTools.modManager => Transform.rotate(
-      angle: 0.7,
-      child: SvgImageIcon(
-        "assets/images/icon-onslaught.svg",
-        height: size,
-        width: size,
+    TriOSTools.modManager => SvgImageIcon(
+      "assets/images/icon-castigator.svg",
+      height: size,
+      width: size,
       color: color,
-      ),
     ),
     TriOSTools.modProfiles => SvgImageIcon(
       "assets/images/icon-view-carousel.svg",

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/deep_link/deep_link_confirmation_dialog.dart';
@@ -301,7 +302,17 @@ class DeepLinkHandler extends Notifier<void> {
     TriOSHttpClient httpClient,
   ) async {
     if (entry.source == DeepLinkModSource.directDownload) {
-      return ResolvedModEntry(entry: entry, downloadUrl: entry.url);
+      // No .version file to fetch, so the link-provided id + version are all we
+      // have to decide whether this mod is already installed.
+      return ResolvedModEntry(
+        entry: entry,
+        modVersion: entry.modVersion,
+        downloadUrl: entry.url,
+        alreadyInstalled: _isDirectDownloadAlreadyInstalled(
+          entry.modId,
+          entry.modVersion,
+        ),
+      );
     }
 
     // Fetch .version file.
@@ -322,7 +333,7 @@ class DeepLinkHandler extends Notifier<void> {
         return ResolvedModEntry(
           entry: entry,
           modName: versionInfo.modName,
-          modVersion: versionInfo.modVersion?.toString(),
+          modVersion: versionInfo.modVersion?.toString() ?? entry.modVersion,
           downloadUrl: entry.url,
           alreadyInstalled: isInstalled,
           error:
@@ -337,7 +348,7 @@ class DeepLinkHandler extends Notifier<void> {
         return ResolvedModEntry(
           entry: entry,
           modName: versionInfo.modName,
-          modVersion: versionInfo.modVersion?.toString(),
+          modVersion: versionInfo.modVersion?.toString() ?? entry.modVersion,
           downloadUrl: entry.url,
           alreadyInstalled: isInstalled,
           error: "The mod's download link isn't a valid http/https URL.",
@@ -347,13 +358,14 @@ class DeepLinkHandler extends Notifier<void> {
       return ResolvedModEntry(
         entry: entry,
         modName: versionInfo.modName,
-        modVersion: versionInfo.modVersion?.toString(),
+        modVersion: versionInfo.modVersion?.toString() ?? entry.modVersion,
         downloadUrl: resolvedUrl,
         alreadyInstalled: isInstalled,
       );
     } on VersionFileFetchException catch (e) {
       return ResolvedModEntry(
         entry: entry,
+        modVersion: entry.modVersion,
         downloadUrl: entry.url,
         error: "Couldn't fetch the mod's version file (HTTP ${e.statusCode}).",
       );
@@ -361,6 +373,7 @@ class DeepLinkHandler extends Notifier<void> {
       Fimber.w('Error fetching .version file: ${entry.url}', ex: e);
       return ResolvedModEntry(
         entry: entry,
+        modVersion: entry.modVersion,
         downloadUrl: entry.url,
         error: "Couldn't read the mod's version file.",
       );
@@ -417,6 +430,35 @@ class DeepLinkHandler extends Notifier<void> {
           remoteResult,
         );
         if (cmp != null && cmp >= 0) return true;
+      }
+      return !sawLocalVersion;
+    }
+    return false;
+  }
+
+  /// Already-installed check for direct-download links, which carry no
+  /// `.version` file to fetch. The link-provided [modId] is the only reliable
+  /// key here (a download URL isn't a stable identity), so match on it; then,
+  /// if the link also provided [versionString], report installed only when a
+  /// local copy is the same version or newer — an older local copy is an update
+  /// and should download. An id match with no provided version, or no
+  /// comparable local version, counts as installed.
+  bool _isDirectDownloadAlreadyInstalled(String? modId, String? versionString) {
+    if (modId == null) return false;
+    final mods = ref.read(AppState.mods);
+
+    for (final mod in mods) {
+      if (mod.id != modId) continue;
+
+      if (versionString == null) return true;
+      final remoteVersion = Version.parse(versionString, sanitizeInput: false);
+      var sawLocalVersion = false;
+      for (final v in mod.modVariants) {
+        final localVersion = v.bestVersion;
+        if (localVersion == null) continue;
+        sawLocalVersion = true;
+        // Same version or newer locally ⇒ already installed (>= 0).
+        if (localVersion >= remoteVersion) return true;
       }
       return !sawLocalVersion;
     }

@@ -6,10 +6,11 @@
 ///
 /// Each `<entry>` value is one of two forms (auto-detected):
 /// - a bare URL — `https://.../Mod.version` (or a direct archive URL); or
-/// - a JSON object — `{"url":"https://.../Mod.version","id":"mod_id"}`, where
-///   `url` is required, `id` is optional, and any extra keys are ignored. This
-///   form is extensible: new optional keys can be added without breaking older
-///   clients. Detected by a leading `{`.
+/// - a JSON object —
+///   `{"url":"https://.../Mod.version","id":"mod_id","version":"1.2.3"}`, where
+///   `url` is required, `id` and `version` are optional, and any extra keys are
+///   ignored. This form is extensible: new optional keys can be added without
+///   breaking older clients. Detected by a leading `{`.
 ///
 /// A `.version` URL is fetched for metadata + download URL; anything else is
 /// treated as a direct download.
@@ -47,11 +48,24 @@ class DeepLinkModEntry {
   /// reliable already-installed matching. Null when the link didn't include it.
   final String? modId;
 
-  const DeepLinkModEntry({required this.url, required this.source, this.modId});
+  /// Optional mod version supplied by the link (e.g. `0.11.2`). Used only as a
+  /// fallback for the version when no `.version` file is fetched (direct
+  /// downloads) or the fetched file omits one — the fetched version always wins.
+  /// Null when the link didn't include it.
+  final String? modVersion;
+
+  const DeepLinkModEntry({
+    required this.url,
+    required this.source,
+    this.modId,
+    this.modVersion,
+  });
 
   @override
   String toString() =>
-      'DeepLinkModEntry(${source.name}: $url${modId != null ? ', id: $modId' : ''})';
+      'DeepLinkModEntry(${source.name}: $url'
+      '${modId != null ? ', id: $modId' : ''}'
+      '${modVersion != null ? ', v$modVersion' : ''})';
 }
 
 enum DeepLinkAction { install }
@@ -106,6 +120,7 @@ DeepLinkModEntry? _parseEntry(String raw) {
 
   String? urlString;
   String? modId;
+  String? modVersion;
 
   if (value.startsWith('{')) {
     try {
@@ -116,6 +131,10 @@ DeepLinkModEntry? _parseEntry(String raw) {
       urlString = url;
       final id = decoded['id'];
       if (id is String && id.trim().isNotEmpty) modId = id.trim();
+      final version = decoded['version'];
+      if (version is String && version.trim().isNotEmpty) {
+        modVersion = version.trim();
+      }
     } catch (_) {
       return null;
     }
@@ -125,7 +144,12 @@ DeepLinkModEntry? _parseEntry(String raw) {
 
   final url = validateHttpUrl(urlString);
   if (url == null) return null;
-  return DeepLinkModEntry(url: url, source: _detectSource(url), modId: modId);
+  return DeepLinkModEntry(
+    url: url,
+    source: _detectSource(url),
+    modId: modId,
+    modVersion: modVersion,
+  );
 }
 
 /// Only allow http/https URLs. Normalizes via [fixUrl] first so a GitHub "blob"

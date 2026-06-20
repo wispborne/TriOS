@@ -4,6 +4,8 @@
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
 #endif
+#include <glib/gstdio.h>
+#include <unistd.h>
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -69,6 +71,47 @@ static void my_application_activate(GApplication* application) {
   }
 }
 
+// Forwards a `starsector-mod://` deep link from a warm (remote) launch to the
+// already-running primary instance.
+//
+// This app is single-instance (unique application-id): a second launch is
+// intercepted here and exits without ever running Dart, so the Dart-side
+// deep-link forwarding never gets a chance. We replicate the minimal piece of
+// it in C — drop the URL into the `pending_deeplinks` directory that the
+// primary's Dart watcher already drains. The directory matches
+// path_provider's getApplicationSupportDirectory():
+//   ${XDG_DATA_HOME:-~/.local/share}/<application-id>/pending_deeplinks
+static void forward_deep_link(char** args) {
+  if (args == nullptr) {
+    return;
+  }
+  const char* url = nullptr;
+  for (int i = 0; args[i] != nullptr; i++) {
+    if (g_str_has_prefix(args[i], "starsector-mod://")) {
+      url = args[i];
+      break;
+    }
+  }
+  if (url == nullptr) {
+    return;
+  }
+
+  g_autofree gchar* dir = g_build_filename(
+      g_get_user_data_dir(), APPLICATION_ID, "pending_deeplinks", nullptr);
+  if (g_mkdir_with_parents(dir, 0755) != 0) {
+    g_warning("Could not create pending deep link dir: %s", dir);
+    return;
+  }
+  // One file per link (unique name) so concurrent forwards never clobber.
+  g_autofree gchar* name = g_strdup_printf(
+      "%d_%" G_GINT64_FORMAT ".deeplink", getpid(), g_get_real_time());
+  g_autofree gchar* file = g_build_filename(dir, name, nullptr);
+  g_autoptr(GError) write_error = nullptr;
+  if (!g_file_set_contents(file, url, -1, &write_error)) {
+    g_warning("Could not write pending deep link: %s", write_error->message);
+  }
+}
+
 // Implements GApplication::local_command_line.
 static gboolean my_application_local_command_line(GApplication* application, gchar*** arguments, int* exit_status) {
   MyApplication* self = MY_APPLICATION(application);
@@ -80,6 +123,13 @@ static gboolean my_application_local_command_line(GApplication* application, gch
      g_warning("Failed to register: %s", error->message);
      *exit_status = 1;
      return TRUE;
+  }
+
+  // A live primary already owns the application-id: this is a warm launch that
+  // will activate the existing window and exit without running Dart. Forward any
+  // deep link to the primary before that happens, or the URL is lost.
+  if (g_application_get_is_remote(application)) {
+    forward_deep_link(self->dart_entrypoint_arguments);
   }
 
   g_application_activate(application);

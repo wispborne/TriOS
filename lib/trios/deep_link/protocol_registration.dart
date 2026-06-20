@@ -142,15 +142,22 @@ NoDisplay=true
       'trios-starsector-mod.desktop',
       'x-scheme-handler/$deepLinkScheme',
     ]);
+
+    // Rebuild mimeinfo.cache so the desktop entry is discoverable as a scheme
+    // handler. Without this, GNOME/GIO ignores the default association above
+    // and clicking a link shows "No Apps Available".
+    await Process.run('update-desktop-database', [applicationsDir.path]);
   }
 
   static Future<void> _unregisterLinux() async {
-    final desktopFile = File(
-      '${Platform.environment['HOME']}/.local/share/applications/trios-starsector-mod.desktop',
-    );
+    final applicationsDir =
+        '${Platform.environment['HOME']}/.local/share/applications';
+    final desktopFile = File('$applicationsDir/trios-starsector-mod.desktop');
     if (desktopFile.existsSync()) {
       await desktopFile.delete();
     }
+    // Refresh the cache so the removed handler stops being advertised.
+    await Process.run('update-desktop-database', [applicationsDir]);
   }
 
   static bool _isRegisteredLinux() {

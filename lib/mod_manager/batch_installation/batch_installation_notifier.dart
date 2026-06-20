@@ -51,9 +51,14 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
   ) => true;
 
   /// Start a batch installation from a list of local sources (archives or folders).
+  ///
+  /// [skipConfirmation] suppresses the confirmation dialog and installs every
+  /// scanned mod — used when the user has already confirmed the install
+  /// upstream (e.g. the deep-link confirmation dialog), so we don't ask again.
   Future<void> create(
     List<FileSystemEntity> sources, {
     Download? download,
+    bool skipConfirmation = false,
   }) async {
     if (sources.isEmpty) return;
 
@@ -62,7 +67,11 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     final existing = state;
     if (existing != null && !existing.isFinished) {
       for (final source in sources) {
-        await addLateEntry(source, download: download);
+        await addLateEntry(
+          source,
+          download: download,
+          skipConfirmation: skipConfirmation,
+        );
       }
       return;
     }
@@ -82,7 +91,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     state = batch;
 
     try {
-      await _runPipeline(batch);
+      await _runPipeline(batch, skipConfirmation: skipConfirmation);
     } catch (e, st) {
       Fimber.e("Batch installation failed", ex: e, stacktrace: st);
       batch.status = BatchStatus.complete;
@@ -107,6 +116,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
   Future<void> addLateEntry(
     FileSystemEntity source, {
     Download? download,
+    bool skipConfirmation = false,
   }) async {
     final batch = state;
     if (batch != null && !batch.isFinished) {
@@ -171,13 +181,20 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
       }
     } else {
       // No active batch — create a batch-of-1, skip dialog.
-      await create([source], download: download);
+      await create(
+        [source],
+        download: download,
+        skipConfirmation: skipConfirmation,
+      );
     }
   }
 
   // ── Steps ──────────────────────────────────────────────────────────
 
-  Future<void> _runPipeline(BatchInstallation batch) async {
+  Future<void> _runPipeline(
+    BatchInstallation batch, {
+    bool skipConfirmation = false,
+  }) async {
     // Phase 1: Pre-scan.
     batch.status = BatchStatus.scanning;
     _notify();
@@ -204,14 +221,18 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     }
 
     // Phase 2: Confirmation dialog (if 2+ entries, or 1 with problems).
+    // When the user already confirmed the install upstream (e.g. the deep-link
+    // dialog), skip it entirely and install every scanned mod — same as how a
+    // late entry merged into an active batch already behaves.
     final needsDialog =
-        batch.entries.length > 1 ||
-        batch.entries.any(
-          (e) =>
-              e.hasConflict ||
-              e.status == BatchEntryStatus.failed ||
-              (e.scanResult?.hasMultipleMods ?? false),
-        );
+        !skipConfirmation &&
+        (batch.entries.length > 1 ||
+            batch.entries.any(
+              (e) =>
+                  e.hasConflict ||
+                  e.status == BatchEntryStatus.failed ||
+                  (e.scanResult?.hasMultipleMods ?? false),
+            ));
 
     final scannedEntries = batch.entries
         .where((e) => e.status == BatchEntryStatus.scanned)

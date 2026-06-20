@@ -31,8 +31,21 @@ class GlitterBackground extends ConsumerStatefulWidget {
 
 class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     with SingleTickerProviderStateMixin {
+  // Time constant (seconds) for easing motion in/out so particles don't
+  // suddenly start or stop moving.
+  static const double _envelopeTau = 0.6;
+
   late final AnimationController _controller;
+  // Real wall clock, used to compute per-frame deltas. Always running.
   final Stopwatch _stopwatch = Stopwatch();
+  double _lastRealSeconds = 0;
+  // Warped time fed to the painter. Advances at a rate scaled by [_envelope],
+  // so motion eases rather than jumping when started/stopped.
+  double _animationSeconds = 0;
+  // Eased motion factor, 0 (stopped) .. 1 (full speed).
+  double _envelope = 0;
+  // Desired motion state, toggled by app lifecycle.
+  bool _motionEnabled = false;
   late final List<_GlitterParticle> _particles;
 
   @override
@@ -41,7 +54,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     _controller = AnimationController(
       duration: const Duration(seconds: 10),
       vsync: this,
-    )..repeat();
+    )..addListener(_tick);
     _stopwatch.start();
 
     final random = Random();
@@ -60,6 +73,37 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     _controller.dispose();
     _stopwatch.stop();
     super.dispose();
+  }
+
+  /// Per-frame tick: advances warped time by the real delta scaled by an eased
+  /// envelope. Runs before [AnimatedBuilder]'s own listener (registered first),
+  /// so the painter reads a fresh [_animationSeconds].
+  void _tick() {
+    final now = _stopwatch.elapsedMilliseconds / 1000.0;
+    // Clamp the delta so a long pause doesn't produce one giant jump.
+    final dt = (now - _lastRealSeconds).clamp(0.0, 0.1);
+    _lastRealSeconds = now;
+
+    final target = _motionEnabled ? 1.0 : 0.0;
+    _envelope = (_envelope + (target - _envelope) * (1 - exp(-dt / _envelopeTau)))
+        .clamp(0.0, 1.0);
+    _animationSeconds += dt * _envelope;
+
+    // Once fully eased out, stop ticking to save CPU.
+    if (!_motionEnabled && _envelope < 0.001) {
+      _envelope = 0;
+      _controller.stop();
+    }
+  }
+
+  /// Sets the desired motion state and keeps the controller ticking while
+  /// either moving or still easing out.
+  void _setMotion(bool enabled) {
+    _motionEnabled = enabled;
+    if ((enabled || _envelope > 0.001) && !_controller.isAnimating) {
+      _lastRealSeconds = _stopwatch.elapsedMilliseconds / 1000.0;
+      _controller.repeat();
+    }
   }
 
   /// Glitter colors come from [themeKey]'s theme, or the active theme when
@@ -105,13 +149,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     }
 
     final lifecycle = ref.watch(appLifecycleProvider);
-    if (lifecycle != AppLifecycleState.resumed) {
-      _controller.stop();
-      _stopwatch.stop();
-    } else if (!_controller.isAnimating) {
-      _controller.repeat();
-      _stopwatch.start();
-    }
+    _setMotion(lifecycle == AppLifecycleState.resumed);
 
     final resolved = _resolveColors(context, modifiers.glitterThemeKey);
     final colors = resolved.colors;
@@ -126,7 +164,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
                 return CustomPaint(
                   painter: _GlitterPainter(
                     particles: _particles,
-                    elapsedSeconds: _stopwatch.elapsedMilliseconds / 1000.0,
+                    elapsedSeconds: _animationSeconds,
                     colors: colors,
                     speed: widget.speed,
                     clustering: widget.clustering,

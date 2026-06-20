@@ -294,6 +294,9 @@ class DeepLinkHandler extends Notifier<void> {
           entry.displayName,
           entry.downloadUrl.toString().fixModDownloadUrl(),
           activateVariantOnComplete: false,
+          // The deep-link confirmation dialog already asked the user; don't make
+          // the batch installer re-ask about already-installed mods.
+          skipConfirmation: true,
         );
   }
 

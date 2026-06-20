@@ -172,6 +172,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     String uri, {
     required bool activateVariantOnComplete,
     ModInfo? modInfo,
+    bool skipConfirmation = false,
   }) {
     if (isDownloadInProgress(uri)) return;
     var tempFolder = Directory.systemTemp.createTempSync();
@@ -214,7 +215,11 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           // failed, or skipped) — not merely once it has been queued.
           await ref
               .read(batchInstallationProvider.notifier)
-              .addLateEntry(downloadedFile, download: value);
+              .addLateEntry(
+                downloadedFile,
+                download: value,
+                skipConfirmation: skipConfirmation,
+              );
 
           // Clean up the temp folder only after a successful install; on
           // failure, keep the archive so the user can install it manually.

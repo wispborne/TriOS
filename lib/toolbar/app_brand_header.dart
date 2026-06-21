@@ -4,7 +4,6 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart' show TriOSBuildContext;
-import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
@@ -19,9 +18,7 @@ class AppBrandHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final modifiers = ref.watch(
-      appSettings.select((s) => s.themeModifiers),
-    );
+    final modifiers = ref.watch(appSettings.select((s) => s.themeModifiers));
     final appName = context.appNameWithModifiers(modifiers);
     final iconSize = compact ? 24.0 : 48.0;
     final blurRadius = compact ? 8.0 : 10.0;
@@ -34,20 +31,19 @@ class AppBrandHeader extends ConsumerWidget {
           child: MovingTooltipWidget.text(
             message: Constants.appSubtitle,
             child: Stack(
+              clipBehavior: .none,
               children: [
                 Opacity(
                   opacity: 0.8,
-                  child: Blur(
-                    blurX: blurRadius,
-                    blurY: blurRadius,
-                    child: TriOSAppIcon(width: iconSize, height: iconSize),
+                  child: TriOSAppIcon(
+                    width: iconSize,
+                    height: iconSize,
+                    blurSigma: blurRadius,
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => showTriOSAboutDialog(
-                    context,
-                    appNameOverride: appName,
-                  ),
+                  onTap: () =>
+                      showTriOSAboutDialog(context, appNameOverride: appName),
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: TriOSAppIcon(width: iconSize, height: iconSize),
@@ -65,10 +61,7 @@ class AppBrandHeader extends ConsumerWidget {
               textBaseline: TextBaseline.alphabetic,
               spacing: 6,
               children: [
-                Text(
-                  appName,
-                  style: theme.textTheme.titleMedium,
-                ),
+                Text(appName, style: theme.textTheme.titleMedium),
                 Text(
                   "v${Constants.version}",
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -84,10 +77,7 @@ class AppBrandHeader extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  appName,
-                  style: theme.textTheme.titleLarge,
-                ),
+                Text(appName, style: theme.textTheme.titleLarge),
                 Text(
                   "v${Constants.version}",
                   style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12),

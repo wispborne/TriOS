@@ -36,14 +36,18 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
   static const double _envelopeTau = 0.6;
 
   late final AnimationController _controller;
+
   // Real wall clock, used to compute per-frame deltas. Always running.
   final Stopwatch _stopwatch = Stopwatch();
   double _lastRealSeconds = 0;
+
   // Warped time fed to the painter. Advances at a rate scaled by [_envelope],
   // so motion eases rather than jumping when started/stopped.
   double _animationSeconds = 0;
+
   // Eased motion factor, 0 (stopped) .. 1 (full speed).
   double _envelope = 0;
+
   // Desired motion state, toggled by app lifecycle.
   bool _motionEnabled = false;
   late final List<_GlitterParticle> _particles;
@@ -85,8 +89,9 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     _lastRealSeconds = now;
 
     final target = _motionEnabled ? 1.0 : 0.0;
-    _envelope = (_envelope + (target - _envelope) * (1 - exp(-dt / _envelopeTau)))
-        .clamp(0.0, 1.0);
+    _envelope =
+        (_envelope + (target - _envelope) * (1 - exp(-dt / _envelopeTau)))
+            .clamp(0.0, 1.0);
     _animationSeconds += dt * _envelope;
 
     // Once fully eased out, stop ticking to save CPU.
@@ -154,10 +159,14 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     final resolved = _resolveColors(context, modifiers.glitterThemeKey);
     final colors = resolved.colors;
 
-    return ClipRect(
-      child: Stack(
-        children: [
-          Positioned.fill(
+    // Clip only the motes layer to the bounds, not the child. The child may
+    // legitimately overflow (e.g. a blurred icon glow), and clipping it here
+    // would chop that into a hard rectangle.
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: ClipRect(
             child: AnimatedBuilder(
               animation: _controller,
               builder: (context, _) {
@@ -176,9 +185,9 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
               },
             ),
           ),
-          widget.child,
-        ],
-      ),
+        ),
+        widget.child,
+      ],
     );
   }
 }

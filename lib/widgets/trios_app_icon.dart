@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,11 +16,14 @@ class TriOSAppIcon extends ConsumerStatefulWidget {
   final double height;
   final Color? color;
 
+  final double? blurSigma;
+
   const TriOSAppIcon({
     super.key,
     this.width = 48,
     this.height = 48,
     this.color,
+    this.blurSigma,
   });
 
   @override
@@ -61,10 +65,12 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
         return _buildRainbowIcon(theme);
       case AppIconOverride.hegemony:
         _stopController();
-        return Image.asset(
-          "assets/images/hegemony_crest.png",
-          width: widget.width,
-          height: widget.height,
+        return _maybeBlur(
+          Image.asset(
+            "assets/images/hegemony_crest.png",
+            width: widget.width,
+            height: widget.height,
+          ),
         );
       case AppIconOverride.defaultIcon:
         // Fall through to existing theme-driven logic.
@@ -74,26 +80,30 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
     final iconAsset = theme.iconAsset;
     if (iconAsset != null) {
       _stopController();
-      return Image.asset(iconAsset, width: widget.width, height: widget.height);
+      return _maybeBlur(
+        Image.asset(iconAsset, width: widget.width, height: widget.height),
+      );
     }
 
     final isRainbow = theme.rainbowAccent && widget.color == null;
 
     final svg = _buildTelosSvg(
-      color: widget.color ?? (isRainbow ? Colors.white : theme.colorScheme.primary),
+      color:
+          widget.color ??
+          (isRainbow ? Colors.white : theme.colorScheme.primary),
     );
 
     if (!isRainbow) {
       _stopController();
-      return svg;
+      return _maybeBlur(svg);
     }
 
-    return _buildAnimatedRainbow(svg);
+    return _maybeBlur(_buildAnimatedRainbow(svg));
   }
 
   Widget _buildRainbowIcon(ThemeData theme) {
     final svg = _buildTelosSvg(color: Colors.white);
-    return _buildAnimatedRainbow(svg);
+    return _maybeBlur(_buildAnimatedRainbow(svg));
   }
 
   Widget _buildTelosSvg({required Color color}) {
@@ -102,6 +112,19 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
       colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
       width: widget.width,
       height: widget.height,
+    );
+  }
+
+  /// Wraps [child] in a blur when [TriOSAppIcon.blurSigma] is set, else returns
+  /// it unchanged. Applied as the outermost layer (outside any rainbow
+  /// [ShaderMask]) so the soft blur isn't clipped to the shader's rectangular
+  /// `srcIn` bounds.
+  Widget _maybeBlur(Widget child) {
+    final sigma = widget.blurSigma;
+    if (sigma == null) return child;
+    return ImageFiltered(
+      imageFilter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+      child: child,
     );
   }
 

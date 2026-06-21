@@ -241,7 +241,7 @@ class FactionViewerController extends Notifier<FactionViewerState> {
       query,
       _fieldsByKey,
       _getSearchIndices(factions),
-      (f) => f.id,
+      (f) => f.mergeKey,
     );
   }
 
@@ -250,7 +250,7 @@ class FactionViewerController extends Notifier<FactionViewerState> {
       _cachedSearchIndicesFactions = factions;
       _cachedSearchIndices = {
         for (final f in factions)
-          f.id: [
+          f.mergeKey: [
             f.id.toLowerCase(),
             f.displayName.toLowerCase(),
             if (f.displayNameLong != null) f.displayNameLong!.toLowerCase(),

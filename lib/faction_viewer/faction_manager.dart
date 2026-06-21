@@ -54,14 +54,14 @@ class FactionListNotifier
   String get domain => 'factions';
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   late final CachedVariantStore store =
       CachedVariantStore(domain, Constants.viewerCacheDirPath);
 
   @override
-  String itemId(Faction item) => item.id;
+  String itemId(Faction item) => item.mergeKey;
 
   @override
   List<Faction> itemsFromPayload(FactionsCachePayload payload) =>
@@ -160,13 +160,11 @@ class FactionListNotifier
           final jsonContent = content.removeJsonComments();
           final factionData = await jsonContent.parseJsonToMapAsync();
 
-          var factionId = factionData['id'] as String?;
-          if (factionId == null || factionId.isEmpty) {
-            // Many mod faction files omit the id field — the game
-            // identifies factions by filename instead.
-            factionId = p.basenameWithoutExtension(entity.path);
-            factionData['id'] = factionId;
-          }
+          // Starsector associates overlay faction files by filename, not by
+          // the `id` field (vanilla persean_league.faction declares id
+          // "persean" but mods omit the id and rely on the filename). Merge on
+          // the filename; the `id` field is kept only for display.
+          final mergeKey = entity.nameWithoutExtension;
 
           final source = FactionSource(
             name: sourceName,
@@ -174,7 +172,7 @@ class FactionListNotifier
           );
 
           // Check if this faction already exists (needs merging).
-          final existingCached = _vanillaFactionJsonCache[factionId];
+          final existingCached = _vanillaFactionJsonCache[mergeKey];
           if (existingCached != null) {
             final mergeResult = mergeFactionJson(
               base: existingCached.json,
@@ -190,6 +188,7 @@ class FactionListNotifier
             existingCached.sources = [...existingCached.sources, source];
 
             final merged = _buildFactionFromJson(
+              mergeKey,
               mergeResult.merged,
               existingCached.sources,
               mergeResult.attributions,
@@ -199,9 +198,9 @@ class FactionListNotifier
             // Update the faction in the payload that first introduced it,
             // so the base class's first-occurrence-wins dedup sees the
             // latest merged version.
-            final ownerList = _factionListOwnership[factionId];
+            final ownerList = _factionListOwnership[mergeKey];
             if (ownerList != null) {
-              final idx = ownerList.indexWhere((f) => f.id == factionId);
+              final idx = ownerList.indexWhere((f) => f.mergeKey == mergeKey);
               if (idx >= 0) {
                 ownerList[idx] = merged;
               } else {
@@ -218,7 +217,7 @@ class FactionListNotifier
               factionData, sourceName, attributions, itemAttrs, '',
             );
 
-            _vanillaFactionJsonCache[factionId] = _ParsedFactionJson(
+            _vanillaFactionJsonCache[mergeKey] = _ParsedFactionJson(
               json: factionData,
               attributions: attributions,
               itemAttributions: itemAttrs,
@@ -226,13 +225,14 @@ class FactionListNotifier
             );
 
             final faction = _buildFactionFromJson(
+              mergeKey,
               factionData,
               [source],
               attributions,
               itemAttrs,
             );
             factions.add(faction);
-            _factionListOwnership[factionId] = factions;
+            _factionListOwnership[mergeKey] = factions;
           }
         } catch (e, st) {
           Fimber.w(
@@ -278,6 +278,7 @@ class FactionListNotifier
 }
 
 Faction _buildFactionFromJson(
+  String mergeKey,
   Map<String, dynamic> data,
   List<FactionSource> sources,
   Map<String, List<SourceContribution>> attributions,
@@ -292,9 +293,14 @@ Faction _buildFactionFromJson(
   final knownHullMods = data['knownHullMods'] as Map<String, dynamic>?;
   final musicRaw = data['music'] as Map<String, dynamic>?;
 
+  // The `id` field is display-only; fall back to the filename when none of
+  // the merged files declared one.
+  final id = (data['id'] as String?)?.ifBlank(mergeKey) ?? mergeKey;
+
   return Faction(
-    id: data['id'] as String,
-    displayName: data['displayName'] as String? ?? data['id'] as String,
+    mergeKey: mergeKey,
+    id: id,
+    displayName: data['displayName'] as String? ?? id,
     displayNameWithArticle: data['displayNameWithArticle'] as String?,
     displayNameLong: data['displayNameLong'] as String?,
     displayNameLongWithArticle: data['displayNameLongWithArticle'] as String?,

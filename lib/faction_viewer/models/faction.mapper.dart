@@ -25,6 +25,11 @@ class FactionMapper extends ClassMapperBase<Faction> {
   @override
   final String id = 'Faction';
 
+  static String _$mergeKey(Faction v) => v.mergeKey;
+  static const Field<Faction, String> _f$mergeKey = Field(
+    'mergeKey',
+    _$mergeKey,
+  );
   static String _$id(Faction v) => v.id;
   static const Field<Faction, String> _f$id = Field('id', _$id);
   static String _$displayName(Faction v) => v.displayName;
@@ -270,6 +275,7 @@ class FactionMapper extends ClassMapperBase<Faction> {
 
   @override
   final MappableFields<Faction> fields = const {
+    #mergeKey: _f$mergeKey,
     #id: _f$id,
     #displayName: _f$displayName,
     #displayNameWithArticle: _f$displayNameWithArticle,
@@ -310,6 +316,7 @@ class FactionMapper extends ClassMapperBase<Faction> {
 
   static Faction _instantiate(DecodingData data) {
     return Faction(
+      mergeKey: data.dec(_f$mergeKey),
       id: data.dec(_f$id),
       displayName: data.dec(_f$displayName),
       displayNameWithArticle: data.dec(_f$displayNameWithArticle),
@@ -465,6 +472,7 @@ abstract class FactionCopyWith<$R, $In extends Faction, $Out>
   >
   get itemAttributions;
   $R call({
+    String? mergeKey,
     String? id,
     String? displayName,
     String? displayNameWithArticle,
@@ -717,6 +725,7 @@ class _FactionCopyWithImpl<$R, $Out>
   );
   @override
   $R call({
+    String? mergeKey,
     String? id,
     String? displayName,
     Object? displayNameWithArticle = $none,
@@ -754,6 +763,7 @@ class _FactionCopyWithImpl<$R, $Out>
     Map<String, Map<String, String>>? itemAttributions,
   }) => $apply(
     FieldCopyWithData({
+      if (mergeKey != null) #mergeKey: mergeKey,
       if (id != null) #id: id,
       if (displayName != null) #displayName: displayName,
       if (displayNameWithArticle != $none)
@@ -796,6 +806,7 @@ class _FactionCopyWithImpl<$R, $Out>
   );
   @override
   Faction $make(CopyWithData data) => Faction(
+    mergeKey: data.get(#mergeKey, or: $value.mergeKey),
     id: data.get(#id, or: $value.id),
     displayName: data.get(#displayName, or: $value.displayName),
     displayNameWithArticle: data.get(

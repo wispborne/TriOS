@@ -177,7 +177,7 @@ class FactionProfileDialog extends ConsumerWidget {
           'data',
           'world',
           'factions',
-          '${faction.id}.faction',
+          '${faction.mergeKey}.faction',
         ),
       );
       if (file.existsSync()) files.add((file, source.name));

@@ -444,7 +444,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
               'data',
               'world',
               'factions',
-              '${faction.id}.faction',
+              '${faction.mergeKey}.faction',
             ),
           )
         : null;

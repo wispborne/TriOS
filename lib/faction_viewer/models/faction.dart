@@ -12,7 +12,11 @@ part 'faction.mapper.dart';
 @MappableClass()
 class Faction with FactionMappable implements WispGridItem {
   @override
-  String get key => id;
+  String get key => mergeKey;
+
+  /// The `.faction` filename (without extension). This is how Starsector
+  /// associates overlay files.
+  final String mergeKey;
 
   final String id;
   final String displayName;
@@ -63,6 +67,7 @@ class Faction with FactionMappable implements WispGridItem {
   final Map<String, Map<String, String>> itemAttributions;
 
   Faction({
+    required this.mergeKey,
     required this.id,
     required this.displayName,
     this.displayNameWithArticle,

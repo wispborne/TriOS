@@ -670,7 +670,7 @@ class _DeepLinkRegistrationToast extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'One-click mod install',
+                      '"Install with TriOS" link support',
                       style: theme.textTheme.titleSmall,
                     ),
                     const SizedBox(height: 4),

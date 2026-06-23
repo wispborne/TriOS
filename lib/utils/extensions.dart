@@ -223,7 +223,8 @@ extension StringExt on String {
     // This pattern matches any character that is not allowed in filenames on Windows, macOS, and Linux.
     // < > : " / \ | ? * are disallowed characters.
     // \x00-\x1F matches non-printable control characters.
-    String fixed = replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_').trim();
+    // # was the first char in a modname (Vexlia's Faster Devstart) and broke game script loading.
+    String fixed = replaceAll(RegExp(r'[#<>:"/\\|?*\x00-\x1F]'), '_').trim();
 
     // Ensure the length is within valid range before calling substring
     if (fixed.length > 255) {

@@ -31,6 +31,16 @@ class ActivityHistoryStore
       }
       return ActivityHistory(entries: updated);
     });
+
+    // When a mod finishes installing while the panel is closed, surface it in a
+    // transient popup below the activity button so the user can Enable it
+    // without opening the panel.
+    if (entry.status == ActivityStatus.completed) {
+      final isOpen = ref.read(appSettings.select((s) => s.isActivityPanelOpen));
+      if (!isOpen) {
+        ref.read(recentInstallPopupProvider.notifier).add(entry);
+      }
+    }
   }
 
   /// Removes a single entry by id.
@@ -81,6 +91,24 @@ class ActivityUnseenCountNotifier extends Notifier<int> {
   void clearUnseen() => state = 0;
 }
 
+/// Mods that finished installing while the Activity Panel was closed.
+/// Surfaced in a transient popup below the activity button so the user can
+/// Enable them without opening the panel. Cleared when the popup times out or
+/// the panel is opened.
+final recentInstallPopupProvider =
+    NotifierProvider<RecentInstallPopupNotifier, List<ActivityEntry>>(
+      RecentInstallPopupNotifier.new,
+    );
+
+class RecentInstallPopupNotifier extends Notifier<List<ActivityEntry>> {
+  @override
+  List<ActivityEntry> build() => const [];
+
+  void add(ActivityEntry entry) => state = [...state, entry];
+
+  void clear() => state = const [];
+}
+
 /// Convenience: toggle panel open state (persisted in Settings).
 void toggleActivityPanel(WidgetRef ref) {
   final wasOpen = ref.read(
@@ -90,7 +118,8 @@ void toggleActivityPanel(WidgetRef ref) {
       .read(appSettings.notifier)
       .update((s) => s.copyWith(isActivityPanelOpen: !wasOpen));
   if (!wasOpen) {
-    // Opening the panel clears unseen count.
+    // Opening the panel clears unseen count and dismisses the install popup.
     ref.read(activityUnseenCount.notifier).clearUnseen();
+    ref.read(recentInstallPopupProvider.notifier).clear();
   }
 }

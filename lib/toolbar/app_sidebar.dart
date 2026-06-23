@@ -43,6 +43,28 @@ class AppSidebar extends ConsumerWidget {
     final theme = Theme.of(context);
     final navState = ref.watch(navOrderProvider);
     final controller = ref.read(navOrderProvider.notifier);
+    final debugMode = ref.watch(appSettings.select((s) => s.debugMode));
+
+    // Hide debug-only (WIP) tools from the list. Reorder still operates on the
+    // full stored order, so visible-list indices are translated back.
+    final visibleEntries = <NavOrderEntry>[];
+    final visibleToFull = <int>[];
+    for (var i = 0; i < navState.entries.length; i++) {
+      final e = navState.entries[i];
+      if (e is NavToolEntry &&
+          !isNavToolVisible(e.tool, debugMode: debugMode)) {
+        continue;
+      }
+      visibleEntries.add(e);
+      visibleToFull.add(i);
+    }
+    void onVisibleReorder(int oldVis, int newVis) {
+      final oldFull = visibleToFull[oldVis];
+      final newFull = newVis >= visibleToFull.length
+          ? navState.entries.length
+          : visibleToFull[newVis];
+      controller.reorder(oldFull, newFull);
+    }
 
     final sidebar = AnimatedContainer(
       duration: _animationDuration,
@@ -101,12 +123,12 @@ class AppSidebar extends ConsumerWidget {
                   // Reorderable nav list fills the remaining space.
                   Expanded(
                     child: _ReorderableNavList(
-                      entries: navState.entries,
+                      entries: visibleEntries,
                       isInDragMode: navState.isInDragMode,
                       isCollapsed: isCollapsed,
                       currentPage: currentPage,
                       onTabChanged: onTabChanged,
-                      onReorder: controller.reorder,
+                      onReorder: onVisibleReorder,
                     ),
                   ),
                   if (navState.isInDragMode)

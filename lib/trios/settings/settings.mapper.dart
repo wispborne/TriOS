@@ -400,6 +400,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       CompressionLibMapper.ensureInitialized();
       CatalogCardClickActionMapper.ensureInitialized();
       CatalogPageStatePersistedMapper.ensureInitialized();
+      SectorMapPageStatePersistedMapper.ensureInitialized();
       ActivityPanelModeMapper.ensureInitialized();
       VramSelectorIdMapper.ensureInitialized();
       ReferencedAssetsSelectorConfigMapper.ensureInitialized();
@@ -940,6 +941,15 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         opt: true,
         hook: SafeDecodeHook(),
       );
+  static SectorMapPageStatePersisted? _$sectorMapPageState(Settings v) =>
+      v.sectorMapPageState;
+  static const Field<Settings, SectorMapPageStatePersisted>
+  _f$sectorMapPageState = Field(
+    'sectorMapPageState',
+    _$sectorMapPageState,
+    opt: true,
+    hook: SafeDecodeHook(),
+  );
   static String? _$activeModProfileId(Settings v) => v.activeModProfileId;
   static const Field<Settings, String> _f$activeModProfileId = Field(
     'activeModProfileId',
@@ -1194,6 +1204,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #catalogMinItemWidth: _f$catalogMinItemWidth,
     #catalogCardSpacing: _f$catalogCardSpacing,
     #catalogPageState: _f$catalogPageState,
+    #sectorMapPageState: _f$sectorMapPageState,
     #activeModProfileId: _f$activeModProfileId,
     #showForceUpdateWarning: _f$showForceUpdateWarning,
     #showDonationButton: _f$showDonationButton,
@@ -1304,6 +1315,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       catalogMinItemWidth: data.dec(_f$catalogMinItemWidth),
       catalogCardSpacing: data.dec(_f$catalogCardSpacing),
       catalogPageState: data.dec(_f$catalogPageState),
+      sectorMapPageState: data.dec(_f$sectorMapPageState),
       activeModProfileId: data.dec(_f$activeModProfileId),
       showForceUpdateWarning: data.dec(_f$showForceUpdateWarning),
       showDonationButton: data.dec(_f$showDonationButton),
@@ -1448,6 +1460,12 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     CatalogPageStatePersisted
   >?
   get catalogPageState;
+  SectorMapPageStatePersistedCopyWith<
+    $R,
+    SectorMapPageStatePersisted,
+    SectorMapPageStatePersisted
+  >?
+  get sectorMapPageState;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get weaponsSearchHistory;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
@@ -1535,6 +1553,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     double? catalogMinItemWidth,
     double? catalogCardSpacing,
     CatalogPageStatePersisted? catalogPageState,
+    SectorMapPageStatePersisted? sectorMapPageState,
     String? activeModProfileId,
     bool? showForceUpdateWarning,
     bool? showDonationButton,
@@ -1685,6 +1704,15 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(catalogPageState: v),
   );
   @override
+  SectorMapPageStatePersistedCopyWith<
+    $R,
+    SectorMapPageStatePersisted,
+    SectorMapPageStatePersisted
+  >?
+  get sectorMapPageState => $value.sectorMapPageState?.copyWith.$chain(
+    (v) => call(sectorMapPageState: v),
+  );
+  @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get weaponsSearchHistory => ListCopyWith(
     $value.weaponsSearchHistory,
@@ -1801,6 +1829,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     double? catalogMinItemWidth,
     double? catalogCardSpacing,
     Object? catalogPageState = $none,
+    Object? sectorMapPageState = $none,
     Object? activeModProfileId = $none,
     bool? showForceUpdateWarning,
     bool? showDonationButton,
@@ -1928,6 +1957,7 @@ class _SettingsCopyWithImpl<$R, $Out>
         #catalogMinItemWidth: catalogMinItemWidth,
       if (catalogCardSpacing != null) #catalogCardSpacing: catalogCardSpacing,
       if (catalogPageState != $none) #catalogPageState: catalogPageState,
+      if (sectorMapPageState != $none) #sectorMapPageState: sectorMapPageState,
       if (activeModProfileId != $none) #activeModProfileId: activeModProfileId,
       if (showForceUpdateWarning != null)
         #showForceUpdateWarning: showForceUpdateWarning,
@@ -2172,6 +2202,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.catalogCardSpacing,
     ),
     catalogPageState: data.get(#catalogPageState, or: $value.catalogPageState),
+    sectorMapPageState: data.get(
+      #sectorMapPageState,
+      or: $value.sectorMapPageState,
+    ),
     activeModProfileId: data.get(
       #activeModProfileId,
       or: $value.activeModProfileId,

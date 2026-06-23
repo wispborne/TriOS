@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
@@ -218,7 +219,9 @@ class DeepLinkHandler extends Notifier<void> {
           newPrimaries.map((e) => _resolveModEntry(e, httpClient)),
         );
         final resolvedDeps = await Future.wait(
-          newDeps.map((e) => _resolveModEntry(e, httpClient)),
+          newDeps.map(
+            (e) => _resolveModEntry(e, httpClient, isDependency: true),
+          ),
         );
 
         final skipConfirmation = ref.read(
@@ -302,8 +305,19 @@ class DeepLinkHandler extends Notifier<void> {
 
   Future<ResolvedModEntry> _resolveModEntry(
     DeepLinkModEntry entry,
-    TriOSHttpClient httpClient,
-  ) async {
+    TriOSHttpClient httpClient, {
+    bool isDependency = false,
+  }) async {
+    // A dependency's version is a *minimum required version*: when a locally
+    // installed copy already meets it (or the link omits a version and the dep
+    // is installed at all), the dependency is satisfied and won't be installed
+    // by default. We still resolve its real download URL below (rather than
+    // short-circuiting on entry.url) so that if the user manually selects it in
+    // the confirmation dialog, we download the actual archive — not the
+    // .version file itself, which isn't a valid archive.
+    final dependencySatisfied =
+        isDependency && isDependencySatisfied(ref.read(AppState.mods), entry);
+
     if (entry.source == DeepLinkModSource.directDownload) {
       // No .version file to fetch, so the link-provided id + version are all we
       // have to decide whether this mod is already installed.
@@ -311,10 +325,9 @@ class DeepLinkHandler extends Notifier<void> {
         entry: entry,
         modVersion: entry.modVersion,
         downloadUrl: entry.url,
-        alreadyInstalled: _isDirectDownloadAlreadyInstalled(
-          entry.modId,
-          entry.modVersion,
-        ),
+        alreadyInstalled:
+            dependencySatisfied ||
+            _isDirectDownloadAlreadyInstalled(entry.modId, entry.modVersion),
       );
     }
 
@@ -326,11 +339,9 @@ class DeepLinkHandler extends Notifier<void> {
       );
 
       // Check if already installed.
-      final isInstalled = _isModAlreadyInstalled(
-        versionInfo,
-        entry.url,
-        entry.modId,
-      );
+      final isInstalled =
+          dependencySatisfied ||
+          _isModAlreadyInstalled(versionInfo, entry.url, entry.modId);
 
       if (!versionInfo.hasDirectDownload) {
         return ResolvedModEntry(
@@ -370,6 +381,7 @@ class DeepLinkHandler extends Notifier<void> {
         entry: entry,
         modVersion: entry.modVersion,
         downloadUrl: entry.url,
+        alreadyInstalled: dependencySatisfied,
         error: "Couldn't fetch the mod's version file (HTTP ${e.statusCode}).",
       );
     } catch (e) {
@@ -378,6 +390,7 @@ class DeepLinkHandler extends Notifier<void> {
         entry: entry,
         modVersion: entry.modVersion,
         downloadUrl: entry.url,
+        alreadyInstalled: dependencySatisfied,
         error: "Couldn't read the mod's version file.",
       );
     }
@@ -473,4 +486,40 @@ class DeepLinkHandler extends Notifier<void> {
     if (context == null) return;
     showAlertDialog(context, title: 'Cannot Install Mod', content: message);
   }
+}
+
+/// True when a dependency [entry] is already satisfied by [mods]. A
+/// version-bearing entry treats its version as a *minimum* — satisfied when an
+/// installed copy is `>=` it. A version-less entry is satisfied whenever the
+/// dependency is installed at all (install only if missing).
+bool isDependencySatisfied(List<Mod> mods, DeepLinkModEntry entry) {
+  final installed = installedVersionForDependency(mods, entry);
+  if (installed == null) return false;
+  final minString = entry.modVersion;
+  if (minString == null) return true;
+  return installed >= Version.parse(minString, sanitizeInput: false);
+}
+
+/// Highest locally-installed version among [mods] of the mod a dependency
+/// [entry] points to, or null if not installed. Matches by mod id when the link
+/// supplied one, else (for a `.version` entry) by the link URL vs a local
+/// variant's `masterVersionFile`, both normalized with [fixUrl]. No network.
+Version? installedVersionForDependency(List<Mod> mods, DeepLinkModEntry entry) {
+  final modId = entry.modId;
+  final linkUrlStr = fixUrl(entry.url.toString());
+
+  for (final mod in mods) {
+    final matched =
+        (modId != null && mod.id == modId) ||
+        (entry.source == DeepLinkModSource.versionFile &&
+            mod.modVariants.any((v) {
+              final localMaster = v.versionCheckerInfo?.masterVersionFile?.let(
+                fixUrl,
+              );
+              return localMaster != null && localMaster == linkUrlStr;
+            }));
+    if (!matched) continue;
+    return mod.findHighestVersion?.bestVersion;
+  }
+  return null;
 }

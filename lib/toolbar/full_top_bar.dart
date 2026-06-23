@@ -44,6 +44,12 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
     final theme = Theme.of(context);
     final navState = ref.watch(navOrderProvider);
     final controller = ref.read(navOrderProvider.notifier);
+    final debugMode = ref.watch(appSettings.select((s) => s.debugMode));
+
+    // Whether a nav entry should render. Debug-only (WIP) tools are hidden
+    // unless debug mode is on; indices are preserved so reorder stays correct.
+    bool isEntryVisible(NavOrderEntry e) =>
+        e is! NavToolEntry || isNavToolVisible(e.tool, debugMode: debugMode);
 
     // Split entries: core tools are rendered as "text + icon" TabButtons (as
     // before), viewers as compact IconButtons. The boundary is the divider
@@ -60,15 +66,16 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
 
     final navChildren = <Widget>[
       for (var i = 0; i < coreSlice.length; i++)
-        _buildEntry(
-          context,
-          entry: coreSlice[i],
-          indexInEntries: i,
-          isInDragMode: navState.isInDragMode,
-          onReorder: controller.reorder,
-          theme: theme,
-          asCoreStyle: true,
-        ),
+        if (isEntryVisible(coreSlice[i]))
+          _buildEntry(
+            context,
+            entry: coreSlice[i],
+            indexInEntries: i,
+            isInDragMode: navState.isInDragMode,
+            onReorder: controller.reorder,
+            theme: theme,
+            asCoreStyle: true,
+          ),
       _buildEntry(
         context,
         entry: const NavDividerEntry(),
@@ -79,16 +86,17 @@ class FullTopBar extends ConsumerWidget implements PreferredSizeWidget {
         asCoreStyle: false,
       ),
       for (var i = 0; i < viewersSlice.length; i++)
-        _buildEntry(
-          context,
-          entry: viewersSlice[i],
-          indexInEntries:
-              (dividerIndex == -1 ? coreSlice.length : dividerIndex) + 1 + i,
-          isInDragMode: navState.isInDragMode,
-          onReorder: controller.reorder,
-          theme: theme,
-          asCoreStyle: false,
-        ),
+        if (isEntryVisible(viewersSlice[i]))
+          _buildEntry(
+            context,
+            entry: viewersSlice[i],
+            indexInEntries:
+                (dividerIndex == -1 ? coreSlice.length : dividerIndex) + 1 + i,
+            isInDragMode: navState.isInDragMode,
+            onReorder: controller.reorder,
+            theme: theme,
+            asCoreStyle: false,
+          ),
     ];
 
     final appBar = AppBar(

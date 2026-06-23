@@ -22,6 +22,7 @@ const List<NavOrderEntry> defaultNavOrder = [
   NavToolEntry(TriOSTools.weapons),
   NavToolEntry(TriOSTools.hullmods),
   NavToolEntry(TriOSTools.factions),
+  NavToolEntry(TriOSTools.sectorMap),
   NavToolEntry(TriOSTools.portraits),
   NavToolEntry(TriOSTools.vramEstimator),
   NavToolEntry(TriOSTools.tips),
@@ -39,10 +40,19 @@ const Set<TriOSTools> reorderableTools = {
   TriOSTools.weapons,
   TriOSTools.hullmods,
   TriOSTools.factions,
+  TriOSTools.sectorMap,
   TriOSTools.portraits,
   TriOSTools.vramEstimator,
   TriOSTools.tips,
 };
+
+/// Tools hidden from the navigation unless the app is in debug mode. Used for
+/// work-in-progress features that aren't ready for general use.
+const Set<TriOSTools> debugOnlyTools = {TriOSTools.sectorMap};
+
+/// Whether [tool]'s nav button should be shown, given the debug-mode setting.
+bool isNavToolVisible(TriOSTools tool, {required bool debugMode}) =>
+    debugMode || !debugOnlyTools.contains(tool);
 
 @MappableEnum(defaultValue: TriOSTools.dashboard)
 enum TriOSTools {
@@ -59,6 +69,7 @@ enum TriOSTools {
   settings,
   catalog,
   tips,
+  sectorMap,
 }
 
 enum NavGroup { core, viewers, bottom }
@@ -76,6 +87,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.hullmods => 'Hullmods',
     TriOSTools.factions => 'Factions',
     TriOSTools.portraits => 'Portraits',
+    TriOSTools.sectorMap => 'Sector',
     TriOSTools.tips => 'Tips',
     TriOSTools.settings => 'Settings',
   };
@@ -92,6 +104,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.hullmods => 'Hullmod Viewer',
     TriOSTools.factions => 'Faction Viewer',
     TriOSTools.portraits => 'Portrait Viewer & Replacer',
+    TriOSTools.sectorMap => 'Sector Map',
     TriOSTools.tips => 'Tips Manager',
     TriOSTools.settings => 'Settings',
   };
@@ -141,6 +154,11 @@ extension TriOSToolsUI on TriOSTools {
       "assets/images/icon-account-box-outline.svg",
       color: color,
     ),
+    TriOSTools.sectorMap => Icon(
+      Icons.scatter_plot,
+      size: size,
+      color: color,
+    ),
     TriOSTools.tips => Icon(Icons.lightbulb, size: size, color: color),
     TriOSTools.settings => Icon(Icons.settings, size: size, color: color),
   };
@@ -156,6 +174,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.weapons ||
     TriOSTools.hullmods ||
     TriOSTools.factions ||
+    TriOSTools.sectorMap ||
     TriOSTools.portraits ||
     TriOSTools.tips => NavGroup.viewers,
     TriOSTools.settings => NavGroup.bottom,

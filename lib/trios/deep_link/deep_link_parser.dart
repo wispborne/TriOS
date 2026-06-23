@@ -12,6 +12,10 @@
 ///   ignored. This form is extensible: new optional keys can be added without
 ///   breaking older clients. Detected by a leading `{`.
 ///
+/// `version` is interpreted by role: on a `dep` entry it is the *minimum required
+/// version* (the dependency is installed/updated only when the locally installed
+/// copy is older than it); on the `mod` entry it is a display/fallback version.
+///
 /// A `.version` URL is fetched for metadata + download URL; anything else is
 /// treated as a direct download.
 library;
@@ -48,9 +52,14 @@ class DeepLinkModEntry {
   /// reliable already-installed matching. Null when the link didn't include it.
   final String? modId;
 
-  /// Optional mod version supplied by the link (e.g. `0.11.2`). Used only as a
-  /// fallback for the version when no `.version` file is fetched (direct
-  /// downloads) or the fetched file omits one — the fetched version always wins.
+  /// Optional version supplied by the link (e.g. `0.11.2`). Its meaning depends
+  /// on the entry's role:
+  ///  - On a **dependency**, it is the *minimum required version*: the dependency
+  ///    counts as satisfied when a locally installed copy is `>=` it, and is
+  ///    otherwise installed/updated. Absent ⇒ install only if missing.
+  ///  - On the **main mod**, it is a display/fallback version, used when no
+  ///    `.version` file is fetched (direct downloads) or the fetched file omits
+  ///    one — the fetched version always wins.
   /// Null when the link didn't include it.
   final String? modVersion;
 

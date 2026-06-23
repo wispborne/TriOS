@@ -11,6 +11,7 @@ import 'package:trios/catalog/mod_browser_page.dart';
 import 'package:trios/chipper/chipper_app.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/faction_viewer/faction_viewer_page.dart';
+import 'package:trios/sector_map/sector_map_page.dart';
 import 'package:trios/hullmod_viewer/hullmods_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
@@ -73,6 +74,7 @@ class _AppShellState extends ConsumerState<AppShell>
     10: TriOSTools.settings,
     11: TriOSTools.catalog,
     12: TriOSTools.tips,
+    13: TriOSTools.sectorMap,
   };
 
   late final toolToIndexMap = tabToolMap.map((k, v) => MapEntry(v, k));
@@ -250,6 +252,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const SettingsPage(pagePadding: 8.0),
       const CatalogPage(pagePadding: .all(8)),
       const TipsPage(),
+      const SectorMapPage(),
     ];
 
     final useTopToolbar = ref.watch(

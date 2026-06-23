@@ -1,3 +1,13 @@
+# 1.6.1
+- Added
+  - Popup when a mod is installed and the Activity panel is closed, giving you a convenient "Enable" mod button.
+- Fixed
+  - Mod names like `#Vexlia's Faster Devstart` no longer break game loading when installed through TriOS.
+    - The leading `#` in the mod folder name prevented the game from loading scripts, idk why.
+  - With TriLink, remote .version files are now resolved immediately, fixing a bug where GraphicsLib wouldn't download.
+- Changed
+  - In TriLinks, the version field is now optional and treated as a minimum requirement.
+
 # 1.6.0
 - Added
   - Factions Viewer

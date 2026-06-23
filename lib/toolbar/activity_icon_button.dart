@@ -1,18 +1,23 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/mod_manager/batch_installation/batch_installation.dart';
 import 'package:trios/mod_manager/batch_installation/batch_installation_notifier.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/activity_panel/activity_entry.dart';
 import 'package:trios/trios/activity_panel/activity_item_tile.dart';
 import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
 import 'package:trios/trios/activity_panel/batch_activity_tile.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants_theme.dart' show TriOSThemeConstants;
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/download_status.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+import 'package:trios/widgets/tooltip_frame.dart';
 
 ({
   List<BatchEntry> activeBatchEntries,
@@ -60,12 +65,31 @@ import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 /// Toolbar icon that toggles the Activity Panel.
 ///
 /// Shows a circular progress ring when downloads/installs are in progress,
-/// and an Edge-style badge count of unseen completions.
-class ActivityIconButton extends ConsumerWidget {
+/// and an Edge-style badge count of unseen completions. When a mod finishes
+/// installing while the panel is closed, shows a transient popup anchored below
+/// the button so the user can Enable the mod(s) without opening the panel.
+class ActivityIconButton extends ConsumerStatefulWidget {
   const ActivityIconButton({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActivityIconButton> createState() => _ActivityIconButtonState();
+}
+
+class _ActivityIconButtonState extends ConsumerState<ActivityIconButton> {
+  final LayerLink _popupLink = LayerLink();
+  final OverlayPortalController _popupController = OverlayPortalController();
+
+  @override
+  Widget build(BuildContext context) {
+    // Show/hide the install popup anchored below the button.
+    ref.listen<List<ActivityEntry>>(recentInstallPopupProvider, (_, next) {
+      if (next.isNotEmpty) {
+        if (!_popupController.isShowing) _popupController.show();
+      } else {
+        if (_popupController.isShowing) _popupController.hide();
+      }
+    });
+
     final downloads = ref.watch(downloadManager).value ?? [];
     final unseenCount = ref.watch(activityUnseenCount);
     final isOpen = ref.watch(appSettings.select((s) => s.isActivityPanelOpen));
@@ -125,6 +149,9 @@ class ActivityIconButton extends ConsumerWidget {
       ],
     );
 
+    // Anchor for the install popup so it can position itself below the button.
+    iconStack = CompositedTransformTarget(link: _popupLink, child: iconStack);
+
     Widget result;
     if (hasActivity) {
       result = MovingTooltipWidget.framed(
@@ -141,20 +168,26 @@ class ActivityIconButton extends ConsumerWidget {
 
     // Only offer dismissing the badge when there's an unseen notification
     // (one or more mods finished while the panel was closed).
-    if (unseenCount == 0) return result;
+    if (unseenCount > 0) {
+      result = ContextMenuRegion(
+        contextMenu: ContextMenu(
+          entries: [
+            MenuItem(
+              label: 'Dismiss notification',
+              value: 'dismiss',
+              onSelected: () {
+                ref.read(activityUnseenCount.notifier).clearUnseen();
+              },
+            ),
+          ],
+        ),
+        child: result,
+      );
+    }
 
-    return ContextMenuRegion(
-      contextMenu: ContextMenu(
-        entries: [
-          MenuItem(
-            label: 'Dismiss notification',
-            value: 'dismiss',
-            onSelected: () {
-              ref.read(activityUnseenCount.notifier).clearUnseen();
-            },
-          ),
-        ],
-      ),
+    return OverlayPortal(
+      controller: _popupController,
+      overlayChildBuilder: (_) => _RecentInstallPopup(link: _popupLink),
       child: result,
     );
   }
@@ -199,6 +232,172 @@ class _ActivityTooltipContent extends ConsumerWidget {
             for (final e in data.unseenEntries)
               CompletedActivityTile(entry: e, showActions: false),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Transient popup anchored below the activity button, shown when mods finish
+/// installing while the panel is closed. Lets the user Enable the new mod(s)
+/// (or Enable All) without opening the panel. Auto-dismisses after the standard
+/// toast time; hovering pauses the countdown.
+class _RecentInstallPopup extends ConsumerStatefulWidget {
+  final LayerLink link;
+
+  const _RecentInstallPopup({required this.link});
+
+  @override
+  ConsumerState<_RecentInstallPopup> createState() =>
+      _RecentInstallPopupState();
+}
+
+class _RecentInstallPopupState extends ConsumerState<_RecentInstallPopup>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _countdown = AnimationController(vsync: this)
+    ..addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        ref.read(recentInstallPopupProvider.notifier).clear();
+      }
+    });
+
+  bool _hovering = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Match the user's notification duration setting (the same value toasts use).
+    _countdown.duration = Duration(
+      seconds: ref.read(appSettings.select((s) => s.toastDurationSeconds)),
+    );
+    _countdown.forward();
+  }
+
+  @override
+  void dispose() {
+    _countdown.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final entries = ref.watch(recentInstallPopupProvider);
+
+    // Restart the countdown when another install lands while the popup is up.
+    ref.listen<List<ActivityEntry>>(recentInstallPopupProvider, (prev, next) {
+      if (next.length > (prev?.length ?? 0) && !_hovering) {
+        _countdown.forward(from: 0);
+      }
+    });
+
+    if (entries.isEmpty) return const SizedBox.shrink();
+
+    final mods = ref.watch(AppState.mods);
+    final enableable = <Mod>[];
+    for (final entry in entries) {
+      final mod = entry.modId != null
+          ? mods.firstWhereOrNull((m) => m.id == entry.modId)
+          : mods.firstWhereOrNull(
+              (m) => m.findHighestVersion?.modInfo.nameOrId == entry.modName,
+            );
+      if (mod != null &&
+          mod.isEnabledInGame != true &&
+          !enableable.contains(mod)) {
+        enableable.add(mod);
+      }
+    }
+
+    return CompositedTransformFollower(
+      link: widget.link,
+      showWhenUnlinked: false,
+      targetAnchor: Alignment.bottomRight,
+      followerAnchor: Alignment.topRight,
+      offset: const Offset(0, 4),
+      child: Align(
+        alignment: Alignment.topRight,
+        child: MouseRegion(
+          onEnter: (_) {
+            _hovering = true;
+            _countdown.stop();
+          },
+          onExit: (_) {
+            _hovering = false;
+            _countdown.forward();
+          },
+          child: TooltipFrame(
+            padding: .zero,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const .only(
+                      left: 16,
+                      right: 8,
+                      top: 8,
+                      bottom: 4,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entries.length == 1
+                                ? 'Mod installed'
+                                : 'Mods installed',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (enableable.length >= 2)
+                          MovingTooltipWidget.text(
+                            message: 'Enable all newly installed mods',
+                            child: TextButton.icon(
+                              onPressed: () async {
+                                await ref
+                                    .read(modManager.notifier)
+                                    .enableMultiple(enableable);
+                              },
+                              icon: const Icon(
+                                Icons.power_settings_new,
+                                size: 14,
+                              ),
+                              label: const Text('Enable All'),
+                              style: TextButton.styleFrom(
+                                padding: .symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  for (final entry in entries)
+                    CompletedActivityTile(entry: entry, showActions: true),
+                  // Shrinking bar showing time until the popup auto-dismisses.
+                  Padding(
+                    padding: const .only(top: 4),
+                    child: AnimatedBuilder(
+                      animation: _countdown,
+                      builder: (_, _) => ThemedLinearProgressIndicator(
+                        value: 1.0 - _countdown.value,
+                        minHeight: 3,
+                        backgroundColor: Colors.transparent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

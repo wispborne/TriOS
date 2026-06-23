@@ -9,6 +9,7 @@ import 'package:trios/models/launch_settings.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
+import 'package:trios/sector_map/sector_map_controller.dart';
 import 'package:trios/toolbar/nav_order_entry.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
@@ -152,6 +153,8 @@ class Settings with SettingsMappable {
   final double catalogCardSpacing;
   @MappableField(hook: SafeDecodeHook())
   final CatalogPageStatePersisted? catalogPageState;
+  @MappableField(hook: SafeDecodeHook())
+  final SectorMapPageStatePersisted? sectorMapPageState;
 
   // Mod profiles are stored in [ModProfilesSettings] and [ModProfileManagerNotifier],
   // in a different shared_prefs key.
@@ -289,6 +292,7 @@ class Settings with SettingsMappable {
     this.catalogMinItemWidth = 390,
     this.catalogCardSpacing = 4,
     this.catalogPageState,
+    this.sectorMapPageState,
     this.activeModProfileId,
     this.showForceUpdateWarning = true,
     this.showDonationButton = true,

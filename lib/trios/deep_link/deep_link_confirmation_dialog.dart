@@ -358,7 +358,16 @@ class _DeepLinkConfirmationDialogState
           ),
         if (entry.entry.modId != null)
           _urlLine(theme, Icons.tag, '${entry.entry.modId}', onTap: onTap),
-        if (entry.modVersion != null)
+        // A dependency's link version is a minimum requirement — label it as such.
+        // The main mod (and version-less deps) show a bare resolved version.
+        if (!isMain && entry.entry.modVersion != null)
+          _urlLine(
+            theme,
+            Icons.numbers,
+            'Requires ≥ ${entry.entry.modVersion}',
+            onTap: onTap,
+          )
+        else if (entry.modVersion != null)
           _urlLine(theme, Icons.numbers, '${entry.modVersion}', onTap: onTap),
         _urlLine(
           theme,

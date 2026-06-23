@@ -42,6 +42,37 @@ void main() {
     }
   });
 
+  test('killer_of_fate insane deeply-nested version format', () {
+    // Real-world mod with absurdly deep dotted versions, including a
+    // "1.4.2.2.4.3.2 (2)" re-release where the "(2)" parenthetical sorts
+    // after the plain version but before the next patch.
+    final ascending = [
+      '1.4.2.2.3.1.2',
+      '1.4.2.2.4',
+      '1.4.2.2.4.1',
+      '1.4.2.2.4.2',
+      '1.4.2.2.4.2.1',
+      '1.4.2.2.4.3',
+      '1.4.2.2.4.3.1',
+      '1.4.2.2.4.3.2',
+      '1.4.2.2.4.3.2 (2)',
+      '1.4.2.2.4.3.3',
+      '1.4.2.2.4.3.3.4',
+      '1.4.2.2.4.3.3.5',
+      '1.4.2.2.4.3.3.6',
+    ];
+
+    for (int i = 0; i < ascending.length - 1; i++) {
+      final a = Version.parse(ascending[i], sanitizeInput: false);
+      final b = Version.parse(ascending[i + 1], sanitizeInput: false);
+      expect(
+        a.compareTo(b),
+        -1,
+        reason: '${ascending[i]} should sort before ${ascending[i + 1]}',
+      );
+    }
+  });
+
   test('benchmark', () {
     // Disable slow console log output
     configureLogging(LoggingSettings(consoleOnly: true));

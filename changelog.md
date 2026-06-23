@@ -7,6 +7,7 @@
   - With TriLink, remote .version files are now resolved immediately, fixing a bug where GraphicsLib wouldn't download.
 - Changed
   - In TriLinks, the version field is now optional and treated as a minimum requirement.
+  - Motes are now motier (Settings - Theme Modifiers).
 
 # 1.6.0
 - Added

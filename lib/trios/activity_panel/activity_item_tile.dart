@@ -27,10 +27,15 @@ class CompletedActivityTile extends ConsumerWidget {
   final ActivityEntry entry;
   final bool showActions;
 
+  /// Overrides what the "Clear" action does. Defaults to removing the entry
+  /// from the persisted history.
+  final VoidCallback? onClear;
+
   const CompletedActivityTile({
     super.key,
     required this.entry,
     this.showActions = true,
+    this.onClear,
   });
 
   @override
@@ -160,9 +165,11 @@ class CompletedActivityTile extends ConsumerWidget {
                                     Icons.close,
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
-                                  onPressed: () => ref
-                                      .read(activityHistoryStore.notifier)
-                                      .removeEntry(entry.id),
+                                  onPressed:
+                                      onClear ??
+                                      () => ref
+                                          .read(activityHistoryStore.notifier)
+                                          .removeEntry(entry.id),
                                 ),
                               ),
                             ),

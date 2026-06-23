@@ -381,7 +381,13 @@ class _RecentInstallPopupState extends ConsumerState<_RecentInstallPopup>
                     ),
                   ),
                   for (final entry in entries)
-                    CompletedActivityTile(entry: entry, showActions: true),
+                    CompletedActivityTile(
+                      entry: entry,
+                      showActions: true,
+                      onClear: () => ref
+                          .read(recentInstallPopupProvider.notifier)
+                          .remove(entry),
+                    ),
                   // Shrinking bar showing time until the popup auto-dismisses.
                   Padding(
                     padding: const .only(top: 4),

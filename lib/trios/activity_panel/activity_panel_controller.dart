@@ -106,6 +106,9 @@ class RecentInstallPopupNotifier extends Notifier<List<ActivityEntry>> {
 
   void add(ActivityEntry entry) => state = [...state, entry];
 
+  void remove(ActivityEntry entry) =>
+      state = state.where((e) => e.id != entry.id).toList();
+
   void clear() => state = const [];
 }
 

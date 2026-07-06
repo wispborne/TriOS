@@ -168,6 +168,13 @@ class DeepLinkHandler extends Notifier<void> {
     _resolving = true;
     bool createdSession = false;
     try {
+      // On a cold start the deep link can arrive before the mod list (and the
+      // mods-folder path) have finished their first load. Until then the
+      // "already installed" checks read an empty mod list and every mod looks
+      // missing, and the mods-folder guard can wrongly fire. Wait for the first
+      // load to settle so the checks see the real installed mods.
+      await _ensureModsLoaded();
+
       while (_queuedUris.isNotEmpty) {
         final uris = List<String>.from(_queuedUris);
         _queuedUris.clear();
@@ -287,6 +294,36 @@ class DeepLinkHandler extends Notifier<void> {
 
       // Links that arrived after the dialog closed start a fresh session.
       if (_queuedUris.isNotEmpty) Future.microtask(_drainAndProcess);
+    }
+  }
+
+  /// Waits for the mod list the install checks rely on to finish loading.
+  /// Reading `.future` returns immediately once things are ready, so this is
+  /// only a real wait on a cold start. Errors are swallowed — if a provider
+  /// fails to load we fall through and let the per-batch guards handle it.
+  Future<void> _ensureModsLoaded() async {
+    try {
+      // The mod scan quietly returns an empty list until these paths resolve
+      // (see reloadModVariants / getModsVariantsInFolder). On a cold start
+      // they're still loading when the link arrives, so wait for them first —
+      // otherwise the "already installed" checks run against an empty mod list
+      // and every mod looks missing.
+      await ref.read(AppState.gameFolder.future);
+      await ref.read(AppState.gameCoreFolder.future);
+      await ref.read(AppState.modsFolder.future);
+      await ref.read(AppState.enabledModIds.future);
+
+      // If the mod list was first built (empty) before those paths were ready,
+      // its cached value is stale. Reload it now that the paths are set. An
+      // empty result on a warm start means the user genuinely has no mods, so
+      // the extra scan is a no-op.
+      final variants = await ref.read(AppState.modVariants.future);
+      if (variants.isEmpty) {
+        ref.invalidate(AppState.modVariants);
+        await ref.read(AppState.modVariants.future);
+      }
+    } catch (e) {
+      Fimber.w('Deep link: error waiting for mods to load: $e');
     }
   }
 

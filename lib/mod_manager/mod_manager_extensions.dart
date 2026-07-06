@@ -198,6 +198,22 @@ extension ModExt on Mod {
 
   Comparable<num> getSortValueForLastEnabled(ModsMetadata? modsMetadata) =>
       modsMetadata?.getMergedModMetadata(id)?.lastEnabled ?? 0;
+
+  /// Timestamp (ms since epoch) of when the highest-version variant the mod
+  /// currently has installed was first seen by TriOS — i.e. when the user last
+  /// installed a newer version (or the first-time install). Falls back to the
+  /// mod-level [ModMetadata.firstSeen], then 0 when nothing is known.
+  int getSortValueForLastUpdated(ModsMetadata? modsMetadata) {
+    final highestSmolId = findHighestVersion?.smolId;
+    final variantFirstSeen = highestSmolId == null
+        ? null
+        : modsMetadata
+              ?.getMergedModVariantMetadata(id, highestSmolId)
+              ?.firstSeen;
+    return variantFirstSeen ??
+        modsMetadata?.getMergedModMetadata(id)?.firstSeen ??
+        0;
+  }
 }
 
 extension ModDependencySatisfiedStateExt on ModDependencySatisfiedState {

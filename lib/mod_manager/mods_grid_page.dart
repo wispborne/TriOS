@@ -14,6 +14,9 @@ import 'package:trios/dashboard/mod_list_basic.dart';
 import 'package:trios/dashboard/mod_list_basic_entry.dart';
 import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
+import 'package:trios/catalog/download_confirm.dart';
+import 'package:trios/catalog/mod_browser_manager.dart';
+import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/mod_context_menu.dart';
@@ -474,16 +477,15 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   child,
                                   Padding(
                                     padding: EdgeInsets.only(
-                                      left:
-                                          12 +
-                                          gridState.getWidthUpToColumn(
-                                            ModGridHeader.name.name,
-                                            modifiers.columns,
-                                          ),
+                                      left: _dependencyButtonLeftInset(
+                                        gridState,
+                                        modifiers.columns,
+                                      ),
                                     ),
                                     child: buildMissingDependencyButtons(
-                                      (item).findFirstEnabled,
+                                      (item).findFirstEnabledOrHighestVersion,
                                       allMods,
+                                      isParentEnabled: item.hasEnabledVariant,
                                     ),
                                   ),
                                 ],
@@ -916,6 +918,46 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       defaultState: WispGridColumnState(
                         position: 12,
                         width: 150,
+                      ),
+                    ),
+                    WispGridColumn<Mod>(
+                      key: ModGridHeader.lastUpdated.name,
+                      name: "Last Updated",
+                      isSortable: true,
+                      getSortValue: (mod) =>
+                          mod.getSortValueForLastUpdated(modsMetadata),
+                      headerCellBuilder: (modifiers) => buildColumnHeader(
+                        ModGridHeader.lastUpdated,
+                        modifiers,
+                      ).child,
+                      itemCellBuilder: (mod, modifiers) {
+                        final ms = mod.getSortValueForLastUpdated(modsMetadata);
+                        return Opacity(
+                          opacity: WispGrid.lightTextOpacity,
+                          child: Text(
+                            ms > 0
+                                ? Constants.dateTimeFormat.format(
+                                    DateTime.fromMillisecondsSinceEpoch(ms),
+                                  )
+                                : "",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelLarge,
+                          ),
+                        );
+                      },
+                      csvValue: (mod) {
+                        final ms = mod.getSortValueForLastUpdated(modsMetadata);
+                        return ms > 0
+                            ? DateTime.fromMillisecondsSinceEpoch(
+                                ms,
+                              ).toIso8601String()
+                            : "";
+                      },
+                      defaultState: WispGridColumnState(
+                        position: 13,
+                        width: 150,
+                        isVisible: false,
                       ),
                     ),
                   ],
@@ -1626,6 +1668,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
       ModGridHeader.gameVersion => ModGridSortField.gameVersion,
       ModGridHeader.firstSeen => ModGridSortField.firstSeen,
       ModGridHeader.lastEnabled => ModGridSortField.lastEnabled,
+      ModGridHeader.lastUpdated => ModGridSortField.lastUpdated,
     };
 
     final builder = Builder(
@@ -1677,6 +1720,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           ModGridHeader.firstSeen => Text('First Seen', style: headerTextStyle),
           ModGridHeader.lastEnabled => Text(
             'Last Enabled',
+            style: headerTextStyle,
+          ),
+          ModGridHeader.lastUpdated => Text(
+            'Last Updated',
             style: headerTextStyle,
           ),
           ModGridHeader.categories => Text('Category', style: headerTextStyle),
@@ -2318,10 +2365,33 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     );
   }
 
+  /// Left inset that lines the dependency buttons up under the Enable/Disable
+  /// (version) column. The row lays out cells as [8px gap, col0, col1, ...]
+  /// with 8px between each, so a column's left edge sits at 16 plus the total
+  /// width of the columns before it (each plus one 8px gap). Recomputed from
+  /// live grid state so it follows the column when it's moved or resized.
+  /// Falls back to the first column's position if that column is hidden.
+  double _dependencyButtonLeftInset(
+    WispGridState gridState,
+    List<WispGridColumn> columns,
+  ) {
+    const leadingInset = WispGrid.gridRowSpacing * 2; // 8px gap + 8px spacing
+    var inset = leadingInset;
+    for (final entry in gridState.sortedVisibleColumns(columns)) {
+      if (entry.key == ModGridHeader.changeVariantButton.name) {
+        return inset;
+      }
+      inset += entry.value.width + WispGrid.gridRowSpacing;
+    }
+    // Enable/Disable column not visible — keep the original indent.
+    return leadingInset;
+  }
+
   Widget buildMissingDependencyButtons(
     ModVariant? enabledVersion,
-    List<Mod> allMods,
-  ) {
+    List<Mod> allMods, {
+    required bool isParentEnabled,
+  }) {
     final modCompatibility = ref.watch(
       AppState.modCompatibility,
     )[enabledVersion?.smolId];
@@ -2333,24 +2403,19 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
 
     if (unmetDependencies.isEmpty) return Container();
 
-    final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-    final cellWidthBeforeNameColumn = gridState.columnsState.entries
-        .sortedBy<num>((entry) => entry.value.position)
-        .takeWhile((element) => element.key != ModGridHeader.name.name)
-        .map((e) => e.value.width + WispGrid.gridRowSpacing)
-        .sum;
-
     return Padding(
-      padding: EdgeInsets.only(left: cellWidthBeforeNameColumn, bottom: 4),
+      padding: const EdgeInsets.only(top: 2, bottom: 4, left: 4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 2,
         children: [
           ...unmetDependencies.map((checkResult) {
             return MissingDependencyButton(
               enabledVersion: enabledVersion,
               checkResult: checkResult,
               allMods: allMods,
+              isParentEnabled: isParentEnabled,
             );
           }),
         ],
@@ -2365,14 +2430,22 @@ class MissingDependencyButton extends ConsumerWidget {
     required this.enabledVersion,
     required this.checkResult,
     required this.allMods,
+    required this.isParentEnabled,
   });
 
   final ModVariant? enabledVersion;
   final ModDependencyCheckResult checkResult;
   final List<Mod> allMods;
+  final bool isParentEnabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // A present-but-off dependency only matters once the parent mod is on:
+    // enabling it alone does nothing while the parent is still off.
+    if (checkResult.satisfiedAmount is Disabled && !isParentEnabled) {
+      return const SizedBox.shrink();
+    }
+
     final buttonStyle = OutlinedButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       minimumSize: const Size(60, 34),
@@ -2424,38 +2497,146 @@ class MissingDependencyButton extends ConsumerWidget {
                   } else {
                     final missingDependency = checkResult.dependency;
 
-                    return OutlinedButton(
-                      onPressed: () async {
-                        final modName =
-                            missingDependency.formattedNameVersionId;
-                        // Advanced search
-                        final url = Uri.parse(
-                          'https://www.google.com/search?q=starsector+$modName+download',
-                        );
-
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url);
-                        } else {
-                          showSnackBar(
-                            context: context,
-                            content: const Text(
-                              "Couldn't open browser. Google recommends Chrome for a faster experience!",
-                            ),
+                    // The catalog has no mod IDs, so match the missing mod to
+                    // a catalog entry by name (ignoring case and punctuation),
+                    // the same way mod records match installed mods.
+                    final catalog = ref
+                        .watch(browseModsNotifierProvider)
+                        .valueOrNull
+                        ?.items;
+                    String normalize(String s) =>
+                        s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+                    final candidates = <String>{
+                      if (missingDependency.name != null)
+                        normalize(missingDependency.name!),
+                      if (missingDependency.id != null)
+                        normalize(missingDependency.id!),
+                    };
+                    final catalogMatch = (catalog == null || candidates.isEmpty)
+                        ? null
+                        : catalog.firstWhereOrNull(
+                            (m) => candidates.contains(normalize(m.name)),
                           );
-                        }
-                      },
+                    final directDownloadUrl =
+                        catalogMatch?.getUrls()[ModUrlType.DirectDownload];
+                    final hasDirectDownload =
+                        directDownloadUrl != null &&
+                        directDownloadUrl.isNotEmpty;
+                    // Page to open when there's no one-click download link.
+                    final websiteUrl = catalogMatch?.getBestWebsiteUrl();
+
+                    // Is the dependency installed, just an older version than
+                    // what the mod needs? (modVariant is only set when present.)
+                    final installedVariant =
+                        checkResult.satisfiedAmount.modVariant;
+                    final installedVersion = installedVariant?.modInfo.version;
+                    final requiredVersion = missingDependency.version;
+                    final isOutdated =
+                        installedVariant != null &&
+                        installedVersion != null &&
+                        requiredVersion != null &&
+                        installedVersion < requiredVersion;
+
+                    Future<void> openUrl(String url) async {
+                      final uri = Uri.parse(url);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else if (context.mounted) {
+                        showSnackBar(
+                          context: context,
+                          content: const Text(
+                            "Couldn't open browser. Google recommends Chrome for a faster experience!",
+                          ),
+                        );
+                      }
+                    }
+
+                    void searchOnline() => openUrl(
+                      'https://www.google.com/search?q=starsector+'
+                      '${missingDependency.formattedNameVersionId}+download',
+                    );
+
+                    final String text;
+                    final String? tooltipMessage;
+                    final Widget leading;
+                    final VoidCallback onPressed;
+
+                    const downloadIcon = Icon(Icons.download, size: 20);
+                    const openPageIcon = Icon(Icons.open_in_browser, size: 20);
+                    const searchIcon = SvgImageIcon(
+                      "assets/images/icon-search.svg",
+                      width: 20,
+                      height: 20,
+                    );
+
+                    if (isOutdated) {
+                      final outdatedTooltip =
+                          "You have $installedVersion. This mod needs "
+                          "$requiredVersion or newer.";
+                      final updateText =
+                          "Update ${missingDependency.nameOrId} "
+                          "($requiredVersion required)";
+                      if (hasDirectDownload) {
+                        text = updateText;
+                        tooltipMessage =
+                            "$outdatedTooltip Click to download the latest version.";
+                        leading = downloadIcon;
+                        onPressed = () => confirmAndDownloadModViaManager(
+                          context,
+                          ref,
+                          modName: missingDependency.nameOrId,
+                          downloadUrl: directDownloadUrl,
+                          activateVariantOnComplete: false,
+                        );
+                      } else if (websiteUrl != null) {
+                        text = updateText;
+                        tooltipMessage =
+                            "$outdatedTooltip Click to open the download page.";
+                        leading = openPageIcon;
+                        onPressed = () => openUrl(websiteUrl);
+                      } else {
+                        text = "Search for newer ${missingDependency.nameOrId}";
+                        tooltipMessage = outdatedTooltip;
+                        leading = searchIcon;
+                        onPressed = searchOnline;
+                      }
+                    } else if (hasDirectDownload) {
+                      text = "Install ${missingDependency.formattedNameVersion}";
+                      tooltipMessage =
+                          "Download and install ${missingDependency.nameOrId} "
+                          "with ${Constants.appName}";
+                      leading = downloadIcon;
+                      onPressed = () => confirmAndDownloadModViaManager(
+                        context,
+                        ref,
+                        modName: missingDependency.nameOrId,
+                        downloadUrl: directDownloadUrl,
+                        activateVariantOnComplete: false,
+                      );
+                    } else {
+                      text =
+                          "Search ${missingDependency.formattedNameVersionId}";
+                      tooltipMessage = null;
+                      leading = searchIcon;
+                      onPressed = searchOnline;
+                    }
+
+                    final button = OutlinedButton(
+                      onPressed: onPressed,
                       style: buttonStyle,
                       child: TextWithIcon(
-                        text:
-                            "Search ${missingDependency.formattedNameVersionId}",
-                        leading: const SvgImageIcon(
-                          "assets/images/icon-search.svg",
-                          width: 20,
-                          height: 20,
-                        ),
+                        text: text,
+                        leading: leading,
                         leadingPadding: const EdgeInsets.only(right: 4),
                       ),
                     );
+
+                    return tooltipMessage == null
+                        ? button
+                        : MovingTooltipWidget.text(
+                            message: tooltipMessage,
+                            child: button,
+                          );
                   }
                 },
               ),

@@ -15,6 +15,8 @@ All-in-one Starsector launcher, mod manager, and toolkit. Flutter desktop app â€
 
 ## Common Commands
 
+Note: I use `fvm`. Try using that first. 
+
 Run all tests:
 
 ```

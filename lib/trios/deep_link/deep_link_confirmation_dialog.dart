@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Information about a resolved mod entry for display in the dialog.
 class ResolvedModEntry {
@@ -177,13 +177,13 @@ class _DeepLinkConfirmationDialogState
         constraints: const BoxConstraints(minWidth: 400, maxWidth: 620),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: .start,
           children: [
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: .start,
                   children: [
                     // Main mods first.
                     ...mainMods.map(
@@ -328,7 +328,7 @@ class _DeepLinkConfirmationDialogState
     final showResolved = isVersionFile && resolvedUrl != sourceUrl;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       spacing: 2,
       children: [
         Text(
@@ -357,7 +357,15 @@ class _DeepLinkConfirmationDialogState
             ),
           ),
         if (entry.entry.modId != null)
-          _urlLine(theme, Icons.tag, '${entry.entry.modId}', onTap: onTap),
+          MovingTooltipWidget.text(
+            message: 'Id: ${entry.entry.modId}',
+            child: _urlLine(
+              theme,
+              Icons.tag,
+              '${entry.entry.modId}',
+              onTap: onTap,
+            ),
+          ),
         // A dependency's link version is a minimum requirement — label it as such.
         // The main mod (and version-less deps) show a bare resolved version.
         if (!isMain && entry.entry.modVersion != null)
@@ -368,15 +376,29 @@ class _DeepLinkConfirmationDialogState
             onTap: onTap,
           )
         else if (entry.modVersion != null)
-          _urlLine(theme, Icons.numbers, '${entry.modVersion}', onTap: onTap),
-        _urlLine(
-          theme,
-          isVersionFile ? Icons.description_outlined : Icons.download,
-          sourceUrl,
-          onTap: onTap,
+          MovingTooltipWidget.text(
+            message: 'Version ${entry.modVersion}',
+            child: _urlLine(
+              theme,
+              Icons.numbers,
+              '${entry.modVersion}',
+              onTap: onTap,
+            ),
+          ),
+        MovingTooltipWidget.text(
+          message: isVersionFile ? 'Version file' : 'Download link',
+          child: _urlLine(
+            theme,
+            isVersionFile ? Icons.description_outlined : Icons.download,
+            sourceUrl,
+            onTap: onTap,
+          ),
         ),
         if (showResolved)
-          _urlLine(theme, Icons.download, resolvedUrl, onTap: onTap),
+          MovingTooltipWidget.text(
+            message: 'Download link',
+            child: _urlLine(theme, Icons.download, resolvedUrl, onTap: onTap),
+          ),
       ],
     );
   }
@@ -393,10 +415,10 @@ class _DeepLinkConfirmationDialogState
     return Padding(
       padding: const EdgeInsets.only(top: 3),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .center,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 2, right: 6),
+            padding: const EdgeInsets.only(right: 6),
             child: Icon(icon, size: 13, color: color),
           ),
           Expanded(

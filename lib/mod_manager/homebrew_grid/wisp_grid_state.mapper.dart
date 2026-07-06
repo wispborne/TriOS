@@ -103,6 +103,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return ModGridHeader.firstSeen;
       case r'lastEnabled':
         return ModGridHeader.lastEnabled;
+      case r'lastUpdated':
+        return ModGridHeader.lastUpdated;
       case r'categories':
         return ModGridHeader.categories;
       default:
@@ -139,6 +141,8 @@ class ModGridHeaderMapper extends EnumMapper<ModGridHeader> {
         return r'firstSeen';
       case ModGridHeader.lastEnabled:
         return r'lastEnabled';
+      case ModGridHeader.lastUpdated:
+        return r'lastUpdated';
       case ModGridHeader.categories:
         return r'categories';
     }
@@ -251,6 +255,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return ModGridSortField.firstSeen;
       case r'lastEnabled':
         return ModGridSortField.lastEnabled;
+      case r'lastUpdated':
+        return ModGridSortField.lastUpdated;
       case r'categories':
         return ModGridSortField.categories;
       default:
@@ -283,6 +289,8 @@ class ModGridSortFieldMapper extends EnumMapper<ModGridSortField> {
         return r'firstSeen';
       case ModGridSortField.lastEnabled:
         return r'lastEnabled';
+      case ModGridSortField.lastUpdated:
+        return r'lastUpdated';
       case ModGridSortField.categories:
         return r'categories';
     }

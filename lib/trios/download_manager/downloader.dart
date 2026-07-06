@@ -892,6 +892,24 @@ class DownloadManager {
               ?.join(';')
               .contains('text/html') ??
           false) {
+        // Google Drive shows an HTML "Virus scan warning" page (instead of the
+        // file) when a file is too large to scan. Follow its hidden form to the
+        // real download — the form carries a `uuid` token the plain `confirm=t`
+        // link is missing, so without this we'd save the warning page as the
+        // "archive" and fail later as "Not a supported archive format".
+        if (hostType == HostType.googleDrive) {
+          final resolved = resolveGoogleDriveConfirmation(
+            getResponse.data,
+            currentUrl,
+          );
+          if (resolved != null) {
+            Fimber.d(
+              "Followed Google Drive virus-scan page to: ${resolved.url}",
+            );
+            return resolved;
+          }
+        }
+
         // Parse HTML to find <meta http-equiv="Refresh" content="...">
         final document = parse(getResponse.data);
         final metaRefresh = document.head
@@ -960,6 +978,54 @@ class DownloadManager {
       Fimber.w('Error checking Google Drive link: $e');
       return false;
     }
+  }
+
+  /// Google Drive can't virus-scan large files, so instead of serving the file
+  /// it returns an HTML "Virus scan warning" page containing a hidden form.
+  /// Submitting that form (a GET) returns the real file. The form carries a
+  /// one-time `uuid` token that the plain `…&confirm=t` link doesn't have, which
+  /// is why large Drive downloads otherwise came back as an HTML page and then
+  /// failed as "Not a supported archive format".
+  ///
+  /// Given the page [html] and the [baseUrl] it was fetched from, returns the
+  /// real download URL together with a Content-Disposition header holding the
+  /// file's name (scraped from the page, so we don't re-request the whole large
+  /// file just to learn its name). Returns null if [html] isn't that page.
+  @visibleForTesting
+  static UrlResponse? resolveGoogleDriveConfirmation(
+    dynamic html,
+    String baseUrl,
+  ) {
+    final document = parse(html);
+    final form = document.getElementById('download-form');
+    if (form == null) return null;
+
+    final action = form.attributes['action'];
+    if (action == null || action.isEmpty) return null;
+
+    // Build the download URL from the form's action and its hidden inputs.
+    final params = <String, String>{};
+    for (final input in form.getElementsByTagName('input')) {
+      final name = input.attributes['name'];
+      final value = input.attributes['value'];
+      if (name != null && name.isNotEmpty && value != null) {
+        params[name] = value;
+      }
+    }
+    final actionUri = Uri.parse(baseUrl).resolve(action);
+    final downloadUrl = actionUri
+        .replace(queryParameters: {...actionUri.queryParameters, ...params})
+        .toString();
+
+    // The page shows the file's name in a link next to its size. Pass it back
+    // as a header so the saved file keeps its real name and archive extension.
+    final headers = <String, String>{};
+    final fileName = document.querySelector('.uc-name-size a')?.text.trim();
+    if (fileName != null && fileName.isNotEmpty) {
+      headers['content-disposition'] = 'attachment; filename="$fileName"';
+    }
+
+    return UrlResponse(downloadUrl, headers);
   }
 
   // Determines if a MEGA link has a download (because it doesn't use proper headers).

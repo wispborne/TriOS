@@ -1,3 +1,12 @@
+# 1.6.2
+- Added
+  - Missing dependencies now have buttons to install or find them.
+  - 'Last Updated' column on the Mods page.
+- Fixed
+  - Deep links now correctly check for already-installed mods on app cold starts.
+  - Large Google Drive files now download correctly instead of failing with "archive not supported".
+  - Faction viewer pips are now ordered to match vanilla.
+
 # 1.6.1
 - Added
   - Popup when a mod is installed and the Activity panel is closed, giving you a convenient "Enable" mod button.

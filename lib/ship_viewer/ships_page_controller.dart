@@ -136,6 +136,12 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   Map<String, String>? _lastVariantHullIdMap;
   Set<String>? _cachedShipsWithModuleIds;
 
+  // Maps an upper-cased tech/manufacturer to the most common original spelling,
+  // used to label the case-insensitive Tech/Manufacturer filter chips. Cached
+  // by ship-list identity so it only rebuilds when the ship list changes.
+  List<Ship>? _techLabelShips;
+  Map<String, String> _techLabelsByUpper = const {};
+
   FilterScope get scope => _scope;
 
   List<FilterGroup<Ship>> get filterGroups => _filters.groups;
@@ -406,7 +412,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         id: 'techManufacturer',
         name: 'Tech/Manufacturer',
         collapsedByDefault: true,
-        valueGetter: (ship) => ship.techManufacturer ?? '',
+        // Group ignoring capitalization so a mod that wrote "High tech" lands
+        // in the same category as vanilla's "High Tech". The chip label uses
+        // the most common original spelling (see _techManufacturerLabel).
+        valueGetter: (ship) => (ship.techManufacturer ?? '').toUpperCase(),
+        displayNameGetter: _techManufacturerLabel,
       ),
       ChipFilterGroup<Ship>(
         id: 'designation',
@@ -416,6 +426,30 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       ),
     ];
     return FilterScopeController<Ship>(scope: _scope, groups: groups);
+  }
+
+  /// Label for a case-folded tech/manufacturer chip. Returns the most common
+  /// original spelling among ships so, e.g., vanilla's "High Tech" wins over a
+  /// mod's "High tech", while names like "MandalMotors" keep their own casing.
+  String _techManufacturerLabel(String upper) {
+    final ships = stateOrNull?.allShips ?? const <Ship>[];
+    if (!identical(_techLabelShips, ships)) {
+      _techLabelShips = ships;
+      final counts = <String, Map<String, int>>{};
+      for (final ship in ships) {
+        final raw = ship.techManufacturer;
+        if (raw == null || raw.isEmpty) continue;
+        final bySpelling = counts[raw.toUpperCase()] ??= <String, int>{};
+        bySpelling[raw] = (bySpelling[raw] ?? 0) + 1;
+      }
+      _techLabelsByUpper = {
+        for (final entry in counts.entries)
+          entry.key: entry.value.entries
+              .reduce((a, b) => b.value > a.value ? b : a)
+              .key,
+      };
+    }
+    return _techLabelsByUpper[upper] ?? upper;
   }
 
   bool _spoilerMatches(Ship ship, SpoilerLevel level) =>

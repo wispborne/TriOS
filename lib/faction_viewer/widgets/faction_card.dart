@@ -127,14 +127,6 @@ class FactionCard extends StatelessWidget {
         _doctrineStat('War', 'Warships', d.warships, factionColor, theme),
         _doctrineStat('Carr', 'Carriers', d.carriers, factionColor, theme),
         _doctrineStat('Phse', 'Phase Ships', d.phaseShips, factionColor, theme),
-        _doctrineStat('Aggr', 'Aggression', d.aggression, factionColor, theme),
-        _doctrineStat(
-          'ShpQ',
-          'Ship Quality',
-          d.shipQuality,
-          factionColor,
-          theme,
-        ),
         _doctrineStat(
           'OffQ',
           'Officer Quality',
@@ -142,8 +134,16 @@ class FactionCard extends StatelessWidget {
           factionColor,
           theme,
         ),
-        _doctrineStat('Size', 'Ship Size', d.shipSize, factionColor, theme),
+        _doctrineStat(
+          'ShpQ',
+          'Ship Quality',
+          d.shipQuality,
+          factionColor,
+          theme,
+        ),
         _doctrineStat('Fleet', 'Fleet Size', d.numShips, factionColor, theme),
+        _doctrineStat('Shp#', 'Ship Size', d.shipSize, factionColor, theme),
+        _doctrineStat('Aggr', 'Aggression', d.aggression, factionColor, theme),
       ],
     );
   }
@@ -156,7 +156,7 @@ class FactionCard extends StatelessWidget {
     ThemeData theme,
   ) {
     return MovingTooltipWidget.text(
-      message: '$tooltip: $value/5',
+      message: '$tooltip: $value/5\nNote: May be changed by mods.',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: .start,

@@ -13,11 +13,11 @@ import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
-import 'package:trios/trios/app_state.dart';
 import 'package:trios/widgets/display_chip.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
@@ -267,10 +267,6 @@ class FactionProfileDialog extends ConsumerWidget {
       runSpacing: 8,
       children: [
         _doctrineBar('Warships', d.warships, 5, factionColor, theme),
-        _doctrineBar('Carriers', d.carriers, 5, factionColor, theme),
-        _doctrineBar('Phase', d.phaseShips, 5, factionColor, theme),
-        _doctrineBar('Aggression', d.aggression, 5, factionColor, theme),
-        _doctrineBar('Ship Quality', d.shipQuality, 5, factionColor, theme),
         _doctrineBar(
           'Officer Quality',
           d.officerQuality,
@@ -279,6 +275,10 @@ class FactionProfileDialog extends ConsumerWidget {
           theme,
         ),
         _doctrineBar('Ship Size', d.shipSize, 5, factionColor, theme),
+        _doctrineBar('Carriers', d.carriers, 5, factionColor, theme),
+        _doctrineBar('Ship Quality', d.shipQuality, 5, factionColor, theme),
+        _doctrineBar('Aggression', d.aggression, 5, factionColor, theme),
+        _doctrineBar('Phase', d.phaseShips, 5, factionColor, theme),
         _doctrineBar('Fleet Size', d.numShips, 5, factionColor, theme),
       ],
     );
@@ -291,40 +291,43 @@ class FactionProfileDialog extends ConsumerWidget {
     Color color,
     ThemeData theme,
   ) {
-    return SizedBox(
-      width: 200,
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(label, style: theme.textTheme.bodySmall),
-          ),
-          Expanded(
-            child: Row(
-              children: List.generate(max, (i) {
-                return Expanded(
-                  child: Container(
-                    height: 12,
-                    margin: .only(right: i < max - 1 ? 2 : 0),
-                    decoration: BoxDecoration(
-                      color: i < value
-                          ? color.withValues(alpha: 0.8)
-                          : theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(2),
+    return MovingTooltipWidget.text(
+      message: '$label: $value/$max\nNote: May be changed by mods.',
+      child: SizedBox(
+        width: 200,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 100,
+              child: Text(label, style: theme.textTheme.bodySmall),
+            ),
+            Expanded(
+              child: Row(
+                children: List.generate(max, (i) {
+                  return Expanded(
+                    child: Container(
+                      height: 12,
+                      margin: .only(right: i < max - 1 ? 2 : 0),
+                      decoration: BoxDecoration(
+                        color: i < value
+                            ? color.withValues(alpha: 0.8)
+                            : theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                }),
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$value',
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontFeatures: [const FontFeature.tabularFigures()],
+            const SizedBox(width: 4),
+            Text(
+              '$value',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontFeatures: [const FontFeature.tabularFigures()],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -483,6 +486,7 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
   WeaponSpoilerLevel _weaponSpoilerLevel = WeaponSpoilerLevel.noSpoilers;
 
   Faction get faction => widget.faction;
+
   Directory? get gameCoreDir => widget.gameCoreDir;
 
   @override
@@ -496,6 +500,8 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
         _BlueprintSection<Ship>(
           label: 'Known Ships',
           ids: faction.knownShipIds,
+          tags: faction.knownShipTags,
+          getItemTags: (s) => s.tags ?? const [],
           attributionKey: 'knownShips.hulls',
           sectionAttributions: faction.sectionAttributions,
           itemAttributions: faction.itemAttributions,
@@ -513,6 +519,8 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
         _BlueprintSection<Weapon>(
           label: 'Known Weapons',
           ids: faction.knownWeaponIds,
+          tags: faction.knownWeaponTags,
+          getItemTags: (w) => w.tagsAsSet,
           attributionKey: 'knownWeapons.weapons',
           sectionAttributions: faction.sectionAttributions,
           itemAttributions: faction.itemAttributions,
@@ -535,6 +543,8 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
         _BlueprintSection<Ship>(
           label: 'Known Fighters',
           ids: faction.knownFighterIds,
+          tags: faction.knownFighterTags,
+          getItemTags: (s) => s.tags ?? const [],
           attributionKey: 'knownFighters.fighters',
           sectionAttributions: faction.sectionAttributions,
           itemAttributions: faction.itemAttributions,
@@ -552,6 +562,8 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
         _BlueprintSection<Hullmod>(
           label: 'Known Hullmods',
           ids: faction.knownHullModIds,
+          tags: faction.knownHullModTags,
+          getItemTags: (h) => h.tagsAsSet,
           attributionKey: 'knownHullMods.hullMods',
           sectionAttributions: faction.sectionAttributions,
           itemAttributions: faction.itemAttributions,
@@ -769,6 +781,15 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
 class _BlueprintSection<T> extends StatelessWidget {
   final String label;
   final List<String> ids;
+
+  /// Blueprint tags the faction knows for this category. Any loaded item that
+  /// carries one of these tags is treated as known, even if it isn't in [ids].
+  /// Some factions (e.g. Draconis) list their ships/weapons only by tag.
+  final List<String> tags;
+
+  /// Extracts an item's own tags, used to match against [tags].
+  final Iterable<String> Function(T item)? getItemTags;
+
   final String attributionKey;
   final Map<String, List<SourceContribution>> sectionAttributions;
   final Map<String, Map<String, String>> itemAttributions;
@@ -797,13 +818,34 @@ class _BlueprintSection<T> extends StatelessWidget {
     required this.gameCoreDir,
     required this.getName,
     required this.getThumbnail,
+    this.tags = const [],
+    this.getItemTags,
     this.buildTooltip,
     this.onTap,
     this.spoilerFilter,
   });
 
+  /// The explicit [ids] plus any loaded item whose tags match a known blueprint
+  /// [tag]. Tag matching is case-insensitive. Explicit ids come first, then
+  /// tag-matched items in load order (both are re-sorted by name for display).
+  List<String> _effectiveIds() {
+    if (tags.isEmpty || getItemTags == null) return ids;
+    final allItems = ref.watch(provider).valueOrNull ?? [];
+    final wanted = tags.map((t) => t.toLowerCase()).toSet();
+    final seen = ids.toSet();
+    final combined = <String>[...ids];
+    for (final item in allItems) {
+      final matches =
+          getItemTags!(item).any((t) => wanted.contains(t.toLowerCase()));
+      if (!matches) continue;
+      final id = (item as dynamic).id as String;
+      if (seen.add(id)) combined.add(id);
+    }
+    return combined;
+  }
+
   /// Applies [spoilerFilter] (if any) to [ids] using items from [provider].
-  List<String> _visibleIds() {
+  List<String> _applySpoiler(List<String> ids) {
     if (spoilerFilter == null) return ids;
     final allItems = ref.watch(provider).valueOrNull ?? [];
     final itemMap = <String, T>{
@@ -817,8 +859,9 @@ class _BlueprintSection<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleIds = _visibleIds();
-    final total = ids.length;
+    final effectiveIds = _effectiveIds();
+    final visibleIds = _applySpoiler(effectiveIds);
+    final total = effectiveIds.length;
     final shown = visibleIds.length;
 
     if (visibleIds.isEmpty) {

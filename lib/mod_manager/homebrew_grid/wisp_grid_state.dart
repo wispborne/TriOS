@@ -177,6 +177,7 @@ enum ModGridHeader {
   gameVersion,
   firstSeen,
   lastEnabled,
+  lastUpdated,
   categories,
 }
 
@@ -202,6 +203,7 @@ enum ModGridSortField {
   gameVersion,
   firstSeen,
   lastEnabled,
+  lastUpdated,
   categories,
 }
 

@@ -328,7 +328,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     } else if (pos.dy > size.height - margin) {
       ay = -(pos.dy - (size.height - margin)) / margin;
     }
-    return Offset(ax, ay) * _boundaryWeight;
+    return Offset(ax, ay) * widget.boundaryWeight;
   }
 
   Offset _normalize(Offset o) {
@@ -387,19 +387,10 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     // Clip only the motes layer to the bounds, not the child. The child may
     // legitimately overflow (e.g. a blurred icon glow), and clipping it here
     // would chop that into a hard rectangle.
-    //
-    // MouseRegion tracks the cursor so motes can dodge it. opaque: false and
-    // hover-only handlers mean it never blocks clicks or the child's own hover
-    // effects/tooltips.
-    return MouseRegion(
-      opaque: false,
-      hitTestBehavior: HitTestBehavior.translucent,
-      onHover: (event) => _cursor = event.localPosition,
-      onExit: (_) => _cursor = null,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
+    final stack = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
           child: ClipRect(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -415,6 +406,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
                         coverage: widget.coverage,
                         opacityScale: resolved.opacityScale,
                         useCircles: !resolved.isRainbow,
+                        pulseRate: widget.pulseRate,
                       ),
                     );
                   },
@@ -423,9 +415,21 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
             ),
           ),
         ),
-          widget.child,
-        ],
-      ),
+        widget.child,
+      ],
+    );
+
+    if (!widget.reactToCursor) return stack;
+
+    // MouseRegion tracks the cursor so motes can dodge it. opaque: false and
+    // hover-only handlers mean it never blocks clicks or the child's own hover
+    // effects/tooltips.
+    return MouseRegion(
+      opaque: false,
+      hitTestBehavior: HitTestBehavior.translucent,
+      onHover: (event) => _cursor = event.localPosition,
+      onExit: (_) => _cursor = null,
+      child: stack,
     );
   }
 }
@@ -464,19 +468,6 @@ class _GlitterParticle {
 // 1 particle per 4000 sq px at coverage 1.0.
 const _baseDensity = 1.0 / 4000.0;
 
-// Flocking tuning (pixels and pixels/second²), adapted from the game's MoteAI.
-const double _separationRange = 16.0;
-const double _alignmentRange = 55.0;
-const double _cohesionRange = 75.0;
-const double _separationWeight = 90.0;
-const double _alignmentWeight = 12.0;
-const double _cohesionWeight = 10.0;
-const double _windWeight = 25.0;
-const double _boundaryWeight = 220.0;
-const double _boundaryMargin = 48.0;
-const double _cursorRange = 90.0;
-const double _cursorWeight = 320.0;
-
 /// Number of particles to simulate and draw for a canvas of [size], given
 /// [coverage] and the available [max].
 int _activeCount(Size size, double coverage, int max) {
@@ -491,6 +482,7 @@ class _GlitterPainter extends CustomPainter {
   final double coverage;
   final double opacityScale;
   final bool useCircles;
+  final double pulseRate;
   final _paint = Paint()..style = PaintingStyle.fill;
 
   _GlitterPainter({
@@ -500,6 +492,7 @@ class _GlitterPainter extends CustomPainter {
     required this.coverage,
     required this.opacityScale,
     required this.useCircles,
+    required this.pulseRate,
   });
 
   @override
@@ -514,7 +507,7 @@ class _GlitterPainter extends CustomPainter {
       final x = p.position.dx;
       final y = p.position.dy;
 
-      final shimmer = 0.5 + 0.5 * sin(pt * p.shimmerSpeed * pi);
+      final shimmer = 0.5 + 0.5 * sin(pt * p.shimmerSpeed * 2 * pi * pulseRate);
       final opacity = (p.baseOpacity * (0.5 + 0.5 * shimmer) * opacityScale)
           .clamp(0.0, 1.0);
 
@@ -546,5 +539,6 @@ class _GlitterPainter extends CustomPainter {
   bool shouldRepaint(_GlitterPainter old) =>
       old.elapsedSeconds != elapsedSeconds ||
       old.coverage != coverage ||
-      old.opacityScale != opacityScale;
+      old.opacityScale != opacityScale ||
+      old.pulseRate != pulseRate;
 }

@@ -9,18 +9,20 @@ import 'package:scaled_app/scaled_app.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/catalog/mod_browser_page.dart';
 import 'package:trios/chipper/chipper_app.dart';
+import 'package:trios/codex/codex_page.dart';
 import 'package:trios/dashboard/dashboard.dart';
 import 'package:trios/faction_viewer/faction_viewer_page.dart';
-import 'package:trios/sector_map/sector_map_page.dart';
 import 'package:trios/hullmod_viewer/hullmods_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/portraits/portraits_page.dart';
+import 'package:trios/sector_map/sector_map_page.dart';
 import 'package:trios/ship_viewer/ships_page.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/toolbar/app_sidebar.dart';
 import 'package:trios/toolbar/compact_top_bar.dart';
 import 'package:trios/toolbar/full_top_bar.dart';
+import 'package:trios/trios/activity_panel/activity_panel.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/navigation.dart';
@@ -29,8 +31,6 @@ import 'package:trios/trios/self_updater/self_updater.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/settings/settings_page.dart';
-import 'package:trios/trios/activity_panel/activity_panel.dart';
-import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
 import 'package:trios/trios/toasts/toast_manager.dart';
 import 'package:trios/trios/toasts/widgets/self_update_toast.dart';
 import 'package:trios/utils/extensions.dart';
@@ -75,6 +75,7 @@ class _AppShellState extends ConsumerState<AppShell>
     11: TriOSTools.catalog,
     12: TriOSTools.tips,
     13: TriOSTools.sectorMap,
+    14: TriOSTools.codex,
   };
 
   late final toolToIndexMap = tabToolMap.map((k, v) => MapEntry(v, k));
@@ -253,6 +254,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const CatalogPage(pagePadding: .all(8)),
       const TipsPage(),
       const SectorMapPage(),
+      const CodexPage(),
     ];
 
     final useTopToolbar = ref.watch(

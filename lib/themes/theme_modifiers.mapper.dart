@@ -201,6 +201,80 @@ extension GlitterLocationMapperExtension on GlitterLocation {
   }
 }
 
+class BackgroundStyleMapper extends EnumMapper<BackgroundStyle> {
+  BackgroundStyleMapper._();
+
+  static BackgroundStyleMapper? _instance;
+  static BackgroundStyleMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = BackgroundStyleMapper._());
+    }
+    return _instance!;
+  }
+
+  static BackgroundStyle fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  BackgroundStyle decode(dynamic value) {
+    switch (value) {
+      case r'motes':
+        return BackgroundStyle.motes;
+      case r'starfield':
+        return BackgroundStyle.starfield;
+      case r'nebula':
+        return BackgroundStyle.nebula;
+      case r'constellation':
+        return BackgroundStyle.constellation;
+      case r'embers':
+        return BackgroundStyle.embers;
+      case r'aurora':
+        return BackgroundStyle.aurora;
+      case r'rain':
+        return BackgroundStyle.rain;
+      case r'radar':
+        return BackgroundStyle.radar;
+      case r'circuitry':
+        return BackgroundStyle.circuitry;
+      default:
+        return BackgroundStyle.values[0];
+    }
+  }
+
+  @override
+  dynamic encode(BackgroundStyle self) {
+    switch (self) {
+      case BackgroundStyle.motes:
+        return r'motes';
+      case BackgroundStyle.starfield:
+        return r'starfield';
+      case BackgroundStyle.nebula:
+        return r'nebula';
+      case BackgroundStyle.constellation:
+        return r'constellation';
+      case BackgroundStyle.embers:
+        return r'embers';
+      case BackgroundStyle.aurora:
+        return r'aurora';
+      case BackgroundStyle.rain:
+        return r'rain';
+      case BackgroundStyle.radar:
+        return r'radar';
+      case BackgroundStyle.circuitry:
+        return r'circuitry';
+    }
+  }
+}
+
+extension BackgroundStyleMapperExtension on BackgroundStyle {
+  String toValue() {
+    BackgroundStyleMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<BackgroundStyle>(this) as String;
+  }
+}
+
 class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
   ThemeModifiersMapper._();
 
@@ -212,6 +286,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
       AppNameOverrideMapper.ensureInitialized();
       LaunchButtonOverrideMapper.ensureInitialized();
       GlitterLocationMapper.ensureInitialized();
+      BackgroundStyleMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -268,6 +343,15 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
     _$glitterThemeKey,
     opt: true,
   );
+  static BackgroundStyle _$backgroundStyle(ThemeModifiers v) =>
+      v.backgroundStyle;
+  static const Field<ThemeModifiers, BackgroundStyle> _f$backgroundStyle =
+      Field(
+        'backgroundStyle',
+        _$backgroundStyle,
+        opt: true,
+        def: BackgroundStyle.motes,
+      );
 
   @override
   final MappableFields<ThemeModifiers> fields = const {
@@ -277,6 +361,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
     #enableGlitter: _f$enableGlitter,
     #glitterLocations: _f$glitterLocations,
     #glitterThemeKey: _f$glitterThemeKey,
+    #backgroundStyle: _f$backgroundStyle,
   };
 
   static ThemeModifiers _instantiate(DecodingData data) {
@@ -287,6 +372,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
       enableGlitter: data.dec(_f$enableGlitter),
       glitterLocations: data.dec(_f$glitterLocations),
       glitterThemeKey: data.dec(_f$glitterThemeKey),
+      backgroundStyle: data.dec(_f$backgroundStyle),
     );
   }
 
@@ -365,6 +451,7 @@ abstract class ThemeModifiersCopyWith<$R, $In extends ThemeModifiers, $Out>
     bool? enableGlitter,
     List<GlitterLocation>? glitterLocations,
     String? glitterThemeKey,
+    BackgroundStyle? backgroundStyle,
   });
   ThemeModifiersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -398,6 +485,7 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
     Object? enableGlitter = $none,
     List<GlitterLocation>? glitterLocations,
     Object? glitterThemeKey = $none,
+    BackgroundStyle? backgroundStyle,
   }) => $apply(
     FieldCopyWithData({
       if (appIconOverride != null) #appIconOverride: appIconOverride,
@@ -407,6 +495,7 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
       if (enableGlitter != $none) #enableGlitter: enableGlitter,
       if (glitterLocations != null) #glitterLocations: glitterLocations,
       if (glitterThemeKey != $none) #glitterThemeKey: glitterThemeKey,
+      if (backgroundStyle != null) #backgroundStyle: backgroundStyle,
     }),
   );
   @override
@@ -420,6 +509,7 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
     enableGlitter: data.get(#enableGlitter, or: $value.enableGlitter),
     glitterLocations: data.get(#glitterLocations, or: $value.glitterLocations),
     glitterThemeKey: data.get(#glitterThemeKey, or: $value.glitterThemeKey),
+    backgroundStyle: data.get(#backgroundStyle, or: $value.backgroundStyle),
   );
 
   @override

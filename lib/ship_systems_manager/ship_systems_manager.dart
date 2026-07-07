@@ -90,7 +90,7 @@ Future<_SystemParseResult> _parseShipSystems(
   final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
   if (!await systemsCsv.exists()) {
-    errors.add('[$modName] ship_systems.csv not found at ${systemsCsv.path}');
+    // Most mods don't add ship systems; a missing file isn't an error.
     return _SystemParseResult(systems, errors, filesProcessed);
   }
 
@@ -125,27 +125,20 @@ Future<_SystemParseResult> _parseShipSystems(
   final headers = rows.first.map((e) => e.toString()).toList();
 
   for (var i = 1; i < rows.length; i++) {
-    final row = rows[i];
-    final data = <String, dynamic>{};
-    for (var j = 0; j < headers.length; j++) {
-      var value = row.length > j ? row[j] : null;
-      if (value is String) {
-        final up = value.toUpperCase();
-        if (up == 'TRUE') {
-          value = true;
-        } else if (up == 'FALSE') {
-          value = false;
-        } else {
-          final n = num.tryParse(value);
-          value = n ?? value;
-        }
-      }
-      data[headers[j]] = value;
+    final data = rows[i].toTypedCsvMap(headers);
+    final id = data['id']?.toString().trim();
+    if (id == null || id.isEmpty) continue;
+
+    // The `icon` column is a folder-relative path. Resolve it to an absolute
+    // file path (relative to the source folder) so the UI can load it directly.
+    final iconRel = data['icon']?.toString().trim();
+    if (iconRel != null && iconRel.isNotEmpty) {
+      data['icon'] = p.join(folder.path, iconRel).toFile().normalize.path;
     }
 
     try {
       final sys = ShipSystemMapper.fromMap(data);
-      // sys.modVariant = modVariant;
+      sys.modVariant = modVariant;
       systems.add(sys);
     } catch (e, st) {
       errors.add('[$modName] Row ${i + 1}: $e');

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 
-import '../weapons_page.dart';
+import 'weapon_image_cell.dart';
 
 /// Displays a weapon sprite overlaid on the geometric mount-type indicator
 /// shapes used in Starsector's weapon codex/tooltip.

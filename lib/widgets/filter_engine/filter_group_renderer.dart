@@ -15,12 +15,17 @@ class FilterGroupRenderer<T> extends StatelessWidget {
   final List<T> items;
   final VoidCallback onChanged;
 
+  /// When true, chip groups show per-value counts. Opt-in; the viewer pages
+  /// leave it off so they render unchanged.
+  final bool showCounts;
+
   const FilterGroupRenderer({
     super.key,
     required this.group,
     required this.scope,
     required this.items,
     required this.onChanged,
+    this.showCounts = false,
   });
 
   @override
@@ -32,6 +37,7 @@ class FilterGroupRenderer<T> extends StatelessWidget {
         items: items,
         filterStates: g.filterStates,
         scope: scope,
+        showCounts: showCounts,
         onSelectionChanged: (states) {
           g.setSelections(states);
           onChanged();

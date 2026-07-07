@@ -62,6 +62,18 @@ class HullmodsPageState with HullmodsPageStateMappable {
 @MappableEnum()
 enum HullmodSpoilerLevel { noSpoilers, showAllSpoilers }
 
+/// Whether [hullmod] should be shown at the given spoiler [level]. Top-level so
+/// the Codex can reuse it, matching `shipMatchesSpoilerLevel` and
+/// `weaponMatchesSpoilerLevel`.
+bool hullmodMatchesSpoilerLevel(Hullmod hullmod, HullmodSpoilerLevel level) {
+  if (level == HullmodSpoilerLevel.showAllSpoilers) return true;
+  final isCodexUnlockable = hullmod.tagsAsSet.contains('codex_unlockable');
+  final isCodexRequireRelated = hullmod.tagsAsSet.contains(
+    'codex_require_related',
+  );
+  return !isCodexUnlockable && !isCodexRequireRelated;
+}
+
 final hullmodsPageControllerProvider =
     NotifierProvider<HullmodsPageController, HullmodsPageState>(
       () => HullmodsPageController(),
@@ -224,14 +236,8 @@ class HullmodsPageController extends Notifier<HullmodsPageState> {
     return FilterScopeController<Hullmod>(scope: _scope, groups: groups);
   }
 
-  bool _spoilerMatches(Hullmod hullmod, HullmodSpoilerLevel level) {
-    if (level == HullmodSpoilerLevel.showAllSpoilers) return true;
-    final isCodexUnlockable = hullmod.tagsAsSet.contains('codex_unlockable');
-    final isCodexRequireRelated = hullmod.tagsAsSet.contains(
-      'codex_require_related',
-    );
-    return !isCodexUnlockable && !isCodexRequireRelated;
-  }
+  bool _spoilerMatches(Hullmod hullmod, HullmodSpoilerLevel level) =>
+      hullmodMatchesSpoilerLevel(hullmod, level);
 
   String _spoilerLabel(HullmodSpoilerLevel e) => switch (e) {
     HullmodSpoilerLevel.noSpoilers => 'No spoilers',

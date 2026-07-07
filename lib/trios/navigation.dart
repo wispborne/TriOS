@@ -18,6 +18,7 @@ const List<NavOrderEntry> defaultNavOrder = [
   NavToolEntry(TriOSTools.catalog),
   NavToolEntry(TriOSTools.chipper),
   NavDividerEntry(),
+  NavToolEntry(TriOSTools.codex),
   NavToolEntry(TriOSTools.ships),
   NavToolEntry(TriOSTools.weapons),
   NavToolEntry(TriOSTools.hullmods),
@@ -36,6 +37,7 @@ const Set<TriOSTools> reorderableTools = {
   TriOSTools.modProfiles,
   TriOSTools.catalog,
   TriOSTools.chipper,
+  TriOSTools.codex,
   TriOSTools.ships,
   TriOSTools.weapons,
   TriOSTools.hullmods,
@@ -48,7 +50,7 @@ const Set<TriOSTools> reorderableTools = {
 
 /// Tools hidden from the navigation unless the app is in debug mode. Used for
 /// work-in-progress features that aren't ready for general use.
-const Set<TriOSTools> debugOnlyTools = {TriOSTools.sectorMap};
+const Set<TriOSTools> debugOnlyTools = {TriOSTools.sectorMap, TriOSTools.codex};
 
 /// Whether [tool]'s nav button should be shown, given the debug-mode setting.
 bool isNavToolVisible(TriOSTools tool, {required bool debugMode}) =>
@@ -70,6 +72,7 @@ enum TriOSTools {
   catalog,
   tips,
   sectorMap,
+  codex,
 }
 
 enum NavGroup { core, viewers, bottom }
@@ -82,6 +85,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.catalog => 'Catalog',
     TriOSTools.chipper => 'Logs',
     TriOSTools.vramEstimator => 'VRAM Estimator',
+    TriOSTools.codex => 'Codex',
     TriOSTools.ships => 'Ships',
     TriOSTools.weapons => 'Weapons',
     TriOSTools.hullmods => 'Hullmods',
@@ -99,6 +103,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.catalog => 'Mod Catalog',
     TriOSTools.chipper => 'Log Viewer',
     TriOSTools.vramEstimator => 'VRAM Estimator',
+    TriOSTools.codex => 'Codex — browse and search all game data',
     TriOSTools.ships => 'Ship Viewer',
     TriOSTools.weapons => 'Weapon Viewer',
     TriOSTools.hullmods => 'Hullmod Viewer',
@@ -150,6 +155,7 @@ extension TriOSToolsUI on TriOSTools {
       color: color,
     ),
     TriOSTools.factions => Icon(Icons.flag, size: size, color: color),
+    TriOSTools.codex => Icon(Icons.menu_book, size: size, color: color),
     TriOSTools.portraits => SvgImageIcon(
       "assets/images/icon-account-box-outline.svg",
       color: color,
@@ -170,6 +176,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.catalog ||
     TriOSTools.chipper => NavGroup.core,
     TriOSTools.vramEstimator ||
+    TriOSTools.codex ||
     TriOSTools.ships ||
     TriOSTools.weapons ||
     TriOSTools.hullmods ||

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
+import 'package:trios/hullmod_viewer/widgets/hullmod_details_dialog.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -290,7 +291,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             SizedBox(
               height: 40,
               child: InkWell(
-                onTap: () => _showHullmodDetailsDialog(context, item),
+                onTap: () => showHullmodDetailsDialog(context, item),
                 child: Container(
                   color: Colors.transparent,
                   child: _buildRowContextMenu(item, child),
@@ -299,51 +300,6 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             ),
         groups: [UngroupedHullmodGridGroup(), ModNameHullmodGridGroup()],
       ),
-    );
-  }
-
-  void _showHullmodDetailsDialog(BuildContext context, Hullmod h) {
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return Dialog(
-          insetPadding: const EdgeInsets.all(16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          tooltip: 'Close',
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.of(ctx).pop(),
-                        ),
-                      ],
-                    ),
-                    HullmodCodexCard.create(hullmod: h),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Close'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 

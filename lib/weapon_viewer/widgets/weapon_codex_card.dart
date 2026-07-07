@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/codex/models/codex_entry.dart';
+import 'package:trios/codex/widgets/codex_reference_link.dart';
 import 'package:trios/descriptions/description_entry.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/trios/constants_theme.dart';
@@ -26,6 +28,10 @@ class WeaponCodexCard {
   // ───────────────────────── Convenience wrapper ─────────────────────────
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows weapon stats on hover.
+  ///
+  /// When [onEntitySelected] is set (inside the Codex), the child also becomes
+  /// clickable and a tap navigates to this weapon. Null everywhere else, so the
+  /// viewer tabs keep their hover-only behaviour.
   static Widget tooltip({
     required Weapon weapon,
     required Widget child,
@@ -33,6 +39,7 @@ class WeaponCodexCard {
     bool showSprite = true,
     bool showDescription = true,
     bool useAbbreviations = false,
+    CodexEntitySelected? onEntitySelected,
   }) {
     return MovingTooltipWidget.starsector(
       tooltipWidget: ConstrainedBox(
@@ -53,7 +60,11 @@ class WeaponCodexCard {
           ),
         ),
       ),
-      child: child,
+      child: asCodexLink(
+        child,
+        onEntitySelected,
+        (CodexEntryType.weapon, weapon.id),
+      ),
     );
   }
 

@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/codex/models/codex_entry.dart';
+import 'package:trios/codex/widgets/codex_reference_link.dart';
 import 'package:trios/descriptions/description_entry.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
+import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
@@ -29,6 +32,10 @@ class ShipCodexCard {
   // ───────────────────────── Convenience wrapper ─────────────────────────
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows ship stats on hover.
+  ///
+  /// When [onEntitySelected] is set (inside the Codex), the child also becomes
+  /// clickable and a tap navigates to this ship. Null everywhere else, so the
+  /// viewer tabs keep their hover-only behaviour.
   static Widget tooltip({
     required Ship ship,
     required Map<String, ShipSystem> shipSystemsMap,
@@ -39,6 +46,7 @@ class ShipCodexCard {
     bool showSprite = true,
     bool showDescription = true,
     bool useAbbreviations = true,
+    CodexEntitySelected? onEntitySelected,
   }) {
     return MovingTooltipWidget.starsector(
       tooltipWidget: ConstrainedBox(
@@ -69,7 +77,11 @@ class ShipCodexCard {
           ),
         ),
       ),
-      child: child,
+      child: asCodexLink(
+        child,
+        onEntitySelected,
+        (CodexEntryType.ship, ship.id),
+      ),
     );
   }
 
@@ -82,6 +94,7 @@ class ShipCodexCard {
     bool showSprite = true,
     bool showDescription = true,
     bool useAbbreviations = true,
+    CodexEntitySelected? onEntitySelected,
   }) {
     return Consumer(
       builder: (context, ref, _) => _buildShipContent(
@@ -106,6 +119,7 @@ class ShipCodexCard {
         showSprite: showSprite,
         showDescription: showDescription,
         useAbbreviations: useAbbreviations,
+        onEntitySelected: onEntitySelected,
       ),
     );
   }
@@ -125,6 +139,7 @@ class ShipCodexCard {
     bool showSprite = true,
     bool showDescription = true,
     bool useAbbreviations = false,
+    CodexEntitySelected? onEntitySelected,
   }) {
     final theme = Theme.of(context);
     final highlightColor = TriOSThemeConstants.vanillaCyanColor;
@@ -408,15 +423,24 @@ class ShipCodexCard {
                           ),
                         ),
                         Expanded(
-                          child: Text(
-                            _toDisplay(
-                              shipSystemsMap[ship.systemId!]?.name ??
-                                  ship.systemId!,
+                          child: asCodexLink(
+                            Text(
+                              _toDisplay(
+                                shipSystemsMap[ship.systemId!]?.name ??
+                                    ship.systemId!,
+                              ),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: TriOSThemeConstants
+                                    .vanillaYellowGoldColor,
+                              ),
                             ),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: TriOSThemeConstants.vanillaYellowGoldColor,
-                            ),
+                            // Only a link when the system resolves in the
+                            // index; otherwise plain text, not a broken link.
+                            shipSystemsMap.containsKey(ship.systemId!)
+                                ? onEntitySelected
+                                : null,
+                            (CodexEntryType.shipSystem, ship.systemId!),
                           ),
                         ),
                       ],
@@ -471,6 +495,7 @@ class ShipCodexCard {
                             armamentGroups,
                             theme,
                             TriOSThemeConstants.vanillaYellowGoldColor,
+                            onEntitySelected,
                           ),
                         ),
                       ],
@@ -487,14 +512,11 @@ class ShipCodexCard {
                           ),
                         ),
                         Expanded(
-                          child: Text(
-                            hullMods
-                                .map(
-                                  (id) =>
-                                      hullmodsMap[id]?.name ?? _toDisplay(id),
-                                )
-                                .join(", "),
-                            style: theme.textTheme.bodySmall,
+                          child: _hullModWrap(
+                            hullMods,
+                            hullmodsMap,
+                            theme,
+                            onEntitySelected,
                           ),
                         ),
                       ],
@@ -598,12 +620,12 @@ Map<String, int> _groupMounts(Ship ship) {
 }
 
 /// Groups built-in weapons and wings by display name, preserving the [Weapon]
-/// object for tooltip use.
-Map<String, ({int count, Weapon? weapon})> _groupArmaments(
+/// object (for tooltips) and, for wings, the wing id (for the Codex link).
+Map<String, ({int count, Weapon? weapon, String? wingId})> _groupArmaments(
   Ship ship,
   Map<String, Weapon> weaponsMap,
 ) {
-  final groups = <String, ({int count, Weapon? weapon})>{};
+  final groups = <String, ({int count, Weapon? weapon, String? wingId})>{};
   for (final id
       in ship.builtInWeapons?.values ?? const Iterable<String>.empty()) {
     final weapon = weaponsMap[id];
@@ -614,12 +636,20 @@ Map<String, ({int count, Weapon? weapon})> _groupArmaments(
           ' (${weapon!.size!.toTitleCase()} ${weapon.effectiveMountType!.toTitleCase()})';
     }
     final existing = groups[name];
-    groups[name] = (count: (existing?.count ?? 0) + 1, weapon: weapon);
+    groups[name] = (
+      count: (existing?.count ?? 0) + 1,
+      weapon: weapon,
+      wingId: null,
+    );
   }
   for (final id in ship.builtInWings ?? const <String>[]) {
     final name = _toDisplay(id);
     final existing = groups[name];
-    groups[name] = (count: (existing?.count ?? 0) + 1, weapon: null);
+    groups[name] = (
+      count: (existing?.count ?? 0) + 1,
+      weapon: null,
+      wingId: id,
+    );
   }
   return groups;
 }
@@ -665,11 +695,14 @@ Widget _mountWrap(
 }
 
 /// Like [_mountWrap] but wraps each weapon entry in a [WeaponCodexCard]
-/// tooltip when the [Weapon] object is available.
+/// tooltip when the [Weapon] object is available. Inside the Codex
+/// ([onEntitySelected] set), built-in weapons and wings become clickable links;
+/// unresolved entries (e.g. from a disabled mod) stay as plain text.
 Widget _armamentWrap(
-  Map<String, ({int count, Weapon? weapon})> groups,
+  Map<String, ({int count, Weapon? weapon, String? wingId})> groups,
   ThemeData theme,
   Color highlightColor,
+  CodexEntitySelected? onEntitySelected,
 ) {
   final baseStyle = theme.textTheme.bodySmall;
   final countStyle = baseStyle?.copyWith(
@@ -690,8 +723,60 @@ Widget _armamentWrap(
         ),
       );
       final weapon = e.value.weapon;
-      if (weapon == null) return text;
-      return WeaponCodexCard.tooltip(weapon: weapon, child: text);
+      if (weapon != null) {
+        return WeaponCodexCard.tooltip(
+          weapon: weapon,
+          onEntitySelected: onEntitySelected,
+          child: text,
+        );
+      }
+      final wingId = e.value.wingId;
+      if (wingId != null) {
+        return asCodexLink(
+          text,
+          onEntitySelected,
+          (CodexEntryType.wing, wingId),
+        );
+      }
+      return text;
+    }).toList(),
+  );
+}
+
+/// Renders a ship's built-in hull mods. Outside the Codex ([onEntitySelected]
+/// null) it stays a single comma-joined line, unchanged. Inside the Codex each
+/// resolved hull mod becomes a clickable link (with its hover card); an
+/// unresolved id (e.g. from a disabled mod) stays plain text.
+Widget _hullModWrap(
+  Iterable<String> hullMods,
+  Map<String, Hullmod> hullmodsMap,
+  ThemeData theme,
+  CodexEntitySelected? onEntitySelected,
+) {
+  final baseStyle = theme.textTheme.bodySmall;
+
+  if (onEntitySelected == null) {
+    return Text(
+      hullMods.map((id) => hullmodsMap[id]?.name ?? _toDisplay(id)).join(", "),
+      style: baseStyle,
+    );
+  }
+
+  final linkStyle = baseStyle?.copyWith(color: theme.colorScheme.primary);
+
+  return Wrap(
+    spacing: 12,
+    runSpacing: 2,
+    children: hullMods.map((id) {
+      final hullmod = hullmodsMap[id];
+      if (hullmod == null) {
+        return Text(_toDisplay(id), style: baseStyle);
+      }
+      return HullmodCodexCard.tooltip(
+        hullmod: hullmod,
+        onEntitySelected: onEntitySelected,
+        child: Text(hullmod.name ?? _toDisplay(id), style: linkStyle),
+      );
     }).toList(),
   );
 }

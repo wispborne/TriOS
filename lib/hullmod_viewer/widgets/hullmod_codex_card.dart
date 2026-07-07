@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/codex/models/codex_entry.dart';
+import 'package:trios/codex/widgets/codex_reference_link.dart';
 import 'package:trios/descriptions/description_entry.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
@@ -19,12 +21,17 @@ class HullmodCodexCard {
   static const _maxWidth = 300.0;
 
   /// Wraps [child] in a [MovingTooltipWidget] that shows hullmod stats on hover.
+  ///
+  /// When [onEntitySelected] is set (inside the Codex), the child also becomes
+  /// clickable and a tap navigates to this hullmod. Null everywhere else, so the
+  /// viewer tabs keep their hover-only behaviour.
   static Widget tooltip({
     required Hullmod hullmod,
     required Widget child,
     bool showTitle = true,
     bool showSprite = true,
     bool showDescription = true,
+    CodexEntitySelected? onEntitySelected,
   }) {
     return MovingTooltipWidget.starsector(
       tooltipWidget: ConstrainedBox(
@@ -44,7 +51,11 @@ class HullmodCodexCard {
           ),
         ),
       ),
-      child: child,
+      child: asCodexLink(
+        child,
+        onEntitySelected,
+        (CodexEntryType.hullmod, hullmod.id),
+      ),
     );
   }
 

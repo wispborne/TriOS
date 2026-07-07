@@ -1627,6 +1627,17 @@ class _ThemeModifiersSection extends ConsumerWidget {
                         crossAxisAlignment: .start,
                         spacing: 8,
                         children: [
+                          _BackgroundStylePicker(
+                            selected: modifiers.backgroundStyle,
+                            onChanged: (style) => ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    themeModifiers: state.themeModifiers
+                                        .copyWith(backgroundStyle: style),
+                                  ),
+                                ),
+                          ),
                           _GlitterLocationsPicker(
                             selected: modifiers.glitterLocations,
                             onChanged: (locations) => ref
@@ -1657,6 +1668,40 @@ class _ThemeModifiersSection extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BackgroundStylePicker extends StatelessWidget {
+  final BackgroundStyle selected;
+  final ValueChanged<BackgroundStyle> onChanged;
+
+  const _BackgroundStylePicker({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MovingTooltipWidget.text(
+      message: "Which animation plays in the background.",
+      child: Row(
+        spacing: 8,
+        children: [
+          const Text("Background style"),
+          TriOSDropdownMenu<BackgroundStyle>(
+            key: ValueKey(selected),
+            initialSelection: selected,
+            dropdownMenuEntries: [
+              for (final style in BackgroundStyle.values)
+                DropdownMenuEntry(value: style, label: style.label),
+            ],
+            onSelected: (style) {
+              if (style != null) onChanged(style);
+            },
+          ),
+        ],
       ),
     );
   }

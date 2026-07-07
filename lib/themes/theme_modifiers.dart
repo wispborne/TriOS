@@ -25,6 +25,32 @@ enum GlitterLocation {
   };
 }
 
+/// Which animation plays in the background surfaces.
+@MappableEnum(defaultValue: BackgroundStyle.motes)
+enum BackgroundStyle {
+  motes,
+  starfield,
+  nebula,
+  constellation,
+  embers,
+  aurora,
+  rain,
+  radar,
+  circuitry;
+
+  String get label => switch (this) {
+    BackgroundStyle.motes => 'Motes',
+    BackgroundStyle.starfield => 'Starfield',
+    BackgroundStyle.nebula => 'Nebula',
+    BackgroundStyle.constellation => 'Constellation',
+    BackgroundStyle.embers => 'Embers',
+    BackgroundStyle.aurora => 'Aurora',
+    BackgroundStyle.rain => 'Rain',
+    BackgroundStyle.radar => 'Radar',
+    BackgroundStyle.circuitry => 'Circuitry',
+  };
+}
+
 @MappableClass()
 class ThemeModifiers with ThemeModifiersMappable {
   final AppIconOverride appIconOverride;
@@ -40,6 +66,9 @@ class ThemeModifiers with ThemeModifiersMappable {
   /// Theme id whose colors the glitter uses. Null = the active theme.
   final String? glitterThemeKey;
 
+  /// Which animated background style plays when the background is enabled.
+  final BackgroundStyle backgroundStyle;
+
   const ThemeModifiers({
     this.appIconOverride = AppIconOverride.defaultIcon,
     this.appNameOverride = AppNameOverride.defaultName,
@@ -47,6 +76,7 @@ class ThemeModifiers with ThemeModifiersMappable {
     this.enableGlitter,
     this.glitterLocations = GlitterLocation.values,
     this.glitterThemeKey,
+    this.backgroundStyle = BackgroundStyle.motes,
   });
 
   /// Whether motes should render given the [activeThemeId]. Honors an explicit

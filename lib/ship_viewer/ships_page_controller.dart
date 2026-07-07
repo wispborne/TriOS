@@ -101,12 +101,27 @@ const _spoilerTags = ["threat", "dweller"];
 /// Whether [ship] should be shown at the given spoiler [level].
 /// Shared by the ships page and the faction profile dialog.
 bool shipMatchesSpoilerLevel(Ship ship, SpoilerLevel level) {
-  if (level == SpoilerLevel.showAllSpoilers) return true;
   final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
-  final tags = ship.tags.orEmpty().map((t) => t.toLowerCase());
-  final hidden = hints.contains('hide_in_codex');
-  final isSlightSpoiler = tags.any(_slightSpoilerTags.contains);
-  final isSpoiler = tags.any(_spoilerTags.contains);
+  return tagsMatchShipSpoilerLevel(
+    ship.tags.orEmpty(),
+    level,
+    hidden: hints.contains('hide_in_codex'),
+  );
+}
+
+/// The tag-list core of [shipMatchesSpoilerLevel], so entries without a full
+/// [Ship] (a wing with no resolved ship, a ship system) can apply the same
+/// spoiler rules to their own tags column. [hidden] forces hiding regardless
+/// of level (the ship version passes `hide_in_codex`).
+bool tagsMatchShipSpoilerLevel(
+  Iterable<String> tags,
+  SpoilerLevel level, {
+  bool hidden = false,
+}) {
+  if (level == SpoilerLevel.showAllSpoilers) return true;
+  final lower = tags.map((t) => t.toLowerCase());
+  final isSlightSpoiler = lower.any(_slightSpoilerTags.contains);
+  final isSpoiler = lower.any(_spoilerTags.contains);
   if (level == SpoilerLevel.showSlightSpoilers) {
     return !hidden && !isSpoiler;
   }

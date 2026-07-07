@@ -19,6 +19,11 @@ class GridFilterWidget<T> extends ConsumerStatefulWidget {
   final Function(Map<String, bool?>) onSelectionChanged;
   final FilterScope scope;
 
+  /// When true, each chip shows how many [items] have that value. Opt-in so the
+  /// existing viewer pages render exactly as before. Counts are of [items] (not
+  /// the chip-filtered subset), so they don't change as chips are toggled.
+  final bool showCounts;
+
   const GridFilterWidget({
     super.key,
     required this.filter,
@@ -26,6 +31,7 @@ class GridFilterWidget<T> extends ConsumerStatefulWidget {
     required this.filterStates,
     required this.onSelectionChanged,
     required this.scope,
+    this.showCounts = false,
   });
 
   @override
@@ -35,6 +41,7 @@ class GridFilterWidget<T> extends ConsumerStatefulWidget {
 
 class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
   List<String> _uniqueValues = [];
+  Map<String, int> _valueCounts = const {};
   late bool _isExpanded = !widget.filter.collapsedByDefault;
 
   @override
@@ -74,12 +81,30 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
       if (comparator != null) {
         values.sort(comparator);
       } else if (displayName != null) {
-        values.sort((a, b) => displayName(a).compareTo(displayName(b)));
+        // Look up each name once; getters can be expensive (e.g. codex tech
+        // labels scan the whole entry list).
+        final names = {for (final v in values) v: displayName(v)};
+        values.sort((a, b) => names[a]!.compareTo(names[b]!));
       } else {
         values.sort();
       }
     }
     _uniqueValues = values;
+
+    if (widget.showCounts) {
+      final counts = <String, int>{};
+      for (final item in widget.items) {
+        if (widget.filter.valuesGetter != null) {
+          for (final v in widget.filter.valuesGetter!(item)) {
+            if (v.isNotEmpty) counts[v] = (counts[v] ?? 0) + 1;
+          }
+        } else {
+          final v = widget.filter.valueGetter(item);
+          if (v.isNotEmpty) counts[v] = (counts[v] ?? 0) + 1;
+        }
+      }
+      _valueCounts = counts;
+    }
   }
 
   /// If the group is currently locked, mirror the new selections to
@@ -153,6 +178,29 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
       .toList();
 
   int get totalCount => _uniqueValues.length;
+
+  /// The chip's label, optionally with a dim per-value count suffix.
+  Widget _chipLabel(ThemeData theme, String value) {
+    final text = widget.filter.displayNameGetter != null
+        ? widget.filter.displayNameGetter!(value)
+        : value;
+    if (!widget.showCounts) {
+      return Text(text, style: theme.textTheme.labelMedium);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(text, style: theme.textTheme.labelMedium),
+        const SizedBox(width: 4),
+        Text(
+          '${_valueCounts[value] ?? 0}',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -326,12 +374,7 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
                             null => "",
                           },
                           child: FilterChip(
-                            label: Text(
-                              widget.filter.displayNameGetter != null
-                                  ? widget.filter.displayNameGetter!(value)
-                                  : value,
-                              style: theme.textTheme.labelMedium,
-                            ),
+                            label: _chipLabel(theme, value),
                             selected: state != null,
                             avatar: leadingIcon,
                             onSelected: (_) => _toggleValue(value),

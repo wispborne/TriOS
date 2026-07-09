@@ -6,8 +6,10 @@ import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 
-/// The six Codex categories. One value per data type the Codex can hold.
-enum CodexEntryType { ship, weapon, hullmod, shipSystem, wing, faction }
+/// The Codex categories. One value per data type the Codex can hold. Ships and
+/// stations share the [Ship] data type but are split into two categories, the
+/// way the in-game Codex does.
+enum CodexEntryType { ship, station, weapon, hullmod, shipSystem, wing, faction }
 
 /// Called when a clickable cross-reference inside a codex card is tapped. Null
 /// on the viewer tabs (references stay hover-only); set to the Codex
@@ -53,16 +55,17 @@ class ShipCodexEntry extends CodexEntry {
   String get id => ship.id;
 
   @override
-  CodexEntryType get type => CodexEntryType.ship;
+  CodexEntryType get type =>
+      ship.isStation ? CodexEntryType.station : CodexEntryType.ship;
 
   @override
-  String get displayName => ship.name ?? ship.id;
+  String get displayName => ship.hullNameForDisplay();
 
   @override
   String get sortName => ship.hullNameForDisplay();
 
   @override
-  String? get subtitle => ship.designation;
+  String? get subtitle => ship.isStation ? null : ship.designation;
 
   @override
   Set<String> get modIds => {?ship.modVariant?.modInfo.id};

@@ -5,6 +5,7 @@ import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/trios/deep_link/deep_link_handler.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 /// Runs a download [candidate] the same way everywhere it's offered (card
 /// button, card menu, forum dialog):
@@ -12,16 +13,30 @@ import 'package:trios/trios/deep_link/deep_link_parser.dart';
 ///   already-installed checks included);
 /// - a website or manual-step link opens in the browser via [linkLoader];
 /// - anything else downloads through the download manager.
+///
+/// Set [hasOwnBusyIndicator] when the caller shows its own busy state (e.g.
+/// the catalog card button's spinner) to skip the acknowledgment snackbar.
 void executeDownloadCandidate(
   BuildContext context,
   WidgetRef ref,
   DownloadCandidate candidate, {
   required String modName,
   required void Function(String) linkLoader,
+  bool hasOwnBusyIndicator = false,
 }) {
   if (candidate.kind == DownloadCandidateKind.triosDeepLink) {
     final deepLink = trilinkToDeepLinkUri(candidate.url);
     if (deepLink != null) {
+      // The install flow does async work (loading mods, resolving the link)
+      // before its confirmation dialog appears. Acknowledge the click right
+      // away so it doesn't feel unresponsive.
+      if (!hasOwnBusyIndicator) {
+        showSnackBar(
+          context: context,
+          type: SnackBarType.info,
+          content: Text('Preparing to install $modName…'),
+        );
+      }
       ref.read(deepLinkHandlerProvider.notifier).handleUriString(deepLink);
       return;
     }

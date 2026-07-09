@@ -246,6 +246,89 @@ class Ship with ShipMappable implements WispGridItem {
 
   String hullNameForDisplay() => name ?? designation ?? id;
 
+  /// Values for the free-text search index. Same content as [toMap] except
+  /// [bounds], but built directly from fields — the mapper encode (mostly
+  /// nested [weaponSlots]) is far too slow to run for every ship.
+  Map<String, dynamic> toSearchMap() => {
+        'id': id,
+        'name': name,
+        'designation': designation,
+        'techManufacturer': techManufacturer,
+        'systemId': systemId,
+        'fleetPts': fleetPts,
+        'hitpoints': hitpoints,
+        'armorRating': armorRating,
+        'maxFlux': maxFlux,
+        'fluxDissipation': fluxDissipation,
+        'ordnancePoints': ordnancePoints,
+        'fighterBays': fighterBays,
+        'maxSpeed': maxSpeed,
+        'acceleration': acceleration,
+        'deceleration': deceleration,
+        'maxTurnRate': maxTurnRate,
+        'turnAcceleration': turnAcceleration,
+        'mass': mass,
+        'shieldType': shieldType,
+        'defenseId': defenseId,
+        'shieldArc': shieldArc,
+        'shieldUpkeep': shieldUpkeep,
+        'shieldEfficiency': shieldEfficiency,
+        'phaseCost': phaseCost,
+        'phaseUpkeep': phaseUpkeep,
+        'minCrew': minCrew,
+        'maxCrew': maxCrew,
+        'cargo': cargo,
+        'fuel': fuel,
+        'fuelPerLY': fuelPerLY,
+        'range': range,
+        'maxBurn': maxBurn,
+        'baseValue': baseValue,
+        'crPercentPerDay': crPercentPerDay,
+        'crToDeploy': crToDeploy,
+        'peakCrSec': peakCrSec,
+        'crLossPerSec': crLossPerSec,
+        'suppliesRec': suppliesRec,
+        'suppliesMo': suppliesMo,
+        'hints': hints,
+        'tags': tags,
+        'rarity': rarity,
+        'breakProb': breakProb,
+        'minPieces': minPieces,
+        'maxPieces': maxPieces,
+        'travelDrive': travelDrive,
+        'number': number,
+        'center': center,
+        'collisionRadius': collisionRadius,
+        'height': height,
+        'width': width,
+        'hullSize': hullSize,
+        'shieldCenter': shieldCenter,
+        'shieldRadius': shieldRadius,
+        'spriteName': spriteName,
+        'spriteFile': spriteFile,
+        'style': style,
+        'viewOffset': viewOffset,
+        'engineSlots': engineSlots,
+        'weaponSlots': weaponSlots
+            ?.map(
+              (s) =>
+                  '${s.id} ${s.mount} ${s.size} ${s.type} ${s.angle} '
+                  '${s.arc} ${s.locations} ${s.position} ${s.renderOrderMod}',
+            )
+            .toList(),
+        'builtInWeapons': builtInWeapons,
+        'builtInMods': builtInMods,
+        'builtInWings': builtInWings,
+        'moduleAnchor': moduleAnchor,
+        'modId': modId,
+        'modName': modName,
+        'isSkin': isSkin,
+        'baseHullId': baseHullId,
+        'color': color?.toHex(),
+        'csvFile': csvFile?.path,
+        'dataFile': dataFile?.path,
+      };
+
   /// Number of weapon slots that accept mountable weapons (excludes
   /// decorative, system, built-in, launch bay, and station module slots).
   late final int mountableWeaponSlotCount =

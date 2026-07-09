@@ -123,8 +123,8 @@ Widget _spriteRow({required Widget? sprite, required Widget child}) {
 Widget? _systemSprite(ShipSystem system) {
   final icon = system.icon;
   if (icon == null || icon.isEmpty) return null;
-  // The manager resolves `icon` to an absolute path. Only show it when the file
-  // actually exists (e.g. a mod referencing a vanilla icon won't have it here).
+  // The manager resolves `icon` to an absolute path (searching the defining
+  // mod, core, and other mods). Only show it when the file actually exists.
   final file = File(icon);
   return FutureBuilder<bool>(
     future: file.exists(),

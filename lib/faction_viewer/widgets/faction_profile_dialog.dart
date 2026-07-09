@@ -659,7 +659,7 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
   }
 
   void _showShipDialog(BuildContext context, Ship ship) {
-    final shipSystems = ref.read(shipSystemsStreamProvider).valueOrNull ?? [];
+    final shipSystems = ref.read(shipSystemListNotifierProvider).valueOrNull ?? [];
     final shipSystemsMap = {for (final s in shipSystems) s.id: s};
     final weapons = ref.read(weaponListNotifierProvider).valueOrNull ?? [];
     final weaponsMap = {for (final w in weapons) w.id: w};
@@ -765,7 +765,7 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
   }
 
   Widget _shipTooltip(Ship ship, Widget child) {
-    final shipSystems = ref.watch(shipSystemsStreamProvider).valueOrNull ?? [];
+    final shipSystems = ref.watch(shipSystemListNotifierProvider).valueOrNull ?? [];
     final shipSystemsMap = {for (final s in shipSystems) s.id: s};
     final weapons = ref.watch(weaponListNotifierProvider).valueOrNull ?? [];
     final weaponsMap = {for (final w in weapons) w.id: w};

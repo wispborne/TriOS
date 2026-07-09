@@ -5,6 +5,7 @@ import 'package:trios/trios/navigation.dart';
 /// User-facing category names (approved copy).
 String codexCategoryLabel(CodexEntryType type) => switch (type) {
   CodexEntryType.ship => 'Ships',
+  CodexEntryType.station => 'Stations',
   CodexEntryType.weapon => 'Weapons',
   CodexEntryType.hullmod => 'Hullmods',
   CodexEntryType.shipSystem => 'Ship Systems',
@@ -15,6 +16,7 @@ String codexCategoryLabel(CodexEntryType type) => switch (type) {
 /// Category order shown at the root, mirroring the proposal.
 const List<CodexEntryType> codexCategoryOrder = [
   CodexEntryType.ship,
+  CodexEntryType.station,
   CodexEntryType.weapon,
   CodexEntryType.hullmod,
   CodexEntryType.shipSystem,
@@ -29,6 +31,7 @@ TriOSTools? codexCategoryTool(CodexEntryType type) => switch (type) {
   CodexEntryType.weapon => TriOSTools.weapons,
   CodexEntryType.hullmod => TriOSTools.hullmods,
   CodexEntryType.faction => TriOSTools.factions,
+  CodexEntryType.station => null,
   CodexEntryType.shipSystem => null,
   CodexEntryType.wing => null,
 };
@@ -41,6 +44,7 @@ Widget codexCategoryIcon(CodexEntryType type, {double size = 24, Color? color}) 
   if (tool != null) return tool.icon(size: size, color: color);
   return Icon(
     switch (type) {
+      CodexEntryType.station => Icons.hub,
       CodexEntryType.shipSystem => Icons.bolt,
       CodexEntryType.wing => Icons.flight,
       _ => Icons.help_outline,

@@ -1,6 +1,10 @@
+import 'dart:collection';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/descriptions/description_entry.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/fighter_viewer/wings_manager.dart';
@@ -98,7 +102,7 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
       ref.watch(hullmodListNotifierProvider).valueOrNull ?? const [];
   final factions =
       ref.watch(factionListNotifierProvider).valueOrNull ?? const [];
-  final systems = ref.watch(shipSystemsStreamProvider).valueOrNull ?? const [];
+  final systems = ref.watch(shipSystemListNotifierProvider).valueOrNull ?? const [];
   final wings = ref.watch(wingListNotifierProvider).valueOrNull ?? const [];
   // Watch the descriptions map once and look up directly — one family watch
   // per ship system is far too slow (each watch walks the element ancestors).
@@ -139,47 +143,100 @@ final codexCategoryLoadingProvider = Provider.family<bool, CodexEntryType>((
 ) {
   return switch (type) {
     CodexEntryType.ship => ref.watch(shipListNotifierProvider).isLoading,
+    CodexEntryType.station => ref.watch(shipListNotifierProvider).isLoading,
     CodexEntryType.weapon => ref.watch(weaponListNotifierProvider).isLoading,
     CodexEntryType.hullmod => ref.watch(hullmodListNotifierProvider).isLoading,
-    CodexEntryType.shipSystem => ref.watch(shipSystemsStreamProvider).isLoading,
+    CodexEntryType.shipSystem => ref.watch(shipSystemListNotifierProvider).isLoading,
     CodexEntryType.wing => ref.watch(wingListNotifierProvider).isLoading,
     CodexEntryType.faction => ref.watch(factionListNotifierProvider).isLoading,
   };
 });
 
+/// One pass over the raw index producing the visible, listed, and
+/// spoiler-locked lists together. The three lists share all their filter work
+/// (the spoiler check is the expensive one), and this runs on every data
+/// refresh while mods load, so doing it in a single pass instead of three
+/// separate provider passes matters.
+final _codexFilteredIndexProvider =
+    Provider<
+      ({
+        List<CodexEntry> visible,
+        List<CodexEntry> listed,
+        List<CodexEntry> locked,
+      })
+    >((ref) {
+      final index = ref.watch(codexIndexProvider);
+      final filters = ref.watch(codexStandingFiltersProvider);
+
+      // When "only enabled mods" is on, keep vanilla plus entries from a mod
+      // that is currently enabled. Off by default, so this collapses to a
+      // no-op filter.
+      final onlyEnabledMods = ref.watch(
+        appSettings.select((s) => s.codexEnabledModsOnly),
+      );
+      final enabledModIds = onlyEnabledMods
+          ? ref
+                .watch(AppState.mods)
+                .where((mod) => mod.isEnabledOnUi)
+                .map((mod) => mod.id)
+                .toSet()
+          : const <String>{};
+
+      // Ships by id, so a wing can borrow its ship's spoiler result. HashMap:
+      // built fresh on every data refresh, and insertion order is never used.
+      final shipsById = HashMap<String, ShipCodexEntry>();
+      for (final e in index) {
+        if (e is ShipCodexEntry) shipsById[e.ship.id] = e;
+      }
+
+      final visible = <CodexEntry>[];
+      final listed = <CodexEntry>[];
+      final locked = <CodexEntry>[];
+      for (final e in index) {
+        // Cheap filters first; the spoiler check walks tag lists.
+        if (!_matchesMod(e, filters.modId)) continue;
+        if (!_matchesEnabledMods(e, onlyEnabledMods, enabledModIds)) continue;
+        if (_matchesSpoiler(e, filters.spoilerLevel, shipsById)) {
+          visible.add(e);
+          if (isCodexEntryListed(e, filters)) listed.add(e);
+        } else if (isCodexEntryListed(e, filters)) {
+          // Hidden by spoiler, but otherwise fully listable.
+          locked.add(e);
+        }
+      }
+      return (visible: visible, listed: listed, locked: locked);
+    });
+
 /// The index after the standing spoiler and mod filters. This is the universe
 /// that links resolve against, so a spoiler- or mod-hidden entry can't leak in
 /// through a related link or a random roll.
-final codexVisibleIndexProvider = Provider<List<CodexEntry>>((ref) {
-  final index = ref.watch(codexIndexProvider);
-  final filters = ref.watch(codexStandingFiltersProvider);
-
-  // Ships by id, so a wing can borrow its ship's spoiler result.
-  final shipsById = <String, ShipCodexEntry>{
-    for (final e in index)
-      if (e is ShipCodexEntry) e.ship.id: e,
-  };
-
-  return index
-      .where((e) => _matchesSpoiler(e, filters.spoilerLevel, shipsById))
-      .where((e) => _matchesMod(e, filters.modId))
-      .toList();
-});
+final codexVisibleIndexProvider = Provider<List<CodexEntry>>(
+  (ref) => ref.watch(_codexFilteredIndexProvider).visible,
+);
 
 /// The subset of the visible index that is actually listed in the drill-down
 /// list, search, and random: fighter hulls are never listed, and hidden
 /// weapons, hullmods, and ship systems only when their toggle is on.
-final codexListedIndexProvider = Provider<List<CodexEntry>>((ref) {
-  final visible = ref.watch(codexVisibleIndexProvider);
-  final filters = ref.watch(codexStandingFiltersProvider);
-  return visible.where((e) => isCodexEntryListed(e, filters)).toList();
-});
+final codexListedIndexProvider = Provider<List<CodexEntry>>(
+  (ref) => ref.watch(_codexFilteredIndexProvider).listed,
+);
+
+/// Entries hidden only by the current spoiler level: they pass the mod,
+/// enabled-mods, and listed filters and would show if the spoiler level allowed
+/// them. The in-game Codex still lists these as "Locked entry" placeholders at
+/// the bottom of their category, revealing nothing about them.
+final codexSpoilerLockedIndexProvider = Provider<List<CodexEntry>>(
+  (ref) => ref.watch(_codexFilteredIndexProvider).locked,
+);
 
 /// Whether [entry] appears in the list/search/random (as opposed to being only
 /// a link target).
 bool isCodexEntryListed(CodexEntry entry, CodexStandingFilters filters) {
   return switch (entry) {
-    ShipCodexEntry(:final ship) => ship.hullSize?.toLowerCase() != 'fighter',
+    ShipCodexEntry(:final ship) =>
+      ship.hullSize?.toLowerCase() != 'fighter' &&
+          !(ship.hints?.any((h) => h.toLowerCase() == 'hide_in_codex') ??
+              false),
     WeaponCodexEntry(:final weapon) => filters.showHidden || !weapon.isHidden(),
     HullmodCodexEntry(:final hullmod) =>
       filters.showHiddenHullmods ||
@@ -197,6 +254,19 @@ bool _matchesMod(CodexEntry entry, String? modId) {
   return entry.modIds.contains(modId);
 }
 
+/// When [onlyEnabledMods] is on, keep vanilla entries (no mod) and any entry
+/// from at least one enabled mod. A faction sourced from several mods stays as
+/// long as one of those mods is enabled.
+bool _matchesEnabledMods(
+  CodexEntry entry,
+  bool onlyEnabledMods,
+  Set<String> enabledModIds,
+) {
+  if (!onlyEnabledMods) return true;
+  if (entry.modIds.isEmpty) return true;
+  return entry.modIds.any(enabledModIds.contains);
+}
+
 bool _matchesSpoiler(
   CodexEntry entry,
   SpoilerLevel level,
@@ -208,7 +278,11 @@ bool _matchesSpoiler(
 
   switch (entry) {
     case ShipCodexEntry(:final ship):
-      return shipMatchesSpoilerLevel(ship, level);
+      // `hide_in_codex` is a listing filter, not a spoiler (handled in
+      // [isCodexEntryListed]). Matching on spoiler tags alone keeps hidden
+      // hulls — like station modules — in the visible index so they still
+      // resolve as related-entry link targets, matching the in-game codex.
+      return tagsMatchShipSpoilerLevel(ship.tags ?? const [], level);
     case WeaponCodexEntry(:final weapon):
       return weaponMatchesSpoilerLevel(
         weapon,

@@ -129,10 +129,19 @@ class ShipListNotifier
   }
 
   @override
+  void onCacheLoadComplete(Map<String, ShipsCachePayload> cachedPayloads) {
+    _publishModuleData(cachedPayloads);
+  }
+
+  @override
   void onFullScanComplete(Map<String, ShipsCachePayload> allPayloads) {
+    _publishModuleData(allPayloads);
+  }
+
+  void _publishModuleData(Map<String, ShipsCachePayload> payloads) {
     final allModuleVariants = <String, ShipVariant>{};
     final allHullIdMap = <String, String>{};
-    for (final payload in allPayloads.values) {
+    for (final payload in payloads.values) {
       allModuleVariants.addAll(payload.moduleVariants);
       allHullIdMap.addAll(payload.hullIdMap);
     }

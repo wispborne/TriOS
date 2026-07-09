@@ -206,6 +206,9 @@ class Settings with SettingsMappable {
   /// When true, the VRAM estimator only shows enabled mods.
   final bool vramEstimatorEnabledModsOnly;
 
+  /// When true, the Codex only shows data from enabled mods (plus vanilla).
+  final bool codexEnabledModsOnly;
+
   Settings({
     this.gameDir,
     this.gameCoreDir,
@@ -325,6 +328,7 @@ class Settings with SettingsMappable {
         ReferencedAssetsSelectorConfig.allEnabled,
     this.vramEstimatorMultithreaded = true,
     this.vramEstimatorEnabledModsOnly = false,
+    this.codexEnabledModsOnly = false,
   });
 }
 

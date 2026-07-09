@@ -6,7 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.6.2-preview02";
+  static const version = "1.6.2-preview03";
   static Version currentVersion = Version.parse(version);
   static const companionModVersion = "1.0.4";
 
@@ -66,6 +66,10 @@ class Constants {
   static const forumUrl = "https://fractalsoftworks.com/forum/index.php";
   static const nexusModsPageUrl = "https://www.nexusmods.com/starsector/mods/";
   static const forumModPageUrl = "$forumUrl?topic=";
+
+  /// Forum member profile page, looked up by username. Append an
+  /// URL-encoded username, e.g. "...user=Trylobot".
+  static const forumUserProfileUrl = "$forumUrl?action=profile;user=";
   static const forumModIndexUrl = "${forumModPageUrl}177";
   static const forumModdingSubforumUrl = "$forumUrl?board=3.0";
   static const forumHostname = "fractalsoftworks.com";

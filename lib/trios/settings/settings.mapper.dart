@@ -1147,6 +1147,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool _$codexEnabledModsOnly(Settings v) => v.codexEnabledModsOnly;
+  static const Field<Settings, bool> _f$codexEnabledModsOnly = Field(
+    'codexEnabledModsOnly',
+    _$codexEnabledModsOnly,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -1248,6 +1255,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
     #vramEstimatorMultithreaded: _f$vramEstimatorMultithreaded,
     #vramEstimatorEnabledModsOnly: _f$vramEstimatorEnabledModsOnly,
+    #codexEnabledModsOnly: _f$codexEnabledModsOnly,
   };
   @override
   final bool ignoreNull = true;
@@ -1363,6 +1371,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       ),
       vramEstimatorMultithreaded: data.dec(_f$vramEstimatorMultithreaded),
       vramEstimatorEnabledModsOnly: data.dec(_f$vramEstimatorEnabledModsOnly),
+      codexEnabledModsOnly: data.dec(_f$codexEnabledModsOnly),
     );
   }
 
@@ -1601,6 +1610,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
     bool? vramEstimatorEnabledModsOnly,
+    bool? codexEnabledModsOnly,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1879,6 +1889,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
     bool? vramEstimatorEnabledModsOnly,
+    bool? codexEnabledModsOnly,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -2025,6 +2036,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         #vramEstimatorMultithreaded: vramEstimatorMultithreaded,
       if (vramEstimatorEnabledModsOnly != null)
         #vramEstimatorEnabledModsOnly: vramEstimatorEnabledModsOnly,
+      if (codexEnabledModsOnly != null)
+        #codexEnabledModsOnly: codexEnabledModsOnly,
     }),
   );
   @override
@@ -2332,6 +2345,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     vramEstimatorEnabledModsOnly: data.get(
       #vramEstimatorEnabledModsOnly,
       or: $value.vramEstimatorEnabledModsOnly,
+    ),
+    codexEnabledModsOnly: data.get(
+      #codexEnabledModsOnly,
+      or: $value.codexEnabledModsOnly,
     ),
   );
 

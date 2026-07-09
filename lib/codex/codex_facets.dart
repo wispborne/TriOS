@@ -25,11 +25,22 @@ List<ChipFilterGroup<CodexEntry>> buildCodexFacetGroups(
         ChipFilterGroup<CodexEntry>(
           id: 'size',
           name: 'Size',
-          valueGetter: (e) {
-            final ship = (e as ShipCodexEntry).ship;
-            return ship.isStation ? 'Station' : ship.hullSizeForDisplay();
-          },
+          valueGetter: (e) => (e as ShipCodexEntry).ship.hullSizeForDisplay(),
           useDefaultSort: true,
+        ),
+        ChipFilterGroup<CodexEntry>(
+          id: 'type',
+          name: 'Type',
+          valueGetter: (e) => _shipType((e as ShipCodexEntry).ship),
+        ),
+      ];
+    // Stations share the ship data type; they only need tech/manufacturer and
+    // type facets (their size is always "Station").
+    case CodexEntryType.station:
+      return [
+        _techManufacturerGroup(
+          itemsFor,
+          (e) => (e as ShipCodexEntry).ship.techManufacturer,
         ),
         ChipFilterGroup<CodexEntry>(
           id: 'type',

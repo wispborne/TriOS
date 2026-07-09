@@ -40,6 +40,12 @@ final deepLinkHandlerProvider = NotifierProvider<DeepLinkHandler, void>(
   DeepLinkHandler.new,
 );
 
+/// True while a deep-link install is being prepared — from the link being
+/// raised until its confirmation dialog is ready (or the batch is otherwise
+/// handled). UI that raised the link (e.g. a catalog Install button) can show
+/// a busy indicator during this gap.
+final deepLinkProcessing = StateProvider<bool>((ref) => false);
+
 class DeepLinkHandler extends Notifier<void> {
   StreamSubscription<Uri>? _linkSubscription;
   StreamSubscription<FileSystemEvent>? _fileWatchSubscription;
@@ -157,6 +163,7 @@ class DeepLinkHandler extends Notifier<void> {
 
     Fimber.i('Deep link received: $rawUri');
     _queuedUris.add(rawUri);
+    ref.read(deepLinkProcessing.notifier).state = true;
 
     // Hop to a microtask so a same-turn burst (e.g. several files drained from
     // the pending dir at once) all queue before the drain runs. The drain loop
@@ -269,6 +276,9 @@ class DeepLinkHandler extends Notifier<void> {
       }
     } finally {
       _resolving = false;
+      // Resolution is done; the confirmation dialog (if any) opens right
+      // after this. Busy indicators watching this can stop now.
+      ref.read(deepLinkProcessing.notifier).state = false;
     }
 
     // Only the flush that created the session shows the dialog (others merged).

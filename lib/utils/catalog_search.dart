@@ -157,6 +157,18 @@ String normalizeBaseVersion(String? rawVersion) {
   return base;
 }
 
+/// Whether a mod's required game version is the same base version as the
+/// user's installed game. Uses the same [normalizeBaseVersion] bucketing as
+/// the Game Version filter, so "0.98a-RC8" installed matches a mod that
+/// requires "0.98a". Returns null when either version is unknown (so callers
+/// can render a neutral state rather than a false match/mismatch).
+bool? gameVersionMatchesInstalled(String? requiredVersion, String? installedVersion) {
+  final req = normalizeBaseVersion(requiredVersion);
+  final installed = normalizeBaseVersion(installedVersion);
+  if (req.isEmpty || installed.isEmpty) return null;
+  return req == installed;
+}
+
 // ===== URL Extraction =====
 
 final _forumTopicIdRegex = RegExp(r'topic=(\d+)');

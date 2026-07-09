@@ -109,6 +109,12 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// side-channels. Default is a no-op.
   void onFullScanComplete(Map<String, P> allPayloads) {}
 
+  /// Hook called at the end of Phase 1 with every payload decoded from cache.
+  /// Lets subclasses publish side-channel data early instead of waiting for
+  /// the fresh scan — ships uses this so module variants are available as
+  /// soon as the cached ships are. Default is a no-op.
+  void onCacheLoadComplete(Map<String, P> cachedPayloads) {}
+
   /// Called before Phase 1 starts; subclasses typically flip loading-state
   /// providers here and/or attach dirty listeners. Default is a no-op.
   void onBuildStart() {}
@@ -195,6 +201,19 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     }
 
     yield _flatten();
+
+    if (cacheHits > 0) {
+      try {
+        onCacheLoadComplete(Map<String, P>.from(_slices));
+      } catch (e, st) {
+        Fimber.w(
+          '[$domain] onCacheLoadComplete failed: $e',
+          ex: e,
+          stacktrace: st,
+        );
+      }
+    }
+
     final cacheMs = DateTime.now().difference(cacheStart).inMilliseconds;
 
     // ── Phase 2: fresh scan, progressive replacement ─────────────────────

@@ -5,8 +5,10 @@ import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Header bar for the Forum Post Dialog. Shows mod title, author (with
 /// avatar when available), post/last-edit dates, compact forum stats (from
@@ -29,6 +31,16 @@ class ForumPostHeader extends StatelessWidget {
   static final _dateFormat = DateFormat.yMMMMd().add_jm();
   static final _decimalFormat = NumberFormat.decimalPattern();
   static final _compactFormat = NumberFormat.compact();
+
+  /// The forum profile page for [author], or null if there's no name to look
+  /// up. The forum resolves profiles by username, so this works without an id.
+  static Uri? _authorProfileUrl(String author) {
+    final name = author.trim();
+    if (name.isEmpty) return null;
+    return Uri.parse(
+      '${Constants.forumUserProfileUrl}${Uri.encodeComponent(name)}',
+    );
+  }
 
   static String _downloadTooltip(DownloadCandidate candidate) {
     final subtitle = downloadCandidateSubtitle(candidate);
@@ -74,53 +86,77 @@ class ForumPostHeader extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Card(
-                  margin: .zero,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Padding(
-                    padding: const .symmetric(vertical: 8.0, horizontal: 12),
-                    child: MovingTooltipWidget.text(
-                      message:
-                          '${_decimalFormat.format(details.authorPostCount)} posts',
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisSize: .min,
-                        children: [
-                          _Avatar(path: details.authorAvatarPath),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: .start,
-                            children: [
-                              Text(
-                                details.author,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              if (details.authorTitle != null &&
-                                  details.authorTitle!.isNotEmpty) ...[
-                                const SizedBox(width: 6),
-                                Text(
-                                  details.authorTitle!,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    fontStyle: FontStyle.italic,
-                                    color: theme.textTheme.labelSmall?.color
-                                        ?.withValues(alpha: 0.7),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(width: 8),
-                        ],
+                child: Builder(
+                  builder: (context) {
+                    final profileUrl = _authorProfileUrl(details.author);
+                    return Card(
+                      margin: .zero,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                    ),
-                  ),
+                      child: MovingTooltipWidget.text(
+                        message: profileUrl != null
+                            ? "Open ${details.author}'s forum profile in your browser"
+                                "\n${_decimalFormat.format(details.authorPostCount)} posts"
+                            : '${_decimalFormat.format(details.authorPostCount)} posts',
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(24),
+                          mouseCursor: profileUrl == null
+                              ? MouseCursor.defer
+                              : SystemMouseCursors.click,
+                          onTap: profileUrl == null
+                              ? null
+                              : () => launchUrl(profileUrl),
+                          child: Padding(
+                            padding: const .symmetric(
+                              vertical: 8.0,
+                              horizontal: 12,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisSize: .min,
+                              children: [
+                                _Avatar(path: details.authorAvatarPath),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: .start,
+                                  children: [
+                                    Text(
+                                      details.author,
+                                      style: theme.textTheme.titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (details.authorTitle != null &&
+                                        details.authorTitle!.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        details.authorTitle!,
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                              fontStyle: FontStyle.italic,
+                                              color: theme
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.color
+                                                  ?.withValues(alpha: 0.7),
+                                            ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               Expanded(

@@ -54,7 +54,7 @@ List<ResolvedModule> resolveModules(
     shipById[s.id] = s;
   }
 
-  return _resolveModulesWithIndex(
+  return resolveModulesWithIndex(
     parentShip,
     shipById,
     moduleVariants,
@@ -64,7 +64,7 @@ List<ResolvedModule> resolveModules(
 
 /// Variant of [resolveModules] that accepts a pre-built `shipById` index and
 /// avoids rebuilding it per call. Intended for batch/set-building loops.
-List<ResolvedModule> _resolveModulesWithIndex(
+List<ResolvedModule> resolveModulesWithIndex(
   Ship parentShip,
   Map<String, Ship> shipById,
   Map<String, ShipVariant> moduleVariants,
@@ -120,7 +120,7 @@ Set<String> computeShipsWithModuleIds(
 
   final result = <String>{};
   for (final ship in allShips) {
-    if (_resolveModulesWithIndex(
+    if (resolveModulesWithIndex(
       ship,
       shipById,
       moduleVariants,

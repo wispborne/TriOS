@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,12 +7,12 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
-import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/download_confirm.dart';
-import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
+import 'package:trios/catalog/models/ai_summary_mode.dart';
+import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
@@ -19,9 +21,13 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/deep_link/deep_link_handler.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/snackbar.dart';
@@ -51,8 +57,6 @@ class ScrapedModCard extends ConsumerStatefulWidget {
 }
 
 class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
-  bool isBeingHovered = false;
-
   Color _statusBarColor(ThemeData theme) {
     final mod = widget.installedMod;
     if (mod == null) return Colors.transparent;
@@ -76,300 +80,275 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     );
 
     final theme = Theme.of(context);
-    return MouseRegion(
-      onEnter: (_) {
-        setState(() {
-          isBeingHovered = true;
-        });
-      },
-      onExit: (_) {
-        setState(() {
-          isBeingHovered = false;
-        });
-      },
-      child: Builder(
-        builder: (context) {
-          final websiteUrl = mod.getBestWebsiteUrl();
-          final topicId = widget.forumModIndex?.topicId;
-          final forumDetails = topicId == null
-              ? null
-              : ref.watch(forumDetailsForTopic(topicId));
-          final hasForumDetails =
-              forumDetails != null && !forumDetails.isPlaceholderDetail;
-          final hasClickableLink =
-              hasForumDetails ||
-              websiteUrl != null ||
-              urls?.containsKey(ModUrlType.DirectDownload) == true;
+    return Builder(
+      builder: (context) {
+        final websiteUrl = mod.getBestWebsiteUrl();
+        final topicId = widget.forumModIndex?.topicId;
+        final forumDetails = topicId == null
+            ? null
+            : ref.watch(forumDetailsForTopic(topicId));
+        final hasForumDetails =
+            forumDetails != null && !forumDetails.isPlaceholderDetail;
+        final hasClickableLink =
+            hasForumDetails ||
+            websiteUrl != null ||
+            urls?.containsKey(ModUrlType.DirectDownload) == true;
 
-          return ContextMenuRegion(
-            contextMenu: ContextMenu(
-              entries: [
-                if (false)
-                  MenuItem(
-                    label: 'View Mod Details...',
-                    icon: Icons.info_outline,
-                    onSelected: () => showModInfoDialog(
-                      context,
-                      mod: widget.installedMod,
-                      scrapedMod: mod,
-                      forumModIndex: widget.forumModIndex,
-                      versionCheckComparison: widget.versionCheckComparison,
-                    ),
-                  ),
-                if (downloadCandidates.isNotEmpty) ...[
-                  const MenuHeader(text: 'Downloads'),
-                  for (final candidate in downloadCandidates)
-                    MenuItem(
-                      label: candidate.sourceHost?.isNotEmpty == true
-                          ? '${candidate.label}  ·  ${candidate.sourceHost}'
-                          : candidate.label,
-                      leading: MovingTooltipWidget.text(
-                        message: candidate.url,
-                        child: Icon(downloadCandidateIcon(candidate), size: 16),
-                      ),
-                      onSelected: () => executeDownloadCandidate(
-                        context,
-                        ref,
-                        candidate,
-                        modName: mod.name,
-                        linkLoader: widget.linkLoader,
-                      ),
-                    ),
-                  MenuItem(
-                    label: 'Copy download link',
-                    leading: MovingTooltipWidget.text(
-                      message: 'Copy the best download link to the clipboard',
-                      child: const Icon(Icons.copy, size: 16),
-                    ),
-                    onSelected: () {
-                      final url =
-                          (primaryCandidate(downloadCandidates) ??
-                                  downloadCandidates.first)
-                              .url;
-                      Clipboard.setData(ClipboardData(text: url));
-                      showSnackBar(
-                        context: context,
-                        type: SnackBarType.info,
-                        content: const Text('Download link copied to clipboard'),
-                      );
-                    },
-                  ),
-                  const MenuDivider(),
-                ],
+        return ContextMenuRegion(
+          contextMenu: ContextMenu(
+            entries: [
+              if (false)
                 MenuItem(
-                  label: 'Debug Info',
-                  leading: const Icon(Icons.bug_report, size: 16),
-                  onSelected: () => _showDebugDialog(context, mod),
+                  label: 'View Mod Details...',
+                  icon: Icons.info_outline,
+                  onSelected: () => showModInfoDialog(
+                    context,
+                    mod: widget.installedMod,
+                    scrapedMod: mod,
+                    forumModIndex: widget.forumModIndex,
+                    versionCheckComparison: widget.versionCheckComparison,
+                  ),
                 ),
-              ],
-            ),
-            child: Card(
-              margin: const EdgeInsets.all(0),
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                side: BorderSide(
-                  color: theme.colorScheme.surface.withValues(alpha: 0.5),
-                ),
-              ),
-              child: ConditionalWrap(
-                condition: hasClickableLink,
-                wrapper: (child) => InkWell(
-                  onTap: () {
-                    if (hasForumDetails) {
-                      showForumPostDialog(
-                        context,
-                        details: forumDetails,
-                        index: widget.forumModIndex,
-                        linkLoader: widget.linkLoader,
-                      );
-                      return;
-                    }
-                    if (urls == null) {
-                      return;
-                    }
-                    if (websiteUrl != null) {
-                      widget.linkLoader(websiteUrl);
-                    } else if (urls.containsKey(ModUrlType.DirectDownload)) {
-                      _showDirectDownloadDialog(
-                        context,
-                        mod.name,
-                        urls[ModUrlType.DirectDownload]!,
-                      );
-                    }
+              if (downloadCandidates.isNotEmpty) ...[
+                const MenuHeader(text: 'Downloads'),
+                for (final candidate in downloadCandidates)
+                  MenuItem(
+                    label: candidate.sourceHost?.isNotEmpty == true
+                        ? '${candidate.label}  ·  ${candidate.sourceHost}'
+                        : candidate.label,
+                    leading: MovingTooltipWidget.text(
+                      message: candidate.url,
+                      child: Icon(downloadCandidateIcon(candidate), size: 16),
+                    ),
+                    onSelected: () => executeDownloadCandidate(
+                      context,
+                      ref,
+                      candidate,
+                      modName: mod.name,
+                      linkLoader: widget.linkLoader,
+                    ),
+                  ),
+                MenuItem(
+                  label: 'Copy download link',
+                  leading: MovingTooltipWidget.text(
+                    message: 'Copy the best download link to the clipboard',
+                    child: const Icon(Icons.copy, size: 16),
+                  ),
+                  onSelected: () {
+                    final url =
+                        (primaryCandidate(downloadCandidates) ??
+                                downloadCandidates.first)
+                            .url;
+                    Clipboard.setData(ClipboardData(text: url));
+                    showSnackBar(
+                      context: context,
+                      type: SnackBarType.info,
+                      content: const Text('Download link copied to clipboard'),
+                    );
                   },
-                  child: child,
                 ),
-                child: Stack(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        color: widget.isSelected
-                            ? theme.cardColor.lighter(5)
-                            : null,
-                      ),
-                      child: Row(
-                        children: [
-                          Stack(
-                            children: [
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 80.0,
-                                  minWidth: 80.0,
-                                  maxHeight: 80.0,
-                                ),
-                                child: ModImage(mod: mod),
+                const MenuDivider(),
+              ],
+              if (widget.installedMod != null) ...[
+                const MenuHeader(text: 'Installed Mod'),
+                if (widget.installedMod!.isEnabledInGame)
+                  MenuItem(
+                    label: 'Disable',
+                    leading: const Icon(Icons.visibility_off, size: 16),
+                    onSelected: () => _setModEnabled(false),
+                  )
+                else
+                  MenuItem(
+                    label: 'Enable',
+                    leading: const Icon(Icons.visibility, size: 16),
+                    onSelected: () => _setModEnabled(true),
+                  ),
+                const MenuDivider(),
+              ],
+              if (_linkEntries(context).isNotEmpty) ...[
+                const MenuHeader(text: 'Links'),
+                ..._linkEntries(context),
+                const MenuDivider(),
+              ],
+              MenuItem(
+                label: 'Debug Info',
+                leading: const Icon(Icons.bug_report, size: 16),
+                onSelected: () => _showDebugDialog(context, mod),
+              ),
+            ],
+          ),
+          child: Card(
+            margin: const EdgeInsets.all(0),
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+              side: BorderSide(
+                color: theme.colorScheme.surface.withValues(alpha: 0.5),
+              ),
+            ),
+            child: ConditionalWrap(
+              condition: hasClickableLink,
+              wrapper: (child) => InkWell(
+                onTap: () {
+                  if (hasForumDetails) {
+                    showForumPostDialog(
+                      context,
+                      details: forumDetails,
+                      index: widget.forumModIndex,
+                      linkLoader: widget.linkLoader,
+                    );
+                    return;
+                  }
+                  if (urls == null) {
+                    return;
+                  }
+                  if (websiteUrl != null) {
+                    widget.linkLoader(websiteUrl);
+                  } else if (urls.containsKey(ModUrlType.DirectDownload)) {
+                    _showDirectDownloadDialog(
+                      context,
+                      mod.name,
+                      urls[ModUrlType.DirectDownload]!,
+                    );
+                  }
+                },
+                child: child,
+              ),
+              child: Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: widget.isSelected
+                          ? theme.cardColor.lighter(5)
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Stack(
+                          children: [
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 60.0,
+                                minWidth: 60.0,
+                                maxHeight: 60.0,
                               ),
-                            ],
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 16.0,
-                                right: 16.0,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    spacing: 4,
-                                    children: [
-                                      Flexible(
-                                        child: TextTriOS(
-                                          mod.name.isNotEmpty
-                                              ? mod.name
-                                              : '???',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14.0,
-                                            // fontFamily:
-                                            //     TriOSThemeConstants.orbitron,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
+                              child: ModImage(mod: mod, size: 60),
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16.0,
+                              right: 16.0,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  spacing: 4,
+                                  children: [
+                                    Flexible(
+                                      child: TextTriOS(
+                                        mod.name.isNotEmpty ? mod.name : '???',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14.0,
+                                          // fontFamily:
+                                          //     TriOSThemeConstants.orbitron,
                                         ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
+                                    ),
+                                  ],
+                                ),
+                                if (mod.authorsList?.isNotEmpty == true)
+                                  Text(
+                                    mod.getAuthorsDeduplicated().join(', '),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontSize: 10,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: .ellipsis,
+                                  ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: buildDescription(
+                                      theme,
+                                      context,
+                                      mod,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  // Only the footer sits at the button's
+                                  // height, so just it clears the corner;
+                                  // the name/author/description above use
+                                  // the card's full width.
+                                  padding: const EdgeInsets.only(right: 80.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (widget.forumModIndex != null)
+                                        _ForumStats(
+                                          forumModIndex: widget.forumModIndex!,
+                                        ),
+                                      Tags(mod: mod),
                                     ],
                                   ),
-                                  if (mod.authorsList?.isNotEmpty == true)
-                                    Text(
-                                      mod.getAuthorsDeduplicated().join(', '),
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            fontSize: 10,
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                      maxLines: 1,
-                                      overflow: .ellipsis,
-                                    ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: buildDescription(
-                                        theme,
-                                        context,
-                                        mod,
-                                      ),
-                                    ),
-                                  ),
-                                  if (widget.forumModIndex != null)
-                                    _ForumStats(
-                                      forumModIndex: widget.forumModIndex!,
-                                    ),
-                                  Tags(mod: mod),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                          Builder(
-                            builder: (context) {
-                              const size = 14.0;
-                              return Column(
-                                mainAxisAlignment: .spaceBetween,
-                                crossAxisAlignment: .center,
-                                children: [
-                                  Column(
-                                    spacing: 4,
-                                    children: [
-                                      BrowserIcon(
-                                        mod: mod,
-                                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                                        linkLoader: widget.linkLoader,
-                                        size: size,
-                                      ),
-                                      DiscordIcon(
-                                        mod: mod,
-                                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                                        size: size,
-                                      ),
-                                      NexusModsIcon(
-                                        mod: mod,
-                                        iconOpacity: isBeingHovered ? 1.0 : 0.7,
-                                        size: size,
-                                      ),
-                                    ],
-                                  ),
-                                  Opacity(
-                                    opacity: isBeingHovered ? 1.0 : 0.7,
-                                    child: CatalogDownloadButton(
-                                      mod: mod,
-                                      installedMod: widget.installedMod,
-                                      versionCheckComparison:
-                                          widget.versionCheckComparison,
-                                      linkLoader: widget.linkLoader,
-                                      llmMainMod:
-                                          widget.forumModIndex?.llm?.mainMod,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (mod.gameVersionReq?.isNotEmpty == true)
+                    Positioned(
+                      left: 8,
+                      top: 4,
+                      child: _ScrapedModGameVersionReq(mod: mod),
+                    ),
+                  if (widget.installedMod != null)
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: MovingTooltipWidget.text(
+                        message: widget.installedMod!.isEnabledInGame
+                            ? 'Enabled'
+                            : 'Installed, disabled',
+                        child: Container(
+                          width: 4,
+                          color: _statusBarColor(theme),
+                        ),
                       ),
                     ),
-                    if (mod.gameVersionReq?.isNotEmpty == true)
-                      Positioned(
-                        left: 8,
-                        top: 4,
-                        child: _ScrapedModGameVersionReq(
-                          theme: theme,
-                          mod: mod,
-                        ),
-                      ),
-                    if (widget.installedMod != null)
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        child: MovingTooltipWidget.text(
-                          message: widget.installedMod!.isEnabledInGame
-                              ? 'Enabled'
-                              : 'Installed, disabled',
-                          child: Builder(
-                            builder: (context) {
-                              final hasUpdate =
-                                  widget.versionCheckComparison?.hasUpdate ==
-                                  true;
-                              return ConditionalWrap(
-                                condition: hasUpdate,
-                                wrapper: (child) => Blur(blur: 2, child: child),
-                                child: Container(
-                                  width: 4,
-                                  color: _statusBarColor(theme),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                  // Overlaid in the bottom-right corner so the text content
+                  // above it can span the card's full width.
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: CatalogDownloadButton(
+                      mod: mod,
+                      installedMod: widget.installedMod,
+                      versionCheckComparison: widget.versionCheckComparison,
+                      linkLoader: widget.linkLoader,
+                      llmMainMod: widget.forumModIndex?.llm?.mainMod,
+                    ),
+                  ),
+                ],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -419,7 +398,8 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
               children: [
                 TextSpan(text: aiSummary!.paragraph),
                 TextSpan(
-                  text: '\n\nSummary generated by AI. See About page for details.',
+                  text:
+                      '\n\nSummary generated by AI. See the ${Constants.appName} About page for AI Disclosure.',
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontStyle: FontStyle.italic,
                     color: theme.colorScheme.onSurface.withAlpha(150),
@@ -435,7 +415,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
               WidgetSpan(
                 alignment: PlaceholderAlignment.middle,
                 child: Padding(
-                  padding: const EdgeInsets.only(right: 3),
+                  padding: const EdgeInsets.only(right: 4),
                   child: Icon(
                     Icons.auto_awesome,
                     size: 12,
@@ -497,6 +477,71 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     //     ),
     //   ),
     // );
+  }
+
+  /// Enable or disable the installed mod. Moved off the primary card button
+  /// so the button stays a pure Install/Update/Installed status.
+  void _setModEnabled(bool enabled) {
+    final mod = widget.installedMod;
+    if (mod == null) return;
+    if (enabled) {
+      final variant = mod.findHighestVersion;
+      if (variant == null) return;
+      ref.read(modManager.notifier).changeActiveModVariant(mod, variant);
+    } else {
+      ref.read(modManager.notifier).changeActiveModVariant(mod, null);
+    }
+  }
+
+  /// Context-menu link entries (Forum / Discord / NexusMods) for this mod.
+  /// Empty when the mod has no such links.
+  List<MenuItem> _linkEntries(BuildContext context) {
+    final urls = widget.mod.urls;
+    final forumUrl = urls?[ModUrlType.Forum];
+    final discordUrl = urls?[ModUrlType.Discord];
+    final nexusUrl = urls?[ModUrlType.NexusMods];
+    return [
+      if (forumUrl != null && forumUrl.isNotEmpty)
+        MenuItem(
+          label: 'Open forum page',
+          leading: const Icon(Icons.public, size: 16),
+          onSelected: () {
+            forumUrl.openAsUriInBrowser();
+          },
+        ),
+      if (discordUrl != null && discordUrl.isNotEmpty) ...[
+        MenuItem(
+          label: 'Open in Discord',
+          leading: const Icon(Icons.discord, size: 16),
+          onSelected: () {
+            discordUrl
+                .replaceAll('https://', 'discord://')
+                .replaceAll('http://', 'discord://')
+                .openAsUriInBrowser();
+          },
+        ),
+        MenuItem(
+          label: 'Copy Discord link',
+          leading: const Icon(Icons.copy, size: 16),
+          onSelected: () {
+            Clipboard.setData(ClipboardData(text: discordUrl));
+            showSnackBar(
+              context: context,
+              type: SnackBarType.info,
+              content: const Text('Discord link copied to clipboard'),
+            );
+          },
+        ),
+      ],
+      if (nexusUrl != null && nexusUrl.isNotEmpty)
+        MenuItem(
+          label: 'Open NexusMods page',
+          leading: const Icon(Icons.extension, size: 16),
+          onSelected: () {
+            nexusUrl.openAsUriInBrowser();
+          },
+        ),
+    ];
   }
 
   void _showDebugDialog(BuildContext context, ScrapedMod mod) {
@@ -568,23 +613,47 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   }
 }
 
-class _ScrapedModGameVersionReq extends StatelessWidget {
-  const _ScrapedModGameVersionReq({required this.theme, required this.mod});
+class _ScrapedModGameVersionReq extends ConsumerWidget {
+  const _ScrapedModGameVersionReq({required this.mod});
 
-  final ThemeData theme;
   final ScrapedMod mod;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final installedVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
+    // true  = made for the installed game version (positive standout)
+    // false = made for a different/older game version (warning)
+    // null  = installed or required version unknown (neutral)
+    final match = gameVersionMatchesInstalled(
+      mod.gameVersionReq,
+      installedVersion,
+    );
+    final Color accent = switch (match) {
+      true => theme.statusColors.success,
+      false => theme.statusColors.warning,
+      null => theme.textTheme.labelLarge?.color ?? theme.colorScheme.onSurface,
+    };
+
+    final tooltip = StringBuffer(
+      'Game version required: ${mod.gameVersionReq}',
+    );
+    if (installedVersion != null && installedVersion.isNotEmpty) {
+      tooltip.write('\nYour game: $installedVersion');
+    }
+
     return Padding(
       padding: const EdgeInsets.only(top: 2, bottom: 2),
       child: MovingTooltipWidget.text(
-        message: "Game version required: ${mod.gameVersionReq}",
+        message: tooltip.toString(),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           decoration: BoxDecoration(
             color: theme.cardColor.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(4),
+            border: match == null
+                ? null
+                : Border.all(color: accent.withValues(alpha: 0.0), width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -627,7 +696,7 @@ class _ScrapedModGameVersionReq extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.0,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.labelLarge?.color,
+                  color: theme.textTheme.labelLarge?.color,
                 ),
               ),
             ],
@@ -640,8 +709,9 @@ class _ScrapedModGameVersionReq extends StatelessWidget {
 
 class ModImage extends StatelessWidget {
   final ScrapedMod mod;
+  final int? size;
 
-  const ModImage({super.key, required this.mod});
+  const ModImage({super.key, required this.mod, this.size});
 
   @override
   Widget build(BuildContext context) {
@@ -688,6 +758,7 @@ class ModImage extends StatelessWidget {
         child: Image.network(
           mainImage.url!,
           fit: .scaleDown,
+          cacheWidth: size == null ? null : size! * 2,
           errorBuilder: (context, error, stackTrace) {
             return _defaultImage();
           },
@@ -761,143 +832,6 @@ class Tags extends StatelessWidget {
   }
 }
 
-class BrowserIcon extends StatelessWidget {
-  final ScrapedMod mod;
-  final double iconOpacity;
-  final void Function(String) linkLoader;
-  final double size;
-
-  const BrowserIcon({
-    super.key,
-    required this.mod,
-    required this.iconOpacity,
-    required this.linkLoader,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final forumUrl = mod.urls?[ModUrlType.Forum];
-
-    if (forumUrl != null && forumUrl.isNotEmpty) {
-      return MovingTooltipWidget.text(
-        message: 'Open in an external browser.\n$forumUrl',
-        child: Opacity(
-          opacity: iconOpacity,
-          child: SizedBox(
-            height: size + 8,
-            width: size + 8,
-            child: IconButton(
-              icon: Icon(Icons.public, size: size),
-              padding: .zero,
-              onPressed: () {
-                forumUrl.openAsUriInBrowser();
-              },
-            ),
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox.shrink();
-    }
-  }
-}
-
-class DiscordIcon extends StatelessWidget {
-  final ScrapedMod mod;
-  final double iconOpacity;
-  final double size;
-
-  const DiscordIcon({
-    super.key,
-    required this.mod,
-    required this.iconOpacity,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final discordUrl = mod.urls?[ModUrlType.Discord];
-
-    if (discordUrl != null && discordUrl.isNotEmpty) {
-      return MovingTooltipWidget.text(
-        message: 'Open in Discord.\nRight-click to copy Discord link.',
-        child: Opacity(
-          opacity: iconOpacity,
-          child: GestureDetector(
-            onSecondaryTap: () {
-              // Copy to clipboard
-              Clipboard.setData(ClipboardData(text: discordUrl));
-              showSnackBar(
-                context: context,
-                type: SnackBarType.info,
-                content: const Text('Discord URL copied to clipboard'),
-              );
-            },
-            child: SizedBox(
-              height: size + 8,
-              width: size + 8,
-              child: IconButton(
-                padding: .zero,
-                onPressed: () {
-                  discordUrl
-                      .toString()
-                      .replaceAll("https://", "discord://")
-                      .replaceAll("http://", "discord://")
-                      .openAsUriInBrowser();
-                },
-                icon: Icon(Icons.discord, size: size),
-              ),
-            ),
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox.shrink();
-    }
-  }
-}
-
-class NexusModsIcon extends StatelessWidget {
-  final ScrapedMod mod;
-  final double iconOpacity;
-  final double size;
-
-  const NexusModsIcon({
-    super.key,
-    required this.mod,
-    required this.iconOpacity,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final nexusModsUrl = mod.urls?[ModUrlType.NexusMods];
-
-    if (nexusModsUrl != null && nexusModsUrl.isNotEmpty) {
-      return MovingTooltipWidget.text(
-        message: 'Open in NexusMods.\n$nexusModsUrl',
-        child: Opacity(
-          opacity: iconOpacity,
-          child: SizedBox(
-            height: size + 8,
-            width: size + 8,
-            child: IconButton(
-              icon: Icon(Icons.extension, size: size),
-              padding: .zero,
-              onPressed: () {
-                nexusModsUrl.openAsUriInBrowser();
-              },
-            ),
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox.shrink();
-    }
-  }
-}
-
 enum _CatalogDownloadState {
   updateDirectDownload,
   updateWebsite,
@@ -908,7 +842,7 @@ enum _CatalogDownloadState {
   noDownloadLink,
 }
 
-class CatalogDownloadButton extends ConsumerWidget {
+class CatalogDownloadButton extends ConsumerStatefulWidget {
   final ScrapedMod mod;
   final Mod? installedMod;
   final VersionCheckComparison? versionCheckComparison;
@@ -923,6 +857,48 @@ class CatalogDownloadButton extends ConsumerWidget {
     required this.linkLoader,
     this.llmMainMod,
   });
+
+  @override
+  ConsumerState<CatalogDownloadButton> createState() =>
+      _CatalogDownloadButtonState();
+}
+
+class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
+  /// True between clicking a one-click download action and a real signal
+  /// taking over (deep-link dialog ready, or the download appearing in the
+  /// download manager). Drives the button spinner during that gap.
+  bool _clickBusy = false;
+  Timer? _busyFallback;
+
+  ScrapedMod get mod => widget.mod;
+
+  Mod? get installedMod => widget.installedMod;
+
+  VersionCheckComparison? get versionCheckComparison =>
+      widget.versionCheckComparison;
+
+  void Function(String) get linkLoader => widget.linkLoader;
+
+  ForumLlmMod? get llmMainMod => widget.llmMainMod;
+
+  void _markBusy() {
+    _busyFallback?.cancel();
+    // Safety net: never spin forever if no completion signal arrives (e.g.
+    // a de-duplicated double-click, or a download that fails to register).
+    _busyFallback = Timer(const Duration(seconds: 10), _clearBusy);
+    setState(() => _clickBusy = true);
+  }
+
+  void _clearBusy() {
+    _busyFallback?.cancel();
+    if (_clickBusy && mounted) setState(() => _clickBusy = false);
+  }
+
+  @override
+  void dispose() {
+    _busyFallback?.cancel();
+    super.dispose();
+  }
 
   _CatalogDownloadState _resolveState({
     required bool hasOneClick,
@@ -948,8 +924,25 @@ class CatalogDownloadButton extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // The click-busy spinner hands off to real signals: the deep-link
+    // confirmation dialog becoming ready, or the download manager picking up
+    // a download for this mod (whose own in-progress state then drives the
+    // spinner until install finishes).
+    ref.listen(deepLinkProcessing, (previous, next) {
+      if (previous == true && next == false) _clearBusy();
+    });
+    ref.listen(downloadManager, (previous, next) {
+      final downloads = next.valueOrNull ?? const <Download>[];
+      if (downloads.any((d) => d.displayName == mod.name)) _clearBusy();
+    });
+    final activeDownload = ref
+        .watch(downloadManager)
+        .valueOrNull
+        ?.firstWhereOrNull((d) => d.displayName == mod.name && d.isInProgress);
+    final isBusy = _clickBusy || activeDownload != null;
 
     final candidates = resolveDownloadCandidates(mod, llmMainMod);
     final primary = primaryCandidate(candidates);
@@ -966,27 +959,37 @@ class CatalogDownloadButton extends ConsumerWidget {
     final IconData icon;
     final Color backgroundColor;
     final Color foregroundColor;
+    final String label;
     final String tooltip;
     final VoidCallback? onPressed;
     final hasUpdate =
         state == _CatalogDownloadState.updateDirectDownload ||
         state == _CatalogDownloadState.updateWebsite;
+    // Installed states render as an inert status marker, not a button.
+    final isInstalledStatus =
+        state == _CatalogDownloadState.installedEnabled ||
+        state == _CatalogDownloadState.installedDisabled;
 
     // Download states run the primary candidate (or open the chooser when
     // several candidates tie). A trios primary installs in-app with deps.
     final isTrios = primary?.kind == DownloadCandidateKind.triosDeepLink;
     final showChooser = tieSet.length > 1;
-    void runPrimary() => executeDownloadCandidate(
-      context,
-      ref,
-      primary!,
-      modName: mod.name,
-      linkLoader: linkLoader,
-    );
+    void runPrimary() {
+      _markBusy();
+      executeDownloadCandidate(
+        context,
+        ref,
+        primary!,
+        modName: mod.name,
+        linkLoader: linkLoader,
+        hasOwnBusyIndicator: true,
+      );
+    }
 
     switch (state) {
       case _CatalogDownloadState.updateDirectDownload:
-        icon = Icons.download;
+        icon = Icons.arrow_upward;
+        label = 'Update';
         backgroundColor = theme.colorScheme.primary;
         foregroundColor = theme.colorScheme.onPrimary;
         tooltip = isTrios
@@ -994,25 +997,29 @@ class CatalogDownloadButton extends ConsumerWidget {
             : 'Update available';
         onPressed = runPrimary;
       case _CatalogDownloadState.updateWebsite:
-        icon = Icons.open_in_browser;
+        icon = Icons.arrow_upward;
+        label = 'Update';
         backgroundColor = theme.colorScheme.primary;
         foregroundColor = theme.colorScheme.onPrimary;
         tooltip = 'Update available.\nOpen download page';
         onPressed = () => linkLoader(browserLink!.url);
       case _CatalogDownloadState.installedEnabled:
         icon = Icons.check;
+        label = 'Installed';
         backgroundColor = theme.statusColors.success.withValues(alpha: 0.85);
         foregroundColor = theme.statusColors.onSuccess;
-        tooltip = 'Installed and enabled.\nClick to disable';
-        onPressed = () => _toggleMod(ref, enabled: false);
+        tooltip = 'Installed and enabled.\nRight-click the card to disable.';
+        onPressed = null;
       case _CatalogDownloadState.installedDisabled:
         icon = Icons.check;
+        label = 'Installed';
         backgroundColor = theme.statusColors.neutral.withValues(alpha: 0.7);
         foregroundColor = theme.statusColors.onNeutral;
-        tooltip = 'Installed but disabled.\nClick to enable';
-        onPressed = () => _toggleMod(ref, enabled: true);
+        tooltip = 'Installed but disabled.\nRight-click the card to enable.';
+        onPressed = null;
       case _CatalogDownloadState.notInstalledDirectDownload:
         icon = isTrios ? Icons.rocket_launch : Icons.download;
+        label = 'Install';
         backgroundColor = theme.statusColors.info;
         foregroundColor = theme.statusColors.onInfo;
         tooltip = isTrios
@@ -1021,12 +1028,14 @@ class CatalogDownloadButton extends ConsumerWidget {
         onPressed = runPrimary;
       case _CatalogDownloadState.notInstalledWebsite:
         icon = Icons.open_in_browser;
+        label = 'Get';
         backgroundColor = theme.statusColors.info;
         foregroundColor = theme.statusColors.onInfo;
-        tooltip = 'Download from website';
+        tooltip = 'Open the download page';
         onPressed = () => linkLoader(browserLink!.url);
       case _CatalogDownloadState.noDownloadLink:
         icon = Icons.download;
+        label = 'Install';
         backgroundColor = theme.colorScheme.surfaceContainer.withValues(
           alpha: 0.5,
         );
@@ -1040,17 +1049,67 @@ class CatalogDownloadButton extends ConsumerWidget {
         state == _CatalogDownloadState.notInstalledDirectDownload;
     final useChooser = isDownloadAction && showChooser;
 
-    Widget buildFab(VoidCallback? onTap) => ConditionalWrap(
-      condition: hasUpdate,
-      wrapper: (child) => Blur(child: child),
-      child: SizedBox(
-        width: 32,
-        height: 32,
-        child: FloatingActionButton.small(
-          heroTag: null,
-          onPressed: onTap,
+    // Installed: an inert status marker. Enable/disable lives in the card's
+    // right-click menu, so the button never toggles the mod by surprise.
+    if (isInstalledStatus) {
+      return MovingTooltipWidget.text(
+        message: tooltip,
+        child: Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: foregroundColor),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: foregroundColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget buildButton(VoidCallback? onTap) => SizedBox(
+      height: 30,
+      child: FilledButton.icon(
+        // While busy, ignore clicks; the disabled colors match the enabled
+        // ones so the button doesn't gray out under the spinner.
+        onPressed: isBusy ? null : onTap,
+        style: FilledButton.styleFrom(
           backgroundColor: backgroundColor,
-          child: Icon(icon, size: 18, color: foregroundColor),
+          foregroundColor: foregroundColor,
+          disabledBackgroundColor: backgroundColor,
+          disabledForegroundColor: foregroundColor,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          visualDensity: VisualDensity.compact,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        icon: isBusy
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: foregroundColor,
+                ),
+              )
+            : Icon(icon, size: 14),
+        label: Padding(
+          padding: const .only(right: 4),
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          ),
         ),
       ),
     );
@@ -1059,15 +1118,14 @@ class CatalogDownloadButton extends ConsumerWidget {
     if (useChooser) {
       buttonChild = MenuAnchor(
         menuChildren: [
-          for (final candidate in tieSet)
-            _downloadMenuItem(context, ref, candidate),
+          for (final candidate in tieSet) _downloadMenuItem(context, candidate),
         ],
-        builder: (context, controller, _) => buildFab(
+        builder: (context, controller, _) => buildButton(
           () => controller.isOpen ? controller.close() : controller.open(),
         ),
       );
     } else {
-      buttonChild = buildFab(onPressed);
+      buttonChild = buildButton(onPressed);
     }
 
     if (hasUpdate && installedMod != null && versionCheckComparison != null) {
@@ -1095,22 +1153,22 @@ class CatalogDownloadButton extends ConsumerWidget {
   }
 
   /// One row in the tie-break chooser opened from the button.
-  Widget _downloadMenuItem(
-    BuildContext context,
-    WidgetRef ref,
-    DownloadCandidate candidate,
-  ) {
+  Widget _downloadMenuItem(BuildContext context, DownloadCandidate candidate) {
     final theme = Theme.of(context);
     final subtitle = downloadCandidateSubtitle(candidate);
     return MenuItemButton(
       leadingIcon: Icon(downloadCandidateIcon(candidate), size: 16),
-      onPressed: () => executeDownloadCandidate(
-        context,
-        ref,
-        candidate,
-        modName: mod.name,
-        linkLoader: linkLoader,
-      ),
+      onPressed: () {
+        _markBusy();
+        executeDownloadCandidate(
+          context,
+          ref,
+          candidate,
+          modName: mod.name,
+          linkLoader: linkLoader,
+          hasOwnBusyIndicator: true,
+        );
+      },
       child: MovingTooltipWidget.text(
         message: candidate.url,
         child: Padding(
@@ -1133,25 +1191,13 @@ class CatalogDownloadButton extends ConsumerWidget {
       ),
     );
   }
-
-  void _toggleMod(WidgetRef ref, {required bool enabled}) {
-    final mod = installedMod;
-    if (mod == null) return;
-
-    if (enabled) {
-      final variant = mod.findHighestVersion;
-      if (variant == null) return;
-      ref.read(modManager.notifier).changeActiveModVariant(mod, variant);
-    } else {
-      ref.read(modManager.notifier).changeActiveModVariant(mod, null);
-    }
-  }
 }
 
 class _ForumStats extends StatelessWidget {
   final ForumModIndex forumModIndex;
   static final _decimalFormat = NumberFormat.decimalPattern();
   static final _compactFormat = NumberFormat.compact();
+  static final _dateFormat = DateFormat.yMMMMd();
 
   const _ForumStats({required this.forumModIndex});
 
@@ -1164,34 +1210,81 @@ class _ForumStats extends StatelessWidget {
       fontSize: 11,
     );
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 8,
-      children: [
-        MovingTooltipWidget.text(
-          message: '${_decimalFormat.format(forumModIndex.views)} forum views',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 4,
-            children: [
-              Icon(Icons.visibility, size: 12, color: style?.color),
-              Text(_compactFormat.format(forumModIndex.views), style: style),
-            ],
-          ),
-        ),
-        MovingTooltipWidget.text(
-          message:
-              '${_decimalFormat.format(forumModIndex.replies)} forum replies',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 4,
-            children: [
-              Icon(Icons.forum, size: 12, color: style?.color),
-              Text(_compactFormat.format(forumModIndex.replies), style: style),
-            ],
-          ),
-        ),
-      ],
+    final date = forumModIndex.lastPostDate;
+    // The age chip = last post in the thread, NOT necessarily a mod update.
+    // A mod can update without the post changing, so the tooltip says "last
+    // forum post". Dim when very old so abandoned threads read that way.
+    final isStale =
+        date != null && DateTime.now().difference(date).inDays > 365;
+    final activeStyle = style?.copyWith(
+      color: style.color?.withValues(alpha: isStale ? 0.35 : 0.6),
     );
+    final modCount = forumModIndex.llm?.mods.length ?? 0;
+
+    Widget segment({
+      required IconData icon,
+      required String text,
+      required String tooltip,
+      TextStyle? segStyle,
+    }) => MovingTooltipWidget.text(
+      message: tooltip,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 4,
+        children: [
+          Icon(icon, size: 12, color: (segStyle ?? style)?.color),
+          Text(text, style: segStyle ?? style),
+        ],
+      ),
+    );
+
+    // Everything here is secondary info, so it stays on one line and scales
+    // down slightly on narrow cards instead of wrapping or overflowing.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 8,
+        children: [
+          segment(
+            icon: Icons.visibility,
+            text: _compactFormat.format(forumModIndex.views),
+            tooltip:
+                '${_decimalFormat.format(forumModIndex.views)} forum views',
+          ),
+          segment(
+            icon: Icons.forum,
+            text: _compactFormat.format(forumModIndex.replies),
+            tooltip:
+                '${_decimalFormat.format(forumModIndex.replies)} forum replies',
+          ),
+          if (date != null)
+            segment(
+              icon: Icons.schedule,
+              text: _compactAge(date),
+              segStyle: activeStyle,
+              tooltip: 'Last forum post: ${_dateFormat.format(date)}',
+            ),
+          if (modCount > 1)
+            segment(
+              icon: Icons.layers,
+              text: '+${modCount - 1}',
+              tooltip:
+                  'This forum thread has $modCount mods.\nClick the card to see them all.',
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Very short age for the card footer: "3h", "6d", "2mo", "3y".
+  static String _compactAge(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inHours < 1) return '${diff.inMinutes}m';
+    if (diff.inDays < 1) return '${diff.inHours}h';
+    if (diff.inDays < 30) return '${diff.inDays}d';
+    if (diff.inDays < 365) return '${(diff.inDays / 30).round()}mo';
+    return '${(diff.inDays / 365).round()}y';
   }
 }

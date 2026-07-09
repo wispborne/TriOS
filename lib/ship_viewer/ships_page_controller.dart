@@ -101,11 +101,11 @@ const _spoilerTags = ["threat", "dweller"];
 /// Whether [ship] should be shown at the given spoiler [level].
 /// Shared by the ships page and the faction profile dialog.
 bool shipMatchesSpoilerLevel(Ship ship, SpoilerLevel level) {
-  final hints = ship.hints.orEmpty().map((h) => h.toLowerCase());
+  if (level == SpoilerLevel.showAllSpoilers) return true;
   return tagsMatchShipSpoilerLevel(
     ship.tags.orEmpty(),
     level,
-    hidden: hints.contains('hide_in_codex'),
+    hidden: ship.hints.orEmpty().any((h) => h.toLowerCase() == 'hide_in_codex'),
   );
 }
 
@@ -113,19 +113,24 @@ bool shipMatchesSpoilerLevel(Ship ship, SpoilerLevel level) {
 /// [Ship] (a wing with no resolved ship, a ship system) can apply the same
 /// spoiler rules to their own tags column. [hidden] forces hiding regardless
 /// of level (the ship version passes `hide_in_codex`).
+///
+/// Single pass over the tags: the codex runs this for every entry on every
+/// data refresh while mods load, so it should not allocate iterable chains.
 bool tagsMatchShipSpoilerLevel(
   Iterable<String> tags,
   SpoilerLevel level, {
   bool hidden = false,
 }) {
   if (level == SpoilerLevel.showAllSpoilers) return true;
-  final lower = tags.map((t) => t.toLowerCase());
-  final isSlightSpoiler = lower.any(_slightSpoilerTags.contains);
-  final isSpoiler = lower.any(_spoilerTags.contains);
-  if (level == SpoilerLevel.showSlightSpoilers) {
-    return !hidden && !isSpoiler;
+  if (hidden) return false;
+  var isSlightSpoiler = false;
+  for (final tag in tags) {
+    final lower = tag.toLowerCase();
+    // A full spoiler hides the entry at both remaining levels.
+    if (_spoilerTags.contains(lower)) return false;
+    if (_slightSpoilerTags.contains(lower)) isSlightSpoiler = true;
   }
-  return !hidden && !isSlightSpoiler && !isSpoiler;
+  return level == SpoilerLevel.showSlightSpoilers || !isSlightSpoiler;
 }
 
 /// Controller for the ships page using Notifier (synchronous)
@@ -207,7 +212,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     // Watch ship data, ship systems, weapons, and descriptions.
     ref.watch(descriptionsNotifierProvider);
     final shipsAsync = ref.watch(shipListNotifierProvider);
-    final shipSystemsAsync = ref.watch(shipSystemsStreamProvider);
+    final shipSystemsAsync = ref.watch(shipSystemListNotifierProvider);
     final mods = ref.watch(AppState.mods);
     final isLoadingShips = ref.watch(isLoadingShipsList);
 
@@ -515,7 +520,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       allShips,
       stateOrNull?.shipSearchIndices ?? {},
           (s) => s.id,
-          (s) => s.toMap(),
+          (s) => s.toSearchMap(),
     );
   }
 

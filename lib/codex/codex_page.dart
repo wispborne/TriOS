@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
 
@@ -22,6 +23,7 @@ import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/filter_engine/filter_group.dart';
@@ -34,6 +36,14 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
+
+/// Marker object for a locked (spoiler-hidden) placeholder row in the category
+/// list. Every locked row is identical, so a single const instance is reused.
+class _CodexLockedRow {
+  const _CodexLockedRow();
+}
+
+const _codexLockedRow = _CodexLockedRow();
 
 /// The unified Codex: a single searchable, cross-linked view over ships,
 /// weapons, hullmods, ship systems, fighters, and factions. Copies the in-game
@@ -88,11 +98,21 @@ class _CodexPageState extends ConsumerState<CodexPage>
   /// Ship-by-hull-id lookup for the fighters' tech facet and wing row images.
   Map<String, Ship> _shipsByHull = const {};
 
-  /// Lookup maps over the visible index, rebuilt each frame. Shared by the row
-  /// hover tooltips (list, search, related) so they show the same nested cards.
+  /// Lookup maps over the visible index, rebuilt when the visible index
+  /// changes. Shared by the row hover tooltips (list, search, related) so they
+  /// show the same nested cards.
   Map<String, ShipSystem> _shipSystemsMap = const {};
   Map<String, Weapon> _weaponsMap = const {};
   Map<String, Hullmod> _hullmodsMap = const {};
+
+  /// The visible-index list the lookup maps above were built from, so an
+  /// unrelated rebuild (hover, selection) skips rebuilding them.
+  List<CodexEntry>? _lookupMapsSource;
+
+  /// The listed-index list each category's [_facetItems] was filtered and
+  /// sorted from, for the same skip-if-unchanged check.
+  final Map<CodexEntryType, List<CodexEntry>> _facetItemsSource = {};
+
   Directory? _gameCoreDir;
 
   /// The selected grouping id per category. Unset defaults to grouping by mod.
@@ -190,43 +210,54 @@ class _CodexPageState extends ConsumerState<CodexPage>
     final state = ref.watch(codexPageControllerProvider);
     _syncSearchField(state.searchQuery);
 
-    // Ship lookup for wing rows and the fighters' tech facet.
+    // Ship lookup for wing rows and the fighters' tech facet, plus lookup maps
+    // for the row hover tooltips (same nested cards the detail panel and
+    // related panel use). Only rebuilt when the visible index itself changes;
+    // this build also runs for hover/selection changes.
     final visible = ref.watch(codexVisibleIndexProvider);
-    _shipsByHull = {
-      for (final e in visible)
-        if (e is ShipCodexEntry) e.ship.id: e.ship,
-    };
-    // Lookup maps for the row hover tooltips (same nested cards the detail
-    // panel and related panel use).
-    _shipSystemsMap = {
-      for (final e in visible)
-        if (e is ShipSystemCodexEntry) e.system.id: e.system,
-    };
-    _weaponsMap = {
-      for (final e in visible)
-        if (e is WeaponCodexEntry) e.weapon.id: e.weapon,
-    };
-    _hullmodsMap = {
-      for (final e in visible)
-        if (e is HullmodCodexEntry) e.hullmod.id: e.hullmod,
-    };
+    if (!identical(visible, _lookupMapsSource)) {
+      _lookupMapsSource = visible;
+      _shipsByHull = {
+        for (final e in visible)
+          if (e is ShipCodexEntry) e.ship.id: e.ship,
+      };
+      _shipSystemsMap = {
+        for (final e in visible)
+          if (e is ShipSystemCodexEntry) e.system.id: e.system,
+      };
+      _weaponsMap = {
+        for (final e in visible)
+          if (e is WeaponCodexEntry) e.weapon.id: e.weapon,
+      };
+      _hullmodsMap = {
+        for (final e in visible)
+          if (e is HullmodCodexEntry) e.hullmod.id: e.hullmod,
+      };
+    }
     _gameCoreDir = ref.watch(AppState.gameCoreFolder).valueOrNull;
 
     // Count basis for the active category's facets (pre-chip-filter).
     final category = state.category;
     if (category != null && !state.isSearching) {
       final listed = ref.watch(codexListedIndexProvider);
-      final items = listed.where((e) => e.type == category).toList()
-        ..sort(
-          (a, b) =>
-              a.sortName.toLowerCase().compareTo(b.sortName.toLowerCase()),
+      if (!identical(_facetItemsSource[category], listed)) {
+        _facetItemsSource[category] = listed;
+        final items = listed.where((e) => e.type == category).toList();
+        // Cache the lowercase sort key per entry: lowercasing inside the
+        // comparator ran it twice per comparison and showed up in profiles.
+        final sortKeys = HashMap<CodexEntry, String>.identity();
+        items.sort(
+          (a, b) => (sortKeys[a] ??= a.sortName.toLowerCase()).compareTo(
+            sortKeys[b] ??= b.sortName.toLowerCase(),
+          ),
         );
-      _facetItems[category] = items;
+        _facetItems[category] = items;
+      }
       // Load locked facet state and merge staged selections whose values exist
       // in the current data — before the list below applies the chip filters.
       final ctrl = _facetControllers[category]!;
       ctrl.loadPersisted(ref.read(filterGroupPersistenceProvider));
-      ctrl.applyPendingChipMerge(items);
+      ctrl.applyPendingChipMerge(_facetItems[category] ?? const []);
     }
     final showFacets =
         category != null &&
@@ -443,12 +474,23 @@ class _CodexPageState extends ConsumerState<CodexPage>
 
   Widget _buildRootCategories(BuildContext context) {
     final theme = Theme.of(context);
+    // How many entries each category would list right now (after the standing
+    // filters). The number is hidden while a category is still loading.
+    final listed = ref.watch(codexListedIndexProvider);
+    final counts = <CodexEntryType, int>{};
+    for (final entry in listed) {
+      counts[entry.type] = (counts[entry.type] ?? 0) + 1;
+    }
     return ListView(
       children: [
         for (final type in codexCategoryOrder)
           ListTile(
             leading: codexCategoryIcon(type, size: 24),
-            title: Text(codexCategoryLabel(type)),
+            title: Text(
+              ref.watch(codexCategoryLoadingProvider(type))
+                  ? codexCategoryLabel(type)
+                  : '${codexCategoryLabel(type)} (${counts[type] ?? 0})',
+            ),
             titleTextStyle: theme.textTheme.labelLarge,
             trailing: ref.watch(codexCategoryLoadingProvider(type))
                 ? MovingTooltipWidget.text(
@@ -492,6 +534,18 @@ class _CodexPageState extends ConsumerState<CodexPage>
     // Entries, with a section header record before each group when grouped.
     final rows = _listRows(entries, grouping, collapsed);
 
+    // Spoiler-locked entries sit at the very bottom as anonymized placeholders,
+    // like the in-game Codex. They ignore grouping and facet chips — revealing
+    // their group or attributes would defeat the spoiler filter.
+    final lockedCount = ref
+        .watch(codexSpoilerLockedIndexProvider)
+        .where((e) => e.type == category)
+        .length;
+    final allRows = <Object>[
+      ...rows,
+      for (var i = 0; i < lockedCount; i++) _codexLockedRow,
+    ];
+
     // Landing here from a search result / related click / random: scroll the
     // target row into view. A virtualized list won't build (so can't self-scroll
     // to) an off-screen row, so jump to its estimated offset first.
@@ -509,9 +563,12 @@ class _CodexPageState extends ConsumerState<CodexPage>
         Expanded(
           child: ListView.builder(
             controller: _listScrollController,
-            itemCount: rows.length,
+            itemCount: allRows.length,
             itemBuilder: (context, i) {
-              final row = rows[i];
+              final row = allRows[i];
+              if (identical(row, _codexLockedRow)) {
+                return _buildLockedRow(context);
+              }
               if (row is ({String key, String label, int count})) {
                 return _buildGroupHeaderRow(
                   context,
@@ -754,6 +811,50 @@ class _CodexPageState extends ConsumerState<CodexPage>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// A placeholder row for an entry the spoiler filter is hiding. Reveals
+  /// nothing about it — just that something is there, locked. Not tappable.
+  Widget _buildLockedRow(BuildContext context) {
+    final theme = Theme.of(context);
+    final dim = theme.colorScheme.onSurface.withValues(alpha: 0.45);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: Row(
+        spacing: 8,
+        children: [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: Center(
+              child: Icon(Icons.lock_outline, size: 22, color: dim),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Locked entry',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(color: dim),
+                ),
+                Text(
+                  '(hidden by spoiler filter)',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1054,6 +1155,21 @@ class _CodexPageState extends ConsumerState<CodexPage>
                     ),
                 ],
                 onChanged: notifier.setModId,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: CheckboxWithLabel(
+                label: 'Only enabled mods',
+                value: ref.watch(
+                  appSettings.select((s) => s.codexEnabledModsOnly),
+                ),
+                labelStyle: theme.textTheme.labelMedium,
+                onChanged: (v) => ref
+                    .read(appSettings.notifier)
+                    .update(
+                      (s) => s.copyWith(codexEnabledModsOnly: v ?? false),
+                    ),
               ),
             ),
             Align(

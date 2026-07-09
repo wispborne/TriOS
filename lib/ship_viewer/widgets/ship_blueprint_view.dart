@@ -13,6 +13,12 @@ import 'package:trios/ship_viewer/models/ship_engine_style_spec.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
+import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
+import 'package:trios/hullmod_viewer/hullmods_manager.dart';
+import 'package:trios/hullmod_viewer/models/hullmod.dart';
+import 'package:trios/ship_systems_manager/ship_system.dart';
+import 'package:trios/ship_systems_manager/ship_systems_manager.dart';
+import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/ship_viewer/utils/polygon_utils.dart';
 import 'package:trios/ship_viewer/utils/sprite_utils.dart';
@@ -188,6 +194,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// Track the last modules list so we can detect changes from Riverpod.
   List<ResolvedModule> _lastModules = const [];
 
+  /// Lookup maps for the module hover tooltip (ship codex card). Populated
+  /// each build only when [ShipBlueprintView.showSlotTooltips] is set.
+  Map<String, ShipSystem> _shipSystemsMap = const {};
+  Map<String, Weapon> _weaponsMap = const {};
+  Map<String, Hullmod> _hullmodsMap = const {};
+
   static const _slotColors = <String, Color>{
     'ENERGY': Colors.cyan,
     'MISSILE': Colors.lime,
@@ -266,7 +278,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
     final ship = widget.ship;
     final center = ship.center;
-    final imgW = _imageSize!.width;
+    // Coordinate space is the declared .ship width, not the PNG's pixel width
+    // (see the note in build() where imgW/imgH are derived).
+    final imgW = ship.width ?? _imageSize!.width;
     final slots = ship.weaponSlots ?? [];
 
     final maxArcRadius = slots.isEmpty
@@ -321,7 +335,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
   /// Compute module geometry from the given [modules] list.
   _ModuleGeometry? _computeModuleGeometry(List<ResolvedModule> modules) {
-    final imgH = _imageSize?.height;
+    // Parent coordinate space is the declared .ship height, not the PNG's.
+    final imgH = widget.ship.height ?? _imageSize?.height;
     final parentCenter = widget.ship.center;
     if (imgH == null || parentCenter == null || parentCenter.length < 2) {
       return null;
@@ -337,9 +352,17 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
     for (var i = 0; i < modules.length; i++) {
       final mod = modules[i];
-      final modSize = _moduleSizes[mod.moduleShip.id];
-      if (modSize == null) continue;
+      final natSize = _moduleSizes[mod.moduleShip.id];
+      if (natSize == null) continue;
       if (mod.moduleShip.spriteFile == null) continue;
+      // Use the module's declared .ship width/height as its coordinate space,
+      // not the PNG's pixel size. The game stretches the sprite to the declared
+      // size; a few module sprites (e.g. module_bastion_pd1) have a PNG that
+      // doesn't match it, so using PNG pixels would misplace the art and slots.
+      final modSize = Size(
+        mod.moduleShip.width ?? natSize.width,
+        mod.moduleShip.height ?? natSize.height,
+      );
 
       final slot = mod.parentSlot;
       final slotX = pcx - slot.locations[1];
@@ -416,6 +439,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
           anchorX: anchorX,
           anchorY: anchorY,
           spriteFile: mod.moduleShip.spriteFile!,
+          moduleShip: mod.moduleShip,
         ),
       );
 
@@ -508,6 +532,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
         File(layout.spriteFile),
         width: layout.width,
         height: layout.height,
+        // Stretch to the declared module size, matching the game.
+        fit: BoxFit.fill,
         errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
       ),
     );
@@ -529,6 +555,39 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       width: layout.width,
       height: layout.height,
       child: sprite,
+    );
+  }
+
+  /// A transparent surface over the currently-hovered module that shows the
+  /// ship codex tooltip with that module's stats. Returns null when no module
+  /// is hovered. Both its placement and its visibility follow
+  /// [_hoveredModuleIndex] — the same signal that highlights the sprite — so the
+  /// tooltip and the highlight always target the same module.
+  Widget? _buildHoveredModuleTooltip(double dx, double dy) {
+    if (!widget.showSlotTooltips || !_showModules) return null;
+    final index = _hoveredModuleIndex;
+    final geom = _cachedModuleGeometry;
+    if (index == null || geom == null || index >= geom.rects.length) {
+      return null;
+    }
+
+    final rect = geom.rects[index];
+    final moduleShip = geom.layouts[index].moduleShip;
+    return Positioned(
+      // Key by module so switching modules rebuilds the tooltip content instead
+      // of reusing the previous module's card.
+      key: ValueKey('module-tooltip-${moduleShip.id}'),
+      left: rect.left + dx,
+      top: rect.top + dy,
+      width: rect.width,
+      height: rect.height,
+      child: ShipCodexCard.tooltip(
+        ship: moduleShip,
+        shipSystemsMap: _shipSystemsMap,
+        weaponsMap: _weaponsMap,
+        hullmodsMap: _hullmodsMap,
+        child: const SizedBox.expand(),
+      ),
     );
   }
 
@@ -565,7 +624,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               width: imgW,
               height: imgH,
               cacheWidth: widget.cacheWidth,
-              fit: widget.cacheWidth != null ? BoxFit.fill : BoxFit.scaleDown,
+              // Stretch to the declared ship size, matching the game.
+              fit: BoxFit.fill,
               errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
             ),
           ),
@@ -597,18 +657,23 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       top: originDy,
       width: imgW,
       height: imgH,
-      child: CustomPaint(
-        size: Size(imgW, imgH),
-        painter: _EngineGlowPainter(
-          slots: ship.engineSlotsParsed,
-          styles: _engineStyles,
-          hullStyle: ship.style,
-          flame: sprites.flame,
-          glow: sprites.glow,
-          imgH: imgH,
-          center: center,
-          opacity: _engineGlowController,
-          defaultColor: _defaultEngineColor,
+      // IgnorePointer: a CustomPaint with a painter absorbs hit tests by
+      // default, which would block hovers meant for the module tooltip
+      // surface below it in the interactive stack.
+      child: IgnorePointer(
+        child: CustomPaint(
+          size: Size(imgW, imgH),
+          painter: _EngineGlowPainter(
+            slots: ship.engineSlotsParsed,
+            styles: _engineStyles,
+            hullStyle: ship.style,
+            flame: sprites.flame,
+            glow: sprites.glow,
+            imgH: imgH,
+            center: center,
+            opacity: _engineGlowController,
+            defaultColor: _defaultEngineColor,
+          ),
         ),
       ),
     );
@@ -629,6 +694,29 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     final center = ship.center;
     final modules = ref.watch(resolvedModulesProvider(ship.id));
     final theme = context.theme;
+
+    // Lookup maps for the module hover tooltip. Only needed in the interactive
+    // view; thumbnails set showSlotTooltips false and skip these watches.
+    if (widget.showSlotTooltips) {
+      _shipSystemsMap = {
+        for (final s
+            in ref.watch(shipSystemListNotifierProvider).valueOrNull ??
+                const <ShipSystem>[])
+          s.id: s,
+      };
+      _weaponsMap = {
+        for (final w
+            in ref.watch(weaponListNotifierProvider).valueOrNull ??
+                const <Weapon>[])
+          w.id: w,
+      };
+      _hullmodsMap = {
+        for (final h
+            in ref.watch(hullmodListNotifierProvider).valueOrNull ??
+                const <Hullmod>[])
+          h.id: h,
+      };
+    }
 
     // Engine glow inputs (cached providers; cheap after first load).
     final hasEngines = ship.engineSlotsParsed.isNotEmpty;
@@ -667,8 +755,14 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       return const SizedBox.shrink();
     }
 
-    final imgW = _imageSize!.width;
-    final imgH = _imageSize!.height;
+    // Ship-space size: the .ship's declared width/height, which is the unit
+    // space that center, bounds, weapon slots, and engine slots are measured
+    // in. Usually this equals the PNG's pixel size, but not always (e.g.
+    // station1 declares 400x400 while its PNG is 440x440). The game forces the
+    // sprite to the declared size, so we draw it stretched to fill (BoxFit.fill
+    // below) and use these dimensions as the coordinate space everywhere.
+    final imgW = ship.width ?? _imageSize!.width;
+    final imgH = ship.height ?? _imageSize!.height;
     final hasCenter = center != null && center.length >= 2;
 
     // --- Fast path for non-interactive (thumbnail) mode ---
@@ -808,14 +902,17 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                       width: imgW,
                       height: imgH,
                       cacheWidth: widget.cacheWidth,
-                      fit: widget.cacheWidth != null
-                          ? BoxFit.fill
-                          : BoxFit.scaleDown,
+                      // Stretch to the declared ship size, matching the game.
+                      fit: BoxFit.fill,
                       errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
                     ),
                   ),
                   if (_showModules)
                     ..._buildModuleSpritesOffset(originDx, originDy),
+                  // Hover tooltip for the module under the cursor. Driven by the
+                  // same detection as the highlight above, so the two always
+                  // agree on which module is targeted.
+                  ?_buildHoveredModuleTooltip(originDx, originDy),
                   ?_engineGlowPositioned(originDx, originDy, imgW, imgH),
                   if (_showBounds)
                     Positioned(
@@ -823,22 +920,25 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                       top: originDy,
                       width: imgW,
                       height: imgH,
-                      child: CustomPaint(
-                        size: Size(imgW, imgH),
-                        painter: _BoundsPainter(
-                          parentBoundsPolygon:
-                              ship.bounds != null &&
-                                  ship.bounds!.length >= 6 &&
-                                  hasCenter
-                              ? parseBoundsToPolygon(
-                                  ship.bounds!,
-                                  center[0],
-                                  imgH - center[1],
-                                )
-                              : null,
-                          moduleBoundsPolygons: _showModules
-                              ? (_cachedModuleGeometry?.polygons ?? const [])
-                              : const [],
+                      // IgnorePointer: see the engine glow overlay above.
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          size: Size(imgW, imgH),
+                          painter: _BoundsPainter(
+                            parentBoundsPolygon:
+                                ship.bounds != null &&
+                                    ship.bounds!.length >= 6 &&
+                                    hasCenter
+                                ? parseBoundsToPolygon(
+                                    ship.bounds!,
+                                    center[0],
+                                    imgH - center[1],
+                                  )
+                                : null,
+                            moduleBoundsPolygons: _showModules
+                                ? (_cachedModuleGeometry?.polygons ?? const [])
+                                : const [],
+                          ),
                         ),
                       ),
                     ),
@@ -854,22 +954,25 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                       top: originDy,
                       width: imgW,
                       height: imgH,
-                      child: CustomPaint(
-                        size: Size(imgW, imgH),
-                        painter: _WeaponSlotPainter(
-                          slots: effectiveSlots,
-                          moduleSlots: _showModules
-                              ? (_cachedModuleGeometry?.transformedSlots ??
-                                    const [])
-                              : const [],
-                          imgH: imgH,
-                          center: center!,
-                          hoveredIndex: _hoveredIndex,
-                          hoveredModuleSlotIndex: _hoveredModuleSlotIndex,
-                          colorForType: _colorForType,
-                          radiusForSize: _radiusForSize,
-                          showMounts: _showMounts,
-                          showArcs: _showArcs,
+                      // IgnorePointer: see the engine glow overlay above.
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          size: Size(imgW, imgH),
+                          painter: _WeaponSlotPainter(
+                            slots: effectiveSlots,
+                            moduleSlots: _showModules
+                                ? (_cachedModuleGeometry?.transformedSlots ??
+                                      const [])
+                                : const [],
+                            imgH: imgH,
+                            center: center!,
+                            hoveredIndex: _hoveredIndex,
+                            hoveredModuleSlotIndex: _hoveredModuleSlotIndex,
+                            colorForType: _colorForType,
+                            radiusForSize: _radiusForSize,
+                            showMounts: _showMounts,
+                            showArcs: _showArcs,
+                          ),
                         ),
                       ),
                     ),
@@ -1706,6 +1809,9 @@ class _ModuleSpriteLayout {
   final double anchorY;
   final String spriteFile;
 
+  /// The module ship this sprite represents, used for the hover tooltip.
+  final Ship moduleShip;
+
   const _ModuleSpriteLayout({
     required this.left,
     required this.top,
@@ -1716,6 +1822,7 @@ class _ModuleSpriteLayout {
     required this.anchorX,
     required this.anchorY,
     required this.spriteFile,
+    required this.moduleShip,
   });
 }
 

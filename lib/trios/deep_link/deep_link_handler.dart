@@ -133,6 +133,11 @@ class DeepLinkHandler extends Notifier<void> {
     }
   }
 
+  /// Public entry point for links raised from inside the app (e.g. a catalog
+  /// card's trios download). Feeds [rawUri] through the same queue, de-dupe,
+  /// and confirmation flow as a link arriving from the OS.
+  void handleUriString(String rawUri) => _onUri(rawUri);
+
   void _onUri(String rawUri) {
     final now = DateTime.now().millisecondsSinceEpoch;
 

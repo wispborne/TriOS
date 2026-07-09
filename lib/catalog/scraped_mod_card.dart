@@ -1,9 +1,14 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:trios/catalog/catalog_download_resolver.dart';
+import 'package:trios/catalog/models/ai_summary_mode.dart';
+import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/download_confirm.dart';
+import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
@@ -14,6 +19,7 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/blur.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
@@ -64,6 +70,10 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   Widget build(BuildContext context) {
     final mod = widget.mod;
     final urls = mod.urls;
+    final downloadCandidates = resolveDownloadCandidates(
+      mod,
+      widget.forumModIndex?.llm?.mainMod,
+    );
 
     final theme = Theme.of(context);
     return MouseRegion(
@@ -106,25 +116,46 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                       versionCheckComparison: widget.versionCheckComparison,
                     ),
                   ),
-                if (mod.urls?[ModUrlType.DirectDownload]?.isNotEmpty == true ||
-                    mod.getBestWebsiteUrl() != null)
+                if (downloadCandidates.isNotEmpty) ...[
+                  const MenuHeader(text: 'Downloads'),
+                  for (final candidate in downloadCandidates)
+                    MenuItem(
+                      label: candidate.sourceHost?.isNotEmpty == true
+                          ? '${candidate.label}  ·  ${candidate.sourceHost}'
+                          : candidate.label,
+                      leading: MovingTooltipWidget.text(
+                        message: candidate.url,
+                        child: Icon(downloadCandidateIcon(candidate), size: 16),
+                      ),
+                      onSelected: () => executeDownloadCandidate(
+                        context,
+                        ref,
+                        candidate,
+                        modName: mod.name,
+                        linkLoader: widget.linkLoader,
+                      ),
+                    ),
                   MenuItem(
-                    label: 'Copy Download URL',
-                    leading: const Icon(Icons.copy, size: 16),
+                    label: 'Copy download link',
+                    leading: MovingTooltipWidget.text(
+                      message: 'Copy the best download link to the clipboard',
+                      child: const Icon(Icons.copy, size: 16),
+                    ),
                     onSelected: () {
                       final url =
-                          mod.urls?[ModUrlType.DirectDownload] ??
-                          mod.getBestWebsiteUrl();
-                      if (url != null) {
-                        Clipboard.setData(ClipboardData(text: url));
-                        showSnackBar(
-                          context: context,
-                          type: SnackBarType.info,
-                          content: const Text('Download URL copied to clipboard'),
-                        );
-                      }
+                          (primaryCandidate(downloadCandidates) ??
+                                  downloadCandidates.first)
+                              .url;
+                      Clipboard.setData(ClipboardData(text: url));
+                      showSnackBar(
+                        context: context,
+                        type: SnackBarType.info,
+                        content: const Text('Download link copied to clipboard'),
+                      );
                     },
                   ),
+                  const MenuDivider(),
+                ],
                 MenuItem(
                   label: 'Debug Info',
                   leading: const Icon(Icons.bug_report, size: 16),
@@ -286,6 +317,8 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                                       versionCheckComparison:
                                           widget.versionCheckComparison,
                                       linkLoader: widget.linkLoader,
+                                      llmMainMod:
+                                          widget.forumModIndex?.llm?.mainMod,
                                     ),
                                   ),
                                 ],
@@ -345,22 +378,87 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     BuildContext context,
     ScrapedMod mod,
   ) {
-    final hasNoDescription = mod.summary == null && mod.description == null;
-    final description =
-        (mod.summary ?? mod.description ?? 'No description...yet!');
+    final authorText = mod.summary ?? mod.description;
+    final aiSummary = widget.forumModIndex?.llm?.mainMod?.extras?.summary;
+    final aiSummaryMode = ref.watch(
+      appSettings.select((s) => s.catalogAiSummaryMode),
+    );
+
+    final String? shownText = switch (aiSummaryMode) {
+      AiSummaryMode.always => aiSummary?.sentence ?? authorText,
+      AiSummaryMode.whenNoAuthorText => authorText ?? aiSummary?.sentence,
+      AiSummaryMode.never => authorText,
+    };
+    // The hover tooltip shows the AI paragraph only when the AI sentence is
+    // what's actually displayed; author text keeps its default overflow
+    // tooltip.
+    final bool showingAiSentence =
+        shownText != null && shownText == aiSummary?.sentence;
+
+    final hasNoDescription = shownText == null;
+    final description = shownText ?? 'No description...yet!';
+    final trimmedDescription = description
+        .split('\n')
+        .where((line) => line.isNotEmpty)
+        .take(2)
+        .join('\n');
+    final style = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurface.withAlpha(150),
+      fontStyle: hasNoDescription ? FontStyle.italic : null,
+    );
+
+    if (showingAiSentence) {
+      // A subtle inline icon marks the text as AI-written. It flows with the
+      // text so the 2-line ellipsis still applies.
+      return MovingTooltipWidget.framed(
+        tooltipWidget: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Text.rich(
+            TextSpan(
+              style: theme.textTheme.labelLarge,
+              children: [
+                TextSpan(text: aiSummary!.paragraph),
+                TextSpan(
+                  text: '\n\nSummary generated by AI. See About page for details.',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontStyle: FontStyle.italic,
+                    color: theme.colorScheme.onSurface.withAlpha(150),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        child: Text.rich(
+          TextSpan(
+            children: [
+              WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 3),
+                  child: Icon(
+                    Icons.auto_awesome,
+                    size: 12,
+                    color: theme.colorScheme.onSurface.withAlpha(120),
+                  ),
+                ),
+              ),
+              TextSpan(text: trimmedDescription),
+            ],
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: style,
+        ),
+      );
+    }
+
     return TextTriOS(
-      description
-          .split('\n')
-          .where((line) => line.isNotEmpty)
-          .take(2)
-          .join('\n'),
+      trimmedDescription,
       maxLines: 2,
       tooltipMaxWidth: 600,
       overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.labelSmall?.copyWith(
-        color: theme.colorScheme.onSurface.withAlpha(150),
-        fontStyle: hasNoDescription ? FontStyle.italic : null,
-      ),
+      style: style,
       tooltipTextStyle: theme.textTheme.labelLarge,
     );
     // return ConditionalWrap(
@@ -815,6 +913,7 @@ class CatalogDownloadButton extends ConsumerWidget {
   final Mod? installedMod;
   final VersionCheckComparison? versionCheckComparison;
   final void Function(String) linkLoader;
+  final ForumLlmMod? llmMainMod;
 
   const CatalogDownloadButton({
     super.key,
@@ -822,16 +921,17 @@ class CatalogDownloadButton extends ConsumerWidget {
     required this.installedMod,
     required this.versionCheckComparison,
     required this.linkLoader,
+    this.llmMainMod,
   });
 
-  _CatalogDownloadState _resolveState() {
-    final hasDirectDownload =
-        mod.urls?[ModUrlType.DirectDownload]?.isNotEmpty == true;
-    final hasWebsite = mod.getBestWebsiteUrl() != null;
+  _CatalogDownloadState _resolveState({
+    required bool hasOneClick,
+    required bool hasBrowserLink,
+  }) {
     final hasUpdate = versionCheckComparison?.hasUpdate == true;
 
     if (installedMod != null && hasUpdate) {
-      return hasDirectDownload
+      return hasOneClick
           ? _CatalogDownloadState.updateDirectDownload
           : _CatalogDownloadState.updateWebsite;
     }
@@ -840,17 +940,28 @@ class CatalogDownloadButton extends ConsumerWidget {
           ? _CatalogDownloadState.installedEnabled
           : _CatalogDownloadState.installedDisabled;
     }
-    if (hasDirectDownload) {
+    if (hasOneClick) {
       return _CatalogDownloadState.notInstalledDirectDownload;
     }
-    if (hasWebsite) return _CatalogDownloadState.notInstalledWebsite;
+    if (hasBrowserLink) return _CatalogDownloadState.notInstalledWebsite;
     return _CatalogDownloadState.noDownloadLink;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final state = _resolveState();
+
+    final candidates = resolveDownloadCandidates(mod, llmMainMod);
+    final primary = primaryCandidate(candidates);
+    final tieSet = primaryTieSet(candidates);
+    // Best browser-only link (a website or a manual-step link), used when no
+    // one-click candidate exists.
+    final browserLink = candidates.firstWhereOrNull((c) => !c.isOneClick);
+
+    final state = _resolveState(
+      hasOneClick: primary != null,
+      hasBrowserLink: browserLink != null,
+    );
 
     final IconData icon;
     final Color backgroundColor;
@@ -861,24 +972,33 @@ class CatalogDownloadButton extends ConsumerWidget {
         state == _CatalogDownloadState.updateDirectDownload ||
         state == _CatalogDownloadState.updateWebsite;
 
+    // Download states run the primary candidate (or open the chooser when
+    // several candidates tie). A trios primary installs in-app with deps.
+    final isTrios = primary?.kind == DownloadCandidateKind.triosDeepLink;
+    final showChooser = tieSet.length > 1;
+    void runPrimary() => executeDownloadCandidate(
+      context,
+      ref,
+      primary!,
+      modName: mod.name,
+      linkLoader: linkLoader,
+    );
+
     switch (state) {
       case _CatalogDownloadState.updateDirectDownload:
         icon = Icons.download;
         backgroundColor = theme.colorScheme.primary;
         foregroundColor = theme.colorScheme.onPrimary;
-        tooltip = 'Update available';
-        onPressed = () => _confirmAndDownload(
-          context,
-          ref,
-          mod.name,
-          mod.urls![ModUrlType.DirectDownload]!,
-        );
+        tooltip = isTrios
+            ? 'Update available.\nInstall with TriOS (also installs the mods it needs)'
+            : 'Update available';
+        onPressed = runPrimary;
       case _CatalogDownloadState.updateWebsite:
         icon = Icons.open_in_browser;
         backgroundColor = theme.colorScheme.primary;
         foregroundColor = theme.colorScheme.onPrimary;
         tooltip = 'Update available.\nOpen download page';
-        onPressed = () => linkLoader(mod.getBestWebsiteUrl()!);
+        onPressed = () => linkLoader(browserLink!.url);
       case _CatalogDownloadState.installedEnabled:
         icon = Icons.check;
         backgroundColor = theme.statusColors.success.withValues(alpha: 0.85);
@@ -892,22 +1012,19 @@ class CatalogDownloadButton extends ConsumerWidget {
         tooltip = 'Installed but disabled.\nClick to enable';
         onPressed = () => _toggleMod(ref, enabled: true);
       case _CatalogDownloadState.notInstalledDirectDownload:
-        icon = Icons.download;
+        icon = isTrios ? Icons.rocket_launch : Icons.download;
         backgroundColor = theme.statusColors.info;
         foregroundColor = theme.statusColors.onInfo;
-        tooltip = 'Download ${mod.name}';
-        onPressed = () => _confirmAndDownload(
-          context,
-          ref,
-          mod.name,
-          mod.urls![ModUrlType.DirectDownload]!,
-        );
+        tooltip = isTrios
+            ? 'Install ${mod.name} with TriOS\n(also installs the mods it needs)'
+            : 'Download ${mod.name}';
+        onPressed = runPrimary;
       case _CatalogDownloadState.notInstalledWebsite:
         icon = Icons.open_in_browser;
         backgroundColor = theme.statusColors.info;
         foregroundColor = theme.statusColors.onInfo;
         tooltip = 'Download from website';
-        onPressed = () => linkLoader(mod.getBestWebsiteUrl()!);
+        onPressed = () => linkLoader(browserLink!.url);
       case _CatalogDownloadState.noDownloadLink:
         icon = Icons.download;
         backgroundColor = theme.colorScheme.surfaceContainer.withValues(
@@ -918,7 +1035,12 @@ class CatalogDownloadButton extends ConsumerWidget {
         onPressed = null;
     }
 
-    final buttonChild = ConditionalWrap(
+    final isDownloadAction =
+        state == _CatalogDownloadState.updateDirectDownload ||
+        state == _CatalogDownloadState.notInstalledDirectDownload;
+    final useChooser = isDownloadAction && showChooser;
+
+    Widget buildFab(VoidCallback? onTap) => ConditionalWrap(
       condition: hasUpdate,
       wrapper: (child) => Blur(child: child),
       child: SizedBox(
@@ -926,12 +1048,27 @@ class CatalogDownloadButton extends ConsumerWidget {
         height: 32,
         child: FloatingActionButton.small(
           heroTag: null,
-          onPressed: onPressed,
+          onPressed: onTap,
           backgroundColor: backgroundColor,
           child: Icon(icon, size: 18, color: foregroundColor),
         ),
       ),
     );
+
+    final Widget buttonChild;
+    if (useChooser) {
+      buttonChild = MenuAnchor(
+        menuChildren: [
+          for (final candidate in tieSet)
+            _downloadMenuItem(context, ref, candidate),
+        ],
+        builder: (context, controller, _) => buildFab(
+          () => controller.isOpen ? controller.close() : controller.open(),
+        ),
+      );
+    } else {
+      buttonChild = buildFab(onPressed);
+    }
 
     if (hasUpdate && installedMod != null && versionCheckComparison != null) {
       final comparison = versionCheckComparison!;
@@ -951,21 +1088,49 @@ class CatalogDownloadButton extends ConsumerWidget {
       );
     }
 
-    return MovingTooltipWidget.text(message: tooltip, child: buttonChild);
+    final tooltipText = useChooser
+        ? 'Several downloads available.\nClick to choose'
+        : tooltip;
+    return MovingTooltipWidget.text(message: tooltipText, child: buttonChild);
   }
 
-  void _confirmAndDownload(
+  /// One row in the tie-break chooser opened from the button.
+  Widget _downloadMenuItem(
     BuildContext context,
     WidgetRef ref,
-    String modName,
-    String downloadUrl,
+    DownloadCandidate candidate,
   ) {
-    confirmAndDownloadModViaManager(
-      context,
-      ref,
-      modName: modName,
-      downloadUrl: downloadUrl,
-      skipDialog: true,
+    final theme = Theme.of(context);
+    final subtitle = downloadCandidateSubtitle(candidate);
+    return MenuItemButton(
+      leadingIcon: Icon(downloadCandidateIcon(candidate), size: 16),
+      onPressed: () => executeDownloadCandidate(
+        context,
+        ref,
+        candidate,
+        modName: mod.name,
+        linkLoader: linkLoader,
+      ),
+      child: MovingTooltipWidget.text(
+        message: candidate.url,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(candidate.label),
+              if (subtitle.isNotEmpty)
+                Text(
+                  subtitle,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

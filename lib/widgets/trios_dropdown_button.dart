@@ -82,7 +82,9 @@ class TriOSDropdownButton<T> extends StatelessWidget {
       isDense: isDense,
       isExpanded: isExpanded,
       itemHeight: itemHeight,
-      focusColor: focusColor,
+      // The default focus fill stays visible after picking an item, which
+      // looks like the button is stuck highlighted.
+      focusColor: focusColor ?? Colors.transparent,
       focusNode: focusNode,
       autofocus: autofocus,
       dropdownColor: dropdownColor,

@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:trios/widgets/snackbar.dart';
 
 import 'package:collection/collection.dart';
+import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_records/mod_record_sources_dialog.dart';
 import 'package:trios/models/mod.dart';
@@ -392,6 +395,50 @@ MenuItem buildMenuItemDebugging(
           },
         ),
     ],
+  );
+}
+
+MenuItem buildMenuItemViewChangelog(
+  Mod mod,
+  WidgetRef ref,
+  BuildContext context,
+) {
+  final versionCheckResults = ref.read(AppState.versionCheckResults).value;
+  final versionCheckComparison = mod.updateCheck(versionCheckResults);
+  final localVersionCheck = versionCheckComparison?.variant.versionCheckerInfo;
+  final remoteVersionCheck = versionCheckComparison?.remoteVersionCheck;
+  final changelogUrl = ref
+      .read(AppState.changelogsProvider.notifier)
+      .getChangelogUrl(localVersionCheck, remoteVersionCheck);
+  final hasChangelog = changelogUrl.isNotNullOrEmpty();
+
+  return MenuItem(
+    label: hasChangelog ? 'View Changelog' : 'View Changelog (unavailable)',
+    icon: Icons.history,
+    iconOpacity: hasChangelog ? 1 : 0.5,
+    onSelected: () {
+      if (!hasChangelog) {
+        showSnackBar(
+          context: context,
+          type: SnackBarType.warn,
+          content: const Text(
+            "This mod has no changelog. It needs Version Checker with a changelog link.",
+          ),
+        );
+        return;
+      }
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Changelogs(
+            mod,
+            localVersionCheck,
+            remoteVersionCheck,
+            showVersionChips: true,
+          ),
+        ),
+      );
+    },
   );
 }
 

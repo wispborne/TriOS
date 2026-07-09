@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:trios/catalog/models/forum_link.dart';
+import 'package:trios/catalog/catalog_download_resolver.dart';
+import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
@@ -18,11 +19,25 @@ class ForumPostHeader extends StatelessWidget {
   final bool isFullScreen;
   final VoidCallback? onClose;
   final void Function(String url)? onLinkTap;
-  final void Function(String url, String label)? onDownloadLink;
+
+  /// The mod's download links, already resolved and prioritized. Rendered as
+  /// the "File download link(s)" strip. Source-agnostic: the dialog fills this
+  /// from LLM data when available, else from the post's scraped links.
+  final List<DownloadCandidate> downloads;
+  final void Function(DownloadCandidate candidate)? onDownload;
 
   static final _dateFormat = DateFormat.yMMMMd().add_jm();
   static final _decimalFormat = NumberFormat.decimalPattern();
   static final _compactFormat = NumberFormat.compact();
+
+  static String _downloadTooltip(DownloadCandidate candidate) {
+    final subtitle = downloadCandidateSubtitle(candidate);
+    return [
+      candidate.label,
+      candidate.url,
+      if (subtitle.isNotEmpty) subtitle,
+    ].join('\n');
+  }
 
   const ForumPostHeader({
     super.key,
@@ -33,18 +48,9 @@ class ForumPostHeader extends StatelessWidget {
     this.isFullScreen = false,
     this.onClose,
     this.onLinkTap,
-    this.onDownloadLink,
+    this.downloads = const [],
+    this.onDownload,
   });
-
-  static String _labelFor(ForumLink link) {
-    if (link.text.isNotEmpty) return link.text;
-    final parsed = Uri.tryParse(link.url);
-    final segs = parsed?.pathSegments;
-    if (segs != null && segs.isNotEmpty && segs.last.isNotEmpty) {
-      return segs.last;
-    }
-    return link.url;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -230,11 +236,7 @@ class ForumPostHeader extends StatelessWidget {
           ),
           Builder(
             builder: (context) {
-              final links = [
-                for (final link in details.links ?? const <ForumLink>[])
-                  if (link.isDownloadable) (link: link, label: _labelFor(link)),
-              ];
-              if (links.isEmpty || onDownloadLink == null) {
+              if (downloads.isEmpty || onDownload == null) {
                 return const SizedBox.shrink();
               }
               return Padding(
@@ -257,25 +259,25 @@ class ForumPostHeader extends StatelessWidget {
                           mainAxisSize: .min,
                           spacing: 8,
                           children: [
-                            for (final entry in links)
+                            for (final candidate in downloads)
                               MovingTooltipWidget.text(
-                                message: "${entry.label}\n${entry.link.url}",
+                                message: _downloadTooltip(candidate),
                                 child: ConstrainedBox(
                                   constraints: const BoxConstraints(
                                     maxWidth: 200,
                                   ),
                                   child: ElevatedButton.icon(
-                                    icon: const Icon(Icons.download, size: 16),
+                                    icon: Icon(
+                                      downloadCandidateIcon(candidate),
+                                      size: 16,
+                                    ),
                                     label: Text(
-                                      entry.label,
+                                      candidate.label,
                                       maxLines: 1,
                                       overflow: .ellipsis,
                                       style: theme.textTheme.labelMedium,
                                     ),
-                                    onPressed: () => onDownloadLink!(
-                                      entry.link.url,
-                                      entry.label,
-                                    ),
+                                    onPressed: () => onDownload!(candidate),
                                   ),
                                 ),
                               ),

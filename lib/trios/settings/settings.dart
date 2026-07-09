@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
 import 'package:trios/faction_viewer/faction_viewer_controller.dart';
+import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/catalog_card_click_action.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
@@ -149,6 +150,7 @@ class Settings with SettingsMappable {
   final bool catalogBrowserPanelOpen;
   final double? catalogBrowserPanelWidth;
   final CatalogCardClickAction catalogCardClickAction;
+  final AiSummaryMode catalogAiSummaryMode;
   final double catalogMinItemWidth;
   final double catalogCardSpacing;
   @MappableField(hook: SafeDecodeHook())
@@ -200,6 +202,9 @@ class Settings with SettingsMappable {
   /// When true, the VRAM scan runs across an isolate pool via `async_task`.
   /// When false (default), runs the legacy single-isolate sequential pipeline.
   final bool vramEstimatorMultithreaded;
+
+  /// When true, the VRAM estimator only shows enabled mods.
+  final bool vramEstimatorEnabledModsOnly;
 
   Settings({
     this.gameDir,
@@ -289,6 +294,7 @@ class Settings with SettingsMappable {
     this.catalogBrowserPanelOpen = false,
     this.catalogBrowserPanelWidth,
     this.catalogCardClickAction = CatalogCardClickAction.forumDialog,
+    this.catalogAiSummaryMode = AiSummaryMode.whenNoAuthorText,
     this.catalogMinItemWidth = 390,
     this.catalogCardSpacing = 4,
     this.catalogPageState,
@@ -318,6 +324,7 @@ class Settings with SettingsMappable {
     this.referencedAssetsSelectorConfig =
         ReferencedAssetsSelectorConfig.allEnabled,
     this.vramEstimatorMultithreaded = true,
+    this.vramEstimatorEnabledModsOnly = false,
   });
 }
 

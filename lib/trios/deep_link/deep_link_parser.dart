@@ -88,6 +88,25 @@ enum DeepLinkModSource {
   directDownload,
 }
 
+/// Host of TriOS's "Install With TriOS" web links.
+const trilinkHost = 'trilink.wispborne.com';
+
+/// Converts a `https://trilink.wispborne.com/open.html?mod=...&dep=...` web
+/// link into the equivalent `starsector-mod://install?...` deep link. The two
+/// share the exact same query format, so this just swaps scheme + host and
+/// keeps the query. Returns null when [url] isn't a trilink with a `mod` param.
+String? trilinkToDeepLinkUri(String url) {
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null) return null;
+  if (uri.host.toLowerCase() != trilinkHost) return null;
+  if ((uri.queryParameters['mod'] ?? '').isEmpty) return null;
+  return Uri(
+    scheme: deepLinkScheme,
+    host: 'install',
+    queryParameters: uri.queryParametersAll,
+  ).toString();
+}
+
 /// Parses a raw URI string into a [DeepLinkRequest], or returns null if invalid.
 DeepLinkRequest? parseDeepLink(String rawUri) {
   final uri = Uri.tryParse(rawUri);

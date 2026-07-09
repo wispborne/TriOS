@@ -169,12 +169,26 @@ Widget tooltipStatsGrid(
 }
 
 /// A label–value stat row.
-TooltipStatEntry tooltipRow(String label, String value, {Color? color, int indentLevel = 0}) =>
-    TooltipStatEntry(label: label, value: value, valueColor: color, indentLevel: indentLevel);
+TooltipStatEntry tooltipRow(
+  String label,
+  String value, {
+  Color? color,
+  int indentLevel = 0,
+}) => TooltipStatEntry(
+  label: label,
+  value: value,
+  valueColor: color,
+  indentLevel: indentLevel,
+);
 
 /// A full-width informational note (empty label, dimmer italic text).
 TooltipStatEntry tooltipNote(String text, {bool rightAlign = false}) =>
-    TooltipStatEntry(label: '', value: text, isNote: true, rightAlign: rightAlign);
+    TooltipStatEntry(
+      label: '',
+      value: text,
+      isNote: true,
+      rightAlign: rightAlign,
+    );
 
 /// An empty separator row.
 const tooltipGap = TooltipStatEntry.gap();
@@ -249,12 +263,14 @@ class TooltipStatEntry {
     return TableRow(
       children: [
         Padding(
-          padding: EdgeInsets.only(
-            left: indentLevel * 8.0,
-            top: 1,
-            bottom: 1,
+          padding: EdgeInsets.only(left: indentLevel * 8.0, top: 1, bottom: 1),
+          // TextTriOS so a cramped label truncates with a tooltip instead of
+          // wrapping one letter per line.
+          child: TextTriOS(
+            label,
+            maxLines: 1,
+            style: theme.textTheme.bodySmall,
           ),
-          child: Text(label, style: theme.textTheme.bodySmall),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 16, top: 1, bottom: 1),

@@ -160,11 +160,7 @@ extension TriOSToolsUI on TriOSTools {
       "assets/images/icon-account-box-outline.svg",
       color: color,
     ),
-    TriOSTools.sectorMap => Icon(
-      Icons.scatter_plot,
-      size: size,
-      color: color,
-    ),
+    TriOSTools.sectorMap => Icon(Icons.scatter_plot, size: size, color: color),
     TriOSTools.tips => Icon(Icons.lightbulb, size: size, color: color),
     TriOSTools.settings => Icon(Icons.settings, size: size, color: color),
   };

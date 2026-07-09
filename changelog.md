@@ -1,11 +1,17 @@
 # 1.6.2
 - Added
+  - Codex that mimics the in-game codex.
   - Missing dependencies now have buttons to install or find them.
   - 'Last Updated' column on the Mods page.
+  - More background effects (Settings - Theme Modifiers).
 - Fixed
   - Deep links now correctly check for already-installed mods on app cold starts.
   - Large Google Drive files now download correctly instead of failing with "archive not supported".
   - Faction viewer pips are now ordered to match vanilla.
+  - Tech/Manufacturer grouping on the Ships page no longer treats different capitalizations as separate groups.
+- Changed
+  - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
+  - About page now has an AI disclosure section.
 
 # 1.6.1
 - Added

@@ -93,6 +93,13 @@ class TriOSChangelogViewer extends ConsumerStatefulWidget {
 
 class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
   String? _selectedVersion;
+  final _versionsScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _versionsScrollController.dispose();
+    super.dispose();
+  }
 
   static final _versionHeaderPattern = RegExp(r'^# \d');
 
@@ -155,28 +162,40 @@ class _TriOSChangelogViewerState extends ConsumerState<TriOSChangelogViewer> {
                 final versions = _parseVersionHeaders(baseContent);
                 if (versions.isEmpty) return const SizedBox.shrink();
                 return SizedBox(
-                  height: 40,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: .symmetric(horizontal: 12),
-                    child: Row(
-                      spacing: 8,
-                      children: [
-                        for (final version in versions)
-                          ActionChip(
-                            label: Text(version),
-                            backgroundColor: _selectedVersion == version
-                                ? Theme.of(context).colorScheme.primaryContainer
-                                : null,
-                            onPressed: () {
-                              setState(() {
-                                _selectedVersion = _selectedVersion == version
-                                    ? null
-                                    : version;
-                              });
-                            },
-                          ),
-                      ],
+                  height: 48,
+                  child: ScrollbarTheme(
+                    data: ScrollbarThemeData(
+                      thumbVisibility: WidgetStatePropertyAll(true),
+                    ),
+                    child: Scrollbar(
+                      controller: _versionsScrollController,
+                      child: SingleChildScrollView(
+                        controller: _versionsScrollController,
+                        scrollDirection: Axis.horizontal,
+                        padding: .symmetric(horizontal: 12),
+                        child: Row(
+                          spacing: 8,
+                          children: [
+                            for (final version in versions)
+                              ActionChip(
+                                label: Text(version),
+                                backgroundColor: _selectedVersion == version
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer
+                                    : null,
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedVersion =
+                                        _selectedVersion == version
+                                            ? null
+                                            : version;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 );

@@ -10,6 +10,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_mount_indicator.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
+import 'package:trios/widgets/hoverable_widget.dart';
 import 'package:trios/widgets/ingame_tooltip_shared.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
@@ -42,7 +43,7 @@ class WeaponCodexCard {
     CodexEntitySelected? onEntitySelected,
   }) {
     return MovingTooltipWidget.starsector(
-      tooltipWidget: ConstrainedBox(
+      tooltipWidgetBuilder: (_) => ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _maxWidth),
         child: SingleChildScrollView(
           child: Consumer(
@@ -60,11 +61,10 @@ class WeaponCodexCard {
           ),
         ),
       ),
-      child: asCodexLink(
-        child,
-        onEntitySelected,
-        (CodexEntryType.weapon, weapon.id),
-      ),
+      child: asCodexLink(child, onEntitySelected, (
+        CodexEntryType.weapon,
+        weapon.id,
+      )),
     );
   }
 
@@ -425,11 +425,21 @@ Widget? _iconRow({required Widget? icon, required Widget child}) {
 }
 
 /// Returns an 80×80 weapon turret sprite with geometric mount-type indicator,
-/// matching the game's codex weapon display.
+/// matching the game's codex weapon display. Hovering it reveals the weapon
+/// glow.
 Widget? _weaponSprite(Weapon weapon) {
   if (weapon.turretSprite == null && weapon.effectiveMountType == null)
     return null;
-  return WeaponMountIndicator(weapon: weapon, size: 80);
+  return HoverableWidget(
+    hoverColor: Colors.transparent,
+    child: Builder(
+      builder: (context) => WeaponMountIndicator(
+        weapon: weapon,
+        size: 80,
+        rowHovered: HoverData.of(context)?.isHovering ?? false,
+      ),
+    ),
+  );
 }
 
 /// Returns an 80×80 colored box representing the damage type,

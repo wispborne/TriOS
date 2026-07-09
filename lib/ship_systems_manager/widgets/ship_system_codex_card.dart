@@ -8,12 +8,26 @@ import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/ingame_tooltip_shared.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Small in-game-style card for a ship system, following the pattern of
 /// [HullmodCodexCard]. Shows the name, a handful of stats, and the description
 /// looked up the same way the ship card does its system text.
 class ShipSystemCodexCard {
   ShipSystemCodexCard._();
+
+  static Widget tooltip({
+    required ShipSystem system,
+    required Widget child,
+  }) {
+    return MovingTooltipWidget.starsector(
+      tooltipWidgetBuilder: (_) => ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 300),
+        child: create(system: system),
+      ),
+      child: child,
+    );
+  }
 
   static Widget create({required ShipSystem system}) {
     return Consumer(

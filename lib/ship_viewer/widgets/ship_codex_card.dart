@@ -49,7 +49,7 @@ class ShipCodexCard {
     CodexEntitySelected? onEntitySelected,
   }) {
     return MovingTooltipWidget.starsector(
-      tooltipWidget: ConstrainedBox(
+      tooltipWidgetBuilder: (_) => ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _maxWidth),
         child: Consumer(
           builder: (context, ref, _) => _buildShipContent(
@@ -77,11 +77,10 @@ class ShipCodexCard {
           ),
         ),
       ),
-      child: asCodexLink(
-        child,
-        onEntitySelected,
-        (CodexEntryType.ship, ship.id),
-      ),
+      child: asCodexLink(child, onEntitySelected, (
+        CodexEntryType.ship,
+        ship.id,
+      )),
     );
   }
 
@@ -192,206 +191,185 @@ class ShipCodexCard {
         ],
 
         // ════════ Three columns: Logistical (1+2) | Combat (3) + Sprite ════════
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 16,
-          children: [
-            // ── Logistical Data (columns 1 & 2) ──
-            Expanded(
-              flex: 2,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 4,
+        _statsSection(
+          sprite: sprite,
+          // ── Logistical Data (columns 1 & 2) ──
+          logistical: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 4,
+            children: [
+              tooltipSectionHeader('Logistical data', theme, highlightColor),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8,
                 children: [
-                  tooltipSectionHeader(
-                    'Logistical data',
-                    theme,
-                    highlightColor,
+                  // ── Column 1 ──
+                  Expanded(
+                    child: tooltipStatsGrid(theme, [
+                      if (ship.crToDeploy != null)
+                        tooltipRow(
+                          'CR per deployment',
+                          '${tooltipFmt(ship.crToDeploy)}%',
+                          color: crColor,
+                        ),
+                      if (ship.crPercentPerDay != null)
+                        tooltipRow(
+                          'Recovery (/day)',
+                          '${tooltipFmt(ship.crPercentPerDay)}%',
+                          color: crColor,
+                          indentLevel: 1,
+                        ),
+                      if (ship.suppliesRec != null)
+                        tooltipRow(
+                          'Recovery (supplies)',
+                          tooltipFmt(ship.suppliesRec),
+                          color: crColor,
+                          indentLevel: 1,
+                        ),
+                      if (ship.deploymentPoints != null)
+                        tooltipRow(
+                          'Deployment points',
+                          tooltipFmt(ship.deploymentPoints),
+                          color: dpColor,
+                          indentLevel: 1,
+                        ),
+                      if (ship.peakCrSec != null)
+                        tooltipRow(
+                          'Peak performance (sec)',
+                          _peakTime(ship.peakCrSec!),
+                          color: crColor,
+                        ),
+                      // if (ship.minCrew != null || ship.maxCrew != null)
+                      //   tooltipRow(
+                      //     'Crew complement',
+                      //     '${tooltipFmt(ship.minCrew)} / ${tooltipFmt(ship.min)}',
+                      //     color: crewColor,
+                      //   ),
+                      tooltipGap,
+                      tooltipRow('Hull size', ship.hullSizeForDisplay()),
+                      if (ship.ordnancePoints != null)
+                        tooltipRow(
+                          'Ordnance points',
+                          tooltipFmt(ship.ordnancePoints),
+                        ),
+                    ]),
                   ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
-                    children: [
-                      // ── Column 1 ──
-                      Expanded(
-                        child: tooltipStatsGrid(theme, [
-                          if (ship.crToDeploy != null)
-                            tooltipRow(
-                              'CR per deployment',
-                              '${tooltipFmt(ship.crToDeploy)}%',
-                              color: crColor,
-                            ),
-                          if (ship.crPercentPerDay != null)
-                            tooltipRow(
-                              'Recovery (/day)',
-                              '${tooltipFmt(ship.crPercentPerDay)}%',
-                              color: crColor,
-                              indentLevel: 1,
-                            ),
-                          if (ship.suppliesRec != null)
-                            tooltipRow(
-                              'Recovery (supplies)',
-                              tooltipFmt(ship.suppliesRec),
-                              color: crColor,
-                              indentLevel: 1,
-                            ),
-                          if (ship.deploymentPoints != null)
-                            tooltipRow(
-                              'Deployment points',
-                              tooltipFmt(ship.deploymentPoints),
-                              color: dpColor,
-                              indentLevel: 1,
-                            ),
-                          if (ship.peakCrSec != null)
-                            tooltipRow(
-                              'Peak performance (sec)',
-                              _peakTime(ship.peakCrSec!),
-                              color: crColor,
-                            ),
-                          // if (ship.minCrew != null || ship.maxCrew != null)
-                          //   tooltipRow(
-                          //     'Crew complement',
-                          //     '${tooltipFmt(ship.minCrew)} / ${tooltipFmt(ship.min)}',
-                          //     color: crewColor,
-                          //   ),
-                          tooltipGap,
-                          tooltipRow('Hull size', ship.hullSizeForDisplay()),
-                          if (ship.ordnancePoints != null)
-                            tooltipRow(
-                              'Ordnance points',
-                              tooltipFmt(ship.ordnancePoints),
-                            ),
-                        ]),
-                      ),
-                      // ── Column 2 ──
-                      Expanded(
-                        child: tooltipStatsGrid(theme, [
-                          if (ship.suppliesMo != null)
-                            tooltipRow(
-                              useAbbreviations
-                                  ? 'Maintenance (sup/mo)'
-                                  : 'Maintenance (supplies/month)',
-                              tooltipFmt(ship.suppliesMo),
-                              color: crColor,
-                            ),
-                          if (ship.cargo != null)
-                            tooltipRow(
-                              'Cargo capacity',
-                              tooltipFmt(ship.cargo),
-                              color: cargoColor,
-                            ),
-                          if (ship.maxCrew != null)
-                            tooltipRow(
-                              'Maximum crew',
-                              tooltipFmt(ship.maxCrew),
-                              color: crewColor,
-                            ),
-                          if (ship.minCrew != null)
-                            tooltipRow(
-                              'Skeleton crew',
-                              tooltipFmt(ship.minCrew),
-                              color: crewColor,
-                            ),
-                          if (ship.fuel != null)
-                            tooltipRow(
-                              'Fuel capacity',
-                              tooltipFmt(ship.fuel),
-                              color: fuelColor,
-                            ),
-                          if (ship.maxBurn != null)
-                            tooltipRow(
-                              'Maximum burn',
-                              tooltipFmt(ship.maxBurn),
-                            ),
-                          if (ship.fuelPerLY != null)
-                            tooltipRow(
-                              'Fuel/ly, jump cost',
-                              tooltipFmt(ship.fuelPerLY),
-                            ),
-                          if (ship.sensorProfile != null)
-                            tooltipRow(
-                              'Sensor profile',
-                              tooltipFmt(ship.sensorProfile),
-                            ),
-                          if (ship.sensorStrength != null)
-                            tooltipRow(
-                              'Sensor strength',
-                              tooltipFmt(ship.sensorStrength),
-                            ),
-                        ]),
-                      ),
-                    ],
+                  // ── Column 2 ──
+                  Expanded(
+                    child: tooltipStatsGrid(theme, [
+                      if (ship.suppliesMo != null)
+                        tooltipRow(
+                          useAbbreviations
+                              ? 'Maintenance (sup/mo)'
+                              : 'Maintenance (supplies/month)',
+                          tooltipFmt(ship.suppliesMo),
+                          color: crColor,
+                        ),
+                      if (ship.cargo != null)
+                        tooltipRow(
+                          'Cargo capacity',
+                          tooltipFmt(ship.cargo),
+                          color: cargoColor,
+                        ),
+                      if (ship.maxCrew != null)
+                        tooltipRow(
+                          'Maximum crew',
+                          tooltipFmt(ship.maxCrew),
+                          color: crewColor,
+                        ),
+                      if (ship.minCrew != null)
+                        tooltipRow(
+                          'Skeleton crew',
+                          tooltipFmt(ship.minCrew),
+                          color: crewColor,
+                        ),
+                      if (ship.fuel != null)
+                        tooltipRow(
+                          'Fuel capacity',
+                          tooltipFmt(ship.fuel),
+                          color: fuelColor,
+                        ),
+                      if (ship.maxBurn != null)
+                        tooltipRow('Maximum burn', tooltipFmt(ship.maxBurn)),
+                      if (ship.fuelPerLY != null)
+                        tooltipRow(
+                          'Fuel/ly, jump cost',
+                          tooltipFmt(ship.fuelPerLY),
+                        ),
+                      if (ship.sensorProfile != null)
+                        tooltipRow(
+                          'Sensor profile',
+                          tooltipFmt(ship.sensorProfile),
+                        ),
+                      if (ship.sensorStrength != null)
+                        tooltipRow(
+                          'Sensor strength',
+                          tooltipFmt(ship.sensorStrength),
+                        ),
+                    ]),
                   ),
                 ],
               ),
-            ),
-
-            // ── Combat Performance (column 3) ──
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 4,
-                children: [
-                  tooltipSectionHeader(
-                    'Combat performance',
-                    theme,
-                    highlightColor,
-                  ),
-                  tooltipStatsGrid(theme, [
-                    if (ship.hitpoints != null)
-                      tooltipRow('Hull integrity', tooltipFmt(ship.hitpoints)),
-                    if (ship.armorRating != null)
-                      tooltipRow('Armor rating', tooltipFmt(ship.armorRating)),
-                    tooltipRow(defenseRowLabel, defenseLabel),
-                    if (hasShield) ...[
-                      if (ship.shieldArc != null)
-                        tooltipRow(
-                          'Shield arc',
-                          '${tooltipFmt(ship.shieldArc)}\u00B0',
-                        ),
-                      if (ship.shieldUpkeep != null)
-                        tooltipRow(
-                          'Shield upkeep/sec',
-                          tooltipFmt(
-                            (ship.shieldUpkeep ?? 1.0) *
-                                (ship.fluxDissipation ?? 1.0),
-                          ),
-                        ),
-                      if (ship.shieldEfficiency != null)
-                        tooltipRow(
-                          'Shield flux/damage',
-                          tooltipFmt(ship.shieldEfficiency, forceDecimal: true),
-                        ),
-                    ],
-                    if (isTruePhaseShip) ...[
-                      if (ship.phaseCost != null)
-                        tooltipRow(
-                          'Cloak activation cost',
-                          tooltipFmt(ship.phaseCost),
-                        ),
-                      if (ship.phaseUpkeep != null)
-                        tooltipRow(
-                          'Cloak upkeep/sec',
-                          tooltipFmt(ship.phaseUpkeep),
-                        ),
-                    ],
-                    if (ship.maxFlux != null)
-                      tooltipRow('Flux capacity', tooltipFmt(ship.maxFlux)),
-                    if (ship.fluxDissipation != null)
-                      tooltipRow(
-                        'Flux dissipation',
-                        tooltipFmt(ship.fluxDissipation),
+            ],
+          ),
+          // ── Combat Performance (column 3) ──
+          combat: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 4,
+            children: [
+              tooltipSectionHeader('Combat performance', theme, highlightColor),
+              tooltipStatsGrid(theme, [
+                if (ship.hitpoints != null)
+                  tooltipRow('Hull integrity', tooltipFmt(ship.hitpoints)),
+                if (ship.armorRating != null)
+                  tooltipRow('Armor rating', tooltipFmt(ship.armorRating)),
+                tooltipRow(defenseRowLabel, defenseLabel),
+                if (hasShield) ...[
+                  if (ship.shieldArc != null)
+                    tooltipRow(
+                      'Shield arc',
+                      '${tooltipFmt(ship.shieldArc)}\u00B0',
+                    ),
+                  if (ship.shieldUpkeep != null)
+                    tooltipRow(
+                      'Shield upkeep/sec',
+                      tooltipFmt(
+                        (ship.shieldUpkeep ?? 1.0) *
+                            (ship.fluxDissipation ?? 1.0),
                       ),
-                    if (ship.maxSpeed != null)
-                      tooltipRow('Top speed', tooltipFmt(ship.maxSpeed)),
-                  ]),
+                    ),
+                  if (ship.shieldEfficiency != null)
+                    tooltipRow(
+                      'Shield flux/damage',
+                      tooltipFmt(ship.shieldEfficiency, forceDecimal: true),
+                    ),
                 ],
-              ),
-            ),
-            ?sprite,
-          ],
+                if (isTruePhaseShip) ...[
+                  if (ship.phaseCost != null)
+                    tooltipRow(
+                      'Cloak activation cost',
+                      tooltipFmt(ship.phaseCost),
+                    ),
+                  if (ship.phaseUpkeep != null)
+                    tooltipRow(
+                      'Cloak upkeep/sec',
+                      tooltipFmt(ship.phaseUpkeep),
+                    ),
+                ],
+                if (ship.maxFlux != null)
+                  tooltipRow('Flux capacity', tooltipFmt(ship.maxFlux)),
+                if (ship.fluxDissipation != null)
+                  tooltipRow(
+                    'Flux dissipation',
+                    tooltipFmt(ship.fluxDissipation),
+                  ),
+                if (ship.maxSpeed != null)
+                  tooltipRow('Top speed', tooltipFmt(ship.maxSpeed)),
+              ]),
+            ],
+          ),
         ),
 
         // ════════ System / Mounts / Armaments / Hull Mods ════════
@@ -431,8 +409,8 @@ class ShipCodexCard {
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: TriOSThemeConstants
-                                    .vanillaYellowGoldColor,
+                                color:
+                                    TriOSThemeConstants.vanillaYellowGoldColor,
                               ),
                             ),
                             // Only a link when the system resolves in the
@@ -449,7 +427,10 @@ class ShipCodexCard {
                     Padding(
                       padding: const EdgeInsets.only(left: 78),
                       child: Text(
-                        (systemDescription.text3 ?? systemDescription.text1 ?? '').trim(),
+                        (systemDescription.text3 ??
+                                systemDescription.text1 ??
+                                '')
+                            .trim(),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.7,
@@ -576,7 +557,46 @@ class ShipCodexCard {
 
 // ───────────────────────── Layout helpers ─────────────────────────
 
-/// Ship silhouette sprite constrained to 128 px tall, or null if unavailable.
+/// Below this width the stats section stacks vertically instead of sitting
+/// three columns + sprite side by side (which needs ~700 px to stay readable).
+const _statsStackBreakpoint = 700.0;
+
+/// Lays out the logistical block, combat block, and sprite side by side when
+/// there is room, or stacked vertically (sprite first) when the card is
+/// narrow — e.g. in the Codex detail panel with the window shrunk.
+Widget _statsSection({
+  required Widget logistical,
+  required Widget combat,
+  Widget? sprite,
+}) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < _statsStackBreakpoint) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 8,
+          children: [
+            if (sprite != null) Center(child: sprite),
+            logistical,
+            combat,
+          ],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 16,
+        children: [
+          Expanded(flex: 2, child: logistical),
+          Expanded(child: combat),
+          ?sprite,
+        ],
+      );
+    },
+  );
+}
+
+/// Ship silhouette sprite constrained to 150×200, or null if unavailable.
 /// When [modules] is non-empty, renders the composite sprite with modules.
 Widget? _shipSprite(Ship ship, List<ResolvedModule> modules) {
   final path = ship.spriteFile;
@@ -732,11 +752,10 @@ Widget _armamentWrap(
       }
       final wingId = e.value.wingId;
       if (wingId != null) {
-        return asCodexLink(
-          text,
-          onEntitySelected,
-          (CodexEntryType.wing, wingId),
-        );
+        return asCodexLink(text, onEntitySelected, (
+          CodexEntryType.wing,
+          wingId,
+        ));
       }
       return text;
     }).toList(),

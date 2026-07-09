@@ -11,6 +11,7 @@ import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
 import 'package:trios/hullmod_viewer/widgets/hullmod_details_dialog.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_systems_manager/widgets/ship_system_codex_card.dart';
+import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/ship_viewer/widgets/ship_details_dialog.dart';
 import 'package:trios/trios/app_state.dart';
@@ -42,24 +43,45 @@ class CodexDetailPanel extends ConsumerWidget {
     final controller = ref.read(codexPageControllerProvider.notifier);
 
     final card = switch (entry) {
-      ShipCodexEntry(:final ship) => ShipCodexCard.create(
-        ship: ship,
-        shipSystemsMap: _mapById<ShipSystem>(
-          visible,
-          (e) => e is ShipSystemCodexEntry ? e.system : null,
-          (s) => s.id,
-        ),
-        weaponsMap: _mapById<Weapon>(
-          visible,
-          (e) => e is WeaponCodexEntry ? e.weapon : null,
-          (w) => w.id,
-        ),
-        hullmodsMap: _mapById<Hullmod>(
-          visible,
-          (e) => e is HullmodCodexEntry ? e.hullmod : null,
-          (h) => h.id,
-        ),
-        onEntitySelected: controller.select,
+      // Full interactive blueprint above the stats card, replacing the card's
+      // small side sprite — same arrangement as the ship details dialog.
+      ShipCodexEntry(:final ship) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (ship.spriteFile != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 140),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ShipBlueprintView(ship: ship),
+                  ),
+                ),
+              ),
+            ),
+          ShipCodexCard.create(
+            ship: ship,
+            showSprite: false,
+            shipSystemsMap: _mapById<ShipSystem>(
+              visible,
+              (e) => e is ShipSystemCodexEntry ? e.system : null,
+              (s) => s.id,
+            ),
+            weaponsMap: _mapById<Weapon>(
+              visible,
+              (e) => e is WeaponCodexEntry ? e.weapon : null,
+              (w) => w.id,
+            ),
+            hullmodsMap: _mapById<Hullmod>(
+              visible,
+              (e) => e is HullmodCodexEntry ? e.hullmod : null,
+              (h) => h.id,
+            ),
+            onEntitySelected: controller.select,
+          ),
+        ],
       ),
       WeaponCodexEntry(:final weapon) => WeaponCodexCard.create(weapon: weapon),
       HullmodCodexEntry(:final hullmod) => HullmodCodexCard.create(

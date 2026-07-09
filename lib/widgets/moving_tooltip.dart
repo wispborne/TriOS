@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -215,6 +216,15 @@ class MovingTooltipWidget extends StatefulWidget {
   final Size offset;
   final TooltipPosition position;
 
+  /// Delay between the mouse entering [child] and the tooltip being shown.
+  /// When null, defaults to [defaultBuilderShowDelay] if [tooltipWidgetBuilder]
+  /// is set (so expensive tooltip content isn't built for every row the mouse
+  /// sweeps across), and no delay otherwise. Pass [Duration.zero] to opt out.
+  final Duration? showDelay;
+
+  /// Default [showDelay] applied when a [tooltipWidgetBuilder] is provided.
+  static const defaultBuilderShowDelay = Duration(milliseconds: 100);
+
   const MovingTooltipWidget({
     super.key,
     required this.child,
@@ -223,6 +233,7 @@ class MovingTooltipWidget extends StatefulWidget {
     this.windowEdgePadding = 10.0,
     this.offset = const Size(5, 5),
     this.position = TooltipPosition.bottomRight,
+    this.showDelay,
   }) : assert(
          (tooltipWidget == null) != (tooltipWidgetBuilder == null),
          'Exactly one of tooltipWidget or tooltipWidgetBuilder must be provided',
@@ -329,7 +340,8 @@ class MovingTooltipWidget extends StatefulWidget {
 
   static Widget starsector({
     Key? key,
-    required Widget? tooltipWidget,
+    Widget? tooltipWidget,
+    WidgetBuilder? tooltipWidgetBuilder,
     TooltipWarningLevel? warningLevel,
     required Widget child,
     EdgeInsetsGeometry padding = const EdgeInsets.all(8),
@@ -337,41 +349,45 @@ class MovingTooltipWidget extends StatefulWidget {
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
   }) {
-    if (tooltipWidget == null) return child;
+    if (tooltipWidget == null && tooltipWidgetBuilder == null) return child;
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
-        return MovingTooltipWidget(
-          key: key,
-          tooltipWidget: TooltipFrame(
-            padding: padding,
-            borderColor: switch (warningLevel) {
-              null || TooltipWarningLevel.none =>
-                context.theme.colorScheme.secondary.withAlpha(150),
-              TooltipWarningLevel.warning || TooltipWarningLevel.error =>
-                theme.colorScheme.onSecondaryContainer.withOpacity(0.5),
-            },
-            backgroundColor: theme.colorScheme.surfaceContainerLowest.withAlpha(
-              230,
-            ),
-            child: Theme(
-              data: theme.copyWith(
-                textTheme: theme.textTheme.copyWith(
-                  bodyMedium: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.brightness == .dark
-                        ? theme.colorScheme.onSurface
-                        : theme.colorScheme.onInverseSurface,
-                  ),
-                  bodySmall: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.brightness == .dark
-                        ? theme.colorScheme.onSurface
-                        : theme.colorScheme.onInverseSurface,
-                  ),
+        Widget frame(Widget content) => TooltipFrame(
+          padding: padding,
+          borderColor: switch (warningLevel) {
+            null || TooltipWarningLevel.none =>
+              context.theme.colorScheme.secondary.withAlpha(150),
+            TooltipWarningLevel.warning || TooltipWarningLevel.error =>
+              theme.colorScheme.onSecondaryContainer.withOpacity(0.5),
+          },
+          backgroundColor: theme.colorScheme.surfaceContainerLowest.withAlpha(
+            230,
+          ),
+          child: Theme(
+            data: theme.copyWith(
+              textTheme: theme.textTheme.copyWith(
+                bodyMedium: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.brightness == .dark
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onInverseSurface,
+                ),
+                bodySmall: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.brightness == .dark
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onInverseSurface,
                 ),
               ),
-              child: tooltipWidget,
             ),
+            child: content,
           ),
+        );
+        return MovingTooltipWidget(
+          key: key,
+          tooltipWidget: tooltipWidget == null ? null : frame(tooltipWidget),
+          tooltipWidgetBuilder: tooltipWidgetBuilder == null
+              ? null
+              : (ctx) => frame(tooltipWidgetBuilder(ctx)),
           windowEdgePadding: windowEdgePadding,
           offset: offset,
           position: position,
@@ -421,6 +437,7 @@ class MovingTooltipWidget extends StatefulWidget {
 class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   OverlayEntry? _overlayEntry;
   Widget? _builtTooltip;
+  Timer? _showDelayTimer;
   late final int _depth;
   bool _blockTooltip = false; // Prevents parent tooltip from activating
   _MovingTooltipWidgetState? _parentState; // Cache parent reference
@@ -434,11 +451,17 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     _depth = (_parentState?._depth ?? 0) + 1;
   }
 
+  Duration get _showDelay =>
+      widget.showDelay ??
+      (widget.tooltipWidgetBuilder != null
+          ? MovingTooltipWidget.defaultBuilderShowDelay
+          : Duration.zero);
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (event) {
-        if (!_blockTooltip) _showTooltip(event.position);
+        if (!_blockTooltip) _scheduleShowTooltip(event.position);
       },
       onHover: (event) => _updateTooltipPosition(event.position),
       onExit: (_) => _hideTooltip(),
@@ -446,11 +469,27 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     );
   }
 
-  void _showTooltip(Offset globalPosition) {
+  /// Shows the tooltip after [_showDelay], or immediately if there is none.
+  /// If a delayed show is already pending, only the mouse position updates.
+  void _scheduleShowTooltip(Offset globalPosition) {
+    _latestGlobalMousePosition = globalPosition;
+    if (_blockTooltip) return;
+
+    final delay = _showDelay;
+    if (delay == Duration.zero) {
+      _showTooltip();
+      return;
+    }
+    if (_showDelayTimer?.isActive ?? false) return;
+    _showDelayTimer = Timer(delay, () {
+      if (mounted && !_blockTooltip) _showTooltip();
+    });
+  }
+
+  void _showTooltip() {
     _hideTooltip();
     if (_blockTooltip) return;
 
-    _latestGlobalMousePosition = globalPosition;
     _parentState?._setTooltipBlock(true); // Disable parent tooltip
 
     _builtTooltip =
@@ -478,7 +517,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
       _hideTooltip();
       return;
     } else if (_overlayEntry == null && !_blockTooltip) {
-      _showTooltip(globalPosition);
+      _scheduleShowTooltip(globalPosition);
       return;
     }
 
@@ -487,6 +526,8 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   }
 
   void _hideTooltip() {
+    _showDelayTimer?.cancel();
+    _showDelayTimer = null;
     if (_overlayEntry != null) {
       _overlayEntry!.remove();
       _overlayEntry = null;

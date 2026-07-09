@@ -30,10 +30,18 @@ class CodexStandingFilters {
   /// in the index as link targets regardless.
   final bool showHidden;
 
+  /// When false, hullmods flagged hidden or hiddenEverywhere are not listed.
+  final bool showHiddenHullmods;
+
+  /// When false, ship systems tagged `hide_in_codex` are not listed.
+  final bool showHiddenShipSystems;
+
   const CodexStandingFilters({
     this.spoilerLevel = SpoilerLevel.showNone,
     this.modId,
     this.showHidden = false,
+    this.showHiddenHullmods = false,
+    this.showHiddenShipSystems = false,
   });
 
   CodexStandingFilters copyWith({
@@ -41,11 +49,16 @@ class CodexStandingFilters {
     String? modId,
     bool clearModId = false,
     bool? showHidden,
+    bool? showHiddenHullmods,
+    bool? showHiddenShipSystems,
   }) {
     return CodexStandingFilters(
       spoilerLevel: spoilerLevel ?? this.spoilerLevel,
       modId: clearModId ? null : (modId ?? this.modId),
       showHidden: showHidden ?? this.showHidden,
+      showHiddenHullmods: showHiddenHullmods ?? this.showHiddenHullmods,
+      showHiddenShipSystems:
+          showHiddenShipSystems ?? this.showHiddenShipSystems,
     );
   }
 }
@@ -62,6 +75,12 @@ class CodexStandingFiltersNotifier extends Notifier<CodexStandingFilters> {
       : state = state.copyWith(modId: modId);
 
   void setShowHidden(bool show) => state = state.copyWith(showHidden: show);
+
+  void setShowHiddenHullmods(bool show) =>
+      state = state.copyWith(showHiddenHullmods: show);
+
+  void setShowHiddenShipSystems(bool show) =>
+      state = state.copyWith(showHiddenShipSystems: show);
 }
 
 final codexStandingFiltersProvider =
@@ -79,8 +98,7 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
       ref.watch(hullmodListNotifierProvider).valueOrNull ?? const [];
   final factions =
       ref.watch(factionListNotifierProvider).valueOrNull ?? const [];
-  final systems =
-      ref.watch(shipSystemsStreamProvider).valueOrNull ?? const [];
+  final systems = ref.watch(shipSystemsStreamProvider).valueOrNull ?? const [];
   final wings = ref.watch(wingListNotifierProvider).valueOrNull ?? const [];
   // Watch the descriptions map once and look up directly — one family watch
   // per ship system is far too slow (each watch walks the element ancestors).
@@ -101,10 +119,8 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
     for (final sys in systems)
       ShipSystemCodexEntry(
         sys,
-        shortType: descriptions[(
-          sys.id,
-          DescriptionEntry.typeShipSystem,
-        )]?.text2,
+        shortType:
+            descriptions[(sys.id, DescriptionEntry.typeShipSystem)]?.text2,
       ),
     for (final wing in wings)
       WingCodexEntry(
@@ -152,19 +168,25 @@ final codexVisibleIndexProvider = Provider<List<CodexEntry>>((ref) {
 
 /// The subset of the visible index that is actually listed in the drill-down
 /// list, search, and random: fighter hulls are never listed, and hidden
-/// weapons only when the toggle is on.
+/// weapons, hullmods, and ship systems only when their toggle is on.
 final codexListedIndexProvider = Provider<List<CodexEntry>>((ref) {
   final visible = ref.watch(codexVisibleIndexProvider);
-  final showHidden = ref.watch(codexStandingFiltersProvider).showHidden;
-  return visible.where((e) => isCodexEntryListed(e, showHidden)).toList();
+  final filters = ref.watch(codexStandingFiltersProvider);
+  return visible.where((e) => isCodexEntryListed(e, filters)).toList();
 });
 
 /// Whether [entry] appears in the list/search/random (as opposed to being only
 /// a link target).
-bool isCodexEntryListed(CodexEntry entry, bool showHidden) {
+bool isCodexEntryListed(CodexEntry entry, CodexStandingFilters filters) {
   return switch (entry) {
     ShipCodexEntry(:final ship) => ship.hullSize?.toLowerCase() != 'fighter',
-    WeaponCodexEntry(:final weapon) => showHidden || !weapon.isHidden(),
+    WeaponCodexEntry(:final weapon) => filters.showHidden || !weapon.isHidden(),
+    HullmodCodexEntry(:final hullmod) =>
+      filters.showHiddenHullmods ||
+          (hullmod.hidden != true && hullmod.hiddenEverywhere != true),
+    ShipSystemCodexEntry(:final system) =>
+      filters.showHiddenShipSystems ||
+          !_splitTags(system.tags).contains('hide_in_codex'),
     _ => true,
   };
 }

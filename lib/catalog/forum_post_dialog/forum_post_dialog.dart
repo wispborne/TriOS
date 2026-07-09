@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/catalog/catalog_download_resolver.dart';
+import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
+import 'package:trios/catalog/models/forum_link.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/trios/download_manager/downloader.dart';
@@ -105,6 +108,35 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
     );
   }
 
+  /// Every download the topic offers, prioritized. Prefers the LLM-structured
+  /// links (trios installs, real labels, confidence); falls back to the links
+  /// scraped from the post HTML when the topic has no LLM data.
+  List<DownloadCandidate> _downloadCandidates() {
+    final mods = widget.index?.llm?.mods ?? const [];
+    final llm = [for (final mod in mods) ...forumDownloadCandidates(mod)];
+    if (llm.isNotEmpty) return llm;
+
+    return [
+      for (final link in widget.details.links ?? const <ForumLink>[])
+        if (link.isDownloadable)
+          DownloadCandidate(
+            url: link.url,
+            label: _scrapedLinkLabel(link),
+            kind: DownloadCandidateKind.forumDirect,
+            sourceHost: Uri.tryParse(link.url)?.host,
+          ),
+    ];
+  }
+
+  static String _scrapedLinkLabel(ForumLink link) {
+    if (link.text.isNotEmpty) return link.text;
+    final segs = Uri.tryParse(link.url)?.pathSegments;
+    if (segs != null && segs.isNotEmpty && segs.last.isNotEmpty) {
+      return segs.last;
+    }
+    return link.url;
+  }
+
   @override
   void dispose() {
     _hoveredUrl.dispose();
@@ -159,7 +191,14 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
               isFullScreen: _isFullScreen,
               onClose: () => Navigator.of(context).pop(),
               onLinkTap: _onLinkTap,
-              onDownloadLink: _confirmAndDownload,
+              downloads: _downloadCandidates(),
+              onDownload: (candidate) => executeDownloadCandidate(
+                context,
+                ref,
+                candidate,
+                modName: widget.details.title,
+                linkLoader: widget.linkLoader,
+              ),
             ),
             Flexible(
               child: SingleChildScrollView(

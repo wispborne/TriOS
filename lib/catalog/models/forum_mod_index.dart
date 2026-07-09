@@ -1,5 +1,6 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:intl/intl.dart';
+import 'package:trios/catalog/models/forum_llm_data.dart';
 
 part 'forum_mod_index.mapper.dart';
 
@@ -52,6 +53,11 @@ class ForumModIndex with ForumModIndexMappable {
   final bool isWip;
   final int? sourceBoard;
 
+  /// LLM-extracted structured data (downloads, summaries, etc.). Null when
+  /// the scraper hasn't processed this topic or the block failed to parse.
+  @MappableField(hook: ForumLlmDataHook())
+  final ForumLlmData? llm;
+
   ForumModIndex({
     required this.topicId,
     required this.title,
@@ -70,5 +76,6 @@ class ForumModIndex with ForumModIndexMappable {
     this.scrapedAt,
     required this.isWip,
     this.sourceBoard,
+    this.llm,
   });
 }

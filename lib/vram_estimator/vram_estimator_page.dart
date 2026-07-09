@@ -142,7 +142,6 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
 
   GraphType graphType = GraphType.bar;
   RangeValues? selectedSliderValues;
-  bool _onlyEnabled = false;
   final SearchController _searchController = SearchController();
   String _searchQuery = '';
 
@@ -166,6 +165,9 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         .watch(AppState.enabledModVariants)
         .map((mod) => mod.smolId)
         .toList();
+    final onlyEnabled = ref.watch(
+      appSettings.select((s) => s.vramEstimatorEnabledModsOnly),
+    );
 
     // Count of mods that would be scanned by the "scan unscanned only"
     // button — enabled-or-highest-version variants whose smolId is not yet
@@ -185,7 +187,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         .where(
           (mod) =>
               // If only showing enabled, filter to only the enabled *variants*.
-              _onlyEnabled ? enabledSmolIds.contains(mod.info.smolId) : true,
+              onlyEnabled ? enabledSmolIds.contains(mod.info.smolId) : true,
         )
         .where((mod) {
           if (searchQuery.isEmpty) return true;
@@ -577,8 +579,15 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
         OverflowMenuCheckItem(
           title: 'Enabled Mods Only',
           icon: Icons.filter_list,
-          checked: _onlyEnabled,
-          onTap: () => setState(() => _onlyEnabled = !_onlyEnabled),
+          checked: settings.vramEstimatorEnabledModsOnly,
+          onTap: () => ref
+              .read(appSettings.notifier)
+              .update(
+                (s) => s.copyWith(
+                  vramEstimatorEnabledModsOnly:
+                      !s.vramEstimatorEnabledModsOnly,
+                ),
+              ),
         ).toEntry(0),
         const PopupMenuDivider(),
         for (final option in options)

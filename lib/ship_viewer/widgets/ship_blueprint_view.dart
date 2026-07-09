@@ -17,6 +17,7 @@ import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/ship_viewer/utils/polygon_utils.dart';
 import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
+import 'package:trios/widgets/broken_ship_image_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
@@ -507,6 +508,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
         File(layout.spriteFile),
         width: layout.width,
         height: layout.height,
+        errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
       ),
     );
 
@@ -564,6 +566,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               height: imgH,
               cacheWidth: widget.cacheWidth,
               fit: widget.cacheWidth != null ? BoxFit.fill : BoxFit.scaleDown,
+              errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
             ),
           ),
           if (_showModules) ..._buildModuleSpritesOffset(originDx, originDy),
@@ -808,6 +811,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                       fit: widget.cacheWidth != null
                           ? BoxFit.fill
                           : BoxFit.scaleDown,
+                      errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
                     ),
                   ),
                   if (_showModules)

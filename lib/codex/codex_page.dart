@@ -3,7 +3,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/codex/codex_facets.dart';
 import 'package:trios/codex/codex_grouping.dart';
 import 'package:trios/codex/codex_index.dart';
@@ -30,6 +32,7 @@ import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_
 import 'package:trios/widgets/highlightable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
 
 /// The unified Codex: a single searchable, cross-linked view over ships,
@@ -45,8 +48,6 @@ class CodexPage extends ConsumerStatefulWidget {
 
 class _CodexPageState extends ConsumerState<CodexPage>
     with AutomaticKeepAliveClientMixin {
-  static const double _sideWidth = 288;
-
   /// Approximate list-row heights, used to estimate a scroll offset when jumping
   /// to a row that the virtualized list hasn't built yet. They only need to be
   /// close: the jump centers the target, then [Highlightable] fine-tunes.
@@ -57,6 +58,23 @@ class _CodexPageState extends ConsumerState<CodexPage>
   final _searchFocus = FocusNode();
   final _listScrollController = ScrollController();
   final _relatedScrollController = ScrollController();
+
+  /// Draggable dividers so the user can resize the codex panels. The starting
+  /// sizes match the old fixed layout; sizes persist for the session because
+  /// this page is kept alive.
+  final _outerSplitController = MultiSplitViewController(
+    areas: [
+      Area(id: 'categories', size: 280, min: 180, max: 480),
+      Area(id: 'center', flex: 1),
+      Area(id: 'filters', size: 260, min: 180, max: 480),
+    ],
+  );
+  final _centerSplitController = MultiSplitViewController(
+    areas: [
+      Area(id: 'detail', flex: 1),
+      Area(id: 'related', size: 150, min: 80, max: 400),
+    ],
+  );
 
   /// One facet controller per category (built once; selections persist across
   /// rebuilds). Factions have no facets, so its groups list is empty.
@@ -117,6 +135,8 @@ class _CodexPageState extends ConsumerState<CodexPage>
     _searchFocus.dispose();
     _listScrollController.dispose();
     _relatedScrollController.dispose();
+    _outerSplitController.dispose();
+    _centerSplitController.dispose();
     super.dispose();
   }
 
@@ -220,49 +240,64 @@ class _CodexPageState extends ConsumerState<CodexPage>
         children: [
           _panelCard(child: _buildToolbar(context, state)),
           Expanded(
-            child: Row(
-              spacing: 8,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Categories on the left (full height).
-                SizedBox(
-                  width: _sideWidth,
-                  child: _panelCard(child: _buildList(context, state)),
-                ),
-                // The codex view (detail) with the Related panel directly
-                // below it — between the categories and the filters.
-                Expanded(
-                  child: Column(
-                    spacing: 8,
-                    children: [
-                      Expanded(
-                        child: _panelCard(
-                          child: CodexDetailPanel(selected: state.selected),
+            child: MultiSplitViewTheme(
+              data: _dividerTheme(Theme.of(context)),
+              child: MultiSplitView(
+                controller: _outerSplitController,
+                axis: Axis.horizontal,
+                builder: (context, area) {
+                  switch (area.id) {
+                    // Categories on the left (full height).
+                    case 'categories':
+                      return _panelCard(child: _buildList(context, state));
+                    // The codex view (detail) with the Related panel directly
+                    // below it — the two are resizable against each other.
+                    case 'center':
+                      return MultiSplitView(
+                        controller: _centerSplitController,
+                        axis: Axis.vertical,
+                        builder: (context, area) => area.id == 'detail'
+                            ? _panelCard(
+                                child: CodexDetailPanel(
+                                  selected: state.selected,
+                                ),
+                              )
+                            : _panelCard(
+                                child: _buildRelatedPanel(context, state),
+                              ),
+                      );
+                    // Filters on the right (full height).
+                    case 'filters':
+                      return _panelCard(
+                        child: _buildFiltersPanel(
+                          context,
+                          category,
+                          showFacets,
                         ),
-                      ),
-                      SizedBox(
-                        height: 150,
-                        child: _panelCard(
-                          child: _buildRelatedPanel(context, state),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Filters on the right (full height).
-                SizedBox(
-                  width: _sideWidth,
-                  child: _panelCard(
-                    child: _buildFiltersPanel(context, category, showFacets),
-                  ),
-                ),
-              ],
+                      );
+                    default:
+                      return const SizedBox.shrink();
+                  }
+                },
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  /// Styling for the draggable dividers between panels: a subtle dashed grip
+  /// that brightens on hover, matching the viewer pages' split panes.
+  MultiSplitViewThemeData _dividerTheme(ThemeData theme) =>
+      MultiSplitViewThemeData(
+        dividerThickness: 10,
+        dividerPainter: DividerPainters.grooved1(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
+          highlightedColor: theme.colorScheme.onSurface,
+          highlightedThickness: 2,
+        ),
+      );
 
   /// A card container for a top-level region, so groups read as cards + spacing
   /// rather than divider lines.
@@ -414,6 +449,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
           ListTile(
             leading: codexCategoryIcon(type, size: 24),
             title: Text(codexCategoryLabel(type)),
+            titleTextStyle: theme.textTheme.labelLarge,
             trailing: ref.watch(codexCategoryLoadingProvider(type))
                 ? MovingTooltipWidget.text(
                     message: 'Loading ${codexCategoryLabel(type)}…',
@@ -553,7 +589,12 @@ class _CodexPageState extends ConsumerState<CodexPage>
                           spacing: 8,
                           children: [
                             codexCategoryIcon(type, size: 18),
-                            Text(codexCategoryLabel(type)),
+                            Flexible(
+                              child: TextTriOS(
+                                codexCategoryLabel(type),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -665,37 +706,53 @@ class _CodexPageState extends ConsumerState<CodexPage>
     int count,
     bool collapsed,
   ) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: () => _toggleGroupCollapsed(category, key),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 12, 8, 2),
-        child: Row(
-          spacing: 6,
-          children: [
-            Icon(
-              collapsed ? Icons.chevron_right : Icons.expand_more,
-              size: 16,
-              color: theme.colorScheme.primary,
-            ),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+    final dividerColor = Theme.of(context).colorScheme.outlineVariant;
+    // The chevron's fixed width plus a minimum divider length. The text may
+    // grow until only this much of the row is left; the divider fills whatever
+    // the text doesn't use.
+    const chevronWidth = 24.0;
+    const minDividerWidth = 16.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: InkWell(
+        onTap: () => _toggleGroupCollapsed(category, key),
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        child: LayoutBuilder(
+          builder: (context, constraints) => Row(
+            children: [
+              SizedBox(
+                height: chevronWidth,
+                width: chevronWidth,
+                child: Icon(
+                  collapsed
+                      ? Icons.keyboard_arrow_right
+                      : Icons.keyboard_arrow_down,
+                  size: 16,
                 ),
               ),
-            ),
-            Text(
-              '$count',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: max(
+                    0.0,
+                    constraints.maxWidth - chevronWidth - minDividerWidth,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 4, right: 8),
+                  child: TextTriOS(
+                    "${label.trim()} ($count)",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.roboto(
+                      textStyle: Theme.of(context).textTheme.labelMedium,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+              Expanded(child: Divider(color: dividerColor, height: 1)),
+            ],
+          ),
         ),
       ),
     );
@@ -934,62 +991,100 @@ class _CodexPageState extends ConsumerState<CodexPage>
       ],
     );
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
-        children: [
-          labeled(
-            'Spoilers',
-            TriOSDropdownButton<SpoilerLevel>(
-              value: filters.spoilerLevel,
-              isExpanded: true,
-              items: const [
-                DropdownMenuItem(
-                  value: SpoilerLevel.showNone,
-                  child: Text('None'),
+    // Same card + header styling as the facet group cards below, so these
+    // read as a group of their own rather than loose controls.
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      color: theme.colorScheme.surfaceContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 8,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                'General',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
                 ),
-                DropdownMenuItem(
-                  value: SpoilerLevel.showSlightSpoilers,
-                  child: Text('Slight'),
-                ),
-                DropdownMenuItem(
-                  value: SpoilerLevel.showAllSpoilers,
-                  child: Text('All'),
-                ),
-              ],
-              onChanged: (v) {
-                if (v != null) notifier.setSpoilerLevel(v);
-              },
+              ),
             ),
-          ),
-          labeled(
-            'Mod',
-            TriOSDropdownButton<String?>(
-              value: filters.modId,
-              isExpanded: true,
-              items: [
-                const DropdownMenuItem(value: null, child: Text('All')),
-                const DropdownMenuItem(
-                  value: codexVanillaModId,
-                  child: Text('Vanilla only'),
-                ),
-                for (final entry in modNames.entries)
-                  DropdownMenuItem(value: entry.key, child: Text(entry.value)),
-              ],
-              onChanged: notifier.setModId,
+            labeled(
+              'Spoilers',
+              TriOSDropdownButton<SpoilerLevel>(
+                value: filters.spoilerLevel,
+                isExpanded: true,
+                items: const [
+                  DropdownMenuItem(
+                    value: SpoilerLevel.showNone,
+                    child: Text('None'),
+                  ),
+                  DropdownMenuItem(
+                    value: SpoilerLevel.showSlightSpoilers,
+                    child: Text('Slight'),
+                  ),
+                  DropdownMenuItem(
+                    value: SpoilerLevel.showAllSpoilers,
+                    child: Text('All'),
+                  ),
+                ],
+                onChanged: (v) {
+                  if (v != null) notifier.setSpoilerLevel(v);
+                },
+              ),
             ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: CheckboxWithLabel(
-              label: 'Show hidden weapons',
-              value: filters.showHidden,
-              onChanged: (v) => notifier.setShowHidden(v ?? false),
+            labeled(
+              'Mod',
+              TriOSDropdownButton<String?>(
+                value: filters.modId,
+                isExpanded: true,
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('All')),
+                  const DropdownMenuItem(
+                    value: codexVanillaModId,
+                    child: Text('Vanilla only'),
+                  ),
+                  for (final entry in modNames.entries)
+                    DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                ],
+                onChanged: notifier.setModId,
+              ),
             ),
-          ),
-        ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: CheckboxWithLabel(
+                label: 'Show hidden weapons',
+                value: filters.showHidden,
+                labelStyle: theme.textTheme.labelMedium,
+                onChanged: (v) => notifier.setShowHidden(v ?? false),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: CheckboxWithLabel(
+                label: 'Show hidden hullmods',
+                value: filters.showHiddenHullmods,
+                labelStyle: theme.textTheme.labelMedium,
+                onChanged: (v) => notifier.setShowHiddenHullmods(v ?? false),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: CheckboxWithLabel(
+                label: 'Show hidden ship systems',
+                value: filters.showHiddenShipSystems,
+                labelStyle: theme.textTheme.labelMedium,
+                onChanged: (v) => notifier.setShowHiddenShipSystems(v ?? false),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

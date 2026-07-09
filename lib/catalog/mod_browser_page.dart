@@ -6,6 +6,7 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/catalog_card_click_action.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/catalog/scraped_mod_card.dart';
@@ -1011,6 +1012,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     final currentAction = ref.watch(
       appSettings.select((s) => s.catalogCardClickAction),
     );
+    final currentAiSummaryMode = ref.watch(
+      appSettings.select((s) => s.catalogAiSummaryMode),
+    );
 
     return OverflowMenuButton(
       menuItems: [
@@ -1047,6 +1051,32 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                   );
             },
           ).toEntry(10 + i),
+        const PopupMenuDivider(),
+        PopupMenuItem<int>(
+          enabled: false,
+          height: 28,
+          child: Text(
+            'Show AI mod summaries',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+        for (int i = 0; i < AiSummaryMode.values.length; i++)
+          OverflowMenuCheckItem(
+            title: AiSummaryMode.values[i].label,
+            icon: AiSummaryMode.values[i].icon,
+            checked: currentAiSummaryMode == AiSummaryMode.values[i],
+            onTap: () {
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (s) => s.copyWith(
+                      catalogAiSummaryMode: AiSummaryMode.values[i],
+                    ),
+                  );
+            },
+          ).toEntry(20 + i),
         const PopupMenuDivider(),
         _SliderMenuEntry(
           label: 'Grid item min. size',

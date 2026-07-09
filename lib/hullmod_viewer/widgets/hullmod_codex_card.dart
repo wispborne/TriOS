@@ -34,7 +34,7 @@ class HullmodCodexCard {
     CodexEntitySelected? onEntitySelected,
   }) {
     return MovingTooltipWidget.starsector(
-      tooltipWidget: ConstrainedBox(
+      tooltipWidgetBuilder: (_) => ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _maxWidth),
         child: SingleChildScrollView(
           child: Consumer(

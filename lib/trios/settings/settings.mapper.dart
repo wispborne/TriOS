@@ -399,6 +399,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       DashboardModListSortMapper.ensureInitialized();
       CompressionLibMapper.ensureInitialized();
       CatalogCardClickActionMapper.ensureInitialized();
+      AiSummaryModeMapper.ensureInitialized();
       CatalogPageStatePersistedMapper.ensureInitialized();
       SectorMapPageStatePersistedMapper.ensureInitialized();
       ActivityPanelModeMapper.ensureInitialized();
@@ -918,6 +919,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: CatalogCardClickAction.forumDialog,
   );
+  static AiSummaryMode _$catalogAiSummaryMode(Settings v) =>
+      v.catalogAiSummaryMode;
+  static const Field<Settings, AiSummaryMode> _f$catalogAiSummaryMode = Field(
+    'catalogAiSummaryMode',
+    _$catalogAiSummaryMode,
+    opt: true,
+    def: AiSummaryMode.whenNoAuthorText,
+  );
   static double _$catalogMinItemWidth(Settings v) => v.catalogMinItemWidth;
   static const Field<Settings, double> _f$catalogMinItemWidth = Field(
     'catalogMinItemWidth',
@@ -1130,6 +1139,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: true,
   );
+  static bool _$vramEstimatorEnabledModsOnly(Settings v) =>
+      v.vramEstimatorEnabledModsOnly;
+  static const Field<Settings, bool> _f$vramEstimatorEnabledModsOnly = Field(
+    'vramEstimatorEnabledModsOnly',
+    _$vramEstimatorEnabledModsOnly,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<Settings> fields = const {
@@ -1201,6 +1218,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #catalogBrowserPanelOpen: _f$catalogBrowserPanelOpen,
     #catalogBrowserPanelWidth: _f$catalogBrowserPanelWidth,
     #catalogCardClickAction: _f$catalogCardClickAction,
+    #catalogAiSummaryMode: _f$catalogAiSummaryMode,
     #catalogMinItemWidth: _f$catalogMinItemWidth,
     #catalogCardSpacing: _f$catalogCardSpacing,
     #catalogPageState: _f$catalogPageState,
@@ -1229,6 +1247,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #vramEstimatorSelectorId: _f$vramEstimatorSelectorId,
     #referencedAssetsSelectorConfig: _f$referencedAssetsSelectorConfig,
     #vramEstimatorMultithreaded: _f$vramEstimatorMultithreaded,
+    #vramEstimatorEnabledModsOnly: _f$vramEstimatorEnabledModsOnly,
   };
   @override
   final bool ignoreNull = true;
@@ -1312,6 +1331,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       catalogBrowserPanelOpen: data.dec(_f$catalogBrowserPanelOpen),
       catalogBrowserPanelWidth: data.dec(_f$catalogBrowserPanelWidth),
       catalogCardClickAction: data.dec(_f$catalogCardClickAction),
+      catalogAiSummaryMode: data.dec(_f$catalogAiSummaryMode),
       catalogMinItemWidth: data.dec(_f$catalogMinItemWidth),
       catalogCardSpacing: data.dec(_f$catalogCardSpacing),
       catalogPageState: data.dec(_f$catalogPageState),
@@ -1342,6 +1362,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         _f$referencedAssetsSelectorConfig,
       ),
       vramEstimatorMultithreaded: data.dec(_f$vramEstimatorMultithreaded),
+      vramEstimatorEnabledModsOnly: data.dec(_f$vramEstimatorEnabledModsOnly),
     );
   }
 
@@ -1550,6 +1571,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? catalogBrowserPanelOpen,
     double? catalogBrowserPanelWidth,
     CatalogCardClickAction? catalogCardClickAction,
+    AiSummaryMode? catalogAiSummaryMode,
     double? catalogMinItemWidth,
     double? catalogCardSpacing,
     CatalogPageStatePersisted? catalogPageState,
@@ -1578,6 +1600,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
+    bool? vramEstimatorEnabledModsOnly,
   });
   SettingsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -1826,6 +1849,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? catalogBrowserPanelOpen,
     Object? catalogBrowserPanelWidth = $none,
     CatalogCardClickAction? catalogCardClickAction,
+    AiSummaryMode? catalogAiSummaryMode,
     double? catalogMinItemWidth,
     double? catalogCardSpacing,
     Object? catalogPageState = $none,
@@ -1854,6 +1878,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     VramSelectorId? vramEstimatorSelectorId,
     ReferencedAssetsSelectorConfig? referencedAssetsSelectorConfig,
     bool? vramEstimatorMultithreaded,
+    bool? vramEstimatorEnabledModsOnly,
   }) => $apply(
     FieldCopyWithData({
       if (gameDir != $none) #gameDir: gameDir,
@@ -1953,6 +1978,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         #catalogBrowserPanelWidth: catalogBrowserPanelWidth,
       if (catalogCardClickAction != null)
         #catalogCardClickAction: catalogCardClickAction,
+      if (catalogAiSummaryMode != null)
+        #catalogAiSummaryMode: catalogAiSummaryMode,
       if (catalogMinItemWidth != null)
         #catalogMinItemWidth: catalogMinItemWidth,
       if (catalogCardSpacing != null) #catalogCardSpacing: catalogCardSpacing,
@@ -1996,6 +2023,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         #referencedAssetsSelectorConfig: referencedAssetsSelectorConfig,
       if (vramEstimatorMultithreaded != null)
         #vramEstimatorMultithreaded: vramEstimatorMultithreaded,
+      if (vramEstimatorEnabledModsOnly != null)
+        #vramEstimatorEnabledModsOnly: vramEstimatorEnabledModsOnly,
     }),
   );
   @override
@@ -2193,6 +2222,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       #catalogCardClickAction,
       or: $value.catalogCardClickAction,
     ),
+    catalogAiSummaryMode: data.get(
+      #catalogAiSummaryMode,
+      or: $value.catalogAiSummaryMode,
+    ),
     catalogMinItemWidth: data.get(
       #catalogMinItemWidth,
       or: $value.catalogMinItemWidth,
@@ -2295,6 +2328,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     vramEstimatorMultithreaded: data.get(
       #vramEstimatorMultithreaded,
       or: $value.vramEstimatorMultithreaded,
+    ),
+    vramEstimatorEnabledModsOnly: data.get(
+      #vramEstimatorEnabledModsOnly,
+      or: $value.vramEstimatorEnabledModsOnly,
     ),
   );
 

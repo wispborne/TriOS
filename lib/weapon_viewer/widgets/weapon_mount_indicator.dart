@@ -16,7 +16,15 @@ class WeaponMountIndicator extends StatelessWidget {
   final Weapon weapon;
   final double size;
 
-  const WeaponMountIndicator({super.key, required this.weapon, this.size = 80});
+  /// Whether an enclosing row/card is hovered; reveals the weapon glow.
+  final bool rowHovered;
+
+  const WeaponMountIndicator({
+    super.key,
+    required this.weapon,
+    this.size = 80,
+    this.rowHovered = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +51,7 @@ class WeaponMountIndicator extends StatelessWidget {
                 weapon: weapon,
                 fit: BoxFit.contain,
                 size: size * 0.7,
+                rowHovered: rowHovered,
               ),
             ),
         ],

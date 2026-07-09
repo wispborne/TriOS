@@ -11,11 +11,11 @@ All-in-one Starsector launcher, mod manager, and toolkit. Flutter desktop app �
 - Do not use jargon.
 - Do not use Opus 4.7. If you are using Opus 4.7, switch to Opus 4.6 instead.
 - Use the `idea` connector when available.
-- Avoid Powershell when possible. Allow the user to verify changes manully; don't run the app yourself.
+- Avoid Powershell when possible. Allow the user to verify changes manually; don't run the app yourself.
 
 ## Common Commands
 
-Note: I use `fvm`. Try using that first. 
+Note: I use `fvm` (Flutter pinned to the version in `.fvmrc`). Prefix commands with it first — `fvm flutter test`, `fvm dart run ...` — and fall back to plain `flutter`/`dart` if `fvm` isn't available.
 
 Run all tests:
 
@@ -46,6 +46,14 @@ dart run build_runner watch --delete-conflicting-outputs
 ```
 
 The Linux build needs `libcurl4-openssl-dev` installed (for Sentry). Don't use the Snap version of Flutter on Linux — install manually so it picks up system libs. Windows builds need the InAppWebView Windows setup (see https://inappwebview.dev/docs/intro/#setup-windows).
+
+## OpenSpec Workflow
+
+Feature work is planned with OpenSpec, under `openspec/`:
+
+- `openspec/specs/<capability>/spec.md` — docs for completed, shipped capabilities.
+- `openspec/changes/<change-id>/` — in-flight changes, each with `proposal.md`, `design.md`, and `tasks.md`. Finished changes move to `openspec/changes/archive/`.
+- Use the `/opsx:*` skills (propose, apply, archive, explore) to work with changes. Check the relevant change folder before implementing a feature that already has one.
 
 ## Architecture
 

@@ -15,6 +15,7 @@ class ForumModIndexMapper extends ClassMapperBase<ForumModIndex> {
   static ForumModIndexMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ForumModIndexMapper._());
+      ForumLlmDataMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -108,6 +109,13 @@ class ForumModIndexMapper extends ClassMapperBase<ForumModIndex> {
     _$sourceBoard,
     opt: true,
   );
+  static ForumLlmData? _$llm(ForumModIndex v) => v.llm;
+  static const Field<ForumModIndex, ForumLlmData> _f$llm = Field(
+    'llm',
+    _$llm,
+    opt: true,
+    hook: ForumLlmDataHook(),
+  );
 
   @override
   final MappableFields<ForumModIndex> fields = const {
@@ -128,6 +136,7 @@ class ForumModIndexMapper extends ClassMapperBase<ForumModIndex> {
     #scrapedAt: _f$scrapedAt,
     #isWip: _f$isWip,
     #sourceBoard: _f$sourceBoard,
+    #llm: _f$llm,
   };
 
   static ForumModIndex _instantiate(DecodingData data) {
@@ -149,6 +158,7 @@ class ForumModIndexMapper extends ClassMapperBase<ForumModIndex> {
       scrapedAt: data.dec(_f$scrapedAt),
       isWip: data.dec(_f$isWip),
       sourceBoard: data.dec(_f$sourceBoard),
+      llm: data.dec(_f$llm),
     );
   }
 
@@ -214,6 +224,7 @@ extension ForumModIndexValueCopy<$R, $Out>
 
 abstract class ForumModIndexCopyWith<$R, $In extends ForumModIndex, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ForumLlmDataCopyWith<$R, ForumLlmData, ForumLlmData>? get llm;
   $R call({
     int? topicId,
     String? title,
@@ -232,6 +243,7 @@ abstract class ForumModIndexCopyWith<$R, $In extends ForumModIndex, $Out>
     DateTime? scrapedAt,
     bool? isWip,
     int? sourceBoard,
+    ForumLlmData? llm,
   });
   ForumModIndexCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -244,6 +256,9 @@ class _ForumModIndexCopyWithImpl<$R, $Out>
   @override
   late final ClassMapperBase<ForumModIndex> $mapper =
       ForumModIndexMapper.ensureInitialized();
+  @override
+  ForumLlmDataCopyWith<$R, ForumLlmData, ForumLlmData>? get llm =>
+      $value.llm?.copyWith.$chain((v) => call(llm: v));
   @override
   $R call({
     int? topicId,
@@ -263,6 +278,7 @@ class _ForumModIndexCopyWithImpl<$R, $Out>
     Object? scrapedAt = $none,
     bool? isWip,
     Object? sourceBoard = $none,
+    Object? llm = $none,
   }) => $apply(
     FieldCopyWithData({
       if (topicId != null) #topicId: topicId,
@@ -282,6 +298,7 @@ class _ForumModIndexCopyWithImpl<$R, $Out>
       if (scrapedAt != $none) #scrapedAt: scrapedAt,
       if (isWip != null) #isWip: isWip,
       if (sourceBoard != $none) #sourceBoard: sourceBoard,
+      if (llm != $none) #llm: llm,
     }),
   );
   @override
@@ -306,6 +323,7 @@ class _ForumModIndexCopyWithImpl<$R, $Out>
     scrapedAt: data.get(#scrapedAt, or: $value.scrapedAt),
     isWip: data.get(#isWip, or: $value.isWip),
     sourceBoard: data.get(#sourceBoard, or: $value.sourceBoard),
+    llm: data.get(#llm, or: $value.llm),
   );
 
   @override

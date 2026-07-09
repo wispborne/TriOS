@@ -38,13 +38,7 @@ Widget codexEntryTooltip({
     case HullmodCodexEntry(:final hullmod):
       return HullmodCodexCard.tooltip(hullmod: hullmod, child: child);
     case ShipSystemCodexEntry(:final system):
-      return _framed(
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
-          child: ShipSystemCodexCard.create(system: system),
-        ),
-        child,
-      );
+      return ShipSystemCodexCard.tooltip(system: system, child: child);
     case WingCodexEntry(:final wing, :final shipName):
       return _framed(
         ConstrainedBox(

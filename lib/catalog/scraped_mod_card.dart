@@ -8,11 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
-import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
+import 'package:trios/catalog/forum_post_dialog/scraped_mod_details_dialog.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
+import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
@@ -42,6 +43,10 @@ class ScrapedModCard extends ConsumerStatefulWidget {
   final VersionCheckComparison? versionCheckComparison;
   final ForumModIndex? forumModIndex;
 
+  /// Whether the app's built-in browser panel is usable on this platform.
+  /// Gates the "Open in the built-in browser" actions.
+  final bool canUseEmbeddedBrowser;
+
   const ScrapedModCard({
     super.key,
     required this.mod,
@@ -50,6 +55,7 @@ class ScrapedModCard extends ConsumerStatefulWidget {
     this.installedMod,
     this.versionCheckComparison,
     this.forumModIndex,
+    this.canUseEmbeddedBrowser = true,
   });
 
   @override
@@ -57,6 +63,22 @@ class ScrapedModCard extends ConsumerStatefulWidget {
 }
 
 class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
+  /// The LLM mod this card represents. For a synthesized "part of a thread"
+  /// entry, that's the specific bundled mod (matched by name); otherwise it's
+  /// the thread's main mod. Drives which downloads the install button offers.
+  ForumLlmMod? get _targetLlmMod {
+    final llm = widget.forumModIndex?.llm;
+    if (llm == null) return null;
+    if (widget.mod.isPartOfThread) {
+      final key = widget.mod.name.toLowerCase().trim();
+      return llm.mods.firstWhereOrNull(
+            (m) => m.name.toLowerCase().trim() == key,
+          ) ??
+          llm.mainMod;
+    }
+    return llm.mainMod;
+  }
+
   Color _statusBarColor(ThemeData theme) {
     final mod = widget.installedMod;
     if (mod == null) return Colors.transparent;
@@ -73,11 +95,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   @override
   Widget build(BuildContext context) {
     final mod = widget.mod;
-    final urls = mod.urls;
-    final downloadCandidates = resolveDownloadCandidates(
-      mod,
-      widget.forumModIndex?.llm?.mainMod,
-    );
+    final downloadCandidates = resolveDownloadCandidates(mod, _targetLlmMod);
 
     final theme = Theme.of(context);
     return Builder(
@@ -89,10 +107,16 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
             : ref.watch(forumDetailsForTopic(topicId));
         final hasForumDetails =
             forumDetails != null && !forumDetails.isPlaceholderDetail;
-        final hasClickableLink =
+        // Clicking any card opens a details dialog: the forum post when it's
+        // cached, otherwise a fallback built from scraped data. Only skip when
+        // there's genuinely nothing to show.
+        final hasDetailsToShow =
             hasForumDetails ||
-            websiteUrl != null ||
-            urls?.containsKey(ModUrlType.DirectDownload) == true;
+            widget.forumModIndex != null ||
+            (mod.description?.isNotEmpty ?? false) ||
+            (mod.summary?.isNotEmpty ?? false) ||
+            (mod.images?.isNotEmpty ?? false) ||
+            downloadCandidates.isNotEmpty;
 
         return ContextMenuRegion(
           contextMenu: ContextMenu(
@@ -149,6 +173,21 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                 ),
                 const MenuDivider(),
               ],
+              if (websiteUrl != null && websiteUrl.isNotEmpty) ...[
+                const MenuHeader(text: 'Open'),
+                MenuItem(
+                  label: 'Open in your web browser',
+                  leading: const Icon(Icons.public, size: 16),
+                  onSelected: () => websiteUrl.openAsUriInBrowser(),
+                ),
+                if (widget.canUseEmbeddedBrowser)
+                  MenuItem(
+                    label: 'Open in the built-in browser',
+                    leading: const Icon(Icons.web, size: 16),
+                    onSelected: () => widget.linkLoader(websiteUrl),
+                  ),
+                const MenuDivider(),
+              ],
               if (widget.installedMod != null) ...[
                 const MenuHeader(text: 'Installed Mod'),
                 if (widget.installedMod!.isEnabledInGame)
@@ -187,31 +226,9 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
               ),
             ),
             child: ConditionalWrap(
-              condition: hasClickableLink,
+              condition: hasDetailsToShow,
               wrapper: (child) => InkWell(
-                onTap: () {
-                  if (hasForumDetails) {
-                    showForumPostDialog(
-                      context,
-                      details: forumDetails,
-                      index: widget.forumModIndex,
-                      linkLoader: widget.linkLoader,
-                    );
-                    return;
-                  }
-                  if (urls == null) {
-                    return;
-                  }
-                  if (websiteUrl != null) {
-                    widget.linkLoader(websiteUrl);
-                  } else if (urls.containsKey(ModUrlType.DirectDownload)) {
-                    _showDirectDownloadDialog(
-                      context,
-                      mod.name,
-                      urls[ModUrlType.DirectDownload]!,
-                    );
-                  }
-                },
+                onTap: () => _openDetailsDialog(context, forumDetails),
                 child: child,
               ),
               child: Stack(
@@ -272,6 +289,40 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                                     ),
                                     maxLines: 1,
                                     overflow: .ellipsis,
+                                  ),
+                                if (mod.isPartOfThread)
+                                  MovingTooltipWidget.text(
+                                    message:
+                                        'Part of the "${mod.partOfThreadTitle}" '
+                                        'forum thread.\nClick the card to see '
+                                        'the whole thread.',
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      spacing: 3,
+                                      children: [
+                                        Icon(
+                                          Icons.layers,
+                                          size: 11,
+                                          color: theme
+                                              .textTheme
+                                              .labelSmall
+                                              ?.color
+                                              ?.withValues(alpha: 0.6),
+                                        ),
+                                        Flexible(
+                                          child: Text(
+                                            'part of ${mod.partOfThreadTitle}',
+                                            style: theme.textTheme.labelSmall
+                                                ?.copyWith(
+                                                  fontSize: 10,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 Expanded(
                                   child: Padding(
@@ -340,7 +391,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                       installedMod: widget.installedMod,
                       versionCheckComparison: widget.versionCheckComparison,
                       linkLoader: widget.linkLoader,
-                      llmMainMod: widget.forumModIndex?.llm?.mainMod,
+                      llmMainMod: _targetLlmMod,
                     ),
                   ),
                 ],
@@ -358,7 +409,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     ScrapedMod mod,
   ) {
     final authorText = mod.summary ?? mod.description;
-    final aiSummary = widget.forumModIndex?.llm?.mainMod?.extras?.summary;
+    final aiSummary = _targetLlmMod?.extras?.summary;
     final aiSummaryMode = ref.watch(
       appSettings.select((s) => s.catalogAiSummaryMode),
     );
@@ -479,6 +530,28 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     // );
   }
 
+  /// Open the mod's details dialog: the cached forum post when available,
+  /// otherwise the fallback dialog built from scraped data.
+  void _openDetailsDialog(BuildContext context, ForumModDetails? forumDetails) {
+    if (forumDetails != null && !forumDetails.isPlaceholderDetail) {
+      showForumPostDialog(
+        context,
+        details: forumDetails,
+        index: widget.forumModIndex,
+        linkLoader: widget.linkLoader,
+        canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
+      );
+    } else {
+      showScrapedModDetailsDialog(
+        context,
+        mod: widget.mod,
+        index: widget.forumModIndex,
+        linkLoader: widget.linkLoader,
+        canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
+      );
+    }
+  }
+
   /// Enable or disable the installed mod. Moved off the primary card button
   /// so the button stays a pure Install/Update/Installed status.
   void _setModEnabled(bool enabled) {
@@ -567,20 +640,6 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     );
   }
 
-  void _showDirectDownloadDialog(
-    BuildContext context,
-    String modName,
-    String downloadUrl,
-  ) {
-    confirmAndDownloadMod(
-      context,
-      modName: modName,
-      downloadUrl: downloadUrl,
-      skipDialog: true,
-      onConfirm: () => widget.linkLoader(downloadUrl),
-    );
-  }
-
   void _showDescriptionDialog(
     BuildContext context,
     String modName,
@@ -629,11 +688,6 @@ class _ScrapedModGameVersionReq extends ConsumerWidget {
       mod.gameVersionReq,
       installedVersion,
     );
-    final Color accent = switch (match) {
-      true => theme.statusColors.success,
-      false => theme.statusColors.warning,
-      null => theme.textTheme.labelLarge?.color ?? theme.colorScheme.onSurface,
-    };
 
     final tooltip = StringBuffer(
       'Game version required: ${mod.gameVersionReq}',
@@ -649,11 +703,11 @@ class _ScrapedModGameVersionReq extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           decoration: BoxDecoration(
-            color: theme.cardColor.withValues(alpha: 0.9),
+            // Only a known mismatch (false) warns; unknown (null) stays neutral.
+            color: match != false
+                ? theme.cardColor.withValues(alpha: 0.9)
+                : theme.statusColors.warning.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(4),
-            border: match == null
-                ? null
-                : Border.all(color: accent.withValues(alpha: 0.0), width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

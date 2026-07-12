@@ -25,6 +25,12 @@ class ScrapedMod with ScrapedModMappable {
   final DateTime? dateTimeCreated;
   final DateTime? dateTimeEdited;
 
+  /// Set only on synthesized entries: a mod that lives inside another mod's
+  /// forum thread (e.g. an add-on) gets its own card, marked "part of <this
+  /// thread title>". Null for real catalog entries. Built at runtime, so it's
+  /// absent from the scraped data and never round-trips through it.
+  final String? partOfThreadTitle;
+
   ScrapedMod({
     required this.name,
     this.summary,
@@ -38,7 +44,12 @@ class ScrapedMod with ScrapedModMappable {
     this.images,
     this.dateTimeCreated,
     this.dateTimeEdited,
+    this.partOfThreadTitle,
   });
+
+  /// True when this is a synthesized entry for a mod bundled in another mod's
+  /// forum thread.
+  bool get isPartOfThread => partOfThreadTitle != null;
 
   List<String> getAuthors() => authorsList ?? [];
 

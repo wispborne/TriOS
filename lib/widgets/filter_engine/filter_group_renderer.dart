@@ -185,8 +185,17 @@ class _CompositeCard<T> extends StatelessWidget {
   Widget _renderField(BuildContext context, FilterField<T> field) {
     final theme = Theme.of(context);
     if (field is BoolField<T>) {
+      final count = field.badgeCount?.call() ?? 0;
       final tile = CheckboxListTile(
-        title: Text(field.label),
+        title: count > 0
+            ? Row(
+                children: [
+                  Flexible(child: Text(field.label)),
+                  const SizedBox(width: 6),
+                  _CountBadge(count: count),
+                ],
+              )
+            : Text(field.label),
         dense: true,
         visualDensity: VisualDensity.compact,
         contentPadding: const EdgeInsets.only(left: 8),
@@ -267,5 +276,35 @@ class _CompositeCard<T> extends StatelessWidget {
       return dropdown;
     }
     return const SizedBox.shrink();
+  }
+}
+
+/// Small circular count badge with the theme's primary color, shown next to a
+/// [BoolField] that supplies a live [BoolField.badgeCount].
+class _CountBadge extends StatelessWidget {
+  final int count;
+
+  const _CountBadge({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        shape: count > 9 ? BoxShape.rectangle : BoxShape.circle,
+        borderRadius: count > 9 ? BorderRadius.circular(10) : null,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$count',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }

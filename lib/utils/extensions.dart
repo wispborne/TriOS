@@ -70,6 +70,11 @@ extension StringExt on String {
 
   File toFile() => File(this);
 
+  /// Strips all non-alphanumeric characters and lowercases, for fuzzy name
+  /// matching (e.g. "Box Util" → "boxutil", "zz BoxUtil" → "zzboxutil").
+  String alphanumericLower() =>
+      toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
   String take(int n) => length < n ? this : substring(0, n);
 
   String takeLast(int n) => length < n ? this : substring(length - n);

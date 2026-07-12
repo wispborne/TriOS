@@ -103,6 +103,17 @@ class _ModInstallSelectionDialogState<T>
 
   String _smolIdAt(int index) => widget.choices[index].modInfo.modInfo.smolId;
 
+  /// Choice indices grouped by smolId, in first-appearance order. A group with
+  /// more than one entry is a set of mutually exclusive picks (same mod and
+  /// version) where only one may be installed.
+  List<List<int>> get _choiceGroups {
+    final bySmolId = <String, List<int>>{};
+    for (var i = 0; i < widget.choices.length; i++) {
+      bySmolId.putIfAbsent(_smolIdAt(i), () => []).add(i);
+    }
+    return bySmolId.values.toList();
+  }
+
   void _toggle(int index, bool selected) {
     setState(() {
       if (selected) {
@@ -147,13 +158,6 @@ class _ModInstallSelectionDialogState<T>
     });
   }
 
-  bool get _hasDuplicateSmolIds {
-    final ids = widget.choices.map(_smolIdForChoice).toSet();
-    return ids.length != widget.choices.length;
-  }
-
-  String _smolIdForChoice(ModInstallChoice<T> c) => c.modInfo.modInfo.smolId;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -162,11 +166,12 @@ class _ModInstallSelectionDialogState<T>
 
     // When nothing could be read there's nothing to "install N of M" — title it
     // as the error it is instead of "Install 0 of 0 mods".
-    final defaultTitle = widget.choices.isEmpty && widget.invalidItems.isNotEmpty
+    final defaultTitle =
+        widget.choices.isEmpty && widget.invalidItems.isNotEmpty
         ? (widget.invalidItems.length == 1
               ? "Couldn't install this file"
               : "Couldn't install these files")
-        : "Install $selectedCount of ${widget.choices.length} mods";
+        : "Install $selectedCount of ${_choiceGroups.length} mods";
 
     return AlertDialog(
       title: Text(widget.title ?? defaultTitle),
@@ -186,34 +191,11 @@ class _ModInstallSelectionDialogState<T>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (var i = 0; i < widget.choices.length; i++)
-                      Builder(
-                        builder: (context) {
-                          final isSelected = _selected.contains(i);
-
-                          return Card.outlined(
-                            shape: RoundedRectangleBorder(
-                              side: BorderSide(
-                                color: isSelected
-                                    ? theme.colorScheme.primary.withAlpha(200)
-                                    : Colors.transparent,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: _buildChoiceTile(i, theme),
-                          );
-                        },
-                      ),
-                    if (_hasDuplicateSmolIds)
-                      Padding(
-                        padding: .only(top: 4),
-                        child: Text(
-                          "Multiple mods have the same id and version. Only one of those may be selected.",
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: TriOSThemeConstants.vanillaWarningColor,
-                          ),
-                        ),
-                      ),
+                    for (final group in _choiceGroups)
+                      if (group.length > 1)
+                        _buildExclusiveGroup(group, theme)
+                      else
+                        _buildChoiceCard(group.first, theme),
                     if (widget.invalidItems.isNotEmpty) ...[
                       // Only separate from the list above when there is one;
                       // on its own the divider would just float.
@@ -273,6 +255,50 @@ class _ModInstallSelectionDialogState<T>
           ),
         ),
       ],
+    );
+  }
+
+  /// A single choice as a selectable, outlined card.
+  Widget _buildChoiceCard(int index, ThemeData theme) {
+    final isSelected = _selected.contains(index);
+    return Card.outlined(
+      shape: RoundedRectangleBorder(
+        side: BorderSide(
+          color: isSelected
+              ? theme.colorScheme.primary.withAlpha(200)
+              : Colors.transparent,
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: _buildChoiceTile(index, theme),
+    );
+  }
+
+  /// A set of mutually exclusive choices (same mod and version) boxed together
+  /// with a "pick one" heading, so it's clear only one can be installed.
+  Widget _buildExclusiveGroup(List<int> indices, ThemeData theme) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 2),
+            child: Text(
+              "These mods all have the same id and version, so only one may be selected.",
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          for (final i in indices) _buildChoiceCard(i, theme),
+        ],
+      ),
     );
   }
 

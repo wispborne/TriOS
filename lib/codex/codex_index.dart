@@ -11,7 +11,9 @@ import 'package:trios/fighter_viewer/wings_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
 import 'package:trios/ship_systems_manager/ship_systems_manager.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
+import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
@@ -40,12 +42,18 @@ class CodexStandingFilters {
   /// When false, ship systems tagged `hide_in_codex` are not listed.
   final bool showHiddenShipSystems;
 
+  /// When false, station modules (the child hulls docked in a station's module
+  /// slots) are not listed as their own ship entries. They stay in the index as
+  /// link targets regardless, so a station still shows them as related.
+  final bool showModulesAsShips;
+
   const CodexStandingFilters({
     this.spoilerLevel = SpoilerLevel.showNone,
     this.modId,
     this.showHidden = false,
     this.showHiddenHullmods = false,
     this.showHiddenShipSystems = false,
+    this.showModulesAsShips = false,
   });
 
   CodexStandingFilters copyWith({
@@ -55,6 +63,7 @@ class CodexStandingFilters {
     bool? showHidden,
     bool? showHiddenHullmods,
     bool? showHiddenShipSystems,
+    bool? showModulesAsShips,
   }) {
     return CodexStandingFilters(
       spoilerLevel: spoilerLevel ?? this.spoilerLevel,
@@ -63,6 +72,7 @@ class CodexStandingFilters {
       showHiddenHullmods: showHiddenHullmods ?? this.showHiddenHullmods,
       showHiddenShipSystems:
           showHiddenShipSystems ?? this.showHiddenShipSystems,
+      showModulesAsShips: showModulesAsShips ?? this.showModulesAsShips,
     );
   }
 }
@@ -85,6 +95,9 @@ class CodexStandingFiltersNotifier extends Notifier<CodexStandingFilters> {
 
   void setShowHiddenShipSystems(bool show) =>
       state = state.copyWith(showHiddenShipSystems: show);
+
+  void setShowModulesAsShips(bool show) =>
+      state = state.copyWith(showModulesAsShips: show);
 }
 
 final codexStandingFiltersProvider =
@@ -102,7 +115,8 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
       ref.watch(hullmodListNotifierProvider).valueOrNull ?? const [];
   final factions =
       ref.watch(factionListNotifierProvider).valueOrNull ?? const [];
-  final systems = ref.watch(shipSystemListNotifierProvider).valueOrNull ?? const [];
+  final systems =
+      ref.watch(shipSystemListNotifierProvider).valueOrNull ?? const [];
   final wings = ref.watch(wingListNotifierProvider).valueOrNull ?? const [];
   // Watch the descriptions map once and look up directly — one family watch
   // per ship system is far too slow (each watch walks the element ancestors).
@@ -146,10 +160,35 @@ final codexCategoryLoadingProvider = Provider.family<bool, CodexEntryType>((
     CodexEntryType.station => ref.watch(shipListNotifierProvider).isLoading,
     CodexEntryType.weapon => ref.watch(weaponListNotifierProvider).isLoading,
     CodexEntryType.hullmod => ref.watch(hullmodListNotifierProvider).isLoading,
-    CodexEntryType.shipSystem => ref.watch(shipSystemListNotifierProvider).isLoading,
+    CodexEntryType.shipSystem =>
+      ref.watch(shipSystemListNotifierProvider).isLoading,
     CodexEntryType.wing => ref.watch(wingListNotifierProvider).isLoading,
     CodexEntryType.faction => ref.watch(factionListNotifierProvider).isLoading,
   };
+});
+
+/// Hull ids that are station modules — the child hulls docked in some station's
+/// module slots. Kept in its own provider so it only recomputes when the ships
+/// or module data change, not on every spoiler/mod-filter tweak.
+final _codexModuleShipIdsProvider = Provider<Set<String>>((ref) {
+  final ships = ref.watch(shipListNotifierProvider).valueOrNull ?? const [];
+  final moduleVariants = ref.watch(moduleVariantsProvider);
+  final variantHullIdMap = ref.watch(variantHullIdMapProvider);
+  if (ships.isEmpty || moduleVariants.isEmpty) return const {};
+
+  final shipById = <String, Ship>{for (final s in ships) s.id: s};
+  final moduleIds = <String>{};
+  for (final ship in ships) {
+    for (final module in resolveModulesWithIndex(
+      ship,
+      shipById,
+      moduleVariants,
+      variantHullIdMap,
+    )) {
+      moduleIds.add(module.moduleShip.id);
+    }
+  }
+  return moduleIds;
 });
 
 /// One pass over the raw index producing the visible, listed, and
@@ -182,6 +221,8 @@ final _codexFilteredIndexProvider =
                 .toSet()
           : const <String>{};
 
+      final moduleShipIds = ref.watch(_codexModuleShipIdsProvider);
+
       // Ships by id, so a wing can borrow its ship's spoiler result. HashMap:
       // built fresh on every data refresh, and insertion order is never used.
       final shipsById = HashMap<String, ShipCodexEntry>();
@@ -196,6 +237,16 @@ final _codexFilteredIndexProvider =
         // Cheap filters first; the spoiler check walks tag lists.
         if (!_matchesMod(e, filters.modId)) continue;
         if (!_matchesEnabledMods(e, onlyEnabledMods, enabledModIds)) continue;
+
+        // Station modules always stay in the visible index so a station's
+        // related panel can resolve them, but they're only listed when "Show
+        // modules as ships" is on, and never appear as locked placeholders.
+        if (e is ShipCodexEntry && moduleShipIds.contains(e.ship.id)) {
+          visible.add(e);
+          if (filters.showModulesAsShips) listed.add(e);
+          continue;
+        }
+
         if (_matchesSpoiler(e, filters.spoilerLevel, shipsById)) {
           visible.add(e);
           if (isCodexEntryListed(e, filters)) listed.add(e);
@@ -233,10 +284,7 @@ final codexSpoilerLockedIndexProvider = Provider<List<CodexEntry>>(
 /// a link target).
 bool isCodexEntryListed(CodexEntry entry, CodexStandingFilters filters) {
   return switch (entry) {
-    ShipCodexEntry(:final ship) =>
-      ship.hullSize?.toLowerCase() != 'fighter' &&
-          !(ship.hints?.any((h) => h.toLowerCase() == 'hide_in_codex') ??
-              false),
+    ShipCodexEntry(:final ship) => ship.hullSize?.toLowerCase() != 'fighter',
     WeaponCodexEntry(:final weapon) => filters.showHidden || !weapon.isHidden(),
     HullmodCodexEntry(:final hullmod) =>
       filters.showHiddenHullmods ||
@@ -278,11 +326,12 @@ bool _matchesSpoiler(
 
   switch (entry) {
     case ShipCodexEntry(:final ship):
-      // `hide_in_codex` is a listing filter, not a spoiler (handled in
-      // [isCodexEntryListed]). Matching on spoiler tags alone keeps hidden
-      // hulls — like station modules — in the visible index so they still
-      // resolve as related-entry link targets, matching the in-game codex.
-      return tagsMatchShipSpoilerLevel(ship.tags ?? const [], level);
+      // Treat the `hide_in_codex` hint as a spoiler, the same as the Ship
+      // Viewer and the wing case below: "Show all spoilers" reveals these
+      // ships, and lower levels leave them as anonymous "Locked entry"
+      // placeholders. Station modules use the tag instead of the hint, so
+      // they keep passing here and stay in the visible index as link targets.
+      return shipMatchesSpoilerLevel(ship, level);
     case WeaponCodexEntry(:final weapon):
       return weaponMatchesSpoilerLevel(
         weapon,

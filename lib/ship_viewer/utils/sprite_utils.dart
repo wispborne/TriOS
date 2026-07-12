@@ -44,16 +44,35 @@ Rect rotatedBounds(
   return Rect.fromLTRB(minX, minY, maxX, maxY);
 }
 
+/// Read and decode an image file's first frame.
+///
+/// Returns `null` if the file is missing or can't be decoded.
+Future<ui.Image?> decodeImageFile(String path) async {
+  try {
+    final file = File(path);
+    if (!await file.exists()) return null;
+    final codec = await ui.instantiateImageCodec(await file.readAsBytes());
+    return (await codec.getNextFrame()).image;
+  } catch (_) {
+    return null;
+  }
+}
+
 Future<ui.Size?> loadImageSize(String? path) async {
   if (path == null) return null;
-  final file = File(path);
-  if (!file.existsSync()) return null;
+  final image = await decodeImageFile(path);
+  if (image == null) return null;
+  return ui.Size(image.width.toDouble(), image.height.toDouble());
+}
 
-  final bytes = await file.readAsBytes();
-  final codec = await ui.instantiateImageCodec(bytes);
-  final frame = await codec.getNextFrame();
-  return ui.Size(
-    frame.image.width.toDouble(),
-    frame.image.height.toDouble(),
-  );
+/// Decoded-image cache for sprite overlays (e.g. built-in weapons on the
+/// ship blueprint), keyed by file path. Never evicted; weapon sprites are
+/// small and shared across ships.
+final Map<String, Future<ui.Image?>> _decodedImageCache = {};
+
+/// Load and decode an image file, cached by path.
+///
+/// Returns `null` if the file doesn't exist or can't be decoded.
+Future<ui.Image?> loadDecodedImage(String path) {
+  return _decodedImageCache.putIfAbsent(path, () => decodeImageFile(path));
 }

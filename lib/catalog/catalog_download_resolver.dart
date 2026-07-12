@@ -1,4 +1,6 @@
+import 'package:trios/catalog/models/forum_link.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
+import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 
 /// Where a download candidate came from, in priority order (lower index wins).
@@ -184,4 +186,129 @@ int _confidenceRank(LlmDownloadConfidence? confidence) => switch (confidence) {
 String? _hostOf(String url) {
   final host = Uri.tryParse(url)?.host;
   return (host == null || host.isEmpty) ? null : host;
+}
+
+/// One mod's required mod (e.g. "LazyLib") and whether it's already installed.
+class DependencyStatus {
+  final String name;
+  final bool installed;
+
+  const DependencyStatus({required this.name, required this.installed});
+}
+
+/// One row in the details dialog's Downloads section: a mod (the topic's main
+/// mod, an add-on, a separate mod, or the unnamed scraped fallback) with its
+/// own download candidates and — for the main mod — its dependencies.
+class DownloadGroup {
+  /// The mod's name, or null for the unnamed scraped fallback (a topic with
+  /// no LLM data, where links come straight from the post).
+  final String? modName;
+  final LlmModRole role;
+  final List<DownloadCandidate> candidates;
+
+  /// True when the best download is a TriOS deep link, which installs the
+  /// mod's dependencies for you.
+  final bool installsDependencies;
+
+  /// The main mod's dependencies. Empty for non-main rows.
+  final List<DependencyStatus> dependencies;
+
+  const DownloadGroup({
+    required this.modName,
+    required this.role,
+    required this.candidates,
+    required this.installsDependencies,
+    this.dependencies = const [],
+  });
+}
+
+/// Builds the per-mod download rows for the details dialog.
+///
+/// When the topic has LLM data, each [ForumLlmMod] becomes a row (ordered
+/// main → add-on → separate → unknown). Otherwise a single unnamed row is
+/// built from the scraped post links ([scrapedLinks]) or, when the dialog has
+/// no forum post at all, from the scraped mod itself ([scrapedMod]).
+///
+/// [isInstalled] answers whether a dependency mod name is already installed.
+List<DownloadGroup> buildDownloadGroups({
+  ForumModIndex? index,
+  List<ForumLink>? scrapedLinks,
+  ScrapedMod? scrapedMod,
+  required bool Function(String name) isInstalled,
+}) {
+  final mods = index?.llm?.mods ?? const <ForumLlmMod>[];
+  if (mods.isNotEmpty) {
+    final ordered = [...mods]
+      ..sort((a, b) => a.role.index.compareTo(b.role.index));
+    // Skip mods the thread only mentions but has no download for; a group with
+    // no candidates would crash the download button (candidates.first).
+    return [
+      for (final mod in ordered)
+        if (mod.downloads.isNotEmpty) _groupForLlmMod(mod, isInstalled),
+    ];
+  }
+
+  // No LLM data: a single unnamed group from the scraped links or mod.
+  final candidates = <DownloadCandidate>[];
+  if (scrapedLinks != null) {
+    for (final link in scrapedLinks) {
+      if (!link.isDownloadable) continue;
+      candidates.add(
+        DownloadCandidate(
+          url: link.url,
+          label: _scrapedLinkLabel(link),
+          kind: DownloadCandidateKind.forumDirect,
+          sourceHost: _hostOf(link.url),
+        ),
+      );
+    }
+  } else if (scrapedMod != null) {
+    candidates.addAll(resolveDownloadCandidates(scrapedMod, null));
+  }
+
+  if (candidates.isEmpty) return const [];
+  return [
+    DownloadGroup(
+      modName: null,
+      role: LlmModRole.unknown,
+      candidates: candidates,
+      installsDependencies:
+          primaryCandidate(candidates)?.kind ==
+          DownloadCandidateKind.triosDeepLink,
+    ),
+  ];
+}
+
+DownloadGroup _groupForLlmMod(
+  ForumLlmMod mod,
+  bool Function(String name) isInstalled,
+) {
+  final candidates = forumDownloadCandidates(mod);
+  final installsDeps =
+      primaryCandidate(candidates)?.kind ==
+      DownloadCandidateKind.triosDeepLink;
+  // Only the main mod lists its dependencies; add-on/separate rows stay compact.
+  final dependencies = mod.role == LlmModRole.main
+      ? [
+          for (final name in mod.requires ?? const <String>[])
+            if (name.trim().isNotEmpty)
+              DependencyStatus(name: name, installed: isInstalled(name)),
+        ]
+      : const <DependencyStatus>[];
+  return DownloadGroup(
+    modName: mod.name,
+    role: mod.role,
+    candidates: candidates,
+    installsDependencies: installsDeps,
+    dependencies: dependencies,
+  );
+}
+
+String _scrapedLinkLabel(ForumLink link) {
+  if (link.text.isNotEmpty) return link.text;
+  final segs = Uri.tryParse(link.url)?.pathSegments;
+  if (segs != null && segs.isNotEmpty && segs.last.isNotEmpty) {
+    return segs.last;
+  }
+  return link.url;
 }

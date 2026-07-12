@@ -4,6 +4,7 @@ import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/catalog_search.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
@@ -91,7 +92,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       }
 
       catalogByNormalizedName[scraped.name.toLowerCase().trim()] = scraped;
-      catalogByAlphanumName[_alphanumOnly(scraped.name)] = scraped;
+      catalogByAlphanumName[scraped.name.alphanumericLower()] = scraped;
     }
 
     // Process installed mods.
@@ -147,11 +148,11 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
         } else {
           // Fuzzy match: strip all non-alphanumeric chars, compare.
           // Try both mod name and mod ID (e.g. "BoxUtil" matches "Box Util").
-          final fuzzyName = _alphanumOnly(variant.modInfo.name ?? modId);
+          final fuzzyName = (variant.modInfo.name ?? modId).alphanumericLower();
           matchedCatalog = catalogByAlphanumName[fuzzyName];
           if (matchedCatalog == null && variant.modInfo.name != null) {
             // Also try mod ID if name didn't match.
-            matchedCatalog = catalogByAlphanumName[_alphanumOnly(modId)];
+            matchedCatalog = catalogByAlphanumName[modId.alphanumericLower()];
           }
         }
       }
@@ -339,10 +340,6 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     );
   }
 
-  /// Strips all non-alphanumeric characters and lowercases for fuzzy matching.
-  /// e.g. "Box Util" → "boxutil", "zz BoxUtil" → "zzboxutil".
-  static String _alphanumOnly(String s) =>
-      s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
 }
 
 /// Persistence manager for mod records.

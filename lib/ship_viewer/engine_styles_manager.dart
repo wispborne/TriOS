@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/ship_viewer/models/ship_engine_style_spec.dart';
+import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -69,23 +70,12 @@ final engineGlowSpritesProvider = FutureProvider<EngineGlowSprites?>((
 ) async {
   final core = ref.watch(AppState.gameCoreFolder).value;
   if (core == null || core.path.isEmpty) return null;
-  final flame = await _decodeImage(
+  final flame = await decodeImageFile(
     p.join(core.path, 'graphics', 'fx', 'engineflame32.png'),
   );
-  final glow = await _decodeImage(
+  final glow = await decodeImageFile(
     p.join(core.path, 'graphics', 'fx', 'engineglow32.png'),
   );
   if (flame == null || glow == null) return null;
   return EngineGlowSprites(flame: flame, glow: glow);
 });
-
-Future<ui.Image?> _decodeImage(String path) async {
-  try {
-    final file = File(path);
-    if (!await file.exists()) return null;
-    final codec = await ui.instantiateImageCodec(await file.readAsBytes());
-    return (await codec.getNextFrame()).image;
-  } catch (_) {
-    return null;
-  }
-}

@@ -345,6 +345,12 @@ class ScrapedModMapper extends ClassMapperBase<ScrapedMod> {
     _$dateTimeEdited,
     opt: true,
   );
+  static String? _$partOfThreadTitle(ScrapedMod v) => v.partOfThreadTitle;
+  static const Field<ScrapedMod, String> _f$partOfThreadTitle = Field(
+    'partOfThreadTitle',
+    _$partOfThreadTitle,
+    opt: true,
+  );
 
   @override
   final MappableFields<ScrapedMod> fields = const {
@@ -360,6 +366,7 @@ class ScrapedModMapper extends ClassMapperBase<ScrapedMod> {
     #images: _f$images,
     #dateTimeCreated: _f$dateTimeCreated,
     #dateTimeEdited: _f$dateTimeEdited,
+    #partOfThreadTitle: _f$partOfThreadTitle,
   };
 
   static ScrapedMod _instantiate(DecodingData data) {
@@ -376,6 +383,7 @@ class ScrapedModMapper extends ClassMapperBase<ScrapedMod> {
       images: data.dec(_f$images),
       dateTimeCreated: data.dec(_f$dateTimeCreated),
       dateTimeEdited: data.dec(_f$dateTimeEdited),
+      partOfThreadTitle: data.dec(_f$partOfThreadTitle),
     );
   }
 
@@ -465,6 +473,7 @@ abstract class ScrapedModCopyWith<$R, $In extends ScrapedMod, $Out>
     Map<String, ScrapedModImage>? images,
     DateTime? dateTimeCreated,
     DateTime? dateTimeEdited,
+    String? partOfThreadTitle,
   });
   ScrapedModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -541,6 +550,7 @@ class _ScrapedModCopyWithImpl<$R, $Out>
     Object? images = $none,
     Object? dateTimeCreated = $none,
     Object? dateTimeEdited = $none,
+    Object? partOfThreadTitle = $none,
   }) => $apply(
     FieldCopyWithData({
       if (name != null) #name: name,
@@ -555,6 +565,7 @@ class _ScrapedModCopyWithImpl<$R, $Out>
       if (images != $none) #images: images,
       if (dateTimeCreated != $none) #dateTimeCreated: dateTimeCreated,
       if (dateTimeEdited != $none) #dateTimeEdited: dateTimeEdited,
+      if (partOfThreadTitle != $none) #partOfThreadTitle: partOfThreadTitle,
     }),
   );
   @override
@@ -571,6 +582,10 @@ class _ScrapedModCopyWithImpl<$R, $Out>
     images: data.get(#images, or: $value.images),
     dateTimeCreated: data.get(#dateTimeCreated, or: $value.dateTimeCreated),
     dateTimeEdited: data.get(#dateTimeEdited, or: $value.dateTimeEdited),
+    partOfThreadTitle: data.get(
+      #partOfThreadTitle,
+      or: $value.partOfThreadTitle,
+    ),
   );
 
   @override

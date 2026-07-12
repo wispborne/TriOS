@@ -5,10 +5,11 @@ import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
-import 'package:trios/catalog/models/forum_link.dart';
+import 'package:trios/catalog/mod_browser_page_controller.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/trios/download_manager/downloader.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
@@ -24,6 +25,7 @@ void showForumPostDialog(
   required ForumModDetails details,
   ForumModIndex? index,
   required void Function(String href) linkLoader,
+  bool canUseEmbeddedBrowser = true,
 }) {
   showDialog(
     context: context,
@@ -31,6 +33,7 @@ void showForumPostDialog(
       details: details,
       index: index,
       linkLoader: linkLoader,
+      canUseEmbeddedBrowser: canUseEmbeddedBrowser,
     ),
   );
 }
@@ -39,11 +42,13 @@ class _ForumPostDialog extends ConsumerStatefulWidget {
   final ForumModDetails details;
   final ForumModIndex? index;
   final void Function(String href) linkLoader;
+  final bool canUseEmbeddedBrowser;
 
   const _ForumPostDialog({
     required this.details,
     required this.index,
     required this.linkLoader,
+    required this.canUseEmbeddedBrowser,
   });
 
   @override
@@ -108,33 +113,16 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
     );
   }
 
-  /// Every download the topic offers, prioritized. Prefers the LLM-structured
+  /// The per-mod download rows the topic offers. Prefers the LLM-structured
   /// links (trios installs, real labels, confidence); falls back to the links
   /// scraped from the post HTML when the topic has no LLM data.
-  List<DownloadCandidate> _downloadCandidates() {
-    final mods = widget.index?.llm?.mods ?? const [];
-    final llm = [for (final mod in mods) ...forumDownloadCandidates(mod)];
-    if (llm.isNotEmpty) return llm;
-
-    return [
-      for (final link in widget.details.links ?? const <ForumLink>[])
-        if (link.isDownloadable)
-          DownloadCandidate(
-            url: link.url,
-            label: _scrapedLinkLabel(link),
-            kind: DownloadCandidateKind.forumDirect,
-            sourceHost: Uri.tryParse(link.url)?.host,
-          ),
-    ];
-  }
-
-  static String _scrapedLinkLabel(ForumLink link) {
-    if (link.text.isNotEmpty) return link.text;
-    final segs = Uri.tryParse(link.url)?.pathSegments;
-    if (segs != null && segs.isNotEmpty && segs.last.isNotEmpty) {
-      return segs.last;
-    }
-    return link.url;
+  List<DownloadGroup> _downloadGroups() {
+    final controller = ref.read(catalogPageControllerProvider.notifier);
+    return buildDownloadGroups(
+      index: widget.index,
+      scrapedLinks: widget.details.links,
+      isInstalled: (name) => controller.statusForModName(name) != null,
+    );
   }
 
   @override
@@ -179,24 +167,31 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ForumPostHeader(
-              details: widget.details,
+              data: ForumPostHeaderData.fromDetails(widget.details),
               index: widget.index,
-              onOpenInBrowser: () {
+              onOpenInSystemBrowser: () {
                 final url = widget.index?.topicUrl;
-                if (url != null && url.isNotEmpty) widget.linkLoader(url);
+                if (url != null && url.isNotEmpty) url.openAsUriInBrowser();
               },
+              onOpenInEmbeddedBrowser: widget.canUseEmbeddedBrowser
+                  ? () {
+                      final url = widget.index?.topicUrl;
+                      if (url != null && url.isNotEmpty) {
+                        widget.linkLoader(url);
+                      }
+                    }
+                  : null,
               onToggleFullScreen: () {
                 setState(() => _isFullScreen = !_isFullScreen);
               },
               isFullScreen: _isFullScreen,
               onClose: () => Navigator.of(context).pop(),
-              onLinkTap: _onLinkTap,
-              downloads: _downloadCandidates(),
-              onDownload: (candidate) => executeDownloadCandidate(
+              downloadGroups: _downloadGroups(),
+              onDownload: (candidate, modName) => executeDownloadCandidate(
                 context,
                 ref,
                 candidate,
-                modName: widget.details.title,
+                modName: modName,
                 linkLoader: widget.linkLoader,
               ),
             ),

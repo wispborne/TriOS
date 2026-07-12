@@ -2504,18 +2504,16 @@ class MissingDependencyButton extends ConsumerWidget {
                         .watch(browseModsNotifierProvider)
                         .valueOrNull
                         ?.items;
-                    String normalize(String s) =>
-                        s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
                     final candidates = <String>{
                       if (missingDependency.name != null)
-                        normalize(missingDependency.name!),
+                        missingDependency.name!.alphanumericLower(),
                       if (missingDependency.id != null)
-                        normalize(missingDependency.id!),
+                        missingDependency.id!.alphanumericLower(),
                     };
                     final catalogMatch = (catalog == null || candidates.isEmpty)
                         ? null
                         : catalog.firstWhereOrNull(
-                            (m) => candidates.contains(normalize(m.name)),
+                            (m) => candidates.contains(m.name.alphanumericLower()),
                           );
                     final directDownloadUrl =
                         catalogMatch?.getUrls()[ModUrlType.DirectDownload];

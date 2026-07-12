@@ -148,6 +148,11 @@ class BoolField<T> extends FilterField<T> {
   final bool defaultValue;
   final bool Function(T) predicate;
 
+  /// Optional live count shown as a badge next to the field label (e.g. how
+  /// many items currently match). Evaluated at render time; return 0 or less
+  /// to hide the badge. Opt-in — most fields leave this null.
+  final int Function()? badgeCount;
+
   bool value;
 
   BoolField({
@@ -157,6 +162,7 @@ class BoolField<T> extends FilterField<T> {
     this.defaultValue = false,
     bool? initialValue,
     this.tooltip,
+    this.badgeCount,
   }) : value = initialValue ?? defaultValue;
 
   @override

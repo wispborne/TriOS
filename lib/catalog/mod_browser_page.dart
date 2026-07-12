@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
-import 'package:trios/catalog/models/catalog_card_click_action.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/catalog/scraped_mod_card.dart';
 import 'package:trios/catalog/side_rail/side_rail.dart';
@@ -142,37 +141,23 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     });
   }
 
-  /// Dispatch a card-body click to the configured target: forum-post-dialog
-  /// fallback, embedded browser panel (auto-opening if closed), or system
-  /// browser. The forum-post-dialog primary path is handled by the card
-  /// itself when cached detail HTML is available; this helper sees only the
-  /// URL-loading fallback case.
-  void _dispatchCardLink(String url) {
-    final action = ref.read(appSettings).catalogCardClickAction;
-    switch (action) {
-      case CatalogCardClickAction.embeddedBrowser:
-        if (_webViewStatus != WebViewStatus.loaded) {
-          // Webview not ready; fall back to OS browser rather than losing
-          // the click. Opt-in flow shows in the panel if the user opens it.
-          url.openAsUriInBrowser();
-          return;
-        }
-        if (_openPanelId != _kBrowserPanelId) {
-          setState(() => _openPanelId = _kBrowserPanelId);
-          ref
-              .read(appSettings.notifier)
-              .update((s) => s.copyWith(catalogBrowserPanelOpen: true));
-        }
-        webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
-        setState(() {});
-        break;
-      case CatalogCardClickAction.forumDialog:
-      case CatalogCardClickAction.systemBrowser:
-        // forumDialog falls through to system browser when cached HTML isn't
-        // available (the card already handled the cached-HTML case).
-        url.openAsUriInBrowser();
-        break;
+  /// Open [url] in the app's built-in browser panel (auto-opening it if
+  /// closed). Used for the "open in the built-in browser" action and for
+  /// website/manual download links. Falls back to the system browser when the
+  /// panel isn't available (e.g. webview not loaded, or on Linux).
+  void _openInEmbeddedBrowser(String url) {
+    if (_webViewStatus != WebViewStatus.loaded) {
+      url.openAsUriInBrowser();
+      return;
     }
+    if (_openPanelId != _kBrowserPanelId) {
+      setState(() => _openPanelId = _kBrowserPanelId);
+      ref
+          .read(appSettings.notifier)
+          .update((s) => s.copyWith(catalogBrowserPanelOpen: true));
+    }
+    webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
+    setState(() {});
   }
 
   @override
@@ -384,9 +369,12 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                           versionCheckComparison:
                                               status?.versionCheck,
                                           forumModIndex: forumEntry,
+                                          canUseEmbeddedBrowser:
+                                              currentPlatform !=
+                                              TargetPlatform.linux,
                                           linkLoader: (url) {
                                             selectedModName = profile.name;
-                                            _dispatchCardLink(url);
+                                            _openInEmbeddedBrowser(url);
                                           },
                                           isSelected:
                                               currentUrl != null &&
@@ -1009,9 +997,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
 
   Widget buildCatalogOverflowButton() {
     final theme = Theme.of(context);
-    final currentAction = ref.watch(
-      appSettings.select((s) => s.catalogCardClickAction),
-    );
     final currentAiSummaryMode = ref.watch(
       appSettings.select((s) => s.catalogAiSummaryMode),
     );
@@ -1025,32 +1010,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
             showCatalogDataSourcesDialog(context);
           },
         ).toEntry(0),
-        const PopupMenuDivider(),
-        PopupMenuItem<int>(
-          enabled: false,
-          height: 28,
-          child: Text(
-            'Clicking a mod opens...',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-        ),
-        for (int i = 0; i < CatalogCardClickAction.values.length; i++)
-          OverflowMenuCheckItem(
-            title: CatalogCardClickAction.values[i].label,
-            icon: CatalogCardClickAction.values[i].icon,
-            checked: currentAction == CatalogCardClickAction.values[i],
-            onTap: () {
-              ref
-                  .read(appSettings.notifier)
-                  .update(
-                    (s) => s.copyWith(
-                      catalogCardClickAction: CatalogCardClickAction.values[i],
-                    ),
-                  );
-            },
-          ).toEntry(10 + i),
         const PopupMenuDivider(),
         PopupMenuItem<int>(
           enabled: false,

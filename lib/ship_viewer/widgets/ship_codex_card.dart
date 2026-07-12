@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/codex/models/codex_entry.dart';
@@ -11,7 +9,6 @@ import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
-import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
@@ -58,7 +55,6 @@ class ShipCodexCard {
             weaponsMap,
             context,
             hullmodsMap: hullmodsMap,
-            modules: ref.watch(resolvedModulesProvider(ship.id)),
             description: ref.watch(
               descriptionProvider((ship.id, DescriptionEntry.typeShip)),
             ),
@@ -102,7 +98,6 @@ class ShipCodexCard {
         weaponsMap,
         context,
         hullmodsMap: hullmodsMap,
-        modules: ref.watch(resolvedModulesProvider(ship.id)),
         description: ref.watch(
           descriptionProvider((ship.id, DescriptionEntry.typeShip)),
         ),
@@ -131,7 +126,6 @@ class ShipCodexCard {
     Map<String, Weapon> weaponsMap,
     BuildContext context, {
     Map<String, Hullmod> hullmodsMap = const {},
-    List<ResolvedModule> modules = const [],
     DescriptionEntry? description,
     DescriptionEntry? systemDescription,
     bool showTitle = true,
@@ -166,7 +160,7 @@ class ShipCodexCard {
     const dpColor = Color(0xFF4ca8bf);
     const cargoColor = Color(0xFFb2b082);
 
-    final sprite = showSprite ? _shipSprite(ship, modules) : null;
+    final sprite = showSprite ? _shipSprite(ship) : null;
     final mountGroups = _groupMounts(ship);
     final hasBays = (ship.fighterBays ?? 0) > 0;
     final armamentGroups = _groupArmaments(ship, weaponsMap);
@@ -597,27 +591,14 @@ Widget _statsSection({
 }
 
 /// Ship silhouette sprite constrained to 150×200, or null if unavailable.
-/// When [modules] is non-empty, renders the composite sprite with modules.
-Widget? _shipSprite(Ship ship, List<ResolvedModule> modules) {
-  final path = ship.spriteFile;
-  if (path == null) return null;
-
-  if (modules.isNotEmpty) {
-    return SizedBox(
-      width: 150,
-      height: 200,
-      child: ShipBlueprintView.minimal(ship: ship, cacheWidth: 150),
-    );
-  }
+/// Always renders the composite blueprint so decorative weapons show.
+Widget? _shipSprite(Ship ship) {
+  if (ship.spriteFile == null) return null;
 
   return SizedBox(
     width: 150,
     height: 200,
-    child: Image.file(
-      File(path),
-      fit: .scaleDown,
-      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-    ),
+    child: ShipBlueprintView.minimal(ship: ship, cacheWidth: 150),
   );
 }
 
@@ -714,10 +695,10 @@ Widget _mountWrap(
   );
 }
 
-/// Like [_mountWrap] but wraps each weapon entry in a [WeaponCodexCard]
-/// tooltip when the [Weapon] object is available. Inside the Codex
-/// ([onEntitySelected] set), built-in weapons and wings become clickable links;
-/// unresolved entries (e.g. from a disabled mod) stay as plain text.
+/// Renders a ship's built-in armaments as one comma-joined line — the same look
+/// whether or not the items are interactive. When a [Weapon] resolves, its entry
+/// keeps its hover card (and, inside the Codex, click-to-open); wings link to
+/// their fighter entry; unresolved entries (e.g. from a disabled mod) stay plain.
 Widget _armamentWrap(
   Map<String, ({int count, Weapon? weapon, String? wingId})> groups,
   ThemeData theme,
@@ -730,42 +711,66 @@ Widget _armamentWrap(
     fontWeight: FontWeight.bold,
   );
 
-  return Wrap(
-    spacing: 16,
-    runSpacing: 2,
-    children: groups.entries.map((e) {
-      final text = Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(text: '${e.value.count}×', style: countStyle),
-            TextSpan(text: ' ${e.key}', style: baseStyle),
-          ],
-        ),
-      );
-      final weapon = e.value.weapon;
-      if (weapon != null) {
-        return WeaponCodexCard.tooltip(
-          weapon: weapon,
-          onEntitySelected: onEntitySelected,
-          child: text,
-        );
-      }
-      final wingId = e.value.wingId;
-      if (wingId != null) {
-        return asCodexLink(text, onEntitySelected, (
-          CodexEntryType.wing,
-          wingId,
-        ));
-      }
-      return text;
-    }).toList(),
+  final entries = groups.entries.toList();
+  return Text.rich(
+    TextSpan(
+      children: [
+        for (var i = 0; i < entries.length; i++) ...[
+          if (i > 0) TextSpan(text: ', ', style: baseStyle),
+          _armamentSpan(entries[i], baseStyle, countStyle, onEntitySelected),
+        ],
+      ],
+    ),
   );
 }
 
-/// Renders a ship's built-in hull mods. Outside the Codex ([onEntitySelected]
-/// null) it stays a single comma-joined line, unchanged. Inside the Codex each
-/// resolved hull mod becomes a clickable link (with its hover card); an
-/// unresolved id (e.g. from a disabled mod) stays plain text.
+/// One armament as an inline span: `count× name`, with the count highlighted.
+/// Resolved weapons/wings get wrapped so they keep their hover card and click;
+/// plain entries stay a bare span so the line reads identically either way.
+InlineSpan _armamentSpan(
+  MapEntry<String, ({int count, Weapon? weapon, String? wingId})> entry,
+  TextStyle? baseStyle,
+  TextStyle? countStyle,
+  CodexEntitySelected? onEntitySelected,
+) {
+  final labelSpans = <InlineSpan>[
+    TextSpan(text: '${entry.value.count}×', style: countStyle),
+    TextSpan(text: ' ${entry.key}', style: baseStyle),
+  ];
+
+  final weapon = entry.value.weapon;
+  if (weapon != null) {
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: WeaponCodexCard.tooltip(
+        weapon: weapon,
+        onEntitySelected: onEntitySelected,
+        child: Text.rich(TextSpan(children: labelSpans)),
+      ),
+    );
+  }
+
+  final wingId = entry.value.wingId;
+  if (wingId != null) {
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.baseline,
+      baseline: TextBaseline.alphabetic,
+      child: asCodexLink(
+        Text.rich(TextSpan(children: labelSpans)),
+        onEntitySelected,
+        (CodexEntryType.wing, wingId),
+      ),
+    );
+  }
+
+  return TextSpan(children: labelSpans);
+}
+
+/// Renders a ship's built-in hull mods as one comma-joined line — e.g.
+/// `Reduced Explosion, Always Detaches` — the same look whether or not the items
+/// are interactive. Inside the Codex each resolved hull mod keeps its hover card
+/// and click-to-open; an unresolved id (e.g. from a disabled mod) stays plain.
 Widget _hullModWrap(
   Iterable<String> hullMods,
   Map<String, Hullmod> hullmodsMap,
@@ -773,57 +778,47 @@ Widget _hullModWrap(
   CodexEntitySelected? onEntitySelected,
 ) {
   final baseStyle = theme.textTheme.bodySmall;
+  final ids = hullMods.toList();
 
+  // Outside the Codex there are no per-item cards, so a single comma-joined
+  // line is all that's needed.
   if (onEntitySelected == null) {
     return Text(
-      hullMods.map((id) => hullmodsMap[id]?.name ?? _toDisplay(id)).join(", "),
+      ids.map((id) => hullmodsMap[id]?.name ?? _toDisplay(id)).join(", "),
       style: baseStyle,
     );
   }
 
-  final linkStyle = baseStyle?.copyWith(color: theme.colorScheme.primary);
-
-  return Wrap(
-    spacing: 12,
-    runSpacing: 2,
-    children: hullMods.map((id) {
-      final hullmod = hullmodsMap[id];
-      if (hullmod == null) {
-        return Text(_toDisplay(id), style: baseStyle);
-      }
-      return HullmodCodexCard.tooltip(
-        hullmod: hullmod,
-        onEntitySelected: onEntitySelected,
-        child: Text(hullmod.name ?? _toDisplay(id), style: linkStyle),
-      );
-    }).toList(),
-  );
-}
-
-/// Renders a collection of raw IDs as small labelled chips.
-Widget _idWrap(Iterable<String> ids, ThemeData theme) {
-  return Wrap(
-    spacing: 4,
-    runSpacing: 4,
-    children: ids.map((id) => _idChip(id, theme)).toList(),
-  );
-}
-
-Widget _idChip(String id, ThemeData theme) {
-  return Container(
-    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
-    decoration: BoxDecoration(
-      color: theme.colorScheme.onSurface.withValues(alpha: 0.07),
-      border: Border.all(
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.18),
-      ),
-      borderRadius: BorderRadius.circular(3),
+  return Text.rich(
+    TextSpan(
+      children: [
+        for (var i = 0; i < ids.length; i++) ...[
+          if (i > 0) TextSpan(text: ', ', style: baseStyle),
+          _hullModSpan(ids[i], hullmodsMap, baseStyle, onEntitySelected),
+        ],
+      ],
     ),
-    child: Text(
-      _toDisplay(id),
-      style: theme.textTheme.labelSmall?.copyWith(
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
-      ),
+  );
+}
+
+/// One hull mod as an inline span. A resolved hull mod keeps its hover card and
+/// click; an unresolved id stays a bare span so the line reads identically.
+InlineSpan _hullModSpan(
+  String id,
+  Map<String, Hullmod> hullmodsMap,
+  TextStyle? baseStyle,
+  CodexEntitySelected onEntitySelected,
+) {
+  final hullmod = hullmodsMap[id];
+  final name = hullmod?.name ?? _toDisplay(id);
+  if (hullmod == null) return TextSpan(text: name, style: baseStyle);
+  return WidgetSpan(
+    alignment: PlaceholderAlignment.baseline,
+    baseline: TextBaseline.alphabetic,
+    child: HullmodCodexCard.tooltip(
+      hullmod: hullmod,
+      onEntitySelected: onEntitySelected,
+      child: Text(name, style: baseStyle),
     ),
   );
 }

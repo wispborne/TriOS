@@ -54,6 +54,16 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
   /// Whether to render turret angle indicator lines.
   final bool initialShowAngleIndicators;
 
+  /// Whether to render built-in weapon sprites over their slots (interactive
+  /// view only). The toolbar toggle for this is shown only when the ship (or
+  /// a visible module) actually has built-in weapons on non-decorative slots.
+  final bool initialShowWeapons;
+
+  /// Whether to render the weapon sprites of decorative slots (interactive
+  /// view only). The toolbar toggle for this is shown only when the ship (or
+  /// a visible module) actually has decorative slot weapons.
+  final bool initialShowDecorativeWeapons;
+
   /// Whether to render the additive engine glow. In the interactive view this
   /// is the toolbar toggle's initial state; thumbnails reveal glow on hover
   /// (or always, per the ships-page setting) regardless of this value.
@@ -98,6 +108,8 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     this.initialShowMounts = true,
     this.initialShowArcs = true,
     this.initialShowAngleIndicators = true,
+    this.initialShowWeapons = true,
+    this.initialShowDecorativeWeapons = true,
     this.initialShowEngineGlow = false,
     this.showSlotTooltips = true,
     this.showPath = true,
@@ -122,6 +134,8 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     bool initialShowMounts = false,
     bool initialShowArcs = false,
     bool initialShowAngleIndicators = false,
+    bool initialShowWeapons = false,
+    bool initialShowDecorativeWeapons = true,
     bool initialShowEngineGlow = false,
     bool showSlotTooltips = false,
     bool showPath = false,
@@ -140,6 +154,8 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
       initialShowMounts: initialShowMounts,
       initialShowArcs: initialShowArcs,
       initialShowAngleIndicators: initialShowAngleIndicators,
+      initialShowWeapons: initialShowWeapons,
+      initialShowDecorativeWeapons: initialShowDecorativeWeapons,
       initialShowEngineGlow: initialShowEngineGlow,
       showSlotTooltips: showSlotTooltips,
       showPath: showPath,
@@ -165,6 +181,14 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   late bool _showBounds;
   late bool _showMounts;
   late bool _showArcs;
+  late bool _showWeapons;
+  late bool _showDecoWeapons;
+
+  /// Decoded built-in weapon sprites, keyed by file path. Filled in
+  /// asynchronously as sprites finish decoding; the painter skips paths that
+  /// aren't loaded yet.
+  final Map<String, ui.Image> _armamentImages = {};
+  final Set<String> _requestedArmamentImages = {};
 
   /// Toolbar toggle state (interactive view). Thumbnails ignore this and use
   /// hover / the always-on setting instead.
@@ -232,6 +256,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     _showBounds = widget.initialShowBounds;
     _showMounts = widget.initialShowMounts;
     _showArcs = widget.initialShowArcs;
+    _showWeapons = widget.initialShowWeapons;
+    _showDecoWeapons = widget.initialShowDecorativeWeapons;
     _showEngineGlow = widget.initialShowEngineGlow;
     _engineGlowController = AnimationController(
       vsync: this,
@@ -593,16 +619,23 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
   /// Lightweight widget tree for non-interactive thumbnails.
   /// Skips LayoutBuilder, TransformationController, MouseRegion, slot
-  /// processing, and padding — just the ship sprite + module sprites.
-  Widget _buildMinimalContent(double imgW, double imgH) {
+  /// processing, and padding — just the ship sprite, module sprites, and
+  /// (by default) decorative slot weapons.
+  Widget _buildMinimalContent(
+    double imgW,
+    double imgH,
+    List<_ArmamentRender> visibleArmaments,
+    List<_ArmamentRender> reservedArmaments,
+  ) {
     final parentRect = Rect.fromLTWH(0, 0, imgW, imgH);
     final geom = _cachedModuleGeometry;
     final moduleTotalBounds = (_showModules && geom?.totalBounds != null)
         ? geom!.totalBounds!
         : null;
-    final combinedRect = moduleTotalBounds != null
+    var combinedRect = moduleTotalBounds != null
         ? parentRect.expandToInclude(moduleTotalBounds)
         : parentRect;
+    combinedRect = _expandForArmaments(combinedRect, reservedArmaments);
 
     final originDx = -combinedRect.left;
     final originDy = -combinedRect.top;
@@ -630,8 +663,45 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
             ),
           ),
           if (_showModules) ..._buildModuleSpritesOffset(originDx, originDy),
+          ?_armamentsPositioned(
+            visibleArmaments,
+            originDx,
+            originDy,
+            imgW,
+            imgH,
+          ),
           ?engineGlow,
         ],
+      ),
+    );
+  }
+
+  /// Builds the built-in weapon sprite overlay positioned over the parent
+  /// hull sprite, or null when there's nothing to draw. Shared by both
+  /// render paths.
+  Widget? _armamentsPositioned(
+    List<_ArmamentRender> visibleArmaments,
+    double originDx,
+    double originDy,
+    double imgW,
+    double imgH,
+  ) {
+    if (visibleArmaments.isEmpty) return null;
+    return Positioned(
+      left: originDx,
+      top: originDy,
+      width: imgW,
+      height: imgH,
+      // IgnorePointer: see the engine glow overlay below.
+      child: IgnorePointer(
+        child: CustomPaint(
+          size: Size(imgW, imgH),
+          painter: _ArmamentPainter(
+            armaments: visibleArmaments,
+            images: _armamentImages,
+            loadedImageCount: _armamentImages.length,
+          ),
+        ),
       ),
     );
   }
@@ -686,6 +756,88 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     return Offset(cx - slot.locations[1], cy - slot.locations[0]);
   }
 
+  /// Collects the built-in ("hardcoded") weapons of the parent ship and, when
+  /// modules are shown, of its modules, resolved to renderable sprite data.
+  /// Slots whose weapon isn't in the loaded weapons list are skipped.
+  List<_ArmamentRender> _computeArmaments(
+    List<ShipWeaponSlot> slots,
+    double imgH,
+  ) {
+    if (_weaponsMap.isEmpty) return const [];
+    final result = <_ArmamentRender>[];
+
+    final builtIns = widget.ship.builtInWeapons;
+    if (builtIns != null && builtIns.isNotEmpty) {
+      for (final slot in slots) {
+        if (slot.locations.length < 2) continue;
+        if (slot.isStationModule) continue;
+        // The game never renders weapon sprites in hidden slots.
+        if (slot.mount.toUpperCase() == 'HIDDEN') continue;
+        final weaponId = builtIns[slot.id];
+        if (weaponId == null) continue;
+        final weapon = _weaponsMap[weaponId];
+        if (weapon == null) continue;
+        final render = _ArmamentRender.build(
+          weapon: weapon,
+          pos: _slotScreenPos(slot, imgH),
+          angleDeg: slot.angle,
+          isHardpointSlot: slot.mount.toUpperCase() == 'HARDPOINT',
+          isDecorative: slot.typeUppercase == 'DECORATIVE',
+        );
+        if (render != null) result.add(render);
+      }
+    }
+
+    if (_showModules) {
+      final moduleSlots =
+          _cachedModuleGeometry?.transformedSlots ?? const <_TransformedSlot>[];
+      for (final ts in moduleSlots) {
+        final weaponId = ts.builtInWeaponId;
+        if (weaponId == null) continue;
+        if (ts.slot.mount.toUpperCase() == 'HIDDEN') continue;
+        final weapon = _weaponsMap[weaponId];
+        if (weapon == null) continue;
+        final render = _ArmamentRender.build(
+          weapon: weapon,
+          pos: ts.screenPos,
+          angleDeg: ts.adjustedAngleDeg,
+          isHardpointSlot: ts.slot.mount.toUpperCase() == 'HARDPOINT',
+          isDecorative: ts.slot.typeUppercase == 'DECORATIVE',
+        );
+        if (render != null) result.add(render);
+      }
+    }
+
+    return result;
+  }
+
+  /// Expands [base] to contain every visible armament sprite (using the
+  /// images decoded so far), so the view sizes itself to weapons that stick
+  /// out past the hull. As more sprites decode, the rebuild grows the rect.
+  Rect _expandForArmaments(Rect base, List<_ArmamentRender> armaments) {
+    var rect = base;
+    for (final armament in armaments) {
+      final b = armament.bounds(_armamentImages);
+      if (b != null) rect = rect.expandToInclude(b);
+    }
+    return rect;
+  }
+
+  /// Kicks off decoding of any armament sprites not yet requested. Each
+  /// finished decode repaints via setState; already-loaded paths are no-ops.
+  void _requestArmamentImages(List<_ArmamentRender> armaments) {
+    for (final armament in armaments) {
+      for (final path in armament.spritePaths) {
+        if (!_requestedArmamentImages.add(path)) continue;
+        loadDecodedImage(path).then((img) {
+          if (img != null && mounted) {
+            setState(() => _armamentImages[path] = img);
+          }
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ship = widget.ship;
@@ -695,20 +847,20 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     final modules = ref.watch(resolvedModulesProvider(ship.id));
     final theme = context.theme;
 
-    // Lookup maps for the module hover tooltip. Only needed in the interactive
-    // view; thumbnails set showSlotTooltips false and skip these watches.
+    // Weapon lookup for the module hover tooltip and built-in weapon
+    // rendering (which thumbnails use too, for decorative weapons).
+    if (widget.showSlotTooltips ||
+        widget.interactive ||
+        _showWeapons ||
+        _showDecoWeapons) {
+      _weaponsMap = ref.watch(weaponsByIdProvider);
+    }
     if (widget.showSlotTooltips) {
       _shipSystemsMap = {
         for (final s
             in ref.watch(shipSystemListNotifierProvider).valueOrNull ??
                 const <ShipSystem>[])
           s.id: s,
-      };
-      _weaponsMap = {
-        for (final w
-            in ref.watch(weaponListNotifierProvider).valueOrNull ??
-                const <Weapon>[])
-          w.id: w,
       };
       _hullmodsMap = {
         for (final h
@@ -765,11 +917,33 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     final imgH = ship.height ?? _imageSize!.height;
     final hasCenter = center != null && center.length >= 2;
 
+    // Built-in weapons rendered over their slots. Computed even while the
+    // toggles are off so the toolbar knows whether to show the buttons.
+    // Filtered in slot order (rather than one pass per kind) so overlapping
+    // weapons keep the game's draw order.
+    final armaments = hasCenter
+        ? _computeArmaments(slots ?? const [], imgH)
+        : const <_ArmamentRender>[];
+    final visibleArmaments = armaments
+        .where((a) => a.isDecorative ? _showDecoWeapons : _showWeapons)
+        .toList();
+    // In the interactive view the user can toggle each group, so reserve
+    // space for every armament (loaded regardless of toggle) to keep the
+    // view from resizing when a group is turned off. Thumbnails have no
+    // toggle, so they only reserve space for what they actually draw.
+    final reservedArmaments = widget.interactive ? armaments : visibleArmaments;
+    _requestArmamentImages(reservedArmaments);
+
     // --- Fast path for non-interactive (thumbnail) mode ---
     if (!widget.interactive) {
       Widget content = FittedBox(
         fit: widget.fit,
-        child: _buildMinimalContent(imgW, imgH),
+        child: _buildMinimalContent(
+          imgW,
+          imgH,
+          visibleArmaments,
+          reservedArmaments,
+        ),
       );
       // Optionally clip to bounds. Disabled for grid-row icons so hovered
       // engine glow can overflow the small cell instead of being cut off.
@@ -801,15 +975,16 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
     // Compute the combined bounding rect of parent sprite + all module
     // sprites so the Stack can be sized to contain everything. Module
-    // sprites may extend beyond the parent sprite bounds.
+    // sprites and armament sprites may extend beyond the parent sprite bounds.
     final parentRect = Rect.fromLTWH(0, 0, imgW, imgH);
     final geom = _cachedModuleGeometry;
     final moduleTotalBounds = (_showModules && geom?.totalBounds != null)
         ? geom!.totalBounds!
         : null;
-    final combinedRect = moduleTotalBounds != null
+    var combinedRect = moduleTotalBounds != null
         ? parentRect.expandToInclude(moduleTotalBounds)
         : parentRect;
+    combinedRect = _expandForArmaments(combinedRect, reservedArmaments);
 
     // Offset to shift everything into positive coordinate space.
     final originDx = -combinedRect.left;
@@ -909,6 +1084,15 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                   ),
                   if (_showModules)
                     ..._buildModuleSpritesOffset(originDx, originDy),
+                  // Built-in weapon sprites, drawn over the hull and module
+                  // sprites like the game does.
+                  ?_armamentsPositioned(
+                    visibleArmaments,
+                    originDx,
+                    originDy,
+                    imgW,
+                    imgH,
+                  ),
                   // Hover tooltip for the module under the cursor. Driven by the
                   // same detection as the highlight above, so the two always
                   // agree on which module is targeted.
@@ -1082,6 +1266,23 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                         isActive: _showArcs,
                         tooltip: 'Show arcs',
                       ),
+                      if (armaments.any((a) => !a.isDecorative))
+                        _compactIconButton(
+                          onPressed: () =>
+                              setState(() => _showWeapons = !_showWeapons),
+                          icon: Icons.gps_fixed,
+                          isActive: _showWeapons,
+                          tooltip: 'Show built-in weapons',
+                        ),
+                      if (armaments.any((a) => a.isDecorative))
+                        _compactIconButton(
+                          onPressed: () => setState(
+                            () => _showDecoWeapons = !_showDecoWeapons,
+                          ),
+                          icon: Icons.brush,
+                          isActive: _showDecoWeapons,
+                          tooltip: 'Show decorative weapons',
+                        ),
                       if (hasEngines)
                         _compactIconButton(
                           onPressed: () {
@@ -1651,6 +1852,339 @@ class _BoundsPainter extends CustomPainter {
     return !identical(oldDelegate.parentBoundsPolygon, parentBoundsPolygon) ||
         !identical(oldDelegate.moduleBoundsPolygons, moduleBoundsPolygons);
   }
+}
+
+/// A built-in weapon resolved to sprite layers, positioned on its slot.
+///
+/// Sprite selection follows the slot's mount: hardpoint slots use the
+/// hardpoint sprite set, turrets the turret set, falling back to the other
+/// set when the matching main sprite is missing.
+class _ArmamentRender {
+  /// Slot position in ship-space screen coordinates.
+  final Offset pos;
+
+  /// Slot facing in game convention (0 = ship forward, counterclockwise).
+  final double angleDeg;
+
+  /// Whether sprites anchor at the hardpoint pivot (1/4 of the sprite height
+  /// from the bottom) instead of the sprite center. The game uses this pivot
+  /// whenever the hardpoint sprite set is rendered.
+  final bool hardpointAnchor;
+
+  /// Whether this weapon sits in a decorative slot (visual embellishment
+  /// rather than an actual armament); toggled separately in the toolbar.
+  final bool isDecorative;
+
+  /// Drawn below every weapon's body sprites, like the game.
+  final String? underSprite;
+
+  /// Barrel + main sprites in draw order (barrel first when the weapon has
+  /// the RENDER_BARREL_BELOW hint).
+  final List<String> bodySprites;
+
+  // Loaded-missile render data (RENDER_LOADED_MISSILES), one missile per
+  // fire-point offset pair.
+  final String? missileSprite;
+  final List<double>? missileSize;
+  final List<double>? missileCenter;
+  final List<double>? missileOffsets;
+  final List<double>? missileAngleOffsets;
+
+  const _ArmamentRender({
+    required this.pos,
+    required this.angleDeg,
+    required this.hardpointAnchor,
+    required this.isDecorative,
+    required this.underSprite,
+    required this.bodySprites,
+    this.missileSprite,
+    this.missileSize,
+    this.missileCenter,
+    this.missileOffsets,
+    this.missileAngleOffsets,
+  });
+
+  /// Every sprite file this armament needs decoded.
+  Iterable<String> get spritePaths => [
+    ?underSprite,
+    ...bodySprites,
+    ?missileSprite,
+  ];
+
+  /// Axis-aligned bounds of this armament in ship-space, using the [images]
+  /// decoded so far. Mirrors [_ArmamentPainter]'s placement so the view can
+  /// grow to contain weapons that extend past the hull. Returns null when
+  /// none of its sprites have loaded yet.
+  Rect? bounds(Map<String, ui.Image> images) {
+    final angle = -angleDeg * (pi / 180);
+    final cosA = cos(angle);
+    final sinA = sin(angle);
+    // Transform an armament-local point into ship-space (rotate by the slot
+    // angle about the slot position, then translate to it).
+    Offset toShip(double lx, double ly) =>
+        Offset(pos.dx + lx * cosA - ly * sinA, pos.dy + lx * sinA + ly * cosA);
+
+    Rect? total;
+    void include(Rect r) => total = total?.expandToInclude(r) ?? r;
+
+    for (final path in [?underSprite, ...bodySprites]) {
+      final img = images[path];
+      if (img == null) continue;
+      final w = img.width.toDouble();
+      final h = img.height.toDouble();
+      final pivotY = hardpointAnchor ? h * 0.75 : h / 2;
+      // Sprite is centered in x and pivoted [pivotY] from the top, rotated
+      // about the slot position — the same placement _drawAnchored paints.
+      include(
+        rotatedBounds(
+          pos.dx - w / 2,
+          pos.dy - pivotY,
+          w,
+          h,
+          angle,
+          Offset(w / 2, pivotY),
+        ),
+      );
+    }
+
+    final missilePath = missileSprite;
+    final missileImg = missilePath == null ? null : images[missilePath];
+    final layout = missileImg == null ? null : missileLayout(missileImg);
+    if (layout != null) {
+      for (final tube in layout.tubes) {
+        final mCos = cos(-tube.angleDeg * (pi / 180));
+        final mSin = sin(-tube.angleDeg * (pi / 180));
+        // Missile corners in tube-draw space, then rotate by the missile
+        // angle and translate by its fire offset into armament-local space.
+        for (final corner in [
+          Offset(-layout.pivot.dx, -layout.pivot.dy),
+          Offset(layout.w - layout.pivot.dx, -layout.pivot.dy),
+          Offset(layout.w - layout.pivot.dx, layout.h - layout.pivot.dy),
+          Offset(-layout.pivot.dx, layout.h - layout.pivot.dy),
+        ]) {
+          final lx = corner.dx * mCos - corner.dy * mSin - tube.lateral;
+          final ly = corner.dx * mSin + corner.dy * mCos - tube.forward;
+          final p = toShip(lx, ly);
+          include(Rect.fromLTWH(p.dx, p.dy, 0, 0));
+        }
+      }
+    }
+
+    return total;
+  }
+
+  /// Returns null when the weapon has nothing renderable for this slot.
+  static _ArmamentRender? build({
+    required Weapon weapon,
+    required Offset pos,
+    required double angleDeg,
+    required bool isHardpointSlot,
+    required bool isDecorative,
+  }) {
+    final useHardpoint = isHardpointSlot
+        ? weapon.hardpointSprite != null
+        : weapon.turretSprite == null && weapon.hardpointSprite != null;
+
+    final under = useHardpoint
+        ? weapon.hardpointUnderSprite
+        : weapon.turretUnderSprite;
+    final main = useHardpoint ? weapon.hardpointSprite : weapon.turretSprite;
+    final gun = useHardpoint
+        ? weapon.hardpointGunSprite
+        : weapon.turretGunSprite;
+    final bodySprites = <String>[
+      if (weapon.renderBarrelBelow && gun != null) gun,
+      ?main,
+      if (!weapon.renderBarrelBelow && gun != null) gun,
+    ];
+
+    String? missileSprite;
+    List<double>? missileOffsets;
+    List<double>? missileAngleOffsets;
+    if (weapon.renderLoadedMissiles && weapon.loadedMissileSprite != null) {
+      missileSprite = weapon.loadedMissileSprite;
+      missileOffsets = useHardpoint
+          ? weapon.hardpointOffsets
+          : weapon.turretOffsets;
+      missileAngleOffsets = useHardpoint
+          ? weapon.hardpointAngleOffsets
+          : weapon.turretAngleOffsets;
+    }
+
+    if (under == null && bodySprites.isEmpty && missileSprite == null) {
+      return null;
+    }
+
+    return _ArmamentRender(
+      pos: pos,
+      angleDeg: angleDeg,
+      hardpointAnchor: useHardpoint,
+      isDecorative: isDecorative,
+      underSprite: under,
+      bodySprites: bodySprites,
+      missileSprite: missileSprite,
+      missileSize: weapon.loadedMissileSize,
+      missileCenter: weapon.loadedMissileCenter,
+      missileOffsets: missileOffsets,
+      missileAngleOffsets: missileAngleOffsets,
+    );
+  }
+
+  /// Resolved loaded-missile geometry for [image], shared by the bounds and
+  /// paint passes so they place tubes identically. The declared `.proj` size
+  /// (world units) overrides the sprite's pixels, and its "center" is measured
+  /// from the sprite's bottom-left. Returns null when this armament draws no
+  /// loaded missiles.
+  _MissileLayout? missileLayout(ui.Image image) {
+    final offsets = missileOffsets;
+    if (missileSprite == null || offsets == null || offsets.length < 2) {
+      return null;
+    }
+    final declared = missileSize;
+    final hasDeclared = declared != null && declared.length >= 2;
+    final w = hasDeclared ? declared[0] : image.width.toDouble();
+    final h = hasDeclared ? declared[1] : image.height.toDouble();
+    final c = missileCenter;
+    final pivot = (c != null && c.length >= 2)
+        ? Offset(c[0], h - c[1])
+        : Offset(w / 2, h / 2);
+    final angles = missileAngleOffsets;
+    final tubes = [
+      for (var i = 0; i < offsets.length ~/ 2; i++)
+        _MissileTube(
+          forward: offsets[i * 2],
+          lateral: offsets[i * 2 + 1],
+          angleDeg: (angles != null && angles.length > i) ? angles[i] : 0.0,
+        ),
+    ];
+    return _MissileLayout(w: w, h: h, pivot: pivot, tubes: tubes);
+  }
+}
+
+/// One loaded-missile fire point in weapon-local space: +[forward] along the
+/// barrel, +[lateral] to the weapon's left, rotated by [angleDeg].
+class _MissileTube {
+  final double forward;
+  final double lateral;
+  final double angleDeg;
+
+  const _MissileTube({
+    required this.forward,
+    required this.lateral,
+    required this.angleDeg,
+  });
+}
+
+/// Drawn size ([w]×[h]), draw-origin [pivot] within that size, and one entry
+/// per fire point for a weapon's loaded missiles.
+class _MissileLayout {
+  final double w;
+  final double h;
+  final Offset pivot;
+  final List<_MissileTube> tubes;
+
+  const _MissileLayout({
+    required this.w,
+    required this.h,
+    required this.pivot,
+    required this.tubes,
+  });
+}
+
+/// Draws built-in weapon sprites over their slots, matching the game's
+/// at-rest rendering: 1 sprite pixel = 1 ship unit, turrets pivot on the
+/// sprite center, hardpoints pivot 1/4 of the sprite height from the bottom,
+/// rotated to the slot's angle.
+class _ArmamentPainter extends CustomPainter {
+  final List<_ArmamentRender> armaments;
+  final Map<String, ui.Image> images;
+
+  /// Repaint key: [images] is mutated in place as decodes finish, so the
+  /// count stands in for its contents.
+  final int loadedImageCount;
+
+  _ArmamentPainter({
+    required this.armaments,
+    required this.images,
+    required this.loadedImageCount,
+  });
+
+  static final Paint _spritePaint = Paint()..filterQuality = FilterQuality.high;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // The game draws every weapon's under-sprite below all weapon bodies,
+    // not just below its own.
+    for (final armament in armaments) {
+      final under = armament.underSprite;
+      if (under != null) {
+        _drawAnchored(canvas, images[under], armament);
+      }
+    }
+    for (final armament in armaments) {
+      for (final path in armament.bodySprites) {
+        _drawAnchored(canvas, images[path], armament);
+      }
+      _drawLoadedMissiles(canvas, armament);
+    }
+  }
+
+  /// Draws [image] with its mount pivot at the slot position, rotated to the
+  /// slot angle. Sprite art points up; game angles are counterclockwise, so
+  /// the screen rotation is the negated angle.
+  void _drawAnchored(Canvas canvas, ui.Image? image, _ArmamentRender armament) {
+    if (image == null) return;
+    final w = image.width.toDouble();
+    final h = image.height.toDouble();
+    final pivotY = armament.hardpointAnchor ? h * 0.75 : h / 2;
+
+    canvas.save();
+    canvas.translate(armament.pos.dx, armament.pos.dy);
+    if (armament.angleDeg != 0) {
+      canvas.rotate(-armament.angleDeg * (pi / 180));
+    }
+    canvas.drawImage(image, Offset(-w / 2, -pivotY), _spritePaint);
+    canvas.restore();
+  }
+
+  /// Draws one loaded missile per fire-point offset, on top of the weapon.
+  /// Offsets are weapon-local: +x along the barrel (screen up before
+  /// rotation), +y to the weapon's left.
+  void _drawLoadedMissiles(Canvas canvas, _ArmamentRender armament) {
+    final spritePath = armament.missileSprite;
+    if (spritePath == null) return;
+    final image = images[spritePath];
+    if (image == null) return;
+    final layout = armament.missileLayout(image);
+    if (layout == null) return;
+
+    final natW = image.width.toDouble();
+    final natH = image.height.toDouble();
+
+    canvas.save();
+    canvas.translate(armament.pos.dx, armament.pos.dy);
+    if (armament.angleDeg != 0) {
+      canvas.rotate(-armament.angleDeg * (pi / 180));
+    }
+    for (final tube in layout.tubes) {
+      canvas.save();
+      canvas.translate(-tube.lateral, -tube.forward);
+      if (tube.angleDeg != 0) canvas.rotate(-tube.angleDeg * (pi / 180));
+      canvas.drawImageRect(
+        image,
+        Rect.fromLTWH(0, 0, natW, natH),
+        Rect.fromLTWH(-layout.pivot.dx, -layout.pivot.dy, layout.w, layout.h),
+        _spritePaint,
+      );
+      canvas.restore();
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_ArmamentPainter oldDelegate) =>
+      !identical(oldDelegate.armaments, armaments) ||
+      oldDelegate.loadedImageCount != loadedImageCount;
 }
 
 /// Draws each engine slot's flame + round base glow, additively tinted by the

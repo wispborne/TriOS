@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -6,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_clipboard/super_clipboard.dart';
+import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/thirdparty/flutter_context_menu/components/menu_item.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
@@ -20,18 +20,7 @@ import 'package:trios/widgets/snackbar.dart';
 final Map<String, Future<ui.Image?>> _weaponDecodedImageCache = {};
 
 Future<ui.Image?> _loadWeaponImage(String path) {
-  return _weaponDecodedImageCache.putIfAbsent(path, () async {
-    try {
-      final file = File(path);
-      if (!await file.exists()) return null;
-      final bytes = await file.readAsBytes();
-      final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      return frame.image;
-    } catch (_) {
-      return null;
-    }
-  });
+  return _weaponDecodedImageCache.putIfAbsent(path, () => decodeImageFile(path));
 }
 
 /// One composited sprite layer, positioned in weapon-pixel space where the

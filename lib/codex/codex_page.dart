@@ -1199,6 +1199,21 @@ class _CodexPageState extends ConsumerState<CodexPage>
                 onChanged: (v) => notifier.setShowHiddenShipSystems(v ?? false),
               ),
             ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: MovingTooltipWidget.text(
+                message:
+                    'List a station\'s modules (its docked parts) as their own '
+                    'ship entries. They always show as related entries on the '
+                    'station either way.',
+                child: CheckboxWithLabel(
+                  label: 'Show modules as ships',
+                  value: filters.showModulesAsShips,
+                  labelStyle: theme.textTheme.labelMedium,
+                  onChanged: (v) => notifier.setShowModulesAsShips(v ?? false),
+                ),
+              ),
+            ),
           ],
         ),
       ),

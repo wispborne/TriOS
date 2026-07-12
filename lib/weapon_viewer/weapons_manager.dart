@@ -26,6 +26,14 @@ final weaponListNotifierProvider =
       WeaponListNotifier.new,
     );
 
+/// Weapons keyed by id, rebuilt only when the weapons list changes. Prefer
+/// this over building a map from [weaponListNotifierProvider] per widget.
+final weaponsByIdProvider = Provider<Map<String, Weapon>>((ref) {
+  final weapons =
+      ref.watch(weaponListNotifierProvider).valueOrNull ?? const <Weapon>[];
+  return {for (final w in weapons) w.id: w};
+});
+
 class WeaponListNotifier
     extends CachedStreamListNotifier<Weapon, WeaponsCachePayload> {
   @override

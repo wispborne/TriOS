@@ -257,11 +257,11 @@ Map<String, Set<String>> extractVersionGroups(List<ScrapedMod> mods) {
 /// Sort keys for the catalog page.
 enum CatalogSortKey {
   name('Name'),
-  date('Date Added'),
+  date('Newest'),
   version('Game Version'),
-  mostViewed('Forum Views'),
-  mostReplies('Forum Replies'),
-  lastActivity('Last Forum Activity');
+  mostViewed('Popular'),
+  mostReplies('Most Discussed'),
+  lastActivity('Recently Active');
 
   final String label;
 

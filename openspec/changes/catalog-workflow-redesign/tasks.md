@@ -15,35 +15,35 @@
 
 ## Slice 2 — Unified details dialog
 
-- [ ] Make card click always open a details dialog: cached forum HTML → existing `showForumPostDialog`; otherwise → new fallback dialog
-- [ ] Build the fallback details dialog from scraped data (same shell/header/download strip; body = image, description/summary, AI paragraph per `AiSummaryMode` with attribution)
-- [ ] Remove the "Clicking a mod opens..." section from the catalog overflow menu; mark the `catalogCardClickAction` settings field `@Deprecated` (no migration)
-- [ ] Simplify `_dispatchCardLink` into an explicit "open in embedded browser" handler; add "Open in system browser" / "Open in embedded browser" actions to the dialog header and card context menu
-- [ ] Restructure `ForumPostHeader` downloads into per-mod rows ordered main → addon → separate → unknown, with role captions
-- [ ] Implement the per-row split button: main click runs `primaryCandidate` for that mod; `▾` menu lists all candidates with host names and low-confidence markers; mirrors only in the menu
-- [ ] Handle manual-step-only mods: button label "Open download page", click opens the link
-- [ ] Add the dependencies line under the main mod row from LLM `requires` (✓ when installed; "(installed with it)" when primary is a TriOS deep link)
-- [ ] Keep the scraped-links fallback (no LLM data) as a single row with a split button
-- [ ] Get user sign-off on dialog strings (section headers, role captions, dependency line)
+- [x] Make card click always open a details dialog: cached forum HTML → existing `showForumPostDialog`; otherwise → new fallback dialog
+- [x] Build the fallback details dialog from scraped data (same shell/header/download strip; body = image, description/summary, AI paragraph per `AiSummaryMode` with attribution)
+- [x] Remove the "Clicking a mod opens..." section from the catalog overflow menu; mark the `catalogCardClickAction` settings field `@Deprecated` (no migration)
+- [x] Simplify `_dispatchCardLink` into an explicit "open in embedded browser" handler; add "Open in system browser" / "Open in embedded browser" actions to the dialog header and card context menu
+- [x] Restructure `ForumPostHeader` downloads into per-mod rows ordered main → addon → separate → unknown, with role captions
+- [x] Implement the per-row split button: main click runs `primaryCandidate` for that mod; `▾` menu lists all candidates with host names and low-confidence markers; mirrors only in the menu
+- [x] Handle manual-step-only mods: button label "Open download page", click opens the link
+- [x] Add the dependencies line under the main mod row from LLM `requires` (✓ when installed; "Install incl. dependencies" when primary is a TriOS deep link)
+- [x] Keep the scraped-links fallback (no LLM data) as a single row with a split button
+- [x] Get user sign-off on dialog strings — approved; "Downloads", "Also in this thread", "add-on"/"separate mod" role tags, split-button "Install"/"Open download page", deps line "Also needs: … ✓" and "Install incl. dependencies" (user's edit), header/menu "Open in your web browser"/"Open in the built-in browser"
 
 ## Slice 3 — Toolbar
 
-- [ ] Expose an updates count from `CatalogPageController` (entries with `versionCheck?.hasUpdate == true`)
-- [ ] Add the "⬆ N updates" pill to the toolbar, visible only when count > 0; click activates the Status → `hasUpdate` filter and opens the filter panel
-- [ ] Rename `CatalogSortKey` labels (Popular, Most Discussed, Recently Active, Newest)
-- [ ] Get user sign-off on pill and sort label strings
+- [x] Expose an updates count from `CatalogPageController` (entries with `versionCheck?.hasUpdate == true`)
+- [x] Show the updates count as a primary-color badge next to the Status → "Has Update" filter (visible only when count > 0), instead of a toolbar pill
+- [x] Rename `CatalogSortKey` labels (Popular, Most Discussed, Recently Active, Newest)
+- [x] Get user sign-off on pill and sort label strings
 
 ## Slice 4 — Addon findability
 
-- [ ] Add nullable `partOfThreadTitle` field to `ScrapedMod`; run `dart run build_runner build --delete-conflicting-outputs`
-- [ ] Synthesize catalog entries for non-main `llm.mods` (addon/separate/extra-unknown), mapping fields from the LLM mod + parent thread; dedupe against existing entries by normalized name
-- [ ] Show "part of <thread title>" on synthesized cards
-- [ ] Point synthesized cards' install button at that specific `ForumLlmMod`'s downloads in `resolveDownloadCandidates`
-- [ ] Open the parent thread's details dialog on synthesized-card click
+- [x] Add nullable `partOfThreadTitle` field to `ScrapedMod`; run `dart run build_runner build --delete-conflicting-outputs`
+- [x] Synthesize catalog entries for non-main `llm.mods` (addon/separate/extra-unknown), mapping fields from the LLM mod + parent thread; dedupe against existing entries by normalized name
+- [x] Show "part of <thread title>" on synthesized cards
+- [x] Point synthesized cards' install button at that specific `ForumLlmMod`'s downloads in `resolveDownloadCandidates`
+- [x] Open the parent thread's details dialog on synthesized-card click
 - [ ] Verify with the "Hartley's mods" thread (5 mods): all appear in search, install correctly, dedupe works
-- [ ] Get user sign-off on the "part of" string
+- [x] Get user sign-off on the "part of" string — approved "part of <thread>" (card line) with tooltip "Part of the "<thread>" forum thread. Click the card to see the whole thread."
 
 ## Wrap-up
 
-- [ ] `flutter analyze` clean
+- [x] `flutter analyze` clean (0 errors; no new lints introduced by this change)
 - [ ] Manual verification pass by user (per project convention: don't run the app yourself)

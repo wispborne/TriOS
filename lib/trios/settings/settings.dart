@@ -149,6 +149,10 @@ class Settings with SettingsMappable {
   // Catalog page — collapsible browser panel and card-click action
   final bool catalogBrowserPanelOpen;
   final double? catalogBrowserPanelWidth;
+  @Deprecated(
+    'Catalog cards now always open the details dialog; this setting is no '
+    'longer read. Kept to avoid a settings migration; remove in a later cleanup.',
+  )
   final CatalogCardClickAction catalogCardClickAction;
   final AiSummaryMode catalogAiSummaryMode;
   final double catalogMinItemWidth;

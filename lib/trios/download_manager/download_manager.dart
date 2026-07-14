@@ -5,10 +5,12 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -48,6 +50,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     String uri,
     Directory destination, {
     ModInfo? modInfo,
+    required DownloadSourceHint? sourceHint,
   }) async {
     return ref
         .read(downloadManagerInstance)
@@ -59,8 +62,14 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           // generate guid for id
           final id = const Uuid().v4();
           final download = modInfo == null
-              ? Download(id, displayName, value)
-              : ModDownload(id, displayName, value, modInfo);
+              ? Download(id, displayName, value, sourceHint: sourceHint)
+              : ModDownload(
+                  id,
+                  displayName,
+                  value,
+                  modInfo,
+                  sourceHint: sourceHint,
+                );
           _downloads.add(download);
           state = AsyncValue.data(_downloads);
 
@@ -154,6 +163,9 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           remoteVersion.directDownloadURL!.fixModDownloadUrl(),
           activateVariantOnComplete: activateVariantOnComplete,
           modInfo: modInfo,
+          // A version-checker update isn't a catalog install; the record is
+          // keyed by the known mod id, so no catalog source hint is needed.
+          sourceHint: null,
         );
       }
     } else if (remoteVersion.modThreadId != null) {
@@ -171,43 +183,51 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     String displayName,
     String uri, {
     required bool activateVariantOnComplete,
+    required DownloadSourceHint? sourceHint,
     ModInfo? modInfo,
     bool skipConfirmation = false,
   }) {
     if (isDownloadInProgress(uri)) return;
     var tempFolder = Directory.systemTemp.createTempSync();
 
-    addDownload(displayName, uri, tempFolder, modInfo: modInfo).then((
-      value,
-    ) async {
+    addDownload(
+      displayName,
+      uri,
+      tempFolder,
+      modInfo: modInfo,
+      sourceHint: sourceHint,
+    ).then((value) async {
       if (value == null) return;
       final status = await value.task.whenDownloadComplete();
       if (status == DownloadStatus.completed) {
         Fimber.d(
           "Downloaded ${value.task.request.url} to ${tempFolder.path}. Installing...",
         );
-        // Record download source in mod records.
-        try {
-          final recordKey = modInfo?.id ?? displayName;
-          ref.read(modRecordsStore.notifier).updateRecord(recordKey, (existing) {
-            final now = DateTime.now();
-            final base = existing ?? ModRecord(
-              recordKey: recordKey,
-              modId: modInfo?.id,
-              firstSeen: now,
-            );
-            final updatedSources = Map<String, ModRecordSource>.of(
-              base.sources,
-            );
-            updatedSources['downloadHistory'] = DownloadHistorySource(
-              lastDownloadedFrom: uri,
-              lastDownloadedAt: now,
-              lastSeen: now,
-            );
-            return base.copyWith(sources: updatedSources);
-          });
-        } catch (e) {
-          Fimber.w("Failed to update mod record on download: $e");
+        // Record download history only when we already know the real mod id.
+        // When we don't (every catalog install, where the id isn't known until
+        // extraction), the batch-install finalize step writes it, keyed by the
+        // real mod id — otherwise the record would orphan under the display name.
+        if (modInfo != null) {
+          try {
+            final modId = modInfo.id;
+            ref.read(modRecordsStore.notifier).updateRecord(modId, (existing) {
+              final now = DateTime.now();
+              final base =
+                  existing ??
+                  ModRecord(recordKey: modId, modId: modId, firstSeen: now);
+              final updatedSources = Map<String, ModRecordSource>.of(
+                base.sources,
+              );
+              updatedSources['downloadHistory'] = DownloadHistorySource(
+                lastDownloadedFrom: uri,
+                lastDownloadedAt: now,
+                lastSeen: now,
+              );
+              return base.copyWith(sources: updatedSources);
+            });
+          } catch (e) {
+            Fimber.w("Failed to update mod record on download: $e");
+          }
         }
         try {
           final downloadedFile = (await tempFolder.list().first).toFile();
@@ -248,10 +268,44 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   }
 }
 
+/// Where a download came from, carried from the click through to install
+/// completion. Lives only for the length of a download (not persisted); at
+/// install completion it's turned into a persistent `CatalogSource` on the
+/// mod's record. Null for downloads that aren't catalog installs.
+///
+/// [catalogName] is the exact catalog entry name (e.g. "Ashpad"), which is
+/// what identifies the entry even when a single forum thread lists several
+/// mods. [forumThreadId] and [nexusModsId] are extra clues used as a fallback.
+class DownloadSourceHint {
+  final String? catalogName;
+  final String? forumThreadId;
+  final String? nexusModsId;
+
+  const DownloadSourceHint({
+    this.catalogName,
+    this.forumThreadId,
+    this.nexusModsId,
+  });
+
+  /// Builds a hint from a catalog entry, so call sites can't assemble it wrong.
+  factory DownloadSourceHint.fromScrapedMod(ScrapedMod mod) {
+    final urls = mod.getUrls();
+    return DownloadSourceHint(
+      catalogName: mod.name,
+      forumThreadId: extractForumThreadId(urls[ModUrlType.Forum]),
+      nexusModsId: extractNexusModId(urls[ModUrlType.NexusMods]),
+    );
+  }
+}
+
 class Download {
   final String id;
   final String displayName;
   final DownloadTask task;
+
+  /// Where this download came from, when it's a catalog install; null otherwise.
+  /// Read at install completion to link the real mod to its catalog entry.
+  final DownloadSourceHint? sourceHint;
 
   /// Tracks file-count progress during mod installation (extraction).
   final ValueNotifier<TriOSDownloadProgress?> installProgress = ValueNotifier(
@@ -269,7 +323,7 @@ class Download {
   /// [Download] objects that don't carry [ModInfo]).
   final ValueNotifier<ModVariant?> installedVariant = ValueNotifier(null);
 
-  Download(this.id, this.displayName, this.task);
+  Download(this.id, this.displayName, this.task, {this.sourceHint});
 
   /// Whether installation completed with an error.
   bool get hasInstallError => installComplete.value && task.error != null;
@@ -284,7 +338,13 @@ class Download {
 class ModDownload extends Download {
   final ModInfo modInfo;
 
-  ModDownload(super.id, super.displayName, super.task, this.modInfo);
+  ModDownload(
+    super.id,
+    super.displayName,
+    super.task,
+    this.modInfo, {
+    super.sourceHint,
+  });
 }
 
 extension DownloadVariantResolution on Download {

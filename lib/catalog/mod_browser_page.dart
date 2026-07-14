@@ -75,6 +75,11 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
   double? webLoadingProgress;
   String? selectedModName;
   WebViewStatus _webViewStatus = WebViewStatus.loading;
+
+  /// A URL waiting to open in the built-in browser once it finishes loading.
+  /// Set when the user asks to open a page but the webview isn't ready yet
+  /// (still loading, or being loaded for the first time after opt-in).
+  String? _pendingEmbeddedUrl;
   String? currentUrl;
 
   @override
@@ -143,19 +148,41 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
 
   /// Open [url] in the app's built-in browser panel (auto-opening it if
   /// closed). Used for the "open in the built-in browser" action and for
-  /// website/manual download links. Falls back to the system browser when the
-  /// panel isn't available (e.g. webview not loaded, or on Linux).
+  /// website/manual download links. If the browser hasn't been loaded yet
+  /// (it's off by default), this loads it for the session and shows the page
+  /// once it's ready. Falls back to the system browser only when the built-in
+  /// browser genuinely can't run here (Linux, no WebView2, or a load error).
   void _openInEmbeddedBrowser(String url) {
-    if (_webViewStatus != WebViewStatus.loaded) {
-      url.openAsUriInBrowser();
-      return;
+    switch (_webViewStatus) {
+      case WebViewStatus.linuxNotSupported:
+      case WebViewStatus.webview2Required:
+      case WebViewStatus.unknownError:
+        url.openAsUriInBrowser();
+        return;
+      case WebViewStatus.loading:
+      case WebViewStatus.optInRequired:
+      case WebViewStatus.loaded:
+        break;
     }
+
+    // Make sure the panel is open.
     if (_openPanelId != _kBrowserPanelId) {
       setState(() => _openPanelId = _kBrowserPanelId);
       ref
           .read(appSettings.notifier)
           .update((s) => s.copyWith(catalogBrowserPanelOpen: true));
     }
+
+    // If the webview isn't ready yet (still checking, waiting on opt-in, or the
+    // controller hasn't attached), remember the URL and load it once it's up.
+    if (_webViewStatus != WebViewStatus.loaded || webViewController == null) {
+      _pendingEmbeddedUrl = url;
+      if (_webViewStatus == WebViewStatus.optInRequired) {
+        _loadWebViewOnce();
+      }
+      return;
+    }
+
     webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
     setState(() {});
   }
@@ -774,67 +801,97 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                               // Hold off until the env is ready.
                               (currentPlatform == TargetPlatform.windows &&
                                       ref.watch(webViewEnvironment) == null)
-                                  ? const Center(child: CircularProgressIndicator())
+                                  ? const Center(
+                                      child: CircularProgressIndicator(),
+                                    )
                                   : InAppWebView(
-                              key: webViewKey,
-                              webViewEnvironment: ref.watch(webViewEnvironment),
-                              shouldOverrideUrlLoading:
-                                  (controller, navigationAction) async {
-                                    if (navigationAction.request.url != null) {
-                                      final finalUrlAndHeaders =
-                                          await DownloadManager.fetchFinalUrlAndHeaders(
-                                            navigationAction.request.url
-                                                .toString(),
-                                            httpClient,
+                                      key: webViewKey,
+                                      webViewEnvironment: ref.watch(
+                                        webViewEnvironment,
+                                      ),
+                                      shouldOverrideUrlLoading:
+                                          (controller, navigationAction) async {
+                                            if (navigationAction.request.url !=
+                                                null) {
+                                              final finalUrlAndHeaders =
+                                                  await DownloadManager.fetchFinalUrlAndHeaders(
+                                                    navigationAction.request.url
+                                                        .toString(),
+                                                    httpClient,
+                                                  );
+                                              final url =
+                                                  finalUrlAndHeaders.url;
+
+                                              final isDownloadFile =
+                                                  await DownloadManager.isDownloadableFile(
+                                                    url.toString(),
+                                                    finalUrlAndHeaders
+                                                        .headersMap,
+                                                    httpClient,
+                                                  );
+
+                                              if (isDownloadFile) {
+                                                ref
+                                                    .read(
+                                                      downloadManager.notifier,
+                                                    )
+                                                    .downloadAndInstallMod(
+                                                      selectedModName ??
+                                                          "Catalog Mod",
+                                                      url.toString(),
+                                                      activateVariantOnComplete:
+                                                          false,
+                                                      // A raw download from the
+                                                      // built-in browser has no
+                                                      // known catalog entry.
+                                                      sourceHint: null,
+                                                    );
+
+                                                return NavigationActionPolicy
+                                                    .CANCEL;
+                                              }
+                                            }
+
+                                            return NavigationActionPolicy.ALLOW;
+                                          },
+                                      onDownloadStartRequest:
+                                          (controller, url) {},
+                                      initialUrlRequest: URLRequest(
+                                        url: WebUri(Constants.forumModIndexUrl),
+                                      ),
+                                      initialSettings: webSettings,
+                                      onWebViewCreated: (controller) {
+                                        webViewController = controller;
+                                        // A page was requested before the
+                                        // webview was ready; open it now.
+                                        final pending = _pendingEmbeddedUrl;
+                                        if (pending != null) {
+                                          _pendingEmbeddedUrl = null;
+                                          controller.loadUrl(
+                                            urlRequest: URLRequest(
+                                              url: WebUri(pending),
+                                            ),
                                           );
-                                      final url = finalUrlAndHeaders.url;
-
-                                      final isDownloadFile =
-                                          await DownloadManager.isDownloadableFile(
-                                            url.toString(),
-                                            finalUrlAndHeaders.headersMap,
-                                            httpClient,
-                                          );
-
-                                      if (isDownloadFile) {
-                                        ref
-                                            .read(downloadManager.notifier)
-                                            .downloadAndInstallMod(
-                                              selectedModName ?? "Catalog Mod",
-                                              url.toString(),
-                                              activateVariantOnComplete: false,
-                                            );
-
-                                        return NavigationActionPolicy.CANCEL;
-                                      }
-                                    }
-
-                                    return NavigationActionPolicy.ALLOW;
-                                  },
-                              onDownloadStartRequest: (controller, url) {},
-                              initialUrlRequest: URLRequest(
-                                url: WebUri(Constants.forumModIndexUrl),
-                              ),
-                              initialSettings: webSettings,
-                              onWebViewCreated: (controller) {
-                                webViewController = controller;
-                              },
-                              onProgressChanged: (controller, progress) {
-                                setState(() {
-                                  if (progress == 100) {
-                                    webLoadingProgress = null;
-                                  } else {
-                                    webLoadingProgress = progress / 100;
-                                  }
-                                });
-                              },
-                              onLoadStop: (controller, url) {
-                                setState(() {
-                                  urlController.text = url.toString();
-                                  currentUrl = url.toString();
-                                });
-                              },
-                            ),
+                                        }
+                                      },
+                                      onProgressChanged:
+                                          (controller, progress) {
+                                            setState(() {
+                                              if (progress == 100) {
+                                                webLoadingProgress = null;
+                                              } else {
+                                                webLoadingProgress =
+                                                    progress / 100;
+                                              }
+                                            });
+                                          },
+                                      onLoadStop: (controller, url) {
+                                        setState(() {
+                                          urlController.text = url.toString();
+                                          currentUrl = url.toString();
+                                        });
+                                      },
+                                    ),
 
                             // Webview not supported
                             WebViewStatus.webview2Required => Column(
@@ -999,6 +1056,9 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     final theme = Theme.of(context);
     final currentAiSummaryMode = ref.watch(
       appSettings.select((s) => s.catalogAiSummaryMode),
+    );
+    final showDialogHeaderSummary = ref.watch(
+      appSettings.select((s) => s.catalogShowDialogHeaderSummary),
     );
 
     return OverflowMenuButton(

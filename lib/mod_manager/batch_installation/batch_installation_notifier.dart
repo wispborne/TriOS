@@ -653,20 +653,35 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
       }
     }
 
-    // Write mod records (InstalledSource + catalog merge) for all installed mods.
+    // Write mod records (InstalledSource, catalog link, download history) for
+    // all installed mods.
     final refreshedVariants = ref.read(AppState.modVariants).value ?? [];
     try {
       final store = ref.read(modRecordsStore.notifier);
       for (final entry in unrecorded) {
+        final hint = entry.download?.sourceHint;
+        final downloadUrl = entry.download?.task.request.url;
+        // A catalog install carries one mod's identity. Apply it only when the
+        // archive produced exactly one mod, so a multi-mod thread archive
+        // doesn't tag every mod with the same catalog entry.
+        final linkFromCatalog =
+            hint?.catalogName != null && entry.installedMods.length == 1;
+
         for (final modInfo in entry.installedMods) {
           final modId = modInfo.id;
           final now = DateTime.now();
 
-          final syntheticKey = ModRecord.syntheticKey(modInfo.nameOrId);
-          if (store.lookupByModId(modId) == null &&
-              store.state.valueOrNull?.records.containsKey(syntheticKey) ==
-                  true) {
-            await store.mergeSyntheticIntoReal(syntheticKey, modId);
+          if (linkFromCatalog) {
+            await store.linkCatalogEntryToMod(modId, hint!);
+          } else {
+            // Fallback for archives with no catalog hint (e.g. drag-drop of a
+            // file whose name matches a catalog-only record): merge by name.
+            final syntheticKey = ModRecord.syntheticKey(modInfo.nameOrId);
+            if (store.lookupByModId(modId) == null &&
+                store.state.valueOrNull?.records.containsKey(syntheticKey) ==
+                    true) {
+              await store.mergeSyntheticIntoReal(syntheticKey, modId);
+            }
           }
 
           final variant = refreshedVariants.firstWhereOrNull(
@@ -685,6 +700,16 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
               version: modInfo.version?.toString(),
               lastSeen: now,
             );
+            // Record download history here, keyed by the real mod id, for
+            // catalog installs (where the id wasn't known at download time and
+            // so the download step skipped it).
+            if (downloadUrl != null && downloadUrl.isNotEmpty) {
+              updatedSources['downloadHistory'] = DownloadHistorySource(
+                lastDownloadedFrom: downloadUrl,
+                lastDownloadedAt: now,
+                lastSeen: now,
+              );
+            }
             return base.copyWith(modId: modId, sources: updatedSources);
           });
         }

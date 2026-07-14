@@ -107,6 +107,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                     "Web link download",
                     uri.uri.toString(),
                     activateVariantOnComplete: false,
+                    sourceHint: null,
                   );
               return null;
             }

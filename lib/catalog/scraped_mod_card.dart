@@ -16,6 +16,8 @@ import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
+import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
@@ -23,7 +25,6 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/deep_link/deep_link_handler.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -118,6 +119,16 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
             (mod.images?.isNotEmpty ?? false) ||
             downloadCandidates.isNotEmpty;
 
+        // The hover tooltip: a full mod overview. Prefer rich forum details
+        // (author title, post count, avatar) when the post is cached.
+        final summaryData = hasForumDetails
+            ? ModSummaryData.fromDetails(
+                forumDetails,
+                widget.forumModIndex,
+                mod,
+              )
+            : ModSummaryData.fromScraped(mod, widget.forumModIndex);
+
         return ContextMenuRegion(
           contextMenu: ContextMenu(
             entries: [
@@ -149,6 +160,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                       ref,
                       candidate,
                       modName: mod.name,
+                      sourceHint: DownloadSourceHint.fromScrapedMod(mod),
                       linkLoader: widget.linkLoader,
                     ),
                   ),
@@ -216,185 +228,204 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
               ),
             ],
           ),
-          child: Card(
-            margin: const EdgeInsets.all(0),
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
-              side: BorderSide(
-                color: theme.colorScheme.surface.withValues(alpha: 0.5),
-              ),
-            ),
-            child: ConditionalWrap(
-              condition: hasDetailsToShow,
-              wrapper: (child) => InkWell(
-                onTap: () => _openDetailsDialog(context, forumDetails),
-                child: child,
-              ),
-              child: Stack(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12.0),
-                    decoration: BoxDecoration(
-                      color: widget.isSelected
-                          ? theme.cardColor.lighter(5)
-                          : null,
+          child: MovingTooltipWidget.framed(
+            tooltipWidget: hasDetailsToShow
+                ? ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: ModSummaryWidget(
+                      data: summaryData,
+                      config: ModSummaryConfig.tooltip,
                     ),
-                    child: Row(
-                      children: [
-                        Stack(
-                          children: [
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: 60.0,
-                                minWidth: 60.0,
-                                maxHeight: 60.0,
+                  )
+                : null,
+            child: Card(
+              margin: const EdgeInsets.all(0),
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+                side: BorderSide(
+                  color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                ),
+              ),
+              child: ConditionalWrap(
+                condition: hasDetailsToShow,
+                wrapper: (child) => InkWell(
+                  onTap: () => _openDetailsDialog(context, forumDetails),
+                  child: child,
+                ),
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: widget.isSelected
+                            ? theme.cardColor.lighter(5)
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Stack(
+                            children: [
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 60.0,
+                                  minWidth: 60.0,
+                                  maxHeight: 60.0,
+                                ),
+                                child: ModImage(
+                                  mod: mod,
+                                  size: 60,
+                                  fallbackImageUrl: _targetLlmMod?.imageUrl,
+                                ),
                               ),
-                              child: ModImage(mod: mod, size: 60),
-                            ),
-                          ],
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 16.0,
-                              right: 16.0,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  spacing: 4,
-                                  children: [
-                                    Flexible(
-                                      child: TextTriOS(
-                                        mod.name.isNotEmpty ? mod.name : '???',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14.0,
-                                          // fontFamily:
-                                          //     TriOSThemeConstants.orbitron,
+                            ],
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 16.0,
+                                right: 16.0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    spacing: 4,
+                                    children: [
+                                      Flexible(
+                                        child: TextTriOS(
+                                          mod.name.isNotEmpty
+                                              ? mod.name
+                                              : '???',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.0,
+                                            // fontFamily:
+                                            //     TriOSThemeConstants.orbitron,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                  if (mod.authorsList?.isNotEmpty == true)
+                                    Text(
+                                      mod.getAuthorsDeduplicated().join(', '),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            fontSize: 10,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                      maxLines: 1,
+                                      overflow: .ellipsis,
+                                    ),
+                                  if (mod.isPartOfThread)
+                                    MovingTooltipWidget.text(
+                                      message:
+                                          'Part of the "${mod.partOfThreadTitle}" '
+                                          'forum thread.\nClick the card to see '
+                                          'the whole thread.',
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        spacing: 3,
+                                        children: [
+                                          Icon(
+                                            Icons.layers,
+                                            size: 11,
+                                            color: theme
+                                                .textTheme
+                                                .labelSmall
+                                                ?.color
+                                                ?.withValues(alpha: 0.6),
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              'part of ${mod.partOfThreadTitle}',
+                                              style: theme.textTheme.labelSmall
+                                                  ?.copyWith(
+                                                    fontSize: 10,
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                                if (mod.authorsList?.isNotEmpty == true)
-                                  Text(
-                                    mod.getAuthorsDeduplicated().join(', '),
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontSize: 10,
-                                      fontStyle: FontStyle.italic,
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: buildDescription(
+                                        theme,
+                                        context,
+                                        mod,
+                                      ),
                                     ),
-                                    maxLines: 1,
-                                    overflow: .ellipsis,
                                   ),
-                                if (mod.isPartOfThread)
-                                  MovingTooltipWidget.text(
-                                    message:
-                                        'Part of the "${mod.partOfThreadTitle}" '
-                                        'forum thread.\nClick the card to see '
-                                        'the whole thread.',
-                                    child: Row(
+                                  Padding(
+                                    // Only the footer sits at the button's
+                                    // height, so just it clears the corner;
+                                    // the name/author/description above use
+                                    // the card's full width.
+                                    padding: const EdgeInsets.only(right: 80.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
-                                      spacing: 3,
                                       children: [
-                                        Icon(
-                                          Icons.layers,
-                                          size: 11,
-                                          color: theme
-                                              .textTheme
-                                              .labelSmall
-                                              ?.color
-                                              ?.withValues(alpha: 0.6),
-                                        ),
-                                        Flexible(
-                                          child: Text(
-                                            'part of ${mod.partOfThreadTitle}',
-                                            style: theme.textTheme.labelSmall
-                                                ?.copyWith(
-                                                  fontSize: 10,
-                                                  fontStyle: FontStyle.italic,
-                                                ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                        if (widget.forumModIndex != null)
+                                          _ForumStats(
+                                            forumModIndex:
+                                                widget.forumModIndex!,
                                           ),
-                                        ),
+                                        Tags(mod: mod),
                                       ],
                                     ),
                                   ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
-                                    child: buildDescription(
-                                      theme,
-                                      context,
-                                      mod,
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  // Only the footer sits at the button's
-                                  // height, so just it clears the corner;
-                                  // the name/author/description above use
-                                  // the card's full width.
-                                  padding: const EdgeInsets.only(right: 80.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (widget.forumModIndex != null)
-                                        _ForumStats(
-                                          forumModIndex: widget.forumModIndex!,
-                                        ),
-                                      Tags(mod: mod),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (mod.gameVersionReq?.isNotEmpty == true)
-                    Positioned(
-                      left: 8,
-                      top: 4,
-                      child: _ScrapedModGameVersionReq(mod: mod),
-                    ),
-                  if (widget.installedMod != null)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: MovingTooltipWidget.text(
-                        message: widget.installedMod!.isEnabledInGame
-                            ? 'Enabled'
-                            : 'Installed, disabled',
-                        child: Container(
-                          width: 4,
-                          color: _statusBarColor(theme),
-                        ),
+                        ],
                       ),
                     ),
-                  // Overlaid in the bottom-right corner so the text content
-                  // above it can span the card's full width.
-                  Positioned(
-                    right: 12,
-                    bottom: 12,
-                    child: CatalogDownloadButton(
-                      mod: mod,
-                      installedMod: widget.installedMod,
-                      versionCheckComparison: widget.versionCheckComparison,
-                      linkLoader: widget.linkLoader,
-                      llmMainMod: _targetLlmMod,
+                    if (mod.gameVersionReq?.isNotEmpty == true)
+                      Positioned(
+                        left: 8,
+                        top: 4,
+                        child: _ScrapedModGameVersionReq(mod: mod),
+                      ),
+                    if (widget.installedMod != null)
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: MovingTooltipWidget.text(
+                          message: widget.installedMod!.isEnabledInGame
+                              ? 'Enabled'
+                              : 'Installed, disabled',
+                          child: Container(
+                            width: 4,
+                            color: _statusBarColor(theme),
+                          ),
+                        ),
+                      ),
+                    // Overlaid in the bottom-right corner so the text content
+                    // above it can span the card's full width.
+                    Positioned(
+                      right: 12,
+                      bottom: 12,
+                      child: CatalogDownloadButton(
+                        mod: mod,
+                        installedMod: widget.installedMod,
+                        versionCheckComparison: widget.versionCheckComparison,
+                        linkLoader: widget.linkLoader,
+                        llmMainMod: _targetLlmMod,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -439,48 +470,29 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
 
     if (showingAiSentence) {
       // A subtle inline icon marks the text as AI-written. It flows with the
-      // text so the 2-line ellipsis still applies.
-      return MovingTooltipWidget.framed(
-        tooltipWidget: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Text.rich(
-            TextSpan(
-              style: theme.textTheme.labelLarge,
-              children: [
-                TextSpan(text: aiSummary!.paragraph),
-                TextSpan(
-                  text:
-                      '\n\nSummary generated by AI. See the ${Constants.appName} About page for AI Disclosure.',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.onSurface.withAlpha(150),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        child: Text.rich(
-          TextSpan(
-            children: [
-              WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Icon(
-                    Icons.auto_awesome,
-                    size: 12,
-                    color: theme.colorScheme.onSurface.withAlpha(120),
-                  ),
+      // text so the 2-line ellipsis still applies. The card's hover tooltip
+      // (built from the same data) carries the full AI paragraph, so the text
+      // itself no longer needs its own tooltip.
+      return Text.rich(
+        TextSpan(
+          children: [
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.auto_awesome,
+                  size: 12,
+                  color: theme.colorScheme.onSurface.withAlpha(120),
                 ),
               ),
-              TextSpan(text: trimmedDescription),
-            ],
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: style,
+            ),
+            TextSpan(text: trimmedDescription),
+          ],
         ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: style,
       );
     }
 
@@ -618,6 +630,31 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   }
 
   void _showDebugDialog(BuildContext context, ScrapedMod mod) {
+    final forumModIndex = widget.forumModIndex;
+    final targetLlmMod = _targetLlmMod;
+    final downloadCandidates = resolveDownloadCandidates(mod, targetLlmMod);
+
+    // Note: the forum index's toString already contains its LLM data, so we
+    // don't dump that separately. The per-card download candidate is the one
+    // LLM mod (of possibly several in a thread) that drives this card.
+    final sections = <String, String?>{
+      'Scraped mod': mod.toString(),
+      'Forum index': forumModIndex?.toString(),
+      'Download candidate (this card)': targetLlmMod?.toString(),
+      'Resolved download candidates':
+          downloadCandidates.isEmpty ? null : downloadCandidates.join('\n\n'),
+    };
+
+    final buffer = StringBuffer();
+    for (final entry in sections.entries) {
+      final value = entry.value;
+      if (value == null || value.isEmpty) continue;
+      if (buffer.isNotEmpty) buffer.write('\n\n');
+      buffer
+        ..writeln('=== ${entry.key} ===')
+        ..write(value);
+    }
+
     showDialog(
       context: context,
       builder: (context) {
@@ -625,7 +662,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
           title: Text(mod.name),
           content: SingleChildScrollView(
             child: SelectableText(
-              mod.toString(),
+              buffer.toString(),
               style: context.theme.textTheme.bodyMedium,
             ),
           ),
@@ -765,7 +802,16 @@ class ModImage extends StatelessWidget {
   final ScrapedMod mod;
   final int? size;
 
-  const ModImage({super.key, required this.mod, this.size});
+  /// Used when the mod itself has no scraped image, e.g. an image found in the
+  /// AI-extracted forum data.
+  final String? fallbackImageUrl;
+
+  const ModImage({
+    super.key,
+    required this.mod,
+    this.size,
+    this.fallbackImageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -773,8 +819,12 @@ class ModImage extends StatelessWidget {
         ? mod.images?.values.first
         : null;
 
-    if (mainImage != null && mainImage.url != null) {
-      final description = mainImage.description;
+    // Prefer the mod's own scraped image; otherwise fall back to the image
+    // from the AI-extracted forum data, if any.
+    final String? imageUrl = mainImage?.url ?? fallbackImageUrl;
+
+    if (imageUrl != null) {
+      final description = mainImage?.description;
       return MovingTooltipWidget.framed(
         tooltipWidget: Builder(
           builder: (context) {
@@ -790,7 +840,7 @@ class ModImage extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Image.network(
-                      mainImage.url!,
+                      imageUrl,
                       fit: BoxFit.scaleDown,
                       errorBuilder: (context, error, stackTrace) =>
                           _defaultImage(),
@@ -810,7 +860,7 @@ class ModImage extends StatelessWidget {
           },
         ),
         child: Image.network(
-          mainImage.url!,
+          imageUrl,
           fit: .scaleDown,
           cacheWidth: size == null ? null : size! * 2,
           errorBuilder: (context, error, stackTrace) {
@@ -1035,6 +1085,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
         ref,
         primary!,
         modName: mod.name,
+        sourceHint: DownloadSourceHint.fromScrapedMod(mod),
         linkLoader: linkLoader,
         hasOwnBusyIndicator: true,
       );
@@ -1219,6 +1270,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
           ref,
           candidate,
           modName: mod.name,
+          sourceHint: DownloadSourceHint.fromScrapedMod(mod),
           linkLoader: linkLoader,
           hasOwnBusyIndicator: true,
         );

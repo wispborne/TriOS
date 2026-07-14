@@ -8,6 +8,9 @@ import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
+import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/downloader.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/http_client.dart';
@@ -110,6 +113,10 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
       modName: modName,
       downloadUrl: url,
       skipDialog: true,
+      sourceHint: DownloadSourceHint(
+        catalogName: modName,
+        forumThreadId: widget.index?.topicId.toString(),
+      ),
     );
   }
 
@@ -166,47 +173,82 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
           mainAxisSize: _isFullScreen ? MainAxisSize.max : MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ForumPostHeader(
-              data: ForumPostHeaderData.fromDetails(widget.details),
-              index: widget.index,
-              onOpenInSystemBrowser: () {
-                final url = widget.index?.topicUrl;
-                if (url != null && url.isNotEmpty) url.openAsUriInBrowser();
-              },
-              onOpenInEmbeddedBrowser: widget.canUseEmbeddedBrowser
-                  ? () {
-                      final url = widget.index?.topicUrl;
-                      if (url != null && url.isNotEmpty) {
-                        widget.linkLoader(url);
-                      }
-                    }
-                  : null,
-              onToggleFullScreen: () {
-                setState(() => _isFullScreen = !_isFullScreen);
-              },
-              isFullScreen: _isFullScreen,
-              onClose: () => Navigator.of(context).pop(),
-              downloadGroups: _downloadGroups(),
-              onDownload: (candidate, modName) => executeDownloadCandidate(
-                context,
-                ref,
-                candidate,
-                modName: modName,
-                linkLoader: widget.linkLoader,
-              ),
-            ),
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: htmlToWidgets(
-                    widget.details.contentHtml,
-                    context,
-                    onLinkTap: _onLinkTap,
-                    onLinkHover: (url) => _hoveredUrl.value = url,
-                    baseUrl: widget.index?.topicUrl,
-                  ),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ForumPostHeader(
+                      data: ModSummaryData.fromDetails(
+                        widget.details,
+                        widget.index,
+                        null,
+                      ),
+                      showSummary: ref.watch(
+                        appSettings.select(
+                          (s) => s.catalogShowDialogHeaderSummary,
+                        ),
+                      ),
+                      onToggleSummary: () {
+                        ref
+                            .read(appSettings.notifier)
+                            .update(
+                              (s) => s.copyWith(
+                                catalogShowDialogHeaderSummary:
+                                    !s.catalogShowDialogHeaderSummary,
+                              ),
+                            );
+                      },
+                      onOpenInSystemBrowser: () {
+                        final url = widget.index?.topicUrl;
+                        if (url != null && url.isNotEmpty) {
+                          url.openAsUriInBrowser();
+                        }
+                      },
+                      onOpenInEmbeddedBrowser: widget.canUseEmbeddedBrowser
+                          ? () {
+                              final url = widget.index?.topicUrl;
+                              if (url != null && url.isNotEmpty) {
+                                widget.linkLoader(url);
+                              }
+                            }
+                          : null,
+                      onToggleFullScreen: () {
+                        setState(() => _isFullScreen = !_isFullScreen);
+                      },
+                      isFullScreen: _isFullScreen,
+                      onClose: () => Navigator.of(context).pop(),
+                      downloadGroups: _downloadGroups(),
+                      onDownload: (candidate, modName) =>
+                          executeDownloadCandidate(
+                            context,
+                            ref,
+                            candidate,
+                            modName: modName,
+                            // Use the download row's own mod name (not the
+                            // thread title) so an add-on links to itself, not
+                            // the thread's main mod.
+                            sourceHint: DownloadSourceHint(
+                              catalogName: modName,
+                              forumThreadId: widget.index?.topicId.toString(),
+                            ),
+                            linkLoader: widget.linkLoader,
+                          ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: htmlToWidgets(
+                          widget.details.contentHtml,
+                          context,
+                          onLinkTap: _onLinkTap,
+                          onLinkHover: (url) => _hoveredUrl.value = url,
+                          baseUrl: widget.index?.topicUrl,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

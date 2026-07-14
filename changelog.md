@@ -4,16 +4,19 @@
   - Catalog: 
     - Installing mods is more streamlined.
     - Forum activity is now shown.
-    - 
+    - Hovering a mod card shows a summary: mod image, description, latest changelog, support links, and save compatibility.
+    - Mod pop-ups show that same summary at the top. You can turn it off in the Catalog menu.
   - Missing dependencies now have buttons to install or find them.
   - 'Last Updated' column on the Mods page.
   - More background effects (Settings - Theme Modifiers).
 - Fixed
   - Deep links now correctly check for already-installed mods on app cold starts.
+  - Catalog: mods now show as "Installed" even when the mod's real name differs from the name in the catalog (e.g. "Ashpad" installs as "Aashpad").
   - Large Google Drive files now download correctly instead of failing with "archive not supported".
   - Faction viewer pips are now ordered to match vanilla.
   - Tech/Manufacturer grouping on the Ships page no longer treats different capitalizations as separate groups.
   - Lowtech station was off-center.
+  - Large ships/stations are now properly centered and zoomed on load.
   - Ship/station modules now show up immediately.
 - Changed
   - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.

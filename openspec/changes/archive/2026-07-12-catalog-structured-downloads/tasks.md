@@ -56,17 +56,17 @@
 
 ## Verify
 
-- [ ] Mod with a trios link (e.g. Grand.Colonies, Knights of Ludd,
+- [x] Mod with a trios link (e.g. Grand.Colonies, Knights of Ludd,
       FleetBuilder): card button opens the in-app deep link install dialog,
       dependencies included; no browser opens.
-- [ ] Mod with one direct link: behavior identical to today.
-- [ ] "AI War" (multiple direct/high links): click shows the chooser with
+- [x] Mod with one direct link: behavior identical to today.
+- [x] "AI War" (multiple direct/high links): click shows the chooser with
       "Download" and "Patch (0.3.1 → 0.3.1b)" labels.
-- [ ] Mod with only a website link and llm direct links: now one-click
+- [x] Mod with only a website link and llm direct links: now one-click
       downloads instead of opening the browser.
-- [ ] Right-click any card: full downloads list with tooltips.
-- [ ] Forum dialog for a multi-mod topic: grouped downloads with subheadings.
-- [ ] Mod with no llm data: card and menus behave exactly as before.
+- [x] Right-click any card: full downloads list with tooltips.
+- [x] Forum dialog for a multi-mod topic: grouped downloads with subheadings.
+- [x] Mod with no llm data: card and menus behave exactly as before.
 - [x] `flutter test` passes (396 tests); `flutter analyze` clean on changed
       files (2 remaining warnings are pre-existing dead code, untouched).
-- [ ] User sign-off on new user-facing strings (menu labels, tooltips).
+- [x] User sign-off on new user-facing strings (menu labels, tooltips).

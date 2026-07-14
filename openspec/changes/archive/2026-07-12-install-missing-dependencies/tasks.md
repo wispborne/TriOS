@@ -50,17 +50,17 @@
 
 ## Verify
 
-- [ ] Turned-off mod with a missing requirement that IS in the catalog: shows
+- [x] Turned-off mod with a missing requirement that IS in the catalog: shows
       "Install"; clicking downloads and installs it.
-- [ ] Turned-off mod with a missing requirement NOT in the catalog: shows
+- [x] Turned-off mod with a missing requirement NOT in the catalog: shows
       "Search" (unchanged behavior).
-- [ ] Turned-off mod whose only unmet requirement is present-but-off: shows no
+- [x] Turned-off mod whose only unmet requirement is present-but-off: shows no
       buttons.
-- [ ] Turned-on mod with a present-but-off requirement: still shows "Enable".
-- [ ] Turned-on mod with a missing requirement in the catalog: shows "Install".
-- [ ] After installing a missing requirement, the parent mod's Enable button is
+- [x] Turned-on mod with a present-but-off requirement: still shows "Enable".
+- [x] Turned-on mod with a missing requirement in the catalog: shows "Install".
+- [x] After installing a missing requirement, the parent mod's Enable button is
       no longer greyed out.
-- [ ] Mod needing a newer version of an installed requirement (e.g. old `bmo`):
+- [x] Mod needing a newer version of an installed requirement (e.g. old `bmo`):
       shows "Update …" if the catalog has a direct download, else "Search for
       newer …", with a tooltip showing the installed and required versions.
 - [x] `flutter analyze` is clean (no new issues from this change).

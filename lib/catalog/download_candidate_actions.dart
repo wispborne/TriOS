@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/download_confirm.dart';
-import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/trios/deep_link/deep_link_handler.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/widgets/snackbar.dart';
 
 /// Runs a download [candidate] the same way everywhere it's offered (card
@@ -21,6 +21,7 @@ void executeDownloadCandidate(
   WidgetRef ref,
   DownloadCandidate candidate, {
   required String modName,
+  required DownloadSourceHint? sourceHint,
   required void Function(String) linkLoader,
   bool hasOwnBusyIndicator = false,
 }) {
@@ -37,7 +38,9 @@ void executeDownloadCandidate(
           content: Text('Preparing to install $modName…'),
         );
       }
-      ref.read(deepLinkHandlerProvider.notifier).handleUriString(deepLink);
+      ref
+          .read(deepLinkHandlerProvider.notifier)
+          .handleUriString(deepLink, sourceHint: sourceHint);
       return;
     }
     // Not a valid trilink after all — fall back to opening it.
@@ -57,6 +60,7 @@ void executeDownloadCandidate(
     modName: modName,
     downloadUrl: candidate.url,
     skipDialog: true,
+    sourceHint: sourceHint,
   );
 }
 
@@ -73,13 +77,10 @@ IconData downloadCandidateIcon(DownloadCandidate candidate) {
 }
 
 /// A short one-line description of where a candidate comes from, e.g.
-/// "Dropbox · medium confidence" — for tooltips and list subtitles.
+/// "Dropbox · opens in browser" — for tooltips and list subtitles.
 String downloadCandidateSubtitle(DownloadCandidate candidate) {
   final parts = <String>[
     if (candidate.sourceHost?.isNotEmpty == true) candidate.sourceHost!,
-    if (candidate.confidence != null &&
-        candidate.confidence != LlmDownloadConfidence.unknown)
-      '${candidate.confidence!.name} confidence',
     if (candidate.requiresManualStep) 'opens in browser',
   ];
   return parts.join(' · ');

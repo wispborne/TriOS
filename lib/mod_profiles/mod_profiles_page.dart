@@ -143,6 +143,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                               modProfiles: modProfiles,
                               save: null,
                               saves: null,
+                              isInitiallyExpanded: false,
                               cardPadding: cardPadding,
                               actualAxisSpacing: actualAxisSpacing,
                               axisSpacingForHeightHack: axisSpacingForHeightHack,
@@ -219,6 +220,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                 modProfiles: null,
                                 save: saveGames[index],
                                 saves: saveGames,
+                                isInitiallyExpanded: index == 0,
                                 cardPadding: cardPadding,
                                 actualAxisSpacing: actualAxisSpacing,
                                 axisSpacingForHeightHack:

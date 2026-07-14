@@ -20,15 +20,15 @@
 
 ## Verify
 
-- [ ] Mode "Only when the author didn't write one" (default): cards with
+- [x] Mode "Only when the author didn't write one" (default): cards with
       author text look unchanged; former "No description...yet!" cards now
       show an AI sentence.
-- [ ] Mode "Always show": cards with both prefer the AI sentence; hover shows
+- [x] Mode "Always show": cards with both prefer the AI sentence; hover shows
       the AI paragraph.
-- [ ] Mode "Never show": identical to pre-change behavior everywhere.
-- [ ] Mod with no forum/llm data shows author text or the placeholder in all
+- [x] Mode "Never show": identical to pre-change behavior everywhere.
+- [x] Mod with no forum/llm data shows author text or the placeholder in all
       three modes.
-- [ ] Switching the mode in the overflow menu updates cards immediately and
+- [x] Switching the mode in the overflow menu updates cards immediately and
       persists across app restarts.
 - [x] `flutter analyze` is clean (no new issues from this change).
 - [x] User sign-off on the menu strings — chose header "Show AI mod summaries"

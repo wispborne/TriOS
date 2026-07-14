@@ -864,6 +864,7 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
                             directUrl,
                             activateVariantOnComplete: false,
                             modInfo: _variant!.modInfo,
+                            sourceHint: null,
                           );
                       Navigator.of(context).pop();
                     }

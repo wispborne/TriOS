@@ -35,6 +35,8 @@ class ModProfileCard extends ConsumerStatefulWidget {
   final List<ModProfile>? modProfiles;
   final SaveFile? save;
   final List<SaveFile>? saves;
+
+  final bool isInitiallyExpanded;
   final double cardPadding;
   final int actualAxisSpacing;
   final double axisSpacingForHeightHack;
@@ -46,6 +48,7 @@ class ModProfileCard extends ConsumerStatefulWidget {
     required this.modProfiles,
     required this.save,
     required this.saves,
+    required this.isInitiallyExpanded,
     required this.cardPadding,
     required this.actualAxisSpacing,
     required this.axisSpacingForHeightHack,
@@ -341,6 +344,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                   const SizedBox(height: 24),
                   TriOSExpansionTile(
                     tilePadding: EdgeInsets.symmetric(horizontal: cardPadding),
+                    initiallyExpanded: widget.isInitiallyExpanded,
                     title: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

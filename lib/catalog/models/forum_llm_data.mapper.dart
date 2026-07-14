@@ -350,6 +350,12 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
     _$extras,
     opt: true,
   );
+  static String? _$image(ForumLlmMod v) => v.image;
+  static const Field<ForumLlmMod, String> _f$image = Field(
+    'image',
+    _$image,
+    opt: true,
+  );
 
   @override
   final MappableFields<ForumLlmMod> fields = const {
@@ -358,6 +364,7 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
     #requires: _f$requires,
     #downloads: _f$downloads,
     #extras: _f$extras,
+    #image: _f$image,
   };
 
   static ForumLlmMod _instantiate(DecodingData data) {
@@ -367,6 +374,7 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
       requires: data.dec(_f$requires),
       downloads: data.dec(_f$downloads),
       extras: data.dec(_f$extras),
+      image: data.dec(_f$image),
     );
   }
 
@@ -444,6 +452,7 @@ abstract class ForumLlmModCopyWith<$R, $In extends ForumLlmMod, $Out>
     List<String>? requires,
     List<ForumLlmDownload>? downloads,
     ForumLlmExtras? extras,
+    String? image,
   });
   ForumLlmModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -486,6 +495,7 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
     Object? requires = $none,
     List<ForumLlmDownload>? downloads,
     Object? extras = $none,
+    Object? image = $none,
   }) => $apply(
     FieldCopyWithData({
       if (name != null) #name: name,
@@ -493,6 +503,7 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
       if (requires != $none) #requires: requires,
       if (downloads != null) #downloads: downloads,
       if (extras != $none) #extras: extras,
+      if (image != $none) #image: image,
     }),
   );
   @override
@@ -502,6 +513,7 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
     requires: data.get(#requires, or: $value.requires),
     downloads: data.get(#downloads, or: $value.downloads),
     extras: data.get(#extras, or: $value.extras),
+    image: data.get(#image, or: $value.image),
   );
 
   @override
@@ -777,6 +789,12 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
       v.supportLinks;
   static const Field<ForumLlmExtras, List<ForumLlmSupportLink>>
   _f$supportLinks = Field('supportLinks', _$supportLinks, opt: true);
+  static String? _$saveCompatibility(ForumLlmExtras v) => v.saveCompatibility;
+  static const Field<ForumLlmExtras, String> _f$saveCompatibility = Field(
+    'saveCompatibility',
+    _$saveCompatibility,
+    opt: true,
+  );
 
   @override
   final MappableFields<ForumLlmExtras> fields = const {
@@ -785,6 +803,7 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
     #changelog: _f$changelog,
     #license: _f$license,
     #supportLinks: _f$supportLinks,
+    #saveCompatibility: _f$saveCompatibility,
   };
 
   static ForumLlmExtras _instantiate(DecodingData data) {
@@ -794,6 +813,7 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
       changelog: data.dec(_f$changelog),
       license: data.dec(_f$license),
       supportLinks: data.dec(_f$supportLinks),
+      saveCompatibility: data.dec(_f$saveCompatibility),
     );
   }
 
@@ -874,6 +894,7 @@ abstract class ForumLlmExtrasCopyWith<$R, $In extends ForumLlmExtras, $Out>
     ForumLlmChangelog? changelog,
     String? license,
     List<ForumLlmSupportLink>? supportLinks,
+    String? saveCompatibility,
   });
   ForumLlmExtrasCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -914,6 +935,7 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
     Object? changelog = $none,
     Object? license = $none,
     Object? supportLinks = $none,
+    Object? saveCompatibility = $none,
   }) => $apply(
     FieldCopyWithData({
       if (version != $none) #version: version,
@@ -921,6 +943,7 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
       if (changelog != $none) #changelog: changelog,
       if (license != $none) #license: license,
       if (supportLinks != $none) #supportLinks: supportLinks,
+      if (saveCompatibility != $none) #saveCompatibility: saveCompatibility,
     }),
   );
   @override
@@ -930,6 +953,10 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
     changelog: data.get(#changelog, or: $value.changelog),
     license: data.get(#license, or: $value.license),
     supportLinks: data.get(#supportLinks, or: $value.supportLinks),
+    saveCompatibility: data.get(
+      #saveCompatibility,
+      or: $value.saveCompatibility,
+    ),
   );
 
   @override

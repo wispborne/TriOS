@@ -293,7 +293,7 @@ task needs already exists by the time you reach it.
       *Done when:* every new icon shows a `MovingTooltipWidget.text` on hover.
       (Nav buttons use `MovingTooltipWidget.text`; the tab icon shows the
       `TriOSTools.codex` tooltip; root-list and control icons carry text labels.)
-- [ ] Look-and-feel pass: game structure, TriOS skin — app theme fonts/text
+- [x] Look-and-feel pass: game structure, TriOS skin — app theme fonts/text
       styles/colors only (no game fonts), spacing on the 8 dip grid, `spacing` params
       over `SizedBox`s. The page should not look foreign next to the existing viewers.
       *Done when:* a side-by-side with the ships page shows consistent fonts,

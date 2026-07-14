@@ -333,6 +333,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                   testMod.versionCheckerInfo!.directDownloadURL!,
                   Directory.systemTemp,
                   modInfo: testMod.modInfo,
+                  sourceHint: null,
                 );
           },
           label: const Text('Redownload MagicLib (shows toast)'),
@@ -365,6 +366,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     mod.versionCheckerInfo!.directDownloadURL!,
                     Directory.systemTemp,
                     modInfo: mod.modInfo,
+                    sourceHint: null,
                   );
             }
 

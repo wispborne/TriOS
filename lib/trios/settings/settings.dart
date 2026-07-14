@@ -155,6 +155,9 @@ class Settings with SettingsMappable {
   )
   final CatalogCardClickAction catalogCardClickAction;
   final AiSummaryMode catalogAiSummaryMode;
+
+  /// Whether the mod pop-ups show the generated summary block at the top.
+  final bool catalogShowDialogHeaderSummary;
   final double catalogMinItemWidth;
   final double catalogCardSpacing;
   @MappableField(hook: SafeDecodeHook())
@@ -302,6 +305,7 @@ class Settings with SettingsMappable {
     this.catalogBrowserPanelWidth,
     this.catalogCardClickAction = CatalogCardClickAction.forumDialog,
     this.catalogAiSummaryMode = AiSummaryMode.whenNoAuthorText,
+    this.catalogShowDialogHeaderSummary = true,
     this.catalogMinItemWidth = 390,
     this.catalogCardSpacing = 4,
     this.catalogPageState,

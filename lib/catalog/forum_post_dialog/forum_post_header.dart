@@ -1,72 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
-import 'package:trios/catalog/models/forum_mod_details.dart';
-import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
-import 'package:trios/trios/constants.dart';
+import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
+import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-/// The header fields the dialog shows, gathered from either a scraped forum
-/// post ([ForumModDetails]) or, when there's no cached post, straight from a
-/// [ScrapedMod]. Keeps [ForumPostHeader] source-agnostic.
-class ForumPostHeaderData {
-  final String title;
-  final String author;
-  final String? authorTitle;
-  final int? authorPostCount;
-  final String? authorAvatarPath;
-  final DateTime? postDate;
-  final DateTime? lastEditDate;
-
-  const ForumPostHeaderData({
-    required this.title,
-    required this.author,
-    this.authorTitle,
-    this.authorPostCount,
-    this.authorAvatarPath,
-    this.postDate,
-    this.lastEditDate,
-  });
-
-  factory ForumPostHeaderData.fromDetails(ForumModDetails details) =>
-      ForumPostHeaderData(
-        title: details.title,
-        author: details.author,
-        authorTitle: details.authorTitle,
-        authorPostCount: details.authorPostCount,
-        authorAvatarPath: details.authorAvatarPath,
-        postDate: details.postDate,
-        lastEditDate: details.lastEditDate,
-      );
-
-  factory ForumPostHeaderData.fromScraped(
-    ScrapedMod mod,
-    ForumModIndex? index,
-  ) {
-    final authors = mod.authorsList?.isNotEmpty == true
-        ? mod.getAuthorsDeduplicated().join(', ')
-        : (index?.author ?? '');
-    return ForumPostHeaderData(
-      title: mod.name.isNotEmpty ? mod.name : (index?.title ?? '???'),
-      author: authors,
-      postDate: index?.createdDate,
-    );
-  }
-}
-
-/// Header bar for the details dialog. Shows mod title, author (with avatar
-/// when available), post/last-edit dates, compact forum stats (from the
-/// optional [ForumModIndex]), the grouped per-mod download rows, and the
-/// open-in-browser actions.
+/// Header for the details dialog. When [showSummary] is true it shows the full
+/// [ModSummaryWidget] (image, author, dates, stats, summary, changelog, etc.);
+/// when false it shows just the title. Either way it keeps the grouped per-mod
+/// download rows and the open-in-browser / window actions.
 class ForumPostHeader extends StatelessWidget {
-  final ForumPostHeaderData data;
-  final ForumModIndex? index;
+  final ModSummaryData data;
+
+  /// Whether to show the full mod summary. When false, only the title shows —
+  /// the informational block is hidden per the user's setting.
+  final bool showSummary;
+
+  /// Flips the summary on/off. When null, the toggle button is hidden.
+  final VoidCallback? onToggleSummary;
 
   /// Opens the topic in the operating system's default browser. Hidden when
   /// null.
@@ -87,24 +41,11 @@ class ForumPostHeader extends StatelessWidget {
   /// Runs a download [candidate] for the mod named [modName].
   final void Function(DownloadCandidate candidate, String modName)? onDownload;
 
-  static final _dateFormat = DateFormat.yMMMMd().add_jm();
-  static final _decimalFormat = NumberFormat.decimalPattern();
-  static final _compactFormat = NumberFormat.compact();
-
-  /// The forum profile page for [author], or null if there's no name to look
-  /// up. The forum resolves profiles by username, so this works without an id.
-  static Uri? _authorProfileUrl(String author) {
-    final name = author.trim();
-    if (name.isEmpty) return null;
-    return Uri.parse(
-      '${Constants.forumUserProfileUrl}${Uri.encodeComponent(name)}',
-    );
-  }
-
   const ForumPostHeader({
     super.key,
     required this.data,
-    this.index,
+    this.showSummary = true,
+    this.onToggleSummary,
     this.onOpenInSystemBrowser,
     this.onOpenInEmbeddedBrowser,
     this.onToggleFullScreen,
@@ -117,9 +58,6 @@ class ForumPostHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final postDate = data.postDate;
-    final lastEdit = data.lastEditDate;
-    final showLastEdit = lastEdit != null && lastEdit != postDate;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
@@ -132,206 +70,92 @@ class ForumPostHeader extends StatelessWidget {
         children: [
           Row(
             crossAxisAlignment: .start,
-            spacing: 16,
+            spacing: 8,
             children: [
-              if (data.author.trim().isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Builder(
-                    builder: (context) {
-                      final profileUrl = _authorProfileUrl(data.author);
-                      final postCount = data.authorPostCount;
-                      final postCountText = postCount != null
-                          ? '${_decimalFormat.format(postCount)} posts'
-                          : null;
-                      final message = [
-                        if (profileUrl != null)
-                          "Open ${data.author}'s forum profile in your browser",
-                        ?postCountText,
-                      ].join('\n');
-                      return Card(
-                        margin: .zero,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: MovingTooltipWidget.text(
-                          message: message.isEmpty ? data.author : message,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(24),
-                            mouseCursor: profileUrl == null
-                                ? MouseCursor.defer
-                                : SystemMouseCursors.click,
-                            onTap: profileUrl == null
-                                ? null
-                                : () => launchUrl(profileUrl),
-                            child: Padding(
-                              padding: const .symmetric(
-                                vertical: 8.0,
-                                horizontal: 12,
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    final headerButtons = Row(
+                      crossAxisAlignment: .start,
+                      children: [
+                        if (onToggleSummary != null)
+                          MovingTooltipWidget.text(
+                            message: showSummary
+                                ? 'Hide the mod summary'
+                                : 'Show the mod summary',
+                            child: IconButton(
+                              icon: Icon(
+                                showSummary
+                                    ? Icons.unfold_less
+                                    : Icons.unfold_more,
                               ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisSize: .min,
-                                children: [
-                                  _Avatar(path: data.authorAvatarPath),
-                                  const SizedBox(width: 8),
-                                  Column(
-                                    crossAxisAlignment: .start,
-                                    children: [
-                                      Text(
-                                        data.author,
-                                        style: theme.textTheme.titleSmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (data.authorTitle != null &&
-                                          data.authorTitle!.isNotEmpty) ...[
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          data.authorTitle!,
-                                          style: theme.textTheme.labelSmall
-                                              ?.copyWith(
-                                                fontStyle: FontStyle.italic,
-                                                color: theme
-                                                    .textTheme
-                                                    .labelSmall
-                                                    ?.color
-                                                    ?.withValues(alpha: 0.7),
-                                              ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                              ),
+                              onPressed: onToggleSummary,
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Column(
-                    crossAxisAlignment: .start,
-                    mainAxisSize: .max,
-                    children: [
-                      TextTriOS(
-                        data.title.isNotEmpty ? data.title : '???',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (postDate != null || showLastEdit)
-                        Row(
-                          children: [
-                            if (postDate != null)
-                              Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: 'Posted ',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: _dateFormat.format(postDate),
-                                    ),
-                                  ],
-                                ),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.textTheme.labelSmall?.color
-                                      ?.withValues(alpha: 0.6),
-                                ),
+                        if (onOpenInEmbeddedBrowser != null)
+                          Tooltip(
+                            message: 'Open in the built-in browser',
+                            child: IconButton(
+                              icon: const Icon(Icons.web),
+                              onPressed: onOpenInEmbeddedBrowser,
+                            ),
+                          ),
+                        if (onOpenInSystemBrowser != null)
+                          Tooltip(
+                            message: 'Open in your web browser',
+                            child: IconButton(
+                              icon: const Icon(Icons.open_in_new),
+                              onPressed: onOpenInSystemBrowser,
+                            ),
+                          ),
+                        if (onToggleFullScreen != null)
+                          Tooltip(
+                            message: isFullScreen
+                                ? 'Exit full screen'
+                                : 'Full screen',
+                            child: IconButton(
+                              icon: Icon(
+                                isFullScreen
+                                    ? Icons.fullscreen_exit
+                                    : Icons.fullscreen,
                               ),
-                            if (showLastEdit)
-                              Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: "  •  ",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: 'Edited ',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: _dateFormat.format(lastEdit),
-                                    ),
-                                  ],
+                              onPressed: onToggleFullScreen,
+                            ),
+                          ),
+                        if (onClose != null)
+                          Tooltip(
+                            message: 'Close',
+                            child: IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: onClose,
+                            ),
+                          ),
+                      ],
+                    );
+
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8, right: 8),
+                      child: showSummary
+                          ? ModSummaryWidget(
+                              data: data,
+                              config: ModSummaryConfig.dialogHeader,
+                              headerButtons: headerButtons,
+                            )
+                          : Row(
+                              mainAxisAlignment: .spaceBetween,
+                              children: [
+                                TextTriOS(
+                                  data.title.isNotEmpty ? data.title : '???',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.textTheme.labelSmall?.color
-                                      ?.withValues(alpha: 0.6),
-                                ),
-                              ),
-                          ],
-                        ),
-                      if (index != null)
-                        _Stats(
-                          index: index!,
-                          compact: _compactFormat,
-                          decimal: _decimalFormat,
-                        ),
-                    ],
-                  ),
+                                headerButtons,
+                              ],
+                            ),
+                    );
+                  },
                 ),
-              ),
-              Row(
-                crossAxisAlignment: .start,
-                children: [
-                  if (onOpenInEmbeddedBrowser != null)
-                    Tooltip(
-                      message: 'Open in the built-in browser',
-                      child: IconButton(
-                        icon: const Icon(Icons.web),
-                        onPressed: onOpenInEmbeddedBrowser,
-                      ),
-                    ),
-                  if (onOpenInSystemBrowser != null)
-                    Tooltip(
-                      message: 'Open in your web browser',
-                      child: IconButton(
-                        icon: const Icon(Icons.public),
-                        onPressed: onOpenInSystemBrowser,
-                      ),
-                    ),
-                  if (onToggleFullScreen != null)
-                    Tooltip(
-                      message: isFullScreen
-                          ? 'Exit full screen'
-                          : 'Full screen',
-                      child: IconButton(
-                        icon: Icon(
-                          isFullScreen
-                              ? Icons.fullscreen_exit
-                              : Icons.fullscreen,
-                        ),
-                        onPressed: onToggleFullScreen,
-                      ),
-                    ),
-                  if (onClose != null)
-                    Tooltip(
-                      message: 'Close',
-                      child: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: onClose,
-                      ),
-                    ),
-                ],
               ),
             ],
           ),
@@ -440,31 +264,29 @@ class _DownloadRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 6,
-                children: [
-                  Flexible(
-                    child: Text(
-                      group.modName!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 6,
+              children: [
+                Flexible(
+                  child: Text(
+                    group.modName!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (roleLabel != null) _RoleTag(label: roleLabel),
-                ],
-              ),
-              _DependencyLine(group: group),
-            ],
-          ),
+                ),
+                if (roleLabel != null) _RoleTag(label: roleLabel),
+              ],
+            ),
+            _DependencyLine(group: group),
+          ],
         ),
         const SizedBox(width: 8),
         button,
@@ -644,102 +466,6 @@ class _DownloadSplitButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  final String? path;
-
-  const _Avatar({required this.path});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final url = _resolveAvatarUrl(path);
-    if (url == null) {
-      return CircleAvatar(
-        radius: 20,
-        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-        child: Icon(Icons.person, size: 22, color: theme.disabledColor),
-      );
-    }
-    return ClipOval(
-      child: Image.network(
-        url,
-        width: 40,
-        height: 40,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => CircleAvatar(
-          radius: 20,
-          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-          child: Icon(Icons.person, size: 22, color: theme.disabledColor),
-        ),
-      ),
-    );
-  }
-
-  String? _resolveAvatarUrl(String? p) {
-    if (p == null || p.isEmpty) return null;
-    if (p.startsWith('http://') || p.startsWith('https://')) return p;
-    // SMF avatar paths in the bundle are either absolute-ish ("avatars/xxx")
-    // or full URLs. Fall back to the fractalsoftworks forum base when
-    // possible.
-    try {
-      return Uri.parse(
-        'https://fractalsoftworks.com/forum/',
-      ).resolve(p).toString();
-    } catch (_) {
-      return null;
-    }
-  }
-}
-
-class _Stats extends StatelessWidget {
-  final ForumModIndex index;
-  final NumberFormat compact;
-  final NumberFormat decimal;
-
-  const _Stats({
-    required this.index,
-    required this.compact,
-    required this.decimal,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.labelSmall?.copyWith(
-      color: theme.textTheme.labelSmall?.color?.withValues(alpha: 0.7),
-    );
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      spacing: 8,
-      children: [
-        MovingTooltipWidget.text(
-          message: '${decimal.format(index.views)} forum views',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 4,
-            children: [
-              Icon(Icons.visibility, size: 12, color: style?.color),
-              Text(compact.format(index.views), style: style),
-            ],
-          ),
-        ),
-        MovingTooltipWidget.text(
-          message: '${decimal.format(index.replies)} forum replies',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 4,
-            children: [
-              Icon(Icons.forum, size: 12, color: style?.color),
-              Text(compact.format(index.replies), style: style),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

@@ -205,9 +205,26 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
   /// Fallback flame tint for engine styles missing from `engine_styles.json`.
   static const Color _defaultEngineColor = Color(0xFFFFA94D);
+
+  /// Zoom limits, shared by the viewer and the "reset zoom" fit.
+  static const double _minScale = 0.1;
+  static const double _maxScale = 5.0;
   Size? _imageSize;
   double? _viewportWidth;
-  bool _hasAppliedInitialTransform = false;
+  double? _viewportHeight;
+
+  /// Size of everything drawn in the viewer — hull, modules, built-in weapon
+  /// sprites, and the arc padding around them — in ship-space units.
+  Size? _contentSize;
+
+  /// The [_contentSize] the view was last centered for. Module and weapon
+  /// sprites decode after the first frame and grow the content, so we
+  /// re-center when this goes stale.
+  Size? _centeredForContentSize;
+
+  /// The transform we last applied ourselves. Once the controller has moved
+  /// away from it the user has panned or zoomed, and we stop auto-centering.
+  Matrix4? _lastAppliedTransform;
   TransformationController? _transformController;
 
   TransformationController get _controller =>
@@ -291,7 +308,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   void didUpdateWidget(ShipBlueprintView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.ship.spriteFile != widget.ship.spriteFile) {
-      _hasAppliedInitialTransform = false;
+      _centeredForContentSize = null;
+      _lastAppliedTransform = null;
       _resolveImageSize();
     }
     if (oldWidget.forceEngineGlow != widget.forceEngineGlow) {
@@ -299,32 +317,42 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     }
   }
 
+  /// Fits everything the viewer draws into the viewport and centers it.
+  ///
+  /// This uses the whole drawn area, not just the hull sprite: on ships with
+  /// modules (e.g. `ii_battlestation`) the modules can stick out well past the
+  /// hull, so centering the hull alone leaves the picture visibly off to one
+  /// side.
+  ///
+  /// Anything that fits is shown at 1:1; bigger stations are zoomed out just
+  /// enough to fit, rather than having their edges cut off. We never zoom in
+  /// past 1:1, so small ships aren't blown up to fill the space.
   Matrix4 _computeCenteringTransform() {
-    if (_imageSize == null || _viewportWidth == null) return Matrix4.identity();
-
-    final ship = widget.ship;
-    final center = ship.center;
-    // Coordinate space is the declared .ship width, not the PNG's pixel width
-    // (see the note in build() where imgW/imgH are derived).
-    final imgW = ship.width ?? _imageSize!.width;
-    final slots = ship.weaponSlots ?? [];
-
-    final maxArcRadius = slots.isEmpty
-        ? 0.0
-        : slots.map((s) => _radiusForSize(s.size) * 5).reduce(max);
-    final pad = maxArcRadius;
-    final totalContentWidth = imgW + pad * 2;
-
-    double tx;
-    if (totalContentWidth <= _viewportWidth!) {
-      tx = (_viewportWidth! - totalContentWidth) / 2;
-    } else if (center != null && center.length >= 2) {
-      tx = _viewportWidth! / 2 - (pad + center[0]);
-    } else {
-      tx = 0;
+    final content = _contentSize;
+    final viewportWidth = _viewportWidth;
+    final viewportHeight = _viewportHeight;
+    if (content == null || viewportWidth == null || viewportHeight == null) {
+      return Matrix4.identity();
     }
+    if (content.width <= 0 || content.height <= 0) return Matrix4.identity();
 
-    return Matrix4.translationValues(tx, 0.0, 0.0);
+    final scale =
+        min(
+          1.0,
+          min(
+            viewportWidth / content.width,
+            viewportHeight / content.height,
+          ),
+        ).clamp(_minScale, 1.0);
+
+    return Matrix4.identity()
+      ..translateByDouble(
+        (viewportWidth - content.width * scale) / 2,
+        (viewportHeight - content.height * scale) / 2,
+        0.0,
+        1.0,
+      )
+      ..scaleByDouble(scale, scale, scale, 1.0);
   }
 
   void _resolveImageSize() {
@@ -1006,19 +1034,32 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     final maxArcRadius = max(parentArcRadius, moduleArcRadius);
     final pad = maxArcRadius;
 
+    // The padding below sits outside the Stack, so the drawn area is the
+    // combined rect grown by `pad` on every side.
+    _contentSize = Size(totalW + pad * 2, totalH + pad * 2);
+
     final viewportHeight = (totalH + pad * 2).clamp(0.0, 500.0);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final newViewportWidth = constraints.maxWidth;
-        if (_viewportWidth != newViewportWidth) {
-          _viewportWidth = newViewportWidth;
-          _hasAppliedInitialTransform = false;
-        }
-        if (!_hasAppliedInitialTransform) {
-          _hasAppliedInitialTransform = true;
+        final viewportChanged =
+            _viewportWidth != constraints.maxWidth ||
+            _viewportHeight != viewportHeight;
+        _viewportWidth = constraints.maxWidth;
+        _viewportHeight = viewportHeight;
+
+        // Re-center when the viewport resizes, and — as long as the user
+        // hasn't panned or zoomed — whenever the content changes size, since
+        // module and weapon sprites decode after the first frame and grow it.
+        final untouched =
+            _lastAppliedTransform == null ||
+            _controller.value == _lastAppliedTransform;
+        if (viewportChanged ||
+            (untouched && _centeredForContentSize != _contentSize)) {
+          _centeredForContentSize = _contentSize;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
-              _controller.value = _computeCenteringTransform();
+              _controller.value = _lastAppliedTransform =
+                  _computeCenteringTransform();
             }
           });
         }
@@ -1206,8 +1247,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
             child: InteractiveViewer(
               transformationController: _controller,
               constrained: false,
-              minScale: 0.1,
-              maxScale: 5.0,
+              minScale: _minScale,
+              maxScale: _maxScale,
               boundaryMargin: EdgeInsets.all(double.infinity),
               child: content,
             ),
@@ -1224,8 +1265,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                   left: 4,
                   top: 4,
                   child: _compactIconButton(
-                    onPressed: () =>
-                        _controller.value = _computeCenteringTransform(),
+                    onPressed: () {
+                      _centeredForContentSize = _contentSize;
+                      _controller.value = _lastAppliedTransform =
+                          _computeCenteringTransform();
+                    },
                     icon: Icons.fit_screen_outlined,
                     tooltip: 'Reset zoom',
                   ),

@@ -927,6 +927,14 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: AiSummaryMode.whenNoAuthorText,
   );
+  static bool _$catalogShowDialogHeaderSummary(Settings v) =>
+      v.catalogShowDialogHeaderSummary;
+  static const Field<Settings, bool> _f$catalogShowDialogHeaderSummary = Field(
+    'catalogShowDialogHeaderSummary',
+    _$catalogShowDialogHeaderSummary,
+    opt: true,
+    def: true,
+  );
   static double _$catalogMinItemWidth(Settings v) => v.catalogMinItemWidth;
   static const Field<Settings, double> _f$catalogMinItemWidth = Field(
     'catalogMinItemWidth',
@@ -1226,6 +1234,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #catalogBrowserPanelWidth: _f$catalogBrowserPanelWidth,
     #catalogCardClickAction: _f$catalogCardClickAction,
     #catalogAiSummaryMode: _f$catalogAiSummaryMode,
+    #catalogShowDialogHeaderSummary: _f$catalogShowDialogHeaderSummary,
     #catalogMinItemWidth: _f$catalogMinItemWidth,
     #catalogCardSpacing: _f$catalogCardSpacing,
     #catalogPageState: _f$catalogPageState,
@@ -1340,6 +1349,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       catalogBrowserPanelWidth: data.dec(_f$catalogBrowserPanelWidth),
       catalogCardClickAction: data.dec(_f$catalogCardClickAction),
       catalogAiSummaryMode: data.dec(_f$catalogAiSummaryMode),
+      catalogShowDialogHeaderSummary: data.dec(
+        _f$catalogShowDialogHeaderSummary,
+      ),
       catalogMinItemWidth: data.dec(_f$catalogMinItemWidth),
       catalogCardSpacing: data.dec(_f$catalogCardSpacing),
       catalogPageState: data.dec(_f$catalogPageState),
@@ -1581,6 +1593,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     double? catalogBrowserPanelWidth,
     CatalogCardClickAction? catalogCardClickAction,
     AiSummaryMode? catalogAiSummaryMode,
+    bool? catalogShowDialogHeaderSummary,
     double? catalogMinItemWidth,
     double? catalogCardSpacing,
     CatalogPageStatePersisted? catalogPageState,
@@ -1860,6 +1873,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? catalogBrowserPanelWidth = $none,
     CatalogCardClickAction? catalogCardClickAction,
     AiSummaryMode? catalogAiSummaryMode,
+    bool? catalogShowDialogHeaderSummary,
     double? catalogMinItemWidth,
     double? catalogCardSpacing,
     Object? catalogPageState = $none,
@@ -1991,6 +2005,8 @@ class _SettingsCopyWithImpl<$R, $Out>
         #catalogCardClickAction: catalogCardClickAction,
       if (catalogAiSummaryMode != null)
         #catalogAiSummaryMode: catalogAiSummaryMode,
+      if (catalogShowDialogHeaderSummary != null)
+        #catalogShowDialogHeaderSummary: catalogShowDialogHeaderSummary,
       if (catalogMinItemWidth != null)
         #catalogMinItemWidth: catalogMinItemWidth,
       if (catalogCardSpacing != null) #catalogCardSpacing: catalogCardSpacing,
@@ -2238,6 +2254,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     catalogAiSummaryMode: data.get(
       #catalogAiSummaryMode,
       or: $value.catalogAiSummaryMode,
+    ),
+    catalogShowDialogHeaderSummary: data.get(
+      #catalogShowDialogHeaderSummary,
+      or: $value.catalogShowDialogHeaderSummary,
     ),
     catalogMinItemWidth: data.get(
       #catalogMinItemWidth,

@@ -140,7 +140,12 @@ class ModRecord with ModRecordMappable {
 
   // --- Static helpers ---
 
-  /// Generates a synthetic key for a catalog-only mod.
+  /// Builds the key for a catalog-only mod record, e.g. "Ashpad" -> "catalog:ashpad".
+  ///
+  /// Lowercases and trims like the shared `catalogEntryKey`, then applies a
+  /// stricter slug (drop symbols, spaces to hyphens). These keys are saved on
+  /// disk, so this output must not change for existing names — it's locked by a
+  /// test. Kept self-contained here so this model stays free of catalog imports.
   static String syntheticKey(String name) {
     final normalized = name
         .toLowerCase()

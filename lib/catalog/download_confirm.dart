@@ -46,6 +46,7 @@ Future<bool> confirmAndDownloadModViaManager(
   required String downloadUrl,
   bool activateVariantOnComplete = false,
   bool skipDialog = false,
+  DownloadSourceHint? sourceHint,
 }) {
   return confirmAndDownloadMod(
     context,
@@ -59,6 +60,7 @@ Future<bool> confirmAndDownloadModViaManager(
             modName,
             downloadUrl,
             activateVariantOnComplete: activateVariantOnComplete,
+            sourceHint: sourceHint,
           );
     },
   );

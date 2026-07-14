@@ -7,8 +7,10 @@ import 'package:trios/catalog/mod_browser_page_controller.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
 import 'package:trios/catalog/scraped_mod_card.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -83,6 +85,52 @@ class _ScrapedModDetailsDialogState
     }
 
     final website = widget.mod.getBestWebsiteUrl();
+    final showHeaderSummary = ref.watch(
+      appSettings.select((s) => s.catalogShowDialogHeaderSummary),
+    );
+
+    final header = ForumPostHeader(
+      data: ModSummaryData.fromScraped(widget.mod, widget.index),
+      showSummary: showHeaderSummary,
+      onToggleSummary: () {
+        ref
+            .read(appSettings.notifier)
+            .update(
+              (s) => s.copyWith(
+                catalogShowDialogHeaderSummary:
+                    !s.catalogShowDialogHeaderSummary,
+              ),
+            );
+      },
+      onOpenInSystemBrowser: (website != null && website.isNotEmpty)
+          ? () => website.openAsUriInBrowser()
+          : null,
+      onOpenInEmbeddedBrowser:
+          (widget.canUseEmbeddedBrowser &&
+              website != null &&
+              website.isNotEmpty)
+          ? () => widget.linkLoader(website)
+          : null,
+      onToggleFullScreen: () {
+        setState(() => _isFullScreen = !_isFullScreen);
+      },
+      isFullScreen: _isFullScreen,
+      onClose: () => Navigator.of(context).pop(),
+      downloadGroups: _downloadGroups(),
+      onDownload: (candidate, modName) => executeDownloadCandidate(
+        context,
+        ref,
+        candidate,
+        modName: modName,
+        // The download row's own mod name is the catalog identity; the thread
+        // id (when known) is a fallback clue.
+        sourceHint: DownloadSourceHint(
+          catalogName: modName,
+          forumThreadId: widget.index?.topicId.toString(),
+        ),
+        linkLoader: widget.linkLoader,
+      ),
+    );
 
     return Dialog(
       insetPadding: insetPadding,
@@ -100,38 +148,22 @@ class _ScrapedModDetailsDialogState
           mainAxisSize: _isFullScreen ? MainAxisSize.max : MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ForumPostHeader(
-              data: ForumPostHeaderData.fromScraped(widget.mod, widget.index),
-              index: widget.index,
-              onOpenInSystemBrowser: (website != null && website.isNotEmpty)
-                  ? () => website.openAsUriInBrowser()
-                  : null,
-              onOpenInEmbeddedBrowser:
-                  (widget.canUseEmbeddedBrowser &&
-                      website != null &&
-                      website.isNotEmpty)
-                  ? () => widget.linkLoader(website)
-                  : null,
-              onToggleFullScreen: () {
-                setState(() => _isFullScreen = !_isFullScreen);
-              },
-              isFullScreen: _isFullScreen,
-              onClose: () => Navigator.of(context).pop(),
-              downloadGroups: _downloadGroups(),
-              onDownload: (candidate, modName) => executeDownloadCandidate(
-                context,
-                ref,
-                candidate,
-                modName: modName,
-                linkLoader: widget.linkLoader,
+            // The summary block can be tall, so let it scroll rather than
+            // overflow. When the header shows the summary it already covers
+            // the image and description, so the body (which would duplicate
+            // it) is dropped; when hidden, the header stays pinned and the
+            // body scrolls instead.
+            if (showHeaderSummary)
+              Flexible(child: SingleChildScrollView(child: header))
+            else ...[
+              header,
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: _Body(mod: widget.mod, index: widget.index),
+                ),
               ),
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: _Body(mod: widget.mod, index: widget.index),
-              ),
-            ),
+            ],
           ],
         ),
       ),
@@ -168,7 +200,11 @@ class _Body extends ConsumerWidget {
           constraints: const BoxConstraints(maxHeight: 300),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: ModImage(mod: mod, size: 300),
+            child: ModImage(
+              mod: mod,
+              size: 300,
+              fallbackImageUrl: index?.llm?.mainMod?.imageUrl,
+            ),
           ),
         ),
         const SizedBox(height: 16),

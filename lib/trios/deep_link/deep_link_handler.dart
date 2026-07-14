@@ -67,6 +67,13 @@ class DeepLinkHandler extends Notifier<void> {
   /// URLs already shown in the current dialog session (avoids duplicate rows).
   final Set<String> _sessionSeenUrls = {};
 
+  /// Catalog source hints for in-app trilink installs, keyed by the main mod's
+  /// URL. Set only when a catalog card raises a single-mod link (see
+  /// [handleUriString]); read and cleared when that mod actually installs, so
+  /// the installed mod gets linked to its catalog entry. Never set for OS deep
+  /// links or multi-mod links, which have no single catalog identity.
+  final Map<String, DownloadSourceHint> _pendingSourceHints = {};
+
   @override
   void build() {
     // Listen for app_links stream (works on macOS warm-start).
@@ -142,7 +149,20 @@ class DeepLinkHandler extends Notifier<void> {
   /// Public entry point for links raised from inside the app (e.g. a catalog
   /// card's trios download). Feeds [rawUri] through the same queue, de-dupe,
   /// and confirmation flow as a link arriving from the OS.
-  void handleUriString(String rawUri) => _onUri(rawUri);
+  ///
+  /// [sourceHint] carries the catalog entry the click came from. It's applied
+  /// to the installed mod only when the link is a single mod with no
+  /// dependencies — one catalog identity can't stand for several mods, so a
+  /// multi-mod link gets no hint rather than a wrong one.
+  void handleUriString(String rawUri, {DownloadSourceHint? sourceHint}) {
+    if (sourceHint != null) {
+      final request = parseDeepLink(trilinkToDeepLinkUri(rawUri) ?? rawUri);
+      if (request != null && request.dependencies.isEmpty) {
+        _pendingSourceHints[request.mainMod.url.toString()] = sourceHint;
+      }
+    }
+    _onUri(rawUri);
+  }
 
   void _onUri(String rawUri) {
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -343,12 +363,16 @@ class DeepLinkHandler extends Notifier<void> {
   }
 
   void _downloadAndInstall(ResolvedModEntry entry) {
+    // Only single-mod catalog trilinks recorded a hint (keyed by the mod's
+    // URL); consume it so the installed mod links to its catalog entry.
+    final sourceHint = _pendingSourceHints.remove(entry.entry.url.toString());
     ref
         .read(downloadManager.notifier)
         .downloadAndInstallMod(
           entry.displayName,
           entry.downloadUrl.toString().fixModDownloadUrl(),
           activateVariantOnComplete: false,
+          sourceHint: sourceHint,
           // The deep-link confirmation dialog already asked the user; don't make
           // the batch installer re-ask about already-installed mods.
           skipConfirmation: true,

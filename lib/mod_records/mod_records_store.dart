@@ -1,10 +1,12 @@
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/models/scraped_mod.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/catalog_search.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
@@ -72,28 +74,20 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
 
     final records = Map<String, ModRecord>.of(current.records);
 
-    // Build indexes from catalog for matching.
-    final catalogByForumThreadId = <String, ScrapedMod>{};
-    final catalogByNexusId = <String, ScrapedMod>{};
-    final catalogByNormalizedName = <String, ScrapedMod>{};
-    // Alphanumeric-only index for fuzzy matching (e.g. "Box Util" → "boxutil").
-    final catalogByAlphanumName = <String, ScrapedMod>{};
-    final matchedCatalogNames = <String>{};
-
-    for (final scraped in catalog) {
-      final threadId = extractForumThreadId(scraped.urls?[ModUrlType.Forum]);
-      if (threadId != null) {
-        catalogByForumThreadId[threadId] = scraped;
-      }
-
-      final nexusId = extractNexusModId(scraped.urls?[ModUrlType.NexusMods]);
-      if (nexusId != null) {
-        catalogByNexusId[nexusId] = scraped;
-      }
-
-      catalogByNormalizedName[scraped.name.toLowerCase().trim()] = scraped;
-      catalogByAlphanumName[scraped.name.alphanumericLower()] = scraped;
+    // Match catalog entries to installed mods with the shared matcher, which
+    // puts saved install-time links first. Keyed by mod id so every variant of
+    // a mod sees the same entry, and refreshed from current scraped data each
+    // pass so linked records stay up to date as the catalog changes.
+    final links = matchCatalogToInstalled(
+      entries: catalog,
+      installedMods: ref.read(AppState.mods),
+      records: current,
+    );
+    final matchedCatalogByModId = <String, ScrapedMod>{};
+    for (final link in links) {
+      matchedCatalogByModId.putIfAbsent(link.mod.id, () => link.entry);
     }
+    final matchedCatalogNames = {for (final link in links) link.entry.name};
 
     // Process installed mods.
     for (final variant in modVariants) {
@@ -129,36 +123,9 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
         );
       }
 
-      // 3. Catalog source (try to match by thread ID, Nexus ID, then name).
-      ScrapedMod? matchedCatalog;
-      final forumThreadId = vci?.modThreadId;
-      final nexusModsId = vci?.modNexusId;
-
-      if (forumThreadId != null &&
-          catalogByForumThreadId.containsKey(forumThreadId)) {
-        matchedCatalog = catalogByForumThreadId[forumThreadId];
-      } else if (nexusModsId != null &&
-          catalogByNexusId.containsKey(nexusModsId)) {
-        matchedCatalog = catalogByNexusId[nexusModsId];
-      } else {
-        // Try exact name match first.
-        final nameKey = (variant.modInfo.name ?? modId).toLowerCase().trim();
-        if (catalogByNormalizedName.containsKey(nameKey)) {
-          matchedCatalog = catalogByNormalizedName[nameKey];
-        } else {
-          // Fuzzy match: strip all non-alphanumeric chars, compare.
-          // Try both mod name and mod ID (e.g. "BoxUtil" matches "Box Util").
-          final fuzzyName = (variant.modInfo.name ?? modId).alphanumericLower();
-          matchedCatalog = catalogByAlphanumName[fuzzyName];
-          if (matchedCatalog == null && variant.modInfo.name != null) {
-            // Also try mod ID if name didn't match.
-            matchedCatalog = catalogByAlphanumName[modId.alphanumericLower()];
-          }
-        }
-      }
-
+      // 3. Catalog source, from the shared matcher (refreshed each pass).
+      final matchedCatalog = matchedCatalogByModId[modId];
       if (matchedCatalog != null) {
-        matchedCatalogNames.add(matchedCatalog.name);
         sourcesMap['catalog'] = _buildCatalogSource(matchedCatalog, now);
       }
 
@@ -312,6 +279,57 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
         records[realModId] = merged;
       }
       return ModRecords(records: records);
+    });
+  }
+
+  /// Links an installed mod to the catalog entry it was installed from. Called
+  /// at install completion, once the real mod id is known.
+  ///
+  /// Merges the catalog-only record (keyed by the catalog name, e.g. "Ashpad")
+  /// into the real mod's record — carrying over its catalog source, forum data,
+  /// and any user overrides — then makes sure a catalog source is attached even
+  /// when there was no catalog-only record to merge.
+  Future<void> linkCatalogEntryToMod(
+    String modId,
+    DownloadSourceHint hint,
+  ) async {
+    final catalogName = hint.catalogName;
+    if (catalogName == null) return;
+
+    final syntheticKey = ModRecord.syntheticKey(catalogName);
+    if (state.valueOrNull?.records.containsKey(syntheticKey) == true) {
+      await mergeSyntheticIntoReal(syntheticKey, modId);
+    }
+
+    await updateRecord(modId, (existing) {
+      final now = DateTime.now();
+      final base =
+          existing ??
+          ModRecord(recordKey: modId, modId: modId, firstSeen: now);
+      // The merge above may already have carried a catalog source over.
+      if (base.sources['catalog'] != null) {
+        return base.copyWith(modId: modId);
+      }
+      // Otherwise attach one: from the current catalog entry when it's loaded,
+      // a bare one built from the hint when it isn't.
+      final catalog =
+          ref.read(browseModsNotifierProvider).valueOrNull?.items ??
+          const <ScrapedMod>[];
+      final key = catalogEntryKey(catalogName);
+      final scraped = catalog.firstWhereOrNull(
+        (m) => catalogEntryKey(m.name) == key,
+      );
+      final catalogSource = scraped != null
+          ? _buildCatalogSource(scraped, now)
+          : CatalogSource(
+              name: catalogName,
+              forumThreadId: hint.forumThreadId,
+              nexusModsId: hint.nexusModsId,
+              lastSeen: now,
+            );
+      final updatedSources = Map<String, ModRecordSource>.of(base.sources);
+      updatedSources['catalog'] = catalogSource;
+      return base.copyWith(modId: modId, sources: updatedSources);
     });
   }
 

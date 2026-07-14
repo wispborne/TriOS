@@ -62,13 +62,32 @@ class ForumLlmMod with ForumLlmModMappable {
   final List<ForumLlmDownload> downloads;
   final ForumLlmExtras? extras;
 
+  /// A preview image for the mod, as found in the forum post. Stored with a
+  /// source prefix, e.g. `ext:https://example.com/logo.png` for an external
+  /// URL. Use [imageUrl] to get a usable link.
+  final String? image;
+
   ForumLlmMod({
     required this.name,
     this.role = LlmModRole.unknown,
     this.requires,
     this.downloads = const [],
     this.extras,
+    this.image,
   });
+
+  /// The mod's preview image as a plain http(s) URL, or null if there isn't a
+  /// usable one. Strips the `ext:` source prefix used in the raw data.
+  String? get imageUrl {
+    final raw = image?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    final withoutPrefix = raw.startsWith('ext:') ? raw.substring(4) : raw;
+    if (withoutPrefix.startsWith('http://') ||
+        withoutPrefix.startsWith('https://')) {
+      return withoutPrefix;
+    }
+    return null;
+  }
 }
 
 /// A structured download link extracted from a forum post.
@@ -109,12 +128,17 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
   final String? license;
   final List<ForumLlmSupportLink>? supportLinks;
 
+  /// Free-form text describing whether updating the mod breaks existing saves,
+  /// e.g. "Should be fully save compatible with 1.05". From QB's forum bundle.
+  final String? saveCompatibility;
+
   ForumLlmExtras({
     this.version,
     this.summary,
     this.changelog,
     this.license,
     this.supportLinks,
+    this.saveCompatibility,
   });
 }
 

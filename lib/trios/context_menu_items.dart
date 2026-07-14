@@ -382,6 +382,7 @@ MenuItem buildMenuItemDebugging(
                         .directDownloadURL!,
                     activateVariantOnComplete: false,
                     modInfo: latestVersionWithDirectDownload.modInfo,
+                    sourceHint: null,
                   );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(

@@ -40,10 +40,10 @@
 - [x] Show "part of <thread title>" on synthesized cards
 - [x] Point synthesized cards' install button at that specific `ForumLlmMod`'s downloads in `resolveDownloadCandidates`
 - [x] Open the parent thread's details dialog on synthesized-card click
-- [ ] Verify with the "Hartley's mods" thread (5 mods): all appear in search, install correctly, dedupe works
+- [x] Verify with the "Hartley's mods" thread (5 mods): all appear in search, install correctly, dedupe works
 - [x] Get user sign-off on the "part of" string — approved "part of <thread>" (card line) with tooltip "Part of the "<thread>" forum thread. Click the card to see the whole thread."
 
 ## Wrap-up
 
 - [x] `flutter analyze` clean (0 errors; no new lints introduced by this change)
-- [ ] Manual verification pass by user (per project convention: don't run the app yourself)
+- [x] Manual verification pass by user (per project convention: don't run the app yourself)

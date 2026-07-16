@@ -166,6 +166,21 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
   int get hashCode => smolId.hashCode;
 }
 
+extension ModVariantLoadOrder on Iterable<ModVariant> {
+  /// Puts variants in the order the game loads them: by `sortString` if the
+  /// mod declares one, otherwise its display name. The game uses a
+  /// case-sensitive comparison, so uppercase names come first. Ties are broken
+  /// by mod id to keep the order stable.
+  List<ModVariant> sortedByGameLoadOrder() {
+    final sorted = toList();
+    sorted.sort((a, b) {
+      final result = a.modInfo.loadOrderKey.compareTo(b.modInfo.loadOrderKey);
+      return result != 0 ? result : a.modInfo.id.compareTo(b.modInfo.id);
+    });
+    return sorted;
+  }
+}
+
 const modIconFilePaths = [
   "icon.ico",
   "icon.png",

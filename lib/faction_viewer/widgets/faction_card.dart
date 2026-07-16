@@ -1,11 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
+import 'package:trios/faction_viewer/spawn_weights/spawn_weight_calculator.dart';
+import 'package:trios/faction_viewer/spawn_weights/vanilla_share_bar.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 
-class FactionCard extends StatelessWidget {
+class FactionCard extends ConsumerWidget {
   final Faction faction;
   final Directory? gameCoreDir;
   final VoidCallback onTap;
@@ -18,9 +21,13 @@ class FactionCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final factionColor = faction.factionColor;
     final theme = Theme.of(context);
+    final spawnReady = ref.watch(spawnWeightsReadyProvider);
+    final summary =
+        ref.watch(factionSpawnSummariesProvider)[faction.mergeKey] ??
+        FactionSpawnSummary.empty;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -75,13 +82,54 @@ class FactionCard extends StatelessWidget {
                   _buildStatsRow(theme),
                   Padding(
                     padding: .only(top: 4),
-                    child: TextTriOS(
-                      faction.isModOnly ? faction.sourceNames : 'Vanilla',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.tertiary,
+                    child: Row(
+                      crossAxisAlignment: .center,
+                      spacing: 4,
+                      children: [
+                        MovingTooltipWidget.text(
+                          message:
+                              "How much of the fleet weight is contributed by vanilla/mods",
+                          child: Text(
+                            "Fleet Wgts:",
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: spawnReady
+                              ? Padding(
+                                  padding: const .only(top: 1),
+                                  child: VanillaShareBar(
+                                    summary: summary,
+                                    factionColor: factionColor,
+                                    factionName: faction.displayName,
+                                  ),
+                                )
+                              : Text(
+                                  'Calculating fleet weights…',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: .only(top: 4),
+                    child: MovingTooltipWidget.text(
+                      message: faction.attributionTooltip,
+                      child: TextTriOS(
+                        _sourceLine(),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        tooltipMaxWidth: 300,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -91,6 +139,18 @@ class FactionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// One-line source summary: who added the faction, plus how many other
+  /// mods change it. Full breakdown lives in the tooltip.
+  String _sourceLine() {
+    final adder = faction.addedBy;
+    if (adder == null) {
+      return faction.sources.isEmpty ? '' : 'Patch only';
+    }
+    final modCount = faction.modifiedBy.length;
+    if (modCount == 0) return adder.name;
+    return '${adder.name} +$modCount ${modCount == 1 ? 'mod' : 'mods'}';
   }
 
   Widget _buildLogo(Directory? gameCoreDir) {

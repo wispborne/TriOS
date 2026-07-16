@@ -84,6 +84,12 @@ class ModInfoMapper extends ClassMapperBase<ModInfo> {
     opt: true,
     def: false,
   );
+  static String? _$sortString(ModInfo v) => v.sortString;
+  static const Field<ModInfo, String> _f$sortString = Field(
+    'sortString',
+    _$sortString,
+    opt: true,
+  );
   static List<ModType> _$modTypes(ModInfo v) => v.modTypes;
   static const Field<ModInfo, List<ModType>> _f$modTypes = Field(
     'modTypes',
@@ -103,6 +109,7 @@ class ModInfoMapper extends ClassMapperBase<ModInfo> {
     #originalGameVersion: _f$originalGameVersion,
     #isUtility: _f$isUtility,
     #isTotalConversion: _f$isTotalConversion,
+    #sortString: _f$sortString,
     #modTypes: _f$modTypes,
   };
 
@@ -118,6 +125,7 @@ class ModInfoMapper extends ClassMapperBase<ModInfo> {
       originalGameVersion: data.dec(_f$originalGameVersion),
       isUtility: data.dec(_f$isUtility),
       isTotalConversion: data.dec(_f$isTotalConversion),
+      sortString: data.dec(_f$sortString),
     );
   }
 
@@ -192,6 +200,7 @@ abstract class ModInfoCopyWith<$R, $In extends ModInfo, $Out>
     String? originalGameVersion,
     bool? isUtility,
     bool? isTotalConversion,
+    String? sortString,
   });
   ModInfoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -226,6 +235,7 @@ class _ModInfoCopyWithImpl<$R, $Out>
     Object? originalGameVersion = $none,
     bool? isUtility,
     bool? isTotalConversion,
+    Object? sortString = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -239,6 +249,7 @@ class _ModInfoCopyWithImpl<$R, $Out>
         #originalGameVersion: originalGameVersion,
       if (isUtility != null) #isUtility: isUtility,
       if (isTotalConversion != null) #isTotalConversion: isTotalConversion,
+      if (sortString != $none) #sortString: sortString,
     }),
   );
   @override
@@ -259,6 +270,7 @@ class _ModInfoCopyWithImpl<$R, $Out>
       #isTotalConversion,
       or: $value.isTotalConversion,
     ),
+    sortString: data.get(#sortString, or: $value.sortString),
   );
 
   @override

@@ -13,7 +13,7 @@ part 'faction_viewer_controller.mapper.dart';
 const String kFactionViewerPageId = 'factions';
 
 @MappableEnum()
-enum FactionViewMode { gallery, grid }
+enum FactionViewMode { gallery, grid, spawnWeights }
 
 @MappableEnum()
 enum FactionGallerySortField {
@@ -36,11 +36,19 @@ class FactionViewerStatePersisted with FactionViewerStatePersistedMappable {
   final FactionGallerySortField gallerySortField;
   final bool gallerySortAscending;
 
+  /// Faction shown in the spawn-weights view (`mergeKey`). Null until picked.
+  final String? spawnFactionKey;
+
+  /// Role shown in the spawn-weights view.
+  final String spawnRole;
+
   const FactionViewerStatePersisted({
     this.viewMode = FactionViewMode.gallery,
     this.showFilters = false,
     this.gallerySortField = FactionGallerySortField.ships,
     this.gallerySortAscending = false,
+    this.spawnFactionKey,
+    this.spawnRole = 'combatMedium',
   });
 }
 
@@ -56,6 +64,8 @@ class FactionViewerState with FactionViewerStateMappable {
   FactionViewMode get viewMode => persisted.viewMode;
   FactionGallerySortField get gallerySortField => persisted.gallerySortField;
   bool get gallerySortAscending => persisted.gallerySortAscending;
+  String? get spawnFactionKey => persisted.spawnFactionKey;
+  String get spawnRole => persisted.spawnRole;
 
   const FactionViewerState({
     this.persisted = const FactionViewerStatePersisted(),
@@ -189,6 +199,24 @@ class FactionViewerController extends Notifier<FactionViewerState> {
 
   void setViewMode(FactionViewMode mode) {
     _updatePersisted(state.persisted.copyWith(viewMode: mode));
+  }
+
+  /// Opens the spawn-weights view on a given faction.
+  void showSpawnWeightsFor(String mergeKey) {
+    _updatePersisted(
+      state.persisted.copyWith(
+        viewMode: FactionViewMode.spawnWeights,
+        spawnFactionKey: mergeKey,
+      ),
+    );
+  }
+
+  void setSpawnFaction(String mergeKey) {
+    _updatePersisted(state.persisted.copyWith(spawnFactionKey: mergeKey));
+  }
+
+  void setSpawnRole(String role) {
+    _updatePersisted(state.persisted.copyWith(spawnRole: role));
   }
 
   void setGallerySortField(FactionGallerySortField field) {

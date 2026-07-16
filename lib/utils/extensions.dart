@@ -16,6 +16,12 @@ import 'package:trios/thirdparty/yaml/yaml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
+/// Java-style float/double literals (`1f`, `-2.5D`) sitting in a JSON value
+/// position — right after a `:`, `[` or `,`. Anchoring on the delimiter keeps
+/// quoted values like `"version":"1f"` untouched, since the character after the
+/// delimiter is a quote rather than a digit.
+final _javaNumberSuffix = RegExp(r'([:\[,]\s*-?\d+(?:\.\d+)?)[fFdD]\b');
+
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
 
@@ -120,7 +126,7 @@ extension StringExt on String {
 
   /// Cheap string-level fixups for near-JSON Starsector mod files:
   /// tabs, escaped `#`, unquoted-key-before-quote, trailing commas, trailing
-  /// semicolons, `//` line comments.
+  /// semicolons, `//` line comments, Java float/double literals (`1f`, `2.5d`).
   String _applyJsonFixups() {
     var fixed = replaceAll(r"\#", "#").trim();
     fixed = fixed.replaceAll("\t", "  ");
@@ -131,6 +137,7 @@ extension StringExt on String {
         .split("\n")
         .where((it) => !it.trim().startsWith("//"))
         .join("\n");
+    fixed = fixed.replaceAllMapped(_javaNumberSuffix, (m) => m[1]!);
     return fixed;
   }
 

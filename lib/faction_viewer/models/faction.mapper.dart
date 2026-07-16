@@ -203,6 +203,13 @@ class FactionMapper extends ClassMapperBase<Faction> {
     opt: true,
     def: const [],
   );
+  static List<String> _$priorityShipTags(Faction v) => v.priorityShipTags;
+  static const Field<Faction, List<String>> _f$priorityShipTags = Field(
+    'priorityShipTags',
+    _$priorityShipTags,
+    opt: true,
+    def: const [],
+  );
   static List<String> _$malePortraits(Faction v) => v.malePortraits;
   static const Field<Faction, List<String>> _f$malePortraits = Field(
     'malePortraits',
@@ -235,6 +242,25 @@ class FactionMapper extends ClassMapperBase<Faction> {
   static const Field<Faction, Map<String, String>> _f$music = Field(
     'music',
     _$music,
+    opt: true,
+  );
+  static Map<String, dynamic>? _$shipRoles(Faction v) => v.shipRoles;
+  static const Field<Faction, Map<String, dynamic>> _f$shipRoles = Field(
+    'shipRoles',
+    _$shipRoles,
+    opt: true,
+  );
+  static Map<String, dynamic>? _$hullFrequency(Faction v) => v.hullFrequency;
+  static const Field<Faction, Map<String, dynamic>> _f$hullFrequency = Field(
+    'hullFrequency',
+    _$hullFrequency,
+    opt: true,
+  );
+  static Map<String, dynamic>? _$variantOverrides(Faction v) =>
+      v.variantOverrides;
+  static const Field<Faction, Map<String, dynamic>> _f$variantOverrides = Field(
+    'variantOverrides',
+    _$variantOverrides,
     opt: true,
   );
   static List<FactionSource> _$sources(Faction v) => v.sources;
@@ -303,11 +329,15 @@ class FactionMapper extends ClassMapperBase<Faction> {
     #knownWeaponTags: _f$knownWeaponTags,
     #knownFighterTags: _f$knownFighterTags,
     #knownHullModTags: _f$knownHullModTags,
+    #priorityShipTags: _f$priorityShipTags,
     #malePortraits: _f$malePortraits,
     #femalePortraits: _f$femalePortraits,
     #illegalCommodities: _f$illegalCommodities,
     #customFlags: _f$customFlags,
     #music: _f$music,
+    #shipRoles: _f$shipRoles,
+    #hullFrequency: _f$hullFrequency,
+    #variantOverrides: _f$variantOverrides,
     #sources: _f$sources,
     #sectionAttributions: _f$sectionAttributions,
     #itemAttributions: _f$itemAttributions,
@@ -344,11 +374,15 @@ class FactionMapper extends ClassMapperBase<Faction> {
       knownWeaponTags: data.dec(_f$knownWeaponTags),
       knownFighterTags: data.dec(_f$knownFighterTags),
       knownHullModTags: data.dec(_f$knownHullModTags),
+      priorityShipTags: data.dec(_f$priorityShipTags),
       malePortraits: data.dec(_f$malePortraits),
       femalePortraits: data.dec(_f$femalePortraits),
       illegalCommodities: data.dec(_f$illegalCommodities),
       customFlags: data.dec(_f$customFlags),
       music: data.dec(_f$music),
+      shipRoles: data.dec(_f$shipRoles),
+      hullFrequency: data.dec(_f$hullFrequency),
+      variantOverrides: data.dec(_f$variantOverrides),
       sources: data.dec(_f$sources),
       sectionAttributions: data.dec(_f$sectionAttributions),
       itemAttributions: data.dec(_f$itemAttributions),
@@ -442,6 +476,8 @@ abstract class FactionCopyWith<$R, $In extends Faction, $Out>
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get knownHullModTags;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get priorityShipTags;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get malePortraits;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get femalePortraits;
@@ -451,6 +487,12 @@ abstract class FactionCopyWith<$R, $In extends Faction, $Out>
   get customFlags;
   MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>>?
   get music;
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
+  get shipRoles;
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
+  get hullFrequency;
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
+  get variantOverrides;
   ListCopyWith<
     $R,
     FactionSource,
@@ -500,11 +542,15 @@ abstract class FactionCopyWith<$R, $In extends Faction, $Out>
     List<String>? knownWeaponTags,
     List<String>? knownFighterTags,
     List<String>? knownHullModTags,
+    List<String>? priorityShipTags,
     List<String>? malePortraits,
     List<String>? femalePortraits,
     List<String>? illegalCommodities,
     Map<String, dynamic>? customFlags,
     Map<String, String>? music,
+    Map<String, dynamic>? shipRoles,
+    Map<String, dynamic>? hullFrequency,
+    Map<String, dynamic>? variantOverrides,
     List<FactionSource>? sources,
     Map<String, List<SourceContribution>>? sectionAttributions,
     Map<String, Map<String, String>>? itemAttributions,
@@ -653,6 +699,13 @@ class _FactionCopyWithImpl<$R, $Out>
   );
   @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get priorityShipTags => ListCopyWith(
+    $value.priorityShipTags,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(priorityShipTags: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
   get malePortraits => ListCopyWith(
     $value.malePortraits,
     (v, t) => ObjectCopyWith(v, $identity, t),
@@ -686,6 +739,33 @@ class _FactionCopyWithImpl<$R, $Out>
           $value.music!,
           (v, t) => ObjectCopyWith(v, $identity, t),
           (v) => call(music: v),
+        )
+      : null;
+  @override
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
+  get shipRoles => $value.shipRoles != null
+      ? MapCopyWith(
+          $value.shipRoles!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(shipRoles: v),
+        )
+      : null;
+  @override
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
+  get hullFrequency => $value.hullFrequency != null
+      ? MapCopyWith(
+          $value.hullFrequency!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(hullFrequency: v),
+        )
+      : null;
+  @override
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>?
+  get variantOverrides => $value.variantOverrides != null
+      ? MapCopyWith(
+          $value.variantOverrides!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(variantOverrides: v),
         )
       : null;
   @override
@@ -753,11 +833,15 @@ class _FactionCopyWithImpl<$R, $Out>
     List<String>? knownWeaponTags,
     List<String>? knownFighterTags,
     List<String>? knownHullModTags,
+    List<String>? priorityShipTags,
     List<String>? malePortraits,
     List<String>? femalePortraits,
     List<String>? illegalCommodities,
     Map<String, dynamic>? customFlags,
     Object? music = $none,
+    Object? shipRoles = $none,
+    Object? hullFrequency = $none,
+    Object? variantOverrides = $none,
     List<FactionSource>? sources,
     Map<String, List<SourceContribution>>? sectionAttributions,
     Map<String, Map<String, String>>? itemAttributions,
@@ -793,11 +877,15 @@ class _FactionCopyWithImpl<$R, $Out>
       if (knownWeaponTags != null) #knownWeaponTags: knownWeaponTags,
       if (knownFighterTags != null) #knownFighterTags: knownFighterTags,
       if (knownHullModTags != null) #knownHullModTags: knownHullModTags,
+      if (priorityShipTags != null) #priorityShipTags: priorityShipTags,
       if (malePortraits != null) #malePortraits: malePortraits,
       if (femalePortraits != null) #femalePortraits: femalePortraits,
       if (illegalCommodities != null) #illegalCommodities: illegalCommodities,
       if (customFlags != null) #customFlags: customFlags,
       if (music != $none) #music: music,
+      if (shipRoles != $none) #shipRoles: shipRoles,
+      if (hullFrequency != $none) #hullFrequency: hullFrequency,
+      if (variantOverrides != $none) #variantOverrides: variantOverrides,
       if (sources != null) #sources: sources,
       if (sectionAttributions != null)
         #sectionAttributions: sectionAttributions,
@@ -846,6 +934,7 @@ class _FactionCopyWithImpl<$R, $Out>
     knownWeaponTags: data.get(#knownWeaponTags, or: $value.knownWeaponTags),
     knownFighterTags: data.get(#knownFighterTags, or: $value.knownFighterTags),
     knownHullModTags: data.get(#knownHullModTags, or: $value.knownHullModTags),
+    priorityShipTags: data.get(#priorityShipTags, or: $value.priorityShipTags),
     malePortraits: data.get(#malePortraits, or: $value.malePortraits),
     femalePortraits: data.get(#femalePortraits, or: $value.femalePortraits),
     illegalCommodities: data.get(
@@ -854,6 +943,9 @@ class _FactionCopyWithImpl<$R, $Out>
     ),
     customFlags: data.get(#customFlags, or: $value.customFlags),
     music: data.get(#music, or: $value.music),
+    shipRoles: data.get(#shipRoles, or: $value.shipRoles),
+    hullFrequency: data.get(#hullFrequency, or: $value.hullFrequency),
+    variantOverrides: data.get(#variantOverrides, or: $value.variantOverrides),
     sources: data.get(#sources, or: $value.sources),
     sectionAttributions: data.get(
       #sectionAttributions,
@@ -1147,17 +1239,26 @@ class FactionSourceMapper extends ClassMapperBase<FactionSource> {
     opt: true,
     hook: SkipSerializationHook(),
   );
+  static bool _$registersFaction(FactionSource v) => v.registersFaction;
+  static const Field<FactionSource, bool> _f$registersFaction = Field(
+    'registersFaction',
+    _$registersFaction,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<FactionSource> fields = const {
     #name: _f$name,
     #modVariant: _f$modVariant,
+    #registersFaction: _f$registersFaction,
   };
 
   static FactionSource _instantiate(DecodingData data) {
     return FactionSource(
       name: data.dec(_f$name),
       modVariant: data.dec(_f$modVariant),
+      registersFaction: data.dec(_f$registersFaction),
     );
   }
 
@@ -1223,7 +1324,7 @@ extension FactionSourceValueCopy<$R, $Out>
 
 abstract class FactionSourceCopyWith<$R, $In extends FactionSource, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? name, dynamic modVariant});
+  $R call({String? name, dynamic modVariant, bool? registersFaction});
   FactionSourceCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -1236,16 +1337,19 @@ class _FactionSourceCopyWithImpl<$R, $Out>
   late final ClassMapperBase<FactionSource> $mapper =
       FactionSourceMapper.ensureInitialized();
   @override
-  $R call({String? name, Object? modVariant = $none}) => $apply(
-    FieldCopyWithData({
-      if (name != null) #name: name,
-      if (modVariant != $none) #modVariant: modVariant,
-    }),
-  );
+  $R call({String? name, Object? modVariant = $none, bool? registersFaction}) =>
+      $apply(
+        FieldCopyWithData({
+          if (name != null) #name: name,
+          if (modVariant != $none) #modVariant: modVariant,
+          if (registersFaction != null) #registersFaction: registersFaction,
+        }),
+      );
   @override
   FactionSource $make(CopyWithData data) => FactionSource(
     name: data.get(#name, or: $value.name),
     modVariant: data.get(#modVariant, or: $value.modVariant),
+    registersFaction: data.get(#registersFaction, or: $value.registersFaction),
   );
 
   @override

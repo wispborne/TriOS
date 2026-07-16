@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 
@@ -70,9 +71,14 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// Extract the list of items contributed by a payload for yield / dedup.
   List<T> itemsFromPayload(P payload);
 
-  /// Resolved list of enabled variants to scan. Called once per build, after
-  /// vanilla. Order determines dedup winner (first occurrence wins).
-  List<ModVariant> resolveEnabledVariants();
+  /// Resolved list of enabled variants to scan, in the game's mod load order.
+  /// Called once per build, after vanilla. Order determines both how files are
+  /// merged and the dedup winner (first occurrence wins).
+  List<ModVariant> resolveEnabledVariants() => ref
+      .read(AppState.mods)
+      .map((mod) => mod.findFirstEnabledOrHighestVersion)
+      .nonNulls
+      .sortedByGameLoadOrder();
 
   /// Path to the game core folder. Null means vanilla parsing is skipped for
   /// this build — used if game detection hasn't resolved yet.

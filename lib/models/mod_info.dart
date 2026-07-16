@@ -24,6 +24,10 @@ class ModInfo with ModInfoMappable {
   final bool isUtility;
   final bool isTotalConversion;
 
+  /// Optional override for where the mod sits in the game's load order.
+  /// When absent the game sorts by display name instead.
+  final String? sortString;
+
   ModInfo({
     required this.id,
     this.name,
@@ -35,6 +39,7 @@ class ModInfo with ModInfoMappable {
     this.originalGameVersion,
     this.isUtility = false,
     this.isTotalConversion = false,
+    this.sortString,
   });
 
   // Factory method to create a ModInfo from a ModInfoJson model
@@ -50,12 +55,16 @@ class ModInfo with ModInfoMappable {
         originalGameVersion: model.originalGameVersion,
         isUtility: model.utility,
         isTotalConversion: model.totalConversion,
+        sortString: model.sortString,
       );
 
   // TODO swap this to id, change id to modId.
   String get smolId => createSmolId(id, version);
 
   String get nameOrId => name ?? id;
+
+  /// What the game sorts on when deciding mod load order.
+  String get loadOrderKey => sortString ?? nameOrId;
 
   String get formattedNameVersionId =>
       "$name${version != null ? " $version" : ""}${" ($id)"}";

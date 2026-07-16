@@ -31,6 +31,8 @@ class FactionViewModeMapper extends EnumMapper<FactionViewMode> {
         return FactionViewMode.gallery;
       case r'grid':
         return FactionViewMode.grid;
+      case r'spawnWeights':
+        return FactionViewMode.spawnWeights;
       default:
         throw MapperException.unknownEnumValue(value);
     }
@@ -43,6 +45,8 @@ class FactionViewModeMapper extends EnumMapper<FactionViewMode> {
         return r'gallery';
       case FactionViewMode.grid:
         return r'grid';
+      case FactionViewMode.spawnWeights:
+        return r'spawnWeights';
     }
   }
 }
@@ -173,6 +177,17 @@ class FactionViewerStatePersistedMapper
     opt: true,
     def: false,
   );
+  static String? _$spawnFactionKey(FactionViewerStatePersisted v) =>
+      v.spawnFactionKey;
+  static const Field<FactionViewerStatePersisted, String> _f$spawnFactionKey =
+      Field('spawnFactionKey', _$spawnFactionKey, opt: true);
+  static String _$spawnRole(FactionViewerStatePersisted v) => v.spawnRole;
+  static const Field<FactionViewerStatePersisted, String> _f$spawnRole = Field(
+    'spawnRole',
+    _$spawnRole,
+    opt: true,
+    def: 'combatMedium',
+  );
 
   @override
   final MappableFields<FactionViewerStatePersisted> fields = const {
@@ -180,6 +195,8 @@ class FactionViewerStatePersistedMapper
     #showFilters: _f$showFilters,
     #gallerySortField: _f$gallerySortField,
     #gallerySortAscending: _f$gallerySortAscending,
+    #spawnFactionKey: _f$spawnFactionKey,
+    #spawnRole: _f$spawnRole,
   };
 
   static FactionViewerStatePersisted _instantiate(DecodingData data) {
@@ -188,6 +205,8 @@ class FactionViewerStatePersistedMapper
       showFilters: data.dec(_f$showFilters),
       gallerySortField: data.dec(_f$gallerySortField),
       gallerySortAscending: data.dec(_f$gallerySortAscending),
+      spawnFactionKey: data.dec(_f$spawnFactionKey),
+      spawnRole: data.dec(_f$spawnRole),
     );
   }
 
@@ -270,6 +289,8 @@ abstract class FactionViewerStatePersistedCopyWith<
     bool? showFilters,
     FactionGallerySortField? gallerySortField,
     bool? gallerySortAscending,
+    String? spawnFactionKey,
+    String? spawnRole,
   });
   FactionViewerStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -299,6 +320,8 @@ class _FactionViewerStatePersistedCopyWithImpl<$R, $Out>
     bool? showFilters,
     FactionGallerySortField? gallerySortField,
     bool? gallerySortAscending,
+    Object? spawnFactionKey = $none,
+    String? spawnRole,
   }) => $apply(
     FieldCopyWithData({
       if (viewMode != null) #viewMode: viewMode,
@@ -306,6 +329,8 @@ class _FactionViewerStatePersistedCopyWithImpl<$R, $Out>
       if (gallerySortField != null) #gallerySortField: gallerySortField,
       if (gallerySortAscending != null)
         #gallerySortAscending: gallerySortAscending,
+      if (spawnFactionKey != $none) #spawnFactionKey: spawnFactionKey,
+      if (spawnRole != null) #spawnRole: spawnRole,
     }),
   );
   @override
@@ -321,6 +346,8 @@ class _FactionViewerStatePersistedCopyWithImpl<$R, $Out>
           #gallerySortAscending,
           or: $value.gallerySortAscending,
         ),
+        spawnFactionKey: data.get(#spawnFactionKey, or: $value.spawnFactionKey),
+        spawnRole: data.get(#spawnRole, or: $value.spawnRole),
       );
 
   @override

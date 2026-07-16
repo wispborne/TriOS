@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/faction_viewer/faction_merge.dart';
+import 'package:trios/faction_viewer/factions_csv.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
 import 'package:trios/faction_viewer/models/factions_cache_payload.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -54,7 +55,7 @@ class FactionListNotifier
   String get domain => 'factions';
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 5;
 
   @override
   late final CachedVariantStore store =
@@ -78,15 +79,6 @@ class FactionListNotifier
 
   @override
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
-
-  @override
-  List<ModVariant> resolveEnabledVariants() {
-    return ref
-        .read(AppState.mods)
-        .map((mod) => mod.findFirstEnabledOrHighestVersion)
-        .nonNulls
-        .toList();
-  }
 
   @override
   Future<bool> awaitReadiness() async {
@@ -151,8 +143,22 @@ class FactionListNotifier
     final sourceName = modName;
     final factions = <Faction>[];
 
+    // A faction only exists in-game if some source lists its file path in
+    // factions.csv (merged across vanilla + mods). Sources with a matching
+    // row *add* the faction; sources without one only patch it.
+    var registeredKeys = const <String>{};
+    final csvFile = File(p.join(factionsDir.path, 'factions.csv'));
+    if (await csvFile.exists()) {
+      try {
+        final csvContent = await csvFile.readAsStringUtf8OrLatin1();
+        registeredKeys = parseFactionsCsvKeys(csvContent);
+      } catch (e) {
+        Fimber.w('[$modName] Error reading factions.csv: $e');
+      }
+    }
+
     try {
-      await for (final entity in factionsDir.list()) {
+      await for (final entity in factionsDir.list(recursive: true)) {
         if (entity is! File || !entity.path.endsWith('.faction')) continue;
 
         try {
@@ -160,15 +166,20 @@ class FactionListNotifier
           final jsonContent = content.removeJsonComments();
           final factionData = await jsonContent.parseJsonToMapAsync();
 
-          // Starsector associates overlay faction files by filename, not by
-          // the `id` field (vanilla persean_league.faction declares id
-          // "persean" but mods omit the id and rely on the filename). Merge on
-          // the filename; the `id` field is kept only for display.
-          final mergeKey = entity.nameWithoutExtension;
+          // Starsector associates overlay faction files by relative path, not
+          // by the `id` field (vanilla persean_league.faction declares id
+          // "persean" but mods omit the id and rely on the path). Merge on
+          // the path under data/world/factions (subfolders count, e.g. AoTD's
+          // submarkets/researchfacil); the `id` field is kept only for
+          // display.
+          final mergeKey = p
+              .withoutExtension(p.relative(entity.path, from: factionsDir.path))
+              .replaceAll('\\', '/');
 
           final source = FactionSource(
             name: sourceName,
             modVariant: modVariant,
+            registersFaction: registeredKeys.contains(mergeKey.toLowerCase()),
           );
 
           // Check if this faction already exists (needs merging).
@@ -344,6 +355,9 @@ Faction _buildFactionFromJson(
     ),
     knownHullModIds: _stringList(knownHullMods?['hullMods']),
     knownShipTags: _stringList(knownShips?['tags']),
+    priorityShipTags: _stringList(
+      (data['priorityShips'] as Map<String, dynamic>?)?['tags'],
+    ),
     knownWeaponTags: _stringList(knownWeapons?['tags']),
     knownFighterTags: _stringList(knownFighters?['tags']),
     knownHullModTags: _stringList(knownHullMods?['tags']),
@@ -352,6 +366,9 @@ Faction _buildFactionFromJson(
     illegalCommodities: _stringList(data['illegalCommodities']),
     customFlags: custom,
     music: musicRaw?.map((k, v) => MapEntry(k, v.toString())),
+    shipRoles: data['shipRoles'] as Map<String, dynamic>?,
+    hullFrequency: data['hullFrequency'] as Map<String, dynamic>?,
+    variantOverrides: data['variantOverrides'] as Map<String, dynamic>?,
     sources: sources,
     sectionAttributions: attributions,
     itemAttributions: itemAttributions,
@@ -390,6 +407,11 @@ void _initAttributions(
       _initAttributions(
         value, sourceName, attributions, itemAttributions, fullKey,
       );
+    } else if (value is! Map && value is! List) {
+      // Scalars are attributed to whoever wrote them last; for the first file
+      // that's this source. Recorded under the parent section, matching
+      // faction_merge.dart.
+      itemAttributions.putIfAbsent(prefix, () => {})[entry.key] = sourceName;
     }
   }
 }

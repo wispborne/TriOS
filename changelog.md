@@ -6,6 +6,8 @@
     - Forum activity is now shown.
     - Hovering a mod card shows a summary: mod image, description, latest changelog, support links, and save compatibility.
     - Mod pop-ups show that same summary at the top. You can turn it off in the Catalog menu.
+  - Faction Viewer: fleet weights are now shown, giving an overview of which mods are adding ships to fleets.
+  - Faction Viewer: now shows which mod added each faction, separate from mods that only modify it.
   - Missing dependencies now have buttons to install or find them.
   - 'Last Updated' column on the Mods page.
   - More background effects (Settings - Theme Modifiers).

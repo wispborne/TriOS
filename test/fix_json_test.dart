@@ -112,6 +112,33 @@ void main() {
       expect(result['emptyList'], []);
     });
 
+    test('strips Java float suffix from a number value', () {
+      const input = '{"a":1f}';
+      final result = input.parseJsonToMap();
+      expect(result['a'], 1);
+    });
+
+    test('leaves a quoted "1f" alone', () {
+      const input = '{"a":"1f", "b":1f}';
+      final result = input.parseJsonToMap();
+      expect(result['a'], '1f');
+      expect(result['b'], 1);
+    });
+
+    test('strips float suffixes inside arrays', () {
+      const input = '{"a":[1f, 2.5f]}';
+      final result = input.parseJsonToMap();
+      expect(result['a'], [1, 2.5]);
+    });
+
+    test('strips uppercase and double suffixes', () {
+      const input = '{"a":1F, "b":-2.5d, "c":3D}';
+      final result = input.parseJsonToMap();
+      expect(result['a'], 1);
+      expect(result['b'], -2.5);
+      expect(result['c'], 3);
+    });
+
     test('handles the real-world weapon file from bug report', () {
       const input = '''
 {

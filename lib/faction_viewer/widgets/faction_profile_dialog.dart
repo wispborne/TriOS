@@ -3,7 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/faction_viewer/faction_viewer_controller.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
+import 'package:trios/faction_viewer/spawn_weights/spawn_weight_calculator.dart';
+import 'package:trios/faction_viewer/spawn_weights/vanilla_share_bar.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
@@ -89,6 +92,10 @@ class FactionProfileDialog extends ConsumerWidget {
                     gameCoreDir: gameCoreDir,
                   ),
                 ),
+                const SizedBox(height: 16),
+                _sectionTitle('Spawn weights', theme),
+                const SizedBox(height: 8),
+                _buildSpawnWeightsSection(context, theme, ref),
                 const SizedBox(height: 16),
                 if (faction.malePortraits.isNotEmpty ||
                     faction.femalePortraits.isNotEmpty) ...[
@@ -458,7 +465,108 @@ class FactionProfileDialog extends ConsumerWidget {
   }
 
   Widget _buildSourceSection(ThemeData theme) {
-    return Text(faction.sourceNames, style: theme.textTheme.bodySmall);
+    if (faction.sources.isEmpty) return const SizedBox.shrink();
+    final adder = faction.addedBy;
+    final modifiers = faction.modifiedBy.map((s) => s.name).join(', ');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 4,
+      children: [
+        Text(
+          adder != null
+              ? 'Added by: ${adder.name}'
+              : 'Not added by any enabled mod — it may belong to a disabled mod.',
+          style: theme.textTheme.bodySmall,
+        ),
+        if (modifiers.isNotEmpty)
+          Text('Modified by: $modifiers', style: theme.textTheme.bodySmall),
+      ],
+    );
+  }
+
+  /// How much of this faction's warship spawn chance each mod owns.
+  Widget _buildSpawnWeightsSection(
+    BuildContext context,
+    ThemeData theme,
+    WidgetRef ref,
+  ) {
+    if (!ref.watch(spawnWeightsReadyProvider)) {
+      return Text(
+        'Calculating spawn weights…',
+        style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+      );
+    }
+
+    final summary =
+        ref.watch(factionSpawnSummariesProvider)[faction.mergeKey] ??
+        FactionSpawnSummary.empty;
+
+    if (summary.totalWeight <= 0) {
+      return Text(
+        'This faction has no warships to spawn.',
+        style: theme.textTheme.bodySmall,
+      );
+    }
+
+    // Vanilla plus each mod, biggest share first, matching the bar above.
+    final contributors = summary.weightBySource.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final shown = contributors.take(5).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8,
+      children: [
+        VanillaShareBar(
+          summary: summary,
+          height: 10,
+          factionColor: faction.factionColor,
+          factionName: faction.displayName,
+        ),
+        for (final contributor in shown)
+          Padding(
+            padding: .only(left: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    contributor.key,
+                    style: theme.textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  formatShare(contributor.value / summary.totalWeight),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFeatures: [const FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (contributors.length > shown.length)
+          Padding(
+            padding: .only(left: 4),
+            child: Text(
+              '+${contributors.length - shown.length} more',
+              style: theme.textTheme.labelSmall,
+            ),
+          ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            icon: const Icon(Icons.list_alt, size: 18),
+            label: const Text('See all ships'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              ref
+                  .read(factionViewerControllerProvider.notifier)
+                  .showSpawnWeightsFor(faction.mergeKey);
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   String _formatFlagName(String flag) {

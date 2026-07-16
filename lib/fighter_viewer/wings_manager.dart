@@ -55,15 +55,6 @@ class WingListNotifier extends CachedStreamListNotifier<Wing, WingsCachePayload>
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
 
   @override
-  List<ModVariant> resolveEnabledVariants() {
-    return ref
-        .read(AppState.mods)
-        .map((mod) => mod.findFirstEnabledOrHighestVersion)
-        .nonNulls
-        .toList();
-  }
-
-  @override
   Future<bool> awaitReadiness() async {
     return ref.watch(AppState.modVariants).hasValue;
   }

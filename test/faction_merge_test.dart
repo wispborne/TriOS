@@ -177,6 +177,66 @@ void main() {
       expect(attr[1].count, 2);
     });
 
+    test('scalar attribution names the last mod to write the value', () {
+      final base = {
+        'shipRoles': {
+          'combatSmall': {'lasher_Assault': 10, 'vigilance_Standard': 5},
+        },
+      };
+      final overlay = {
+        'shipRoles': {
+          'combatSmall': {'lasher_Assault': 2, 'mod_frigate_Standard': 8},
+        },
+      };
+
+      final result = mergeFactionJson(
+        base: base,
+        overlay: overlay,
+        sourceName: 'TestMod',
+        existingAttributions: {},
+        existingItemAttributions: {
+          'shipRoles.combatSmall': {
+            'lasher_Assault': 'Vanilla',
+            'vigilance_Standard': 'Vanilla',
+          },
+        },
+      );
+
+      final weights =
+          ((result.merged['shipRoles'] as Map)['combatSmall'] as Map);
+      expect(weights['lasher_Assault'], 2);
+      expect(weights['vigilance_Standard'], 5);
+      expect(weights['mod_frigate_Standard'], 8);
+
+      final attrs = result.itemAttributions['shipRoles.combatSmall']!;
+      expect(attrs['lasher_Assault'], 'TestMod');
+      expect(attrs['vigilance_Standard'], 'Vanilla');
+      expect(attrs['mod_frigate_Standard'], 'TestMod');
+    });
+
+    test('a brand-new nested section still gets scalar attribution', () {
+      final result = mergeFactionJson(
+        base: {},
+        overlay: {
+          'hullFrequency': {
+            'hulls': {'onslaught': 10},
+          },
+        },
+        sourceName: 'TestMod',
+        existingAttributions: {},
+        existingItemAttributions: {},
+      );
+
+      expect(
+        (result.merged['hullFrequency'] as Map)['hulls'],
+        {'onslaught': 10},
+      );
+      expect(
+        result.itemAttributions['hullFrequency.hulls']!['onslaught'],
+        'TestMod',
+      );
+    });
+
     test('core_clearArray resets attribution for that source', () {
       final base = {
         'knownWeapons': {

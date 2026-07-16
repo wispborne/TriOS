@@ -7,6 +7,9 @@ import 'package:path/path.dart' as p;
 import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/faction_viewer/faction_viewer_controller.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
+import 'package:trios/faction_viewer/spawn_weights/spawn_weight_calculator.dart';
+import 'package:trios/faction_viewer/spawn_weights/spawn_weights_view.dart';
+import 'package:trios/faction_viewer/spawn_weights/vanilla_share_bar.dart';
 import 'package:trios/faction_viewer/widgets/faction_card.dart';
 import 'package:trios/faction_viewer/widgets/faction_profile_dialog.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -23,6 +26,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/mode_switcher.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -86,7 +90,10 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
               appSettings.select((s) => s.factionSearchHistory),
             ),
             initialValue: controllerState.searchQuery,
-            hintText: 'Search factions...',
+            hintText:
+                controllerState.viewMode == FactionViewMode.spawnWeights
+                ? 'Search ships...'
+                : 'Search factions...',
             onChanged: (query) => ref
                 .read(factionViewerControllerProvider.notifier)
                 .updateSearchQuery(query),
@@ -108,13 +115,21 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
               Expanded(
                 child: controllerState.filteredFactions.isEmpty && !isLoading
                     ? const Center(child: Text('No factions found.'))
-                    : controllerState.viewMode == FactionViewMode.grid
-                    ? _buildGrid(
-                        controllerState,
-                        gameCoreDir,
-                        Theme.of(context),
-                      )
-                    : _buildGallery(controllerState, gameCoreDir),
+                    : switch (controllerState.viewMode) {
+                        FactionViewMode.grid => _buildGrid(
+                          controllerState,
+                          gameCoreDir,
+                          Theme.of(context),
+                        ),
+                        FactionViewMode.spawnWeights => SpawnWeightsView(
+                          factions: controllerState.filteredFactions,
+                          searchQuery: controllerState.searchQuery,
+                        ),
+                        FactionViewMode.gallery => _buildGallery(
+                          controllerState,
+                          gameCoreDir,
+                        ),
+                      },
               ),
             ],
           ),
@@ -167,22 +182,19 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
     FactionViewerController controller,
     FactionViewerState state,
   ) {
-    return MovingTooltipWidget.text(
-      message: state.viewMode == FactionViewMode.gallery
-          ? 'Switch to grid view'
-          : 'Switch to gallery view',
-      child: IconButton(
-        icon: Icon(
-          state.viewMode == FactionViewMode.gallery
-              ? Icons.grid_view
-              : Icons.view_list,
-        ),
-        onPressed: () => controller.setViewMode(
-          state.viewMode == FactionViewMode.gallery
-              ? FactionViewMode.grid
-              : FactionViewMode.gallery,
-        ),
-      ),
+    return ModeSwitcher<FactionViewMode>(
+      selected: state.viewMode,
+      onChanged: controller.setViewMode,
+      modes: const {
+        FactionViewMode.gallery: 'Cards',
+        FactionViewMode.grid: 'Grid',
+        FactionViewMode.spawnWeights: 'Spawn weights',
+      },
+      modeIcons: const {
+        FactionViewMode.gallery: Icon(Icons.grid_view, size: 18),
+        FactionViewMode.grid: Icon(Icons.view_list, size: 18),
+        FactionViewMode.spawnWeights: Icon(Icons.balance, size: 18),
+      },
     );
   }
 
@@ -235,7 +247,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
       padding: .all(8),
       itemBuilder: (context, faction, index) {
         return SizedBox(
-          height: 140,
+          height: 168,
           child: _buildRowContextMenu(
             faction,
             gameCoreDir,
@@ -256,7 +268,8 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
     ThemeData theme,
   ) {
     final gridState = ref.watch(appSettings.select((s) => s.factionsGridState));
-    final columns = _buildColumns(theme, gameCoreDir);
+    final summaries = ref.watch(factionSpawnSummariesProvider);
+    final columns = _buildColumns(theme, gameCoreDir, summaries);
 
     return DefaultTextStyle.merge(
       style: theme.textTheme.labelLarge!.copyWith(fontSize: 14),
@@ -300,6 +313,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
   List<WispGridColumn<Faction>> _buildColumns(
     ThemeData theme,
     Directory? gameCoreDir,
+    Map<String, FactionSpawnSummary> summaries,
   ) {
     int position = 0;
 
@@ -413,16 +427,44 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
       col('knownShips', 'Ships', (f) => f.knownShipIds.length, width: 70),
       col('knownWeapons', 'Weapons', (f) => f.knownWeaponIds.length, width: 80),
       WispGridColumn<Faction>(
+        key: 'vanillaSpawn',
+        isSortable: true,
+        name: 'Vanilla %',
+        // Factions with no warships sort below the ones that have them.
+        getSortValue: (f) => summaries[f.mergeKey]?.vanillaShare ?? -1,
+        itemCellBuilder: (item, _) {
+          final summary =
+              summaries[item.mergeKey] ?? FactionSpawnSummary.empty;
+          final share = summary.vanillaShare;
+          return MovingTooltipWidget.text(
+            message: vanillaShareTooltip(summary),
+            child: TextTriOS(
+              share == null ? '—' : formatShare(share),
+              maxLines: 1,
+            ),
+          );
+        },
+        csvValue: (item) {
+          final share = summaries[item.mergeKey]?.vanillaShare;
+          return share == null ? '' : formatShare(share);
+        },
+        defaultState: WispGridColumnState(position: position++, width: 90),
+      ),
+      WispGridColumn<Faction>(
         key: 'source',
         isSortable: true,
-        name: 'Source',
-        getSortValue: (f) => f.sourceNames.toLowerCase(),
-        itemCellBuilder: (item, _) => TextTriOS(
-          item.sourceNames,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        name: 'Added by',
+        getSortValue: (f) => (f.addedBy?.name ?? '').toLowerCase(),
+        itemCellBuilder: (item, _) => MovingTooltipWidget.text(
+          message: item.attributionTooltip,
+          child: TextTriOS(
+            item.addedBy?.name ??
+                (item.sources.isEmpty ? '' : 'Patch only'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        csvValue: (item) => item.sourceNames,
+        csvValue: (item) => item.addedBy?.name ?? '',
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
     ];
@@ -433,7 +475,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
     Directory? gameCoreDir,
     Widget child,
   ) {
-    final primarySource = faction.sources.firstOrNull;
+    final primarySource = faction.addedBy ?? faction.sources.firstOrNull;
     final folder = primarySource?.modVariant is ModVariant
         ? (primarySource!.modVariant as ModVariant).modFolder
         : gameCoreDir;
@@ -526,13 +568,14 @@ class UngroupedFactionGridGroup extends WispGridGroup<Faction> {
 }
 
 class SourceFactionGridGroup extends WispGridGroup<Faction> {
-  SourceFactionGridGroup() : super('source', 'Source');
+  SourceFactionGridGroup() : super('source', 'Added by');
 
   @override
   String getGroupName(Faction item, {Comparable? groupSortValue}) =>
-      item.sources.firstOrNull?.name ?? 'Unknown';
+      item.addedBy?.name ??
+      (item.sources.isEmpty ? 'Unknown' : 'Patch only');
 
   @override
   Comparable getGroupSortValue(Faction item) =>
-      item.sources.firstOrNull?.name.toLowerCase() ?? '';
+      item.addedBy?.name.toLowerCase() ?? '';
 }

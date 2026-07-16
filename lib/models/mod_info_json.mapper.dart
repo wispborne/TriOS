@@ -219,6 +219,12 @@ class ModInfoJsonMapper extends ClassMapperBase<ModInfoJson> {
     opt: true,
     def: false,
   );
+  static String? _$sortString(ModInfoJson v) => v.sortString;
+  static const Field<ModInfoJson, String> _f$sortString = Field(
+    'sortString',
+    _$sortString,
+    opt: true,
+  );
 
   @override
   final MappableFields<ModInfoJson> fields = const {
@@ -232,6 +238,7 @@ class ModInfoJsonMapper extends ClassMapperBase<ModInfoJson> {
     #originalGameVersion: _f$originalGameVersion,
     #utility: _f$utility,
     #totalConversion: _f$totalConversion,
+    #sortString: _f$sortString,
   };
 
   static ModInfoJson _instantiate(DecodingData data) {
@@ -246,6 +253,7 @@ class ModInfoJsonMapper extends ClassMapperBase<ModInfoJson> {
       originalGameVersion: data.dec(_f$originalGameVersion),
       utility: data.dec(_f$utility),
       totalConversion: data.dec(_f$totalConversion),
+      sortString: data.dec(_f$sortString),
     );
   }
 
@@ -323,6 +331,7 @@ abstract class ModInfoJsonCopyWith<$R, $In extends ModInfoJson, $Out>
     String? originalGameVersion,
     bool? utility,
     bool? totalConversion,
+    String? sortString,
   });
   ModInfoJsonCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -357,6 +366,7 @@ class _ModInfoJsonCopyWithImpl<$R, $Out>
     Object? originalGameVersion = $none,
     bool? utility,
     bool? totalConversion,
+    Object? sortString = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -370,6 +380,7 @@ class _ModInfoJsonCopyWithImpl<$R, $Out>
         #originalGameVersion: originalGameVersion,
       if (utility != null) #utility: utility,
       if (totalConversion != null) #totalConversion: totalConversion,
+      if (sortString != $none) #sortString: sortString,
     }),
   );
   @override
@@ -387,6 +398,7 @@ class _ModInfoJsonCopyWithImpl<$R, $Out>
     ),
     utility: data.get(#utility, or: $value.utility),
     totalConversion: data.get(#totalConversion, or: $value.totalConversion),
+    sortString: data.get(#sortString, or: $value.sortString),
   );
 
   @override

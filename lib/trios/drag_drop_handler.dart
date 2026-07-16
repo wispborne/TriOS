@@ -397,6 +397,7 @@ class _IgnoreDropMouseRegionState extends ConsumerState<IgnoreDropMouseRegion> {
       onExit: (PointerEvent event) async {
         if (_isDragging) return; // Prevent resetting during drag
         await Future.delayed(const Duration(milliseconds: 500));
+        if (!mounted) return; // Widget may have been disposed during the delay
         _updateIgnoringDrop(false);
       },
       child: Listener(

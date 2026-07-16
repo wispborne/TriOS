@@ -72,15 +72,6 @@ class ShipListNotifier
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
 
   @override
-  List<ModVariant> resolveEnabledVariants() {
-    return ref
-        .read(AppState.mods)
-        .map((mod) => mod.findFirstEnabledOrHighestVersion)
-        .nonNulls
-        .toList();
-  }
-
-  @override
   void onBuildStart() {
     ref.read(isLoadingShipsList.notifier).state = true;
     ref.listen(AppState.smolIds, (previous, next) {

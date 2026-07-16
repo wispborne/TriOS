@@ -29,6 +29,10 @@ class ModInfoJson with ModInfoJsonMappable {
   final bool utility;
   final bool totalConversion;
 
+  /// Optional override for where the mod sits in the game's load order.
+  /// When absent the game sorts by display name instead.
+  final String? sortString;
+
   ModInfoJson(
     this.id, {
     this.name,
@@ -40,6 +44,7 @@ class ModInfoJson with ModInfoJsonMappable {
     this.originalGameVersion,
     this.utility = false,
     this.totalConversion = false,
+    this.sortString,
   });
 
   String get formattedName => "$name $version ($id)";

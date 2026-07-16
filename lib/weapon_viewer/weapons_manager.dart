@@ -62,15 +62,6 @@ class WeaponListNotifier
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
 
   @override
-  List<ModVariant> resolveEnabledVariants() {
-    return ref
-        .read(AppState.mods)
-        .map((mod) => mod.findFirstEnabledOrHighestVersion)
-        .nonNulls
-        .toList();
-  }
-
-  @override
   Future<bool> awaitReadiness() async {
     // Watch modVariants so this rebuilds once the initial scan resolves.
     return ref.watch(AppState.modVariants).hasValue;

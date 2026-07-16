@@ -14,8 +14,10 @@ class Faction with FactionMappable implements WispGridItem {
   @override
   String get key => mergeKey;
 
-  /// The `.faction` filename (without extension). This is how Starsector
-  /// associates overlay files.
+  /// The `.faction` file path relative to `data/world/factions`, without the
+  /// extension — e.g. `hegemony` or `submarkets/researchfacil`. Forward
+  /// slashes on all platforms. This is how Starsector associates overlay
+  /// files across mods.
   final String mergeKey;
 
   final String id;
@@ -50,6 +52,11 @@ class Faction with FactionMappable implements WispGridItem {
   final List<String> knownFighterTags;
   final List<String> knownHullModTags;
 
+  /// Hulls/tags the faction *favors*. The game picks from these far more often
+  /// than their raw weight implies, so a ship being here matters. From the
+  /// `.faction` `priorityShips` block.
+  final List<String> priorityShipTags;
+
   final List<String> malePortraits;
   final List<String> femalePortraits;
 
@@ -58,6 +65,17 @@ class Faction with FactionMappable implements WispGridItem {
   final Map<String, dynamic> customFlags;
 
   final Map<String, String>? music;
+
+  /// Role name → `{ includeDefault: bool, <loadoutId>: weight, ... }`. Kept raw;
+  /// the shape varies and it's small.
+  final Map<String, dynamic>? shipRoles;
+
+  /// `{ hulls: { <hullId>: multiplier }, tags: { <tag>: multiplier } }`.
+  final Map<String, dynamic>? hullFrequency;
+
+  /// `<loadoutId>` → weight. Naming any loadout of a hull hides that hull's
+  /// other loadouts from the faction.
+  final Map<String, dynamic>? variantOverrides;
 
   @MappableField(hook: SkipSerializationHook())
   final List<FactionSource> sources;
@@ -95,11 +113,15 @@ class Faction with FactionMappable implements WispGridItem {
     this.knownWeaponTags = const [],
     this.knownFighterTags = const [],
     this.knownHullModTags = const [],
+    this.priorityShipTags = const [],
     this.malePortraits = const [],
     this.femalePortraits = const [],
     this.illegalCommodities = const [],
     this.customFlags = const {},
     this.music,
+    this.shipRoles,
+    this.hullFrequency,
+    this.variantOverrides,
     this.sources = const [],
     this.sectionAttributions = const {},
     this.itemAttributions = const {},
@@ -122,6 +144,40 @@ class Faction with FactionMappable implements WispGridItem {
   bool get isModOnly => sources.every((s) => s.modVariant != null);
 
   String get sourceNames => sources.map((s) => s.name).join(', ');
+
+  /// The source that registered this faction in its `factions.csv` — the mod
+  /// (or vanilla) that actually added the faction to the game. Null when no
+  /// enabled source registers it: every source is then just patching a
+  /// faction owned by something else (possibly a disabled mod).
+  FactionSource? get addedBy {
+    for (final source in sources) {
+      if (source.registersFaction) return source;
+    }
+    return null;
+  }
+
+  /// Every source except [addedBy]: mods that merge changes into the faction
+  /// without being the one that added it.
+  List<FactionSource> get modifiedBy {
+    final adder = addedBy;
+    if (adder == null) return sources;
+    return sources.where((s) => !identical(s, adder)).toList();
+  }
+
+  /// Multi-line "who added it, who changes it" text for tooltips.
+  /// Empty when sources are unknown (e.g. cache-loaded, pre-scan).
+  String get attributionTooltip {
+    if (sources.isEmpty) return '';
+    final adder = addedBy;
+    final modifiers = modifiedBy.map((s) => s.name).join(', ');
+    return [
+      if (adder != null)
+        'Added by: ${adder.name}'
+      else
+        'Not added by any enabled mod — it may belong to a disabled mod.',
+      if (modifiers.isNotEmpty) 'Modified by: $modifiers',
+    ].join('\n');
+  }
 
   /// Resolves an image path (e.g. logo, crest) by searching source directories
   /// in reverse order (last source wins).
@@ -171,7 +227,15 @@ class FactionSource with FactionSourceMappable {
   @MappableField(hook: SkipSerializationHook())
   final dynamic modVariant;
 
-  const FactionSource({required this.name, this.modVariant});
+  /// True if this source lists the faction's file in its `factions.csv`,
+  /// meaning it adds the faction to the game rather than just patching it.
+  final bool registersFaction;
+
+  const FactionSource({
+    required this.name,
+    this.modVariant,
+    this.registersFaction = false,
+  });
 }
 
 @MappableClass()

@@ -496,13 +496,11 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
       );
     }
 
-    return TextTriOS(
+    return Text(
       trimmedDescription,
       maxLines: 2,
-      tooltipMaxWidth: 600,
       overflow: TextOverflow.ellipsis,
       style: style,
-      tooltipTextStyle: theme.textTheme.labelLarge,
     );
     // return ConditionalWrap(
     //   condition: description.isNotEmpty == true,

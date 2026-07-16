@@ -111,23 +111,27 @@ void _mergeRecursive(
         // Music is replaced entirely.
         target[key] = overlayValue;
       } else {
-        final existing = target[key];
-        if (existing is Map<String, dynamic>) {
-          _mergeRecursive(
-            existing,
-            overlayValue,
-            sourceName,
-            attributions,
-            itemAttributions,
-            prefix: fullKey,
-          );
-        } else {
-          target[key] = Map<String, dynamic>.from(overlayValue);
+        var existing = target[key];
+        if (existing is! Map<String, dynamic>) {
+          existing = <String, dynamic>{};
+          target[key] = existing;
         }
+        _mergeRecursive(
+          existing,
+          overlayValue,
+          sourceName,
+          attributions,
+          itemAttributions,
+          prefix: fullKey,
+        );
       }
     } else {
-      // Scalar: last-write-wins.
+      // Scalar: last-write-wins, and the last writer owns the value. Recorded
+      // under the parent section so spawn weights (`shipRoles.combatSmall`,
+      // `hullFrequency.hulls`, `variantOverrides`) can name the mod that set
+      // each number.
       target[key] = overlayValue;
+      itemAttributions.putIfAbsent(prefix, () => {})[key] = sourceName;
     }
   }
 }

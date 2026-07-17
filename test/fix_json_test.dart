@@ -112,31 +112,33 @@ void main() {
       expect(result['emptyList'], []);
     });
 
-    test('strips Java float suffix from a number value', () {
+    // Java-style literals like `1f` or `3d` are ambiguous: fleet weights mean
+    // the number, but `.version` files use `"patch": 3d` to mean the string
+    // "3d". The parser must not guess — it keeps them as strings, and readers
+    // that expect a number use toDoubleOrNullAllowingJavaSuffix().
+    test('keeps Java float suffix as a string, does not strip it', () {
       const input = '{"a":1f}';
       final result = input.parseJsonToMap();
-      expect(result['a'], 1);
+      expect(result['a'], '1f');
     });
 
     test('leaves a quoted "1f" alone', () {
       const input = '{"a":"1f", "b":1f}';
       final result = input.parseJsonToMap();
       expect(result['a'], '1f');
-      expect(result['b'], 1);
+      expect(result['b'], '1f');
     });
 
-    test('strips float suffixes inside arrays', () {
+    test('keeps suffixed values inside arrays as strings', () {
       const input = '{"a":[1f, 2.5f]}';
       final result = input.parseJsonToMap();
-      expect(result['a'], [1, 2.5]);
+      expect(result['a'], ['1f', '2.5f']);
     });
 
-    test('strips uppercase and double suffixes', () {
-      const input = '{"a":1F, "b":-2.5d, "c":3D}';
+    test('keeps version-file patch values like 3d as strings', () {
+      const input = '{"modVersion":{"major":1, "minor":1, "patch":3d}}';
       final result = input.parseJsonToMap();
-      expect(result['a'], 1);
-      expect(result['b'], -2.5);
-      expect(result['c'], 3);
+      expect(result['modVersion']['patch'], '3d');
     });
 
     test('handles the real-world weapon file from bug report', () {
@@ -172,6 +174,28 @@ void main() {
           'data.scripts.weapons.bt_arm_everyframe');
       expect(result['turretOffsets'], [10, 0]);
       expect(result['muzzleFlashSpec']['particleCount'], 12);
+    });
+  });
+
+  group('toDoubleOrNullAllowingJavaSuffix', () {
+    test('parses plain numbers', () {
+      expect('1'.toDoubleOrNullAllowingJavaSuffix(), 1.0);
+      expect('2.5'.toDoubleOrNullAllowingJavaSuffix(), 2.5);
+      expect('-3'.toDoubleOrNullAllowingJavaSuffix(), -3.0);
+    });
+
+    test('parses Java-style suffixed literals', () {
+      expect('1f'.toDoubleOrNullAllowingJavaSuffix(), 1.0);
+      expect('1F'.toDoubleOrNullAllowingJavaSuffix(), 1.0);
+      expect('-2.5d'.toDoubleOrNullAllowingJavaSuffix(), -2.5);
+      expect('3D'.toDoubleOrNullAllowingJavaSuffix(), 3.0);
+    });
+
+    test('rejects non-numbers', () {
+      expect('d'.toDoubleOrNullAllowingJavaSuffix(), null);
+      expect('1x'.toDoubleOrNullAllowingJavaSuffix(), null);
+      expect('1fd'.toDoubleOrNullAllowingJavaSuffix(), null);
+      expect(''.toDoubleOrNullAllowingJavaSuffix(), null);
     });
   });
 }

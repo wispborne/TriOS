@@ -440,13 +440,15 @@ List<int>? _toIntList(dynamic value) {
 int _toInt(dynamic value) {
   if (value is int) return value;
   if (value is double) return value.round();
-  if (value is String) return int.tryParse(value) ?? 0;
+  if (value is String) {
+    return value.toDoubleOrNullAllowingJavaSuffix()?.round() ?? 0;
+  }
   return 0;
 }
 
 double? _toDouble(dynamic value) {
   if (value is double) return value;
   if (value is int) return value.toDouble();
-  if (value is String) return double.tryParse(value);
+  if (value is String) return value.toDoubleOrNullAllowingJavaSuffix();
   return null;
 }

@@ -16,11 +16,10 @@ import 'package:trios/thirdparty/yaml/yaml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
-/// Java-style float/double literals (`1f`, `-2.5D`) sitting in a JSON value
-/// position — right after a `:`, `[` or `,`. Anchoring on the delimiter keeps
-/// quoted values like `"version":"1f"` untouched, since the character after the
-/// delimiter is a quote rather than a digit.
-final _javaNumberSuffix = RegExp(r'([:\[,]\s*-?\d+(?:\.\d+)?)[fFdD]\b');
+/// A whole string that is a Java-style float/double literal (`1f`, `-2.5D`).
+/// Dart's `double.tryParse` rejects the suffix, so callers that expect a
+/// number strip it via [StringExt.toDoubleOrNullAllowingJavaSuffix].
+final _javaNumberLiteral = RegExp(r'^\s*(-?\d+(?:\.\d+)?)[fFdD]\s*$');
 
 extension DoubleExt on double {
   String bytesAsReadableMB() => "${(this / 1000000).toStringAsFixed(3)} MB";
@@ -126,7 +125,7 @@ extension StringExt on String {
 
   /// Cheap string-level fixups for near-JSON Starsector mod files:
   /// tabs, escaped `#`, unquoted-key-before-quote, trailing commas, trailing
-  /// semicolons, `//` line comments, Java float/double literals (`1f`, `2.5d`).
+  /// semicolons, `//` line comments.
   String _applyJsonFixups() {
     var fixed = replaceAll(r"\#", "#").trim();
     fixed = fixed.replaceAll("\t", "  ");
@@ -137,7 +136,6 @@ extension StringExt on String {
         .split("\n")
         .where((it) => !it.trim().startsWith("//"))
         .join("\n");
-    fixed = fixed.replaceAllMapped(_javaNumberSuffix, (m) => m[1]!);
     return fixed;
   }
 
@@ -172,6 +170,15 @@ extension StringExt on String {
 
   Future<Map<String, dynamic>> parseJsonToMapAsync() {
     return Future.microtask(() => parseJsonToMap());
+  }
+
+  /// `double.tryParse` that also accepts Java-style literals like `1f` or
+  /// `-2.5D`, which some Starsector files use for numbers. Use when reading a
+  /// value that is expected to be a number; [parseJsonToMap] leaves the
+  /// suffix in place because it can't know what type the reader wants.
+  double? toDoubleOrNullAllowingJavaSuffix() {
+    return double.tryParse(this) ??
+        _javaNumberLiteral.firstMatch(this)?.let((m) => double.tryParse(m[1]!));
   }
 
   /// Returns a string having leading characters from the chars array removed.

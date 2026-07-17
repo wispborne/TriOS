@@ -276,6 +276,69 @@ void main() {
         // getVersionCheckerInfo catches exceptions and returns null
         expect(result, isNull);
       });
+
+      // Regression: 1.6.2-preview05 stripped Java-style `d`/`f` suffixes during
+      // JSON parsing, turning an unquoted `"patch": 3d` into the number 3. That
+      // changed the version from "1.1.3d" to "1.1.3", which then disagreed with
+      // the cached remote and flagged a fake update. The suffix must survive.
+      // A real example: Adjustable S-Mods ships an unquoted `"patch": 3d`.
+      test('keeps an unquoted patch suffix like 3d (does not strip it)', () {
+        // Arrange
+        final versionFile = tempDir.resolve('version.json').toFile();
+        versionFile.writeAsStringSync('''
+{
+  "masterVersionFile": "https://example.com/version.json",
+  "modVersion": {
+    "major": 1,
+    "minor": 1,
+    "patch": 3d
+  }
+}
+''');
+
+        // Act
+        final result = getVersionCheckerInfo(versionFile);
+
+        // Assert
+        expect(result, isNotNull);
+        expect(result!.modVersion.toString(), equals('1.1.3d'));
+      });
+
+      test('keeps a quoted patch string like "3d"', () {
+        // Arrange
+        final versionFile = tempDir.resolve('version.json').toFile();
+        versionFile.writeAsStringSync('''
+{
+  "masterVersionFile": "https://example.com/version.json",
+  "modVersion": { "major": 1, "minor": 1, "patch": "3d" }
+}
+''');
+
+        // Act
+        final result = getVersionCheckerInfo(versionFile);
+
+        // Assert
+        expect(result, isNotNull);
+        expect(result!.modVersion.toString(), equals('1.1.3d'));
+      });
+
+      test('parses a plain numeric patch', () {
+        // Arrange
+        final versionFile = tempDir.resolve('version.json').toFile();
+        versionFile.writeAsStringSync('''
+{
+  "masterVersionFile": "https://example.com/version.json",
+  "modVersion": { "major": 1, "minor": 1, "patch": 3 }
+}
+''');
+
+        // Act
+        final result = getVersionCheckerInfo(versionFile);
+
+        // Assert
+        expect(result, isNotNull);
+        expect(result!.modVersion.toString(), equals('1.1.3'));
+      });
     });
 
     group('getModVariantForModInfo', () {

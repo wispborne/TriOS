@@ -156,10 +156,10 @@ String? _firstKeyOf(dynamic value) {
   return null;
 }
 
-/// Weights in these files are numbers, but a stray quoted number shouldn't
-/// silently drop an entry.
+/// Weights in these files are numbers, but a stray quoted number or a Java
+/// suffix (`1f`, parsed to the string "1f") shouldn't silently drop an entry.
 double? toDoubleOrNull(dynamic value) {
   if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value);
+  if (value is String) return value.toDoubleOrNullAllowingJavaSuffix();
   return null;
 }

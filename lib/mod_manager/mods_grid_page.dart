@@ -16,7 +16,7 @@ import 'package:trios/dashboard/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/mod_browser_manager.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/mod_context_menu.dart';

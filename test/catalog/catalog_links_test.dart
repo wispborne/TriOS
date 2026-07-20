@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/catalog/catalog_links.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
 import 'package:trios/models/mod.dart';
@@ -38,7 +38,7 @@ Mod _mod(
   );
 }
 
-ScrapedMod _entry(
+CatalogMod _entry(
   String name, {
   String? forumUrl,
   String? nexusUrl,
@@ -47,7 +47,7 @@ ScrapedMod _entry(
   final urls = <ModUrlType, String>{};
   if (forumUrl != null) urls[ModUrlType.Forum] = forumUrl;
   if (nexusUrl != null) urls[ModUrlType.NexusMods] = nexusUrl;
-  return ScrapedMod(
+  return CatalogMod(
     name: name,
     urls: urls.isEmpty ? null : urls,
     partOfThreadTitle: partOfThreadTitle,

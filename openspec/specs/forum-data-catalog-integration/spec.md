@@ -36,7 +36,7 @@ The `ModRecord` class SHALL provide a typed accessor `forumData` that returns th
 - **THEN** no `ForumDataSource` is added (the record is unchanged)
 
 ### Requirement: Display forum stats in Catalog cards
-The Catalog UI SHALL display view count and reply count on `ScrapedModCard` when forum data is available for a mod. Stats SHALL be formatted with locale-aware number formatting (e.g., "474,747 views").
+The Catalog UI SHALL display view count and reply count on `CatalogModCard` when forum data is available for a mod. Stats SHALL be formatted with locale-aware number formatting (e.g., "474,747 views").
 
 #### Scenario: Card with forum data
 - **WHEN** a mod in the catalog has matched forum data

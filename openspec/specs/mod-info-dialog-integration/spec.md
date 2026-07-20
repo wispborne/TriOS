@@ -17,15 +17,15 @@ The catalog mod browser cards SHALL support opening the `ModInfoDialog`.
 - **THEN** the `ModInfoDialog` opens with catalog data and any matched installed mod data
 
 ### Requirement: Data resolution for dialog
-The caller SHALL resolve and pass all available data sources when opening the dialog: installed `Mod`, `ScrapedMod`, `ForumModIndex`, and `VersionCheckComparison`.
+The caller SHALL resolve and pass all available data sources when opening the dialog: installed `Mod`, `CatalogMod`, `ForumModIndex`, and `VersionCheckComparison`.
 
 #### Scenario: Installed mod with catalog match
 - **WHEN** an installed mod has a matching catalog entry
-- **THEN** the dialog receives both the `Mod` and `ScrapedMod` data
+- **THEN** the dialog receives both the `Mod` and `CatalogMod` data
 
 #### Scenario: Catalog-only mod
 - **WHEN** a catalog mod has no installed match
-- **THEN** the dialog receives only `ScrapedMod` and optionally `ForumModIndex`
+- **THEN** the dialog receives only `CatalogMod` and optionally `ForumModIndex`
 
 #### Scenario: Installed mod with no catalog match
 - **WHEN** an installed mod has no catalog entry

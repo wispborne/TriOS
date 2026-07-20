@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
 
 /// Side-mounted filter panel for the Catalog page, rendering the controller's
 /// filter groups via the shared [FilterGroupRenderer].
 class CatalogFiltersPanel extends ConsumerWidget {
-  final List<ScrapedMod> items;
+  final List<CatalogMod> items;
 
   const CatalogFiltersPanel({super.key, required this.items});
 
@@ -26,7 +26,7 @@ class CatalogFiltersPanel extends ConsumerWidget {
       onClearAll: controller.clearAllFilters,
       filterWidgets: [
         for (final g in controller.filterGroups)
-          FilterGroupRenderer<ScrapedMod>(
+          FilterGroupRenderer<CatalogMod>(
             group: g,
             scope: controller.scope,
             items: items,

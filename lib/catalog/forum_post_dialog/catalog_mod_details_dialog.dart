@@ -6,9 +6,9 @@ import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
-import 'package:trios/catalog/scraped_mod_card.dart';
+import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -16,18 +16,18 @@ import 'package:trios/utils/extensions.dart';
 
 /// The details dialog used when a mod has no cached forum post HTML. Shares the
 /// same shell, header, and grouped download rows as the forum-post dialog, but
-/// builds its body from the scraped mod: image, description/summary, and the
+/// builds its body from the catalog mod: image, description/summary, and the
 /// AI paragraph summary when the AI-summary setting allows it.
-void showScrapedModDetailsDialog(
+void showCatalogModDetailsDialog(
   BuildContext context, {
-  required ScrapedMod mod,
+  required CatalogMod mod,
   ForumModIndex? index,
   required void Function(String href) linkLoader,
   bool canUseEmbeddedBrowser = true,
 }) {
   showDialog(
     context: context,
-    builder: (ctx) => _ScrapedModDetailsDialog(
+    builder: (ctx) => _CatalogModDetailsDialog(
       mod: mod,
       index: index,
       linkLoader: linkLoader,
@@ -36,13 +36,13 @@ void showScrapedModDetailsDialog(
   );
 }
 
-class _ScrapedModDetailsDialog extends ConsumerStatefulWidget {
-  final ScrapedMod mod;
+class _CatalogModDetailsDialog extends ConsumerStatefulWidget {
+  final CatalogMod mod;
   final ForumModIndex? index;
   final void Function(String href) linkLoader;
   final bool canUseEmbeddedBrowser;
 
-  const _ScrapedModDetailsDialog({
+  const _CatalogModDetailsDialog({
     required this.mod,
     required this.index,
     required this.linkLoader,
@@ -50,19 +50,19 @@ class _ScrapedModDetailsDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_ScrapedModDetailsDialog> createState() =>
-      _ScrapedModDetailsDialogState();
+  ConsumerState<_CatalogModDetailsDialog> createState() =>
+      _CatalogModDetailsDialogState();
 }
 
-class _ScrapedModDetailsDialogState
-    extends ConsumerState<_ScrapedModDetailsDialog> {
+class _CatalogModDetailsDialogState
+    extends ConsumerState<_CatalogModDetailsDialog> {
   bool _isFullScreen = false;
 
   List<DownloadGroup> _downloadGroups() {
     final controller = ref.read(catalogPageControllerProvider.notifier);
     return buildDownloadGroups(
       index: widget.index,
-      scrapedMod: widget.mod,
+      catalogMod: widget.mod,
       isInstalled: (name) => controller.statusForModName(name) != null,
     );
   }
@@ -90,7 +90,7 @@ class _ScrapedModDetailsDialogState
     );
 
     final header = ForumPostHeader(
-      data: ModSummaryData.fromScraped(widget.mod, widget.index),
+      data: ModSummaryData.fromCatalog(widget.mod, widget.index),
       showSummary: showHeaderSummary,
       onToggleSummary: () {
         ref
@@ -172,7 +172,7 @@ class _ScrapedModDetailsDialogState
 }
 
 class _Body extends ConsumerWidget {
-  final ScrapedMod mod;
+  final CatalogMod mod;
   final ForumModIndex? index;
 
   const _Body({required this.mod, this.index});

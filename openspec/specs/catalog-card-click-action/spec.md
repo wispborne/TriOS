@@ -79,7 +79,7 @@ When `catalogCardClickAction` is `systemBrowser` and a mod card body is clicked 
 
 ### Requirement: Discord URLs are excluded from the best-website picker
 
-`getBestWebsiteUrl()` on `ScrapedMod` SHALL NOT return a Discord URL. When forum and NexusMods URLs are both absent, the function SHALL return `null` even if a Discord URL is present.
+`getBestWebsiteUrl()` on `CatalogMod` SHALL NOT return a Discord URL. When forum and NexusMods URLs are both absent, the function SHALL return `null` even if a Discord URL is present.
 
 #### Scenario: Discord-only mod returns null
 - **WHEN** a mod has only a Discord URL among its sources
@@ -91,7 +91,7 @@ When `catalogCardClickAction` is `systemBrowser` and a mod card body is clicked 
 
 ### Requirement: Discord-only mods render as non-clickable cards
 
-Because `getBestWebsiteUrl()` returns null for Discord-only mods and those mods typically have no cached detail HTML or direct-download URL, the existing `hasClickableLink` computation on `ScrapedModCard` SHALL evaluate to `false` for such mods, causing the card body to render without hover state, cursor pointer, or click handler. The Discord icon button on the card SHALL remain clickable.
+Because `getBestWebsiteUrl()` returns null for Discord-only mods and those mods typically have no cached detail HTML or direct-download URL, the existing `hasClickableLink` computation on `CatalogModCard` SHALL evaluate to `false` for such mods, causing the card body to render without hover state, cursor pointer, or click handler. The Discord icon button on the card SHALL remain clickable.
 
 #### Scenario: Card body has no hover or click for Discord-only mods
 - **WHEN** rendering a card for a Discord-only mod with no cached HTML and no direct-download URL

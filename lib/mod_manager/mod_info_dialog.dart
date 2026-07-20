@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
@@ -26,7 +26,7 @@ import 'package:url_launcher/url_launcher.dart';
 void showModInfoDialog(
   BuildContext context, {
   Mod? mod,
-  ScrapedMod? scrapedMod,
+  CatalogMod? catalogMod,
   ForumModIndex? forumModIndex,
   VersionCheckComparison? versionCheckComparison,
 }) {
@@ -34,7 +34,7 @@ void showModInfoDialog(
     context: context,
     builder: (context) => ModInfoDialog(
       mod: mod,
-      scrapedMod: scrapedMod,
+      catalogMod: catalogMod,
       forumModIndex: forumModIndex,
       versionCheckComparison: versionCheckComparison,
     ),
@@ -43,14 +43,14 @@ void showModInfoDialog(
 
 class ModInfoDialog extends ConsumerStatefulWidget {
   final Mod? mod;
-  final ScrapedMod? scrapedMod;
+  final CatalogMod? catalogMod;
   final ForumModIndex? forumModIndex;
   final VersionCheckComparison? versionCheckComparison;
 
   const ModInfoDialog({
     super.key,
     this.mod,
-    this.scrapedMod,
+    this.catalogMod,
     this.forumModIndex,
     this.versionCheckComparison,
   });
@@ -69,34 +69,34 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
 
   String get _modName {
     final variant = widget.mod?.findFirstEnabledOrHighestVersion;
-    return variant?.modInfo.name ?? widget.scrapedMod?.name ?? "(unknown)";
+    return variant?.modInfo.name ?? widget.catalogMod?.name ?? "(unknown)";
   }
 
   String? get _author {
     final variant = widget.mod?.findFirstEnabledOrHighestVersion;
     final installed = variant?.modInfo.author;
     if (installed.isNotNullOrEmpty()) return installed;
-    final scraped = widget.scrapedMod?.getAuthors();
-    if (scraped != null && scraped.isNotEmpty) return scraped.join(", ");
+    final catalogAuthors = widget.catalogMod?.getAuthors();
+    if (catalogAuthors != null && catalogAuthors.isNotEmpty) return catalogAuthors.join(", ");
     return null;
   }
 
   String? get _version {
     final variant = widget.mod?.findFirstEnabledOrHighestVersion;
     return variant?.modInfo.version?.toString() ??
-        widget.scrapedMod?.modVersion;
+        widget.catalogMod?.modVersion;
   }
 
   String? get _gameVersion {
     final variant = widget.mod?.findFirstEnabledOrHighestVersion;
-    return variant?.modInfo.gameVersion ?? widget.scrapedMod?.gameVersionReq;
+    return variant?.modInfo.gameVersion ?? widget.catalogMod?.gameVersionReq;
   }
 
   String? get _description {
     final variant = widget.mod?.findFirstEnabledOrHighestVersion;
     final installed = variant?.modInfo.description;
     if (installed.isNotNullOrEmpty()) return installed;
-    return widget.scrapedMod?.description ?? widget.scrapedMod?.summary;
+    return widget.catalogMod?.description ?? widget.catalogMod?.summary;
   }
 
   ModVariant? get _variant => widget.mod?.findFirstEnabledOrHighestVersion;
@@ -258,7 +258,7 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
     }
 
     // From catalog
-    final urls = widget.scrapedMod?.getUrls() ?? {};
+    final urls = widget.catalogMod?.getUrls() ?? {};
     if (links.every((l) => l.$1 != "Forum") &&
         urls.containsKey(ModUrlType.Forum)) {
       links.add(("Forum", Icons.forum, urls[ModUrlType.Forum]!));
@@ -292,7 +292,7 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
   // ───────────────────── IMAGE GALLERY ─────────────────────
 
   Widget? _buildImageGallery() {
-    final images = widget.scrapedMod?.getImages() ?? {};
+    final images = widget.catalogMod?.getImages() ?? {};
     if (images.isEmpty) return null;
 
     return SizedBox(
@@ -593,28 +593,28 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
   Widget? _buildModRepoCard(ThemeData theme) {
     final children = <Widget>[];
 
-    final scrapedCategories = widget.scrapedMod?.getCategories() ?? [];
-    if (scrapedCategories.isNotEmpty) {
+    final catalogCategories = widget.catalogMod?.getCategories() ?? [];
+    if (catalogCategories.isNotEmpty) {
       children.add(
         _buildCardSection(
           theme,
           title: "Categories",
           child: Text(
-            scrapedCategories.join(", "),
+            catalogCategories.join(", "),
             style: theme.textTheme.bodyMedium,
           ),
         ),
       );
     }
 
-    final scrapedSources = widget.scrapedMod?.getSources() ?? [];
-    if (scrapedSources.isNotEmpty) {
+    final catalogSources = widget.catalogMod?.getSources() ?? [];
+    if (catalogSources.isNotEmpty) {
       children.add(
         _buildCardSection(
           theme,
           title: "Sources",
           child: Text(
-            scrapedSources.map((s) => s.name).join(", "),
+            catalogSources.map((s) => s.name).join(", "),
             style: theme.textTheme.bodyMedium,
           ),
         ),
@@ -686,7 +686,7 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
 
     // Catalog-only: show only link buttons
     if (mod == null) {
-      final bestUrl = widget.scrapedMod?.getBestWebsiteUrl();
+      final bestUrl = widget.catalogMod?.getBestWebsiteUrl();
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(

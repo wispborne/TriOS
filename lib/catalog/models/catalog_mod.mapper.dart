@@ -6,7 +6,7 @@
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
-part of 'scraped_mod.dart';
+part of 'catalog_mod.dart';
 
 class ModSourceMapper extends EnumMapper<ModSource> {
   ModSourceMapper._();
@@ -120,40 +120,40 @@ extension ModUrlTypeMapperExtension on ModUrlType {
   }
 }
 
-class ScrapedModsRepoMapper extends ClassMapperBase<ScrapedModsRepo> {
-  ScrapedModsRepoMapper._();
+class CatalogModsRepoMapper extends ClassMapperBase<CatalogModsRepo> {
+  CatalogModsRepoMapper._();
 
-  static ScrapedModsRepoMapper? _instance;
-  static ScrapedModsRepoMapper ensureInitialized() {
+  static CatalogModsRepoMapper? _instance;
+  static CatalogModsRepoMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = ScrapedModsRepoMapper._());
-      ScrapedModMapper.ensureInitialized();
+      MapperContainer.globals.use(_instance = CatalogModsRepoMapper._());
+      CatalogModMapper.ensureInitialized();
     }
     return _instance!;
   }
 
   @override
-  final String id = 'ScrapedModsRepo';
+  final String id = 'CatalogModsRepo';
 
-  static List<ScrapedMod> _$items(ScrapedModsRepo v) => v.items;
-  static const Field<ScrapedModsRepo, List<ScrapedMod>> _f$items = Field(
+  static List<CatalogMod> _$items(CatalogModsRepo v) => v.items;
+  static const Field<CatalogModsRepo, List<CatalogMod>> _f$items = Field(
     'items',
     _$items,
   );
-  static String _$lastUpdated(ScrapedModsRepo v) => v.lastUpdated;
-  static const Field<ScrapedModsRepo, String> _f$lastUpdated = Field(
+  static String _$lastUpdated(CatalogModsRepo v) => v.lastUpdated;
+  static const Field<CatalogModsRepo, String> _f$lastUpdated = Field(
     'lastUpdated',
     _$lastUpdated,
   );
 
   @override
-  final MappableFields<ScrapedModsRepo> fields = const {
+  final MappableFields<CatalogModsRepo> fields = const {
     #items: _f$items,
     #lastUpdated: _f$lastUpdated,
   };
 
-  static ScrapedModsRepo _instantiate(DecodingData data) {
-    return ScrapedModsRepo(
+  static CatalogModsRepo _instantiate(DecodingData data) {
+    return CatalogModsRepo(
       items: data.dec(_f$items),
       lastUpdated: data.dec(_f$lastUpdated),
     );
@@ -162,198 +162,198 @@ class ScrapedModsRepoMapper extends ClassMapperBase<ScrapedModsRepo> {
   @override
   final Function instantiate = _instantiate;
 
-  static ScrapedModsRepo fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<ScrapedModsRepo>(map);
+  static CatalogModsRepo fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogModsRepo>(map);
   }
 
-  static ScrapedModsRepo fromJson(String json) {
-    return ensureInitialized().decodeJson<ScrapedModsRepo>(json);
+  static CatalogModsRepo fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogModsRepo>(json);
   }
 }
 
-mixin ScrapedModsRepoMappable {
+mixin CatalogModsRepoMappable {
   String toJson() {
-    return ScrapedModsRepoMapper.ensureInitialized()
-        .encodeJson<ScrapedModsRepo>(this as ScrapedModsRepo);
+    return CatalogModsRepoMapper.ensureInitialized()
+        .encodeJson<CatalogModsRepo>(this as CatalogModsRepo);
   }
 
   Map<String, dynamic> toMap() {
-    return ScrapedModsRepoMapper.ensureInitialized().encodeMap<ScrapedModsRepo>(
-      this as ScrapedModsRepo,
+    return CatalogModsRepoMapper.ensureInitialized().encodeMap<CatalogModsRepo>(
+      this as CatalogModsRepo,
     );
   }
 
-  ScrapedModsRepoCopyWith<ScrapedModsRepo, ScrapedModsRepo, ScrapedModsRepo>
+  CatalogModsRepoCopyWith<CatalogModsRepo, CatalogModsRepo, CatalogModsRepo>
   get copyWith =>
-      _ScrapedModsRepoCopyWithImpl<ScrapedModsRepo, ScrapedModsRepo>(
-        this as ScrapedModsRepo,
+      _CatalogModsRepoCopyWithImpl<CatalogModsRepo, CatalogModsRepo>(
+        this as CatalogModsRepo,
         $identity,
         $identity,
       );
   @override
   String toString() {
-    return ScrapedModsRepoMapper.ensureInitialized().stringifyValue(
-      this as ScrapedModsRepo,
+    return CatalogModsRepoMapper.ensureInitialized().stringifyValue(
+      this as CatalogModsRepo,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return ScrapedModsRepoMapper.ensureInitialized().equalsValue(
-      this as ScrapedModsRepo,
+    return CatalogModsRepoMapper.ensureInitialized().equalsValue(
+      this as CatalogModsRepo,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return ScrapedModsRepoMapper.ensureInitialized().hashValue(
-      this as ScrapedModsRepo,
+    return CatalogModsRepoMapper.ensureInitialized().hashValue(
+      this as CatalogModsRepo,
     );
   }
 }
 
-extension ScrapedModsRepoValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, ScrapedModsRepo, $Out> {
-  ScrapedModsRepoCopyWith<$R, ScrapedModsRepo, $Out> get $asScrapedModsRepo =>
-      $base.as((v, t, t2) => _ScrapedModsRepoCopyWithImpl<$R, $Out>(v, t, t2));
+extension CatalogModsRepoValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogModsRepo, $Out> {
+  CatalogModsRepoCopyWith<$R, CatalogModsRepo, $Out> get $asCatalogModsRepo =>
+      $base.as((v, t, t2) => _CatalogModsRepoCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class ScrapedModsRepoCopyWith<$R, $In extends ScrapedModsRepo, $Out>
+abstract class CatalogModsRepoCopyWith<$R, $In extends CatalogModsRepo, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  ListCopyWith<$R, ScrapedMod, ScrapedModCopyWith<$R, ScrapedMod, ScrapedMod>>
+  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
   get items;
-  $R call({List<ScrapedMod>? items, String? lastUpdated});
-  ScrapedModsRepoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+  $R call({List<CatalogMod>? items, String? lastUpdated});
+  CatalogModsRepoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
 }
 
-class _ScrapedModsRepoCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, ScrapedModsRepo, $Out>
-    implements ScrapedModsRepoCopyWith<$R, ScrapedModsRepo, $Out> {
-  _ScrapedModsRepoCopyWithImpl(super.value, super.then, super.then2);
+class _CatalogModsRepoCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogModsRepo, $Out>
+    implements CatalogModsRepoCopyWith<$R, CatalogModsRepo, $Out> {
+  _CatalogModsRepoCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<ScrapedModsRepo> $mapper =
-      ScrapedModsRepoMapper.ensureInitialized();
+  late final ClassMapperBase<CatalogModsRepo> $mapper =
+      CatalogModsRepoMapper.ensureInitialized();
   @override
-  ListCopyWith<$R, ScrapedMod, ScrapedModCopyWith<$R, ScrapedMod, ScrapedMod>>
+  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
   get items => ListCopyWith(
     $value.items,
     (v, t) => v.copyWith.$chain(t),
     (v) => call(items: v),
   );
   @override
-  $R call({List<ScrapedMod>? items, String? lastUpdated}) => $apply(
+  $R call({List<CatalogMod>? items, String? lastUpdated}) => $apply(
     FieldCopyWithData({
       if (items != null) #items: items,
       if (lastUpdated != null) #lastUpdated: lastUpdated,
     }),
   );
   @override
-  ScrapedModsRepo $make(CopyWithData data) => ScrapedModsRepo(
+  CatalogModsRepo $make(CopyWithData data) => CatalogModsRepo(
     items: data.get(#items, or: $value.items),
     lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated),
   );
 
   @override
-  ScrapedModsRepoCopyWith<$R2, ScrapedModsRepo, $Out2> $chain<$R2, $Out2>(
+  CatalogModsRepoCopyWith<$R2, CatalogModsRepo, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _ScrapedModsRepoCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _CatalogModsRepoCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
-class ScrapedModMapper extends ClassMapperBase<ScrapedMod> {
-  ScrapedModMapper._();
+class CatalogModMapper extends ClassMapperBase<CatalogMod> {
+  CatalogModMapper._();
 
-  static ScrapedModMapper? _instance;
-  static ScrapedModMapper ensureInitialized() {
+  static CatalogModMapper? _instance;
+  static CatalogModMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = ScrapedModMapper._());
+      MapperContainer.globals.use(_instance = CatalogModMapper._());
       ModUrlTypeMapper.ensureInitialized();
       ModSourceMapper.ensureInitialized();
-      ScrapedModImageMapper.ensureInitialized();
+      CatalogModImageMapper.ensureInitialized();
     }
     return _instance!;
   }
 
   @override
-  final String id = 'ScrapedMod';
+  final String id = 'CatalogMod';
 
-  static String _$name(ScrapedMod v) => v.name;
-  static const Field<ScrapedMod, String> _f$name = Field('name', _$name);
-  static String? _$summary(ScrapedMod v) => v.summary;
-  static const Field<ScrapedMod, String> _f$summary = Field(
+  static String _$name(CatalogMod v) => v.name;
+  static const Field<CatalogMod, String> _f$name = Field('name', _$name);
+  static String? _$summary(CatalogMod v) => v.summary;
+  static const Field<CatalogMod, String> _f$summary = Field(
     'summary',
     _$summary,
     opt: true,
   );
-  static String? _$description(ScrapedMod v) => v.description;
-  static const Field<ScrapedMod, String> _f$description = Field(
+  static String? _$description(CatalogMod v) => v.description;
+  static const Field<CatalogMod, String> _f$description = Field(
     'description',
     _$description,
     opt: true,
   );
-  static String? _$modVersion(ScrapedMod v) => v.modVersion;
-  static const Field<ScrapedMod, String> _f$modVersion = Field(
+  static String? _$modVersion(CatalogMod v) => v.modVersion;
+  static const Field<CatalogMod, String> _f$modVersion = Field(
     'modVersion',
     _$modVersion,
     opt: true,
   );
-  static String? _$gameVersionReq(ScrapedMod v) => v.gameVersionReq;
-  static const Field<ScrapedMod, String> _f$gameVersionReq = Field(
+  static String? _$gameVersionReq(CatalogMod v) => v.gameVersionReq;
+  static const Field<CatalogMod, String> _f$gameVersionReq = Field(
     'gameVersionReq',
     _$gameVersionReq,
     opt: true,
   );
-  static List<String>? _$authorsList(ScrapedMod v) => v.authorsList;
-  static const Field<ScrapedMod, List<String>> _f$authorsList = Field(
+  static List<String>? _$authorsList(CatalogMod v) => v.authorsList;
+  static const Field<CatalogMod, List<String>> _f$authorsList = Field(
     'authorsList',
     _$authorsList,
     opt: true,
   );
-  static Map<ModUrlType, String>? _$urls(ScrapedMod v) => v.urls;
-  static const Field<ScrapedMod, Map<ModUrlType, String>> _f$urls = Field(
+  static Map<ModUrlType, String>? _$urls(CatalogMod v) => v.urls;
+  static const Field<CatalogMod, Map<ModUrlType, String>> _f$urls = Field(
     'urls',
     _$urls,
     opt: true,
   );
-  static List<ModSource>? _$sources(ScrapedMod v) => v.sources;
-  static const Field<ScrapedMod, List<ModSource>> _f$sources = Field(
+  static List<ModSource>? _$sources(CatalogMod v) => v.sources;
+  static const Field<CatalogMod, List<ModSource>> _f$sources = Field(
     'sources',
     _$sources,
     opt: true,
   );
-  static List<String>? _$categories(ScrapedMod v) => v.categories;
-  static const Field<ScrapedMod, List<String>> _f$categories = Field(
+  static List<String>? _$categories(CatalogMod v) => v.categories;
+  static const Field<CatalogMod, List<String>> _f$categories = Field(
     'categories',
     _$categories,
     opt: true,
   );
-  static Map<String, ScrapedModImage>? _$images(ScrapedMod v) => v.images;
-  static const Field<ScrapedMod, Map<String, ScrapedModImage>> _f$images =
+  static Map<String, CatalogModImage>? _$images(CatalogMod v) => v.images;
+  static const Field<CatalogMod, Map<String, CatalogModImage>> _f$images =
       Field('images', _$images, opt: true);
-  static DateTime? _$dateTimeCreated(ScrapedMod v) => v.dateTimeCreated;
-  static const Field<ScrapedMod, DateTime> _f$dateTimeCreated = Field(
+  static DateTime? _$dateTimeCreated(CatalogMod v) => v.dateTimeCreated;
+  static const Field<CatalogMod, DateTime> _f$dateTimeCreated = Field(
     'dateTimeCreated',
     _$dateTimeCreated,
     opt: true,
   );
-  static DateTime? _$dateTimeEdited(ScrapedMod v) => v.dateTimeEdited;
-  static const Field<ScrapedMod, DateTime> _f$dateTimeEdited = Field(
+  static DateTime? _$dateTimeEdited(CatalogMod v) => v.dateTimeEdited;
+  static const Field<CatalogMod, DateTime> _f$dateTimeEdited = Field(
     'dateTimeEdited',
     _$dateTimeEdited,
     opt: true,
   );
-  static String? _$partOfThreadTitle(ScrapedMod v) => v.partOfThreadTitle;
-  static const Field<ScrapedMod, String> _f$partOfThreadTitle = Field(
+  static String? _$partOfThreadTitle(CatalogMod v) => v.partOfThreadTitle;
+  static const Field<CatalogMod, String> _f$partOfThreadTitle = Field(
     'partOfThreadTitle',
     _$partOfThreadTitle,
     opt: true,
   );
 
   @override
-  final MappableFields<ScrapedMod> fields = const {
+  final MappableFields<CatalogMod> fields = const {
     #name: _f$name,
     #summary: _f$summary,
     #description: _f$description,
@@ -369,8 +369,8 @@ class ScrapedModMapper extends ClassMapperBase<ScrapedMod> {
     #partOfThreadTitle: _f$partOfThreadTitle,
   };
 
-  static ScrapedMod _instantiate(DecodingData data) {
-    return ScrapedMod(
+  static CatalogMod _instantiate(DecodingData data) {
+    return CatalogMod(
       name: data.dec(_f$name),
       summary: data.dec(_f$summary),
       description: data.dec(_f$description),
@@ -390,62 +390,62 @@ class ScrapedModMapper extends ClassMapperBase<ScrapedMod> {
   @override
   final Function instantiate = _instantiate;
 
-  static ScrapedMod fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<ScrapedMod>(map);
+  static CatalogMod fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogMod>(map);
   }
 
-  static ScrapedMod fromJson(String json) {
-    return ensureInitialized().decodeJson<ScrapedMod>(json);
+  static CatalogMod fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogMod>(json);
   }
 }
 
-mixin ScrapedModMappable {
+mixin CatalogModMappable {
   String toJson() {
-    return ScrapedModMapper.ensureInitialized().encodeJson<ScrapedMod>(
-      this as ScrapedMod,
+    return CatalogModMapper.ensureInitialized().encodeJson<CatalogMod>(
+      this as CatalogMod,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return ScrapedModMapper.ensureInitialized().encodeMap<ScrapedMod>(
-      this as ScrapedMod,
+    return CatalogModMapper.ensureInitialized().encodeMap<CatalogMod>(
+      this as CatalogMod,
     );
   }
 
-  ScrapedModCopyWith<ScrapedMod, ScrapedMod, ScrapedMod> get copyWith =>
-      _ScrapedModCopyWithImpl<ScrapedMod, ScrapedMod>(
-        this as ScrapedMod,
+  CatalogModCopyWith<CatalogMod, CatalogMod, CatalogMod> get copyWith =>
+      _CatalogModCopyWithImpl<CatalogMod, CatalogMod>(
+        this as CatalogMod,
         $identity,
         $identity,
       );
   @override
   String toString() {
-    return ScrapedModMapper.ensureInitialized().stringifyValue(
-      this as ScrapedMod,
+    return CatalogModMapper.ensureInitialized().stringifyValue(
+      this as CatalogMod,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return ScrapedModMapper.ensureInitialized().equalsValue(
-      this as ScrapedMod,
+    return CatalogModMapper.ensureInitialized().equalsValue(
+      this as CatalogMod,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return ScrapedModMapper.ensureInitialized().hashValue(this as ScrapedMod);
+    return CatalogModMapper.ensureInitialized().hashValue(this as CatalogMod);
   }
 }
 
-extension ScrapedModValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, ScrapedMod, $Out> {
-  ScrapedModCopyWith<$R, ScrapedMod, $Out> get $asScrapedMod =>
-      $base.as((v, t, t2) => _ScrapedModCopyWithImpl<$R, $Out>(v, t, t2));
+extension CatalogModValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogMod, $Out> {
+  CatalogModCopyWith<$R, CatalogMod, $Out> get $asCatalogMod =>
+      $base.as((v, t, t2) => _CatalogModCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class ScrapedModCopyWith<$R, $In extends ScrapedMod, $Out>
+abstract class CatalogModCopyWith<$R, $In extends CatalogMod, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get authorsList;
   MapCopyWith<$R, ModUrlType, String, ObjectCopyWith<$R, String, String>>?
@@ -456,8 +456,8 @@ abstract class ScrapedModCopyWith<$R, $In extends ScrapedMod, $Out>
   MapCopyWith<
     $R,
     String,
-    ScrapedModImage,
-    ScrapedModImageCopyWith<$R, ScrapedModImage, ScrapedModImage>
+    CatalogModImage,
+    CatalogModImageCopyWith<$R, CatalogModImage, CatalogModImage>
   >?
   get images;
   $R call({
@@ -470,22 +470,22 @@ abstract class ScrapedModCopyWith<$R, $In extends ScrapedMod, $Out>
     Map<ModUrlType, String>? urls,
     List<ModSource>? sources,
     List<String>? categories,
-    Map<String, ScrapedModImage>? images,
+    Map<String, CatalogModImage>? images,
     DateTime? dateTimeCreated,
     DateTime? dateTimeEdited,
     String? partOfThreadTitle,
   });
-  ScrapedModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+  CatalogModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
-class _ScrapedModCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, ScrapedMod, $Out>
-    implements ScrapedModCopyWith<$R, ScrapedMod, $Out> {
-  _ScrapedModCopyWithImpl(super.value, super.then, super.then2);
+class _CatalogModCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogMod, $Out>
+    implements CatalogModCopyWith<$R, CatalogMod, $Out> {
+  _CatalogModCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<ScrapedMod> $mapper =
-      ScrapedModMapper.ensureInitialized();
+  late final ClassMapperBase<CatalogMod> $mapper =
+      CatalogModMapper.ensureInitialized();
   @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
   get authorsList => $value.authorsList != null
@@ -526,8 +526,8 @@ class _ScrapedModCopyWithImpl<$R, $Out>
   MapCopyWith<
     $R,
     String,
-    ScrapedModImage,
-    ScrapedModImageCopyWith<$R, ScrapedModImage, ScrapedModImage>
+    CatalogModImage,
+    CatalogModImageCopyWith<$R, CatalogModImage, CatalogModImage>
   >?
   get images => $value.images != null
       ? MapCopyWith(
@@ -569,7 +569,7 @@ class _ScrapedModCopyWithImpl<$R, $Out>
     }),
   );
   @override
-  ScrapedMod $make(CopyWithData data) => ScrapedMod(
+  CatalogMod $make(CopyWithData data) => CatalogMod(
     name: data.get(#name, or: $value.name),
     summary: data.get(#summary, or: $value.summary),
     description: data.get(#description, or: $value.description),
@@ -589,66 +589,66 @@ class _ScrapedModCopyWithImpl<$R, $Out>
   );
 
   @override
-  ScrapedModCopyWith<$R2, ScrapedMod, $Out2> $chain<$R2, $Out2>(
+  CatalogModCopyWith<$R2, CatalogMod, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _ScrapedModCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _CatalogModCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
-class ScrapedModImageMapper extends ClassMapperBase<ScrapedModImage> {
-  ScrapedModImageMapper._();
+class CatalogModImageMapper extends ClassMapperBase<CatalogModImage> {
+  CatalogModImageMapper._();
 
-  static ScrapedModImageMapper? _instance;
-  static ScrapedModImageMapper ensureInitialized() {
+  static CatalogModImageMapper? _instance;
+  static CatalogModImageMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = ScrapedModImageMapper._());
+      MapperContainer.globals.use(_instance = CatalogModImageMapper._());
     }
     return _instance!;
   }
 
   @override
-  final String id = 'ScrapedModImage';
+  final String id = 'CatalogModImage';
 
-  static String _$id(ScrapedModImage v) => v.id;
-  static const Field<ScrapedModImage, String> _f$id = Field('id', _$id);
-  static String? _$filename(ScrapedModImage v) => v.filename;
-  static const Field<ScrapedModImage, String> _f$filename = Field(
+  static String _$id(CatalogModImage v) => v.id;
+  static const Field<CatalogModImage, String> _f$id = Field('id', _$id);
+  static String? _$filename(CatalogModImage v) => v.filename;
+  static const Field<CatalogModImage, String> _f$filename = Field(
     'filename',
     _$filename,
     opt: true,
   );
-  static String? _$description(ScrapedModImage v) => v.description;
-  static const Field<ScrapedModImage, String> _f$description = Field(
+  static String? _$description(CatalogModImage v) => v.description;
+  static const Field<CatalogModImage, String> _f$description = Field(
     'description',
     _$description,
     opt: true,
   );
-  static String? _$contentType(ScrapedModImage v) => v.contentType;
-  static const Field<ScrapedModImage, String> _f$contentType = Field(
+  static String? _$contentType(CatalogModImage v) => v.contentType;
+  static const Field<CatalogModImage, String> _f$contentType = Field(
     'contentType',
     _$contentType,
     opt: true,
   );
-  static int? _$size(ScrapedModImage v) => v.size;
-  static const Field<ScrapedModImage, int> _f$size = Field(
+  static int? _$size(CatalogModImage v) => v.size;
+  static const Field<CatalogModImage, int> _f$size = Field(
     'size',
     _$size,
     opt: true,
   );
-  static String? _$url(ScrapedModImage v) => v.url;
-  static const Field<ScrapedModImage, String> _f$url = Field(
+  static String? _$url(CatalogModImage v) => v.url;
+  static const Field<CatalogModImage, String> _f$url = Field(
     'url',
     _$url,
     opt: true,
   );
-  static String? _$proxyUrl(ScrapedModImage v) => v.proxyUrl;
-  static const Field<ScrapedModImage, String> _f$proxyUrl = Field(
+  static String? _$proxyUrl(CatalogModImage v) => v.proxyUrl;
+  static const Field<CatalogModImage, String> _f$proxyUrl = Field(
     'proxyUrl',
     _$proxyUrl,
     opt: true,
   );
 
   @override
-  final MappableFields<ScrapedModImage> fields = const {
+  final MappableFields<CatalogModImage> fields = const {
     #id: _f$id,
     #filename: _f$filename,
     #description: _f$description,
@@ -658,8 +658,8 @@ class ScrapedModImageMapper extends ClassMapperBase<ScrapedModImage> {
     #proxyUrl: _f$proxyUrl,
   };
 
-  static ScrapedModImage _instantiate(DecodingData data) {
-    return ScrapedModImage(
+  static CatalogModImage _instantiate(DecodingData data) {
+    return CatalogModImage(
       id: data.dec(_f$id),
       filename: data.dec(_f$filename),
       description: data.dec(_f$description),
@@ -673,64 +673,64 @@ class ScrapedModImageMapper extends ClassMapperBase<ScrapedModImage> {
   @override
   final Function instantiate = _instantiate;
 
-  static ScrapedModImage fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<ScrapedModImage>(map);
+  static CatalogModImage fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogModImage>(map);
   }
 
-  static ScrapedModImage fromJson(String json) {
-    return ensureInitialized().decodeJson<ScrapedModImage>(json);
+  static CatalogModImage fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogModImage>(json);
   }
 }
 
-mixin ScrapedModImageMappable {
+mixin CatalogModImageMappable {
   String toJson() {
-    return ScrapedModImageMapper.ensureInitialized()
-        .encodeJson<ScrapedModImage>(this as ScrapedModImage);
+    return CatalogModImageMapper.ensureInitialized()
+        .encodeJson<CatalogModImage>(this as CatalogModImage);
   }
 
   Map<String, dynamic> toMap() {
-    return ScrapedModImageMapper.ensureInitialized().encodeMap<ScrapedModImage>(
-      this as ScrapedModImage,
+    return CatalogModImageMapper.ensureInitialized().encodeMap<CatalogModImage>(
+      this as CatalogModImage,
     );
   }
 
-  ScrapedModImageCopyWith<ScrapedModImage, ScrapedModImage, ScrapedModImage>
+  CatalogModImageCopyWith<CatalogModImage, CatalogModImage, CatalogModImage>
   get copyWith =>
-      _ScrapedModImageCopyWithImpl<ScrapedModImage, ScrapedModImage>(
-        this as ScrapedModImage,
+      _CatalogModImageCopyWithImpl<CatalogModImage, CatalogModImage>(
+        this as CatalogModImage,
         $identity,
         $identity,
       );
   @override
   String toString() {
-    return ScrapedModImageMapper.ensureInitialized().stringifyValue(
-      this as ScrapedModImage,
+    return CatalogModImageMapper.ensureInitialized().stringifyValue(
+      this as CatalogModImage,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return ScrapedModImageMapper.ensureInitialized().equalsValue(
-      this as ScrapedModImage,
+    return CatalogModImageMapper.ensureInitialized().equalsValue(
+      this as CatalogModImage,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return ScrapedModImageMapper.ensureInitialized().hashValue(
-      this as ScrapedModImage,
+    return CatalogModImageMapper.ensureInitialized().hashValue(
+      this as CatalogModImage,
     );
   }
 }
 
-extension ScrapedModImageValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, ScrapedModImage, $Out> {
-  ScrapedModImageCopyWith<$R, ScrapedModImage, $Out> get $asScrapedModImage =>
-      $base.as((v, t, t2) => _ScrapedModImageCopyWithImpl<$R, $Out>(v, t, t2));
+extension CatalogModImageValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogModImage, $Out> {
+  CatalogModImageCopyWith<$R, CatalogModImage, $Out> get $asCatalogModImage =>
+      $base.as((v, t, t2) => _CatalogModImageCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class ScrapedModImageCopyWith<$R, $In extends ScrapedModImage, $Out>
+abstract class CatalogModImageCopyWith<$R, $In extends CatalogModImage, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   $R call({
     String? id,
@@ -741,19 +741,19 @@ abstract class ScrapedModImageCopyWith<$R, $In extends ScrapedModImage, $Out>
     String? url,
     String? proxyUrl,
   });
-  ScrapedModImageCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+  CatalogModImageCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
 }
 
-class _ScrapedModImageCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, ScrapedModImage, $Out>
-    implements ScrapedModImageCopyWith<$R, ScrapedModImage, $Out> {
-  _ScrapedModImageCopyWithImpl(super.value, super.then, super.then2);
+class _CatalogModImageCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogModImage, $Out>
+    implements CatalogModImageCopyWith<$R, CatalogModImage, $Out> {
+  _CatalogModImageCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<ScrapedModImage> $mapper =
-      ScrapedModImageMapper.ensureInitialized();
+  late final ClassMapperBase<CatalogModImage> $mapper =
+      CatalogModImageMapper.ensureInitialized();
   @override
   $R call({
     String? id,
@@ -775,7 +775,7 @@ class _ScrapedModImageCopyWithImpl<$R, $Out>
     }),
   );
   @override
-  ScrapedModImage $make(CopyWithData data) => ScrapedModImage(
+  CatalogModImage $make(CopyWithData data) => CatalogModImage(
     id: data.get(#id, or: $value.id),
     filename: data.get(#filename, or: $value.filename),
     description: data.get(#description, or: $value.description),
@@ -786,8 +786,8 @@ class _ScrapedModImageCopyWithImpl<$R, $Out>
   );
 
   @override
-  ScrapedModImageCopyWith<$R2, ScrapedModImage, $Out2> $chain<$R2, $Out2>(
+  CatalogModImageCopyWith<$R2, CatalogModImage, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _ScrapedModImageCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _CatalogModImageCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

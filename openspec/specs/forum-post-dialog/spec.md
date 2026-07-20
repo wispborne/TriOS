@@ -2,7 +2,7 @@
 The system SHALL provide a dialog (`showForumPostDialog`) that opens from the catalog mod card and displays the forum post content for a given `ForumModDetails`. The dialog SHALL NOT launch an external browser to render the post.
 
 #### Scenario: Open dialog for a mod with forum details
-- **WHEN** the user clicks a `ScrapedModCard` whose `forumModIndex` is non-null and whose `ForumModDetails` is available
+- **WHEN** the user clicks a `CatalogModCard` whose `forumModIndex` is non-null and whose `ForumModDetails` is available
 - **THEN** a Flutter dialog opens showing the mod's header bar and the rendered post body, without launching an external browser
 
 #### Scenario: Close dialog
@@ -14,7 +14,7 @@ The system SHALL provide a dialog (`showForumPostDialog`) that opens from the ca
 - **THEN** the dialog has a bounded max width and max height, and the post body scrolls vertically if the content exceeds the dialog height
 
 ### Requirement: Forum post dialog header bar
-The dialog SHALL display a header bar containing the mod title, the author (with avatar if `authorAvatarPath` is available and resolvable), the post date (with bold "Posted" label), the last-edit date (with bold "Edited" label, when different from the post date), and the forum stats (views and replies with tooltips showing full decimal-formatted counts, matching ScrapedModCard) taken from the matching `ForumModIndex` when one is supplied.
+The dialog SHALL display a header bar containing the mod title, the author (with avatar if `authorAvatarPath` is available and resolvable), the post date (with bold "Posted" label), the last-edit date (with bold "Edited" label, when different from the post date), and the forum stats (views and replies with tooltips showing full decimal-formatted counts, matching CatalogModCard) taken from the matching `ForumModIndex` when one is supplied.
 
 The header SHALL also contain an "Open in Browser" action that delegates the mod's `topicUrl` to the catalog's existing link loader, and a fullscreen toggle button that persists its state across dialog instances.
 
@@ -35,7 +35,7 @@ The header SHALL also contain an "Open in Browser" action that delegates the mod
 - **THEN** the `topicUrl` from the `ForumModIndex` is passed to the catalog's link loader, opening it externally
 
 ### Requirement: Card click opens forum post dialog
-The system SHALL change the primary click behavior of `ScrapedModCard` so that when a `ForumModDetails` is available for the mod's `topicId`, clicking the card opens the Forum Post Dialog instead of opening the forum website in an external browser.
+The system SHALL change the primary click behavior of `CatalogModCard` so that when a `ForumModDetails` is available for the mod's `topicId`, clicking the card opens the Forum Post Dialog instead of opening the forum website in an external browser.
 
 #### Scenario: Card click with details available
 - **WHEN** the user clicks a card whose mod has a `forumModIndex` and whose `ForumModDetails` is available and is not a placeholder

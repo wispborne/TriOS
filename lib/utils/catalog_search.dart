@@ -1,5 +1,5 @@
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 
@@ -202,7 +202,7 @@ final _nonAlphanumericStart = RegExp(r'^[^a-zA-Z0-9]');
 
 /// Compares mod names alphabetically, placing names starting with
 /// non-alphanumeric characters (brackets, symbols) at the end.
-int nameCompare(ScrapedMod a, ScrapedMod b) {
+int nameCompare(CatalogMod a, CatalogMod b) {
   final aName = a.name;
   final bName = b.name;
   final aIsBracket = _nonAlphanumericStart.hasMatch(aName);
@@ -214,7 +214,7 @@ int nameCompare(ScrapedMod a, ScrapedMod b) {
 // ===== Filter Population Helpers =====
 
 /// Extracts unique non-empty categories from mods, sorted alphabetically.
-List<String> extractCategories(List<ScrapedMod> mods) {
+List<String> extractCategories(List<CatalogMod> mods) {
   final categories = <String>{};
   for (final mod in mods) {
     if (mod.categories != null) {
@@ -229,7 +229,7 @@ List<String> extractCategories(List<ScrapedMod> mods) {
 /// Extracts normalized version groups from mods.
 /// Returns a map of base version → set of raw version strings,
 /// filtered to groups with 3+ mods, sorted newest-first.
-Map<String, Set<String>> extractVersionGroups(List<ScrapedMod> mods) {
+Map<String, Set<String>> extractVersionGroups(List<CatalogMod> mods) {
   var versionMap = <String, Set<String>>{};
   final versionModCount = <String, int>{};
 
@@ -274,22 +274,22 @@ enum CatalogSortKey {
   };
 }
 
-/// Looks up the [ForumModIndex] for a [ScrapedMod] using the forum URL.
-ForumModIndex? _forumFor(ScrapedMod mod, Map<int, ForumModIndex> forumLookup) {
+/// Looks up the [ForumModIndex] for a [CatalogMod] using the forum URL.
+ForumModIndex? _forumFor(CatalogMod mod, Map<int, ForumModIndex> forumLookup) {
   final id = extractForumTopicId(mod.urls?[ModUrlType.Forum]);
   return id != null ? forumLookup[id] : null;
 }
 
-/// Sorts a list of scraped mods by the given sort key. Returns a new list.
+/// Sorts a list of catalog mods by the given sort key. Returns a new list.
 /// [forumLookup] is needed for [CatalogSortKey.mostViewed] and
 /// [CatalogSortKey.lastActivity]; mods without forum data sort last.
-List<ScrapedMod> sortScrapedMods(
-  List<ScrapedMod> mods,
+List<CatalogMod> sortCatalogMods(
+  List<CatalogMod> mods,
   CatalogSortKey sortKey, {
   bool ascending = true,
   Map<int, ForumModIndex> forumLookup = const {},
 }) {
-  final sorted = List<ScrapedMod>.from(mods);
+  final sorted = List<CatalogMod>.from(mods);
   final flip = ascending ? 1 : -1;
   switch (sortKey) {
     case CatalogSortKey.name:

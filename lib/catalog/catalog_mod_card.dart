@@ -10,12 +10,12 @@ import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
-import 'package:trios/catalog/forum_post_dialog/scraped_mod_details_dialog.dart';
+import 'package:trios/catalog/forum_post_dialog/catalog_mod_details_dialog.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
@@ -36,8 +36,8 @@ import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/text_trios.dart';
 
-class ScrapedModCard extends ConsumerStatefulWidget {
-  final ScrapedMod mod;
+class CatalogModCard extends ConsumerStatefulWidget {
+  final CatalogMod mod;
   final void Function(String) linkLoader;
   final bool isSelected;
   final Mod? installedMod;
@@ -48,7 +48,7 @@ class ScrapedModCard extends ConsumerStatefulWidget {
   /// Gates the "Open in the built-in browser" actions.
   final bool canUseEmbeddedBrowser;
 
-  const ScrapedModCard({
+  const CatalogModCard({
     super.key,
     required this.mod,
     required this.linkLoader,
@@ -60,10 +60,10 @@ class ScrapedModCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ScrapedModCard> createState() => _ScrapedModCardState();
+  ConsumerState<CatalogModCard> createState() => _CatalogModCardState();
 }
 
-class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
+class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   /// The LLM mod this card represents. For a synthesized "part of a thread"
   /// entry, that's the specific bundled mod (matched by name); otherwise it's
   /// the thread's main mod. Drives which downloads the install button offers.
@@ -109,7 +109,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
         final hasForumDetails =
             forumDetails != null && !forumDetails.isPlaceholderDetail;
         // Clicking any card opens a details dialog: the forum post when it's
-        // cached, otherwise a fallback built from scraped data. Only skip when
+        // cached, otherwise a fallback built from catalog data. Only skip when
         // there's genuinely nothing to show.
         final hasDetailsToShow =
             hasForumDetails ||
@@ -127,7 +127,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                 widget.forumModIndex,
                 mod,
               )
-            : ModSummaryData.fromScraped(mod, widget.forumModIndex);
+            : ModSummaryData.fromCatalog(mod, widget.forumModIndex);
 
         return ContextMenuRegion(
           contextMenu: ContextMenu(
@@ -139,7 +139,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                   onSelected: () => showModInfoDialog(
                     context,
                     mod: widget.installedMod,
-                    scrapedMod: mod,
+                    catalogMod: mod,
                     forumModIndex: widget.forumModIndex,
                     versionCheckComparison: widget.versionCheckComparison,
                   ),
@@ -160,7 +160,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                       ref,
                       candidate,
                       modName: mod.name,
-                      sourceHint: DownloadSourceHint.fromScrapedMod(mod),
+                      sourceHint: DownloadSourceHint.fromCatalogMod(mod),
                       linkLoader: widget.linkLoader,
                     ),
                   ),
@@ -293,7 +293,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                                     spacing: 4,
                                     children: [
                                       Flexible(
-                                        child: TextTriOS(
+                                        child: Text(
                                           mod.name.isNotEmpty
                                               ? mod.name
                                               : '???',
@@ -394,7 +394,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
                       Positioned(
                         left: 8,
                         top: 4,
-                        child: _ScrapedModGameVersionReq(mod: mod),
+                        child: _CatalogModGameVersionReq(mod: mod),
                       ),
                     if (widget.installedMod != null)
                       Positioned(
@@ -437,7 +437,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   Widget buildDescription(
     ThemeData theme,
     BuildContext context,
-    ScrapedMod mod,
+    CatalogMod mod,
   ) {
     final authorText = mod.summary ?? mod.description;
     final aiSummary = _targetLlmMod?.extras?.summary;
@@ -541,7 +541,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   }
 
   /// Open the mod's details dialog: the cached forum post when available,
-  /// otherwise the fallback dialog built from scraped data.
+  /// otherwise the fallback dialog built from catalog data.
   void _openDetailsDialog(BuildContext context, ForumModDetails? forumDetails) {
     if (forumDetails != null && !forumDetails.isPlaceholderDetail) {
       showForumPostDialog(
@@ -552,7 +552,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
         canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
       );
     } else {
-      showScrapedModDetailsDialog(
+      showCatalogModDetailsDialog(
         context,
         mod: widget.mod,
         index: widget.forumModIndex,
@@ -627,7 +627,7 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     ];
   }
 
-  void _showDebugDialog(BuildContext context, ScrapedMod mod) {
+  void _showDebugDialog(BuildContext context, CatalogMod mod) {
     final forumModIndex = widget.forumModIndex;
     final targetLlmMod = _targetLlmMod;
     final downloadCandidates = resolveDownloadCandidates(mod, targetLlmMod);
@@ -636,11 +636,12 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
     // don't dump that separately. The per-card download candidate is the one
     // LLM mod (of possibly several in a thread) that drives this card.
     final sections = <String, String?>{
-      'Scraped mod': mod.toString(),
+      'Catalog mod': mod.toString(),
       'Forum index': forumModIndex?.toString(),
       'Download candidate (this card)': targetLlmMod?.toString(),
-      'Resolved download candidates':
-          downloadCandidates.isEmpty ? null : downloadCandidates.join('\n\n'),
+      'Resolved download candidates': downloadCandidates.isEmpty
+          ? null
+          : downloadCandidates.join('\n\n'),
     };
 
     final buffer = StringBuffer();
@@ -707,10 +708,10 @@ class _ScrapedModCardState extends ConsumerState<ScrapedModCard> {
   }
 }
 
-class _ScrapedModGameVersionReq extends ConsumerWidget {
-  const _ScrapedModGameVersionReq({required this.mod});
+class _CatalogModGameVersionReq extends ConsumerWidget {
+  const _CatalogModGameVersionReq({required this.mod});
 
-  final ScrapedMod mod;
+  final CatalogMod mod;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -797,7 +798,7 @@ class _ScrapedModGameVersionReq extends ConsumerWidget {
 }
 
 class ModImage extends StatelessWidget {
-  final ScrapedMod mod;
+  final CatalogMod mod;
   final int? size;
 
   /// Used when the mod itself has no scraped image, e.g. an image found in the
@@ -886,7 +887,7 @@ class ModImage extends StatelessWidget {
 }
 
 class Tags extends StatelessWidget {
-  final ScrapedMod mod;
+  final CatalogMod mod;
 
   const Tags({super.key, required this.mod});
 
@@ -945,7 +946,7 @@ enum _CatalogDownloadState {
 }
 
 class CatalogDownloadButton extends ConsumerStatefulWidget {
-  final ScrapedMod mod;
+  final CatalogMod mod;
   final Mod? installedMod;
   final VersionCheckComparison? versionCheckComparison;
   final void Function(String) linkLoader;
@@ -972,7 +973,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
   bool _clickBusy = false;
   Timer? _busyFallback;
 
-  ScrapedMod get mod => widget.mod;
+  CatalogMod get mod => widget.mod;
 
   Mod? get installedMod => widget.installedMod;
 
@@ -1083,7 +1084,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
         ref,
         primary!,
         modName: mod.name,
-        sourceHint: DownloadSourceHint.fromScrapedMod(mod),
+        sourceHint: DownloadSourceHint.fromCatalogMod(mod),
         linkLoader: linkLoader,
         hasOwnBusyIndicator: true,
       );
@@ -1268,7 +1269,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
           ref,
           candidate,
           modName: mod.name,
-          sourceHint: DownloadSourceHint.fromScrapedMod(mod),
+          sourceHint: DownloadSourceHint.fromCatalogMod(mod),
           linkLoader: linkLoader,
           hasOwnBusyIndicator: true,
         );

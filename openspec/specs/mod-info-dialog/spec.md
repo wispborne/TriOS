@@ -7,7 +7,7 @@ The dialog SHALL display a header section containing: mod icon (if available), m
 
 #### Scenario: Catalog-only mod
 - **WHEN** the dialog is opened for a catalog-only mod (not installed)
-- **THEN** the header displays the catalog name, authors, version, and game version requirement from scraped data, with no icon
+- **THEN** the header displays the catalog name, authors, version, and game version requirement from catalog data, with no icon
 
 #### Scenario: Missing optional fields
 - **WHEN** a mod has no author or no game version specified
@@ -28,7 +28,7 @@ The dialog SHALL display link buttons for all available external URLs: Forum, Ne
 The dialog SHALL display a horizontally scrolling gallery of images when catalog image data is available.
 
 #### Scenario: Catalog mod with images
-- **WHEN** the mod has catalog images in `ScrapedMod.images`
+- **WHEN** the mod has catalog images in `CatalogMod.images`
 - **THEN** a horizontal scrolling gallery shows thumbnails at a fixed height, using `proxyUrl` with `url` as fallback
 
 #### Scenario: No images available
@@ -47,7 +47,7 @@ The dialog SHALL display the full mod description in a `SelectionArea` for easy 
 - **THEN** the description is displayed with selectable text
 
 #### Scenario: Description from catalog only
-- **WHEN** the mod is catalog-only with a description in ScrapedMod
+- **WHEN** the mod is catalog-only with a description in CatalogMod
 - **THEN** the catalog description is displayed
 
 #### Scenario: Both sources available

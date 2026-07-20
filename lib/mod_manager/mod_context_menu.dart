@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/mod_browser_manager.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/widgets/category_context_menu.dart';
@@ -359,8 +359,8 @@ MenuItem _buildMenuItemViewModDetails(
         }
       }
 
-      // Look up ScrapedMod via ModRecord's catalog name
-      ScrapedMod? scrapedMod;
+      // Look up CatalogMod via ModRecord's catalog name
+      CatalogMod? catalogMod;
       final modRecords = ref.read(modRecordsStore).valueOrNull;
       final catalogItems = ref
           .read(browseModsNotifierProvider)
@@ -371,7 +371,7 @@ MenuItem _buildMenuItemViewModDetails(
         final catalogName = record?.catalog?.name;
         if (catalogName != null) {
           final key = catalogName.toLowerCase().trim();
-          scrapedMod = catalogItems.cast<ScrapedMod?>().firstWhere(
+          catalogMod = catalogItems.cast<CatalogMod?>().firstWhere(
             (s) => s!.name.toLowerCase().trim() == key,
             orElse: () => null,
           );
@@ -381,7 +381,7 @@ MenuItem _buildMenuItemViewModDetails(
       showModInfoDialog(
         context,
         mod: mod,
-        scrapedMod: scrapedMod,
+        catalogMod: catalogMod,
         forumModIndex: forumEntry,
         versionCheckComparison: comparison,
       );

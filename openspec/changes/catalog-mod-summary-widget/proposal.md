@@ -5,7 +5,7 @@
 The catalog shows mod information in three different, inconsistent places:
 
 - **Card hover**: only the description text has a tooltip (the AI paragraph, or plain overflow text). Hovering a card doesn't give a real overview of the mod.
-- **Forum post dialog** and **scraped details dialog**: both use `ForumPostHeader`, which shows title, author, dates, and forum stats — but not the summary, mod image, changelog, support links, or save compatibility.
+- **Forum post dialog** and **catalog details dialog**: both use `ForumPostHeader`, which shows title, author, dates, and forum stats — but not the summary, mod image, changelog, support links, or save compatibility.
 
 Meanwhile, QB's forum bundle now carries rich per-mod data that we parse (or could parse) but never show: extracted changelogs, support/donation links, and save compatibility. Save compatibility isn't even in our Dart model yet.
 
@@ -13,8 +13,8 @@ Meanwhile, QB's forum bundle now carries rich per-mod data that we parse (or cou
 
 Build one reusable "mod summary" widget that gathers everything we know about a mod and renders it in a consistent layout. Each field can be shown or hidden through a config object, so the same widget serves two roles:
 
-1. **Card tooltip**: hovering a scraped mod card shows the summary widget as a framed tooltip (compact config).
-2. **Modal header**: the forum post dialog and scraped details dialog use it as their header info block (fuller config). A new user setting can turn these dialog headers off.
+1. **Card tooltip**: hovering a catalog mod card shows the summary widget as a framed tooltip (compact config).
+2. **Modal header**: the forum post dialog and catalog details dialog use it as their header info block (fuller config). A new user setting can turn these dialog headers off.
 
 Fields the widget can show:
 
@@ -32,7 +32,7 @@ Fields the widget can show:
 
 - New `saveCompatibility` field on `ForumLlmExtras` (exists in the raw QB bundle, not yet modeled).
 - New summary widget + per-field config in `lib/catalog/widgets/`.
-- Wire it as the scraped-mod-card hover tooltip.
+- Wire it as the catalog-mod-card hover tooltip.
 - Use it as the info section of both mod dialogs, replacing the info portion of `ForumPostHeader` (window/browser buttons and download rows stay as they are).
 - New setting to hide the dialog header summary, plus its Settings-page toggle.
 

@@ -35,7 +35,7 @@ class ForumPostHeader extends StatelessWidget {
 
   /// The per-mod download rows, already built and ordered. Source-agnostic:
   /// the dialog fills this from LLM data when available, else from the post's
-  /// scraped links or the scraped mod.
+  /// scraped links or the catalog mod.
   final List<DownloadGroup> downloadGroups;
 
   /// Runs a download [candidate] for the mod named [modName].

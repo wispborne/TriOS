@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
-import 'package:trios/catalog/scraped_mod_card.dart';
+import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -71,7 +71,7 @@ class ModSummaryConfig {
 
 /// A configurable overview of a mod: image, title, author, where and when it
 /// was posted, forum stats, summary, save compatibility, recent changelog, and
-/// donation links. Used as the scraped-card hover tooltip and as the header of
+/// donation links. Used as the catalog-card hover tooltip and as the header of
 /// the mod pop-ups.
 class ModSummaryWidget extends ConsumerWidget {
   final ModSummaryData data;
@@ -178,19 +178,19 @@ class _HeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scrapedMod = data.scrapedMod;
+    final catalogMod = data.catalogMod;
     return Row(
       crossAxisAlignment: .start,
       spacing: 12,
       children: [
-        if (config.showImage && scrapedMod != null)
+        if (config.showImage && catalogMod != null)
           ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: config.imageSize,
               maxHeight: config.imageSize,
             ),
             child: ModImage(
-              mod: scrapedMod,
+              mod: catalogMod,
               size: config.imageSize.round(),
               fallbackImageUrl: data.fallbackImageUrl,
             ),
@@ -480,7 +480,7 @@ class _SummarySection extends StatelessWidget {
       spacing: 2,
       children: [
         if (isAi)
-          // A sparkle marks the text as AI-written, matching the scraped card.
+          // A sparkle marks the text as AI-written, matching the catalog card.
           Text.rich(
             TextSpan(
               children: [
@@ -520,10 +520,12 @@ class _SummarySection extends StatelessWidget {
 /// label. Keeps the summary, save-compatibility, changelog, and donation
 /// blocks visually grouped instead of running together.
 class _SectionHeader extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
   final String label;
 
-  const _SectionHeader({required this.icon, required this.label});
+  const _SectionHeader({this.icon, this.iconAsset, required this.label})
+    : assert(icon != null || iconAsset != null);
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +535,9 @@ class _SectionHeader extends StatelessWidget {
       mainAxisSize: .min,
       spacing: 6,
       children: [
-        Icon(icon, size: 14, color: color),
+        iconAsset != null
+            ? SvgImageIcon(iconAsset!, width: 14, height: 14, color: color)
+            : Icon(icon, size: 14, color: color),
         Text(
           label,
           style: theme.textTheme.labelMedium?.copyWith(
@@ -639,7 +643,10 @@ class _ChangelogSection extends StatelessWidget {
       mainAxisSize: .min,
       spacing: 4,
       children: [
-        const _SectionHeader(icon: Icons.history, label: 'Recent updates'),
+        const _SectionHeader(
+          iconAsset: 'assets/images/icon-bullhorn-variant.svg',
+          label: 'Recent updates',
+        ),
         if (hasLink && interactive)
           Padding(
             padding: const .only(left: 0),

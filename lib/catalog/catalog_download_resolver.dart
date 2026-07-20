@@ -1,10 +1,10 @@
 import 'package:trios/catalog/models/forum_link.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 
 /// Where a download candidate came from, in priority order (lower index wins).
-/// `trios` deep links always outrank everything; the scraped catalog's own
+/// `trios` deep links always outrank everything; the catalog's own
 /// direct link stays above forum links so today's one-click mods are unchanged.
 enum DownloadCandidateKind {
   triosDeepLink,
@@ -14,7 +14,7 @@ enum DownloadCandidateKind {
   website,
 }
 
-/// A single way to download a mod, gathered from the scraped catalog and the
+/// A single way to download a mod, gathered from the catalog and the
 /// forum LLM data. The card button, context menu, and forum dialog all share
 /// this list.
 class DownloadCandidate {
@@ -58,13 +58,13 @@ class DownloadCandidate {
 }
 
 /// Builds the prioritized list of download candidates for a mod. Pure function
-/// over the scraped mod plus its forum LLM data (null when the topic has none).
+/// over the catalog mod plus its forum LLM data (null when the topic has none).
 ///
 /// Sorted: trios deep links > catalog direct > forum direct (high > medium >
 /// low > unknown) > forum mirror (same) > website. Manual-step links keep their
 /// place in the ordering but never become the primary (see [primaryCandidate]).
 List<DownloadCandidate> resolveDownloadCandidates(
-  ScrapedMod mod,
+  CatalogMod mod,
   ForumLlmMod? llmMainMod,
 ) {
   final candidates = <DownloadCandidate>[
@@ -73,7 +73,7 @@ List<DownloadCandidate> resolveDownloadCandidates(
       _forumCandidate(download),
   ];
 
-  // The scraped catalog's existing direct download link.
+  // The catalog's existing direct download link.
   final catalogDirect = mod.urls?[ModUrlType.DirectDownload];
   if (catalogDirect != null && catalogDirect.isNotEmpty) {
     candidates.add(
@@ -103,9 +103,9 @@ List<DownloadCandidate> resolveDownloadCandidates(
   return candidates;
 }
 
-/// The download candidates for one forum mod (no scraped-catalog links),
+/// The download candidates for one forum mod (no catalog links),
 /// sorted by priority. Used by the forum post dialog, which lists links per
-/// [ForumLlmMod] rather than per scraped mod.
+/// [ForumLlmMod] rather than per catalog mod.
 List<DownloadCandidate> forumDownloadCandidates(ForumLlmMod mod) {
   return mod.downloads.map(_forumCandidate).toList()..sort(_byPriority);
 }
@@ -227,13 +227,13 @@ class DownloadGroup {
 /// When the topic has LLM data, each [ForumLlmMod] becomes a row (ordered
 /// main → add-on → separate → unknown). Otherwise a single unnamed row is
 /// built from the scraped post links ([scrapedLinks]) or, when the dialog has
-/// no forum post at all, from the scraped mod itself ([scrapedMod]).
+/// no forum post at all, from the catalog mod itself ([catalogMod]).
 ///
 /// [isInstalled] answers whether a dependency mod name is already installed.
 List<DownloadGroup> buildDownloadGroups({
   ForumModIndex? index,
   List<ForumLink>? scrapedLinks,
-  ScrapedMod? scrapedMod,
+  CatalogMod? catalogMod,
   required bool Function(String name) isInstalled,
 }) {
   final mods = index?.llm?.mods ?? const <ForumLlmMod>[];
@@ -262,8 +262,8 @@ List<DownloadGroup> buildDownloadGroups({
         ),
       );
     }
-  } else if (scrapedMod != null) {
-    candidates.addAll(resolveDownloadCandidates(scrapedMod, null));
+  } else if (catalogMod != null) {
+    candidates.addAll(resolveDownloadCandidates(catalogMod, null));
   }
 
   if (candidates.isEmpty) return const [];

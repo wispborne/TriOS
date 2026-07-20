@@ -155,7 +155,7 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = CatalogPageStateMapper._());
       CatalogPageStatePersistedMapper.ensureInitialized();
-      ScrapedModMapper.ensureInitialized();
+      CatalogModMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -172,16 +172,16 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
         opt: true,
         def: const CatalogPageStatePersisted(),
       );
-  static List<ScrapedMod> _$allMods(CatalogPageState v) => v.allMods;
-  static const Field<CatalogPageState, List<ScrapedMod>> _f$allMods = Field(
+  static List<CatalogMod> _$allMods(CatalogPageState v) => v.allMods;
+  static const Field<CatalogPageState, List<CatalogMod>> _f$allMods = Field(
     'allMods',
     _$allMods,
     opt: true,
     def: const [],
   );
-  static List<ScrapedMod> _$displayedMods(CatalogPageState v) =>
+  static List<CatalogMod> _$displayedMods(CatalogPageState v) =>
       v.displayedMods;
-  static const Field<CatalogPageState, List<ScrapedMod>> _f$displayedMods =
+  static const Field<CatalogPageState, List<CatalogMod>> _f$displayedMods =
       Field('displayedMods', _$displayedMods, opt: true, def: const []);
   static String _$currentSearchQuery(CatalogPageState v) =>
       v.currentSearchQuery;
@@ -304,14 +304,14 @@ abstract class CatalogPageStateCopyWith<$R, $In extends CatalogPageState, $Out>
     CatalogPageStatePersisted
   >
   get persisted;
-  ListCopyWith<$R, ScrapedMod, ScrapedModCopyWith<$R, ScrapedMod, ScrapedMod>>
+  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
   get allMods;
-  ListCopyWith<$R, ScrapedMod, ScrapedModCopyWith<$R, ScrapedMod, ScrapedMod>>
+  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
   get displayedMods;
   $R call({
     CatalogPageStatePersisted? persisted,
-    List<ScrapedMod>? allMods,
-    List<ScrapedMod>? displayedMods,
+    List<CatalogMod>? allMods,
+    List<CatalogMod>? displayedMods,
     String? currentSearchQuery,
     CatalogSortKey? selectedSort,
     bool? sortAscending,
@@ -338,14 +338,14 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
   >
   get persisted => $value.persisted.copyWith.$chain((v) => call(persisted: v));
   @override
-  ListCopyWith<$R, ScrapedMod, ScrapedModCopyWith<$R, ScrapedMod, ScrapedMod>>
+  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
   get allMods => ListCopyWith(
     $value.allMods,
     (v, t) => v.copyWith.$chain(t),
     (v) => call(allMods: v),
   );
   @override
-  ListCopyWith<$R, ScrapedMod, ScrapedModCopyWith<$R, ScrapedMod, ScrapedMod>>
+  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
   get displayedMods => ListCopyWith(
     $value.displayedMods,
     (v, t) => v.copyWith.$chain(t),
@@ -354,8 +354,8 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
   @override
   $R call({
     CatalogPageStatePersisted? persisted,
-    List<ScrapedMod>? allMods,
-    List<ScrapedMod>? displayedMods,
+    List<CatalogMod>? allMods,
+    List<CatalogMod>? displayedMods,
     String? currentSearchQuery,
     CatalogSortKey? selectedSort,
     bool? sortAscending,

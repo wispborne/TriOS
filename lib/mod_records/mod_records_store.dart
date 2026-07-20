@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_links.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
 import 'package:trios/trios/app_state.dart';
@@ -76,14 +76,14 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
 
     // Match catalog entries to installed mods with the shared matcher, which
     // puts saved install-time links first. Keyed by mod id so every variant of
-    // a mod sees the same entry, and refreshed from current scraped data each
+    // a mod sees the same entry, and refreshed from current catalog data each
     // pass so linked records stay up to date as the catalog changes.
     final links = matchCatalogToInstalled(
       entries: catalog,
       installedMods: ref.read(AppState.mods),
       records: current,
     );
-    final matchedCatalogByModId = <String, ScrapedMod>{};
+    final matchedCatalogByModId = <String, CatalogMod>{};
     for (final link in links) {
       matchedCatalogByModId.putIfAbsent(link.mod.id, () => link.entry);
     }
@@ -144,14 +144,14 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     }
 
     // Create records for unmatched catalog entries (catalog-only mods).
-    for (final scraped in catalog) {
-      if (matchedCatalogNames.contains(scraped.name)) continue;
+    for (final catalogMod in catalog) {
+      if (matchedCatalogNames.contains(catalogMod.name)) continue;
 
-      final syntheticKey = ModRecord.syntheticKey(scraped.name);
+      final syntheticKey = ModRecord.syntheticKey(catalogMod.name);
 
       // Skip if already merged into a real-ID record.
       if (records.values.any(
-        (r) => r.catalog?.name == scraped.name && r.modId != null,
+        (r) => r.catalog?.name == catalogMod.name && r.modId != null,
       )) {
         if (records.containsKey(syntheticKey)) {
           records.remove(syntheticKey);
@@ -161,7 +161,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       }
 
       final existing = records[syntheticKey];
-      final catalogSource = _buildCatalogSource(scraped, now);
+      final catalogSource = _buildCatalogSource(catalogMod, now);
 
       final newRecord = ModRecord(
         recordKey: syntheticKey,
@@ -227,15 +227,15 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     }
   }
 
-  /// Builds a [CatalogSource] from a [ScrapedMod].
-  CatalogSource _buildCatalogSource(ScrapedMod scraped, DateTime now) {
-    final urls = scraped.getUrls();
+  /// Builds a [CatalogSource] from a [CatalogMod].
+  CatalogSource _buildCatalogSource(CatalogMod catalogMod, DateTime now) {
+    final urls = catalogMod.getUrls();
     final forumUrl = urls[ModUrlType.Forum];
     final nexusUrl = urls[ModUrlType.NexusMods];
     return CatalogSource(
-      name: scraped.name,
-      authors: scraped.getAuthors().isNotEmpty
-          ? scraped.getAuthors()
+      name: catalogMod.name,
+      authors: catalogMod.getAuthors().isNotEmpty
+          ? catalogMod.getAuthors()
           : null,
       forumUrl: forumUrl,
       nexusUrl: nexusUrl,
@@ -244,7 +244,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       downloadPageUrl: urls[ModUrlType.DownloadPage],
       forumThreadId: extractForumThreadId(forumUrl),
       nexusModsId: extractNexusModId(nexusUrl),
-      categories: scraped.getCategories(),
+      categories: catalogMod.getCategories(),
       lastSeen: now,
     );
   }
@@ -314,13 +314,13 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       // a bare one built from the hint when it isn't.
       final catalog =
           ref.read(browseModsNotifierProvider).valueOrNull?.items ??
-          const <ScrapedMod>[];
+          const <CatalogMod>[];
       final key = catalogEntryKey(catalogName);
-      final scraped = catalog.firstWhereOrNull(
+      final catalogMod = catalog.firstWhereOrNull(
         (m) => catalogEntryKey(m.name) == key,
       );
-      final catalogSource = scraped != null
-          ? _buildCatalogSource(scraped, now)
+      final catalogSource = catalogMod != null
+          ? _buildCatalogSource(catalogMod, now)
           : CatalogSource(
               name: catalogName,
               forumThreadId: hint.forumThreadId,

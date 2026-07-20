@@ -7,8 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
-import 'package:trios/catalog/scraped_mod_card.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/catalog/side_rail/side_rail.dart';
 import 'package:trios/catalog/side_rail/side_rail_panel.dart';
 import 'package:trios/catalog/widgets/catalog_filters_panel.dart';
@@ -358,7 +358,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       ),
                                     ),
                                   )
-                                : WispAdaptiveGridView<ScrapedMod>(
+                                : WispAdaptiveGridView<CatalogMod>(
                                     items: displayedMods,
                                     minItemWidth: ref.watch(
                                       appSettings.select(
@@ -390,7 +390,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
 
                                       return SizedBox(
                                         height: 140,
-                                        child: ScrapedModCard(
+                                        child: CatalogModCard(
                                           mod: profile,
                                           installedMod: status?.mod,
                                           versionCheckComparison:

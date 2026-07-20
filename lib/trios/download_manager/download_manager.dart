@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -288,7 +288,7 @@ class DownloadSourceHint {
   });
 
   /// Builds a hint from a catalog entry, so call sites can't assemble it wrong.
-  factory DownloadSourceHint.fromScrapedMod(ScrapedMod mod) {
+  factory DownloadSourceHint.fromCatalogMod(CatalogMod mod) {
     final urls = mod.getUrls();
     return DownloadSourceHint(
       catalogName: mod.name,

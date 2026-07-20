@@ -1,17 +1,17 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
-part 'scraped_mod.mapper.dart';
+part 'catalog_mod.mapper.dart';
 
 @MappableClass()
-class ScrapedModsRepo with ScrapedModsRepoMappable {
-  final List<ScrapedMod> items;
+class CatalogModsRepo with CatalogModsRepoMappable {
+  final List<CatalogMod> items;
   final String lastUpdated;
 
-  ScrapedModsRepo({required this.items, required this.lastUpdated});
+  CatalogModsRepo({required this.items, required this.lastUpdated});
 }
 
 @MappableClass()
-class ScrapedMod with ScrapedModMappable {
+class CatalogMod with CatalogModMappable {
   final String name;
   final String? summary;
   final String? description;
@@ -21,17 +21,17 @@ class ScrapedMod with ScrapedModMappable {
   final Map<ModUrlType, String>? urls;
   final List<ModSource>? sources;
   final List<String>? categories;
-  final Map<String, ScrapedModImage>? images;
+  final Map<String, CatalogModImage>? images;
   final DateTime? dateTimeCreated;
   final DateTime? dateTimeEdited;
 
   /// Set only on synthesized entries: a mod that lives inside another mod's
   /// forum thread (e.g. an add-on) gets its own card, marked "part of <this
   /// thread title>". Null for real catalog entries. Built at runtime, so it's
-  /// absent from the scraped data and never round-trips through it.
+  /// absent from the catalog data and never round-trips through it.
   final String? partOfThreadTitle;
 
-  ScrapedMod({
+  CatalogMod({
     required this.name,
     this.summary,
     this.description,
@@ -66,7 +66,7 @@ class ScrapedMod with ScrapedModMappable {
 
   List<ModSource> getSources() => sources ?? [];
 
-  Map<String, ScrapedModImage> getImages() => images ?? {};
+  Map<String, CatalogModImage> getImages() => images ?? {};
 
   Map<ModUrlType, String> getUrls() => urls ?? {};
 
@@ -89,7 +89,7 @@ enum ModSource { Index, ModdingSubforum, Discord, NexusMods }
 enum ModUrlType { Forum, Discord, NexusMods, DirectDownload, DownloadPage }
 
 @MappableClass()
-class ScrapedModImage with ScrapedModImageMappable {
+class CatalogModImage with CatalogModImageMappable {
   final String id;
   final String? filename;
   final String? description;
@@ -98,7 +98,7 @@ class ScrapedModImage with ScrapedModImageMappable {
   final String? url;
   final String? proxyUrl;
 
-  ScrapedModImage({
+  CatalogModImage({
     required this.id,
     this.filename,
     this.description,

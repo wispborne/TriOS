@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 
-/// Minimal `ScrapedMod` stand-in: the catalog filter groups only need the
+/// Minimal `CatalogMod` stand-in: the catalog filter groups only need the
 /// attribute-key list and a version string, so we avoid pulling in the real
 /// class (which has heavy transitive deps).
 class _TestMod {

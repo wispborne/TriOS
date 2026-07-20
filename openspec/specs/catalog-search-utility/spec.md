@@ -44,7 +44,7 @@ The utility SHALL provide a `nameCompare` function that sorts mod names alphabet
 - **THEN** "[REDACTED]" is placed after "Arsenal Expansion"
 
 ### Requirement: Filter population helpers
-The utility SHALL provide functions to extract unique categories and normalized version groups from a list of `ScrapedMod` items. The version helper SHALL build a mapping of base version to the set of raw version strings, filtered to groups with 3+ mods.
+The utility SHALL provide functions to extract unique categories and normalized version groups from a list of `CatalogMod` items. The version helper SHALL build a mapping of base version to the set of raw version strings, filtered to groups with 3+ mods.
 
 #### Scenario: Extract categories
 - **WHEN** given a list of mods with various categories

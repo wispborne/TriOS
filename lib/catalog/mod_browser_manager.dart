@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/cached_json_fetcher.dart';
 import 'package:trios/utils/logging.dart';
@@ -16,7 +16,7 @@ final modRepoFetcher = CachedJsonFetcher(
   logTag: 'mod repo',
 );
 
-final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
+final browseModsNotifierProvider = StreamProvider<CatalogModsRepo>((
   ref,
 ) async* {
   final currentTime = DateTime.now();
@@ -32,14 +32,14 @@ final browseModsNotifierProvider = StreamProvider<ScrapedModsRepo>((
   }
 
   try {
-    final scrapedMods = ScrapedModsRepoMapper.fromJson(modRepo);
+    final catalogMods = CatalogModsRepoMapper.fromJson(modRepo);
 
     ref.watch(isLoadingCatalog.notifier).state = false;
     Fimber.i(
-      'Parsed ${scrapedMods.items.length} scraped mods in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
+      'Parsed ${catalogMods.items.length} catalog mods in ${DateTime.now().difference(currentTime).inMilliseconds}ms',
     );
 
-    yield scrapedMods;
+    yield catalogMods;
   } catch (ex, st) {
     Fimber.w('Failed to parse mod repo', ex: ex, stacktrace: st);
     ref.watch(isLoadingCatalog.notifier).state = false;

@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 
-ScrapedMod mod({String? directDownload, String? forum}) => ScrapedMod(
+CatalogMod mod({String? directDownload, String? forum}) => CatalogMod(
   name: 'Test Mod',
   urls: {
     if (directDownload != null) ModUrlType.DirectDownload: directDownload,

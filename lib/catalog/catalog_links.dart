@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/mod_browser_manager.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/models/mod.dart';
@@ -31,7 +31,7 @@ enum CatalogLinkSignal { persistedRecord, threadId, nexusId, exactName, fuzzyNam
 
 /// A resolved link between a catalog entry and an installed mod.
 class CatalogLink {
-  final ScrapedMod entry;
+  final CatalogMod entry;
   final Mod mod;
   final CatalogLinkSignal signal;
 
@@ -50,7 +50,7 @@ class CatalogLink {
 /// an install made through the Catalog stays linked even when the mod's own
 /// `mod_info` name differs from the catalog name (the Ashpad/Aashpad case).
 List<CatalogLink> matchCatalogToInstalled({
-  required List<ScrapedMod> entries,
+  required List<CatalogMod> entries,
   required List<Mod> installedMods,
   required ModRecords? records,
 }) {
@@ -157,7 +157,7 @@ class CatalogLinks {
   Iterable<CatalogLink> get all => _byEntryKey.values;
 
   /// The installed mod for a catalog entry, or null when it isn't installed.
-  Mod? modForEntry(ScrapedMod entry) => _byEntryKey[catalogEntryKey(entry.name)]?.mod;
+  Mod? modForEntry(CatalogMod entry) => _byEntryKey[catalogEntryKey(entry.name)]?.mod;
 
   /// The link for a catalog entry name, or null when it isn't installed.
   CatalogLink? linkForName(String name) => _byEntryKey[catalogEntryKey(name)];
@@ -169,9 +169,9 @@ class CatalogLinks {
 /// The full catalog list the page shows: real entries plus the made-up "part of
 /// a thread" add-on entries. Both the Catalog page and [catalogLinksProvider]
 /// watch this so they always work from the same list.
-final catalogEntriesProvider = Provider<List<ScrapedMod>>((ref) {
+final catalogEntriesProvider = Provider<List<CatalogMod>>((ref) {
   final repo = ref.watch(browseModsNotifierProvider).value;
-  final realMods = repo?.items ?? const <ScrapedMod>[];
+  final realMods = repo?.items ?? const <CatalogMod>[];
   final forumLookup = ref.watch(forumDataByTopicId);
   return withSynthesizedAddonEntries(realMods, forumLookup);
 });
@@ -196,7 +196,7 @@ final catalogLinksProvider = Provider<CatalogLinks>((ref) {
 /// already have its own catalog entry becomes a made-up card, marked with the
 /// thread title so the card can show `part of <thread>`.
 ///
-/// A thread's "main" mod isn't special-cased: the scraped catalog entry that
+/// A thread's "main" mod isn't special-cased: the catalog entry that
 /// points at the thread often has a different name (e.g. it's a different mod in
 /// the same thread), so relying on the name match below is what keeps the real
 /// main mod from being both listed and made up — and stops a main mod with no
@@ -204,8 +204,8 @@ final catalogLinksProvider = Provider<CatalogLinks>((ref) {
 ///
 /// Drops duplicate made-up names across threads (first thread wins), so a mod
 /// that appears in several threads isn't listed twice.
-List<ScrapedMod> withSynthesizedAddonEntries(
-  List<ScrapedMod> realMods,
+List<CatalogMod> withSynthesizedAddonEntries(
+  List<CatalogMod> realMods,
   Map<int, ForumModIndex> forumLookup,
 ) {
   if (realMods.isEmpty || forumLookup.isEmpty) return realMods;
@@ -215,7 +215,7 @@ List<ScrapedMod> withSynthesizedAddonEntries(
       if (mod.name.trim().isNotEmpty) mod.name.toLowerCase().trim(),
   };
   final synthesizedNames = <String>{};
-  final synthesized = <ScrapedMod>[];
+  final synthesized = <CatalogMod>[];
 
   for (final mod in realMods) {
     final forumUrl = mod.urls?[ModUrlType.Forum];
@@ -232,7 +232,7 @@ List<ScrapedMod> withSynthesizedAddonEntries(
       if (!synthesizedNames.add(key)) continue;
 
       synthesized.add(
-        ScrapedMod(
+        CatalogMod(
           name: llmMod.name,
           summary: llmMod.extras?.summary?.sentence,
           description: llmMod.extras?.summary?.paragraph,
@@ -258,13 +258,13 @@ List<ScrapedMod> withSynthesizedAddonEntries(
 extension ModCatalogLinkExt on Mod {
   CatalogLink? catalogLink(CatalogLinks links) => links.linkForModId(id);
 
-  ScrapedMod? catalogEntry(CatalogLinks links) =>
+  CatalogMod? catalogEntry(CatalogLinks links) =>
       links.linkForModId(id)?.entry;
 }
 
-/// Look up an installed mod straight from a [ScrapedMod]. Pass the watched
+/// Look up an installed mod straight from a [CatalogMod]. Pass the watched
 /// [CatalogLinks] (from [catalogLinksProvider]).
-extension ScrapedModLinkExt on ScrapedMod {
+extension CatalogModLinkExt on CatalogMod {
   Mod? installedMod(CatalogLinks links) => links.modForEntry(this);
 
   bool isInstalled(CatalogLinks links) => links.modForEntry(this) != null;

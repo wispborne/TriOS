@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/mod_browser_manager.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/version_checker.dart';
@@ -56,8 +56,8 @@ class CatalogPageStatePersisted with CatalogPageStatePersistedMappable {
 @MappableClass()
 class CatalogPageState with CatalogPageStateMappable {
   final CatalogPageStatePersisted persisted;
-  final List<ScrapedMod> allMods;
-  final List<ScrapedMod> displayedMods;
+  final List<CatalogMod> allMods;
+  final List<CatalogMod> displayedMods;
   final String currentSearchQuery;
   final CatalogSortKey selectedSort;
   final bool sortAscending;
@@ -86,7 +86,7 @@ class CatalogEntryStatus {
 class CatalogPageController extends Notifier<CatalogPageState> {
   static const FilterScope _scope = FilterScope(kCatalogPageId);
 
-  late final FilterScopeController<ScrapedMod> _filters;
+  late final FilterScopeController<CatalogMod> _filters;
 
   /// Resolved catalog↔installed links from the shared [catalogLinksProvider].
   CatalogLinks _links = CatalogLinks(const []);
@@ -96,7 +96,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
 
   FilterScope get scope => _scope;
 
-  List<FilterGroup<ScrapedMod>> get filterGroups => _filters.groups;
+  List<FilterGroup<CatalogMod>> get filterGroups => _filters.groups;
 
   int get activeFilterCount => _filters.activeCount;
 
@@ -177,7 +177,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
     return _processAllFilters(initialState);
   }
 
-  FilterScopeController<ScrapedMod> _buildFilters() {
+  FilterScopeController<CatalogMod> _buildFilters() {
     // Category order is declared and stable; the chip renderer respects
     // sortComparator when useDefaultSort is false.
     int declaredAttrIndex(String v) {
@@ -185,12 +185,12 @@ class CatalogPageController extends Notifier<CatalogPageState> {
       return i < 0 ? _kAttributeOrder.length : i;
     }
 
-    final groups = <FilterGroup<ScrapedMod>>[
-      CompositeFilterGroup<ScrapedMod>(
+    final groups = <FilterGroup<CatalogMod>>[
+      CompositeFilterGroup<CatalogMod>(
         id: 'status',
         name: 'Status',
         fields: [
-          StringChoiceField<ScrapedMod>(
+          StringChoiceField<CatalogMod>(
             id: 'installed',
             label: 'Installed',
             allLabel: 'Both Installed & Available',
@@ -203,7 +203,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
               return selected == 'installed' ? isInstalled : !isInstalled;
             },
           ),
-          BoolField<ScrapedMod>(
+          BoolField<CatalogMod>(
             id: 'hasUpdate',
             label: 'Has Update',
             badgeCount: () => updatesCount,
@@ -212,7 +212,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
           ),
         ],
       ),
-      ChipFilterGroup<ScrapedMod>(
+      ChipFilterGroup<CatalogMod>(
         id: 'attributes',
         name: 'Attributes',
         valueGetter: (_) => '',
@@ -221,11 +221,11 @@ class CatalogPageController extends Notifier<CatalogPageState> {
         sortComparator: (a, b) =>
             declaredAttrIndex(a).compareTo(declaredAttrIndex(b)),
       ),
-      CompositeFilterGroup<ScrapedMod>(
+      CompositeFilterGroup<CatalogMod>(
         id: 'version',
         name: 'Game Version',
         fields: [
-          StringChoiceField<ScrapedMod>(
+          StringChoiceField<CatalogMod>(
             id: 'versionBucket',
             label: 'Game Version',
             options: _versionGroupOptions.keys.toList(),
@@ -240,7 +240,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
           ),
         ],
       ),
-      ChipFilterGroup<ScrapedMod>(
+      ChipFilterGroup<CatalogMod>(
         id: 'category',
         name: 'Category',
         collapsedByDefault: false,
@@ -248,11 +248,11 @@ class CatalogPageController extends Notifier<CatalogPageState> {
         valuesGetter: (m) => m.categories ?? const <String>[],
       ),
     ];
-    return FilterScopeController<ScrapedMod>(scope: _scope, groups: groups);
+    return FilterScopeController<CatalogMod>(scope: _scope, groups: groups);
   }
 
   /// Returns the set of Attribute chip-value keys that apply to [mod].
-  List<String> _attributeValuesFor(ScrapedMod mod) {
+  List<String> _attributeValuesFor(CatalogMod mod) {
     final result = <String>[];
     final urls = mod.urls;
     if (urls?.containsKey(ModUrlType.DirectDownload) == true) {
@@ -275,19 +275,19 @@ class CatalogPageController extends Notifier<CatalogPageState> {
     return result;
   }
 
-  StringChoiceField<ScrapedMod>? _versionChoiceField() {
+  StringChoiceField<CatalogMod>? _versionChoiceField() {
     final group =
-        _filters.findGroup('version') as CompositeFilterGroup<ScrapedMod>?;
-    return group?.fieldById('versionBucket') as StringChoiceField<ScrapedMod>?;
+        _filters.findGroup('version') as CompositeFilterGroup<CatalogMod>?;
+    return group?.fieldById('versionBucket') as StringChoiceField<CatalogMod>?;
   }
 
   CatalogPageState _processAllFilters(CatalogPageState current) {
-    Iterable<ScrapedMod> items = current.allMods;
+    Iterable<CatalogMod> items = current.allMods;
 
     // 1. Search
     final q = current.currentSearchQuery;
     if (q.isNotEmpty) {
-      items = searchScrapedMods(items.toList(), q);
+      items = searchCatalogMods(items.toList(), q);
     }
 
     // 2. Chip groups (Attributes, Category)
@@ -297,7 +297,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
     items = _filters.applyNonChipFilters(items);
 
     // 4. Sort
-    final sorted = sortScrapedMods(
+    final sorted = sortCatalogMods(
       items.toList(),
       current.selectedSort,
       ascending: current.sortAscending,

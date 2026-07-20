@@ -1,10 +1,10 @@
 ### Requirement: Collapsible filter panel on the Catalog page
 
-The Catalog page SHALL host a collapsible left-side filter panel built on the shared filter engine (`FilterScopeController<ScrapedMod>`), matching the pattern used by the ships, weapons, hullmods, and portraits pages. The panel SHALL be toggleable via a `CollapsedFilterButton` when collapsed and SHALL display an active-filter count badge. The panel SHALL contain (in order) an Attributes chip group, a Category chip group, and a Version selection group.
+The Catalog page SHALL host a collapsible left-side filter panel built on the shared filter engine (`FilterScopeController<CatalogMod>`), matching the pattern used by the ships, weapons, hullmods, and portraits pages. The panel SHALL be toggleable via a `CollapsedFilterButton` when collapsed and SHALL display an active-filter count badge. The panel SHALL contain (in order) an Attributes chip group, a Category chip group, and a Version selection group.
 
 #### Scenario: User expands the filter panel
 - **WHEN** the user taps the `CollapsedFilterButton` on the Catalog page
-- **THEN** the filter panel expands and renders the Attributes, Category, and Version groups using `FilterGroupRenderer<ScrapedMod>`
+- **THEN** the filter panel expands and renders the Attributes, Category, and Version groups using `FilterGroupRenderer<CatalogMod>`
 
 #### Scenario: Collapse button shows active-filter count
 - **WHEN** the user has two chip values in "include" state on the Attributes group and a Category selected
@@ -16,7 +16,7 @@ The Catalog page SHALL host a collapsible left-side filter panel built on the sh
 
 ### Requirement: Attributes chip group replaces the eight tri-state icon buttons
 
-The Attributes chip group SHALL be a `ChipFilterGroup<ScrapedMod>` with the following fixed chip values: `download`, `discord`, `index`, `forum`, `installed`, `update`, `wip`, `archived`. The chip-label display SHALL be "Has Download", "Discord", "Index", "Forum", "Installed", "Has Update", "WIP", "Archived" respectively. The group SHALL preserve the declared chip order (not sort alphabetically). Each chip SHALL cycle through tri-state (null → include → exclude → null) and apply the canonical `ChipFilterGroup.matches` algorithm.
+The Attributes chip group SHALL be a `ChipFilterGroup<CatalogMod>` with the following fixed chip values: `download`, `discord`, `index`, `forum`, `installed`, `update`, `wip`, `archived`. The chip-label display SHALL be "Has Download", "Discord", "Index", "Forum", "Installed", "Has Update", "WIP", "Archived" respectively. The group SHALL preserve the declared chip order (not sort alphabetically). Each chip SHALL cycle through tri-state (null → include → exclude → null) and apply the canonical `ChipFilterGroup.matches` algorithm.
 
 #### Scenario: User includes a single attribute
 - **WHEN** the user clicks the "Has Download" chip once (state becomes `true`)
@@ -36,7 +36,7 @@ The Attributes chip group SHALL be a `ChipFilterGroup<ScrapedMod>` with the foll
 
 ### Requirement: Category chip group replaces the Category dropdown
 
-The Catalog page SHALL expose categories as a `ChipFilterGroup<ScrapedMod>` where `valuesGetter` returns `mod.categories ?? []`. Chips SHALL be sorted alphabetically. The group SHALL default to collapsed because category lists can be long. Empty and null category values SHALL NOT appear as chips.
+The Catalog page SHALL expose categories as a `ChipFilterGroup<CatalogMod>` where `valuesGetter` returns `mod.categories ?? []`. Chips SHALL be sorted alphabetically. The group SHALL default to collapsed because category lists can be long. Empty and null category values SHALL NOT appear as chips.
 
 #### Scenario: User selects one category
 - **WHEN** the user clicks the "Total Conversion" chip (state `true`)
@@ -52,7 +52,7 @@ The Catalog page SHALL expose categories as a `ChipFilterGroup<ScrapedMod>` wher
 
 ### Requirement: Version selection group replaces the Version dropdown
 
-The Catalog page SHALL expose game version as a single-select filter inside a `CompositeFilterGroup<ScrapedMod>` so that it can be persisted with a lock. Only base-version buckets with 3 or more mods SHALL appear as choices, and buckets SHALL be ordered newest-first by the version comparator. An "All Versions" choice SHALL be present. On first-ever load (no persisted state), the selection SHALL default to the newest available version bucket.
+The Catalog page SHALL expose game version as a single-select filter inside a `CompositeFilterGroup<CatalogMod>` so that it can be persisted with a lock. Only base-version buckets with 3 or more mods SHALL appear as choices, and buckets SHALL be ordered newest-first by the version comparator. An "All Versions" choice SHALL be present. On first-ever load (no persisted state), the selection SHALL default to the newest available version bucket.
 
 #### Scenario: User selects a version bucket
 - **WHEN** the user selects "0.97" from the Version dropdown inside the filter panel
@@ -96,7 +96,7 @@ Each filter group in the Catalog panel SHALL support persistence via its lock bu
 
 ### Requirement: Filter pipeline order is search → chips → composite → sort
 
-The Catalog filter pipeline SHALL execute in this order: (1) text search via `searchScrapedMods`, (2) `FilterScopeController.applyChipFilters` for Attributes and Category, (3) `FilterScopeController.applyNonChipFilters` for the Version composite, (4) `sortScrapedMods` with the currently-selected `CatalogSortKey`. The `displayedMods` list SHALL be derived from this pipeline and SHALL be what the `WispAdaptiveGridView` renders.
+The Catalog filter pipeline SHALL execute in this order: (1) text search via `searchCatalogMods`, (2) `FilterScopeController.applyChipFilters` for Attributes and Category, (3) `FilterScopeController.applyNonChipFilters` for the Version composite, (4) `sortCatalogMods` with the currently-selected `CatalogSortKey`. The `displayedMods` list SHALL be derived from this pipeline and SHALL be what the `WispAdaptiveGridView` renders.
 
 #### Scenario: Combined filters and sort
 - **WHEN** the user has search text "weapons", Category "Faction" set to `true`, Version "0.97" selected, and Sort "Newest"

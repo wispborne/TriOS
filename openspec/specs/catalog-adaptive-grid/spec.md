@@ -1,5 +1,5 @@
 ### Requirement: Catalog displays mods in an adaptive grid
-The Catalog page SHALL display scraped mods using `WispAdaptiveGridView` instead of a single-column `ListView`. The grid SHALL automatically calculate the number of columns based on available width and a configured minimum item width.
+The Catalog page SHALL display catalog mods using `WispAdaptiveGridView` instead of a single-column `ListView`. The grid SHALL automatically calculate the number of columns based on available width and a configured minimum item width.
 
 #### Scenario: Multiple columns on wide screen
 - **WHEN** the Catalog page is displayed with sufficient width for two or more columns
@@ -17,7 +17,7 @@ The grid SHALL use 8px horizontal spacing and 8px vertical spacing between items
 - **THEN** there is 8px of space between adjacent items both horizontally and vertically
 
 ### Requirement: Cards adapt to grid item width
-Each `ScrapedModCard` SHALL fill the width assigned by the grid without overflow or minimum-width violations. The card layout SHALL remain readable at the minimum item width.
+Each `CatalogModCard` SHALL fill the width assigned by the grid without overflow or minimum-width violations. The card layout SHALL remain readable at the minimum item width.
 
 #### Scenario: Card renders correctly at minimum width
 - **WHEN** a mod card is rendered at the minimum grid item width (~450px)

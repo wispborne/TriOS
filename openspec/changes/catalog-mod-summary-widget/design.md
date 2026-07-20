@@ -35,7 +35,7 @@ class ModSummaryData {
   final ForumLlmChangelog? changelog;
   final List<ForumLlmSupportLink> supportLinks;
   final String? saveCompatibility;
-  final ScrapedMod? scrapedMod;   // for ModImage
+  final CatalogMod? catalogMod;   // for ModImage
   final String? fallbackImageUrl; // llm mainMod imageUrl
   final String? topicUrl;         // author profile / open-in-browser targets
 }
@@ -43,8 +43,8 @@ class ModSummaryData {
 
 Two factories, matching the two existing dialog paths:
 
-- `ModSummaryData.fromScraped(ScrapedMod mod, ForumModIndex? index)` — card tooltip and scraped details dialog.
-- `ModSummaryData.fromDetails(ForumModDetails details, ForumModIndex? index, ScrapedMod? mod)` — forum post dialog.
+- `ModSummaryData.fromCatalog(CatalogMod mod, ForumModIndex? index)` — card tooltip and catalog details dialog.
+- `ModSummaryData.fromDetails(ForumModDetails details, ForumModIndex? index, CatalogMod? mod)` — forum post dialog.
 
 Both pull LLM extras from `index.llm.mainMod` (same logic the card uses via `_targetLlmMod`: match by mod name, fall back to `mainMod`).
 
@@ -86,7 +86,7 @@ All new icons get `MovingTooltipWidget.text` tooltips. 8dp grid, `spacing` param
 
 ## Changed files
 
-### `lib/catalog/scraped_mod_card.dart`
+### `lib/catalog/catalog_mod_card.dart`
 
 Wrap the card's main content in `MovingTooltipWidget.framed` with `ModSummaryWidget(config: .tooltip)` (constrained to ~500px wide). Remove the description text's own AI-paragraph tooltip (`MovingTooltipWidget.framed` around `buildDescription`'s text) so tooltips don't stack — the card tooltip now carries the paragraph. Inner tooltips on buttons/icons still win because they're deeper in the tree (`MovingTooltipWidget` at the closest ancestor takes over hover); verify this during implementation.
 
@@ -96,9 +96,9 @@ Wrap the card's main content in `MovingTooltipWidget.framed` with `ModSummaryWid
 
 When the new setting hides the summary: show a slim row of just title + action buttons, downloads below — nothing else.
 
-### `lib/catalog/forum_post_dialog/forum_post_dialog.dart` and `scraped_mod_details_dialog.dart`
+### `lib/catalog/forum_post_dialog/forum_post_dialog.dart` and `catalog_mod_details_dialog.dart`
 
-Pass `ModSummaryData` to the header. The scraped details dialog's `_Body` currently shows image + description/AI paragraph — with the header now showing image and summary, slim `_Body` down to just the author text (and drop it entirely when it duplicates what the header shows; keep "No description...yet!" for the empty case when the header is off).
+Pass `ModSummaryData` to the header. The catalog details dialog's `_Body` currently shows image + description/AI paragraph — with the header now showing image and summary, slim `_Body` down to just the author text (and drop it entirely when it duplicates what the header shows; keep "No description...yet!" for the empty case when the header is off).
 
 ### `lib/trios/settings/settings.dart`
 
@@ -119,5 +119,5 @@ Regenerate mappers. Add a toggle on the Settings page next to the existing catal
 
 ## Open questions (defaults chosen, flag during implementation)
 
-- The dialog body (scraped details) already shows the summary paragraph. Default: header owns image + summary when enabled; body keeps only author description text. If that reads as duplicated, drop summary text from the header config instead.
+- The dialog body (catalog details) already shows the summary paragraph. Default: header owns image + summary when enabled; body keeps only author description text. If that reads as duplicated, drop summary text from the header config instead.
 - Whether the card tooltip should appear over the whole card or exclude the button row (hovering "Install" showing a big tooltip could be noisy). Default: whole card except the actions row.

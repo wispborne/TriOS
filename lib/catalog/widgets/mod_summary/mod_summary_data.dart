@@ -2,11 +2,11 @@ import 'package:collection/collection.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/scraped_mod.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 
 /// Everything the [ModSummaryWidget] can show about a mod, gathered from the
-/// three sources we might have: the scraped catalog entry, the forum index
+/// three sources we might have: the catalog entry, the forum index
 /// entry (stats, dates, LLM data), and — when a post is cached — the rich
 /// forum details. Keeps the widget source-agnostic.
 class ModSummaryData {
@@ -23,18 +23,18 @@ class ModSummaryData {
   final int? views;
   final int? replies;
 
-  /// The mod's own description text (from the scraped entry), if any.
+  /// The mod's own description text (from the catalog entry), if any.
   final String? authorText;
   final ForumLlmSummary? aiSummary;
   final ForumLlmChangelog? changelog;
   final List<ForumLlmSupportLink> supportLinks;
   final String? saveCompatibility;
 
-  /// The scraped mod, used to render its image. Null when we only have forum
+  /// The catalog mod, used to render its image. Null when we only have forum
   /// details (no matching catalog entry).
-  final ScrapedMod? scrapedMod;
+  final CatalogMod? catalogMod;
 
-  /// A preview image from the LLM data, used when [scrapedMod] has no image.
+  /// A preview image from the LLM data, used when [catalogMod] has no image.
   final String? fallbackImageUrl;
 
   /// The forum topic URL, for opening the author's profile / the post.
@@ -56,14 +56,14 @@ class ModSummaryData {
     this.changelog,
     this.supportLinks = const [],
     this.saveCompatibility,
-    this.scrapedMod,
+    this.catalogMod,
     this.fallbackImageUrl,
     this.topicUrl,
   });
 
-  /// Builds summary data from a scraped catalog entry and its optional forum
-  /// index entry. Used for the card tooltip and the scraped-details dialog.
-  factory ModSummaryData.fromScraped(ScrapedMod mod, ForumModIndex? index) {
+  /// Builds summary data from a catalog entry and its optional forum
+  /// index entry. Used for the card tooltip and the catalog-details dialog.
+  factory ModSummaryData.fromCatalog(CatalogMod mod, ForumModIndex? index) {
     final llmMod = _resolveLlmMod(mod, index);
     final extras = llmMod?.extras;
     final authors = mod.authorsList?.isNotEmpty == true
@@ -85,19 +85,19 @@ class ModSummaryData {
       changelog: extras?.changelog,
       supportLinks: extras?.supportLinks ?? const [],
       saveCompatibility: extras?.saveCompatibility,
-      scrapedMod: mod,
+      catalogMod: mod,
       fallbackImageUrl: llmMod?.imageUrl,
       topicUrl: index?.topicUrl,
     );
   }
 
   /// Builds summary data from a cached forum post's details, its optional
-  /// index entry, and the matching scraped entry (for the image). Used for the
+  /// index entry, and the matching catalog entry (for the image). Used for the
   /// forum-post dialog.
   factory ModSummaryData.fromDetails(
     ForumModDetails details,
     ForumModIndex? index,
-    ScrapedMod? mod,
+    CatalogMod? mod,
   ) {
     final llmMod = _resolveLlmMod(mod, index);
     final extras = llmMod?.extras;
@@ -119,7 +119,7 @@ class ModSummaryData {
       changelog: extras?.changelog,
       supportLinks: extras?.supportLinks ?? const [],
       saveCompatibility: extras?.saveCompatibility,
-      scrapedMod: mod,
+      catalogMod: mod,
       fallbackImageUrl: llmMod?.imageUrl,
       topicUrl: index?.topicUrl ?? details.title,
     );
@@ -128,7 +128,7 @@ class ModSummaryData {
   /// Picks the LLM mod entry this summary represents: for a mod bundled in
   /// another mod's thread, the matching entry by name; otherwise the thread's
   /// main mod. Mirrors the card's `_targetLlmMod`.
-  static ForumLlmMod? _resolveLlmMod(ScrapedMod? mod, ForumModIndex? index) {
+  static ForumLlmMod? _resolveLlmMod(CatalogMod? mod, ForumModIndex? index) {
     final llm = index?.llm;
     if (llm == null) return null;
     if (mod != null && mod.isPartOfThread) {

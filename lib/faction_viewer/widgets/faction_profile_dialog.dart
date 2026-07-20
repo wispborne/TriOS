@@ -31,10 +31,15 @@ class FactionProfileDialog extends ConsumerWidget {
   final Faction faction;
   final Directory? gameCoreDir;
 
+  /// Leave weights added by mods that aren't enabled out of the spawn numbers,
+  /// matching the page this dialog was opened from.
+  final bool onlyEnabledMods;
+
   const FactionProfileDialog({
     super.key,
     required this.faction,
     required this.gameCoreDir,
+    this.onlyEnabledMods = false,
   });
 
   @override
@@ -490,7 +495,7 @@ class FactionProfileDialog extends ConsumerWidget {
     ThemeData theme,
     WidgetRef ref,
   ) {
-    if (!ref.watch(spawnWeightsReadyProvider)) {
+    if (!ref.watch(spawnWeightsReadyProvider(onlyEnabledMods))) {
       return Text(
         'Calculating spawn weights…',
         style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
@@ -498,7 +503,9 @@ class FactionProfileDialog extends ConsumerWidget {
     }
 
     final summary =
-        ref.watch(factionSpawnSummariesProvider)[faction.mergeKey] ??
+        ref.watch(
+          factionSpawnSummariesProvider(onlyEnabledMods),
+        )[faction.mergeKey] ??
         FactionSpawnSummary.empty;
 
     if (summary.totalWeight <= 0) {

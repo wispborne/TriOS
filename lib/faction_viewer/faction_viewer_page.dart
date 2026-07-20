@@ -30,6 +30,7 @@ import 'package:trios/widgets/mode_switcher.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'package:trios/widgets/text_trios.dart';
+import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
@@ -104,6 +105,18 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
           leadingActions: [
             if (controllerState.viewMode == FactionViewMode.gallery)
               _buildGallerySortDropdown(controller, controllerState),
+            const SizedBox(width: 8),
+            MovingTooltipWidget.text(
+              message:
+                  'Show faction data from enabled mods only.\nShips, weapons, '
+                  'and spawn weights added by disabled mods are hidden.',
+              child: TriOSToolbarCheckboxButton(
+                text: 'Only Enabled Mods',
+                value: controllerState.onlyEnabledMods,
+                onChanged: (value) =>
+                    controller.setOnlyEnabledMods(value ?? false),
+              ),
+            ),
           ],
           trailingActions: [_buildViewModeToggle(controller, controllerState)],
         ),
@@ -254,7 +267,13 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
             FactionCard(
               faction: faction,
               gameCoreDir: gameCoreDir,
-              onTap: () => _showProfile(context, faction, gameCoreDir),
+              onlyEnabledMods: state.onlyEnabledMods,
+              onTap: () => _showProfile(
+                context,
+                faction,
+                gameCoreDir,
+                state.onlyEnabledMods,
+              ),
             ),
           ),
         );
@@ -268,7 +287,9 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
     ThemeData theme,
   ) {
     final gridState = ref.watch(appSettings.select((s) => s.factionsGridState));
-    final summaries = ref.watch(factionSpawnSummariesProvider);
+    final summaries = ref.watch(
+      factionSpawnSummariesProvider(state.onlyEnabledMods),
+    );
     final columns = _buildColumns(theme, gameCoreDir, summaries);
 
     return DefaultTextStyle.merge(
@@ -298,7 +319,12 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
             SizedBox(
               height: 40,
               child: InkWell(
-                onTap: () => _showProfile(context, item, gameCoreDir),
+                onTap: () => _showProfile(
+                  context,
+                  item,
+                  gameCoreDir,
+                  state.onlyEnabledMods,
+                ),
                 child: Container(
                   color: Colors.transparent,
                   child: _buildRowContextMenu(item, gameCoreDir, child),
@@ -544,11 +570,15 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
     BuildContext context,
     Faction faction,
     Directory? gameCoreDir,
+    bool onlyEnabledMods,
   ) {
     showDialog(
       context: context,
-      builder: (context) =>
-          FactionProfileDialog(faction: faction, gameCoreDir: gameCoreDir),
+      builder: (context) => FactionProfileDialog(
+        faction: faction,
+        gameCoreDir: gameCoreDir,
+        onlyEnabledMods: onlyEnabledMods,
+      ),
     );
   }
 }

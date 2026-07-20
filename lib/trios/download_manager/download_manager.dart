@@ -9,7 +9,9 @@ import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -73,6 +75,12 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           _downloads.add(download);
           state = AsyncValue.data(_downloads);
 
+          // Let the user know a background download started, unless they're
+          // already looking at the Activity Panel.
+          if (!ref.read(appSettings.select((s) => s.isActivityPanelOpen))) {
+            ref.read(activityStartedPopupProvider.notifier).notifyStarted();
+          }
+
           // Just for debugging.
           value.status.addListener(() async {
             switch (value.status.value) {
@@ -120,6 +128,12 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     download.installCancelled.addListener(() => ref.invalidateSelf());
     _downloads.add(download);
     state = AsyncValue.data(_downloads);
+
+    // Let the user know a background install started, unless they're already
+    // looking at the Activity Panel.
+    if (!ref.read(appSettings.select((s) => s.isActivityPanelOpen))) {
+      ref.read(activityStartedPopupProvider.notifier).notifyStarted();
+    }
     return download;
   }
 

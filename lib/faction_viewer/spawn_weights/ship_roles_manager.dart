@@ -58,15 +58,21 @@ class MergedShipRoles {
 }
 
 /// Reads and merges `default_ship_roles.json` from the game core and every
-/// enabled mod, in the game's load order.
-final mergedShipRolesProvider = FutureProvider<MergedShipRoles>((ref) async {
+/// installed mod, in the game's load order. With [onlyEnabledMods] on, mods
+/// that aren't enabled are left out.
+final mergedShipRolesProvider =
+    FutureProvider.family<MergedShipRoles, bool>((ref, onlyEnabledMods) async {
   final gameCore = ref.watch(AppState.gameCoreFolder).value;
   if (gameCore == null) return MergedShipRoles.empty;
 
-  final variants = ref
-      .watch(AppState.mods)
+  final mods = ref.watch(AppState.mods);
+  final variants = mods
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
       .nonNulls
+      .where(
+        (variant) =>
+            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
+      )
       .sortedByGameLoadOrder();
 
   final sources = <(String, Directory)>[

@@ -13,20 +13,26 @@ class FactionCard extends ConsumerWidget {
   final Directory? gameCoreDir;
   final VoidCallback onTap;
 
+  /// Leave weights added by mods that aren't enabled out of the spawn share.
+  final bool onlyEnabledMods;
+
   const FactionCard({
     super.key,
     required this.faction,
     required this.gameCoreDir,
     required this.onTap,
+    this.onlyEnabledMods = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final factionColor = faction.factionColor;
     final theme = Theme.of(context);
-    final spawnReady = ref.watch(spawnWeightsReadyProvider);
+    final spawnReady = ref.watch(spawnWeightsReadyProvider(onlyEnabledMods));
     final summary =
-        ref.watch(factionSpawnSummariesProvider)[faction.mergeKey] ??
+        ref.watch(
+          factionSpawnSummariesProvider(onlyEnabledMods),
+        )[faction.mergeKey] ??
         FactionSpawnSummary.empty;
 
     return Card(

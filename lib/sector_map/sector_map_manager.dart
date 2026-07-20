@@ -59,7 +59,7 @@ final finderEngineProvider = Provider.family<FinderEngine?, SectorSource>((
 /// Maps a faction id to its UI color, reusing faction_viewer's parsed factions.
 /// Unknown ids fall back to [unknownFactionColor].
 final factionColorsProvider = Provider<Map<String, Color>>((ref) {
-  final factions = ref.watch(factionListNotifierProvider).valueOrNull ?? [];
+  final factions = ref.watch(mergedFactionListProvider(false));
   return {for (final f in factions) f.id: f.factionColor};
 });
 
@@ -70,7 +70,7 @@ Color factionColorFor(Map<String, Color> colors, String factionId) =>
 
 /// Maps a faction id to its display name, for tooltips and the detail panel.
 final factionNamesProvider = Provider<Map<String, String>>((ref) {
-  final factions = ref.watch(factionListNotifierProvider).valueOrNull ?? [];
+  final factions = ref.watch(mergedFactionListProvider(false));
   return {for (final f in factions) f.id: f.displayNameBest};
 });
 

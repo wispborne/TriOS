@@ -194,6 +194,39 @@ class Faction with FactionMappable implements WispGridItem {
   }
 }
 
+/// One `.faction` file exactly as it sits on disk, before any merging.
+///
+/// The viewer keeps these instead of a merged result so it can leave mods out
+/// and re-merge on demand — that's how "Only Enabled Mods" works without a
+/// rescan.
+@MappableClass()
+class FactionFileData with FactionFileDataMappable {
+  /// Path under `data/world/factions`, without the extension. Files sharing a
+  /// key describe the same faction, whoever shipped them.
+  final String mergeKey;
+
+  /// The mod that shipped this file, or `Vanilla`.
+  final String sourceName;
+
+  /// `smolId` of the mod variant it came from. Null for vanilla.
+  final String? sourceSmolId;
+
+  /// True when this source's `factions.csv` lists the file, meaning it adds
+  /// the faction to the game rather than only patching one.
+  final bool registersFaction;
+
+  /// The file's parsed contents.
+  final Map<String, dynamic> json;
+
+  const FactionFileData({
+    required this.mergeKey,
+    required this.sourceName,
+    required this.sourceSmolId,
+    required this.registersFaction,
+    required this.json,
+  });
+}
+
 @MappableClass()
 class FactionDoctrine with FactionDoctrineMappable {
   final int warships;

@@ -113,8 +113,13 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
   final weapons = ref.watch(weaponListNotifierProvider).valueOrNull ?? const [];
   final hullmods =
       ref.watch(hullmodListNotifierProvider).valueOrNull ?? const [];
-  final factions =
-      ref.watch(factionListNotifierProvider).valueOrNull ?? const [];
+  // Factions are merged from mod files, so "only enabled mods" has to be
+  // applied while merging rather than by dropping entries afterwards.
+  final factions = ref.watch(
+    mergedFactionListProvider(
+      ref.watch(appSettings.select((s) => s.codexEnabledModsOnly)),
+    ),
+  );
   final systems =
       ref.watch(shipSystemListNotifierProvider).valueOrNull ?? const [];
   final wings = ref.watch(wingListNotifierProvider).valueOrNull ?? const [];

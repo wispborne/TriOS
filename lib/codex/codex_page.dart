@@ -877,6 +877,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
       weaponsMap: _weaponsMap,
       hullmodsMap: _hullmodsMap,
       gameCoreDir: _gameCoreDir,
+      onlyEnabledMods: ref.read(appSettings).codexEnabledModsOnly,
       child: row,
     );
   }

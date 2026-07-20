@@ -112,6 +112,25 @@ class RecentInstallPopupNotifier extends Notifier<List<ActivityEntry>> {
   void clear() => state = const [];
 }
 
+/// Counts downloads and installs that started while the Activity Panel was
+/// closed. Any value above zero makes the popup below the activity button
+/// appear so the user knows something began in the background. Each new one
+/// bumps the count, which restarts the popup's countdown. Cleared when the
+/// popup times out or the panel is opened.
+final activityStartedPopupProvider =
+    NotifierProvider<ActivityStartedPopupNotifier, int>(
+      ActivityStartedPopupNotifier.new,
+    );
+
+class ActivityStartedPopupNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void notifyStarted() => state = state + 1;
+
+  void clear() => state = 0;
+}
+
 /// Convenience: toggle panel open state (persisted in Settings).
 void toggleActivityPanel(WidgetRef ref) {
   final wasOpen = ref.read(
@@ -124,5 +143,6 @@ void toggleActivityPanel(WidgetRef ref) {
     // Opening the panel clears unseen count and dismisses the install popup.
     ref.read(activityUnseenCount.notifier).clearUnseen();
     ref.read(recentInstallPopupProvider.notifier).clear();
+    ref.read(activityStartedPopupProvider.notifier).clear();
   }
 }

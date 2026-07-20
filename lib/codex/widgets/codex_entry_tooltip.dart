@@ -23,6 +23,7 @@ Widget codexEntryTooltip({
   required Map<String, Weapon> weaponsMap,
   required Map<String, Hullmod> hullmodsMap,
   required Directory? gameCoreDir,
+  bool onlyEnabledMods = false,
 }) {
   switch (entry) {
     case ShipCodexEntry(:final ship):
@@ -55,6 +56,7 @@ Widget codexEntryTooltip({
           child: FactionCard(
             faction: faction,
             gameCoreDir: gameCoreDir,
+            onlyEnabledMods: onlyEnabledMods,
             onTap: () {},
           ),
         ),

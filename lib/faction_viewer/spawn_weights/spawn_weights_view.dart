@@ -38,16 +38,22 @@ class SpawnWeightsView extends ConsumerWidget {
       return const Center(child: Text('No factions found.'));
     }
 
-    if (!ref.watch(spawnWeightsReadyProvider)) {
+    final onlyEnabledMods = state.onlyEnabledMods;
+
+    if (!ref.watch(spawnWeightsReadyProvider(onlyEnabledMods))) {
       return const Center(child: Text('Calculating spawn weights…'));
     }
 
-    final faction =
-        factions.firstWhere(
-          (f) => f.mergeKey == state.persisted.spawnFactionKey,
-          orElse: () => factions.first,
-        );
-    final weights = ref.watch(factionSpawnWeightsProvider(faction.mergeKey));
+    final faction = factions.firstWhere(
+      (f) => f.mergeKey == state.persisted.spawnFactionKey,
+      orElse: () => factions.first,
+    );
+    final weights = ref.watch(
+      factionSpawnWeightsProvider((
+        mergeKey: faction.mergeKey,
+        onlyEnabledMods: onlyEnabledMods,
+      )),
+    );
     // If the chosen role has no ships for this faction, follow the game's own
     // fallback chain so we open on the role that actually spawns something,
     // instead of an empty table.
@@ -68,6 +74,7 @@ class SpawnWeightsView extends ConsumerWidget {
                     faction: faction,
                     entries: entries,
                     searchQuery: searchQuery,
+                    onlyEnabledMods: onlyEnabledMods,
                   ),
           ),
           _buildFooterNote(theme, weights.summary),
@@ -172,7 +179,7 @@ class SpawnWeightsView extends ConsumerWidget {
   Widget _buildFooterNote(ThemeData theme, FactionSpawnSummary summary) {
     final skipped = summary.skippedEntries;
     return Text(
-      'These numbers come from the mod files on disk. They miss a few things: '
+      'These numbers are approximate. They miss a few things: '
       'ships that mods add in code, the game trimming ships that cost too many '
       'fleet points, combat freighters being mixed in, and mods that fully '
       'replace a file instead of adding to it.'
@@ -180,6 +187,7 @@ class SpawnWeightsView extends ConsumerWidget {
                 'is not installed.' : ''}',
       style: theme.textTheme.labelSmall?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
+        fontStyle: .italic,
       ),
     );
   }
@@ -189,11 +197,13 @@ class _SpawnWeightTable extends ConsumerWidget {
   final Faction faction;
   final List<SpawnWeightEntry> entries;
   final String searchQuery;
+  final bool onlyEnabledMods;
 
   const _SpawnWeightTable({
     required this.faction,
     required this.entries,
     required this.searchQuery,
+    required this.onlyEnabledMods,
   });
 
   @override
@@ -342,11 +352,12 @@ class _SpawnWeightTable extends ConsumerWidget {
     required bool bold,
     bool isPriority = false,
   }) {
-    final style = (bold ? theme.textTheme.bodySmall : theme.textTheme.labelSmall)
-        ?.copyWith(
-          fontWeight: bold ? FontWeight.w500 : FontWeight.normal,
-          fontFeatures: [const FontFeature.tabularFigures()],
-        );
+    final style =
+        (bold ? theme.textTheme.bodySmall : theme.textTheme.labelSmall)
+            ?.copyWith(
+              fontWeight: bold ? FontWeight.w500 : FontWeight.normal,
+              fontFeatures: [const FontFeature.tabularFigures()],
+            );
     final share = total > 0 ? weight / total : 0.0;
 
     return Row(
@@ -357,7 +368,8 @@ class _SpawnWeightTable extends ConsumerWidget {
             children: [
               if (isPriority)
                 MovingTooltipWidget.text(
-                  message: 'Priority ship: this faction favors it, so it '
+                  message:
+                      'Priority ship: this faction favors it, so it '
                       'spawns more often than its weight alone suggests.',
                   child: Padding(
                     padding: .only(right: 4),
@@ -416,7 +428,7 @@ class _SpawnWeightTable extends ConsumerWidget {
     if (source == null) return null;
 
     if (entry.origin == WeightOrigin.defaultShipRoles) {
-      final roles = ref.watch(mergedShipRolesProvider).value;
+      final roles = ref.watch(mergedShipRolesProvider(onlyEnabledMods)).value;
       final file = roles?.sourceFiles[source];
       return file != null && file.existsSync() ? file : null;
     }

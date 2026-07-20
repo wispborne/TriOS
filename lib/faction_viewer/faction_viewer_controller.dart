@@ -2,7 +2,6 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
-import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
@@ -42,6 +41,10 @@ class FactionViewerStatePersisted with FactionViewerStatePersistedMappable {
   /// Role shown in the spawn-weights view.
   final String spawnRole;
 
+  /// Leave data from mods that aren't enabled out of everything on the page,
+  /// spawn weights included.
+  final bool onlyEnabledMods;
+
   const FactionViewerStatePersisted({
     this.viewMode = FactionViewMode.gallery,
     this.showFilters = false,
@@ -49,6 +52,7 @@ class FactionViewerStatePersisted with FactionViewerStatePersistedMappable {
     this.gallerySortAscending = false,
     this.spawnFactionKey,
     this.spawnRole = 'combatMedium',
+    this.onlyEnabledMods = false,
   });
 }
 
@@ -66,6 +70,7 @@ class FactionViewerState with FactionViewerStateMappable {
   bool get gallerySortAscending => persisted.gallerySortAscending;
   String? get spawnFactionKey => persisted.spawnFactionKey;
   String get spawnRole => persisted.spawnRole;
+  bool get onlyEnabledMods => persisted.onlyEnabledMods;
 
   const FactionViewerState({
     this.persisted = const FactionViewerStatePersisted(),
@@ -111,9 +116,10 @@ class FactionViewerController extends Notifier<FactionViewerState> {
       _filters.loadPersisted(ref.read(filterGroupPersistenceProvider));
     }
 
-    final factions = ref.watch(factionListNotifierProvider);
     final isLoading = ref.watch(isLoadingFactionsList);
-    final allFactions = factions.valueOrNull ?? [];
+    final allFactions = ref.watch(
+      mergedFactionListProvider(persisted.onlyEnabledMods),
+    );
 
     var filtered = _filters.applyChipFilters(allFactions);
     filtered = _filters.applyNonChipFilters(filtered);
@@ -148,20 +154,6 @@ class FactionViewerController extends Notifier<FactionViewerState> {
               label: 'Hide mod-only factions',
               predicate: (f) => !f.isModOnly,
             ),
-            BoolField<Faction>(
-              id: 'showEnabled',
-              label: 'Only Enabled Mods',
-              tooltip: 'Only show factions from enabled mods.',
-              predicate: (f) {
-                final mods = ref.read(AppState.mods);
-                return f.isVanilla ||
-                    f.sources.any(
-                      (s) =>
-                          s.modVariant != null &&
-                          s.modVariant.mod(mods)?.hasEnabledVariant == true,
-                    );
-              },
-            ),
           ],
         ),
         ChipFilterGroup<Faction>(
@@ -195,6 +187,10 @@ class FactionViewerController extends Notifier<FactionViewerState> {
     _updatePersisted(
       state.persisted.copyWith(showFilters: !state.showFilters),
     );
+  }
+
+  void setOnlyEnabledMods(bool value) {
+    _updatePersisted(state.persisted.copyWith(onlyEnabledMods: value));
   }
 
   void setViewMode(FactionViewMode mode) {

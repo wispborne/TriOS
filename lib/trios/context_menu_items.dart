@@ -514,7 +514,7 @@ MenuItem buildMenuItemViewInViewer(Mod mod, WidgetRef ref) {
     );
   }
 
-  final factions = ref.read(factionListNotifierProvider).valueOrNull ?? [];
+  final factions = ref.read(mergedFactionListProvider(false));
   final modFactions =
       factions.where((f) => f.sources.any((s) => s.name == modName)).toList()
         ..sort((a, b) => a.displayName.compareTo(b.displayName));

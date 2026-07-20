@@ -8,6 +8,7 @@
     - Mod pop-ups show that same summary at the top. You can turn it off in the Catalog menu.
   - Faction Viewer: fleet weights are now shown, giving an overview of which mods are adding ships to fleets.
   - Faction Viewer: now shows which mod added each faction, separate from mods that only modify it.
+  - Popup when a download or install starts.
   - Missing dependencies now have buttons to install or find them.
   - 'Last Updated' column on the Mods page.
   - More background effects (Settings - Theme Modifiers).
@@ -20,6 +21,7 @@
   - Lowtech station was off-center.
   - Large ships/stations are now properly centered and zoomed on load.
   - Ship/station modules now show up immediately.
+  - Faction Viewer: "Only Enabled Mods" now actually only shows data from enabled mods.
 - Changed
   - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
   - About page now has an AI disclosure section.

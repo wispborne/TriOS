@@ -146,7 +146,15 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
   void didUpdateWidget(WeaponImageCell oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.weapon.id != widget.weapon.id) {
-      _loaded = false;
+      // Drop the old weapon's layers right away, or a recycled row keeps
+      // painting them until the async rebuild finishes (and forever, if the
+      // new weapon has no sprite at all).
+      setState(() {
+        _loaded = false;
+        _layers = const [];
+        _glowLayers = const [];
+        _canvasSize = Size.zero;
+      });
       _build();
     }
     if (oldWidget.rowHovered != widget.rowHovered) {

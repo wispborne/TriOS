@@ -45,7 +45,15 @@ import 'package:trios/widgets/tooltip_frame.dart';
       ? history.entries.take(unseenCount).toList()
       : const <ActivityEntry>[];
 
-  final inProgress = downloads.where((d) {
+  return (
+    activeBatchEntries: activeBatchEntries,
+    unseenEntries: unseenEntries,
+    inProgress: _inProgressDownloads(downloads),
+  );
+}
+
+List<Download> _inProgressDownloads(List<Download> downloads) {
+  return downloads.where((d) {
     final status = d.task.status.value;
     if (status == DownloadStatus.failed ||
         status == DownloadStatus.canceled) {
@@ -54,12 +62,6 @@ import 'package:trios/widgets/tooltip_frame.dart';
     return !status.isCompleted ||
         (!d.installComplete.value && !d.installCancelled.value);
   }).toList();
-
-  return (
-    activeBatchEntries: activeBatchEntries,
-    unseenEntries: unseenEntries,
-    inProgress: inProgress,
-  );
 }
 
 /// Toolbar icon that toggles the Activity Panel.
@@ -79,16 +81,29 @@ class _ActivityIconButtonState extends ConsumerState<ActivityIconButton> {
   final LayerLink _popupLink = LayerLink();
   final OverlayPortalController _popupController = OverlayPortalController();
 
+  /// The popup below the button appears when a mod finishes installing or when
+  /// a download starts, both only while the panel is closed.
+  void _syncPopupVisibility() {
+    final shouldShow =
+        ref.read(recentInstallPopupProvider).isNotEmpty ||
+        ref.read(activityStartedPopupProvider) > 0;
+    if (shouldShow) {
+      if (!_popupController.isShowing) _popupController.show();
+    } else {
+      if (_popupController.isShowing) _popupController.hide();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Show/hide the install popup anchored below the button.
-    ref.listen<List<ActivityEntry>>(recentInstallPopupProvider, (_, next) {
-      if (next.isNotEmpty) {
-        if (!_popupController.isShowing) _popupController.show();
-      } else {
-        if (_popupController.isShowing) _popupController.hide();
-      }
-    });
+    ref.listen<List<ActivityEntry>>(
+      recentInstallPopupProvider,
+      (_, _) => _syncPopupVisibility(),
+    );
+    ref.listen<int>(
+      activityStartedPopupProvider,
+      (_, _) => _syncPopupVisibility(),
+    );
 
     final downloads = ref.watch(downloadManager).value ?? [];
     final unseenCount = ref.watch(activityUnseenCount);
@@ -187,7 +202,7 @@ class _ActivityIconButtonState extends ConsumerState<ActivityIconButton> {
 
     return OverlayPortal(
       controller: _popupController,
-      overlayChildBuilder: (_) => _RecentInstallPopup(link: _popupLink),
+      overlayChildBuilder: (_) => _ActivityPopup(link: _popupLink),
       child: result,
     );
   }
@@ -238,26 +253,27 @@ class _ActivityTooltipContent extends ConsumerWidget {
   }
 }
 
-/// Transient popup anchored below the activity button, shown when mods finish
-/// installing while the panel is closed. Lets the user Enable the new mod(s)
-/// (or Enable All) without opening the panel. Auto-dismisses after the standard
-/// toast time; hovering pauses the countdown.
-class _RecentInstallPopup extends ConsumerStatefulWidget {
+/// Transient popup anchored below the activity button. Shows when a download
+/// starts, and when mods finish installing, both only while the panel is
+/// closed. Lets the user Enable the new mod(s) (or Enable All) without opening
+/// the panel. Auto-dismisses after the standard toast time; hovering pauses the
+/// countdown.
+class _ActivityPopup extends ConsumerStatefulWidget {
   final LayerLink link;
 
-  const _RecentInstallPopup({required this.link});
+  const _ActivityPopup({required this.link});
 
   @override
-  ConsumerState<_RecentInstallPopup> createState() =>
-      _RecentInstallPopupState();
+  ConsumerState<_ActivityPopup> createState() => _ActivityPopupState();
 }
 
-class _RecentInstallPopupState extends ConsumerState<_RecentInstallPopup>
+class _ActivityPopupState extends ConsumerState<_ActivityPopup>
     with SingleTickerProviderStateMixin {
   late final AnimationController _countdown = AnimationController(vsync: this)
     ..addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
         ref.read(recentInstallPopupProvider.notifier).clear();
+        ref.read(activityStartedPopupProvider.notifier).clear();
       }
     });
 
@@ -283,15 +299,30 @@ class _RecentInstallPopupState extends ConsumerState<_RecentInstallPopup>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final entries = ref.watch(recentInstallPopupProvider);
+    final activityStarts = ref.watch(activityStartedPopupProvider);
+    final downloads = activityStarts > 0
+        ? _inProgressDownloads(ref.watch(downloadManager).value ?? [])
+        : const <Download>[];
+    // Local archives skip the download step, so only say "Downloading" when
+    // something is actually still coming down the wire.
+    final isDownloading = downloads.any(
+      (d) => !d.task.status.value.isCompleted,
+    );
 
-    // Restart the countdown when another install lands while the popup is up.
+    // Restart the countdown when another install or download lands while the
+    // popup is up.
     ref.listen<List<ActivityEntry>>(recentInstallPopupProvider, (prev, next) {
       if (next.length > (prev?.length ?? 0) && !_hovering) {
         _countdown.forward(from: 0);
       }
     });
+    ref.listen<int>(activityStartedPopupProvider, (prev, next) {
+      if (next > (prev ?? 0) && !_hovering) {
+        _countdown.forward(from: 0);
+      }
+    });
 
-    if (entries.isEmpty) return const SizedBox.shrink();
+    if (entries.isEmpty && downloads.isEmpty) return const SizedBox.shrink();
 
     final mods = ref.watch(AppState.mods);
     final enableable = <Mod>[];
@@ -344,7 +375,11 @@ class _RecentInstallPopupState extends ConsumerState<_RecentInstallPopup>
                       children: [
                         Expanded(
                           child: Text(
-                            entries.length == 1
+                            entries.isEmpty
+                                ? (isDownloading
+                                      ? 'Downloading...'
+                                      : 'Installing...')
+                                : entries.length == 1
                                 ? 'Mod installed'
                                 : 'Mods installed',
                             style: theme.textTheme.bodyMedium?.copyWith(
@@ -380,6 +415,12 @@ class _RecentInstallPopupState extends ConsumerState<_RecentInstallPopup>
                       ],
                     ),
                   ),
+                  for (final d in downloads)
+                    InProgressActivityTile(
+                      download: d,
+                      onCancel: () =>
+                          ref.read(downloadManager.notifier).cancelDownload(d),
+                    ),
                   for (final entry in entries)
                     CompletedActivityTile(
                       entry: entry,

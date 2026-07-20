@@ -20,6 +20,7 @@ import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/ship_viewer/widgets/ship_details_dialog.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_details_dialog.dart';
@@ -119,6 +120,9 @@ class CodexDetailPanel extends ConsumerWidget {
         child: FactionCard(
           faction: faction,
           gameCoreDir: ref.watch(AppState.gameCoreFolder).valueOrNull,
+          onlyEnabledMods: ref.watch(
+            appSettings.select((s) => s.codexEnabledModsOnly),
+          ),
           onTap: () {},
         ),
       ),
@@ -192,10 +196,14 @@ class CodexDetailPanel extends ConsumerWidget {
         return () => showHullmodDetailsDialog(context, hullmod);
       case FactionCodexEntry(:final faction):
         final gameCoreDir = ref.read(AppState.gameCoreFolder).valueOrNull;
+        final onlyEnabledMods = ref.read(appSettings).codexEnabledModsOnly;
         return () => showDialog(
           context: context,
-          builder: (_) =>
-              FactionProfileDialog(faction: faction, gameCoreDir: gameCoreDir),
+          builder: (_) => FactionProfileDialog(
+            faction: faction,
+            gameCoreDir: gameCoreDir,
+            onlyEnabledMods: onlyEnabledMods,
+          ),
         );
       case WingCodexEntry():
       case ShipSystemCodexEntry():

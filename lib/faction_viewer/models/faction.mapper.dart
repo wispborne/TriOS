@@ -1500,3 +1500,184 @@ class _SourceContributionCopyWithImpl<$R, $Out>
   ) => _SourceContributionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
+class FactionFileDataMapper extends ClassMapperBase<FactionFileData> {
+  FactionFileDataMapper._();
+
+  static FactionFileDataMapper? _instance;
+  static FactionFileDataMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = FactionFileDataMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'FactionFileData';
+
+  static String _$mergeKey(FactionFileData v) => v.mergeKey;
+  static const Field<FactionFileData, String> _f$mergeKey = Field(
+    'mergeKey',
+    _$mergeKey,
+  );
+  static String _$sourceName(FactionFileData v) => v.sourceName;
+  static const Field<FactionFileData, String> _f$sourceName = Field(
+    'sourceName',
+    _$sourceName,
+  );
+  static String? _$sourceSmolId(FactionFileData v) => v.sourceSmolId;
+  static const Field<FactionFileData, String> _f$sourceSmolId = Field(
+    'sourceSmolId',
+    _$sourceSmolId,
+  );
+  static bool _$registersFaction(FactionFileData v) => v.registersFaction;
+  static const Field<FactionFileData, bool> _f$registersFaction = Field(
+    'registersFaction',
+    _$registersFaction,
+  );
+  static Map<String, dynamic> _$json(FactionFileData v) => v.json;
+  static const Field<FactionFileData, Map<String, dynamic>> _f$json = Field(
+    'json',
+    _$json,
+  );
+
+  @override
+  final MappableFields<FactionFileData> fields = const {
+    #mergeKey: _f$mergeKey,
+    #sourceName: _f$sourceName,
+    #sourceSmolId: _f$sourceSmolId,
+    #registersFaction: _f$registersFaction,
+    #json: _f$json,
+  };
+
+  static FactionFileData _instantiate(DecodingData data) {
+    return FactionFileData(
+      mergeKey: data.dec(_f$mergeKey),
+      sourceName: data.dec(_f$sourceName),
+      sourceSmolId: data.dec(_f$sourceSmolId),
+      registersFaction: data.dec(_f$registersFaction),
+      json: data.dec(_f$json),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static FactionFileData fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<FactionFileData>(map);
+  }
+
+  static FactionFileData fromJson(String json) {
+    return ensureInitialized().decodeJson<FactionFileData>(json);
+  }
+}
+
+mixin FactionFileDataMappable {
+  String toJson() {
+    return FactionFileDataMapper.ensureInitialized()
+        .encodeJson<FactionFileData>(this as FactionFileData);
+  }
+
+  Map<String, dynamic> toMap() {
+    return FactionFileDataMapper.ensureInitialized().encodeMap<FactionFileData>(
+      this as FactionFileData,
+    );
+  }
+
+  FactionFileDataCopyWith<FactionFileData, FactionFileData, FactionFileData>
+  get copyWith =>
+      _FactionFileDataCopyWithImpl<FactionFileData, FactionFileData>(
+        this as FactionFileData,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return FactionFileDataMapper.ensureInitialized().stringifyValue(
+      this as FactionFileData,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return FactionFileDataMapper.ensureInitialized().equalsValue(
+      this as FactionFileData,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return FactionFileDataMapper.ensureInitialized().hashValue(
+      this as FactionFileData,
+    );
+  }
+}
+
+extension FactionFileDataValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, FactionFileData, $Out> {
+  FactionFileDataCopyWith<$R, FactionFileData, $Out> get $asFactionFileData =>
+      $base.as((v, t, t2) => _FactionFileDataCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class FactionFileDataCopyWith<$R, $In extends FactionFileData, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>
+  get json;
+  $R call({
+    String? mergeKey,
+    String? sourceName,
+    String? sourceSmolId,
+    bool? registersFaction,
+    Map<String, dynamic>? json,
+  });
+  FactionFileDataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _FactionFileDataCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, FactionFileData, $Out>
+    implements FactionFileDataCopyWith<$R, FactionFileData, $Out> {
+  _FactionFileDataCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<FactionFileData> $mapper =
+      FactionFileDataMapper.ensureInitialized();
+  @override
+  MapCopyWith<$R, String, dynamic, ObjectCopyWith<$R, dynamic, dynamic>?>
+  get json => MapCopyWith(
+    $value.json,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(json: v),
+  );
+  @override
+  $R call({
+    String? mergeKey,
+    String? sourceName,
+    Object? sourceSmolId = $none,
+    bool? registersFaction,
+    Map<String, dynamic>? json,
+  }) => $apply(
+    FieldCopyWithData({
+      if (mergeKey != null) #mergeKey: mergeKey,
+      if (sourceName != null) #sourceName: sourceName,
+      if (sourceSmolId != $none) #sourceSmolId: sourceSmolId,
+      if (registersFaction != null) #registersFaction: registersFaction,
+      if (json != null) #json: json,
+    }),
+  );
+  @override
+  FactionFileData $make(CopyWithData data) => FactionFileData(
+    mergeKey: data.get(#mergeKey, or: $value.mergeKey),
+    sourceName: data.get(#sourceName, or: $value.sourceName),
+    sourceSmolId: data.get(#sourceSmolId, or: $value.sourceSmolId),
+    registersFaction: data.get(#registersFaction, or: $value.registersFaction),
+    json: data.get(#json, or: $value.json),
+  );
+
+  @override
+  FactionFileDataCopyWith<$R2, FactionFileData, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _FactionFileDataCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+

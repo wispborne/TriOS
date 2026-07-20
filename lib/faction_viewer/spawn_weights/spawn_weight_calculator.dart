@@ -146,10 +146,16 @@ class SpawnWeightContext {
 
 /// Combat-role summary for every faction. Drives the card bar and the grid
 /// column, so it only walks the combat roles.
+///
+/// The flag is "only enabled mods": with it on, weights added by mods that
+/// aren't enabled are left out.
 final factionSpawnSummariesProvider =
-    Provider<Map<String, FactionSpawnSummary>>((ref) {
-      final factions = ref.watch(factionListNotifierProvider).value ?? const [];
-      final context = ref.watch(_spawnWeightContextProvider);
+    Provider.family<Map<String, FactionSpawnSummary>, bool>((
+      ref,
+      onlyEnabledMods,
+    ) {
+      final factions = ref.watch(mergedFactionListProvider(onlyEnabledMods));
+      final context = ref.watch(_spawnWeightContextProvider(onlyEnabledMods));
       if (context == null) return const {};
 
       return {
@@ -160,13 +166,21 @@ final factionSpawnSummariesProvider =
 
 /// Every role for one faction. Used by the detail view and the dialog.
 final factionSpawnWeightsProvider =
-    Provider.family<FactionSpawnWeights, String>((ref, mergeKey) {
-      final factions = ref.watch(factionListNotifierProvider).value ?? const [];
+    Provider.family<
+      FactionSpawnWeights,
+      ({String mergeKey, bool onlyEnabledMods})
+    >((ref, key) {
+      final mergeKey = key.mergeKey;
+      final factions = ref.watch(
+        mergedFactionListProvider(key.onlyEnabledMods),
+      );
       final faction = factions.firstWhere(
         (f) => f.mergeKey == mergeKey,
         orElse: () => Faction(mergeKey: mergeKey, id: mergeKey, displayName: ''),
       );
-      final context = ref.watch(_spawnWeightContextProvider);
+      final context = ref.watch(
+        _spawnWeightContextProvider(key.onlyEnabledMods),
+      );
       if (context == null) return FactionSpawnWeights.empty;
 
       final roleNames = <String>{
@@ -195,12 +209,16 @@ final factionSpawnWeightsProvider =
 /// False until the ship list and merged role data have loaded. The summaries
 /// are empty until this flips true, so the UI shows "calculating" rather than
 /// a misleading empty result.
-final spawnWeightsReadyProvider = Provider<bool>(
-  (ref) => ref.watch(_spawnWeightContextProvider) != null,
+final spawnWeightsReadyProvider = Provider.family<bool, bool>(
+  (ref, onlyEnabledMods) =>
+      ref.watch(_spawnWeightContextProvider(onlyEnabledMods)) != null,
 );
 
-final _spawnWeightContextProvider = Provider<SpawnWeightContext?>((ref) {
-  final defaults = ref.watch(mergedShipRolesProvider).value;
+final _spawnWeightContextProvider =
+    Provider.family<SpawnWeightContext?, bool>((ref, onlyEnabledMods) {
+  final defaults = ref.watch(mergedShipRolesProvider(onlyEnabledMods)).value;
+  // The ship list stays unfiltered: it only resolves names and sizes for ids
+  // the (already filtered) faction data asks about.
   final ships = ref.watch(shipListNotifierProvider).value;
   final variantHullIds = ref.watch(variantHullIdMapProvider);
   if (defaults == null || ships == null || variantHullIds.isEmpty) return null;

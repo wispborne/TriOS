@@ -21,55 +21,43 @@ import 'package:trios/viewer_cache/cached_variant_store.dart';
 final isLoadingFactionsList = StateProvider<bool>((ref) => false);
 final isFactionsListDirty = StateProvider<bool>((ref) => false);
 
+/// The raw `.faction` files from vanilla and every installed mod. Read
+/// [mergedFactionListProvider] for usable factions.
 final factionListNotifierProvider =
-    StreamNotifierProvider<FactionListNotifier, List<Faction>>(
+    StreamNotifierProvider<FactionListNotifier, List<FactionFileData>>(
       FactionListNotifier.new,
     );
 
-/// Holds the raw parsed JSON for each faction ID, used for mod merging.
-/// Key: faction ID, Value: {json, attributions, sources}.
-final _vanillaFactionJsonCache = <String, _ParsedFactionJson>{};
+/// Name used for game-core data, matching `ship_roles_manager.dart` so
+/// attributions from both can be compared by name.
+const String _vanillaSourceName = 'Vanilla';
 
-/// Maps faction ID → the payload list that first introduced it, so merges
-/// update in-place and the base class's first-occurrence-wins dedup picks
-/// up the latest merged version.
-final _factionListOwnership = <String, List<Faction>>{};
+/// Key standing in for vanilla when grouping files by their source mod.
+const String _vanillaSourceKey = '__vanilla__';
 
-class _ParsedFactionJson {
-  Map<String, dynamic> json;
-  Map<String, List<SourceContribution>> attributions;
-  Map<String, Map<String, String>> itemAttributions;
-  List<FactionSource> sources;
-
-  _ParsedFactionJson({
-    required this.json,
-    required this.attributions,
-    required this.itemAttributions,
-    required this.sources,
-  });
-}
-
+/// Scans every installed mod for `.faction` files and keeps them raw, one
+/// entry per file per mod. [mergedFactionListProvider] does the merging.
 class FactionListNotifier
-    extends CachedStreamListNotifier<Faction, FactionsCachePayload> {
+    extends CachedStreamListNotifier<FactionFileData, FactionsCachePayload> {
   @override
   String get domain => 'factions';
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   late final CachedVariantStore store =
       CachedVariantStore(domain, Constants.viewerCacheDirPath);
 
+  /// Two mods can both ship `hegemony.faction`, and we need to keep both, so
+  /// the id covers the source as well as the file.
   @override
-  String itemId(Faction item) => item.mergeKey;
+  String itemId(FactionFileData item) =>
+      '${item.sourceSmolId ?? _vanillaSourceKey}|${item.mergeKey}';
 
   @override
-  List<Faction> itemsFromPayload(FactionsCachePayload payload) =>
-      payload.factions;
-
-  @override
-  bool get providesItemContext => true;
+  List<FactionFileData> itemsFromPayload(FactionsCachePayload payload) =>
+      payload.files;
 
   @override
   Directory? get gameCorePath {
@@ -87,8 +75,6 @@ class FactionListNotifier
 
   @override
   void onBuildStart() {
-    _vanillaFactionJsonCache.clear();
-    _factionListOwnership.clear();
     ref.read(isLoadingFactionsList.notifier).state = true;
     ref.listen(AppState.smolIds, (previous, next) {
       ref.read(isFactionsListDirty.notifier).state = true;
@@ -105,43 +91,33 @@ class FactionListNotifier
   }
 
   @override
-  void rehydratePayload(
-    FactionsCachePayload payload,
-    ModVariant? sourceVariant,
-  ) {
-    // Factions don't store modVariant on the model directly since they
-    // can have multiple sources. Nothing to rehydrate.
-  }
-
-  @override
   Future<FactionsCachePayload?> parseVanilla(
     Directory gameCore,
-    List<Faction> allItemsSoFar,
+    List<FactionFileData> allItemsSoFar,
   ) async {
-    return _parseFactionFolder(gameCore, null, allItemsSoFar);
+    return _parseFactionFolder(gameCore, null);
   }
 
   @override
   Future<FactionsCachePayload?> parseVariant(
     ModVariant variant,
-    List<Faction> allItemsSoFar,
+    List<FactionFileData> allItemsSoFar,
   ) async {
-    return _parseFactionFolder(variant.modFolder, variant, allItemsSoFar);
+    return _parseFactionFolder(variant.modFolder, variant);
   }
 
   Future<FactionsCachePayload?> _parseFactionFolder(
     Directory folder,
     ModVariant? modVariant,
-    List<Faction> allItemsSoFar,
   ) async {
     final factionsDir = Directory(
       p.join(folder.path, 'data', 'world', 'factions'),
     );
     if (!await factionsDir.exists()) return null;
 
-    final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
+    final modName = modVariant?.modInfo.nameOrId ?? _vanillaSourceName;
     final sourceName = modName;
-    final factions = <Faction>[];
+    final files = <FactionFileData>[];
 
     // A faction only exists in-game if some source lists its file path in
     // factions.csv (merged across vanilla + mods). Sources with a matching
@@ -176,75 +152,15 @@ class FactionListNotifier
               .withoutExtension(p.relative(entity.path, from: factionsDir.path))
               .replaceAll('\\', '/');
 
-          final source = FactionSource(
-            name: sourceName,
-            modVariant: modVariant,
-            registersFaction: registeredKeys.contains(mergeKey.toLowerCase()),
-          );
-
-          // Check if this faction already exists (needs merging).
-          final existingCached = _vanillaFactionJsonCache[mergeKey];
-          if (existingCached != null) {
-            final mergeResult = mergeFactionJson(
-              base: existingCached.json,
-              overlay: factionData,
+          files.add(
+            FactionFileData(
+              mergeKey: mergeKey,
               sourceName: sourceName,
-              existingAttributions: existingCached.attributions,
-              existingItemAttributions: existingCached.itemAttributions,
-            );
-
-            existingCached.json = mergeResult.merged;
-            existingCached.attributions = mergeResult.attributions;
-            existingCached.itemAttributions = mergeResult.itemAttributions;
-            existingCached.sources = [...existingCached.sources, source];
-
-            final merged = _buildFactionFromJson(
-              mergeKey,
-              mergeResult.merged,
-              existingCached.sources,
-              mergeResult.attributions,
-              mergeResult.itemAttributions,
-            );
-
-            // Update the faction in the payload that first introduced it,
-            // so the base class's first-occurrence-wins dedup sees the
-            // latest merged version.
-            final ownerList = _factionListOwnership[mergeKey];
-            if (ownerList != null) {
-              final idx = ownerList.indexWhere((f) => f.mergeKey == mergeKey);
-              if (idx >= 0) {
-                ownerList[idx] = merged;
-              } else {
-                factions.add(merged);
-              }
-            } else {
-              factions.add(merged);
-            }
-          } else {
-            // New faction — build initial attributions from array lengths.
-            final attributions = <String, List<SourceContribution>>{};
-            final itemAttrs = <String, Map<String, String>>{};
-            _initAttributions(
-              factionData, sourceName, attributions, itemAttrs, '',
-            );
-
-            _vanillaFactionJsonCache[mergeKey] = _ParsedFactionJson(
+              sourceSmolId: modVariant?.smolId,
+              registersFaction: registeredKeys.contains(mergeKey.toLowerCase()),
               json: factionData,
-              attributions: attributions,
-              itemAttributions: itemAttrs,
-              sources: [source],
-            );
-
-            final faction = _buildFactionFromJson(
-              mergeKey,
-              factionData,
-              [source],
-              attributions,
-              itemAttrs,
-            );
-            factions.add(faction);
-            _factionListOwnership[mergeKey] = factions;
-          }
+            ),
+          );
         } catch (e, st) {
           Fimber.w(
             '[$modName] Error parsing faction file ${entity.path}: $e',
@@ -257,14 +173,14 @@ class FactionListNotifier
       Fimber.w('Error scanning factions in ${folder.path}: $e');
     }
 
-    if (factions.isEmpty) return null;
-    return FactionsCachePayload(factions: factions);
+    if (files.isEmpty) return null;
+    return FactionsCachePayload(files: files);
   }
 
   @override
   Uint8List encodePayload(FactionsCachePayload payload) {
     final map = <String, dynamic>{
-      'factions': payload.factions.map((f) => f.toMap()).toList(),
+      'files': payload.files.map((f) => f.toMap()).toList(),
     };
     return msgpack.serialize(map);
   }
@@ -274,18 +190,153 @@ class FactionListNotifier
     final raw = CachedStreamListNotifier.normalizeForMapper(
       msgpack.deserialize(bytes),
     ) as Map<String, dynamic>;
-    final factionMaps =
-        (raw['factions'] as List).cast<Map<String, dynamic>>();
-    final factions = <Faction>[];
-    for (final map in factionMaps) {
+    final fileMaps = (raw['files'] as List).cast<Map<String, dynamic>>();
+    final files = <FactionFileData>[];
+    for (final map in fileMaps) {
       try {
-        factions.add(FactionMapper.fromMap(map));
+        files.add(FactionFileDataMapper.fromMap(map));
       } catch (e) {
-        Fimber.w('Error decoding cached faction: $e');
+        Fimber.w('Error decoding cached faction file: $e');
       }
     }
-    return FactionsCachePayload(factions: factions);
+    return FactionsCachePayload(files: files);
   }
+}
+
+/// Factions built by merging the raw files, in the game's load order.
+///
+/// With [onlyEnabledMods] on, files from mods that aren't enabled are left
+/// out, so ship lists, doctrine numbers, and spawn weights match what the game
+/// would actually do with the current setup. Vanilla is always included.
+///
+/// Merging here rather than during the scan means flipping the toggle is
+/// instant: the scan and its cache hold every installed mod either way.
+final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
+  ref,
+  onlyEnabledMods,
+) {
+  final files = ref.watch(factionListNotifierProvider).valueOrNull ?? const [];
+  if (files.isEmpty) return const [];
+  final mods = ref.watch(AppState.mods);
+
+  final filesBySource = <String, List<FactionFileData>>{};
+  for (final file in files) {
+    filesBySource
+        .putIfAbsent(file.sourceSmolId ?? _vanillaSourceKey, () => [])
+        .add(file);
+  }
+
+  // Later files overwrite earlier ones, so walk the sources the way the game
+  // loads them: vanilla, then mods in load order.
+  final orderedSources =
+      <({List<FactionFileData> files, ModVariant? variant, bool enabled})>[
+        (
+          files: filesBySource[_vanillaSourceKey] ?? const [],
+          variant: null,
+          enabled: true,
+        ),
+        for (final variant in mods
+            .map((mod) => mod.findFirstEnabledOrHighestVersion)
+            .nonNulls
+            .sortedByGameLoadOrder())
+          if (filesBySource[variant.smolId] case final variantFiles?)
+            (
+              files: variantFiles,
+              variant: variant,
+              enabled: variant.mod(mods)?.hasEnabledVariant == true,
+            ),
+      ];
+
+  // Which factions any installed mod claims to add, enabled or not. Used below
+  // to tell "nobody owns this file" apart from "a disabled mod owns it".
+  final registeredByAnySource = <String>{
+    for (final file in files)
+      if (file.registersFaction) file.mergeKey,
+  };
+
+  final merging = <String, _MergingFaction>{};
+  for (final source in orderedSources) {
+    if (onlyEnabledMods && !source.enabled) continue;
+
+    for (final file in source.files) {
+      final factionSource = FactionSource(
+        name: file.sourceName,
+        modVariant: source.variant,
+        registersFaction: file.registersFaction,
+      );
+
+      final existing = merging[file.mergeKey];
+      if (existing == null) {
+        final attributions = <String, List<SourceContribution>>{};
+        final itemAttributions = <String, Map<String, String>>{};
+        _initAttributions(
+          file.json,
+          file.sourceName,
+          attributions,
+          itemAttributions,
+          '',
+        );
+        merging[file.mergeKey] = _MergingFaction(
+          json: file.json,
+          attributions: attributions,
+          itemAttributions: itemAttributions,
+          sources: [factionSource],
+        );
+      } else {
+        final result = mergeFactionJson(
+          base: existing.json,
+          overlay: file.json,
+          sourceName: file.sourceName,
+          existingAttributions: existing.attributions,
+          existingItemAttributions: existing.itemAttributions,
+        );
+        existing.json = result.merged;
+        existing.attributions = result.attributions;
+        existing.itemAttributions = result.itemAttributions;
+        existing.sources.add(factionSource);
+      }
+    }
+  }
+
+  final factions = <Faction>[];
+  for (final entry in merging.entries) {
+    final merged = entry.value;
+
+    // A faction is only in the game if some source lists it in factions.csv.
+    // If the only sources that did are mods we left out, the faction isn't
+    // there either. Files nobody claims are kept — the owner is unknown, not
+    // known-to-be-disabled.
+    if (registeredByAnySource.contains(entry.key) &&
+        !merged.sources.any((s) => s.registersFaction)) {
+      continue;
+    }
+
+    factions.add(
+      _buildFactionFromJson(
+        entry.key,
+        merged.json,
+        merged.sources,
+        merged.attributions,
+        merged.itemAttributions,
+      ),
+    );
+  }
+  return factions;
+});
+
+/// One faction's data part-way through the merge.
+class _MergingFaction {
+  Map<String, dynamic> json;
+  Map<String, List<SourceContribution>> attributions;
+  Map<String, Map<String, String>> itemAttributions;
+  final List<FactionSource> sources;
+
+  _MergingFaction({
+    required this.json,
+    required this.attributions,
+    required this.itemAttributions,
+    required this.sources,
+  });
 }
 
 Faction _buildFactionFromJson(

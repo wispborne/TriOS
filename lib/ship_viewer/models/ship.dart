@@ -8,6 +8,7 @@ import 'package:trios/ship_viewer/models/ship_engine_slot.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/game_data_merge.dart';
 
 part 'ship.mapper.dart';
 
@@ -102,8 +103,6 @@ class Ship with ShipMappable implements WispGridItem {
   final double? maxPieces;
   @MappableField(key: 'travel drive')
   final String? travelDrive;
-  @MappableField(hook: SafeDoubleHook())
-  final double? number;
 
   // Visual and gameplay data
   final List<double>? bounds;
@@ -149,6 +148,16 @@ class Ship with ShipMappable implements WispGridItem {
 
   @MappableField(hook: SkipSerializationHook())
   late ModVariant? modVariant;
+
+  /// The mod that supplied the `.ship` or `.skin` file (hull shape and sprite).
+  /// Can differ from [modVariant] when a mod overrides only the CSV row. Null
+  /// for vanilla or when no `.ship` file exists.
+  @MappableField(hook: SkipSerializationHook())
+  ModVariant? spriteModVariant;
+
+  /// Mod attribution for the details dialog. Rebuilt each load, not serialized.
+  @MappableField(hook: SkipSerializationHook())
+  ItemModSources? modSources;
 
   /// The ship_data.csv file this ship was loaded from.
   @MappableField(hook: FileHook())
@@ -205,7 +214,6 @@ class Ship with ShipMappable implements WispGridItem {
     this.minPieces,
     this.maxPieces,
     this.travelDrive,
-    this.number,
     this.bounds,
     this.center,
     this.collisionRadius,
@@ -296,7 +304,6 @@ class Ship with ShipMappable implements WispGridItem {
         'minPieces': minPieces,
         'maxPieces': maxPieces,
         'travelDrive': travelDrive,
-        'number': number,
         'center': center,
         'collisionRadius': collisionRadius,
         'height': height,

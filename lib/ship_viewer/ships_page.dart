@@ -147,7 +147,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       total: total,
       visible: visible,
       isLoading: controllerState.isLoading,
-      onRefresh: () => ref.invalidate(shipListNotifierProvider),
+      onRefresh: () => ref.invalidate(shipSourcesProvider),
       searchBox: SmartSearchBar(
         fields: controller.searchFieldsMeta,
         recentHistory: ref.watch(
@@ -566,7 +566,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         col('minPieces', 'Min Pieces', (s) => s.minPieces),
         col('maxPieces', 'Max Pieces', (s) => s.maxPieces),
         col('travelDrive', 'Travel Drive', (s) => s.travelDrive),
-        col('number', 'Number', (s) => s.number),
         col('style', 'Style', (s) => s.style?.toTitleCase()),
       ],
     ];
@@ -599,7 +598,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 _gridController!,
                 includeHeaders: true,
               ),
-              () => ref.read(shipListNotifierProvider.notifier).allShipsAsCsv(),
+              () => shipsAsCsv(
+                ref.read(shipListNotifierProvider).valueOrNull ?? const [],
+              ),
             );
           },
         ).toEntry(0),

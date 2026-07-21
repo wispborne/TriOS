@@ -5,13 +5,14 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 
 /// Pseudo-smolId used for vanilla slices. Vanilla has no ModVariant so we key
 /// its entry in `_slices` with this sentinel. Distinct from the on-disk
 /// `_vanilla.mp` path to keep in-memory bookkeeping independent of file names.
-const String _kVanillaSliceKey = '__vanilla__';
+const String _kVanillaSliceKey = kVanillaSourceKey;
 
 /// Generic cache-first streaming notifier for viewer lists.
 ///
@@ -30,9 +31,12 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// clobbering newer cache data.
   int _buildToken = 0;
 
-  /// Per-variant slices in insertion order. Vanilla is always first if
-  /// present. `_flatten()` walks this map to produce the yielded list.
+  /// Per-variant slices, keyed by smolId (or [_kVanillaSliceKey]). `_flatten()`
+  /// reads it in [_sources] order, so the insertion order here doesn't matter.
   final Map<String, P> _slices = <String, P>{};
+
+  /// Sources for this build, in load order (vanilla last). Set once per build.
+  List<MergeSource> _sources = const [MergeSource.vanilla];
 
   /// Parse diagnostics accumulated during the current build. Reset in
   /// `build()` and flushed to the logger in `onBuildComplete` by default.
@@ -93,6 +97,12 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// resolution. When false, the base class skips flattening the slice map
   /// before each parse call (saves O(total items) per variant on cold scan).
   bool get providesItemContext => false;
+
+  /// How often Phase 2 pushes an intermediate result during a fresh scan.
+  ///
+  /// Domains with an expensive downstream merge (ships, weapons, factions)
+  /// override this higher. The final result is always pushed regardless.
+  Duration get progressiveYieldInterval => const Duration(milliseconds: 500);
 
   /// Parse vanilla data. `allItemsSoFar` is the cache-seeded union available
   /// at the time of parse — used by ship skin resolution for cross-variant
@@ -167,6 +177,7 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
 
     final variants = resolveEnabledVariants();
     final enabledSmolIds = variants.map((v) => v.smolId).toSet();
+    _sources = orderedSources(variants);
 
     // ── Phase 1: parallel cache read ──────────────────────────────────────
     final cacheStart = DateTime.now();
@@ -224,7 +235,7 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
 
     // ── Phase 2: fresh scan, progressive replacement ─────────────────────
     final scanStart = DateTime.now();
-    const yieldInterval = Duration(milliseconds: 500);
+    final yieldInterval = progressiveYieldInterval;
     var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
     var freshCount = 0;
     var fullScanCompleted = false;
@@ -387,16 +398,12 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     }
   }
 
-  /// Flatten `_slices` in insertion order with first-occurrence-wins dedup
-  /// by `itemId`. Matches today's `distinctBy` semantics.
-  List<T> _flatten() {
-    final seen = <String>{};
-    final out = <T>[];
-    for (final payload in _slices.values) {
-      for (final item in itemsFromPayload(payload)) {
-        if (seen.add(itemId(item))) out.add(item);
-      }
-    }
-    return out;
-  }
+  /// Flattens `_slices` into one list using `mergeById`. Loaders with
+  /// source-qualified `itemId` (factions, weapons, ships) keep every copy
+  /// through the scan and merge on raw data afterwards.
+  List<T> _flatten() => mergeById<T>([
+    for (final source in _sources)
+      if (_slices[source.key] case final payload?)
+        (source: source, items: itemsFromPayload(payload)),
+  ], itemId);
 }

@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
-import 'package:trios/faction_viewer/faction_merge.dart';
 import 'package:trios/faction_viewer/factions_csv.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
 import 'package:trios/faction_viewer/models/factions_cache_payload.dart';
@@ -14,6 +13,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
@@ -27,13 +27,6 @@ final factionListNotifierProvider =
     StreamNotifierProvider<FactionListNotifier, List<FactionFileData>>(
       FactionListNotifier.new,
     );
-
-/// Name used for game-core data, matching `ship_roles_manager.dart` so
-/// attributions from both can be compared by name.
-const String _vanillaSourceName = 'Vanilla';
-
-/// Key standing in for vanilla when grouping files by their source mod.
-const String _vanillaSourceKey = '__vanilla__';
 
 /// Scans every installed mod for `.faction` files and keeps them raw, one
 /// entry per file per mod. [mergedFactionListProvider] does the merging.
@@ -49,11 +42,15 @@ class FactionListNotifier
   late final CachedVariantStore store =
       CachedVariantStore(domain, Constants.viewerCacheDirPath);
 
+  /// Longer interval because the downstream merge is expensive.
+  @override
+  Duration get progressiveYieldInterval => const Duration(seconds: 3);
+
   /// Two mods can both ship `hegemony.faction`, and we need to keep both, so
   /// the id covers the source as well as the file.
   @override
   String itemId(FactionFileData item) =>
-      '${item.sourceSmolId ?? _vanillaSourceKey}|${item.mergeKey}';
+      '${item.sourceSmolId ?? kVanillaSourceKey}|${item.mergeKey}';
 
   @override
   List<FactionFileData> itemsFromPayload(FactionsCachePayload payload) =>
@@ -115,7 +112,7 @@ class FactionListNotifier
     );
     if (!await factionsDir.exists()) return null;
 
-    final modName = modVariant?.modInfo.nameOrId ?? _vanillaSourceName;
+    final modName = modVariant?.modInfo.nameOrId ?? kVanillaSourceName;
     final sourceName = modName;
     final files = <FactionFileData>[];
 
@@ -222,30 +219,30 @@ final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
   final filesBySource = <String, List<FactionFileData>>{};
   for (final file in files) {
     filesBySource
-        .putIfAbsent(file.sourceSmolId ?? _vanillaSourceKey, () => [])
+        .putIfAbsent(file.sourceSmolId ?? kVanillaSourceKey, () => [])
         .add(file);
   }
 
-  // Later files overwrite earlier ones, so walk the sources the way the game
-  // loads them: vanilla, then mods in load order.
-  final orderedSources =
-      <({List<FactionFileData> files, ModVariant? variant, bool enabled})>[
-        (
-          files: filesBySource[_vanillaSourceKey] ?? const [],
-          variant: null,
-          enabled: true,
-        ),
-        for (final variant in mods
-            .map((mod) => mod.findFirstEnabledOrHighestVersion)
-            .nonNulls
-            .sortedByGameLoadOrder())
-          if (filesBySource[variant.smolId] case final variantFiles?)
-            (
-              files: variantFiles,
-              variant: variant,
-              enabled: variant.mod(mods)?.hasEnabledVariant == true,
-            ),
-      ];
+  final variants = mods
+      .map((mod) => mod.findFirstEnabledOrHighestVersion)
+      .nonNulls
+      .where(
+        (variant) =>
+            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
+      );
+
+  // Hand each source's scanned files to `mergeFactions` in load order.
+  final sources = orderedSources(variants);
+  final merged = mergeFactions([
+    for (final source in sources)
+      (
+        source: source,
+        filesByPath: {
+          for (final file in filesBySource[source.key] ?? const [])
+            file.mergeKey: file.json,
+        },
+      ),
+  ]);
 
   // Which factions any installed mod claims to add, enabled or not. Used below
   // to tell "nobody owns this file" apart from "a disabled mod owns it".
@@ -254,90 +251,54 @@ final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
       if (file.registersFaction) file.mergeKey,
   };
 
-  final merging = <String, _MergingFaction>{};
-  for (final source in orderedSources) {
-    if (onlyEnabledMods && !source.enabled) continue;
-
-    for (final file in source.files) {
-      final factionSource = FactionSource(
-        name: file.sourceName,
-        modVariant: source.variant,
-        registersFaction: file.registersFaction,
-      );
-
-      final existing = merging[file.mergeKey];
-      if (existing == null) {
-        final attributions = <String, List<SourceContribution>>{};
-        final itemAttributions = <String, Map<String, String>>{};
-        _initAttributions(
-          file.json,
-          file.sourceName,
-          attributions,
-          itemAttributions,
-          '',
-        );
-        merging[file.mergeKey] = _MergingFaction(
-          json: file.json,
-          attributions: attributions,
-          itemAttributions: itemAttributions,
-          sources: [factionSource],
-        );
-      } else {
-        final result = mergeFactionJson(
-          base: existing.json,
-          overlay: file.json,
-          sourceName: file.sourceName,
-          existingAttributions: existing.attributions,
-          existingItemAttributions: existing.itemAttributions,
-        );
-        existing.json = result.merged;
-        existing.attributions = result.attributions;
-        existing.itemAttributions = result.itemAttributions;
-        existing.sources.add(factionSource);
-      }
-    }
-  }
+  // Source key + file path → does that source's copy register the faction.
+  final registers = <String, bool>{
+    for (final file in files)
+      '${file.sourceSmolId ?? kVanillaSourceKey}|${file.mergeKey}':
+          file.registersFaction,
+  };
 
   final factions = <Faction>[];
-  for (final entry in merging.entries) {
-    final merged = entry.value;
+  for (final entry in merged.entries) {
+    final mergeKey = entry.key;
+    final result = entry.value;
+
+    final factionSources = [
+      for (final source in result.contributors)
+        FactionSource(
+          name: source.name,
+          modVariant: source.variant,
+          registersFaction: registers['${source.key}|$mergeKey'] ?? false,
+        ),
+    ];
 
     // A faction is only in the game if some source lists it in factions.csv.
     // If the only sources that did are mods we left out, the faction isn't
     // there either. Files nobody claims are kept — the owner is unknown, not
     // known-to-be-disabled.
-    if (registeredByAnySource.contains(entry.key) &&
-        !merged.sources.any((s) => s.registersFaction)) {
+    if (registeredByAnySource.contains(mergeKey) &&
+        !factionSources.any((s) => s.registersFaction)) {
       continue;
     }
 
     factions.add(
       _buildFactionFromJson(
-        entry.key,
-        merged.json,
-        merged.sources,
-        merged.attributions,
-        merged.itemAttributions,
+        mergeKey,
+        result.merged,
+        factionSources,
+        {
+          for (final e in result.sectionAttributions.entries)
+            e.key: [
+              for (final c in e.value)
+                SourceContribution(source: c.source, count: c.count),
+            ],
+        },
+        result.itemAttributions,
       ),
     );
   }
   return factions;
 });
-
-/// One faction's data part-way through the merge.
-class _MergingFaction {
-  Map<String, dynamic> json;
-  Map<String, List<SourceContribution>> attributions;
-  Map<String, Map<String, String>> itemAttributions;
-  final List<FactionSource> sources;
-
-  _MergingFaction({
-    required this.json,
-    required this.attributions,
-    required this.itemAttributions,
-    required this.sources,
-  });
-}
 
 Faction _buildFactionFromJson(
   String mergeKey,
@@ -424,56 +385,6 @@ Faction _buildFactionFromJson(
     sectionAttributions: attributions,
     itemAttributions: itemAttributions,
   );
-}
-
-void _initAttributions(
-  Map<String, dynamic> data,
-  String sourceName,
-  Map<String, List<SourceContribution>> attributions,
-  Map<String, Map<String, String>> itemAttributions,
-  String prefix,
-) {
-  for (final entry in data.entries) {
-    final fullKey = prefix.isEmpty ? entry.key : '$prefix.${entry.key}';
-    final value = entry.value;
-    if (value is List && !_isColorKey(entry.key)) {
-      final items = value.where((e) => e != 'core_clearArray');
-      final count = items.length;
-      if (count > 0) {
-        attributions[fullKey] = [
-          SourceContribution(source: sourceName, count: count),
-        ];
-        final perItem = <String, String>{};
-        for (final item in items) {
-          if (item is String) {
-            perItem[item] = sourceName;
-          }
-        }
-        if (perItem.isNotEmpty) {
-          itemAttributions[fullKey] = perItem;
-        }
-      }
-    } else if (value is Map<String, dynamic> &&
-        entry.key.toLowerCase() != 'music') {
-      _initAttributions(
-        value, sourceName, attributions, itemAttributions, fullKey,
-      );
-    } else if (value is! Map && value is! List) {
-      // Scalars are attributed to whoever wrote them last; for the first file
-      // that's this source. Recorded under the parent section, matching
-      // faction_merge.dart.
-      itemAttributions.putIfAbsent(prefix, () => {})[entry.key] = sourceName;
-    }
-  }
-}
-
-bool _isColorKey(String key) {
-  final lower = key.toLowerCase();
-  return lower == 'color' ||
-      lower == 'baseuicolor' ||
-      lower == 'darkuicolor' ||
-      lower == 'griduicolor' ||
-      lower == 'brightuicolor';
 }
 
 List<String> _stringList(dynamic value) {

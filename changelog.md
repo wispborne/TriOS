@@ -8,11 +8,13 @@
     - Mod pop-ups show that same summary at the top. You can turn it off in the Catalog menu.
   - Faction Viewer: fleet weights are now shown, giving an overview of which mods are adding ships to fleets.
   - Faction Viewer: now shows which mod added each faction, separate from mods that only modify it.
+  - Ship and weapon details now show which mods change them: which mod's stats the game uses, which mod supplies the ship or weapon file, and a hover breakdown of what each other mod changed.
   - Popup when a download or install starts.
   - Missing dependencies now have buttons to install or find them.
   - 'Last Updated' column on the Mods page.
   - More background effects (Settings - Theme Modifiers).
 - Fixed
+  - Ships/weapons/etc with stats should now reflect any mods' changes to those stats.
   - Deep links now correctly check for already-installed mods on app cold starts.
   - Catalog: mods now show as "Installed" even when the mod's real name differs from the name in the catalog (e.g. "Ashpad" installs as "Aashpad").
   - Large Google Drive files now download correctly instead of failing with "archive not supported".

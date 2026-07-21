@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
+import 'package:trios/widgets/merge_mod_sources_view.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 
@@ -167,10 +168,14 @@ Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
       const SizedBox(height: 8),
       WeaponCodexCard.create(weapon: w, showTitle: false, useAbbreviations: false),
       Divider(color: Theme.of(context).colorScheme.outline),
-      _kv(
-        w.modVariant != null ? 'Mod' : null,
-        w.modVariant?.modInfo.nameOrId ?? 'Vanilla',
-        theme,
+      Padding(
+        padding: const .only(bottom: 8),
+        child: mergeModSourcesView(
+          w.modSources,
+          theme,
+          fileLabel: 'Weapon file',
+          fallbackName: w.modVariant?.modInfo.nameOrId ?? 'Vanilla',
+        ),
       ),
       _kv('Type', w.weaponType?.toTitleCase(), theme),
       _kv('Size', w.size?.toTitleCase(), theme),
@@ -241,7 +246,6 @@ Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
           _chip('Tier', _fmtNum(w.tier)),
           _chip('Rarity', _fmtNum(w.rarity)),
           _chip('Base Value', w.baseValue.asCredits()),
-          if (w.number != null) _chip('Number', _fmtNum(w.number)),
           if (w.noDPSInTooltip == true) _chip('No DPS In Tooltip', 'Yes'),
           if ((w.hints ?? '').isNotEmpty) _chip('Hints', w.hints!),
           if ((w.tags ?? '').isNotEmpty) _chip('Tags', w.tags!),

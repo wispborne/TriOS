@@ -63,8 +63,10 @@ class ModInfo with ModInfoMappable {
 
   String get nameOrId => name ?? id;
 
-  /// What the game sorts on when deciding mod load order.
-  String get loadOrderKey => sortString ?? nameOrId;
+  /// Load-order sort key. Empty `sortString` falls back to name (matching the
+  /// game).
+  String get loadOrderKey =>
+      (sortString == null || sortString!.isEmpty) ? nameOrId : sortString!;
 
   String get formattedNameVersionId =>
       "$name${version != null ? " $version" : ""}${" ($id)"}";

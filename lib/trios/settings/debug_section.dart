@@ -532,7 +532,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               context: ref.read(AppState.appContext)!,
               content: Text(
                 ref
-                        .refresh(weaponListNotifierProvider)
+                        .refresh(weaponSourcesProvider)
                         .value
                         ?.toString() ??
                     "weh",
@@ -552,7 +552,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     context: ref.read(AppState.appContext)!,
                     content: Text(
                       ref
-                              .refresh(shipListNotifierProvider)
+                              .refresh(shipSourcesProvider)
                               .value
                               ?.toString() ??
                           "weh",

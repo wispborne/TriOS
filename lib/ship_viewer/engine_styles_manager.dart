@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,47 +6,57 @@ import 'package:trios/ship_viewer/models/ship_engine_style_spec.dart';
 import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
 
 /// Merged `engine_styles.json` from the game core plus every enabled mod,
-/// keyed by style id (e.g. `HIGH_TECH`). Later folders override earlier ones,
-/// matching how Starsector merges config across mods.
+/// keyed by style id (e.g. `HIGH_TECH`). Deep-merged field by field, so a mod
+/// that sets one field of a style keeps the rest of vanilla's values.
 final engineStylesProvider = FutureProvider<Map<String, EngineStyleSpec>>((
   ref,
 ) async {
-  final result = <String, EngineStyleSpec>{};
-
-  final folders = <Directory>[];
   final core = ref.watch(AppState.gameCoreFolder).value;
-  if (core != null && core.path.isNotEmpty) folders.add(core);
-  for (final mod in ref.watch(AppState.mods)) {
-    final variant = mod.findFirstEnabledOrHighestVersion;
-    if (variant != null) folders.add(variant.modFolder);
-  }
+  final variants = ref
+      .watch(AppState.mods)
+      .map((mod) => mod.findFirstEnabledOrHighestVersion)
+      .nonNulls;
 
-  for (final folder in folders) {
+  final jsonSources = <SourceJson>[];
+  for (final source in orderedSources(variants)) {
+    final folder = source.isVanilla ? core : source.variant!.modFolder;
+    if (folder == null || folder.path.isEmpty) continue;
+
     final file = p
         .join(folder.path, 'data', 'config', 'engine_styles.json')
         .toFile();
     if (!await file.exists()) continue;
     try {
-      final map = (await file.readAsString()).parseJsonToMap();
-      for (final entry in map.entries) {
-        final value = entry.value;
-        if (value is! Map) continue;
-        try {
-          result[entry.key] = EngineStyleSpec.fromJson(value);
-        } catch (e) {
-          // One malformed style shouldn't drop the rest of the file's styles.
-          Fimber.w('Skipping engine style "${entry.key}" in ${folder.path}: $e');
-        }
-      }
+      jsonSources.add((
+        source: source,
+        json: (await file.readAsString()).parseJsonToMap(),
+      ));
     } catch (e, st) {
-      Fimber.w('Failed to parse engine_styles.json in ${folder.path}: $e',
-          ex: e, stacktrace: st);
+      Fimber.w(
+        'Failed to parse engine_styles.json in ${folder.path}: $e',
+        ex: e,
+        stacktrace: st,
+      );
     }
   }
 
+  final merged = mergeEngineStyles(jsonSources);
+
+  final result = <String, EngineStyleSpec>{};
+  for (final entry in merged.merged.entries) {
+    final value = entry.value;
+    if (value is! Map) continue;
+    try {
+      result[entry.key] = EngineStyleSpec.fromJson(value);
+    } catch (e) {
+      // One malformed style shouldn't drop the rest.
+      Fimber.w('Skipping engine style "${entry.key}": $e');
+    }
+  }
   return result;
 });
 

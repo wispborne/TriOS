@@ -7,6 +7,7 @@ import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/merge_mod_sources_view.dart';
 
 /// Shows the full ship details dialog — the same dialog opened by clicking a
 /// row in the Ships viewer. Extracted here so the Codex can open it too.
@@ -190,10 +191,14 @@ Widget _buildShipInfoPane(
         useAbbreviations: false,
       ),
       const SizedBox(height: 16),
-      _kv(
-        s.modVariant != null ? 'Mod' : null,
-        s.modVariant?.modInfo.nameOrId ?? 'Vanilla',
-        theme,
+      Padding(
+        padding: const .only(bottom: 8),
+        child: mergeModSourcesView(
+          s.modSources,
+          theme,
+          fileLabel: 'Ship file',
+          fallbackName: s.modVariant?.modInfo.nameOrId ?? 'Vanilla',
+        ),
       ),
       _kv('Hull Size', s.hullSizeForDisplay(), theme),
       _kv('Designation', s.designation, theme),

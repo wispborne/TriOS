@@ -7,6 +7,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
+import 'package:trios/utils/game_data_merge.dart';
 
 part 'weapon.mapper.dart';
 
@@ -84,7 +85,6 @@ class Weapon with WeaponMappable implements WispGridItem {
   final String? customAncillary;
   final String? customAncillaryHL;
   final bool? noDPSInTooltip;
-  final double? number;
 
   // Fields from the .wpn files
   final String? specClass;
@@ -131,8 +131,20 @@ class Weapon with WeaponMappable implements WispGridItem {
   /// Use this wherever mount type display or slot compatibility is needed.
   String? get effectiveMountType => mountTypeOverride ?? type;
 
+  /// The mod that supplied this weapon's `weapon_data.csv` row.
   @MappableField(hook: SkipSerializationHook())
   late ModVariant? modVariant;
+
+  /// The mod that supplied the `.wpn` file (sprite and spec). Can differ from
+  /// [modVariant] when a mod overrides only the CSV row. Null for vanilla or
+  /// when no `.wpn` file exists.
+  @MappableField(hook: SkipSerializationHook())
+  ModVariant? spriteModVariant;
+
+  /// Mod attribution for the details dialog. Rebuilt each load, not serialized.
+  @MappableField(hook: SkipSerializationHook())
+  ItemModSources? modSources;
+
   @MappableField(hook: FileHook())
   File? csvFile;
   @MappableField(hook: FileHook())
@@ -187,7 +199,6 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.customAncillary,
     this.customAncillaryHL,
     this.noDPSInTooltip,
-    this.number,
     // .wpn file fields
     this.specClass,
     this.weaponType,

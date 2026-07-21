@@ -320,13 +320,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     key: r'travel drive',
     opt: true,
   );
-  static double? _$number(Ship v) => v.number;
-  static const Field<Ship, double> _f$number = Field(
-    'number',
-    _$number,
-    opt: true,
-    hook: SafeDoubleHook(),
-  );
   static List<double>? _$bounds(Ship v) => v.bounds;
   static const Field<Ship, List<double>> _f$bounds = Field(
     'bounds',
@@ -494,6 +487,20 @@ class ShipMapper extends ClassMapperBase<Ship> {
     key: r'modvariant',
     hook: SkipSerializationHook(),
   );
+  static ModVariant? _$spriteModVariant(Ship v) => v.spriteModVariant;
+  static const Field<Ship, ModVariant> _f$spriteModVariant = Field(
+    'spriteModVariant',
+    _$spriteModVariant,
+    key: r'spritemodvariant',
+    hook: SkipSerializationHook(),
+  );
+  static ItemModSources? _$modSources(Ship v) => v.modSources;
+  static const Field<Ship, ItemModSources> _f$modSources = Field(
+    'modSources',
+    _$modSources,
+    key: r'modsources',
+    hook: SkipSerializationHook(),
+  );
   static File? _$csvFile(Ship v) => v.csvFile;
   static const Field<Ship, File> _f$csvFile = Field(
     'csvFile',
@@ -599,7 +606,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #minPieces: _f$minPieces,
     #maxPieces: _f$maxPieces,
     #travelDrive: _f$travelDrive,
-    #number: _f$number,
     #bounds: _f$bounds,
     #center: _f$center,
     #collisionRadius: _f$collisionRadius,
@@ -625,6 +631,8 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #color: _f$color,
     #engineSlotsParsed: _f$engineSlotsParsed,
     #modVariant: _f$modVariant,
+    #spriteModVariant: _f$spriteModVariant,
+    #modSources: _f$modSources,
     #csvFile: _f$csvFile,
     #dataFile: _f$dataFile,
     #shipSizesMap: _f$shipSizesMap,
@@ -683,7 +691,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
       minPieces: data.dec(_f$minPieces),
       maxPieces: data.dec(_f$maxPieces),
       travelDrive: data.dec(_f$travelDrive),
-      number: data.dec(_f$number),
       bounds: data.dec(_f$bounds),
       center: data.dec(_f$center),
       collisionRadius: data.dec(_f$collisionRadius),
@@ -824,7 +831,6 @@ abstract class ShipCopyWith<$R, $In extends Ship, $Out>
     double? minPieces,
     double? maxPieces,
     String? travelDrive,
-    double? number,
     List<double>? bounds,
     List<double>? center,
     double? collisionRadius,
@@ -1009,7 +1015,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     Object? minPieces = $none,
     Object? maxPieces = $none,
     Object? travelDrive = $none,
-    Object? number = $none,
     Object? bounds = $none,
     Object? center = $none,
     Object? collisionRadius = $none,
@@ -1081,7 +1086,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
       if (minPieces != $none) #minPieces: minPieces,
       if (maxPieces != $none) #maxPieces: maxPieces,
       if (travelDrive != $none) #travelDrive: travelDrive,
-      if (number != $none) #number: number,
       if (bounds != $none) #bounds: bounds,
       if (center != $none) #center: center,
       if (collisionRadius != $none) #collisionRadius: collisionRadius,
@@ -1155,7 +1159,6 @@ class _ShipCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Ship, $Out>
     minPieces: data.get(#minPieces, or: $value.minPieces),
     maxPieces: data.get(#maxPieces, or: $value.maxPieces),
     travelDrive: data.get(#travelDrive, or: $value.travelDrive),
-    number: data.get(#number, or: $value.number),
     bounds: data.get(#bounds, or: $value.bounds),
     center: data.get(#center, or: $value.center),
     collisionRadius: data.get(#collisionRadius, or: $value.collisionRadius),

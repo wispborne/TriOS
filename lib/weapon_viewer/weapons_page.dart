@@ -151,7 +151,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       total: total,
       visible: visible,
       isLoading: controllerState.isLoading,
-      onRefresh: () => ref.invalidate(weaponListNotifierProvider),
+      onRefresh: () => ref.invalidate(weaponSourcesProvider),
       searchBox: SmartSearchBar(
         fields: controller.searchFieldsMeta,
         recentHistory: ref.watch(
@@ -662,9 +662,9 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 _gridController!,
                 includeHeaders: true,
               ),
-              () => ref
-                  .read(weaponListNotifierProvider.notifier)
-                  .allWeaponsAsCsv(),
+              () => weaponsAsCsv(
+                ref.read(weaponListNotifierProvider).valueOrNull ?? const [],
+              ),
             );
           },
         ).toEntry(0),

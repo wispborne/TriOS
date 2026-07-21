@@ -312,12 +312,6 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'nodpsintooltip',
     opt: true,
   );
-  static double? _$number(Weapon v) => v.number;
-  static const Field<Weapon, double> _f$number = Field(
-    'number',
-    _$number,
-    opt: true,
-  );
   static String? _$specClass(Weapon v) => v.specClass;
   static const Field<Weapon, String> _f$specClass = Field(
     'specClass',
@@ -480,6 +474,20 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     'modVariant',
     _$modVariant,
     key: r'modvariant',
+    hook: SkipSerializationHook(),
+  );
+  static ModVariant? _$spriteModVariant(Weapon v) => v.spriteModVariant;
+  static const Field<Weapon, ModVariant> _f$spriteModVariant = Field(
+    'spriteModVariant',
+    _$spriteModVariant,
+    key: r'spritemodvariant',
+    hook: SkipSerializationHook(),
+  );
+  static ItemModSources? _$modSources(Weapon v) => v.modSources;
+  static const Field<Weapon, ItemModSources> _f$modSources = Field(
+    'modSources',
+    _$modSources,
+    key: r'modsources',
     hook: SkipSerializationHook(),
   );
   static File? _$csvFile(Weapon v) => v.csvFile;
@@ -652,7 +660,6 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #customAncillary: _f$customAncillary,
     #customAncillaryHL: _f$customAncillaryHL,
     #noDPSInTooltip: _f$noDPSInTooltip,
-    #number: _f$number,
     #specClass: _f$specClass,
     #weaponType: _f$weaponType,
     #size: _f$size,
@@ -677,6 +684,8 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #loadedMissileCenter: _f$loadedMissileCenter,
     #mountTypeOverride: _f$mountTypeOverride,
     #modVariant: _f$modVariant,
+    #spriteModVariant: _f$spriteModVariant,
+    #modSources: _f$modSources,
     #csvFile: _f$csvFile,
     #wpnFile: _f$wpnFile,
     #hintsAsSet: _f$hintsAsSet,
@@ -746,7 +755,6 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       customAncillary: data.dec(_f$customAncillary),
       customAncillaryHL: data.dec(_f$customAncillaryHL),
       noDPSInTooltip: data.dec(_f$noDPSInTooltip),
-      number: data.dec(_f$number),
       specClass: data.dec(_f$specClass),
       weaponType: data.dec(_f$weaponType),
       size: data.dec(_f$size),
@@ -882,7 +890,6 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     String? customAncillary,
     String? customAncillaryHL,
     bool? noDPSInTooltip,
-    double? number,
     String? specClass,
     String? weaponType,
     String? size,
@@ -1038,7 +1045,6 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     Object? customAncillary = $none,
     Object? customAncillaryHL = $none,
     Object? noDPSInTooltip = $none,
-    Object? number = $none,
     Object? specClass = $none,
     Object? weaponType = $none,
     Object? size = $none,
@@ -1112,7 +1118,6 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
       if (customAncillary != $none) #customAncillary: customAncillary,
       if (customAncillaryHL != $none) #customAncillaryHL: customAncillaryHL,
       if (noDPSInTooltip != $none) #noDPSInTooltip: noDPSInTooltip,
-      if (number != $none) #number: number,
       if (specClass != $none) #specClass: specClass,
       if (weaponType != $none) #weaponType: weaponType,
       if (size != $none) #size: size,
@@ -1199,7 +1204,6 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
       or: $value.customAncillaryHL,
     ),
     noDPSInTooltip: data.get(#noDPSInTooltip, or: $value.noDPSInTooltip),
-    number: data.get(#number, or: $value.number),
     specClass: data.get(#specClass, or: $value.specClass),
     weaponType: data.get(#weaponType, or: $value.weaponType),
     size: data.get(#size, or: $value.size),

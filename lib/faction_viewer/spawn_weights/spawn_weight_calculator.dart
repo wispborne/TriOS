@@ -4,6 +4,7 @@ import 'package:trios/faction_viewer/models/faction.dart';
 import 'package:trios/faction_viewer/spawn_weights/ship_roles_manager.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
+import 'package:trios/utils/game_data_merge.dart';
 
 /// The roles the game uses to pick warships. The headline "how much of this
 /// faction's fleet is vanilla" number is the share of weight across these.

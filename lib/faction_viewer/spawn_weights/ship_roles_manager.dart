@@ -2,17 +2,11 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:trios/faction_viewer/faction_merge.dart';
-import 'package:trios/faction_viewer/models/faction.dart';
-import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
-
-/// Name used for game-core data, matching `faction_manager.dart` so
-/// attributions from both sources can be compared by name.
-const String kVanillaSourceName = 'Vanilla';
 
 const String _shipRolesRelativePath = 'data/world/factions/'
     'default_ship_roles.json';
@@ -72,50 +66,34 @@ final mergedShipRolesProvider =
       .where(
         (variant) =>
             !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
-      )
-      .sortedByGameLoadOrder();
+      );
 
-  final sources = <(String, Directory)>[
-    (kVanillaSourceName, gameCore),
-    for (final variant in variants)
-      (variant.modInfo.nameOrId, variant.modFolder),
-  ];
-
-  var merged = <String, dynamic>{};
-  var attributions = <String, List<SourceContribution>>{};
-  var itemAttributions = <String, Map<String, String>>{};
+  final jsonSources = <SourceJson>[];
   final sourceFiles = <String, File>{};
 
-  for (final (sourceName, folder) in sources) {
+  for (final source in orderedSources(variants)) {
+    final folder = source.variant?.modFolder ?? gameCore;
     final file = File(p.join(folder.path, _shipRolesRelativePath));
     if (!await file.exists()) continue;
 
     try {
       final content = await file.readAsStringUtf8OrLatin1();
       final json = await content.removeJsonComments().parseJsonToMapAsync();
-
-      final result = mergeFactionJson(
-        base: merged,
-        overlay: json,
-        sourceName: sourceName,
-        existingAttributions: attributions,
-        existingItemAttributions: itemAttributions,
-      );
-      merged = result.merged;
-      attributions = result.attributions;
-      itemAttributions = result.itemAttributions;
-      sourceFiles[sourceName] = file;
+      jsonSources.add((source: source, json: json));
+      sourceFiles[source.name] = file;
     } catch (e, st) {
       Fimber.w(
-        '[$sourceName] Error parsing ${file.path}: $e',
+        '[${source.name}] Error parsing ${file.path}: $e',
         ex: e,
         stacktrace: st,
       );
     }
   }
 
+  final merged = mergeShipRoles(jsonSources);
+
   return MergedShipRoles(
-    roles: _buildRoles(merged, itemAttributions),
+    roles: _buildRoles(merged.merged, merged.itemAttributions),
     sourceFiles: sourceFiles,
   );
 });

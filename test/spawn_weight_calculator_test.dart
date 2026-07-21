@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
 import 'package:trios/faction_viewer/spawn_weights/ship_roles_manager.dart';
 import 'package:trios/faction_viewer/spawn_weights/spawn_weight_calculator.dart';

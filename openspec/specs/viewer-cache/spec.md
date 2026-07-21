@@ -89,12 +89,19 @@ The visible list MUST NOT shrink during Phase 2: at no point should the user obs
 - **THEN** after A re-parses, the list still contains items from all four variants (A's from fresh parse, B/C/D from cache)
 - **AND** the total count remains ≈ 400 throughout the scan (modulo any net additions or deletions in fresh data)
 
-#### Scenario: Cross-variant dedup is preserved
+#### Scenario: The shared merge rules decide the winner
 
-- **GIVEN** two variants both define an item with the same `id`
-- **AND** the first-occurrence-wins rule applied today
-- **WHEN** the notifier flattens its per-variant slices for a yield
-- **THEN** the same first-occurrence-wins dedup holds across cached and fresh slices alike
+- **GIVEN** two sources both define an item with the same `id`
+- **WHEN** the notifier flattens its per-source slices for a yield
+- **THEN** it orders the slices with `orderedSources` and merges them with `mergeById`
+- **AND** it holds no rule of its own — the winner is `game_data_merge.dart`'s answer, whether the slices came from cache or a fresh parse
+
+#### Scenario: Vanilla is consulted last
+
+- **GIVEN** vanilla and a mod both define an item with the same `id`
+- **WHEN** the notifier flattens its slices
+- **THEN** the mod's item wins, because `orderedSources` puts vanilla last
+- **AND** the parse order in `build()` is unaffected — vanilla is still parsed first, so cross-source lookups have it available
 
 ### Requirement: Fire-and-forget writes guarded by build token
 
@@ -133,7 +140,7 @@ The cache implementation SHALL be generic over a per-domain payload type `P`. Ad
 1. A unique `domain` string.
 2. A payload type with `@MappableClass` mapper for msgpack round-trip.
 3. A per-variant parse function producing a payload from a mod folder.
-4. An item-ID function for cross-variant dedup.
+4. An item-ID function. Domains that merge on raw data afterwards (weapons, ships, factions) make this source-qualified, so the flatten keeps every source's copy.
 5. A list-extraction function from payload to public item list.
 
 The cache SHALL NOT require modification to support new domains.

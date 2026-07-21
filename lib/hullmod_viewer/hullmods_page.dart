@@ -23,6 +23,7 @@ import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/viewer_cache/graphics_index_manager.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
@@ -337,6 +338,9 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     HullmodsPageState controllerState,
   ) {
     int position = 0;
+    // The CSV names an icon; any mod, or the game core, can be the one that
+    // actually has it.
+    final resolver = ref.watch(gameFileResolverProvider);
 
     String hullmodValueToString(
       Comparable<dynamic>? Function(Hullmod) getValue,
@@ -394,20 +398,25 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         key: 'sprite',
         isSortable: false,
         name: '',
-        itemCellBuilder: (item, _) => item.sprite != null
-            ? _HullmodSpriteWidget(
-                spritePath: item.sprite!,
-                size: 40,
-                fit: controllerState.useContainFit
-                    ? BoxFit.contain
-                    : BoxFit.scaleDown,
-              )
-            : const SizedBox(
-                width: 40,
-                height: 40,
-                child: Center(child: Icon(Icons.image_not_supported, size: 16)),
-              ),
-        csvValue: (hullmod) => hullmod.sprite,
+        itemCellBuilder: (item, _) {
+          final spritePath = resolver.resolve(item.sprite);
+          return spritePath != null
+              ? _HullmodSpriteWidget(
+                  spritePath: spritePath,
+                  size: 40,
+                  fit: controllerState.useContainFit
+                      ? BoxFit.contain
+                      : BoxFit.scaleDown,
+                )
+              : const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Center(
+                    child: Icon(Icons.image_not_supported, size: 16),
+                  ),
+                );
+        },
+        csvValue: (hullmod) => resolver.resolve(hullmod.sprite),
         defaultState: WispGridColumnState(position: position++, width: 48),
       ),
       WispGridColumn<Hullmod>(
@@ -484,9 +493,9 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
   }
 }
 
-final Map<String, bool> _hullmodSpritePathCache = {};
-
-class _HullmodSpriteWidget extends StatefulWidget {
+/// Draws a hullmod icon. The path has already been matched to a real file, so
+/// there's nothing to check first.
+class _HullmodSpriteWidget extends StatelessWidget {
   final String spritePath;
   final double size;
   final BoxFit fit;
@@ -498,46 +507,14 @@ class _HullmodSpriteWidget extends StatefulWidget {
   });
 
   @override
-  State<_HullmodSpriteWidget> createState() => _HullmodSpriteWidgetState();
-}
-
-class _HullmodSpriteWidgetState extends State<_HullmodSpriteWidget> {
-  bool? _exists;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkExists();
-  }
-
-  void _checkExists() async {
-    if (_hullmodSpritePathCache.containsKey(widget.spritePath)) {
-      _exists = _hullmodSpritePathCache[widget.spritePath];
-    } else {
-      final exists = await File(widget.spritePath).exists();
-      _hullmodSpritePathCache[widget.spritePath] = exists;
-      _exists = exists;
-    }
-    if (mounted) setState(() {});
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (_exists != true) {
-      return SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: const Center(child: Icon(Icons.image_not_supported, size: 16)),
-      );
-    }
-
     return MovingTooltipWidget.image(
-      path: widget.spritePath,
+      path: spritePath,
       child: Image.file(
-        File(widget.spritePath),
-        width: widget.size,
-        height: widget.size,
-        fit: widget.fit,
+        File(spritePath),
+        width: size,
+        height: size,
+        fit: fit,
       ),
     );
   }

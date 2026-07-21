@@ -16,10 +16,16 @@ class WeaponsCachePayload {
   /// Absolute path to this source's `weapon_data.csv`.
   final String? csvFilePath;
 
+  /// Missile projectiles this source defines in a `.proj` file, keyed by
+  /// projectile id. Each holds `sprite` (a game-relative path), `size` and
+  /// `center`. Used to draw the missiles loaded on a launcher.
+  final Map<String, Map<String, dynamic>> missileSpecs;
+
   const WeaponsCachePayload({
     required this.sourceKey,
     required this.rows,
     required this.wpnFiles,
     this.csvFilePath,
+    this.missileSpecs = const {},
   });
 }

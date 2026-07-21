@@ -30,8 +30,9 @@ class HullmodListNotifier
   @override
   String get domain => 'hullmods';
 
+  /// 2: `sprite` is stored as the CSV writes it, not joined to the mod folder.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   late final CachedVariantStore store =
@@ -262,15 +263,8 @@ Future<HullmodParseResult> _parseHullmodsCsv(
         continue;
       }
 
-      // Resolve sprite path relative to mod/game folder
-      final spritePath = hullmodData['sprite'] as String?;
-      if (spritePath != null && spritePath.isNotEmpty) {
-        hullmodData['sprite'] = p
-            .join(folder.path, spritePath)
-            .toFile()
-            .normalize
-            .path;
-      }
+      // `sprite` is kept as the CSV writes it. Which mod actually has the
+      // image is decided when the icon is drawn.
 
       // Create Hullmod instance
       final hullmod = HullmodMapper.fromMap(

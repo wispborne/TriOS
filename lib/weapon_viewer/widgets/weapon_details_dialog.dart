@@ -123,44 +123,37 @@ Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
       Wrap(
         spacing: 8,
         runSpacing: 8,
+        // Every path here has already been matched to a real file, so there's
+        // nothing to check before drawing it.
         children: imagePaths
             .map(
-              (p) => FutureBuilder<String?>(
-                future: _getWeaponImagePath([p]),
-                builder: (context, snap) {
-                  final path = snap.data;
-                  if (path == null) {
-                    return const SizedBox.shrink();
-                  }
-                  return GestureDetector(
-                    onTap: () => path.toFile().showInExplorer(),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        MovingTooltipWidget.image(
-                          path: path,
-                          child: Image.file(
-                            File(path),
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        SizedBox(
-                          width: 56,
-                          child: TextTriOS(
-                            path.split(Platform.pathSeparator).last,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
+              (path) => GestureDetector(
+                onTap: () => path.toFile().showInExplorer(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MovingTooltipWidget.image(
+                      path: path,
+                      child: Image.file(
+                        File(path),
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 56,
+                      child: TextTriOS(
+                        path.split(Platform.pathSeparator).last,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
             .toList(),
@@ -314,21 +307,3 @@ Widget _chip(String label, String value) {
   );
 }
 
-final Map<String, bool> _weaponImagePathCache = {};
-
-Future<String?> _getWeaponImagePath(List<String> imagePaths) async {
-  for (String path in imagePaths) {
-    if (_weaponImagePathCache.containsKey(path)) {
-      if (_weaponImagePathCache[path] == true) {
-        return path;
-      }
-    } else {
-      bool exists = await File(path).exists();
-      _weaponImagePathCache[path] = exists;
-      if (exists) {
-        return path;
-      }
-    }
-  }
-  return null;
-}

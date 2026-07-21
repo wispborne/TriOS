@@ -9,8 +9,11 @@ import 'package:trios/models/version.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ships_cache_payload.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/game_file_resolver.dart';
+import 'package:trios/viewer_cache/graphics_index_manager.dart';
 
 /// Stands in for the real scanner so tests can hand it fixed raw data.
 class _FakeShipListNotifier extends ShipListNotifier {
@@ -51,14 +54,30 @@ ShipsCachePayload _payload({
   hullIdMap: const {},
 );
 
+/// A source that ships the given images, spelled as they are on disk.
+GameFileSource _source(String folder, List<String> imageFiles) =>
+    GameFileSource(
+      folderPath: folder,
+      imageFiles: {for (final file in imageFiles) file.toLowerCase(): file},
+    );
+
+/// The path the resolver builds for an image in [folder]. The resolver hands
+/// back absolute paths, and these test folders are relative.
+String _imageIn(String folder, String relativePath) =>
+    p.normalize(File(p.join(folder, relativePath)).absolute.path);
+
 Future<List<Ship>> _build({
   required List<ShipsCachePayload> payloads,
   required List<Mod> mods,
+  List<GameFileSource> imageSources = const [],
 }) async {
   final container = ProviderContainer(
     overrides: [
       shipSourcesProvider.overrideWith(() => _FakeShipListNotifier(payloads)),
       AppState.mods.overrideWithValue(mods),
+      gameFileResolverProvider.overrideWithValue(
+        GameFileResolver(imageSources),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -85,7 +104,7 @@ void main() {
             shipFiles: {
               'onslaught.ship': {
                 'hullId': 'onslaught',
-                'spriteFile': 'vanilla/onslaught.png',
+                'spriteName': 'graphics/ships/onslaught.png',
               },
             },
           ),
@@ -97,13 +116,17 @@ void main() {
           ),
         ],
         mods: [_mod(rebalance)],
+        imageSources: [
+          _source('mods/Rebalance', const []),
+          _source('core', const ['graphics/ships/onslaught.png']),
+        ],
       );
 
       final onslaught = _byId(ships, 'onslaught')!;
       expect(onslaught.hitpoints, 99000);
       expect(
         onslaught.spriteFile,
-        'vanilla/onslaught.png',
+        _imageIn('core', 'graphics/ships/onslaught.png'),
         reason: 'the hull shape is still paired in from vanilla',
       );
       expect(onslaught.modVariant?.modInfo.name, 'Rebalance');
@@ -141,7 +164,7 @@ void main() {
             shipFiles: {
               'lasher.ship': {
                 'hullId': 'lasher',
-                'spriteFile': 'vanilla/lasher.png',
+                'spriteName': 'graphics/ships/lasher.png',
               },
             },
           ),
@@ -152,12 +175,18 @@ void main() {
                 'baseHullId': 'lasher',
                 'skinHullId': 'lasher_pirate',
                 'hullName': 'Lasher (Pirate)',
-                '_spriteFile': 'mods/pirate_lasher.png',
+                'spriteName': 'graphics/ships/lasher_pirate.png',
               },
             },
           ),
         ],
         mods: [_mod(skinner)],
+        imageSources: [
+          _source('mods/Z-skinner', const [
+            'graphics/ships/lasher_pirate.png',
+          ]),
+          _source('core', const ['graphics/ships/lasher.png']),
+        ],
       );
 
       final skin = _byId(ships, 'lasher_pirate');
@@ -165,7 +194,10 @@ void main() {
       expect(skin!.name, 'Lasher (Pirate)');
       expect(skin.isSkin, isTrue);
       expect(skin.hitpoints, 3000, reason: 'inherited from the base hull');
-      expect(skin.spriteFile, 'mods/pirate_lasher.png');
+      expect(
+        skin.spriteFile,
+        _imageIn('mods/Z-skinner', 'graphics/ships/lasher_pirate.png'),
+      );
       expect(skin.modVariant?.modInfo.name, 'Z-skinner');
     });
 
@@ -205,6 +237,40 @@ void main() {
 
       expect(_byId(ships, 'lasher_pirate'), isNotNull);
       expect(_byId(ships, 'lasher_pirate_elite')?.name, 'Elite Pirate Lasher');
+    });
+
+    test('a mod that ships only art wins the image for a vanilla ship', () async {
+      // No rows, no .ship files — just a replacement picture. It has no ships
+      // payload at all, only an entry in the image index.
+      final artPack = _variant('Art Pack');
+
+      final ships = await _build(
+        payloads: [
+          _payload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {'id': 'lasher', 'name': 'Lasher', 'hitpoints': 3000},
+            ],
+            shipFiles: {
+              'lasher.ship': {
+                'hullId': 'lasher',
+                'spriteName': 'graphics/ships/lasher.png',
+              },
+            },
+          ),
+        ],
+        mods: [_mod(artPack)],
+        imageSources: [
+          _source('mods/Art Pack', const ['graphics/ships/lasher.png']),
+          _source('core', const ['graphics/ships/lasher.png']),
+        ],
+      );
+
+      expect(
+        _byId(ships, 'lasher')?.spriteFile,
+        _imageIn('mods/Art Pack', 'graphics/ships/lasher.png'),
+        reason: 'the art pack has the file, so its copy is the one shown',
+      );
     });
   });
 }

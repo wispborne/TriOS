@@ -18,10 +18,12 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
+import 'package:trios/viewer_cache/graphics_index_manager.dart';
 
 final isLoadingShipsList = StateProvider<bool>((ref) => false);
 final isShipsListDirty = StateProvider<bool>((ref) => false);
@@ -44,13 +46,21 @@ final shipSourcesProvider =
       ShipListNotifier.new,
     );
 
-/// Cached last merge result. Reused when payloads and source order are unchanged.
-({List<ShipsCachePayload> payloads, String key, List<Ship> ships})? _lastMergedShips;
+/// Cached last merge result. Reused when payloads, source order and the image
+/// index are all unchanged.
+({
+  List<ShipsCachePayload> payloads,
+  String key,
+  GameFileResolver resolver,
+  List<Ship> ships,
+})?
+_lastMergedShips;
 
 /// Ships built from the merged scan. Calls `mergeShips`, builds [Ship] objects,
 /// and resolves skins.
 final shipListNotifierProvider = Provider<AsyncValue<List<Ship>>>((ref) {
   final sources = ref.watch(shipSourcesProvider);
+  final resolver = ref.watch(gameFileResolverProvider);
   final variants = ref
       .watch(AppState.mods)
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
@@ -60,11 +70,19 @@ final shipListNotifierProvider = Provider<AsyncValue<List<Ship>>>((ref) {
   return sources.whenData((payloads) {
     final key = orderedSrcs.map((s) => s.key).join('\n');
     final memo = _lastMergedShips;
-    if (memo != null && identical(memo.payloads, payloads) && memo.key == key) {
+    if (memo != null &&
+        identical(memo.payloads, payloads) &&
+        memo.key == key &&
+        identical(memo.resolver, resolver)) {
       return memo.ships;
     }
-    final ships = _buildShips(payloads, orderedSrcs);
-    _lastMergedShips = (payloads: payloads, key: key, ships: ships);
+    final ships = _buildShips(payloads, orderedSrcs, resolver);
+    _lastMergedShips = (
+      payloads: payloads,
+      key: key,
+      resolver: resolver,
+      ships: ships,
+    );
     return ships;
   });
 });
@@ -91,13 +109,13 @@ const _shipAreaNames = <String, String>{
   'viewOffset': 'view offset',
   'moduleAnchor': 'module anchor',
   'hullId': '',
-  'spriteFile': '',
   '_dataFile': '',
 };
 
 List<Ship> _buildShips(
   List<ShipsCachePayload> payloads,
   List<MergeSource> sources,
+  GameFileResolver resolver,
 ) {
   if (payloads.isEmpty) return const [];
   final bySourceKey = {for (final payload in payloads) payload.sourceKey: payload};
@@ -122,6 +140,7 @@ List<Ship> _buildShips(
       spec,
       bySourceKey[spec.rowSource.key]?.csvFilePath?.toFile(),
       failures,
+      resolver,
     );
     if (ship != null) ships.add(ship);
   }
@@ -135,6 +154,7 @@ List<Ship> _buildShips(
       ]),
       ships,
       failures,
+      resolver,
     ),
   );
 
@@ -146,7 +166,12 @@ List<Ship> _buildShips(
 ///
 /// A row with no `.ship` file is kept with no hull geometry (the game drops
 /// such rows; TriOS keeps them so the problem is visible).
-Ship? _buildHull(MergedSpec spec, File? csvFile, LogCollapser failures) {
+Ship? _buildHull(
+  MergedSpec spec,
+  File? csvFile,
+  LogCollapser failures,
+  GameFileResolver resolver,
+) {
   final data = <String, dynamic>{...spec.row};
   File? dataFile;
 
@@ -163,6 +188,10 @@ Ship? _buildHull(MergedSpec spec, File? csvFile, LogCollapser failures) {
     }
     data.addAll(fields);
   }
+
+  // The winning .ship file says which image to use; any mod, or the game core,
+  // can be the one that actually has it.
+  data['spriteFile'] = resolver.resolve(data['spriteName'] as String?);
 
   try {
     return ShipMapper.fromMap({
@@ -192,6 +221,7 @@ List<Ship> _resolveSkins(
   Map<String, DeepMergeResult> mergedSkins,
   List<Ship> baseShips,
   LogCollapser failures,
+  GameFileResolver resolver,
 ) {
   final available = {for (final ship in baseShips) ship.id: ship};
   final resolved = <Ship>[];
@@ -202,7 +232,6 @@ List<Ship> _resolveSkins(
 
     for (final entry in pending) {
       final fields = <String, dynamic>{...entry.value.merged};
-      final spriteFile = fields.remove('_spriteFile') as String?;
       final dataFile = fields.remove('_dataFile') as String?;
 
       final ShipSkin skin;
@@ -222,7 +251,7 @@ List<Ship> _resolveSkins(
       final ship = _resolveSkin(
         skin,
         baseHull,
-        spriteFile,
+        resolver.resolve(skin.spriteName),
         entry.value.winningSource?.variant,
       )
         ..modSources = buildItemModSources(
@@ -273,10 +302,10 @@ class ShipListNotifier
   @override
   String get domain => 'ships';
 
-  /// 2: the payload holds raw rows and side files instead of finished ships,
-  /// so every cached file from before is unreadable.
+  /// 3: sprite paths are stored as the data file writes them, not joined to
+  /// the mod folder.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   late final CachedVariantStore store =
@@ -590,14 +619,8 @@ Future<_ShipScanResult> _scanShipsFolder(
           errors.add('[$modName] .ship file ${shipFile.path} missing "hullId"');
           continue;
         }
-        final spriteName = map['spriteName'] as String?;
-        if (spriteName != null) {
-          map['spriteFile'] = p
-              .join(folder.path, spriteName)
-              .toFile()
-              .normalize
-              .path;
-        }
+        // `spriteName` is kept as written. Which mod actually has the image is
+        // decided after the full scan.
         // Underscored so it can't collide with a real field name from the
         // file; stripped again before the Ship is built.
         map['_dataFile'] = shipFile.path;
@@ -619,14 +642,6 @@ Future<_ShipScanResult> _scanShipsFolder(
       try {
         final raw = await skinFile.readAsString(encoding: utf8);
         final map = await raw.removeJsonComments().parseJsonToMapAsync();
-        final spriteName = map['spriteName'] as String?;
-        if (spriteName != null) {
-          map['_spriteFile'] = p
-              .join(folder.path, spriteName)
-              .toFile()
-              .normalize
-              .path;
-        }
         map['_dataFile'] = skinFile.path;
         map.removeWhere((_, value) => value == null);
         skinFiles[p

@@ -301,9 +301,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
   }
 
   Widget buildRowContextMenu(Ship ship, Widget child) {
-    final controller = ref.read(shipsPageControllerProvider.notifier);
-    final gameCoreDir = controller.getGameCoreDir();
-
     return ContextMenuRegion(
       contextMenu: ContextMenu(
         entries: <ContextMenuEntry>[
@@ -328,9 +325,8 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 ship.csvFile!.absolute.showInExplorer();
               },
             ),
-          buildOpenSingleFolderMenuItem(
-            _getPathForSpriteName(ship, gameCoreDir).parent,
-          ),
+          if (ship.spriteFile != null)
+            buildOpenSingleFolderMenuItem(ship.spriteFile!.toFile().parent),
           if (ship.modVariant != null)
             buildOpenSingleFolderMenuItem(
               ship.modVariant!.modFolder.absolute,
@@ -351,8 +347,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     ShipsPageState controllerState,
   ) {
     int position = 0;
-    final controller = ref.read(shipsPageControllerProvider.notifier);
-    final gameCoreDir = controller.getGameCoreDir();
 
     String shipValueToString(
       Comparable<dynamic>? Function(Ship) getValue,
@@ -408,14 +402,14 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         name: '',
         isSortable: false,
         itemCellBuilder: (item, modifiers) => ShipImageCell(
-          imagePath: _getPathForSpriteName(item, gameCoreDir).path,
+          imagePath: item.spriteFile,
           ship: item,
           fit: controllerState.useContainFit
               ? BoxFit.contain
               : BoxFit.scaleDown,
           rowHovered: modifiers.isHovering,
         ),
-        csvValue: (ship) => _getPathForSpriteName(ship, gameCoreDir).path,
+        csvValue: (ship) => ship.spriteFile,
         defaultState: WispGridColumnState(position: position++, width: 50),
       ),
       WispGridColumn<Ship>(
@@ -569,12 +563,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         col('style', 'Style', (s) => s.style?.toTitleCase()),
       ],
     ];
-  }
-
-  Directory _getPathForSpriteName(Ship item, Directory gameCoreDir) {
-    return (item.modVariant == null ? gameCoreDir : item.modVariant!.modFolder)
-        .resolve(item.spriteName ?? "")
-        .toDirectory();
   }
 
   Widget _buildOverflowButton({

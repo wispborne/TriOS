@@ -13,10 +13,12 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
+import 'package:trios/viewer_cache/graphics_index_manager.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/models/weapons_cache_payload.dart';
 
@@ -31,14 +33,21 @@ final weaponSourcesProvider =
       WeaponListNotifier.new,
     );
 
-/// Cached last merge result. Reused when payloads and source order are unchanged.
-({List<WeaponsCachePayload> payloads, String key, List<Weapon> weapons})?
+/// Cached last merge result. Reused when payloads, source order and the image
+/// index are all unchanged.
+({
+  List<WeaponsCachePayload> payloads,
+  String key,
+  GameFileResolver resolver,
+  List<Weapon> weapons,
+})?
 _lastMergedWeapons;
 
 /// Weapons built from the merged scan. Calls `mergeWeapons` and builds
 /// [Weapon] objects.
 final weaponListNotifierProvider = Provider<AsyncValue<List<Weapon>>>((ref) {
   final sources = ref.watch(weaponSourcesProvider);
+  final resolver = ref.watch(gameFileResolverProvider);
   final variants = ref
       .watch(AppState.mods)
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
@@ -48,11 +57,19 @@ final weaponListNotifierProvider = Provider<AsyncValue<List<Weapon>>>((ref) {
   return sources.whenData((payloads) {
     final key = orderedSrcs.map((s) => s.key).join('\n');
     final memo = _lastMergedWeapons;
-    if (memo != null && identical(memo.payloads, payloads) && memo.key == key) {
+    if (memo != null &&
+        identical(memo.payloads, payloads) &&
+        memo.key == key &&
+        identical(memo.resolver, resolver)) {
       return memo.weapons;
     }
-    final weapons = _buildWeapons(payloads, orderedSrcs);
-    _lastMergedWeapons = (payloads: payloads, key: key, weapons: weapons);
+    final weapons = _buildWeapons(payloads, orderedSrcs, resolver);
+    _lastMergedWeapons = (
+      payloads: payloads,
+      key: key,
+      resolver: resolver,
+      weapons: weapons,
+    );
     return weapons;
   });
 });
@@ -90,17 +107,38 @@ const _weaponAreaNames = <String, String>{
   'projectileSpecId': 'projectile',
   'id': '',
   'wpnFile': '',
-  'loadedMissileSprite': '',
-  'loadedMissileSize': '',
-  'loadedMissileCenter': '',
 };
+
+/// The eight image layers a `.wpn` file can name.
+const _weaponSpriteFields = [
+  'turretSprite',
+  'turretGunSprite',
+  'turretUnderSprite',
+  'turretGlowSprite',
+  'hardpointSprite',
+  'hardpointGunSprite',
+  'hardpointUnderSprite',
+  'hardpointGlowSprite',
+];
 
 List<Weapon> _buildWeapons(
   List<WeaponsCachePayload> payloads,
   List<MergeSource> sources,
+  GameFileResolver resolver,
 ) {
   if (payloads.isEmpty) return const [];
   final bySourceKey = {for (final payload in payloads) payload.sourceKey: payload};
+
+  // Projectiles from every source, in load order, so a launcher in one mod can
+  // find the missile it fires even when another mod defines it.
+  final missileSpecs = <String, Map<String, dynamic>>{};
+  for (final source in sources) {
+    final payload = bySourceKey[source.key];
+    if (payload == null) continue;
+    for (final entry in payload.missileSpecs.entries) {
+      missileSpecs.putIfAbsent(entry.key, () => entry.value);
+    }
+  }
 
   final specs = mergeWeapons(
     rows: [
@@ -132,6 +170,28 @@ List<Weapon> _buildWeapons(
       data.addAll(fields);
       // .wpn files rarely have damageType; fall back to the CSV type column.
       data['damageType'] ??= csvDamageType;
+    }
+
+    // The winning .wpn file says which images to use; any mod, or the game
+    // core, can be the one that actually has them.
+    for (final field in _weaponSpriteFields) {
+      if (data[field] case final path?) {
+        data[field] = resolver.resolve(path as String);
+      }
+    }
+
+    // Launchers with this hint draw the missiles they hold.
+    final hints = (data['renderHints'] as List?)?.cast<String>() ?? const [];
+    final projectileId = data['projectileSpecId'] as String?;
+    if (projectileId != null &&
+        hints.any((h) => h.toUpperCase().contains('RENDER_LOADED_MISSILES'))) {
+      final missile = missileSpecs[projectileId];
+      final missileSprite = resolver.resolve(missile?['sprite'] as String?);
+      if (missileSprite != null) {
+        data['loadedMissileSprite'] = missileSprite;
+        data['loadedMissileSize'] = missile?['size'];
+        data['loadedMissileCenter'] = missile?['center'];
+      }
     }
 
     try {
@@ -175,10 +235,10 @@ class WeaponListNotifier
   @override
   String get domain => 'weapons';
 
-  /// 2: the payload holds raw rows and `.wpn` files instead of finished
-  /// weapons, so every cached file from before is unreadable.
+  /// 3: sprite paths are stored as the data file writes them, not joined to
+  /// the mod folder, and `.proj` missiles moved into the payload.
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   late final CachedVariantStore store =
@@ -273,6 +333,7 @@ class WeaponListNotifier
       'rows': payload.rows,
       'wpnFiles': payload.wpnFiles,
       'csvFilePath': payload.csvFilePath,
+      'missileSpecs': payload.missileSpecs,
     });
   }
 
@@ -290,6 +351,10 @@ class WeaponListNotifier
           e.key.toString(): (e.value as Map).cast<String, dynamic>(),
       },
       csvFilePath: raw['csvFilePath'] as String?,
+      missileSpecs: {
+        for (final e in (raw['missileSpecs'] as Map? ?? const {}).entries)
+          e.key.toString(): (e.value as Map).cast<String, dynamic>(),
+      },
     );
   }
 }
@@ -326,10 +391,8 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
     return _WeaponScanResult(null, errors, infos);
   }
 
-  // Index missile projectile specs in this folder so launchers with the
-  // RENDER_LOADED_MISSILES hint can show their loaded missiles. Resolved
-  // within the weapon's own mod folder (cross-mod projectile references are
-  // not handled; those launchers simply won't show missiles).
+  // Missile projectiles defined here. Launchers are matched to them after the
+  // full scan, so a launcher can find a missile another mod defines.
   final missileSpecs = await _indexMissileSpecs(folder);
 
   final wpnFiles = <String, Map<String, dynamic>>{};
@@ -356,35 +419,10 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
       put('mountTypeOverride', jsonData['mountTypeOverride']);
       put('size', jsonData['size']);
       put('damageType', jsonData['damageType']);
-      put('turretSprite', _resolveSpritePath(folder, jsonData['turretSprite']));
-      put(
-        'turretGunSprite',
-        _resolveSpritePath(folder, jsonData['turretGunSprite']),
-      );
-      put(
-        'hardpointSprite',
-        _resolveSpritePath(folder, jsonData['hardpointSprite']),
-      );
-      put(
-        'hardpointGunSprite',
-        _resolveSpritePath(folder, jsonData['hardpointGunSprite']),
-      );
-      put(
-        'turretUnderSprite',
-        _resolveSpritePath(folder, jsonData['turretUnderSprite']),
-      );
-      put(
-        'hardpointUnderSprite',
-        _resolveSpritePath(folder, jsonData['hardpointUnderSprite']),
-      );
-      put(
-        'turretGlowSprite',
-        _resolveSpritePath(folder, jsonData['turretGlowSprite']),
-      );
-      put(
-        'hardpointGlowSprite',
-        _resolveSpritePath(folder, jsonData['hardpointGlowSprite']),
-      );
+      // Kept as written. Which mod actually has the image is decided later.
+      for (final field in _weaponSpriteFields) {
+        put(field, _spritePath(jsonData[field]));
+      }
       put('glowColor', _toDoubleList(jsonData['glowColor']));
       put('renderHints', _toStringList(jsonData['renderHints']));
       put('projectileSpecId', jsonData['projectileSpecId']);
@@ -400,19 +438,6 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
       if (jsonData['id'] == null) {
         errors.add('[$modName] .wpn file ${wpnFile.path} missing "id" field');
         continue;
-      }
-
-      // Resolve loaded-missile render data for launchers.
-      final hints = (fields['renderHints'] as List<String>?) ?? const [];
-      final projId = jsonData['projectileSpecId'] as String?;
-      if (projId != null &&
-          hints.any((h) => h.toUpperCase().contains('RENDER_LOADED_MISSILES'))) {
-        final missile = missileSpecs[projId];
-        if (missile != null) {
-          put('loadedMissileSprite', missile.sprite);
-          put('loadedMissileSize', missile.size);
-          put('loadedMissileCenter', missile.center);
-        }
       }
 
       // Keyed on path relative to data/weapons (not on the id inside).
@@ -472,6 +497,7 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
       rows: rows,
       wpnFiles: wpnFiles,
       csvFilePath: await weaponsCsvFile.exists() ? weaponsCsvFile.path : null,
+      missileSpecs: missileSpecs,
     ),
     errors,
     infos,
@@ -503,12 +529,11 @@ Map<String, dynamic> _typedRow(List<dynamic> row, List<String> headers) {
   return data;
 }
 
-/// Joins a mod-relative sprite path to an absolute, normalized path.
-/// Returns null when the source value is missing, so absent layers stay null
-/// (joining a null would otherwise yield the mod folder path).
-String? _resolveSpritePath(Directory folder, dynamic relativePath) {
-  if (relativePath is! String || relativePath.trim().isEmpty) return null;
-  return p.join(folder.path, relativePath).toFile().normalize.path;
+/// The sprite path exactly as the data file writes it, or null when the field
+/// is missing or blank (so an absent layer stays absent through the merge).
+String? _spritePath(dynamic rawPath) {
+  if (rawPath is! String || rawPath.trim().isEmpty) return null;
+  return rawPath.trim();
 }
 
 List<double>? _toDoubleList(dynamic value) {
@@ -530,20 +555,14 @@ List<String>? _toStringList(dynamic value) {
   return value.map((e) => e.toString()).toList();
 }
 
-/// Resolved render data for a loaded missile, from a `.proj` spec.
-class _MissileSpec {
-  final String sprite;
-  final List<double>? size;
-  final List<double>? center;
-
-  _MissileSpec(this.sprite, this.size, this.center);
-}
-
 /// Scans `data/weapons` (recursively, to catch the `proj/` subfolder) and
-/// builds a `projectileSpecId -> _MissileSpec` index for missile-type
-/// projectiles defined in this folder.
-Future<Map<String, _MissileSpec>> _indexMissileSpecs(Directory folder) async {
-  final result = <String, _MissileSpec>{};
+/// builds a `projectileSpecId -> {sprite, size, center}` index for
+/// missile-type projectiles defined in this folder. The sprite path is kept as
+/// written; it is matched to a real file after the full scan.
+Future<Map<String, Map<String, dynamic>>> _indexMissileSpecs(
+  Directory folder,
+) async {
+  final result = <String, Map<String, dynamic>>{};
   final projDir = p.join(folder.path, 'data/weapons').toDirectory();
   if (!await projDir.exists()) return result;
 
@@ -559,13 +578,13 @@ Future<Map<String, _MissileSpec>> _indexMissileSpecs(Directory folder) async {
       final id = json['id'] as String?;
       final specClass = (json['specClass'] as String?)?.toLowerCase();
       if (id == null || specClass != 'missile') continue;
-      final sprite = _resolveSpritePath(folder, json['sprite']);
+      final sprite = _spritePath(json['sprite']);
       if (sprite == null) continue;
-      result[id] = _MissileSpec(
-        sprite,
-        _toDoubleList(json['size']),
-        _toDoubleList(json['center']),
-      );
+      result[id] = {
+        'sprite': sprite,
+        'size': _toDoubleList(json['size']),
+        'center': _toDoubleList(json['center']),
+      };
     } catch (_) {
       // Ignore unparseable .proj files; missiles are best-effort decoration.
     }

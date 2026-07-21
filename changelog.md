@@ -24,6 +24,7 @@
   - Large ships/stations are now properly centered and zoomed on load.
   - Ship/station modules now show up immediately.
   - Faction Viewer: "Only Enabled Mods" now actually only shows data from enabled mods.
+  - Missing ship, weapon and hullmod images. TriOS now looks for an image the way the game does — every enabled mod in load order, then the game files — instead of only in the mod that named it. Fixes cases like the Autopulse Laser showing no image with Emergent Threats enabled, and means mods that only replace artwork now show up.
 - Changed
   - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
   - About page now has an AI disclosure section.

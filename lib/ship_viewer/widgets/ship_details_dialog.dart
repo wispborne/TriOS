@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -53,19 +52,16 @@ void showShipDetailsDialog(BuildContext context, WidgetRef ref, Ship s) {
                             onPressed: () =>
                                 s.csvFile?.absolute.showInExplorer(),
                           ),
-                          IconButton(
-                            tooltip: 'Open Folder',
-                            icon: const Icon(Icons.folder),
-                            onPressed: () {
-                              final gameCoreDir = ref
-                                  .read(shipsPageControllerProvider.notifier)
-                                  .getGameCoreDir();
-                              _getPathForSpriteName(
-                                s,
-                                gameCoreDir,
-                              ).parent.path.openAsUriInBrowser();
-                            },
-                          ),
+                          if (s.spriteFile != null)
+                            IconButton(
+                              tooltip: 'Open Folder',
+                              icon: const Icon(Icons.folder),
+                              onPressed: () => s.spriteFile!
+                                  .toFile()
+                                  .parent
+                                  .path
+                                  .openAsUriInBrowser(),
+                            ),
                         ],
                       ),
                       const Spacer(),
@@ -83,12 +79,6 @@ void showShipDetailsDialog(BuildContext context, WidgetRef ref, Ship s) {
       );
     },
   );
-}
-
-Directory _getPathForSpriteName(Ship item, Directory gameCoreDir) {
-  return (item.modVariant == null ? gameCoreDir : item.modVariant!.modFolder)
-      .resolve(item.spriteName ?? "")
-      .toDirectory();
 }
 
 Widget _buildShipInfoPane(

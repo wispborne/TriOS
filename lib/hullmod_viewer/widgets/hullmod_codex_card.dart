@@ -9,6 +9,7 @@ import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/viewer_cache/graphics_index_manager.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/ingame_tooltip_shared.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -44,6 +45,9 @@ class HullmodCodexCard {
               description: ref.watch(
                 descriptionProvider((hullmod.id, DescriptionEntry.typeHullMod)),
               ),
+              spritePath: ref
+                  .watch(gameFileResolverProvider)
+                  .resolve(hullmod.sprite),
               showTitle: showTitle,
               showSprite: showSprite,
               showDescription: showDescription,
@@ -72,6 +76,7 @@ class HullmodCodexCard {
         description: ref.watch(
           descriptionProvider((hullmod.id, DescriptionEntry.typeHullMod)),
         ),
+        spritePath: ref.watch(gameFileResolverProvider).resolve(hullmod.sprite),
         showTitle: showTitle,
         showSprite: showSprite,
         showDescription: showDescription,
@@ -83,6 +88,10 @@ class HullmodCodexCard {
     Hullmod hullmod,
     BuildContext context, {
     DescriptionEntry? description,
+
+    /// The hullmod's icon, already matched to a real file. Null when no mod
+    /// and not the game core has it.
+    String? spritePath,
     bool showTitle = true,
     bool showSprite = true,
     bool showDescription = true,
@@ -125,7 +134,9 @@ class HullmodCodexCard {
         tooltipSectionHeader('Hullmod data', theme, highlightColor),
         const SizedBox(height: 4),
         _spriteRow(
-          sprite: showSprite ? _hullmodSprite(hullmod) : null,
+          sprite: showSprite && spritePath != null
+              ? _HullmodSpriteImage(spritePath: spritePath, size: 40)
+              : null,
           child: tooltipStatsGrid(theme, [
             if (hullmod.costFrigate != null)
               tooltipRow('OP cost (Frigate)', tooltipFmt(hullmod.costFrigate)),
@@ -214,51 +225,22 @@ Widget _spriteRow({required Widget? sprite, required Widget child}) {
   );
 }
 
-Widget? _hullmodSprite(Hullmod hullmod) {
-  if (hullmod.sprite == null) return null;
-  return _HullmodSpriteImage(spritePath: hullmod.sprite!, size: 40);
-}
-
-class _HullmodSpriteImage extends StatefulWidget {
+/// Draws a hullmod icon. The path has already been matched to a real file, so
+/// there's nothing to check first.
+class _HullmodSpriteImage extends StatelessWidget {
   final String spritePath;
   final double size;
 
   const _HullmodSpriteImage({required this.spritePath, this.size = 40});
 
   @override
-  State<_HullmodSpriteImage> createState() => _HullmodSpriteImageState();
-}
-
-class _HullmodSpriteImageState extends State<_HullmodSpriteImage> {
-  bool? _exists;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkExists();
-  }
-
-  void _checkExists() async {
-    final exists = await File(widget.spritePath).exists();
-    if (mounted) setState(() => _exists = exists);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (_exists != true) {
-      return SizedBox(
-        width: widget.size,
-        height: widget.size,
-        child: const Center(child: Icon(Icons.image_not_supported, size: 16)),
-      );
-    }
-
     return MovingTooltipWidget.image(
-      path: widget.spritePath,
+      path: spritePath,
       child: Image.file(
-        File(widget.spritePath),
-        width: widget.size,
-        height: widget.size,
+        File(spritePath),
+        width: size,
+        height: size,
         fit: BoxFit.scaleDown,
       ),
     );

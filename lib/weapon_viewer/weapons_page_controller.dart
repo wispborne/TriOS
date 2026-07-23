@@ -81,6 +81,11 @@ final weaponsPageControllerProvider =
       () => WeaponsPageController(),
     );
 
+/// Bumped whenever "Only Enabled Mods" flips. The filter field itself stays
+/// the source of truth; the controller watches this so it rebuilds and re-reads
+/// the weapon list, which is merged differently depending on the toggle.
+final _onlyEnabledModsChanged = StateProvider<int>((ref) => 0);
+
 class WeaponsPageController extends Notifier<WeaponsPageState> {
   static final _scope = const FilterScope(kWeaponsPageId);
 
@@ -88,6 +93,10 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   late final List<SearchField<Weapon>> _searchFields;
   late final Map<String, SearchField<Weapon>> _fieldsByKey;
   List<Weapon>? _searchIndexItems;
+
+  /// The "Only Enabled Mods" value the current weapon list was merged with, so
+  /// [_emitAfterFilterMutation] can tell when a re-merge is needed.
+  bool? _mergedWithShowEnabled;
 
   final vanillaName = 'Vanilla';
 
@@ -129,7 +138,9 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     final saved = ref.read(appSettings).weaponsPageState;
 
     ref.watch(descriptionsNotifierProvider);
-    final weaponsAsync = ref.watch(weaponListNotifierProvider);
+    ref.watch(_onlyEnabledModsChanged);
+    _mergedWithShowEnabled = showEnabled;
+    final weaponsAsync = ref.watch(weaponListNotifierProvider(showEnabled));
     final mods = ref.watch(AppState.mods);
     final isLoadingWeapons = ref.watch(isLoadingWeaponsList);
 
@@ -346,20 +357,20 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
 
   void toggleShowEnabled() {
     _showEnabledField.value = !_showEnabledField.value;
-    _emitAfterFilterMutation();
     _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
+    _emitAfterFilterMutation();
   }
 
   void toggleShowHidden() {
     _showHiddenField.value = !_showHiddenField.value;
-    _emitAfterFilterMutation();
     _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
+    _emitAfterFilterMutation();
   }
 
   void setWeaponSpoilerLevel(WeaponSpoilerLevel level) {
     _spoilerField.setSelected(level);
-    _emitAfterFilterMutation();
     _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
+    _emitAfterFilterMutation();
   }
 
   void toggleSplitPane() {
@@ -408,8 +419,8 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   }
 
   void onGroupChanged(String groupId) {
-    _emitAfterFilterMutation();
     _filters.maybePersist(groupId, ref.read(filterGroupPersistenceProvider));
+    _emitAfterFilterMutation();
   }
 
   void setChipSelections(String groupId, Map<String, bool?> selections) {
@@ -417,7 +428,17 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
     _emitAfterFilterMutation();
   }
 
+  /// Call this last. When the toggle changed it marks this controller as
+  /// needing a rebuild, and `ref` can't be used again until that rebuild runs.
   void _emitAfterFilterMutation() {
+    // "Only Enabled Mods" can be flipped from the toolbar button or the
+    // filters panel, so check the field itself rather than trusting one path.
+    if (_mergedWithShowEnabled != showEnabled) {
+      // Rebuilds this controller, which re-reads the weapon list with disabled
+      // mods left in or out of the merge.
+      ref.read(_onlyEnabledModsChanged.notifier).state++;
+      return;
+    }
     final mods = ref.read(AppState.mods);
     state = _processAllFilters(state, mods);
   }

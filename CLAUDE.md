@@ -60,8 +60,24 @@ Feature work is planned with OpenSpec, under `openspec/`:
 - **State management**: Riverpod. Use `AsyncNotifier`/`Notifier` providers, `ref.watch()` for reactive UI. NOT Bloc, NOT Provider package.
 - **Serialization**: dart_mappable (`@MappableClass`, `@MappableEnum`, `.mapper.dart` files). NOT freezed.
   - Custom hooks: `DirectoryHook()`, `VersionHook()`, `SafeDecodeHook()` in `lib/utils/dart_mappable_utils.dart`.
-- **Navigation**: Enum-based tabs via `TriOSTools` (`lib/trios/navigation.dart`). `AppShell` (`lib/app_shell.dart`) maps tab indices to tools. `LazyIndexedStack` for efficient tab switching.
-- **Organization**: Feature-folder structure under `lib/`. Each feature has its own directory (e.g., `mod_manager/`, `ship_viewer/`, `weapon_viewer/`, `hullmod_viewer/`, `faction_viewer/`, `portraits/`, `catalog/`, `dashboard/`, `vram_estimator/`, `chipper/`).
+- **Navigation**: Enum-based tabs via `TriOSTools` (`lib/trios/navigation.dart`). `AppShell` (`lib/app_shell.dart`) maps tab indices to tools. `LazyIndexedStack` for efficient tab switching. Some tools are debug-only (`debugOnlyTools` in `navigation.dart` — currently Sector Map and Codex).
+- **Game data merging**: `lib/utils/game_data_merge.dart` merges CSV/JSON data from vanilla + enabled mods the same way the game does (load order, `core_clearArray`, vanilla always loses conflicts). `lib/utils/game_file_resolver.dart` resolves file paths written in data files the way the game does: each enabled mod is asked in load order, then the game core; first source with the file wins. All viewers route through these — don't hand-roll merge logic.
+- **Viewer data cache** (`lib/viewer_cache/`): viewers load from a msgpack disk cache first, then re-parse in the background. `CachedStreamListNotifier<T, P>` is the base class (one cache file per mod variant per domain, schema-versioned via `CacheEnvelope`, stored by `CachedVariantStore`). Ships, weapons, hullmods, ship systems, wings, and the graphics-path index (`GraphicsIndexManager`) all use it.
+- **Organization**: Feature-folder structure under `lib/`. Each feature has its own directory (e.g., `mod_manager/`, `ship_viewer/`, `weapon_viewer/`, `hullmod_viewer/`, `faction_viewer/`, `fighter_viewer/`, `ship_systems_manager/`, `codex/`, `sector_map/`, `portraits/`, `catalog/`, `dashboard/`, `vram_estimator/`, `chipper/`). Notable smaller ones:
+  - `chatbot/` — in-app assistant answering questions about the user's mods/RAM/logs. No LLM — keyword/regex intent matching (`ChatbotEngine`, `ChatIntent` subclasses) against local app state.
+  - `codex/` — unified searchable reference browser cross-linking ships, weapons, hullmods, ship systems, and wings. Debug-only for now.
+  - `sector_map/` — renders a saved game's star sector as an interactive map, with a system finder. WIP, debug-only.
+  - `toolbar/` — top bar: nav tab buttons and reordering, launch/game-folder action buttons, chatbot button.
+  - `trios/activity_panel/` — side panel showing live and historical download/install activity.
+  - `mod_records/` — persistent per-mod records of where a mod came from (catalog, version checker, forum).
+  - `mod_tag_manager/` — user-defined mod categories/tags with icons and colors.
+  - `mod_profiles/` — save/load named sets of enabled mods; can read enabled-mod lists from game saves.
+  - `descriptions/` — loads and merges `descriptions.csv` across vanilla + mods for viewer/codex flavor text.
+  - `changelogs/` — fetches and caches per-mod changelogs via version-checker URLs.
+  - `launcher/`, `vmparams/` — game launch with pre-launch checks; `vmparams` RAM editing.
+  - `companion_mod/` — deploys/updates TriOS's bundled companion Starsector mod.
+  - `rules_autofresh/` — watches `rules.csv` and triggers the game's rules hot-reload.
+  - `onboarding/`, `tips/`, `about/` — first-run carousel, loading-screen tips viewer, About page.
 - **Platform-native bits**: `windows/`, `macos/`, `linux/` for native runners. Archive support via 7-Zip CLI wrapper (`lib/compression/`). Crash reporting via Sentry (initialized in `main.dart`).
 - **Generated files** are excluded from analysis: `build/**`, `lib/**.freezed.dart`, `lib/**.g.dart`, `lib/libarchive/libarchive_bindings.dart`.
 
@@ -81,6 +97,8 @@ Reusable widgets in `lib/widgets/` and shared components. Use these before build
 - `MovingTooltipWidget` (`lib/widgets/moving_tooltip.dart`) — Mouse-tracking tooltip. Static factories: `.text()`, `.framed()`, `.starsector()`, `.image()`. Prefer `.text()` over Flutter's `tooltip`.
 - `TooltipFrame` (`lib/widgets/tooltip_frame.dart`) — Styled frame for tooltip content with optional rainbow border.
 - `ingame_tooltip_shared.dart` (`lib/widgets/ingame_tooltip_shared.dart`) — Shared helpers for game-style tooltips: `tooltipTitle()`, `tooltipTitleWithDesignType()`, `tooltipSectionHeader()`, `tooltipStatsGrid()`, `tooltipHairline()`, and the `TooltipStatEntry` model.
+- `ModTooltipFancyTitleHeader` (`lib/widgets/fancy_mod_tooltip_header.dart`) — Tooltip header tinted with colors pulled from the mod's icon.
+- `UnderConstructionOverlay` (`lib/widgets/under_construction_overlay.dart`) — "Under construction" tape overlay for WIP features.
 
 ### Text
 
@@ -122,6 +140,7 @@ Reusable widgets in `lib/widgets/` and shared components. Use these before build
 - `CompactListTile` (`lib/widgets/compact_list_tile.dart`) — Minimal-padding list tile.
 - `SimpleDataRow` (`lib/widgets/simple_data_row.dart`) — Label + bold value display row.
 - `SettingsGroup` (`lib/widgets/settings_group.dart`) — Section header with divider for settings pages. Static factory: `.subsection()`.
+- `MultiSplitViewMixin` (`lib/widgets/multi_split_mixin_view.dart`) — State mixin that wires up a `MultiSplitViewController` for resizable split layouts.
 
 ### State & Interaction
 
@@ -132,6 +151,7 @@ Reusable widgets in `lib/widgets/` and shared components. Use these before build
 - `HoverableRow` (`lib/widgets/hoverable_row.dart`) — Row with hover highlighting.
 - `Highlightable` (`lib/widgets/highlightable.dart`) — Programmatic highlight with glow animation, auto-scrolls into view.
 - `InlineEditText` (`lib/widgets/inline_edit_text.dart`) — In-place text editing (display to edit mode).
+- `RestartableApp` (`lib/widgets/restartable_app.dart`) — Wrapper that can soft-restart the widget tree: `RestartableApp.softRestartApp(context)`.
 
 ### Progress & Feedback
 
@@ -152,6 +172,8 @@ Reusable widgets in `lib/widgets/` and shared components. Use these before build
 - `ModIcon` (`lib/widgets/mod_icon.dart`) — Mod icon from file path. Static factories: `.fromMod()`, `.fromVariant()`.
 - `ModTypeIcon` (`lib/widgets/mod_type_icon.dart`) — Icon indicating mod type (total conversion, utility, etc.).
 - `TriOSAppIcon` (`lib/widgets/trios_app_icon.dart`) — Animated app icon with optional rainbow gradient.
+- `BrokenShipImageWidget` (`lib/widgets/broken_ship_image_widget.dart`) — Banana placeholder for missing/undecodable *ship* sprites (use as `Image.file` `errorBuilder`). Other missing images use a plain broken-image icon.
+- `PaletteGeneratorMixin` (`lib/widgets/palette_generator_mixin.dart`) — State mixin that extracts a color palette from an image (cached per path).
 
 ### Borders & Visual Effects
 
@@ -159,6 +181,7 @@ Reusable widgets in `lib/widgets/` and shared components. Use these before build
 - `DottedBorder` (`lib/widgets/dotted_border.dart`) — Dotted/dashed border (Circle, RRect, Rect, Oval).
 - `AnimatedGradientBorder` (`lib/widgets/animated_gradient_border.dart`) — Animated gradient border effect.
 - `Blur` (`lib/widgets/blur.dart`) — Blur effect on child widget.
+- `GlitterBackground` (`lib/widgets/glitter_background.dart`) — Animated background-effect host. Effects live in `lib/widgets/background_effects/` (aurora, circuitry, constellation, embers, motes, nebula, radar, rain, starfield), each extending `BackgroundEffect`.
 
 ### Expansion
 
@@ -199,6 +222,7 @@ See [Shared viewer widgets](#shared-viewer-widgets) and [WispGrid](#wispgrid) un
 - `showExportOrCopyDialog()` (`lib/widgets/export_to_csv_dialog.dart`) — Dialog for exporting data as CSV or copying to clipboard.
 - `DragDropInstallModOverlay` (`lib/widgets/file_card.dart`) — Drag-drop overlay for mod installation.
 - `TriOSChangelogViewer` (`lib/widgets/changelog_viewer.dart`) — Formatted changelog display.
+- `mergeModSourcesView()` (`lib/widgets/merge_mod_sources_view.dart`) — Mod-attribution lines for ship/weapon details dialogs ("Mod: X", or split Stats/file lines with hover breakdowns when mods overlap).
 
 ## Common Utilities
 
@@ -259,6 +283,21 @@ Reusable functions and extensions in `lib/utils/`. Use these before writing new 
 - `HexColorExt.fromHex(hexString)` — Parse hex string ("aabbcc" or "#ffaabbcc") to `Color`.
 - `Color.toHex()` — Convert `Color` to hex string.
 
+### Game Data Merging & File Resolution
+
+- `game_data_merge.dart` (`lib/utils/game_data_merge.dart`) — Shared merge rules for vanilla + mod data (CSV rows, JSON maps, `.wpn`/`.ship` pairing). `MergeSource` identifies a source (mod variant or `kVanillaSourceKey`); `ItemModSources` tracks which mod supplied what. No disk I/O — raw data in, merged data out.
+- `GameFileResolver` (`lib/utils/game_file_resolver.dart`) — Resolves a path written in a data file the way the game does: every enabled mod in load order, then the game core; first source with the file wins. Case-insensitive lookups.
+
+### Search
+
+- `updateSearchIndices()` (`lib/utils/search_index.dart`) — Incrementally update a search index cache (remove gone items, add new ones).
+- `mod_search.dart` (`lib/utils/mod_search.dart`) — Search index/tags for installed mods (`createSearchIndex()`, `createSearchTags()`).
+- `catalog_search.dart` (`lib/utils/catalog_search.dart`) — Catalog mod search plus lenient version comparison for scraped version strings.
+
+### Background Work
+
+- `AppWorker` (`lib/utils/app_worker.dart`) — Runs functions on a long-lived background isolate. Riverpod provider: `appWorkerProvider`.
+
 ### Debouncing
 
 - `Debouncer` (`lib/utils/debouncer.dart`) — Debounce async operations. First call executes immediately; subsequent calls within the window are coalesced.
@@ -266,6 +305,7 @@ Reusable functions and extensions in `lib/utils/`. Use these before writing new 
 ### Logging
 
 - `Fimber` (`lib/utils/logging.dart`) — Static logging facade. Levels: `.v()` (verbose), `.d()` (debug), `.i()` (info), `.w()` (warning), `.e()` (error). Logs to console, file, and Sentry.
+- `LogCollapser` (`lib/utils/log_collapser.dart`) — Collapses repeated warnings into one line with `(xN)` counts; stays quiet if the same summary was logged recently. Used by merge code that re-runs often.
 
 ### HTTP & Caching
 
@@ -276,6 +316,14 @@ Reusable functions and extensions in `lib/utils/`. Use these before writing new 
 
 - `GenericAsyncSettingsManager<T>` (`lib/utils/generic_settings_manager.dart`) — Abstract settings file manager with debounced writes, file-lock retry, and backup support.
 - `GenericSettingsAsyncNotifier<T>` (`lib/utils/generic_settings_notifier.dart`) — Riverpod `AsyncNotifier` base class that auto-persists state via a settings manager.
+
+### Platform & Misc
+
+- `platform_paths.dart` (`lib/utils/platform_paths.dart`) — Per-platform game paths: JRE folder, Java executable, etc.
+- `platform_specific.dart` (`lib/utils/platform_specific.dart`) — OS-specific operations, e.g. `FileSystemEntity.moveToTrash()` (Recycle Bin / Trash per platform).
+- `NetworkUtils` (`lib/utils/network_util.dart`) — Fetch GitHub releases (used for TriOS self-update).
+- `MapDiff` / `MapComparer` (`lib/utils/map_diff.dart`) — Compare two maps; returns added/removed/modified entries.
+- `dialogs.dart` (`lib/utils/dialogs.dart`) — Shared app dialogs (alerts, confirmations, etc.).
 
 ### Serialization Hooks (`lib/utils/dart_mappable_utils.dart`)
 
@@ -288,7 +336,7 @@ All viewer pages (ships, weapons, hullmods, portraits, factions) follow this tem
 - **Page** (`xxx_page.dart`): `ConsumerStatefulWidget` with `AutomaticKeepAliveClientMixin`. Builds toolbar, filter panel, and grid.
 - **Controller** (`xxx_page_controller.dart`): `Notifier<XxxPageState>`. Manages filters, search, UI toggles.
 - **State**: Split into `XxxPageState` (ephemeral) and `XxxPageStatePersisted` (saved to app settings). Both use `@MappableClass`.
-- **Manager** (`xxx_manager.dart`): Loads and provides data (CSV parsing, file I/O).
+- **Manager** (`xxx_manager.dart`): Loads and provides data (CSV parsing, file I/O). Newer managers (ships, weapons, hullmods, ship systems, wings) extend `CachedStreamListNotifier` (`lib/viewer_cache/`) — cache-first load, then background re-parse — and merge per-mod data through `lib/utils/game_data_merge.dart`.
 - **Models** (`models/` subdirectory): Data classes with `@MappableClass`, CSV field mapping via `@MappableField(key: 'csv-column-name')`.
 
 ### Shared viewer widgets
@@ -317,6 +365,8 @@ Filter values: `null` (indifferent), `true` (include), `false` (exclude). If any
 - `lib/models/` — Core domain models (Mod, ModVariant, ModInfo, Version)
 - `lib/mod_manager/mod_manager_logic.dart` — Core mod enable/disable/install logic
 - `lib/mod_manager/homebrew_grid/wisp_grid.dart` — WispGrid implementation
+- `lib/utils/game_data_merge.dart` — Merge rules for vanilla + mod game data
+- `lib/viewer_cache/` — Cache-first loading base classes for viewers
 - `lib/widgets/` — Shared reusable widgets
 - `lib/utils/` — Utility functions and extensions
 

@@ -58,4 +58,10 @@ class Debouncer {
 
     return completer.future;
   }
+
+  /// Cancels any pending run. The future returned by that [debounce] call
+  /// will never complete.
+  void cancel() {
+    _timer?.cancel();
+  }
 }

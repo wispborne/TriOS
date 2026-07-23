@@ -133,6 +133,11 @@ bool tagsMatchShipSpoilerLevel(
   return level == SpoilerLevel.showSlightSpoilers || !isSlightSpoiler;
 }
 
+/// Bumped whenever "Only Enabled Mods" flips. The filter field itself stays
+/// the source of truth; the controller watches this so it rebuilds and re-reads
+/// the ship list, which is merged differently depending on the toggle.
+final _onlyEnabledModsChanged = StateProvider<int>((ref) => 0);
+
 /// Controller for the ships page using Notifier (synchronous)
 class ShipsPageController extends Notifier<ShipsPageState> {
   final vanillaName = 'Vanilla';
@@ -147,6 +152,10 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       _searchFields.map((f) => f.toMeta(state.allShips)).toList();
 
   List<Ship>? _searchIndexItems;
+
+  /// The "Only Enabled Mods" value the current ship list was merged with, so
+  /// [_emitAfterFilterMutation] can tell when a re-merge is needed.
+  bool? _mergedWithShowEnabled;
 
   // Memoization for shipsWithModuleIds, keyed by input identity so we skip
   // the O(N²) recompute on rebuilds where ship/variant references haven't
@@ -209,9 +218,22 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
   @override
   ShipsPageState build() {
+    // Build filter scope controller only once; reuse the same groups across
+    // rebuilds so live filter state persists across them. Done first because
+    // the "Only Enabled Mods" field decides which ship list to read.
+    if (stateOrNull == null) {
+      _filters = _buildFilters();
+      _searchFields = _buildSearchFields();
+      _fieldsByKey = {for (final f in _searchFields) f.key: f};
+      final persistence = ref.read(filterGroupPersistenceProvider);
+      _filters.loadPersisted(persistence);
+    }
+
     // Watch ship data, ship systems, weapons, and descriptions.
     ref.watch(descriptionsNotifierProvider);
-    final shipsAsync = ref.watch(shipListNotifierProvider);
+    ref.watch(_onlyEnabledModsChanged);
+    _mergedWithShowEnabled = showEnabled;
+    final shipsAsync = ref.watch(shipListNotifierProvider(showEnabled));
     final shipSystemsAsync = ref.watch(shipSystemListNotifierProvider);
     final mods = ref.watch(AppState.mods);
     final isLoadingShips = ref.watch(isLoadingShipsList);
@@ -225,7 +247,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     final shipSystemsMap = shipSystems.associateBy((e) => e.id);
     final hullmodsMap = (hullmodsAsync.value ?? []).associateBy((e) => e.id);
 
-    final weaponsAsync = ref.watch(weaponListNotifierProvider);
+    final weaponsAsync = ref.watch(weaponListNotifierProvider(showEnabled));
     final weapons = weaponsAsync.value ?? [];
     final weaponsMap = weapons.associateBy((e) => e.id);
 
@@ -234,16 +256,6 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       moduleVariants,
       variantHullIdMap,
     );
-
-    // Build filter scope controller only once; reuse the same groups across
-    // rebuilds so live filter state persists across them.
-    if (stateOrNull == null) {
-      _filters = _buildFilters();
-      _searchFields = _buildSearchFields();
-      _fieldsByKey = {for (final f in _searchFields) f.key: f};
-      final persistence = ref.read(filterGroupPersistenceProvider);
-      _filters.loadPersisted(persistence);
-    }
 
     // Apply staged chip selections against the current data.
     _filters.applyPendingChipMerge(allShips);
@@ -552,14 +564,14 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
   void toggleShowEnabled() {
     _showEnabledField.value = !_showEnabledField.value;
-    _emitAfterFilterMutation();
     _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
+    _emitAfterFilterMutation();
   }
 
   void setShowSpoilers(SpoilerLevel spoilerLevelToShow) {
     _spoilerField.setSelected(spoilerLevelToShow);
-    _emitAfterFilterMutation();
     _filters.maybePersist('general', ref.read(filterGroupPersistenceProvider));
+    _emitAfterFilterMutation();
   }
 
   void toggleSplitPane() {
@@ -612,8 +624,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
   /// Called after a user mutates a filter group's state via the renderer.
   void onGroupChanged(String groupId) {
-    _emitAfterFilterMutation();
     _filters.maybePersist(groupId, ref.read(filterGroupPersistenceProvider));
+    _emitAfterFilterMutation();
   }
 
   /// Replace chip selections on a named group (context-menu navigation).
@@ -622,7 +634,17 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     _emitAfterFilterMutation();
   }
 
+  /// Call this last. When the toggle changed it marks this controller as
+  /// needing a rebuild, and `ref` can't be used again until that rebuild runs.
   void _emitAfterFilterMutation() {
+    // "Only Enabled Mods" can be flipped from the toolbar button or the
+    // filters panel, so check the field itself rather than trusting one path.
+    if (_mergedWithShowEnabled != showEnabled) {
+      // Rebuilds this controller, which re-reads the ship list with disabled
+      // mods left in or out of the merge.
+      ref.read(_onlyEnabledModsChanged.notifier).state++;
+      return;
+    }
     final mods = ref.read(AppState.mods);
     state = _processAllFilters(state, mods);
   }

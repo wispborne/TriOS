@@ -37,8 +37,8 @@ ModVariant _variant(String name) => ModVariant(
   gameCoreFolder: Directory('core'),
 );
 
-Mod _mod(ModVariant variant) =>
-    Mod(id: variant.modInfo.id, isEnabledInGame: true, modVariants: [variant]);
+Mod _mod(ModVariant variant, {bool enabled = true}) =>
+    Mod(id: variant.modInfo.id, isEnabledInGame: enabled, modVariants: [variant]);
 
 /// A source that ships the given images, spelled as they are on disk.
 GameFileSource _source(String folder, List<String> imageFiles) =>
@@ -56,6 +56,7 @@ Future<List<Weapon>> _build({
   required List<WeaponsCachePayload> payloads,
   required List<Mod> mods,
   List<GameFileSource> imageSources = const [],
+  bool onlyEnabledMods = false,
 }) async {
   final container = ProviderContainer(
     overrides: [
@@ -63,15 +64,18 @@ Future<List<Weapon>> _build({
         () => _FakeWeaponListNotifier(payloads),
       ),
       AppState.mods.overrideWithValue(mods),
-      gameFileResolverProvider.overrideWithValue(
-        GameFileResolver(imageSources),
+      gameFileResolverProvider.overrideWith(
+        (ref, _) => GameFileResolver(imageSources),
       ),
     ],
   );
   addTearDown(container.dispose);
 
   await container.read(weaponSourcesProvider.future);
-  return container.read(weaponListNotifierProvider).valueOrNull ?? const [];
+  return container
+          .read(weaponListNotifierProvider(onlyEnabledMods))
+          .valueOrNull ??
+      const [];
 }
 
 void main() {

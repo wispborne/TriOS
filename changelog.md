@@ -14,6 +14,7 @@
   - 'Last Updated' column on the Mods page.
   - More background effects (Settings - Theme Modifiers).
 - Fixed
+  - A ship no longer lists the same built-in hullmod twice when two mods both name it.
   - Ships/weapons/etc with stats should now reflect any mods' changes to those stats.
   - Deep links now correctly check for already-installed mods on app cold starts.
   - Catalog: mods now show as "Installed" even when the mod's real name differs from the name in the catalog (e.g. "Ashpad" installs as "Aashpad").

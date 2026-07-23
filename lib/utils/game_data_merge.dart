@@ -273,6 +273,33 @@ DeepMergeResult _deepMerge(List<SourceJson> sources, LogCollapser issues) {
   );
 }
 
+/// List fields the game treats as a set, so a repeated entry is not a second
+/// anything. Two mods both listing a hull's built-in hullmods would otherwise
+/// show each one twice.
+///
+/// Everything not named here keeps its duplicates. `builtInWings` needs them:
+/// listing a fighter twice is how a ship gets two bays of it.
+const _setLikeListKeys = {
+  'builtinmods',
+  'removebuiltinmods',
+  'hints',
+  'addhints',
+  'removehints',
+  'tags',
+  'removetags',
+  'renderhints',
+};
+
+/// Drops entries of [incoming] that [existing] already has, keeping the order
+/// of what is left. Only used for [_setLikeListKeys].
+List<dynamic> _withoutRepeats(List<dynamic> existing, List<dynamic> incoming) {
+  final seen = existing.toSet();
+  return [
+    for (final item in incoming)
+      if (seen.add(item)) item,
+  ];
+}
+
 /// Whether a list replaces the base instead of appending.
 ///
 /// From `LoadingUtils.java:384-390`: replaces when the key starts with
@@ -336,15 +363,19 @@ void _mergeInto(
         continue;
       }
 
-      target[key] = [...afterClear, ...incoming];
-      if (incoming.isNotEmpty) {
+      final added = _setLikeListKeys.contains(key.toLowerCase())
+          ? _withoutRepeats(afterClear, incoming)
+          : incoming;
+
+      target[key] = [...afterClear, ...added];
+      if (added.isNotEmpty) {
         _addContribution(
           sectionAttributions,
           fullKey,
           sourceName,
-          incoming.length,
+          added.length,
         );
-        for (final item in incoming) {
+        for (final item in added) {
           if (item is String) {
             itemAttributions.putIfAbsent(fullKey, () => {})[item] = sourceName;
           }

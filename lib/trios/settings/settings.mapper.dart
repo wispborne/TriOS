@@ -1082,6 +1082,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool _$showEngineTrails(Settings v) => v.showEngineTrails;
+  static const Field<Settings, bool> _f$showEngineTrails = Field(
+    'showEngineTrails',
+    _$showEngineTrails,
+    opt: true,
+    def: false,
+  );
   static List<String> _$weaponsSearchHistory(Settings v) =>
       v.weaponsSearchHistory;
   static const Field<Settings, List<String>> _f$weaponsSearchHistory = Field(
@@ -1255,6 +1262,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #activityPanelMode: _f$activityPanelMode,
     #concurrentExtractions: _f$concurrentExtractions,
     #debugMode: _f$debugMode,
+    #showEngineTrails: _f$showEngineTrails,
     #weaponsSearchHistory: _f$weaponsSearchHistory,
     #shipsSearchHistory: _f$shipsSearchHistory,
     #hullmodsSearchHistory: _f$hullmodsSearchHistory,
@@ -1372,6 +1380,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       activityPanelMode: data.dec(_f$activityPanelMode),
       concurrentExtractions: data.dec(_f$concurrentExtractions),
       debugMode: data.dec(_f$debugMode),
+      showEngineTrails: data.dec(_f$showEngineTrails),
       weaponsSearchHistory: data.dec(_f$weaponsSearchHistory),
       shipsSearchHistory: data.dec(_f$shipsSearchHistory),
       hullmodsSearchHistory: data.dec(_f$hullmodsSearchHistory),
@@ -1614,6 +1623,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     ActivityPanelMode? activityPanelMode,
     int? concurrentExtractions,
     bool? debugMode,
+    bool? showEngineTrails,
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
     List<String>? hullmodsSearchHistory,
@@ -1894,6 +1904,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     ActivityPanelMode? activityPanelMode,
     int? concurrentExtractions,
     bool? debugMode,
+    bool? showEngineTrails,
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
     List<String>? hullmodsSearchHistory,
@@ -2036,6 +2047,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (concurrentExtractions != null)
         #concurrentExtractions: concurrentExtractions,
       if (debugMode != null) #debugMode: debugMode,
+      if (showEngineTrails != null) #showEngineTrails: showEngineTrails,
       if (weaponsSearchHistory != null)
         #weaponsSearchHistory: weaponsSearchHistory,
       if (shipsSearchHistory != null) #shipsSearchHistory: shipsSearchHistory,
@@ -2330,6 +2342,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.concurrentExtractions,
     ),
     debugMode: data.get(#debugMode, or: $value.debugMode),
+    showEngineTrails: data.get(#showEngineTrails, or: $value.showEngineTrails),
     weaponsSearchHistory: data.get(
       #weaponsSearchHistory,
       or: $value.weaponsSearchHistory,

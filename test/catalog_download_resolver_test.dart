@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/models/mod_info_json.dart';
+import 'package:trios/models/version_checker_info.dart';
 
 CatalogMod mod({String? directDownload, String? forum}) => CatalogMod(
   name: 'Test Mod',
@@ -26,6 +30,30 @@ ForumLlmDownload dl(
   requiresManualStep: requiresManualStep,
   resolvedDirectUrl: resolvedDirectUrl,
 );
+
+/// A trios "Install with TriOS" link whose `mod` entry points at [url], with an
+/// optional version stated in the link.
+ForumLlmDownload trilink(String url, {String? version}) {
+  final entry = version == null
+      ? url
+      : jsonEncode({'url': url, 'version': version});
+  return dl(
+    'https://trilink.wispborne.com/open.html?mod=${Uri.encodeComponent(entry)}',
+    kind: LlmDownloadKind.trios,
+  );
+}
+
+VersionCheckerInfo remote(String? directDownloadUrl, {String? version}) =>
+    VersionCheckerInfo(
+      directDownloadURL: directDownloadUrl,
+      modVersion: version == null
+          ? null
+          : VersionObject(
+              version.split('.').elementAtOrNull(0),
+              version.split('.').elementAtOrNull(1),
+              version.split('.').elementAtOrNull(2),
+            ),
+    );
 
 ForumLlmMod llmMod(List<ForumLlmDownload> downloads) =>
     ForumLlmMod(name: 'Test Mod', role: LlmModRole.main, downloads: downloads);
@@ -171,6 +199,75 @@ void main() {
         null,
       );
       expect(primaryTieSet(candidates), hasLength(1));
+    });
+  });
+
+  group('version checker candidate', () {
+    test('beats a stale catalog direct link', () {
+      final candidates = resolveDownloadCandidates(
+        mod(directDownload: 'https://github.com/x/download/v1.0/m_1.0.zip'),
+        null,
+        remoteVersion: remote(
+          'https://github.com/x/download/v1.1/m_1.1.zip',
+          version: '1.1',
+        ),
+      );
+
+      expect(candidates.first.kind, DownloadCandidateKind.versionChecker);
+      expect(candidates.first.url, 'https://github.com/x/download/v1.1/m_1.1.zip');
+      expect(candidates.first.label, 'Version checker (1.1)');
+    });
+
+    test('a trios link with no version still wins', () {
+      final candidates = resolveDownloadCandidates(
+        mod(),
+        llmMod([trilink('https://a.com/m.zip')]),
+        remoteVersion: remote('https://vc.com/m.zip', version: '1.1'),
+      );
+
+      expect(candidates.first.kind, DownloadCandidateKind.triosDeepLink);
+    });
+
+    test('a trios link pointing at a .version file still wins', () {
+      final candidates = resolveDownloadCandidates(
+        mod(),
+        llmMod([trilink('https://a.com/M.version', version: '1.0')]),
+        remoteVersion: remote('https://vc.com/m.zip', version: '1.1'),
+      );
+
+      expect(candidates.first.kind, DownloadCandidateKind.triosDeepLink);
+    });
+
+    test('a trios link naming an older version loses to the version checker',
+        () {
+      final candidates = resolveDownloadCandidates(
+        mod(),
+        llmMod([trilink('https://a.com/m.zip', version: '1.0')]),
+        remoteVersion: remote('https://vc.com/m.zip', version: '1.1'),
+      );
+
+      expect(candidates.first.kind, DownloadCandidateKind.versionChecker);
+      expect(candidates[1].kind, DownloadCandidateKind.triosDeepLink);
+    });
+
+    test('a trios link naming the same version still wins', () {
+      final candidates = resolveDownloadCandidates(
+        mod(),
+        llmMod([trilink('https://a.com/m.zip', version: '1.1')]),
+        remoteVersion: remote('https://vc.com/m.zip', version: '1.1'),
+      );
+
+      expect(candidates.first.kind, DownloadCandidateKind.triosDeepLink);
+    });
+
+    test('nothing changes when the version checker has no download link', () {
+      final candidates = resolveDownloadCandidates(
+        mod(directDownload: 'https://catalog.com/mod.zip'),
+        null,
+        remoteVersion: remote(null, version: '1.1'),
+      );
+
+      expect(candidates.single.kind, DownloadCandidateKind.catalogDirect);
     });
   });
 }

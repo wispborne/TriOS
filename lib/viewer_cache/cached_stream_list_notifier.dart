@@ -196,11 +196,16 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
 
     var cacheHits = 0;
 
+    /// Keys whose slice came from cache and so can be compared byte-for-byte
+    /// against the fresh parse below.
+    final seededFromCache = <String>{};
+
     if (vanillaBytes != null) {
       final decoded = _tryDecode(vanillaBytes);
       if (decoded != null) {
         rehydratePayload(decoded, null);
         _slices[_kVanillaSliceKey] = decoded;
+        seededFromCache.add(_kVanillaSliceKey);
         cacheHits++;
       }
     }
@@ -213,6 +218,7 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
       if (decoded != null) {
         rehydratePayload(decoded, variant);
         _slices[variant.smolId] = decoded;
+        seededFromCache.add(variant.smolId);
         cacheHits++;
       }
     }
@@ -240,6 +246,12 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     var freshCount = 0;
     var fullScanCompleted = false;
 
+    /// Whether the fresh scan found anything the cache didn't already have.
+    /// Pushing a rebuilt list is expensive downstream — every merge and every
+    /// model object is rebuilt on the UI thread — so a mod whose files are
+    /// byte-for-byte what the cache held doesn't push one.
+    var anySliceChanged = false;
+
     final wantsContext = providesItemContext;
 
     try {
@@ -252,16 +264,21 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
         );
         if (_buildToken != myToken) return;
         if (vanillaPayload != null) {
-          _slices[_kVanillaSliceKey] = vanillaPayload;
           freshCount++;
-          final now = DateTime.now();
-          if (now.difference(lastYieldTime) >= yieldInterval) {
-            yield _flatten();
-            lastYieldTime = now;
-          }
-          if (gameVersion != null) {
-            final bytes = _tryEncode(vanillaPayload);
-            if (bytes != null) {
+          final bytes = _tryEncode(vanillaPayload);
+          final unchanged =
+              bytes != null &&
+              seededFromCache.contains(_kVanillaSliceKey) &&
+              _sameBytes(bytes, vanillaBytes);
+          if (!unchanged) {
+            _slices[_kVanillaSliceKey] = vanillaPayload;
+            anySliceChanged = true;
+            final now = DateTime.now();
+            if (now.difference(lastYieldTime) >= yieldInterval) {
+              yield _flatten();
+              lastYieldTime = now;
+            }
+            if (gameVersion != null && bytes != null) {
               final token = myToken;
               // Fire-and-forget; guard token at write time.
               unawaited(() async {
@@ -281,14 +298,21 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
         );
         if (_buildToken != myToken) return;
         if (payload == null) continue;
-        _slices[variant.smolId] = payload;
         freshCount++;
+        final bytes = _tryEncode(payload);
+        final unchanged =
+            bytes != null &&
+            seededFromCache.contains(variant.smolId) &&
+            _sameBytes(bytes, cachedBytes[variant.smolId]);
+        if (unchanged) continue;
+
+        _slices[variant.smolId] = payload;
+        anySliceChanged = true;
         final now = DateTime.now();
         if (now.difference(lastYieldTime) >= yieldInterval) {
           yield _flatten();
           lastYieldTime = now;
         }
-        final bytes = _tryEncode(payload);
         if (bytes != null) {
           final token = myToken;
           final smolId = variant.smolId;
@@ -299,9 +323,10 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
         }
       }
 
-      // Final yield guarantees the UI sees the complete fresh list regardless
-      // of where we were in the throttle window.
-      yield _flatten();
+      // Final push guarantees the UI sees the complete fresh list regardless
+      // of where we were in the throttle window. Skipped when the scan found
+      // nothing new, since what's already on screen is that same list.
+      if (anySliceChanged) yield _flatten();
       fullScanCompleted = true;
     } catch (e, st) {
       Fimber.w('[$domain] fresh scan aborted: $e', ex: e, stacktrace: st);
@@ -354,6 +379,17 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     );
 
     onBuildComplete(fullScanCompleted: fullScanCompleted);
+  }
+
+  /// Whether a freshly encoded payload matches what the cache held. The two
+  /// come from the same encoder over the same files, so equal bytes mean the
+  /// mod's data is unchanged.
+  static bool _sameBytes(Uint8List fresh, Uint8List? cached) {
+    if (cached == null || cached.length != fresh.length) return false;
+    for (var i = 0; i < fresh.length; i++) {
+      if (fresh[i] != cached[i]) return false;
+    }
+    return true;
   }
 
   P? _tryDecode(Uint8List bytes) {

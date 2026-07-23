@@ -412,6 +412,25 @@ class _ActivityPopupState extends ConsumerState<_ActivityPopup>
                               ),
                             ),
                           ),
+                        MovingTooltipWidget.text(
+                          message: 'Hide this popup',
+                          child: IconButton(
+                            icon: const Icon(Icons.close, size: 14),
+                            onPressed: () {
+                              ref
+                                  .read(recentInstallPopupProvider.notifier)
+                                  .clear();
+                              ref
+                                  .read(activityStartedPopupProvider.notifier)
+                                  .clear();
+                            },
+                            style: IconButton.styleFrom(
+                              padding: .all(4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

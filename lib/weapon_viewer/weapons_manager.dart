@@ -33,30 +33,44 @@ final weaponSourcesProvider =
       WeaponListNotifier.new,
     );
 
-/// Cached last merge result. Reused when payloads, source order and the image
-/// index are all unchanged.
-({
-  List<WeaponsCachePayload> payloads,
-  String key,
-  GameFileResolver resolver,
-  List<Weapon> weapons,
-})?
-_lastMergedWeapons;
+/// Cached last merge result, one per toggle value. Reused when payloads,
+/// source order and the image index are all unchanged.
+final _lastMergedWeapons =
+    <
+      bool,
+      ({
+        List<WeaponsCachePayload> payloads,
+        String key,
+        GameFileResolver resolver,
+        List<Weapon> weapons,
+      })
+    >{};
 
 /// Weapons built from the merged scan. Calls `mergeWeapons` and builds
 /// [Weapon] objects.
-final weaponListNotifierProvider = Provider<AsyncValue<List<Weapon>>>((ref) {
+///
+/// With [onlyEnabledMods] on, mods without an enabled variant are left out of
+/// the merge, so a disabled mod can't override a weapon's stats or sprites.
+///
+/// Merging here rather than during the scan means flipping the toggle is
+/// quick: the scan and its cache hold every installed mod either way.
+final weaponListNotifierProvider =
+    Provider.family<AsyncValue<List<Weapon>>, bool>((ref, onlyEnabledMods) {
   final sources = ref.watch(weaponSourcesProvider);
-  final resolver = ref.watch(gameFileResolverProvider);
-  final variants = ref
-      .watch(AppState.mods)
+  final resolver = ref.watch(gameFileResolverProvider(onlyEnabledMods));
+  final mods = ref.watch(AppState.mods);
+  final variants = mods
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls;
+      .nonNulls
+      .where(
+        (variant) =>
+            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
+      );
   final orderedSrcs = orderedSources(variants);
 
   return sources.whenData((payloads) {
     final key = orderedSrcs.map((s) => s.key).join('\n');
-    final memo = _lastMergedWeapons;
+    final memo = _lastMergedWeapons[onlyEnabledMods];
     if (memo != null &&
         identical(memo.payloads, payloads) &&
         memo.key == key &&
@@ -64,7 +78,7 @@ final weaponListNotifierProvider = Provider<AsyncValue<List<Weapon>>>((ref) {
       return memo.weapons;
     }
     final weapons = _buildWeapons(payloads, orderedSrcs, resolver);
-    _lastMergedWeapons = (
+    _lastMergedWeapons[onlyEnabledMods] = (
       payloads: payloads,
       key: key,
       resolver: resolver,
@@ -76,9 +90,13 @@ final weaponListNotifierProvider = Provider<AsyncValue<List<Weapon>>>((ref) {
 
 /// Weapons keyed by id, rebuilt only when the weapons list changes. Prefer
 /// this over building a map from [weaponListNotifierProvider] per widget.
-final weaponsByIdProvider = Provider<Map<String, Weapon>>((ref) {
+final weaponsByIdProvider = Provider.family<Map<String, Weapon>, bool>((
+  ref,
+  onlyEnabledMods,
+) {
   final weapons =
-      ref.watch(weaponListNotifierProvider).valueOrNull ?? const <Weapon>[];
+      ref.watch(weaponListNotifierProvider(onlyEnabledMods)).valueOrNull ??
+      const <Weapon>[];
   return {for (final w in weapons) w.id: w};
 });
 

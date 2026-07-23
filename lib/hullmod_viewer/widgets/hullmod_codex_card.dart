@@ -46,7 +46,7 @@ class HullmodCodexCard {
                 descriptionProvider((hullmod.id, DescriptionEntry.typeHullMod)),
               ),
               spritePath: ref
-                  .watch(gameFileResolverProvider)
+                  .watch(gameFileResolverProvider(false))
                   .resolve(hullmod.sprite),
               showTitle: showTitle,
               showSprite: showSprite,
@@ -76,7 +76,7 @@ class HullmodCodexCard {
         description: ref.watch(
           descriptionProvider((hullmod.id, DescriptionEntry.typeHullMod)),
         ),
-        spritePath: ref.watch(gameFileResolverProvider).resolve(hullmod.sprite),
+        spritePath: ref.watch(gameFileResolverProvider(false)).resolve(hullmod.sprite),
         showTitle: showTitle,
         showSprite: showSprite,
         showDescription: showDescription,

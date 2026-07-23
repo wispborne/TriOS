@@ -196,6 +196,10 @@ class Settings with SettingsMappable {
 
   final bool debugMode;
 
+  /// Whether the ship viewer draws engine trails behind lit engines.
+  /// Work in progress, so it's off unless you turn it on.
+  final bool showEngineTrails;
+
   final List<String> weaponsSearchHistory;
   final List<String> shipsSearchHistory;
   final List<String> hullmodsSearchHistory;
@@ -326,6 +330,7 @@ class Settings with SettingsMappable {
     this.activityPanelMode = ActivityPanelMode.pinned,
     this.concurrentExtractions = 2,
     this.debugMode = false,
+    this.showEngineTrails = false,
     this.weaponsSearchHistory = const [],
     this.shipsSearchHistory = const [],
     this.hullmodsSearchHistory = const [],

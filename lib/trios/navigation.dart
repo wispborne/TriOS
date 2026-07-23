@@ -103,7 +103,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.catalog => 'Mod Catalog',
     TriOSTools.chipper => 'Log Viewer',
     TriOSTools.vramEstimator => 'VRAM Estimator',
-    TriOSTools.codex => 'Codex — browse and search all game data',
+    TriOSTools.codex => 'Codex',
     TriOSTools.ships => 'Ship Viewer',
     TriOSTools.weapons => 'Weapon Viewer',
     TriOSTools.hullmods => 'Hullmod Viewer',

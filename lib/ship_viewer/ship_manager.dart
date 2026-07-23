@@ -46,30 +46,44 @@ final shipSourcesProvider =
       ShipListNotifier.new,
     );
 
-/// Cached last merge result. Reused when payloads, source order and the image
-/// index are all unchanged.
-({
-  List<ShipsCachePayload> payloads,
-  String key,
-  GameFileResolver resolver,
-  List<Ship> ships,
-})?
-_lastMergedShips;
+/// Cached last merge result, one per toggle value. Reused when payloads,
+/// source order and the image index are all unchanged.
+final _lastMergedShips =
+    <
+      bool,
+      ({
+        List<ShipsCachePayload> payloads,
+        String key,
+        GameFileResolver resolver,
+        List<Ship> ships,
+      })
+    >{};
 
 /// Ships built from the merged scan. Calls `mergeShips`, builds [Ship] objects,
 /// and resolves skins.
-final shipListNotifierProvider = Provider<AsyncValue<List<Ship>>>((ref) {
+///
+/// With [onlyEnabledMods] on, mods without an enabled variant are left out of
+/// the merge, so a disabled mod can't override a ship's stats or sprite.
+///
+/// Merging here rather than during the scan means flipping the toggle is
+/// quick: the scan and its cache hold every installed mod either way.
+final shipListNotifierProvider =
+    Provider.family<AsyncValue<List<Ship>>, bool>((ref, onlyEnabledMods) {
   final sources = ref.watch(shipSourcesProvider);
-  final resolver = ref.watch(gameFileResolverProvider);
-  final variants = ref
-      .watch(AppState.mods)
+  final resolver = ref.watch(gameFileResolverProvider(onlyEnabledMods));
+  final mods = ref.watch(AppState.mods);
+  final variants = mods
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls;
+      .nonNulls
+      .where(
+        (variant) =>
+            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
+      );
   final orderedSrcs = orderedSources(variants);
 
   return sources.whenData((payloads) {
     final key = orderedSrcs.map((s) => s.key).join('\n');
-    final memo = _lastMergedShips;
+    final memo = _lastMergedShips[onlyEnabledMods];
     if (memo != null &&
         identical(memo.payloads, payloads) &&
         memo.key == key &&
@@ -77,7 +91,7 @@ final shipListNotifierProvider = Provider<AsyncValue<List<Ship>>>((ref) {
       return memo.ships;
     }
     final ships = _buildShips(payloads, orderedSrcs, resolver);
-    _lastMergedShips = (
+    _lastMergedShips[onlyEnabledMods] = (
       payloads: payloads,
       key: key,
       resolver: resolver,
@@ -736,13 +750,14 @@ Ship _resolveSkin(
   String? spriteFile,
   ModVariant? modVariant,
 ) {
-  // Built-in mods: remove then add
+  // Built-in mods: remove then add. A hullmod is on the hull or it isn't, so a
+  // skin repeating one the base hull already has shouldn't list it twice.
   final builtInMods = List<String>.from(baseHull.builtInMods ?? []);
   if (skin.removeBuiltInMods != null) {
     builtInMods.removeWhere(skin.removeBuiltInMods!.contains);
   }
   if (skin.builtInMods != null) {
-    builtInMods.addAll(skin.builtInMods!);
+    builtInMods.addAll(skin.builtInMods!.where((m) => !builtInMods.contains(m)));
   }
 
   // Built-in weapons: remove then add
@@ -793,7 +808,7 @@ Ship _resolveSkin(
     hints.removeWhere(skin.removeHints!.contains);
   }
   if (skin.addHints != null) {
-    hints.addAll(skin.addHints!);
+    hints.addAll(skin.addHints!.where((h) => !hints.contains(h)));
   }
 
   // Tags: override if skin specifies, otherwise inherit

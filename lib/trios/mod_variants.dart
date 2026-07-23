@@ -17,7 +17,7 @@ import 'app_state.dart';
 /// Master list of all mod variants found in the mods folder.
 class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   final _lock = Mutex();
-  bool _initializedFileWatcher = false;
+  StreamSubscription<FileSystemEvent>? _fileWatcherSubscription;
   final Debouncer _fileWatcherReloadDebouncer = Debouncer(
     duration: Duration(milliseconds: 250),
   );
@@ -35,26 +35,32 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
     }
     // }
 
-    ref.listen(AppState.modsFolder, (previous, next) {
-      if (previous != next) {
-        Fimber.i("Mods directory changed, resetting file watcher.");
-        _initializedFileWatcher = false;
-      }
+    // Watch the mods folder for changes. Cancel any watcher from a previous
+    // build first — otherwise a mods folder change would leave the old
+    // folder's watcher running alongside the new one.
+    // (`ref.watch` on modsFolder means a folder change triggers a rebuild.)
+    _fileWatcherSubscription?.cancel();
+    _fileWatcherSubscription = null;
+    final modsPath = ref.watch(AppState.modsFolder).value;
+
+    if (modsPath != null && modsPath.existsSync()) {
+      _fileWatcherSubscription = addModsFolderFileWatcher(modsPath, (
+        List<File> files,
+      ) {
+        _fileWatcherReloadDebouncer.debounce(() {
+          onModsFolderChanged(files);
+          return null;
+        });
+      });
+    }
+
+    ref.onDispose(() {
+      _fileWatcherSubscription?.cancel();
+      _fileWatcherSubscription = null;
+      // A queued reload could still fire after disposal and touch a dead ref.
+      _fileWatcherReloadDebouncer.cancel();
     });
 
-    if (!_initializedFileWatcher) {
-      _initializedFileWatcher = true;
-      final modsPath = ref.watch(AppState.modsFolder).value;
-
-      if (modsPath != null && modsPath.existsSync()) {
-        addModsFolderFileWatcher(modsPath, (List<File> files) {
-          _fileWatcherReloadDebouncer.debounce(() {
-            onModsFolderChanged(files);
-            return null;
-          });
-        });
-      }
-    }
     return state.value ?? [];
   }
 
@@ -137,6 +143,9 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         return;
       }
 
+      // Only existing folders can be rescanned. Folders that are gone
+      // (deleted or renamed) still get their old entries removed from state
+      // below — otherwise a deleted mod would linger until a full rescan.
       final folders = onlyFolders
           ?.where((d) => d.existsSync())
           .toList(growable: false);
@@ -169,8 +178,10 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         ModVariant.iconCache.clear();
       } else {
         // Remove any variants whose modFolder was reloaded, then add updated ones.
+        // Use `onlyFolders` (not `folders`) so variants of deleted folders are
+        // removed too, even though they couldn't be rescanned.
         final newVariants = state.value?.toList() ?? [];
-        final folderPaths = folders.map((d) => d.path).toSet();
+        final folderPaths = onlyFolders!.map((d) => d.path).toSet();
 
         newVariants.removeWhere(
           (it) => folderPaths.contains(it.modFolder.path),

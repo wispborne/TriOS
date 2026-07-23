@@ -37,8 +37,8 @@ ModVariant _variant(String name) => ModVariant(
   gameCoreFolder: Directory('core'),
 );
 
-Mod _mod(ModVariant variant) =>
-    Mod(id: variant.modInfo.id, isEnabledInGame: true, modVariants: [variant]);
+Mod _mod(ModVariant variant, {bool enabled = true}) =>
+    Mod(id: variant.modInfo.id, isEnabledInGame: enabled, modVariants: [variant]);
 
 ShipsCachePayload _payload({
   required String sourceKey,
@@ -70,20 +70,22 @@ Future<List<Ship>> _build({
   required List<ShipsCachePayload> payloads,
   required List<Mod> mods,
   List<GameFileSource> imageSources = const [],
+  bool onlyEnabledMods = false,
 }) async {
   final container = ProviderContainer(
     overrides: [
       shipSourcesProvider.overrideWith(() => _FakeShipListNotifier(payloads)),
       AppState.mods.overrideWithValue(mods),
-      gameFileResolverProvider.overrideWithValue(
-        GameFileResolver(imageSources),
+      gameFileResolverProvider.overrideWith(
+        (ref, _) => GameFileResolver(imageSources),
       ),
     ],
   );
   addTearDown(container.dispose);
 
   await container.read(shipSourcesProvider.future);
-  return container.read(shipListNotifierProvider).valueOrNull ?? const [];
+  return container.read(shipListNotifierProvider(onlyEnabledMods)).valueOrNull ??
+      const [];
 }
 
 Ship? _byId(List<Ship> ships, String id) =>
@@ -91,6 +93,123 @@ Ship? _byId(List<Ship> ships, String id) =>
 
 void main() {
   group('shipListNotifierProvider', () {
+    test('two mods listing the same built-in hullmod only show it once', () async {
+      final resprite = _variant('Resprite');
+      final ships = await _build(
+        payloads: [
+          _payload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {'id': 'paragon', 'name': 'Paragon', 'hitpoints': 18000},
+            ],
+            shipFiles: {
+              'paragon.ship': {
+                'hullId': 'paragon',
+                'spriteName': 'graphics/ships/paragon.png',
+                'builtInMods': ['advancedshieldstabilizer'],
+                'builtInWings': ['talon_wing', 'talon_wing'],
+              },
+            },
+          ),
+          _payload(
+            sourceKey: resprite.smolId,
+            shipFiles: {
+              'paragon.ship': {
+                'hullId': 'paragon',
+                'spriteName': 'graphics/ships/paragon_resprite.png',
+                'builtInMods': ['advancedshieldstabilizer', 'targetingunit'],
+              },
+            },
+          ),
+        ],
+        mods: [_mod(resprite)],
+      );
+
+      final paragon = _byId(ships, 'paragon')!;
+      expect(paragon.builtInMods, [
+        'advancedshieldstabilizer',
+        'targetingunit',
+      ]);
+      expect(
+        paragon.builtInWings,
+        ['talon_wing', 'talon_wing'],
+        reason: 'a repeated wing is a second bay, so it is left alone',
+      );
+    });
+
+    test('a disabled mod does not override a vanilla ship when the toggle is '
+        'on', () async {
+      final rebalance = _variant('Rebalance');
+      final payloads = [
+        _payload(
+          sourceKey: kVanillaSourceKey,
+          rows: [
+            {'id': 'onslaught', 'name': 'Onslaught', 'hitpoints': 20000},
+          ],
+          shipFiles: {
+            'onslaught.ship': {
+              'hullId': 'onslaught',
+              'spriteName': 'graphics/ships/onslaught.png',
+            },
+          },
+        ),
+        _payload(
+          sourceKey: rebalance.smolId,
+          rows: [
+            {'id': 'onslaught', 'name': 'Onslaught', 'hitpoints': 99000},
+          ],
+          shipFiles: {
+            'onslaught.ship': {
+              'hullId': 'onslaught',
+              'spriteName': 'graphics/ships/onslaught_redrawn.png',
+            },
+          },
+        ),
+      ];
+      final mods = [_mod(rebalance, enabled: false)];
+
+      final withToggleOff = await _build(payloads: payloads, mods: mods);
+      final withToggleOn = await _build(
+        payloads: payloads,
+        mods: mods,
+        onlyEnabledMods: true,
+      );
+
+      expect(
+        _byId(withToggleOff, 'onslaught')!.hitpoints,
+        99000,
+        reason: 'the toggle is off, so every installed mod still counts',
+      );
+      final onslaught = _byId(withToggleOn, 'onslaught')!;
+      expect(onslaught.hitpoints, 20000);
+      expect(onslaught.spriteName, 'graphics/ships/onslaught.png');
+      expect(onslaught.modVariant, isNull, reason: 'vanilla supplies the row');
+    });
+
+    test('a ship only a disabled mod adds disappears when the toggle is on', () async {
+      final adder = _variant('Adder');
+      final ships = await _build(
+        payloads: [
+          _payload(
+            sourceKey: adder.smolId,
+            rows: [
+              {'id': 'newship', 'name': 'New Ship', 'hitpoints': 500},
+            ],
+            shipFiles: {
+              'newship.ship': {
+                'hullId': 'newship',
+                'spriteName': 'graphics/ships/newship.png',
+              },
+            },
+          ),
+        ],
+        mods: [_mod(adder, enabled: false)],
+        onlyEnabledMods: true,
+      );
+
+      expect(_byId(ships, 'newship'), isNull);
+    });
+
     test('a mod\'s rebalanced row beats vanilla\'s', () async {
       final rebalance = _variant('Rebalance');
 

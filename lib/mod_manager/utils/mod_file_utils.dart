@@ -165,21 +165,28 @@ void watchModsFolder(
 ///
 /// Calls [onUpdated] whenever a file is created, deleted, or modified
 /// in the mods folder. This is event-based and more efficient than polling.
-void addModsFolderFileWatcher(
+///
+/// Returns the subscription. The caller must cancel it when done, or the
+/// watcher keeps firing forever (e.g. after the mods folder setting changes).
+StreamSubscription<FileSystemEvent> addModsFolderFileWatcher(
   Directory modsFolder,
   Function(List<File> modInfoFilesFound) onUpdated,
 ) {
-  modsFolder.watch()
-    ..listen((event) {
+  return modsFolder.watch().listen(
+    (event) {
       if (event.type == FileSystemEvent.create ||
           event.type == FileSystemEvent.delete ||
           event.type == FileSystemEvent.modify) {
         onUpdated([event.path.toFile()]);
       }
-    })
-    ..handleError((error) {
+    },
+    // The old `..handleError(...)` cascade built a handled copy of the stream
+    // and threw it away, so watcher errors (e.g. the watched folder being
+    // deleted) went unhandled and crashed.
+    onError: (Object error) {
       Fimber.w("Error watching mods folder: $error");
-    });
+    },
+  );
 }
 
 /// Finds a mod variant that matches the given mod info.

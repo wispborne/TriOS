@@ -339,8 +339,13 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
   ) {
     int position = 0;
     // The CSV names an icon; any mod, or the game core, can be the one that
-    // actually has it.
-    final resolver = ref.watch(gameFileResolverProvider);
+    // actually has it. With "Only Enabled Mods" on, disabled mods can't supply
+    // it, matching what the game would draw.
+    final resolver = ref.watch(
+      gameFileResolverProvider(
+        ref.read(hullmodsPageControllerProvider.notifier).showEnabled,
+      ),
+    );
 
     String hullmodValueToString(
       Comparable<dynamic>? Function(Hullmod) getValue,

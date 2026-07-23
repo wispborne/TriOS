@@ -2,12 +2,22 @@ import 'package:trios/catalog/models/forum_link.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/models/mod_info_json.dart';
+import 'package:trios/models/version.dart';
+import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/trios/deep_link/deep_link_parser.dart';
 
 /// Where a download candidate came from, in priority order (lower index wins).
-/// `trios` deep links always outrank everything; the catalog's own
-/// direct link stays above forum links so today's one-click mods are unchanged.
+/// `trios` deep links outrank everything (they install dependencies too),
+/// except when the link names an older version than the mod's version checker
+/// — see [resolveDownloadCandidates]. The version checker comes next: it's the
+/// mod author's own "latest build" link, so it beats the catalog and forum
+/// links, which are snapshots that go stale. The catalog's own direct link
+/// stays above forum links so today's one-click mods are unchanged.
 enum DownloadCandidateKind {
   triosDeepLink,
+  versionChecker,
   catalogDirect,
   forumDirect,
   forumMirror,
@@ -58,20 +68,45 @@ class DownloadCandidate {
 }
 
 /// Builds the prioritized list of download candidates for a mod. Pure function
-/// over the catalog mod plus its forum LLM data (null when the topic has none).
+/// over the catalog mod, its forum LLM data (null when the topic has none), and
+/// the installed mod's version checker result ([remoteVersion], null when the
+/// mod isn't installed or has no version checker).
 ///
-/// Sorted: trios deep links > catalog direct > forum direct (high > medium >
-/// low > unknown) > forum mirror (same) > website. Manual-step links keep their
-/// place in the ordering but never become the primary (see [primaryCandidate]).
+/// Sorted: trios deep links > version checker > catalog direct > forum direct
+/// (high > medium > low > unknown) > forum mirror (same) > website. Manual-step
+/// links keep their place in the ordering but never become the primary (see
+/// [primaryCandidate]).
+///
+/// One exception to that order: a trios link that names an older version than
+/// the version checker reports is a stale link, so the version checker's
+/// download goes ahead of it.
 List<DownloadCandidate> resolveDownloadCandidates(
   CatalogMod mod,
-  ForumLlmMod? llmMainMod,
-) {
+  ForumLlmMod? llmMainMod, {
+  VersionCheckerInfo? remoteVersion,
+}) {
   final candidates = <DownloadCandidate>[
     // Forum links (may include a trios deep link).
     for (final download in llmMainMod?.downloads ?? const <ForumLlmDownload>[])
       _forumCandidate(download),
   ];
+
+  // The mod's own version checker download, when it has one.
+  final versionCheckerUrl = remoteVersion?.directDownloadURL;
+  if (versionCheckerUrl != null && versionCheckerUrl.isNotEmpty) {
+    final fixedUrl = versionCheckerUrl.fixModDownloadUrl();
+    final version = remoteVersion?.modVersion?.toString();
+    candidates.add(
+      DownloadCandidate(
+        url: fixedUrl,
+        label: version == null || version.isEmpty
+            ? 'Version checker'
+            : 'Version checker ($version)',
+        kind: DownloadCandidateKind.versionChecker,
+        sourceHost: _hostOf(fixedUrl),
+      ),
+    );
+  }
 
   // The catalog's existing direct download link.
   final catalogDirect = mod.urls?[ModUrlType.DirectDownload];
@@ -100,7 +135,46 @@ List<DownloadCandidate> resolveDownloadCandidates(
   }
 
   candidates.sort(_byPriority);
+
+  // Only trios links can sort above the version checker, so if every one of
+  // them is stale, the version checker's download becomes the primary.
+  final versionCheckerIndex = candidates.indexWhere(
+    (c) => c.kind == DownloadCandidateKind.versionChecker,
+  );
+  if (versionCheckerIndex > 0 &&
+      candidates
+          .take(versionCheckerIndex)
+          .every((c) => _isOutdatedTrilink(c, remoteVersion?.modVersion))) {
+    candidates.insert(0, candidates.removeAt(versionCheckerIndex));
+  }
+
   return candidates;
+}
+
+/// True when a trios link names a version older than [remoteVersion].
+///
+/// A link pointing at a `.version` file is never outdated — it reads the mod's
+/// current version when clicked. A link with no version in it can't be judged,
+/// so it isn't treated as outdated either.
+bool _isOutdatedTrilink(
+  DownloadCandidate candidate,
+  VersionObject? remoteVersion,
+) {
+  if (candidate.kind != DownloadCandidateKind.triosDeepLink) return false;
+  if (remoteVersion == null) return false;
+
+  final deepLink = trilinkToDeepLinkUri(candidate.url);
+  if (deepLink == null) return false;
+  final mainMod = parseDeepLink(deepLink)?.mainMod;
+  if (mainMod == null) return false;
+  if (mainMod.source == DeepLinkModSource.versionFile) return false;
+
+  final linkVersion = mainMod.modVersion;
+  if (linkVersion == null) return false;
+  return Version.parse(linkVersion, sanitizeInput: false).compareTo(
+        Version.parse(remoteVersion.toString(), sanitizeInput: false),
+      ) <
+      0;
 }
 
 /// The download candidates for one forum mod (no catalog links),

@@ -95,6 +95,7 @@ class FactionProfileDialog extends ConsumerWidget {
                   child: _FleetSection(
                     faction: faction,
                     gameCoreDir: gameCoreDir,
+                    onlyEnabledMods: onlyEnabledMods,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -590,7 +591,15 @@ class _FleetSection extends ConsumerStatefulWidget {
   final Faction faction;
   final Directory? gameCoreDir;
 
-  const _FleetSection({required this.faction, required this.gameCoreDir});
+  /// Leave data from mods that aren't enabled out of the ship and weapon
+  /// lists, matching the page this dialog was opened from.
+  final bool onlyEnabledMods;
+
+  const _FleetSection({
+    required this.faction,
+    required this.gameCoreDir,
+    required this.onlyEnabledMods,
+  });
 
   @override
   ConsumerState<_FleetSection> createState() => _FleetSectionState();
@@ -603,6 +612,8 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
   Faction get faction => widget.faction;
 
   Directory? get gameCoreDir => widget.gameCoreDir;
+
+  bool get onlyEnabledMods => widget.onlyEnabledMods;
 
   @override
   Widget build(BuildContext context) {
@@ -620,7 +631,7 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
           attributionKey: 'knownShips.hulls',
           sectionAttributions: faction.sectionAttributions,
           itemAttributions: faction.itemAttributions,
-          provider: shipListNotifierProvider,
+          provider: shipListNotifierProvider(onlyEnabledMods),
           ref: ref,
           theme: theme,
           gameCoreDir: gameCoreDir,
@@ -639,7 +650,7 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
           attributionKey: 'knownWeapons.weapons',
           sectionAttributions: faction.sectionAttributions,
           itemAttributions: faction.itemAttributions,
-          provider: weaponListNotifierProvider,
+          provider: weaponListNotifierProvider(onlyEnabledMods),
           ref: ref,
           theme: theme,
           gameCoreDir: gameCoreDir,
@@ -663,7 +674,7 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
           attributionKey: 'knownFighters.fighters',
           sectionAttributions: faction.sectionAttributions,
           itemAttributions: faction.itemAttributions,
-          provider: shipListNotifierProvider,
+          provider: shipListNotifierProvider(onlyEnabledMods),
           ref: ref,
           theme: theme,
           gameCoreDir: gameCoreDir,
@@ -776,7 +787,7 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
   void _showShipDialog(BuildContext context, Ship ship) {
     final shipSystems = ref.read(shipSystemListNotifierProvider).valueOrNull ?? [];
     final shipSystemsMap = {for (final s in shipSystems) s.id: s};
-    final weapons = ref.read(weaponListNotifierProvider).valueOrNull ?? [];
+    final weapons = ref.read(weaponListNotifierProvider(onlyEnabledMods)).valueOrNull ?? [];
     final weaponsMap = {for (final w in weapons) w.id: w};
 
     showDialog(
@@ -882,7 +893,7 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
   Widget _shipTooltip(Ship ship, Widget child) {
     final shipSystems = ref.watch(shipSystemListNotifierProvider).valueOrNull ?? [];
     final shipSystemsMap = {for (final s in shipSystems) s.id: s};
-    final weapons = ref.watch(weaponListNotifierProvider).valueOrNull ?? [];
+    final weapons = ref.watch(weaponListNotifierProvider(onlyEnabledMods)).valueOrNull ?? [];
     final weaponsMap = {for (final w in weapons) w.id: w};
     return ShipCodexCard.tooltip(
       ship: ship,

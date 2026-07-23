@@ -6,6 +6,7 @@ import 'package:trios/codex/codex_labels.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
+import 'package:trios/ship_viewer/widgets/ship_skin_badge.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_image_cell.dart';
 
@@ -78,13 +79,22 @@ class _CodexListRowState extends ConsumerState<CodexListRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      entry.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: widget.compact
-                          ? theme.textTheme.bodySmall
-                          : theme.textTheme.bodyMedium,
+                    Row(
+                      spacing: 8,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            entry.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: widget.compact
+                                ? theme.textTheme.bodySmall
+                                : theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                        if (entry is ShipCodexEntry && entry.ship.isSkin)
+                          const ShipSkinBadge(),
+                      ],
                     ),
                     if (widget.showTypeHint)
                       Text(

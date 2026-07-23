@@ -75,7 +75,7 @@ void main() {
           reason: 'Content should be preserved');
       });
 
-      test('should throw exception when mod_info.json does not exist', () {
+      test('should do nothing when mod_info.json does not exist', () {
         // Arrange
         final modFolder = tempDir;
         final smolId = 'test_mod';
@@ -83,8 +83,16 @@ void main() {
         // Act & Assert
         expect(
           () => core.brickModInfoFile(modFolder, smolId),
-          throwsException,
-          reason: 'Should throw when mod_info.json is missing',
+          returnsNormally,
+          reason: 'Already-disabled mods are not an error',
+        );
+        final disabledFile = modFolder
+            .resolve(Constants.modInfoFileDisabledNames.first)
+            .toFile();
+        expect(
+          disabledFile.existsSync(),
+          isFalse,
+          reason: 'Should not create a disabled file when there was no mod_info.json',
         );
       });
     });

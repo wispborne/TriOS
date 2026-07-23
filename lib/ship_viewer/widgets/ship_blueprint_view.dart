@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:collection/collection.dart';
@@ -7,6 +8,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/ship_viewer/engine_styles_manager.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_engine_slot.dart';
 import 'package:trios/ship_viewer/models/ship_engine_style_spec.dart';
@@ -173,7 +176,7 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
 }
 
 class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int? _hoveredIndex;
   int? _hoveredModuleIndex;
   int? _hoveredModuleSlotIndex;
@@ -198,6 +201,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
   /// Drives the engine glow fade and repaints the painter while animating.
   late final AnimationController _engineGlowController;
+
+  /// Loops once a second to scroll the flame texture, which is what makes the
+  /// flames flicker. Only runs while the glow is showing and TriOS is the
+  /// window in front — otherwise it's a repaint every frame for nothing.
+  late final AnimationController _engineFlickerController;
+  bool _windowFocused = true;
 
   /// Engine data resolved from providers each build, read by the glow overlay.
   Map<String, EngineStyleSpec> _engineStyles = const {};
@@ -281,14 +290,33 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       duration: const Duration(milliseconds: 180),
       value: _showEngineGlow ? 1.0 : 0.0,
     );
+    _engineFlickerController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+    // Catches the end of a fade-out, which no rebuild would tell us about.
+    _engineGlowController.addStatusListener((_) => _updateEngineFlicker());
     _resolveImageSize();
   }
 
   @override
   void dispose() {
     _engineGlowController.dispose();
+    _engineFlickerController.dispose();
     _transformController?.dispose();
     super.dispose();
+  }
+
+  /// Runs the flicker only while there's a flame on screen and TriOS is in
+  /// front.
+  void _updateEngineFlicker() {
+    final shouldRun = _windowFocused && _engineGlowController.value > 0;
+    if (shouldRun == _engineFlickerController.isAnimating) return;
+    if (shouldRun) {
+      _engineFlickerController.repeat();
+    } else {
+      _engineFlickerController.stop();
+    }
   }
 
   /// Animate the glow toward shown. The interactive (dialog) view is driven
@@ -302,6 +330,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               _engineGlowHovering ||
               widget.forceEngineGlow);
     _engineGlowController.animateTo(show ? 1.0 : 0.0);
+    _updateEngineFlicker();
   }
 
   @override
@@ -336,14 +365,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     }
     if (content.width <= 0 || content.height <= 0) return Matrix4.identity();
 
-    final scale =
-        min(
-          1.0,
-          min(
-            viewportWidth / content.width,
-            viewportHeight / content.height,
-          ),
-        ).clamp(_minScale, 1.0);
+    final scale = min(
+      1.0,
+      min(viewportWidth / content.width, viewportHeight / content.height),
+    ).clamp(_minScale, 1.0);
 
     return Matrix4.identity()
       ..translateByDouble(
@@ -668,13 +693,14 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     final originDx = -combinedRect.left;
     final originDy = -combinedRect.top;
 
-    final engineGlow = _engineGlowPositioned(originDx, originDy, imgW, imgH);
-
     return SizedBox(
       width: combinedRect.width,
       height: combinedRect.height,
       child: Stack(
         children: [
+          // Particle contrails go under the hull sprite, like the game.
+          ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
+              underHull: true),
           Positioned(
             left: originDx,
             top: originDy,
@@ -698,7 +724,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
             imgW,
             imgH,
           ),
-          ?engineGlow,
+          ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
+              underHull: false),
         ],
       ),
     );
@@ -734,17 +761,26 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     );
   }
 
-  /// Builds the additive engine glow overlay positioned over the parent hull
-  /// sprite, or null when there's nothing to draw (no glow sprites yet, no
-  /// sprite center, or the hull has no engines). Shared by both render paths.
+  /// Builds one layer of the engine glow overlay, or null when there's nothing
+  /// to draw (no glow sprites yet, no sprite center, or the hull has no
+  /// engines). Called twice per render path: once with [underHull] true,
+  /// placed under the hull sprite (particle contrails render below ships in
+  /// the game), and once with it false, placed over the sprite (flames,
+  /// blooms, and ribbon contrails). The under-hull layer is skipped entirely
+  /// when engine trails are turned off, since trails are all it draws.
   Widget? _engineGlowPositioned(
     double originDx,
     double originDy,
     double imgW,
-    double imgH,
-  ) {
+    double imgH, {
+    required bool underHull,
+  }) {
     final sprites = _engineGlowSprites;
     if (sprites == null) return null;
+    final showTrails = ref.watch(
+      appSettings.select((s) => s.showEngineTrails),
+    );
+    if (underHull && !showTrails) return null;
     final ship = widget.ship;
     final center = ship.center;
     if (center == null || center.length < 2) return null;
@@ -765,12 +801,16 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
             slots: ship.engineSlotsParsed,
             styles: _engineStyles,
             hullStyle: ship.style,
-            flame: sprites.flame,
-            glow: sprites.glow,
+            sprites: sprites,
             imgH: imgH,
             center: center,
+            isFighter: ship.hullSize?.toUpperCase() == 'FIGHTER',
+            maxSpeed: ship.maxSpeed,
             opacity: _engineGlowController,
+            flicker: _engineFlickerController,
             defaultColor: _defaultEngineColor,
+            underHull: underHull,
+            showTrails: showTrails,
           ),
         ),
       ),
@@ -881,7 +921,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
         widget.interactive ||
         _showWeapons ||
         _showDecoWeapons) {
-      _weaponsMap = ref.watch(weaponsByIdProvider);
+      // Every mod, enabled or not: this only resolves weapon ids the ship
+      // already names, for tooltips and built-in weapon art.
+      _weaponsMap = ref.watch(weaponsByIdProvider(false));
     }
     if (widget.showSlotTooltips) {
       _shipSystemsMap = {
@@ -903,6 +945,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     if (hasEngines) {
       _engineStyles = ref.watch(engineStylesProvider).value ?? const {};
       _engineGlowSprites = ref.watch(engineGlowSpritesProvider).value;
+
+      // Pause the flicker while TriOS is behind another window.
+      final focused = ref.watch(AppState.isWindowFocused);
+      if (focused != _windowFocused) _windowFocused = focused;
+      _updateEngineFlicker();
     }
 
     // Pin glow on (or release to hover/toggle) when the ships-page setting flips.
@@ -1106,6 +1153,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
+                  // Particle contrails go under the hull sprite, like the
+                  // game.
+                  ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
+                      underHull: true),
                   // Parent ship sprite, offset so modules with negative
                   // coordinates still fit within the Stack.
                   Positioned(
@@ -1138,7 +1189,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                   // same detection as the highlight above, so the two always
                   // agree on which module is targeted.
                   ?_buildHoveredModuleTooltip(originDx, originDy),
-                  ?_engineGlowPositioned(originDx, originDy, imgW, imgH),
+                  ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
+                      underHull: false),
                   if (_showBounds)
                     Positioned(
                       left: originDx,
@@ -1424,7 +1476,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// Resolves a built-in weapon ID to its display name, falling back to the
   /// raw ID if the weapons list hasn't loaded yet.
   String _builtInWeaponName(String weaponId) {
-    final weapons = ref.read(weaponListNotifierProvider).valueOrNull;
+    final weapons = ref.read(weaponListNotifierProvider(false)).valueOrNull;
     if (weapons != null) {
       final weapon = weapons.firstWhereOrNull((w) => w.id == weaponId);
       if (weapon?.name != null) return weapon!.name!;
@@ -2231,34 +2283,81 @@ class _ArmamentPainter extends CustomPainter {
       oldDelegate.loadedImageCount != loadedImageCount;
 }
 
-/// Draws each engine slot's flame + round base glow, additively tinted by the
-/// engine style color. Mirrors how the weapon viewer renders glow sprites.
+/// Draws each engine slot's flame and the round bloom at its nozzle, the same
+/// way the game does in combat (`com.fs.starfarer.combat.entities.G`).
+///
+/// Per slot the game draws the flame sprite several times over, each pass
+/// narrower and longer than the last, with the brightness ramping from nearly
+/// nothing at the nozzle up to full a short way out and back down to nothing at
+/// the tip. Non-fighters then get a teardrop outline laid faintly over the top.
+/// Last comes a round bloom over the nozzle in the engine colour, with a smaller
+/// white one on top of it. That white core is what makes a flame look hot.
+///
+/// The game has two paths: fighters go through `G.class(float)`, everything else
+/// through `G.o00000(float)`. They differ in the pass count, how bright the
+/// flame gets, and whether there's an outline.
 class _EngineGlowPainter extends CustomPainter {
   final List<ShipEngineSlot> slots;
   final Map<String, EngineStyleSpec> styles;
   final String? hullStyle;
-  final ui.Image flame;
-  final ui.Image glow;
+  final EngineGlowSprites sprites;
   final double imgH;
   final List<double> center;
 
+  /// True when the hull is a fighter. The game shrinks their bloom.
+  final bool isFighter;
+
+  /// The hull's top speed. Contrail length comes from it: particles fall
+  /// behind a ship at cruise. Null or zero (stations) means no contrail —
+  /// same as the game, where a ship that isn't moving leaves no trail.
+  final double? maxSpeed;
+
   /// Current glow fade, 0 (hidden) to 1 (full). Drives repaint while animating.
   final Animation<double> opacity;
+
+  /// Loops 0 → 1 once a second. The game scrolls the flame texture sideways at
+  /// this rate, which is where the flicker comes from. Null holds it still.
+  final Animation<double>? flicker;
   final Color defaultColor;
+
+  /// Which layer this painter draws. The game splits contrails across the
+  /// ship sprite: particle trails render below ships, ribbon trails (and the
+  /// flames themselves) above. One painter instance goes under the hull
+  /// sprite in the stack and draws only particle trails; the other goes over
+  /// it and draws everything else.
+  final bool underHull;
+
+  /// Whether to draw engine trails at all. Off by default, behind a setting
+  /// in Debug Settings.
+  final bool showTrails;
 
   _EngineGlowPainter({
     required this.slots,
     required this.styles,
     required this.hullStyle,
-    required this.flame,
-    required this.glow,
+    required this.sprites,
     required this.imgH,
     required this.center,
+    required this.isFighter,
+    required this.maxSpeed,
     required this.opacity,
+    required this.flicker,
     required this.defaultColor,
-  }) : super(repaint: opacity);
+    required this.underHull,
+    required this.showTrails,
+  }) : super(repaint: Listenable.merge([opacity, flicker]));
 
-  EngineStyleSpec? _specFor(ShipEngineSlot s) => styles[s.style ?? hullStyle];
+  /// How hard the engines are running, 0 (idle) to 1 (full burn). The game
+  /// varies this; we show a steady mid-burn.
+  static const double _throttle = 0.6;
+
+  /// Resolves a slot's engine style the way the game's hull loader does:
+  /// the `style` name looks up the merged styles map (unknown names are
+  /// treated as style ids, so this also covers mods that put their own id
+  /// straight in `style`); `CUSTOM` slots fall through to `styleId`, then to
+  /// a style written inline in the `.ship` file.
+  EngineStyleSpec? _specFor(ShipEngineSlot s) =>
+      styles[s.style ?? hullStyle] ?? styles[s.styleId] ?? s.styleSpec;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2267,93 +2366,606 @@ class _EngineGlowPainter extends CustomPainter {
 
     final cx = center[0];
     final cy = imgH - center[1];
+    final scroll = flicker?.value ?? 0.0;
 
-    final flameSrc = Rect.fromLTWH(
-      0,
-      0,
-      flame.width.toDouble(),
-      flame.height.toDouble(),
-    );
-    final glowSrc = Rect.fromLTWH(
-      0,
-      0,
-      glow.width.toDouble(),
-      glow.height.toDouble(),
-    );
-
-    for (final s in slots) {
+    for (var i = 0; i < slots.length; i++) {
+      final s = slots[i];
       // Same ship-space → screen transform as the weapon slot markers.
       final pos = Offset(cx - s.location[1], cy - s.location[0]);
 
       final spec = _specFor(s);
-      final paint = _engineGlowPaint(spec?.engineColor ?? defaultColor, op);
+      final tint = spec?.engineColor ?? defaultColor;
 
+      // The game requires both in a .ship file, so the fallbacks almost never
+      // fire. (`contrailSize` is NOT a length — the game only checks it
+      // against 128/256 as a legacy flag.)
       final engineWidth = s.width > 0 ? s.width : 10.0;
-      final maxLength = s.length > 0
-          ? s.length
-          : (s.contrailSize ?? engineWidth * 4);
-      // The `.ship` length is the full-burn flame length (e.g. 64px on an 80px
-      // hull). We render engines at rest, so use a fraction of it. We also
-      // ignore glowSizeMult — styles like COBRA_BOMBER (3.5) otherwise dwarf
-      // small hulls (drone_terminator, armaa_guppy).
-      final flameLength = maxLength * 0.55;
-      final flameWidth = engineWidth * 0.9;
+      final maxLength = s.length > 0 ? s.length : engineWidth * 4;
 
-      // The flame sprite points +x (base at left), so rotating the canvas to
-      // the slot's facing aims it outward. angle 180 = aft = downward here.
+      // The `.ship` numbers are the full-burn size. The game scales length by
+      // 0.2 + 0.8 × throttle and width by 0.1 + 0.9 × throttle.
+      final flameLength = maxLength * (0.2 + 0.8 * _throttle);
+      final flameWidth = engineWidth * (0.1 + 0.9 * _throttle);
+      if (flameLength <= 0 || flameWidth <= 0) continue;
+
+      // Distance from the nozzle to the brightest point of the flame.
+      final shoulder = min(flameWidth / 2, flameLength / 4);
+
+      // The flame points along +x once the canvas is rotated to the slot's
+      // facing. angle 180 = aft, which is downward here.
       final phi = -pi / 2 - s.angle * (pi / 180);
 
       canvas.save();
       canvas.translate(pos.dx, pos.dy);
-      canvas.rotate(phi);
 
-      // Round bloom at the nozzle, sized off the engine width.
-      final g = engineWidth * 0.95;
-      canvas.drawImageRect(
-        glow,
-        glowSrc,
-        Rect.fromCenter(center: Offset.zero, width: g, height: g),
-        paint,
+      // Contrail first, so the flame and bloom draw over its head. Drawn
+      // before the rotate: a particle's own drift follows the engine's angle,
+      // but the ship flies out from under it along its facing — straight aft
+      // on screen — and that second part doesn't rotate with the slot.
+      // Which contrail kind this pass draws is decided inside, by [underHull].
+      _paintContrail(
+        canvas,
+        spec: spec,
+        slot: s,
+        slotIndex: i,
+        alphaMult: op,
+        slotAngle: phi,
+        scroll: scroll,
       );
 
-      // Flame extending outward from the nozzle along +x (post-rotation).
-      canvas.drawImageRect(
-        flame,
-        flameSrc,
-        Rect.fromLTWH(
-          -flameLength * 0.1,
-          -flameWidth / 2,
-          flameLength * 1.1,
-          flameWidth,
-        ),
-        paint,
+      // The under-hull pass carries only particle trails.
+      if (underHull) {
+        canvas.restore();
+        continue;
+      }
+
+      canvas.rotate(phi);
+
+      // Each slot starts its texture scroll at a different place so nearby
+      // engines don't flicker in lockstep. Fixed per slot, not random, so a
+      // repaint doesn't make the flames jump.
+      final slotOffset = (i * 0.37) % 1.0;
+      // Fighters get a plain three-pass flame. Everything else gets six thinner
+      // passes with an outline laid over them, and Omega engines get one wide
+      // pass stamped twice instead.
+      final omega = spec?.omegaMode ?? false;
+      final passes = isFighter
+          ? 3
+          : omega
+          ? 1
+          : 6;
+      final stamps = omega ? 2 : 1;
+      // Fighters burn their flame to full at the shoulder; other ships only
+      // reach 100/255 there, because the outline fills in the rest.
+      final shoulderAlpha = isFighter ? 1.0 : 100 / 255;
+
+      // A style can name its own flame and outline sprites. Fall back to the
+      // defaults when we can't find one, so a bad path dims the flame rather
+      // than deleting it. The outline is the exception: a style that points at
+      // a blank sprite (THREAT uses `empty.png`) means "no outline", and the
+      // sprite index skips files it can't read, so treat missing as blank.
+      final defaultFlame = (spec?.isSmoke ?? false)
+          ? sprites.flameSmoke
+          : sprites.flameGlow;
+      final customFlame = spec?.glowSprite;
+      final flameImage =
+          (customFlame != null ? sprites.custom[customFlame] : null) ??
+          defaultFlame;
+      final customOutline = spec?.glowOutline;
+      final outlineImage = customOutline != null
+          ? sprites.custom[customOutline]
+          : sprites.outline;
+
+      for (var stamp = 0; stamp < stamps; stamp++) {
+        _paintFlame(
+          canvas,
+          image: flameImage,
+          tint: tint,
+          alphaMult: op,
+          length: flameLength,
+          width: flameWidth,
+          shoulder: shoulder,
+          scrollStart: slotOffset - scroll,
+          passes: passes,
+          shoulderAlpha: shoulderAlpha,
+        );
+      }
+
+      if (!isFighter && outlineImage != null) {
+        _paintOutline(
+          canvas,
+          image: outlineImage,
+          tint: tint,
+          alphaMult: op,
+          length: flameLength,
+          width: flameWidth,
+        );
+      }
+
+      _paintBloom(
+        canvas,
+        tint: spec?.glowAlternateColor ?? tint,
+        alphaMult: op,
+        flameWidth: flameWidth,
+        sizeMult: spec?.glowSizeMult ?? 1.0,
       );
 
       canvas.restore();
     }
   }
 
+  /// Draws the flame body: [passes] stacked quad strips, brightness ramping
+  /// nozzle → shoulder → tip.
+  void _paintFlame(
+    Canvas canvas, {
+    required ui.Image image,
+    required Color tint,
+    required double alphaMult,
+    required double length,
+    required double width,
+    required double shoulder,
+    required double scrollStart,
+    required int passes,
+    required double shoulderAlpha,
+  }) {
+    final texW = image.width.toDouble();
+    final texH = image.height.toDouble();
+    final paint = Paint()
+      ..blendMode = BlendMode.plus
+      ..filterQuality = FilterQuality.high
+      ..shader = ui.ImageShader(
+        image,
+        TileMode.repeated,
+        TileMode.clamp,
+        Matrix4.identity().storage,
+      );
+
+    // Texture rows to sample. Staying a hair inside the edges avoids picking up
+    // the transparent border, same as the game does.
+    final vTop = 0.01 * texH;
+    final vBottom = 0.99 * texH;
+
+    var u = scrollStart;
+    for (var pass = 0; pass < passes; pass++) {
+      final halfWidth = width / 2;
+      final uShoulder = u + shoulder / length;
+      final uTip = u + _throttle;
+
+      final positions = Float32List.fromList([
+        0,
+        -halfWidth,
+        0,
+        halfWidth,
+        shoulder,
+        -halfWidth,
+        shoulder,
+        halfWidth,
+        length,
+        -halfWidth,
+        length,
+        halfWidth,
+      ]);
+      final texCoords = Float32List.fromList([
+        u * texW,
+        vTop,
+        u * texW,
+        vBottom,
+        uShoulder * texW,
+        vTop,
+        uShoulder * texW,
+        vBottom,
+        uTip * texW,
+        vTop,
+        uTip * texW,
+        vBottom,
+      ]);
+
+      // Nearly dark at the nozzle, full at the shoulder, gone at the tip.
+      final atNozzle = _dimmedInt(tint, pass * 5 / 255 * alphaMult);
+      final atShoulder = _dimmedInt(tint, shoulderAlpha * alphaMult);
+      final atTip = _dimmedInt(tint, 0);
+      final colors = Int32List.fromList([
+        atNozzle,
+        atNozzle,
+        atShoulder,
+        atShoulder,
+        atTip,
+        atTip,
+      ]);
+
+      canvas.save();
+      // Nudge each pass forward and squash it: later passes are narrower and
+      // reach further, which is what gives the flame its tapered core.
+      canvas.translate((passes - pass - 1) * shoulder / (passes * 2), 0);
+      canvas.scale(0.5 + 0.5 * (pass + 1) / passes, (passes - pass) / passes);
+      canvas.drawVertices(
+        ui.Vertices.raw(
+          VertexMode.triangleStrip,
+          positions,
+          textureCoordinates: texCoords,
+          colors: colors,
+        ),
+        BlendMode.modulate,
+        paint,
+      );
+      canvas.restore();
+
+      u += 1.0 / passes;
+    }
+  }
+
+  /// Seconds between contrail particles in the game.
+  static const double _emitInterval = 0.1;
+
+  /// Seconds a particle takes to fade in after it spawns.
+  static const double _rampUpSeconds = 0.35;
+
+  /// Draws the trail behind one engine, as if the ship were flying at top
+  /// speed. Particles spawn at the nozzle every 0.1s; the ship flies out from
+  /// under them straight aft at top speed, while each also drifts along its
+  /// engine's angle at `maxSpeed × contrailMaxSpeedMult`. Each fades in over
+  /// 0.35s, then fades out and grows (or shrinks) until it dies at
+  /// `contrailDuration`. OMEGA-style engines draw one textured ribbon instead.
+  ///
+  /// One deliberate difference from the game: a full-length trail (seconds of
+  /// flight) dwarfs a still sprite, so trails are compressed to at most one
+  /// hull length. Proportions, lean, and fade are preserved.
+  ///
+  /// Runs in ship space, translated to the nozzle but NOT rotated to the slot:
+  /// straight aft is `(0, 1)` here regardless of the engine's angle, so an
+  /// angled engine's trail leans only as much as its drift share.
+  void _paintContrail(
+    Canvas canvas, {
+    required EngineStyleSpec? spec,
+    required ShipEngineSlot slot,
+    required int slotIndex,
+    required double alphaMult,
+    required double slotAngle,
+    required double scroll,
+  }) {
+    final speed = maxSpeed ?? 0;
+    if (!showTrails || spec == null || speed <= 0) return;
+    if (spec.contrailMode == ContrailMode.none) return;
+    // Particle trails belong to the under-hull pass, ribbons to the over-hull
+    // pass — the game's layering (particles below ships, ribbons above).
+    final isRibbon = spec.contrailMode == ContrailMode.quadStrip;
+    if (isRibbon == underHull) return;
+    final color = spec.contrailColor;
+    if (color == null || color.a <= 0) return;
+    final duration = spec.contrailDuration;
+    final startWidth = slot.width * spec.contrailSizeMult;
+    if (duration <= 0 || startWidth <= 0) return;
+
+    // In game the trail's alpha scales with ship speed over top speed, times
+    // the engine glow level. At cruise that's 1 × (0.4 + 0.6 × throttle).
+    final cruise = 0.4 + 0.6 * _throttle;
+    final alpha = alphaMult * cruise;
+
+    // The direction the engine points, in this unrotated space.
+    final slotDir = Offset(cos(slotAngle), sin(slotAngle));
+
+    if (isRibbon) {
+      // The ribbon's head sits a little out from the nozzle along the engine's
+      // angle. Ribbon points drift along that angle too, but the game damps
+      // the drift by ×(1 − life) every frame, so over its whole life a point
+      // moves only ~0.16·√duration seconds' worth of its starting drift speed
+      // (at 60 fps). The trail's shape is dominated by the ship flying out
+      // from under it, straight aft on screen.
+      final head = slotDir * (slot.length * 0.4 * spec.contrailSpawnDistMult);
+      final drift =
+          slotDir * (speed * spec.contrailMaxSpeedMult * 0.16 * sqrt(duration));
+      var tail = Offset(0, speed * duration) + drift;
+      // A trail at full game length runs for seconds of flight — hundreds of
+      // pixels hanging off a still sprite. Deliberate preview choice: compress
+      // it to at most one hull length. Shape, lean, and fade are unchanged.
+      if (tail.distance > imgH) tail *= imgH / tail.distance;
+      canvas.save();
+      canvas.translate(head.dx, head.dy);
+      canvas.rotate(atan2(tail.dy, tail.dx));
+      _paintContrailRibbon(
+        canvas,
+        color: color,
+        alphaMult: alpha,
+        length: tail.distance,
+        startWidth: startWidth,
+        endWidth: (startWidth * (1 + spec.contrailEndMult)).clamp(
+          0.0,
+          double.infinity,
+        ),
+        duration: duration,
+        scroll: scroll,
+        isSmoke: spec.isSmoke,
+      );
+      canvas.restore();
+      return;
+    }
+
+    // A particle trail at full game length spans (1 + drift mult) × top speed
+    // × duration — hundreds of pixels hanging off a still sprite. Deliberate
+    // preview choice: compress it to at most one hull length by scaling the
+    // speed the trail math sees. Spacing, lean, and fade compress together.
+    final naturalLength =
+        speed * (1 + spec.contrailMaxSpeedMult) * duration;
+    final displaySpeed = naturalLength > imgH
+        ? speed * imgH / naturalLength
+        : speed;
+
+    _paintContrailParticles(
+      canvas,
+      spec: spec,
+      color: color,
+      alphaMult: alpha,
+      slotIndex: slotIndex,
+      slotDir: slotDir,
+      shipSpeed: displaySpeed,
+      duration: duration,
+      startWidth: startWidth,
+      scroll: scroll,
+    );
+  }
+
+  void _paintContrailParticles(
+    Canvas canvas, {
+    required EngineStyleSpec spec,
+    required Color color,
+    required double alphaMult,
+    required int slotIndex,
+    required Offset slotDir,
+    required double shipSpeed,
+    required double duration,
+    required double startWidth,
+    required double scroll,
+  }) {
+    final image = spec.isSmoke ? sprites.smoke : sprites.particle;
+    final src = Rect.fromLTWH(0, 0, image.width * 1.0, image.height * 1.0);
+    final endWidth = startWidth * spec.contrailEndMult;
+    final driftSpeed = shipSpeed * spec.contrailMaxSpeedMult;
+
+    // The game scatters each particle's drift direction by ±5°; this is the
+    // matching sideways share of the drift, as a smooth wobble instead of
+    // randomness so the loop stays seamless.
+    const spread = 0.087;
+
+    // The flicker loops once a second; ten emissions happen in that time, so
+    // sliding every particle forward by one slot per tenth loops seamlessly.
+    final f = (scroll * 10) % 1.0;
+    final count = min(40, (duration / _emitInterval).ceil());
+
+    // Smoke puffs spin as they age, alternating direction per engine.
+    final spin = spec.isSmoke ? (slotIndex.isEven ? 1.2 : -1.2) : 0.0;
+
+    for (var k = 0; k < count; k++) {
+      final age = (k + f) * _emitInterval;
+      if (age >= duration) break;
+      final life = age / duration;
+
+      final brightness = age < _rampUpSeconds
+          ? age / _rampUpSeconds
+          : 1 - (age - _rampUpSeconds) / max(0.001, duration - _rampUpSeconds);
+      if (brightness <= 0) continue;
+
+      // Where the ship's motion left it (straight aft) plus its own drift
+      // (along the engine's angle), plus the sideways wobble.
+      final driftDist = driftSpeed * age;
+      final wobble = sin(age * 1.3 + slotIndex * 2.399) * driftDist * spread;
+      final center =
+          Offset(0, shipSpeed * age) +
+          slotDir * driftDist +
+          Offset(-slotDir.dy, slotDir.dx) * wobble;
+
+      final size = startWidth + (endWidth - startWidth) * life;
+      if (size <= 0) continue;
+
+      final paint = Paint()
+        ..blendMode = spec.isSmoke ? BlendMode.srcOver : BlendMode.plus
+        ..filterQuality = FilterQuality.high
+        ..colorFilter = ColorFilter.mode(
+          _dimmed(color, brightness * alphaMult),
+          BlendMode.modulate,
+        );
+
+      if (spin != 0) {
+        canvas.save();
+        canvas.translate(center.dx, center.dy);
+        canvas.rotate(age * spin);
+        canvas.drawImageRect(
+          image,
+          src,
+          Rect.fromCenter(center: Offset.zero, width: size, height: size),
+          paint,
+        );
+        canvas.restore();
+      } else {
+        canvas.drawImageRect(
+          image,
+          src,
+          Rect.fromCenter(center: center, width: size, height: size),
+          paint,
+        );
+      }
+    }
+  }
+
+  /// One textured ribbon (OMEGA), using the game's exact per-point alpha
+  /// curve. That curve is piecewise linear in trail progress, so four vertex
+  /// columns draw it exactly: alpha climbs at a fixed slope of 10 per unit of
+  /// progress until `min(0.05 / duration, 0.5)`, then restarts at full and
+  /// falls linearly to zero at the tail. For durations over half a second
+  /// that's a genuine jump — a short dim lead-in at the head, then full
+  /// brightness — and the game draws it that way too. (For shorter durations
+  /// the game lets the climb pass full brightness and its colour byte wraps
+  /// around; we clamp instead.) Width tapers linearly per the style. Drawn
+  /// along +x; the caller rotates the canvas to the trail's real direction.
+  void _paintContrailRibbon(
+    Canvas canvas, {
+    required Color color,
+    required double alphaMult,
+    required double length,
+    required double startWidth,
+    required double endWidth,
+    required double duration,
+    required double scroll,
+    required bool isSmoke,
+  }) {
+    if (length <= 0 || duration <= 0) return;
+    final image = sprites.ribbon;
+    final texW = image.width.toDouble();
+    final texH = image.height.toDouble();
+
+    // The game repeats the ribbon texture once per 256 world units — a fixed
+    // constant, nothing to do with the texture's own pixel size.
+    const unitsPerRepeat = 256.0;
+
+    // The texture rides with the trail's points, so it streams tailward at
+    // the point speed; rounded to a whole number of repeats per loop of the
+    // one-second flicker cycle so the loop is seamless.
+    final repeatsPerLoop = max(1, (length / duration / unitsPerRepeat).round());
+    final uOffset = -scroll * repeatsPerLoop * texW;
+
+    // (progress, alpha) of the four columns: head, both sides of the alpha
+    // jump, tail. Duplicate positions in a triangle strip just make zero-area
+    // triangles, which is the standard way to draw a hard colour step.
+    final t = min(0.05 / duration, 0.5);
+    final columns = [
+      (0.0, 0.0),
+      (t, min(1.0, 10.0 * t)),
+      (t, 1.0),
+      (1.0, 0.0),
+    ];
+
+    final positions = Float32List(columns.length * 4);
+    final texCoords = Float32List(columns.length * 4);
+    final colors = Int32List(columns.length * 2);
+
+    for (var i = 0; i < columns.length; i++) {
+      final (p, brightness) = columns[i];
+      final x = length * p;
+      final halfWidth = (startWidth + (endWidth - startWidth) * p) / 2;
+      final c = _dimmedInt(color, brightness * alphaMult);
+
+      final j = i * 4;
+      positions[j] = x;
+      positions[j + 1] = -halfWidth;
+      positions[j + 2] = x;
+      positions[j + 3] = halfWidth;
+      final u = x / unitsPerRepeat * texW + uOffset;
+      texCoords[j] = u;
+      texCoords[j + 1] = 0.01 * texH;
+      texCoords[j + 2] = u;
+      texCoords[j + 3] = 0.99 * texH;
+      colors[i * 2] = c;
+      colors[i * 2 + 1] = c;
+    }
+
+    canvas.drawVertices(
+      ui.Vertices.raw(
+        VertexMode.triangleStrip,
+        positions,
+        textureCoordinates: texCoords,
+        colors: colors,
+      ),
+      BlendMode.modulate,
+      Paint()
+        // The style's type is the blend mode, same as for particles: GLOW
+        // ribbons add light, SMOKE ribbons paint over what's behind them.
+        ..blendMode = isSmoke ? BlendMode.srcOver : BlendMode.plus
+        ..filterQuality = FilterQuality.high
+        ..shader = ui.ImageShader(
+          image,
+          TileMode.repeated,
+          TileMode.clamp,
+          Matrix4.identity().storage,
+        ),
+    );
+  }
+
+  /// Lays the outline sprite faintly over the whole flame. This is the teardrop
+  /// shape that gives a non-fighter flame its edge.
+  void _paintOutline(
+    Canvas canvas, {
+    required ui.Image image,
+    required Color tint,
+    required double alphaMult,
+    required double length,
+    required double width,
+  }) {
+    final src = Rect.fromLTWH(
+      image.width * 0.01,
+      image.height * 0.01,
+      image.width * 0.98,
+      image.height * 0.98,
+    );
+    canvas.drawImageRect(
+      image,
+      src,
+      // The game squashes the outline to 90% of the flame's length.
+      Rect.fromLTWH(0, -width / 2, length * 0.9, width),
+      Paint()
+        ..blendMode = BlendMode.plus
+        ..filterQuality = FilterQuality.high
+        ..colorFilter = ColorFilter.mode(
+          _dimmed(tint, _throttle * 50 / 255 * alphaMult),
+          BlendMode.modulate,
+        ),
+    );
+  }
+
+  /// Draws the round bloom over the nozzle: engine colour first, then a smaller
+  /// white core on top.
+  void _paintBloom(
+    Canvas canvas, {
+    required Color tint,
+    required double alphaMult,
+    required double flameWidth,
+    required double sizeMult,
+  }) {
+    var bloomSize = flameWidth * 2;
+    if (isFighter) bloomSize *= 0.66;
+
+    final bloom = sprites.bloom;
+    final src = Rect.fromLTWH(0, 0, bloom.width * 1.0, bloom.height * 1.0);
+
+    void draw(Color color, double size, double alpha) {
+      if (size <= 0) return;
+      canvas.drawImageRect(
+        bloom,
+        src,
+        Rect.fromCenter(center: Offset.zero, width: size, height: size),
+        Paint()
+          ..blendMode = BlendMode.plus
+          ..filterQuality = FilterQuality.high
+          ..colorFilter = ColorFilter.mode(
+            _dimmed(color, alpha),
+            BlendMode.modulate,
+          ),
+      );
+    }
+
+    // 0.45 is the alpha the game settles on for an engine that's running but
+    // not flaring.
+    final alpha = 0.45 * alphaMult;
+    draw(tint, sizeMult * bloomSize * 2, alpha);
+    draw(Colors.white, sizeMult * bloomSize * 0.75, alpha);
+  }
+
   @override
   bool shouldRepaint(_EngineGlowPainter oldDelegate) =>
       !identical(oldDelegate.slots, slots) ||
-      !identical(oldDelegate.flame, flame) ||
-      !identical(oldDelegate.glow, glow) ||
-      oldDelegate.defaultColor != defaultColor;
+      !identical(oldDelegate.sprites, sprites) ||
+      oldDelegate.isFighter != isFighter ||
+      oldDelegate.maxSpeed != maxSpeed ||
+      oldDelegate.defaultColor != defaultColor ||
+      oldDelegate.underHull != underHull ||
+      oldDelegate.showTrails != showTrails;
 }
 
-/// Additive glow paint, scaled by [op] (0–1) so the glow can fade in/out.
-Paint _engineGlowPaint(Color tint, double op) => Paint()
-  ..blendMode = BlendMode.plus
-  ..filterQuality = FilterQuality.high
-  ..colorFilter = ColorFilter.mode(
-    Color.from(
-      alpha: tint.a * op,
-      red: tint.r * op,
-      green: tint.g * op,
-      blue: tint.b * op,
-    ),
-    BlendMode.modulate,
-  );
+/// [tint] with its alpha scaled by [mult]. Under an additive blend the alpha
+/// is what dims the colour, so the other channels are left alone — scaling
+/// them too would dim it twice over.
+Color _dimmed(Color tint, double mult) => tint.withValues(alpha: tint.a * mult);
+
+/// Same as [_dimmed], packed the way `ui.Vertices` wants its colours.
+int _dimmedInt(Color tint, double mult) => _dimmed(tint, mult).toARGB32();
 
 class _ModuleGeometry {
   final List<_ModuleSpriteLayout> layouts;

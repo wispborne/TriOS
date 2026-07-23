@@ -6,6 +6,7 @@ import 'package:trios/fighter_viewer/wings_manager.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 
 typedef CodexKey = (CodexEntryType, String);
 
@@ -30,7 +31,16 @@ final codexLinksProvider = Provider<Map<CodexKey, List<CodexKey>>>((ref) {
   // are derived only from ships and wings, so yields from the other five
   // index sources (weapons, hullmods, systems, factions, descriptions) don't
   // trigger a rebuild of this expensive map while everything loads.
-  final ships = ref.watch(shipListNotifierProvider).valueOrNull ?? const [];
+  // Same toggle the index uses, so the codex only ever merges one ship list.
+  final ships =
+      ref
+          .watch(
+            shipListNotifierProvider(
+              ref.watch(appSettings.select((s) => s.codexEnabledModsOnly)),
+            ),
+          )
+          .valueOrNull ??
+      const [];
   final wings = ref.watch(wingListNotifierProvider).valueOrNull ?? const [];
   final moduleVariants = ref.watch(moduleVariantsProvider);
   final variantHullIdMap = ref.watch(variantHullIdMapProvider);

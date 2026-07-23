@@ -17,6 +17,7 @@ import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/ship_viewer/widgets/ship_details_dialog.dart';
+import 'package:trios/ship_viewer/widgets/ship_skin_badge.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/context_menu_items.dart';
@@ -437,27 +438,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
               ),
             ),
             if (item.isSkin)
-              Padding(
-                padding: const .only(left: 8, top: 3),
-                child: Container(
-                  padding: const .symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: MovingTooltipWidget.text(
-                    message:
-                        "This ship comes from a .skin file."
-                        "\nSkins are variations of standard hulls. For example, the Falcon (P) is a skin of the Falcon.",
-                    child: Text(
-                      'Skin',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ),
+              const Padding(
+                padding: .only(left: 8, top: 3),
+                child: ShipSkinBadge(),
               ),
           ],
         ),
@@ -587,7 +570,16 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 includeHeaders: true,
               ),
               () => shipsAsCsv(
-                ref.read(shipListNotifierProvider).valueOrNull ?? const [],
+                ref
+                        .read(
+                          shipListNotifierProvider(
+                            ref
+                                .read(shipsPageControllerProvider.notifier)
+                                .showEnabled,
+                          ),
+                        )
+                        .valueOrNull ??
+                    const [],
               ),
             );
           },

@@ -357,6 +357,17 @@ class ModManagerNotifier extends AsyncNotifier<void> {
       }
     }
 
+    if (!dryRun) {
+      // Take the deleted variants out of the mod list right away.
+      // Otherwise stale entries point at missing folders until the next full
+      // rescan, and things like switching versions trip over them.
+      await ref
+          .read(AppState.modVariants.notifier)
+          .reloadModVariantsFromFolders(
+            onlyFolders: variantsToDelete.map((it) => it.modFolder).toList(),
+          );
+    }
+
     return variantsToDelete.map((it) => it).toList();
   }
 

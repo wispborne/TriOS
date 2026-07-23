@@ -22,6 +22,7 @@ import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
@@ -80,6 +81,11 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     return llm.mainMod;
   }
 
+  /// The installed mod's version checker result, when it has one. Its download
+  /// link is the mod author's own, so it outranks the catalog and forum links.
+  VersionCheckerInfo? get _remoteVersion =>
+      widget.versionCheckComparison?.remoteVersionCheck?.remoteVersion;
+
   Color _statusBarColor(ThemeData theme) {
     final mod = widget.installedMod;
     if (mod == null) return Colors.transparent;
@@ -96,7 +102,11 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   @override
   Widget build(BuildContext context) {
     final mod = widget.mod;
-    final downloadCandidates = resolveDownloadCandidates(mod, _targetLlmMod);
+    final downloadCandidates = resolveDownloadCandidates(
+      mod,
+      _targetLlmMod,
+      remoteVersion: _remoteVersion,
+    );
 
     final theme = Theme.of(context);
     return Builder(
@@ -630,7 +640,11 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   void _showDebugDialog(BuildContext context, CatalogMod mod) {
     final forumModIndex = widget.forumModIndex;
     final targetLlmMod = _targetLlmMod;
-    final downloadCandidates = resolveDownloadCandidates(mod, targetLlmMod);
+    final downloadCandidates = resolveDownloadCandidates(
+      mod,
+      targetLlmMod,
+      remoteVersion: _remoteVersion,
+    );
 
     // Note: the forum index's toString already contains its LLM data, so we
     // don't dump that separately. The per-card download candidate is the one
@@ -1047,7 +1061,11 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
         ?.firstWhereOrNull((d) => d.displayName == mod.name && d.isInProgress);
     final isBusy = _clickBusy || activeDownload != null;
 
-    final candidates = resolveDownloadCandidates(mod, llmMainMod);
+    final candidates = resolveDownloadCandidates(
+      mod,
+      llmMainMod,
+      remoteVersion: versionCheckComparison?.remoteVersionCheck?.remoteVersion,
+    );
     final primary = primaryCandidate(candidates);
     final tieSet = primaryTieSet(candidates);
     // Best browser-only link (a website or a manual-step link), used when no

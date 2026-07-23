@@ -220,7 +220,7 @@ final _spawnWeightContextProvider =
   final defaults = ref.watch(mergedShipRolesProvider(onlyEnabledMods)).value;
   // The ship list stays unfiltered: it only resolves names and sizes for ids
   // the (already filtered) faction data asks about.
-  final ships = ref.watch(shipListNotifierProvider).value;
+  final ships = ref.watch(shipListNotifierProvider(false)).value;
   final variantHullIds = ref.watch(variantHullIdMapProvider);
   if (defaults == null || ships == null || variantHullIds.isEmpty) return null;
 

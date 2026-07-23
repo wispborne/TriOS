@@ -17,12 +17,16 @@ class ModVariantCore {
   /// Disables a mod by renaming mod_info.json to mod_info.json.disabled.
   ///
   /// This "bricks" the mod so it won't be loaded by the game.
-  /// Throws an exception if mod_info.json doesn't exist.
+  /// Does nothing if mod_info.json isn't there, since that means the mod is
+  /// already disabled (or the folder is gone).
   void brickModInfoFile(Directory modFolder, String smolId) {
     final modInfoFile = modFolder.resolve(Constants.unbrickedModInfoFileName);
 
     if (!modInfoFile.existsSync()) {
-      throw Exception("mod_info.json not found in ${modFolder.absolute}");
+      Fimber.i(
+        "Nothing to disable for '$smolId': no mod_info.json in '${modFolder.absolute.path}'. It's probably already disabled.",
+      );
+      return;
     }
 
     modInfoFile.renameSync(

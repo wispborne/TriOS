@@ -101,7 +101,7 @@ class Weapon with WeaponMappable implements WispGridItem {
   final String? turretGlowSprite;
   final String? hardpointGlowSprite;
 
-  /// `[r, g, b, a]` from the .wpn, used to tint the (additive) glow sprite.
+  /// `[r, g, b, a]` (0-255) from the .wpn, used to tint the (additive) glow sprite.
   final List<double>? glowColor;
 
   /// Raw `renderHints` list from the .wpn, e.g. `RENDER_BARREL_BELOW`,
@@ -358,7 +358,9 @@ class Weapon with WeaponMappable implements WispGridItem {
   }
 
   bool get renderBarrelBelow =>
-      renderHints?.any((h) => h.toUpperCase().contains('RENDER_BARREL_BELOW')) ??
+      renderHints?.any(
+        (h) => h.toUpperCase().contains('RENDER_BARREL_BELOW'),
+      ) ??
       false;
 
   bool get renderLoadedMissiles =>
@@ -373,12 +375,17 @@ class Weapon with WeaponMappable implements WispGridItem {
 
   String? get _underSprite =>
       _useTurret ? turretUnderSprite : hardpointUnderSprite;
+
   String? get mainSprite => _useTurret ? turretSprite : hardpointSprite;
+
   String? get _gunSprite => _useTurret ? turretGunSprite : hardpointGunSprite;
+
   String? get glowSprite => _useTurret ? turretGlowSprite : hardpointGlowSprite;
 
   /// Fire-point offsets for the preferred mount.
-  List<double>? get mountOffsets => _useTurret ? turretOffsets : hardpointOffsets;
+  List<double>? get mountOffsets =>
+      _useTurret ? turretOffsets : hardpointOffsets;
+
   List<double>? get mountAngleOffsets =>
       _useTurret ? turretAngleOffsets : hardpointAngleOffsets;
 

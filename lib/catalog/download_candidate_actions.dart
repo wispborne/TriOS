@@ -69,6 +69,7 @@ IconData downloadCandidateIcon(DownloadCandidate candidate) {
   if (candidate.requiresManualStep) return Icons.open_in_new;
   return switch (candidate.kind) {
     DownloadCandidateKind.triosDeepLink => Icons.rocket_launch,
+    DownloadCandidateKind.versionChecker => Icons.download,
     DownloadCandidateKind.catalogDirect => Icons.download,
     DownloadCandidateKind.forumDirect => Icons.download,
     DownloadCandidateKind.forumMirror => Icons.cloud_download,

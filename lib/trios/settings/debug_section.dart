@@ -111,6 +111,23 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             label: "Allow insecure HTTPS connections",
           ),
         ),
+        MovingTooltipWidget.text(
+          message:
+              "Draws the trail of smoke or glow behind a ship's lit engines"
+              "\nin the ship viewer. Still being worked on.",
+          child: CheckboxWithLabel(
+            value: ref.watch(appSettings.select((s) => s.showEngineTrails)),
+            onChanged: (value) {
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (state) =>
+                        state.copyWith(showEngineTrails: value ?? false),
+                  );
+            },
+            label: "Show engine trails",
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Row(

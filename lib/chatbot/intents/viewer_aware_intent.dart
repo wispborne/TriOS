@@ -13,10 +13,12 @@ import 'package:trios/weapon_viewer/weapons_manager.dart';
 mixin ViewerAwareIntent {
   Ref get ref;
 
-  List<Ship>? get ships => ref.read(shipListNotifierProvider).valueOrNull;
+  /// Every mod, enabled or not, so questions about an installed mod still get
+  /// an answer while it's switched off.
+  List<Ship>? get ships => ref.read(shipListNotifierProvider(false)).valueOrNull;
 
   List<Weapon>? get weapons =>
-      ref.read(weaponListNotifierProvider).valueOrNull;
+      ref.read(weaponListNotifierProvider(false)).valueOrNull;
 
   List<Hullmod>? get hullmods =>
       ref.read(hullmodListNotifierProvider).valueOrNull;

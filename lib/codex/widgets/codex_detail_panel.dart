@@ -50,11 +50,12 @@ class CodexDetailPanel extends ConsumerWidget {
 
     // A hull's key type depends on whether it's a station (separate category),
     // so resolve it from the index rather than assuming the ship category.
-    CodexEntryType hullKeyType(String hullId) => visible
-        .whereType<ShipCodexEntry>()
-        .where((e) => e.ship.id == hullId)
-        .map((e) => e.type)
-        .firstOrNull ??
+    CodexEntryType hullKeyType(String hullId) =>
+        visible
+            .whereType<ShipCodexEntry>()
+            .where((e) => e.ship.id == hullId)
+            .map((e) => e.type)
+            .firstOrNull ??
         CodexEntryType.ship;
 
     final card = switch (entry) {
@@ -67,7 +68,7 @@ class CodexDetailPanel extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 140),
+                constraints: const BoxConstraints(minHeight: 240),
                 child: Card(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),

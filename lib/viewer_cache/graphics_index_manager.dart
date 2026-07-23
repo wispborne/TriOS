@@ -50,14 +50,24 @@ final graphicsIndexProvider =
       GraphicsIndexNotifier.new,
     );
 
-/// Finds images the way the game does — every enabled mod in load order, then
-/// the game core. Rebuilt when the index or the enabled mods change.
-final gameFileResolverProvider = Provider<GameFileResolver>((ref) {
+/// Finds images the way the game does — every mod in load order, then the game
+/// core. Rebuilt when the index or the mod list changes.
+///
+/// With [onlyEnabledMods] on, mods without an enabled variant are left out, so
+/// a disabled mod can't replace a sprite it wouldn't replace in the game.
+final gameFileResolverProvider = Provider.family<GameFileResolver, bool>((
+  ref,
+  onlyEnabledMods,
+) {
   final payloads = ref.watch(graphicsIndexProvider).valueOrNull ?? const [];
-  final variants = ref
-      .watch(AppState.mods)
+  final mods = ref.watch(AppState.mods);
+  final variants = mods
       .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls;
+      .nonNulls
+      .where(
+        (variant) =>
+            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
+      );
 
   final bySourceKey = {for (final payload in payloads) payload.sourceKey: payload};
   return GameFileResolver([

@@ -663,7 +663,16 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 includeHeaders: true,
               ),
               () => weaponsAsCsv(
-                ref.read(weaponListNotifierProvider).valueOrNull ?? const [],
+                ref
+                        .read(
+                          weaponListNotifierProvider(
+                            ref
+                                .read(weaponsPageControllerProvider.notifier)
+                                .showEnabled,
+                          ),
+                        )
+                        .valueOrNull ??
+                    const [],
               ),
             );
           },

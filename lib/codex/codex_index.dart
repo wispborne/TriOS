@@ -109,17 +109,21 @@ final codexStandingFiltersProvider =
 /// each category by the loaders themselves. `(type, id)` is the key, so the
 /// same id in two categories never collides.
 final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
-  final ships = ref.watch(shipListNotifierProvider).valueOrNull ?? const [];
-  final weapons = ref.watch(weaponListNotifierProvider).valueOrNull ?? const [];
+  // Ships, weapons and factions are merged from mod files, so "only enabled
+  // mods" has to be applied while merging rather than by dropping entries
+  // afterwards — otherwise a disabled mod still overrides stats and sprites.
+  final enabledModsOnly = ref.watch(
+    appSettings.select((s) => s.codexEnabledModsOnly),
+  );
+  final ships =
+      ref.watch(shipListNotifierProvider(enabledModsOnly)).valueOrNull ??
+      const [];
+  final weapons =
+      ref.watch(weaponListNotifierProvider(enabledModsOnly)).valueOrNull ??
+      const [];
   final hullmods =
       ref.watch(hullmodListNotifierProvider).valueOrNull ?? const [];
-  // Factions are merged from mod files, so "only enabled mods" has to be
-  // applied while merging rather than by dropping entries afterwards.
-  final factions = ref.watch(
-    mergedFactionListProvider(
-      ref.watch(appSettings.select((s) => s.codexEnabledModsOnly)),
-    ),
-  );
+  final factions = ref.watch(mergedFactionListProvider(enabledModsOnly));
   final systems =
       ref.watch(shipSystemListNotifierProvider).valueOrNull ?? const [];
   final wings = ref.watch(wingListNotifierProvider).valueOrNull ?? const [];
@@ -160,10 +164,18 @@ final codexCategoryLoadingProvider = Provider.family<bool, CodexEntryType>((
   ref,
   type,
 ) {
+  // Same toggle the index itself uses, so this doesn't merge a second list
+  // just to read a loading flag.
+  final enabledModsOnly = ref.watch(
+    appSettings.select((s) => s.codexEnabledModsOnly),
+  );
   return switch (type) {
-    CodexEntryType.ship => ref.watch(shipListNotifierProvider).isLoading,
-    CodexEntryType.station => ref.watch(shipListNotifierProvider).isLoading,
-    CodexEntryType.weapon => ref.watch(weaponListNotifierProvider).isLoading,
+    CodexEntryType.ship =>
+      ref.watch(shipListNotifierProvider(enabledModsOnly)).isLoading,
+    CodexEntryType.station =>
+      ref.watch(shipListNotifierProvider(enabledModsOnly)).isLoading,
+    CodexEntryType.weapon =>
+      ref.watch(weaponListNotifierProvider(enabledModsOnly)).isLoading,
     CodexEntryType.hullmod => ref.watch(hullmodListNotifierProvider).isLoading,
     CodexEntryType.shipSystem =>
       ref.watch(shipSystemListNotifierProvider).isLoading,
@@ -176,7 +188,16 @@ final codexCategoryLoadingProvider = Provider.family<bool, CodexEntryType>((
 /// module slots. Kept in its own provider so it only recomputes when the ships
 /// or module data change, not on every spoiler/mod-filter tweak.
 final _codexModuleShipIdsProvider = Provider<Set<String>>((ref) {
-  final ships = ref.watch(shipListNotifierProvider).valueOrNull ?? const [];
+  // Same toggle the index uses, so the codex only ever merges one ship list.
+  final ships =
+      ref
+          .watch(
+            shipListNotifierProvider(
+              ref.watch(appSettings.select((s) => s.codexEnabledModsOnly)),
+            ),
+          )
+          .valueOrNull ??
+      const [];
   final moduleVariants = ref.watch(moduleVariantsProvider);
   final variantHullIdMap = ref.watch(variantHullIdMapProvider);
   if (ships.isEmpty || moduleVariants.isEmpty) return const {};

@@ -6,6 +6,7 @@ import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
@@ -27,6 +28,7 @@ void showForumPostDialog(
   BuildContext context, {
   required ForumModDetails details,
   ForumModIndex? index,
+  CatalogMod? mod,
   required void Function(String href) linkLoader,
   bool canUseEmbeddedBrowser = true,
 }) {
@@ -35,6 +37,7 @@ void showForumPostDialog(
     builder: (ctx) => _ForumPostDialog(
       details: details,
       index: index,
+      mod: mod,
       linkLoader: linkLoader,
       canUseEmbeddedBrowser: canUseEmbeddedBrowser,
     ),
@@ -44,12 +47,17 @@ void showForumPostDialog(
 class _ForumPostDialog extends ConsumerStatefulWidget {
   final ForumModDetails details;
   final ForumModIndex? index;
+
+  /// The matching catalog entry, when we have one. Supplies the mod's own
+  /// description and its image for the header.
+  final CatalogMod? mod;
   final void Function(String href) linkLoader;
   final bool canUseEmbeddedBrowser;
 
   const _ForumPostDialog({
     required this.details,
     required this.index,
+    required this.mod,
     required this.linkLoader,
     required this.canUseEmbeddedBrowser,
   });
@@ -182,7 +190,7 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
                       data: ModSummaryData.fromDetails(
                         widget.details,
                         widget.index,
-                        null,
+                        widget.mod,
                       ),
                       showSummary: ref.watch(
                         appSettings.select(

@@ -769,8 +769,9 @@ InlineSpan _armamentSpan(
 
 /// Renders a ship's built-in hull mods as one comma-joined line — e.g.
 /// `Reduced Explosion, Always Detaches` — the same look whether or not the items
-/// are interactive. Inside the Codex each resolved hull mod keeps its hover card
-/// and click-to-open; an unresolved id (e.g. from a disabled mod) stays plain.
+/// are interactive. Each resolved hull mod keeps its hover card (and, inside the
+/// Codex, click-to-open); an unresolved id (e.g. from a disabled mod) stays
+/// plain.
 Widget _hullModWrap(
   Iterable<String> hullMods,
   Map<String, Hullmod> hullmodsMap,
@@ -779,15 +780,6 @@ Widget _hullModWrap(
 ) {
   final baseStyle = theme.textTheme.bodySmall;
   final ids = hullMods.toList();
-
-  // Outside the Codex there are no per-item cards, so a single comma-joined
-  // line is all that's needed.
-  if (onEntitySelected == null) {
-    return Text(
-      ids.map((id) => hullmodsMap[id]?.name ?? _toDisplay(id)).join(", "),
-      style: baseStyle,
-    );
-  }
 
   return Text.rich(
     TextSpan(
@@ -807,7 +799,7 @@ InlineSpan _hullModSpan(
   String id,
   Map<String, Hullmod> hullmodsMap,
   TextStyle? baseStyle,
-  CodexEntitySelected onEntitySelected,
+  CodexEntitySelected? onEntitySelected,
 ) {
   final hullmod = hullmodsMap[id];
   final name = hullmod?.name ?? _toDisplay(id);

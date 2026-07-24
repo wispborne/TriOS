@@ -1057,6 +1057,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     final currentAiSummaryMode = ref.watch(
       appSettings.select((s) => s.catalogAiSummaryMode),
     );
+    final aiEnabled = ref.watch(appSettings.select((s) => s.enableAiFeatures));
     final showDialogHeaderSummary = ref.watch(
       appSettings.select((s) => s.catalogShowDialogHeaderSummary),
     );
@@ -1086,6 +1087,10 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
             title: AiSummaryMode.values[i].label,
             icon: AiSummaryMode.values[i].icon,
             checked: currentAiSummaryMode == AiSummaryMode.values[i],
+            enabled: aiEnabled,
+            tooltip: aiEnabled
+                ? null
+                : 'Turn on AI features in Settings to use this.',
             onTap: () {
               ref
                   .read(appSettings.notifier)

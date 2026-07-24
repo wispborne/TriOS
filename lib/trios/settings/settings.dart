@@ -8,6 +8,7 @@ import 'package:trios/catalog/models/catalog_card_click_action.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
+import 'package:trios/ship_viewer/ship_blueprint_view_state.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
 import 'package:trios/sector_map/sector_map_controller.dart';
@@ -100,6 +101,8 @@ class Settings with SettingsMappable {
   @MappableField(hook: SafeDecodeHook())
   final ShipsPageStatePersisted? shipsPageState;
   @MappableField(hook: SafeDecodeHook())
+  final ShipBlueprintViewState shipBlueprintViewState;
+  @MappableField(hook: SafeDecodeHook())
   final WeaponsPageStatePersisted? weaponsPageState;
   final WispGridState hullmodsGridState;
   @MappableField(hook: SafeDecodeHook())
@@ -145,6 +148,12 @@ class Settings with SettingsMappable {
   final bool enableAccessibilitySemanticsOnLinux;
 
   final bool? hasHiddenForumDarkModeTip;
+
+  /// Master switch for all AI features. When false, TriOS shows no AI-written
+  /// content anywhere (today: catalog AI mod summaries). The per-catalog
+  /// [catalogAiSummaryMode] is left untouched, so turning this back on restores
+  /// the previous behavior.
+  final bool enableAiFeatures;
 
   // Catalog page — collapsible browser panel and card-click action
   final bool catalogBrowserPanelOpen;
@@ -263,6 +272,7 @@ class Settings with SettingsMappable {
       columnsState: {},
     ),
     this.shipsPageState,
+    this.shipBlueprintViewState = const ShipBlueprintViewState(),
     this.weaponsPageState,
     this.hullmodsGridState = const WispGridState(
       groupingSetting: null,
@@ -305,6 +315,7 @@ class Settings with SettingsMappable {
     this.windowScaleFactor = 1.0,
     this.enableAccessibilitySemanticsOnLinux = false,
     this.hasHiddenForumDarkModeTip,
+    this.enableAiFeatures = true,
     this.catalogBrowserPanelOpen = false,
     this.catalogBrowserPanelWidth,
     this.catalogCardClickAction = CatalogCardClickAction.forumDialog,

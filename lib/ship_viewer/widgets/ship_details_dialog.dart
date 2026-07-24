@@ -203,113 +203,117 @@ Widget _buildShipInfoPane(
         theme,
       ),
       _kv('Tech/Manufacturer', s.techManufacturer, theme),
-      Card(
-        child: Column(
-          crossAxisAlignment: .start,
-          children: [
-            // Combat
-            section('Combat'),
-            Wrap(
-              runSpacing: 6,
-              children: [
-                _chip('Fleet Pts', _fmtNum(s.fleetPts)),
-                _chip('Hitpoints', _fmtNum(s.hitpoints)),
-                _chip('Armor', _fmtNum(s.armorRating)),
-                _chip('Max Flux', _fmtNum(s.maxFlux)),
-                _chip('Flux Diss', _fmtNum(s.fluxDissipation)),
-                _chip('Ordnance Pts', _fmtNum(s.ordnancePoints)),
-                _chip('Fighter Bays', _fmtNum(s.fighterBays)),
-                _chip('Weapons', _fmtNum(s.mountableWeaponSlotCount)),
-                _chip('Built-in Wpns', _fmtNum(s.builtInWeapons?.length ?? 0)),
-                _chip('Built-in Mods', _fmtNum(s.builtInMods?.length ?? 0)),
-                _chip('Built-in Wings', _fmtNum(s.builtInWings?.length ?? 0)),
-              ],
-            ),
-            // Shields / Phase
-            if (s.shieldType != null) ...[
-              section('Shield / Phase'),
+      Card.outlined(
+        color: Colors.transparent,
+        child: Padding(
+          padding: const .symmetric(vertical: 8, horizontal: 16),
+          child: Column(
+            crossAxisAlignment: .start,
+            children: [
+              // Combat
+              section('Combat'),
               Wrap(
                 runSpacing: 6,
                 children: [
-                  _chip('Shield', s.shieldType!.toTitleCase()),
-                  _chip('Shield Arc', _fmtNum(s.shieldArc)),
-                  _chip('Shield Upkeep', _fmtNum(s.shieldUpkeep)),
-                  _chip('Shield Efficiency', _fmtNum(s.shieldEfficiency)),
-                  _chip('Phase Cost', _fmtNum(s.phaseCost)),
-                  _chip('Phase Upkeep', _fmtNum(s.phaseUpkeep)),
+                  _chip('Fleet Pts', _fmtNum(s.fleetPts)),
+                  _chip('Hitpoints', _fmtNum(s.hitpoints)),
+                  _chip('Armor', _fmtNum(s.armorRating)),
+                  _chip('Max Flux', _fmtNum(s.maxFlux)),
+                  _chip('Flux Diss', _fmtNum(s.fluxDissipation)),
+                  _chip('Ordnance Pts', _fmtNum(s.ordnancePoints)),
+                  _chip('Fighter Bays', _fmtNum(s.fighterBays)),
+                  _chip('Weapons', _fmtNum(s.mountableWeaponSlotCount)),
+                  _chip('Built-in Wpns', _fmtNum(s.builtInWeapons?.length ?? 0)),
+                  _chip('Built-in Mods', _fmtNum(s.builtInMods?.length ?? 0)),
+                  _chip('Built-in Wings', _fmtNum(s.builtInWings?.length ?? 0)),
+                ],
+              ),
+              // Shields / Phase
+              if (s.shieldType != null) ...[
+                section('Shield / Phase'),
+                Wrap(
+                  runSpacing: 6,
+                  children: [
+                    _chip('Shield', s.shieldType!.toTitleCase()),
+                    _chip('Shield Arc', _fmtNum(s.shieldArc)),
+                    _chip('Shield Upkeep', _fmtNum(s.shieldUpkeep)),
+                    _chip('Shield Efficiency', _fmtNum(s.shieldEfficiency)),
+                    _chip('Phase Cost', _fmtNum(s.phaseCost)),
+                    _chip('Phase Upkeep', _fmtNum(s.phaseUpkeep)),
+                  ],
+                ),
+              ],
+              // Mobility
+              section('Mobility'),
+              Wrap(
+                runSpacing: 6,
+                children: [
+                  _chip('Max Speed', _fmtNum(s.maxSpeed)),
+                  _chip('Acceleration', _fmtNum(s.acceleration)),
+                  _chip('Deceleration', _fmtNum(s.deceleration)),
+                  _chip('Turn Rate', _fmtNum(s.maxTurnRate)),
+                  _chip('Turn Accel', _fmtNum(s.turnAcceleration)),
+                  _chip('Mass', _fmtNum(s.mass)),
+                ],
+              ),
+              // Crew & Logistics
+              section('Crew & Logistics'),
+              Wrap(
+                runSpacing: 6,
+                children: [
+                  _chip('Min Crew', _fmtNum(s.minCrew)),
+                  _chip('Max Crew', _fmtNum(s.maxCrew)),
+                  _chip('Cargo', _fmtNum(s.cargo)),
+                  _chip('Fuel', _fmtNum(s.fuel)),
+                  _chip('Fuel/LY', _fmtNum(s.fuelPerLY)),
+                  _chip('Range', _fmtNum(s.range)),
+                  _chip('Max Burn', _fmtNum(s.maxBurn)),
+                  _chip('Sensor Profile', _fmtNum(s.sensorProfile)),
+                  _chip('Sensor Strength', _fmtNum(s.sensorStrength)),
+                ],
+              ),
+              // Economics & CR
+              section('Economics & CR'),
+              Wrap(
+                runSpacing: 6,
+                children: [
+                  _chip('Base Value', s.baseValue.asCredits()),
+                  _chip('CR%/Day', _fmtNum(s.crPercentPerDay)),
+                  _chip('CR to Deploy', _fmtNum(s.crToDeploy)),
+                  _chip('PPT (s)', _fmtNum(s.peakCrSec)),
+                  _chip('CR Loss/Sec', _fmtNum(s.crLossPerSec)),
+                  _chip('Supplies/Mo', _fmtNum(s.suppliesMo)),
+                  _chip('DP', _fmtNum(s.deploymentPoints)),
+                ],
+              ),
+              // Misc
+              section('Misc'),
+              Wrap(
+                runSpacing: 6,
+                children: [
+                  _chip('Rarity', s.rarity ?? '-'),
+                  _chip('Break Prob', s.breakProb ?? '-'),
+                  _chip('Min Pieces', _fmtNum(s.minPieces)),
+                  _chip('Max Pieces', _fmtNum(s.maxPieces)),
+                  _chip('Travel Drive', s.travelDrive ?? '-'),
+                  _chip('Collision Radius', _fmtNum(s.collisionRadius)),
+                  if ((s.hints ?? []).isNotEmpty)
+                    _chip('Hints', s.hints!.join(', ')),
+                  if ((s.tags ?? []).isNotEmpty)
+                    _chip('Tags', s.tags!.join(', ')),
+                  if ((s.builtInMods ?? []).isNotEmpty)
+                    _chip('Built-in Mods', s.builtInMods!.join(', ')),
+                  if ((s.builtInWings ?? []).isNotEmpty)
+                    _chip('Built-in Wings', s.builtInWings!.join(', ')),
+                  if ((s.builtInWeapons ?? {}).isNotEmpty)
+                    _chip(
+                      'Built-in Weapons',
+                      s.builtInWeapons!.values.join(', '),
+                    ),
                 ],
               ),
             ],
-            // Mobility
-            section('Mobility'),
-            Wrap(
-              runSpacing: 6,
-              children: [
-                _chip('Max Speed', _fmtNum(s.maxSpeed)),
-                _chip('Acceleration', _fmtNum(s.acceleration)),
-                _chip('Deceleration', _fmtNum(s.deceleration)),
-                _chip('Turn Rate', _fmtNum(s.maxTurnRate)),
-                _chip('Turn Accel', _fmtNum(s.turnAcceleration)),
-                _chip('Mass', _fmtNum(s.mass)),
-              ],
-            ),
-            // Crew & Logistics
-            section('Crew & Logistics'),
-            Wrap(
-              runSpacing: 6,
-              children: [
-                _chip('Min Crew', _fmtNum(s.minCrew)),
-                _chip('Max Crew', _fmtNum(s.maxCrew)),
-                _chip('Cargo', _fmtNum(s.cargo)),
-                _chip('Fuel', _fmtNum(s.fuel)),
-                _chip('Fuel/LY', _fmtNum(s.fuelPerLY)),
-                _chip('Range', _fmtNum(s.range)),
-                _chip('Max Burn', _fmtNum(s.maxBurn)),
-                _chip('Sensor Profile', _fmtNum(s.sensorProfile)),
-                _chip('Sensor Strength', _fmtNum(s.sensorStrength)),
-              ],
-            ),
-            // Economics & CR
-            section('Economics & CR'),
-            Wrap(
-              runSpacing: 6,
-              children: [
-                _chip('Base Value', s.baseValue.asCredits()),
-                _chip('CR%/Day', _fmtNum(s.crPercentPerDay)),
-                _chip('CR to Deploy', _fmtNum(s.crToDeploy)),
-                _chip('PPT (s)', _fmtNum(s.peakCrSec)),
-                _chip('CR Loss/Sec', _fmtNum(s.crLossPerSec)),
-                _chip('Supplies/Mo', _fmtNum(s.suppliesMo)),
-                _chip('DP', _fmtNum(s.deploymentPoints)),
-              ],
-            ),
-            // Misc
-            section('Misc'),
-            Wrap(
-              runSpacing: 6,
-              children: [
-                _chip('Rarity', s.rarity ?? '-'),
-                _chip('Break Prob', s.breakProb ?? '-'),
-                _chip('Min Pieces', _fmtNum(s.minPieces)),
-                _chip('Max Pieces', _fmtNum(s.maxPieces)),
-                _chip('Travel Drive', s.travelDrive ?? '-'),
-                _chip('Collision Radius', _fmtNum(s.collisionRadius)),
-                if ((s.hints ?? []).isNotEmpty)
-                  _chip('Hints', s.hints!.join(', ')),
-                if ((s.tags ?? []).isNotEmpty)
-                  _chip('Tags', s.tags!.join(', ')),
-                if ((s.builtInMods ?? []).isNotEmpty)
-                  _chip('Built-in Mods', s.builtInMods!.join(', ')),
-                if ((s.builtInWings ?? []).isNotEmpty)
-                  _chip('Built-in Wings', s.builtInWings!.join(', ')),
-                if ((s.builtInWeapons ?? {}).isNotEmpty)
-                  _chip(
-                    'Built-in Weapons',
-                    s.builtInWeapons!.values.join(', '),
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     ],

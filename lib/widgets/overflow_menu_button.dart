@@ -71,12 +71,17 @@ class OverflowMenuCheckItem {
   final VoidCallback onTap;
   final String? tooltip;
 
+  /// When false, the row is greyed out and can't be tapped (the checkmark
+  /// still shows the current choice).
+  final bool enabled;
+
   const OverflowMenuCheckItem({
     required this.title,
     required this.icon,
     required this.checked,
     required this.onTap,
     this.tooltip,
+    this.enabled = true,
   });
 
   PopupMenuEntry<int> toEntry(int? key) {
@@ -94,7 +99,8 @@ class OverflowMenuCheckItem {
 
     return PopupMenuItem<int>(
       value: key,
-      onTap: onTap,
+      enabled: enabled,
+      onTap: enabled ? onTap : null,
       child: tooltip != null
           ? MovingTooltipWidget.text(message: tooltip!, child: content)
           : content,

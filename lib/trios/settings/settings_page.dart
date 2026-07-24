@@ -1164,6 +1164,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                   ],
                 ),
+                SettingsGroup(
+                  name: "AI Features",
+                  children: [
+                    MovingTooltipWidget.text(
+                      message:
+                          "When checked, ${Constants.appName} never shows anything "
+                          "AI-related, such as the AI mod summaries on the "
+                          "Catalog page (currently the only AI feature).",
+                      child: CheckboxWithLabel(
+                        value: !ref.watch(
+                          appSettings.select((s) => s.enableAiFeatures),
+                        ),
+                        onChanged: (value) {
+                          ref
+                              .read(appSettings.notifier)
+                              .update(
+                                (state) => state.copyWith(
+                                  enableAiFeatures: !(value ?? false),
+                                ),
+                              );
+                        },
+                        label: "Disable all AI-related features",
+                      ),
+                    ),
+                  ],
+                ),
                 // Debugging line here
                 SizedBox.fromSize(size: const Size.fromHeight(20)),
                 Theme(

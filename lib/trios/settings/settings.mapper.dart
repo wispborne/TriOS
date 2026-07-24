@@ -389,6 +389,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       ModsGridUpdateVisibilityMapper.ensureInitialized();
       WispGridStateMapper.ensureInitialized();
       ShipsPageStatePersistedMapper.ensureInitialized();
+      ShipBlueprintViewStateMapper.ensureInitialized();
       WeaponsPageStatePersistedMapper.ensureInitialized();
       HullmodsPageStatePersistedMapper.ensureInitialized();
       PortraitsPageStatePersistedMapper.ensureInitialized();
@@ -617,6 +618,16 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         opt: true,
         hook: SafeDecodeHook(),
       );
+  static ShipBlueprintViewState _$shipBlueprintViewState(Settings v) =>
+      v.shipBlueprintViewState;
+  static const Field<Settings, ShipBlueprintViewState>
+  _f$shipBlueprintViewState = Field(
+    'shipBlueprintViewState',
+    _$shipBlueprintViewState,
+    opt: true,
+    def: const ShipBlueprintViewState(),
+    hook: SafeDecodeHook(),
+  );
   static WeaponsPageStatePersisted? _$weaponsPageState(Settings v) =>
       v.weaponsPageState;
   static const Field<Settings, WeaponsPageStatePersisted> _f$weaponsPageState =
@@ -894,6 +905,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'hasHiddenForumDarkModeTip',
     _$hasHiddenForumDarkModeTip,
     opt: true,
+  );
+  static bool _$enableAiFeatures(Settings v) => v.enableAiFeatures;
+  static const Field<Settings, bool> _f$enableAiFeatures = Field(
+    'enableAiFeatures',
+    _$enableAiFeatures,
+    opt: true,
+    def: true,
   );
   static bool _$catalogBrowserPanelOpen(Settings v) =>
       v.catalogBrowserPanelOpen;
@@ -1200,6 +1218,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #weaponsGridState: _f$weaponsGridState,
     #shipsGridState: _f$shipsGridState,
     #shipsPageState: _f$shipsPageState,
+    #shipBlueprintViewState: _f$shipBlueprintViewState,
     #weaponsPageState: _f$weaponsPageState,
     #hullmodsGridState: _f$hullmodsGridState,
     #hullmodsPageState: _f$hullmodsPageState,
@@ -1237,6 +1256,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #enableAccessibilitySemanticsOnLinux:
         _f$enableAccessibilitySemanticsOnLinux,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
+    #enableAiFeatures: _f$enableAiFeatures,
     #catalogBrowserPanelOpen: _f$catalogBrowserPanelOpen,
     #catalogBrowserPanelWidth: _f$catalogBrowserPanelWidth,
     #catalogCardClickAction: _f$catalogCardClickAction,
@@ -1309,6 +1329,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       weaponsGridState: data.dec(_f$weaponsGridState),
       shipsGridState: data.dec(_f$shipsGridState),
       shipsPageState: data.dec(_f$shipsPageState),
+      shipBlueprintViewState: data.dec(_f$shipBlueprintViewState),
       weaponsPageState: data.dec(_f$weaponsPageState),
       hullmodsGridState: data.dec(_f$hullmodsGridState),
       hullmodsPageState: data.dec(_f$hullmodsPageState),
@@ -1353,6 +1374,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         _f$enableAccessibilitySemanticsOnLinux,
       ),
       hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
+      enableAiFeatures: data.dec(_f$enableAiFeatures),
       catalogBrowserPanelOpen: data.dec(_f$catalogBrowserPanelOpen),
       catalogBrowserPanelWidth: data.dec(_f$catalogBrowserPanelWidth),
       catalogCardClickAction: data.dec(_f$catalogCardClickAction),
@@ -1472,6 +1494,12 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     ShipsPageStatePersisted
   >?
   get shipsPageState;
+  ShipBlueprintViewStateCopyWith<
+    $R,
+    ShipBlueprintViewState,
+    ShipBlueprintViewState
+  >
+  get shipBlueprintViewState;
   WeaponsPageStatePersistedCopyWith<
     $R,
     WeaponsPageStatePersisted,
@@ -1562,6 +1590,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
     ShipsPageStatePersisted? shipsPageState,
+    ShipBlueprintViewState? shipBlueprintViewState,
     WeaponsPageStatePersisted? weaponsPageState,
     WispGridState? hullmodsGridState,
     HullmodsPageStatePersisted? hullmodsPageState,
@@ -1598,6 +1627,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     double? windowScaleFactor,
     bool? enableAccessibilitySemanticsOnLinux,
     bool? hasHiddenForumDarkModeTip,
+    bool? enableAiFeatures,
     bool? catalogBrowserPanelOpen,
     double? catalogBrowserPanelWidth,
     CatalogCardClickAction? catalogCardClickAction,
@@ -1692,6 +1722,15 @@ class _SettingsCopyWithImpl<$R, $Out>
   >?
   get shipsPageState =>
       $value.shipsPageState?.copyWith.$chain((v) => call(shipsPageState: v));
+  @override
+  ShipBlueprintViewStateCopyWith<
+    $R,
+    ShipBlueprintViewState,
+    ShipBlueprintViewState
+  >
+  get shipBlueprintViewState => $value.shipBlueprintViewState.copyWith.$chain(
+    (v) => call(shipBlueprintViewState: v),
+  );
   @override
   WeaponsPageStatePersistedCopyWith<
     $R,
@@ -1843,6 +1882,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
     Object? shipsPageState = $none,
+    ShipBlueprintViewState? shipBlueprintViewState,
     Object? weaponsPageState = $none,
     WispGridState? hullmodsGridState,
     Object? hullmodsPageState = $none,
@@ -1879,6 +1919,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     double? windowScaleFactor,
     bool? enableAccessibilitySemanticsOnLinux,
     Object? hasHiddenForumDarkModeTip = $none,
+    bool? enableAiFeatures,
     bool? catalogBrowserPanelOpen,
     Object? catalogBrowserPanelWidth = $none,
     CatalogCardClickAction? catalogCardClickAction,
@@ -1950,6 +1991,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (weaponsGridState != null) #weaponsGridState: weaponsGridState,
       if (shipsGridState != null) #shipsGridState: shipsGridState,
       if (shipsPageState != $none) #shipsPageState: shipsPageState,
+      if (shipBlueprintViewState != null)
+        #shipBlueprintViewState: shipBlueprintViewState,
       if (weaponsPageState != $none) #weaponsPageState: weaponsPageState,
       if (hullmodsGridState != null) #hullmodsGridState: hullmodsGridState,
       if (hullmodsPageState != $none) #hullmodsPageState: hullmodsPageState,
@@ -2008,6 +2051,7 @@ class _SettingsCopyWithImpl<$R, $Out>
             enableAccessibilitySemanticsOnLinux,
       if (hasHiddenForumDarkModeTip != $none)
         #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
+      if (enableAiFeatures != null) #enableAiFeatures: enableAiFeatures,
       if (catalogBrowserPanelOpen != null)
         #catalogBrowserPanelOpen: catalogBrowserPanelOpen,
       if (catalogBrowserPanelWidth != $none)
@@ -2122,6 +2166,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     weaponsGridState: data.get(#weaponsGridState, or: $value.weaponsGridState),
     shipsGridState: data.get(#shipsGridState, or: $value.shipsGridState),
     shipsPageState: data.get(#shipsPageState, or: $value.shipsPageState),
+    shipBlueprintViewState: data.get(
+      #shipBlueprintViewState,
+      or: $value.shipBlueprintViewState,
+    ),
     weaponsPageState: data.get(#weaponsPageState, or: $value.weaponsPageState),
     hullmodsGridState: data.get(
       #hullmodsGridState,
@@ -2251,6 +2299,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       #hasHiddenForumDarkModeTip,
       or: $value.hasHiddenForumDarkModeTip,
     ),
+    enableAiFeatures: data.get(#enableAiFeatures, or: $value.enableAiFeatures),
     catalogBrowserPanelOpen: data.get(
       #catalogBrowserPanelOpen,
       or: $value.catalogBrowserPanelOpen,

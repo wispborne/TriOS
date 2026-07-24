@@ -11,9 +11,11 @@ GameFileSource source(String folder, List<String> files) => GameFileSource(
 );
 
 /// The same path the resolver builds, for comparing without worrying about
-/// which slash the platform uses.
+/// which slash the platform uses. The resolver makes its paths absolute (via
+/// `File.normalize`), so we do too — otherwise the fake `C:` paths, which count
+/// as absolute on Windows but not on Linux, wouldn't match on Linux.
 String joined(String folder, String relative) =>
-    p.normalize(p.join(folder, relative));
+    p.normalize(p.absolute(p.join(folder, relative)));
 
 void main() {
   const sprite = 'graphics/weapons/autopulse_turret_base.png';

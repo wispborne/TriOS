@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 // import 'package:toml/toml.dart';
+import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
@@ -21,6 +22,18 @@ import 'package:trios/widgets/filter_group_persistence/persisted_filter_group.da
 final appSettings = NotifierProvider<AppSettingNotifier, Settings>(
   () => AppSettingNotifier(),
 );
+
+/// The catalog AI-summary mode to actually use when showing text.
+///
+/// The master AI switch wins: when [Settings.enableAiFeatures] is off, this is
+/// always [AiSummaryMode.never], so no AI text shows anywhere — without
+/// changing the user's saved level. Display widgets watch this; the catalog
+/// picker still reads and writes the raw [Settings.catalogAiSummaryMode].
+final effectiveCatalogAiSummaryModeProvider = Provider<AiSummaryMode>((ref) {
+  final aiEnabled = ref.watch(appSettings.select((s) => s.enableAiFeatures));
+  if (!aiEnabled) return AiSummaryMode.never;
+  return ref.watch(appSettings.select((s) => s.catalogAiSummaryMode));
+});
 
 /// Manages loading, storing, and updating the app's [Settings] while keeping the UI reactive.
 /// It uses a debounced write strategy to minimize frequent disk writes.

@@ -36,6 +36,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/text_trios.dart';
+import 'package:trios/widgets/trios_app_icon.dart';
 
 class CatalogModCard extends ConsumerStatefulWidget {
   final CatalogMod mod;
@@ -451,9 +452,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   ) {
     final authorText = mod.summary ?? mod.description;
     final aiSummary = _targetLlmMod?.extras?.summary;
-    final aiSummaryMode = ref.watch(
-      appSettings.select((s) => s.catalogAiSummaryMode),
-    );
+    final aiSummaryMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
 
     final String? shownText = switch (aiSummaryMode) {
       AiSummaryMode.always => aiSummary?.sentence ?? authorText,
@@ -558,6 +557,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
         context,
         details: forumDetails,
         index: widget.forumModIndex,
+        mod: widget.mod,
         linkLoader: widget.linkLoader,
         canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
       );
@@ -1094,6 +1094,10 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
     // Download states run the primary candidate (or open the chooser when
     // several candidates tie). A trios primary installs in-app with deps.
     final isTrios = primary?.kind == DownloadCandidateKind.triosDeepLink;
+    // The "Install with TriOS" button wears the TriOS crest instead of a
+    // generic icon.
+    final showTriosBrandIcon =
+        isTrios && state == _CatalogDownloadState.notInstalledDirectDownload;
     final showChooser = tieSet.length > 1;
     void runPrimary() {
       _markBusy();
@@ -1225,6 +1229,8 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
                   color: foregroundColor,
                 ),
               )
+            : showTriosBrandIcon
+            ? TriOSAppIcon(width: 14, height: 14, color: foregroundColor)
             : Icon(icon, size: 14),
         label: Padding(
           padding: const .only(right: 4),

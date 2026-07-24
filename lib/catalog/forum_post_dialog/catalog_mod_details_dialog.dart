@@ -180,7 +180,7 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final aiMode = ref.watch(appSettings.select((s) => s.catalogAiSummaryMode));
+    final aiMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
 
     final authorText = mod.description ?? mod.summary;
     final aiParagraph = index?.llm?.mainMod?.extras?.summary?.paragraph;

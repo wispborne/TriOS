@@ -6,6 +6,7 @@ import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 
 /// Where a download candidate came from, in priority order (lower index wins).
@@ -243,7 +244,7 @@ String _forumLabel(ForumLlmDownload download, DownloadCandidateKind kind) {
   if (download.label.isNotEmpty) return download.label;
   if (download.fileName?.isNotEmpty == true) return download.fileName!;
   return switch (kind) {
-    DownloadCandidateKind.triosDeepLink => 'Install with TriOS',
+    DownloadCandidateKind.triosDeepLink => 'Install with ${Constants.appName}',
     DownloadCandidateKind.forumMirror => 'Mirror',
     _ => 'Download',
   };

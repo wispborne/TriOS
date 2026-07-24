@@ -457,6 +457,14 @@ DeepMergeResult mergeShipRoles(List<SourceJson> sources) {
   return result;
 }
 
+/// Deep merges `data/config/hull_styles.json` across sources.
+DeepMergeResult mergeHullStyles(List<SourceJson> sources) {
+  final issues = LogCollapser();
+  final result = _deepMerge(sources, issues);
+  issues.flush('Merging hull styles');
+  return result;
+}
+
 Map<String, DeepMergeResult> _mergeFilesByPath(
   List<SourceFiles> sources,
   LogCollapser issues,

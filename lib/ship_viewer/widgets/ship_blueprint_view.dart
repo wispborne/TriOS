@@ -8,6 +8,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/ship_viewer/engine_styles_manager.dart';
+import 'package:trios/ship_viewer/hull_styles_manager.dart';
+import 'package:trios/ship_viewer/ship_blueprint_view_state.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
@@ -25,9 +27,11 @@ import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/ship_viewer/utils/polygon_utils.dart';
 import 'package:trios/ship_viewer/utils/sprite_utils.dart';
+import 'package:trios/utils/logging.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/widgets/broken_ship_image_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
@@ -72,6 +76,11 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
   /// (or always, per the ships-page setting) regardless of this value.
   final bool initialShowEngineGlow;
 
+  /// Whether to render the ship's shield (interactive view only). This is the
+  /// toolbar toggle's initial state; the toggle only appears for ships that
+  /// actually have a FRONT or OMNI shield.
+  final bool initialShowShield;
+
   /// Whether to show tooltips on slot hover.
   final bool showSlotTooltips;
 
@@ -114,6 +123,7 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
     this.initialShowWeapons = true,
     this.initialShowDecorativeWeapons = true,
     this.initialShowEngineGlow = false,
+    this.initialShowShield = false,
     this.showSlotTooltips = true,
     this.showPath = true,
     this.showToolbar = true,
@@ -212,6 +222,23 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   Map<String, EngineStyleSpec> _engineStyles = const {};
   EngineGlowSprites? _engineGlowSprites;
 
+  /// Toolbar toggle state (interactive view) for the shield overlay.
+  late bool _showShield;
+
+  /// Whether shields animate, toggled from the blueprint view's own overflow
+  /// menu and saved across restarts. When off, the shield is drawn as a single
+  /// still frame.
+  bool _animateShields = true;
+
+  /// Loops once every 16 seconds. Drives both the shield fill's slow spin and
+  /// the edge ring's ripple. Only runs while a shield is showing, animation is
+  /// on, and TriOS is the window in front.
+  late final AnimationController _shieldClockController;
+
+  /// Shield data resolved from providers each build, read by the overlay.
+  Map<String, ShieldStyleColors> _shieldColors = const {};
+  ShieldSprites? _shieldSprites;
+
   /// Fallback flame tint for engine styles missing from `engine_styles.json`.
   static const Color _defaultEngineColor = Color(0xFFFFA94D);
 
@@ -278,13 +305,30 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   @override
   void initState() {
     super.initState();
-    _showModules = widget.initialShowModules;
-    _showBounds = widget.initialShowBounds;
-    _showMounts = widget.initialShowMounts;
-    _showArcs = widget.initialShowArcs;
-    _showWeapons = widget.initialShowWeapons;
-    _showDecoWeapons = widget.initialShowDecorativeWeapons;
-    _showEngineGlow = widget.initialShowEngineGlow;
+    // The interactive view remembers its shown layers across restarts, shared
+    // by every place it's used. Thumbnails aren't interactive and just use
+    // their constructor values.
+    if (widget.interactive) {
+      final saved = ref.read(appSettings).shipBlueprintViewState;
+      _showModules = saved.showModules;
+      _showBounds = saved.showBounds;
+      _showMounts = saved.showMounts;
+      _showArcs = saved.showArcs;
+      _showWeapons = saved.showWeapons;
+      _showDecoWeapons = saved.showDecorativeWeapons;
+      _showEngineGlow = saved.showEngineGlow;
+      _showShield = saved.showShield;
+      _animateShields = saved.animateShields;
+    } else {
+      _showModules = widget.initialShowModules;
+      _showBounds = widget.initialShowBounds;
+      _showMounts = widget.initialShowMounts;
+      _showArcs = widget.initialShowArcs;
+      _showWeapons = widget.initialShowWeapons;
+      _showDecoWeapons = widget.initialShowDecorativeWeapons;
+      _showEngineGlow = widget.initialShowEngineGlow;
+      _showShield = widget.initialShowShield;
+    }
     _engineGlowController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 180),
@@ -296,15 +340,64 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     );
     // Catches the end of a fade-out, which no rebuild would tell us about.
     _engineGlowController.addStatusListener((_) => _updateEngineFlicker());
+    _shieldClockController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 16),
+    );
     _resolveImageSize();
+  }
+
+  /// Saves the interactive view's shown layers (and the shield animation
+  /// setting) so they come back the same next time — anywhere the view is used.
+  /// No-op for thumbnails, which aren't user-configurable.
+  void _persistBlueprintState() {
+    if (!widget.interactive) return;
+    try {
+      ref.read(appSettings.notifier).update(
+        (s) => s.copyWith(
+          shipBlueprintViewState: ShipBlueprintViewState(
+            showModules: _showModules,
+            showBounds: _showBounds,
+            showMounts: _showMounts,
+            showArcs: _showArcs,
+            showWeapons: _showWeapons,
+            showDecorativeWeapons: _showDecoWeapons,
+            showEngineGlow: _showEngineGlow,
+            showShield: _showShield,
+            animateShields: _animateShields,
+          ),
+        ),
+      );
+    } catch (e, st) {
+      Fimber.w('Failed to persist ship blueprint view state', ex: e, stacktrace: st);
+    }
+  }
+
+  /// Applies a toolbar toggle and saves the new choice.
+  void _toggleLayer(VoidCallback mutate) {
+    setState(mutate);
+    _persistBlueprintState();
   }
 
   @override
   void dispose() {
     _engineGlowController.dispose();
     _engineFlickerController.dispose();
+    _shieldClockController.dispose();
     _transformController?.dispose();
     super.dispose();
+  }
+
+  /// Runs the shield clock only while a shield is on screen, animation is on,
+  /// and TriOS is in front.
+  void _updateShieldClock() {
+    final shouldRun = _showShield && _animateShields && _windowFocused;
+    if (shouldRun == _shieldClockController.isAnimating) return;
+    if (shouldRun) {
+      _shieldClockController.repeat();
+    } else {
+      _shieldClockController.stop();
+    }
   }
 
   /// Runs the flicker only while there's a flame on screen and TriOS is in
@@ -817,6 +910,69 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     );
   }
 
+  /// Whether [ship] has a shield worth drawing: a FRONT or OMNI shield with a
+  /// real radius, and the sprite center/shield center needed to place it.
+  bool _shipHasShield(Ship ship) {
+    final type = ship.shieldType?.toUpperCase();
+    if (type != 'FRONT' && type != 'OMNI') return false;
+    final radius = ship.shieldRadius;
+    if (radius == null || radius <= 0) return false;
+    if (ship.shieldCenter == null || ship.shieldCenter!.length < 2) return false;
+    return ship.center != null && ship.center!.length >= 2;
+  }
+
+  /// Builds the shield overlay positioned over the parent hull sprite, or null
+  /// when there's nothing to draw (toggle off, no shield, or textures not
+  /// decoded yet).
+  Widget? _shieldPositioned(
+    double originDx,
+    double originDy,
+    double imgW,
+    double imgH,
+  ) {
+    if (!_showShield) return null;
+    final ship = widget.ship;
+    if (!_shipHasShield(ship)) return null;
+    final sprites = _shieldSprites;
+    if (sprites == null) return null;
+
+    final colors =
+        _shieldColors[ship.style?.toUpperCase()] ?? ShieldStyleColors.fallback;
+    final radius = ship.shieldRadius!;
+    // The game draws a thinner ring on small hulls.
+    final hullSize = ship.hullSize?.toUpperCase();
+    final ringThickness = hullSize == 'FIGHTER'
+        ? 3.0
+        : hullSize == 'FRIGATE'
+        ? 4.0
+        : 5.0;
+
+    return Positioned(
+      left: originDx,
+      top: originDy,
+      width: imgW,
+      height: imgH,
+      // IgnorePointer: see the engine glow overlay above.
+      child: IgnorePointer(
+        child: CustomPaint(
+          size: Size(imgW, imgH),
+          painter: _ShieldPainter(
+            center: ship.center!,
+            imgH: imgH,
+            shieldCenter: ship.shieldCenter!,
+            radius: radius,
+            arcDegrees: ship.shieldArc ?? 30,
+            colors: colors,
+            fillImage: sprites.fillForRadius(radius),
+            ringImage: sprites.ring,
+            ringThickness: ringThickness,
+            clock: _animateShields ? _shieldClockController : null,
+          ),
+        ),
+      ),
+    );
+  }
+
   Offset _slotScreenPos(ShipWeaponSlot slot, double imgH) {
     final center = widget.ship.center!;
     final cx = center[0];
@@ -940,17 +1096,27 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       };
     }
 
-    // Engine glow inputs (cached providers; cheap after first load).
+    // Engine glow and shield inputs (cached providers; cheap after first load).
     final hasEngines = ship.engineSlotsParsed.isNotEmpty;
+    final hasShield = _shipHasShield(ship);
     if (hasEngines) {
       _engineStyles = ref.watch(engineStylesProvider).value ?? const {};
       _engineGlowSprites = ref.watch(engineGlowSpritesProvider).value;
+    }
+    if (hasShield) {
+      _shieldColors =
+          ref.watch(hullStyleShieldColorsProvider).value ?? const {};
+      _shieldSprites = ref.watch(shieldSpritesProvider).value;
+    }
 
-      // Pause the flicker while TriOS is behind another window.
+    // Pause the engine flicker and the shield clock while TriOS is behind
+    // another window — they'd otherwise repaint every frame for nothing.
+    if (hasEngines || hasShield) {
       final focused = ref.watch(AppState.isWindowFocused);
       if (focused != _windowFocused) _windowFocused = focused;
-      _updateEngineFlicker();
     }
+    if (hasEngines) _updateEngineFlicker();
+    if (hasShield) _updateShieldClock();
 
     // Pin glow on (or release to hover/toggle) when the ships-page setting flips.
     final alwaysShowEngineGlow = ref.watch(
@@ -1191,6 +1357,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                   ?_buildHoveredModuleTooltip(originDx, originDy),
                   ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
                       underHull: false),
+                  // Shield sits over the ship like in the game, but under the
+                  // blueprint's own mount/bounds markers so they stay readable.
+                  ?_shieldPositioned(originDx, originDy, imgW, imgH),
                   if (_showBounds)
                     Positioned(
                       left: originDx,
@@ -1334,9 +1503,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                     spacing: 4,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (hasShield) _buildBlueprintOverflowMenu(),
                       _compactIconButton(
                         onPressed: () =>
-                            setState(() => _showBounds = !_showBounds),
+                            _toggleLayer(() => _showBounds = !_showBounds),
                         icon: Icons.polyline,
                         isActive: _showBounds,
                         tooltip: 'Show bounds',
@@ -1344,20 +1514,21 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                       if (modules.isNotEmpty)
                         _compactIconButton(
                           onPressed: () =>
-                              setState(() => _showModules = !_showModules),
+                              _toggleLayer(() => _showModules = !_showModules),
                           icon: Icons.extension,
                           isActive: _showModules,
                           tooltip: 'Show modules',
                         ),
                       _compactIconButton(
                         onPressed: () =>
-                            setState(() => _showMounts = !_showMounts),
+                            _toggleLayer(() => _showMounts = !_showMounts),
                         icon: Icons.radar,
                         isActive: _showMounts,
                         tooltip: 'Show mounts',
                       ),
                       _compactIconButton(
-                        onPressed: () => setState(() => _showArcs = !_showArcs),
+                        onPressed: () =>
+                            _toggleLayer(() => _showArcs = !_showArcs),
                         icon: Icons.signal_wifi_4_bar,
                         isActive: _showArcs,
                         tooltip: 'Show arcs',
@@ -1365,14 +1536,14 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                       if (armaments.any((a) => !a.isDecorative))
                         _compactIconButton(
                           onPressed: () =>
-                              setState(() => _showWeapons = !_showWeapons),
+                              _toggleLayer(() => _showWeapons = !_showWeapons),
                           icon: Icons.gps_fixed,
                           isActive: _showWeapons,
                           tooltip: 'Show built-in weapons',
                         ),
                       if (armaments.any((a) => a.isDecorative))
                         _compactIconButton(
-                          onPressed: () => setState(
+                          onPressed: () => _toggleLayer(
                             () => _showDecoWeapons = !_showDecoWeapons,
                           ),
                           icon: Icons.brush,
@@ -1384,10 +1555,22 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                           onPressed: () {
                             setState(() => _showEngineGlow = !_showEngineGlow);
                             _updateEngineGlow();
+                            _persistBlueprintState();
                           },
                           icon: Icons.local_fire_department,
                           isActive: _showEngineGlow,
                           tooltip: 'Show engine glow',
+                        ),
+                      if (hasShield)
+                        _compactIconButton(
+                          onPressed: () {
+                            setState(() => _showShield = !_showShield);
+                            _updateShieldClock();
+                            _persistBlueprintState();
+                          },
+                          icon: Icons.shield_outlined,
+                          isActive: _showShield,
+                          tooltip: 'Show shields',
                         ),
                       Flexible(
                         child: TextTriOS(
@@ -1436,6 +1619,29 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
             style: _compactButtonStyle,
             tooltip: tooltip,
           );
+  }
+
+  /// The blueprint view's own three-dot menu. Holds the "Animate shields"
+  /// toggle (and is a home for any future view options).
+  Widget _buildBlueprintOverflowMenu() {
+    return SizedBox(
+      width: 30,
+      child: OverflowMenuButton(
+        iconSize: 16,
+        menuItems: [
+          OverflowMenuCheckItem(
+            title: 'Animate shields',
+            icon: Icons.shield_outlined,
+            checked: _animateShields,
+            onTap: () {
+              setState(() => _animateShields = !_animateShields);
+              _updateShieldClock();
+              _persistBlueprintState();
+            },
+          ).toEntry(0),
+        ],
+      ),
+    );
   }
 
   Widget _buildSlotHitAreaOffset(
@@ -2957,6 +3163,262 @@ class _EngineGlowPainter extends CustomPainter {
       oldDelegate.defaultColor != defaultColor ||
       oldDelegate.underHull != underHull ||
       oldDelegate.showTrails != showTrails;
+}
+
+/// Draws a ship's shield the way the game draws it in combat: a cloudy inner
+/// fill under a soft edge ring, over the shield arc. Everything here follows
+/// the game's own shield rendering (radius, colors, arc, and the idle
+/// animation), so the blueprint matches what a player sees.
+///
+/// Only the idle, raised shield is drawn — no hit flashes, no raise/lower
+/// unfold. The arc is centered on the ship's nose (straight up here), which is
+/// exactly right for FRONT shields; OMNI shields are shown the same way, since
+/// an idle omni shield has no target to face.
+class _ShieldPainter extends CustomPainter {
+  final List<double> center;
+  final double imgH;
+
+  /// Shield center offset from the ship's pivot, `[forward, lateral]`, in the
+  /// same ship-space units as weapon slots.
+  final List<double> shieldCenter;
+  final double radius;
+
+  /// The shield arc from `ship_data.csv`, in degrees.
+  final double arcDegrees;
+
+  final ShieldStyleColors colors;
+
+  /// The inner-fill texture (already picked for this shield's radius) and the
+  /// edge-ring texture.
+  final ui.Image fillImage;
+  final ui.Image ringImage;
+
+  /// Ring band thickness in ship-space units (thinner for small hulls).
+  final double ringThickness;
+
+  /// Loops 0 → 1 every 16 seconds while animating; null holds the shield still.
+  /// Drives the fill's rotation and the ring's ripple.
+  final Animation<double>? clock;
+
+  _ShieldPainter({
+    required this.center,
+    required this.imgH,
+    required this.shieldCenter,
+    required this.radius,
+    required this.arcDegrees,
+    required this.colors,
+    required this.fillImage,
+    required this.ringImage,
+    required this.ringThickness,
+    required this.clock,
+  }) : super(repaint: clock);
+
+  /// The game draws the shield 10° wider than its stated arc, fading the extra
+  /// out at each end.
+  static const double _arcPaddingDeg = 10.0;
+
+  /// A raised, undamaged shield sits at this brightness in the game (it gets
+  /// brighter only where it's hit).
+  static const double _idleBrightness = 0.55;
+
+  /// The fill reaches a little past the ring, same as the game.
+  static const double _fillRadiusMult = 1.07;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (center.length < 2 || shieldCenter.length < 2 || radius <= 0) return;
+
+    final cx = center[0];
+    final cy = imgH - center[1];
+    // Same ship-space → screen transform as the weapon slots and engine glow.
+    final origin = Offset(cx - shieldCenter[1], cy - shieldCenter[0]);
+
+    final drawnArcDeg = arcDegrees + _arcPaddingDeg;
+    if (drawnArcDeg <= 0) return;
+    final drawnArcRad = drawnArcDeg * pi / 180;
+    final halfArcRad = drawnArcRad / 2;
+
+    // One perimeter point per ~20 units of arc, at least one per 5°.
+    final byLength = (radius * drawnArcRad / 20).floor() + 1;
+    final byAngle = (drawnArcDeg / 5).floor() + 1;
+    final pointCount = max(max(byLength, byAngle), 2);
+
+    // Animation phases. The fill texture spins at π/8 rad/s (a full turn every
+    // 16s), so the 16s clock maps straight to a 0 → 2π spin. The ring ripple's
+    // speed depends on radius; it's quantized to a whole number of cycles per
+    // clock loop so it repeats seamlessly when the clock wraps.
+    final t = clock?.value ?? 0.0;
+    final spin = t * 2 * pi;
+    final ringRate = sqrt(20 * pi / radius) * 10; // radians/sec inside the sine
+    final ringCycles = max(1, (ringRate * 16 / (2 * pi)).round());
+    final ringTimeArg = t * 2 * pi * ringCycles;
+    final rippleAmplitude = (0.25 + 0.75 * radius / 256).clamp(0.0, 1.0);
+
+    // Precompute each perimeter point's angle, direction, and end-fade.
+    final gammas = List<double>.filled(pointCount, 0);
+    final dirs = List<Offset>.filled(pointCount, Offset.zero);
+    final fades = List<double>.filled(pointCount, 0);
+    for (var i = 0; i < pointCount; i++) {
+      final frac = i / (pointCount - 1);
+      final gamma = -halfArcRad + frac * drawnArcRad;
+      gammas[i] = gamma;
+      // Ship-space (cosγ forward, sinγ lateral) → screen delta.
+      dirs[i] = Offset(-sin(gamma), -cos(gamma));
+      // Fade to nothing over the last 10° at each end of the drawn arc.
+      final degFromEnd =
+          min(gamma + halfArcRad, halfArcRad - gamma) * 180 / pi;
+      final edgeFade = (degFromEnd / _arcPaddingDeg).clamp(0.0, 1.0);
+      fades[i] = _idleBrightness * edgeFade;
+    }
+
+    _paintFill(canvas, origin, gammas, dirs, fades, spin);
+    _paintRing(
+      canvas,
+      origin,
+      gammas,
+      dirs,
+      fades,
+      ringTimeArg,
+      rippleAmplitude,
+    );
+  }
+
+  /// The translucent inner fill: a textured triangle fan, drawn twice with the
+  /// texture spinning in opposite directions and added together, which is what
+  /// gives the shield its cloudy shimmer.
+  void _paintFill(
+    Canvas canvas,
+    Offset origin,
+    List<double> gammas,
+    List<Offset> dirs,
+    List<double> fades,
+    double spin,
+  ) {
+    final r = radius * _fillRadiusMult;
+    final texW = fillImage.width.toDouble();
+    final texH = fillImage.height.toDouble();
+    final paint = Paint()
+      ..blendMode = BlendMode.plus
+      ..filterQuality = FilterQuality.high
+      ..shader = ui.ImageShader(
+        fillImage,
+        TileMode.clamp,
+        TileMode.clamp,
+        Matrix4.identity().storage,
+      );
+
+    final count = gammas.length;
+    // Fan: one center vertex, then every perimeter point.
+    final vertexCount = count + 1;
+
+    for (final dir in [1.0, -1.0]) {
+      final positions = Float32List(vertexCount * 2);
+      final texCoords = Float32List(vertexCount * 2);
+      final vColors = Int32List(vertexCount);
+
+      // Center vertex: fully transparent, texture centre.
+      positions[0] = origin.dx;
+      positions[1] = origin.dy;
+      texCoords[0] = 0.5 * texW;
+      texCoords[1] = 0.5 * texH;
+      vColors[0] = _dimmedInt(colors.inner, 0);
+
+      for (var i = 0; i < count; i++) {
+        final v = i + 1;
+        final p = origin + dirs[i] * r;
+        positions[v * 2] = p.dx;
+        positions[v * 2 + 1] = p.dy;
+        // Texture mapped as a full circle in UV space, spun over time.
+        final a = gammas[i] + dir * spin;
+        texCoords[v * 2] = (0.5 + cos(a) * 0.5) * texW;
+        texCoords[v * 2 + 1] = (0.5 + sin(a) * 0.5) * texH;
+        vColors[v] = _dimmedInt(colors.inner, fades[i]);
+      }
+
+      canvas.drawVertices(
+        ui.Vertices.raw(
+          VertexMode.triangleFan,
+          positions,
+          textureCoordinates: texCoords,
+          colors: vColors,
+        ),
+        BlendMode.modulate,
+        paint,
+      );
+    }
+  }
+
+  /// The bright edge ring: a textured strip along the shield radius whose edges
+  /// are softened by the line texture, and whose radius ripples over time.
+  void _paintRing(
+    Canvas canvas,
+    Offset origin,
+    List<double> gammas,
+    List<Offset> dirs,
+    List<double> fades,
+    double timeArg,
+    double amplitude,
+  ) {
+    final texW = ringImage.width.toDouble();
+    final texH = ringImage.height.toDouble();
+    final paint = Paint()
+      ..filterQuality = FilterQuality.high
+      ..shader = ui.ImageShader(
+        ringImage,
+        TileMode.clamp,
+        TileMode.clamp,
+        Matrix4.identity().storage,
+      );
+
+    final count = gammas.length;
+    final positions = Float32List(count * 2 * 2);
+    final texCoords = Float32List(count * 2 * 2);
+    final vColors = Int32List(count * 2);
+
+    for (var i = 0; i < count; i++) {
+      final wobble = amplitude * sin(timeArg + 10 * gammas[i]);
+      final outer = origin + dirs[i] * (radius + wobble);
+      final inner = origin + dirs[i] * (radius + wobble - ringThickness);
+      final o = i * 2;
+      final inn = i * 2 + 1;
+      positions[o * 2] = outer.dx;
+      positions[o * 2 + 1] = outer.dy;
+      positions[inn * 2] = inner.dx;
+      positions[inn * 2 + 1] = inner.dy;
+      // Sample down the middle column, outer edge to inner edge, so the line
+      // texture's soft top and bottom become the ring's soft edges.
+      texCoords[o * 2] = 0.5 * texW;
+      texCoords[o * 2 + 1] = 0.5;
+      texCoords[inn * 2] = 0.5 * texW;
+      texCoords[inn * 2 + 1] = texH - 0.5;
+      final c = _dimmedInt(colors.ring, fades[i]);
+      vColors[o] = c;
+      vColors[inn] = c;
+    }
+
+    canvas.drawVertices(
+      ui.Vertices.raw(
+        VertexMode.triangleStrip,
+        positions,
+        textureCoordinates: texCoords,
+        colors: vColors,
+      ),
+      BlendMode.modulate,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ShieldPainter oldDelegate) =>
+      oldDelegate.radius != radius ||
+      oldDelegate.arcDegrees != arcDegrees ||
+      oldDelegate.shieldCenter != shieldCenter ||
+      oldDelegate.colors.inner != colors.inner ||
+      oldDelegate.colors.ring != colors.ring ||
+      !identical(oldDelegate.fillImage, fillImage) ||
+      !identical(oldDelegate.ringImage, ringImage) ||
+      oldDelegate.ringThickness != ringThickness ||
+      !identical(oldDelegate.clock, clock);
 }
 
 /// [tint] with its alpha scaled by [mult]. Under an additive blend the alpha

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
-import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -92,7 +92,7 @@ class ModSummaryWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final aiMode = ref.watch(appSettings.select((s) => s.catalogAiSummaryMode));
+    final aiMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
 
     final summary = config.showSummary ? _resolveSummary(data, aiMode) : null;
     final saveCompat = data.saveCompatibility?.trim();
@@ -118,7 +118,21 @@ class ModSummaryWidget extends ConsumerWidget {
         // "what" content below it.
         ?(hasContent ? Divider(height: 1, color: theme.dividerColor) : null),
         ?(summary != null
-            ? _SummarySection(text: summary.text, isAi: summary.isAi)
+            ? Column(
+                crossAxisAlignment: .start,
+                mainAxisSize: .min,
+                spacing: 4,
+                children: [
+                  const _SectionHeader(icon: Icons.save, label: 'Summary'),
+                  Padding(
+                    padding: const .only(left: 20),
+                    child: _SummarySection(
+                      text: summary.text,
+                      isAi: summary.isAi,
+                    ),
+                  ),
+                ],
+              )
             : null),
         ?(showSaveCompat ? _SaveCompatibilitySection(text: saveCompat!) : null),
         ?(showChangelog
@@ -487,7 +501,7 @@ class _SummarySection extends StatelessWidget {
                 WidgetSpan(
                   alignment: PlaceholderAlignment.middle,
                   child: Padding(
-                    padding: const .only(right: 4),
+                    padding: const .only(right: 6),
                     child: Icon(
                       Icons.auto_awesome,
                       size: 12,
@@ -498,7 +512,9 @@ class _SummarySection extends StatelessWidget {
                 TextSpan(text: text),
               ],
             ),
-            style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurface),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
           )
         else
           Text(text, style: theme.textTheme.labelMedium),

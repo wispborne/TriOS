@@ -6,7 +6,7 @@ import 'package:trios/models/version.dart';
 import 'package:trios/utils/extensions.dart';
 
 class Constants {
-  static const version = "1.6.2-preview07";
+  static const version = "1.7.0-preview01";
   static Version currentVersion = Version.parse(version);
   static const companionModVersion = "1.0.4";
 

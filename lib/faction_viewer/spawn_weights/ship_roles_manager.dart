@@ -7,6 +7,7 @@ import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/ordered_sources_provider.dart';
 
 const String _shipRolesRelativePath = 'data/world/factions/'
     'default_ship_roles.json';
@@ -59,19 +60,14 @@ final mergedShipRolesProvider =
   final gameCore = ref.watch(AppState.gameCoreFolder).value;
   if (gameCore == null) return MergedShipRoles.empty;
 
-  final mods = ref.watch(AppState.mods);
-  final variants = mods
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls
-      .where(
-        (variant) =>
-            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
-      );
+  // Watched through orderedSourcesProvider so enabling a mod only re-reads this
+  // file out of every mod folder when the sources actually changed.
+  final sources = ref.watch(orderedSourcesProvider(onlyEnabledMods));
 
   final jsonSources = <SourceJson>[];
   final sourceFiles = <String, File>{};
 
-  for (final source in orderedSources(variants)) {
+  for (final source in sources) {
     final folder = source.variant?.modFolder ?? gameCore;
     final file = File(p.join(folder.path, _shipRolesRelativePath));
     if (!await file.exists()) continue;

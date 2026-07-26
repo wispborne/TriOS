@@ -9,6 +9,7 @@ import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -19,13 +20,12 @@ final engineStylesProvider = FutureProvider<Map<String, EngineStyleSpec>>((
   ref,
 ) async {
   final core = ref.watch(AppState.gameCoreFolder).value;
-  final variants = ref
-      .watch(AppState.mods)
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls;
+  // Every mod, enabled or not. Watched through orderedSourcesProvider so
+  // enabling a mod doesn't re-read this file out of every mod folder again.
+  final sources = ref.watch(orderedSourcesProvider(false));
 
   final jsonSources = <SourceJson>[];
-  for (final source in orderedSources(variants)) {
+  for (final source in sources) {
     final folder = source.isVanilla ? core : source.variant!.modFolder;
     if (folder == null || folder.path.isEmpty) continue;
 

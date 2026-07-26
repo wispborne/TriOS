@@ -419,30 +419,39 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         name: 'Name',
         getSortValue: (ship) =>
             ship.hullNameForDisplay().replaceAll(_nonAlphanumeric, ''),
-        itemCellBuilder: (item, _) => Row(
-          children: [
-            Flexible(
-              child: ShipCodexCard.tooltip(
-                ship: item,
-                shipSystemsMap: controllerState.shipSystemsMap,
-                weaponsMap: controllerState.weaponsMap,
-                hullmodsMap: controllerState.hullmodsMap,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.none,
-                  child: Text(
-                    item.hullNameForDisplay(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+        // The tooltip wraps the whole cell so hovering anywhere in it works,
+        // not just over the name text. The skin badge has its own tooltip,
+        // which takes over from this one while the mouse is on it.
+        itemCellBuilder: (item, _) => ShipCodexCard.tooltip(
+          ship: item,
+          shipSystemsMap: controllerState.shipSystemsMap,
+          weaponsMap: controllerState.weaponsMap,
+          hullmodsMap: controllerState.hullmodsMap,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.none,
+            child: SizedBox.expand(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      item.hullNameForDisplay(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
+                  if (item.isSkin)
+                    const MouseRegion(
+                      // Bring the pointer back for the badge's own tooltip.
+                      cursor: SystemMouseCursors.basic,
+                      child: Padding(
+                        padding: .only(left: 8, top: 3),
+                        child: ShipSkinBadge(),
+                      ),
+                    ),
+                ],
               ),
             ),
-            if (item.isSkin)
-              const Padding(
-                padding: .only(left: 8, top: 3),
-                child: ShipSkinBadge(),
-              ),
-          ],
+          ),
         ),
         csvValue: (item) => item.hullNameForDisplay(),
         defaultState: WispGridColumnState(position: position++, width: 200),

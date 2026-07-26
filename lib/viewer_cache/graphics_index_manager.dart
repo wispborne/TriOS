@@ -10,6 +10,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 
@@ -50,30 +51,50 @@ final graphicsIndexProvider =
       GraphicsIndexNotifier.new,
     );
 
+/// The resolver last handed out for each toggle value, kept next to the source
+/// list it was built from. See [gameFileResolverProvider].
+final _lastResolvers =
+    <bool, ({List<GameFileSource> sources, GameFileResolver resolver})>{};
+
+/// True when both lists hold the very same source objects in the same order.
+bool _sameSources(List<GameFileSource> a, List<GameFileSource> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (!identical(a[i], b[i])) return false;
+  }
+  return true;
+}
+
 /// Finds images the way the game does — every mod in load order, then the game
 /// core. Rebuilt when the index or the mod list changes.
 ///
 /// With [onlyEnabledMods] on, mods without an enabled variant are left out, so
 /// a disabled mod can't replace a sprite it wouldn't replace in the game.
+///
+/// The scan keeps re-emitting while it runs, so when the sources come out the
+/// same as last time the old resolver is handed back instead of an identical
+/// new one. Riverpod then sees an unchanged value and leaves the ship and
+/// weapon lists alone. The resolver's remembered answers stay warm too.
 final gameFileResolverProvider = Provider.family<GameFileResolver, bool>((
   ref,
   onlyEnabledMods,
 ) {
   final payloads = ref.watch(graphicsIndexProvider).valueOrNull ?? const [];
-  final mods = ref.watch(AppState.mods);
-  final variants = mods
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls
-      .where(
-        (variant) =>
-            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
-      );
 
-  final bySourceKey = {for (final payload in payloads) payload.sourceKey: payload};
-  return GameFileResolver([
-    for (final source in orderedSources(variants))
+  final bySourceKey = {
+    for (final payload in payloads) payload.sourceKey: payload,
+  };
+  final sources = [
+    for (final source in ref.watch(orderedSourcesProvider(onlyEnabledMods)))
       if (bySourceKey[source.key] case final payload?) payload.asSource,
-  ]);
+  ];
+
+  final last = _lastResolvers[onlyEnabledMods];
+  if (last != null && _sameSources(last.sources, sources)) return last.resolver;
+
+  final resolver = GameFileResolver(sources);
+  _lastResolvers[onlyEnabledMods] = (sources: sources, resolver: resolver);
+  return resolver;
 });
 
 /// Walks every source's `graphics/` folder and remembers what it found, so the
@@ -115,12 +136,6 @@ class GraphicsIndexNotifier
 
   @override
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
-
-  @override
-  Future<bool> awaitReadiness() async {
-    // Watch modVariants so this rebuilds once the initial scan resolves.
-    return ref.watch(AppState.modVariants).hasValue;
-  }
 
   @override
   void rehydratePayload(
@@ -165,11 +180,7 @@ class GraphicsIndexNotifier
         );
       }
     } catch (e, st) {
-      Fimber.w(
-        'Could not list ${graphicsDir.path}: $e',
-        ex: e,
-        stacktrace: st,
-      );
+      Fimber.w('Could not list ${graphicsDir.path}: $e', ex: e, stacktrace: st);
       return null;
     }
 
@@ -191,9 +202,9 @@ class GraphicsIndexNotifier
 
   @override
   GraphicsIndexPayload decodePayload(Uint8List bytes) {
-    final raw = CachedStreamListNotifier.normalizeForMapper(
-      msgpack.deserialize(bytes),
-    ) as Map<String, dynamic>;
+    final raw =
+        CachedStreamListNotifier.normalizeForMapper(msgpack.deserialize(bytes))
+            as Map<String, dynamic>;
 
     return GraphicsIndexPayload(
       sourceKey: raw['sourceKey'] as String,

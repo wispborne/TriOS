@@ -25,6 +25,14 @@ final hullmodListNotifierProvider =
       HullmodListNotifier.new,
     );
 
+/// Hullmods keyed by id, rebuilt only when the hullmod list changes. Prefer
+/// this over building a map from [hullmodListNotifierProvider] per widget.
+final hullmodsByIdProvider = Provider<Map<String, Hullmod>>((ref) {
+  final hullmods =
+      ref.watch(hullmodListNotifierProvider).valueOrNull ?? const <Hullmod>[];
+  return {for (final h in hullmods) h.id: h};
+});
+
 class HullmodListNotifier
     extends CachedStreamListNotifier<Hullmod, HullmodsCachePayload> {
   @override
@@ -53,11 +61,6 @@ class HullmodListNotifier
 
   @override
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
-
-  @override
-  Future<bool> awaitReadiness() async {
-    return ref.watch(AppState.modVariants).hasValue;
-  }
 
   @override
   void onBuildStart() {

@@ -287,12 +287,6 @@ class WeaponListNotifier
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
 
   @override
-  Future<bool> awaitReadiness() async {
-    // Watch modVariants so this rebuilds once the initial scan resolves.
-    return ref.watch(AppState.modVariants).hasValue;
-  }
-
-  @override
   void onBuildStart() {
     ref.read(isLoadingWeaponsList.notifier).state = true;
     ref.listen(AppState.smolIds, (previous, next) {

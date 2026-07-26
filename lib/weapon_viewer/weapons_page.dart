@@ -433,15 +433,22 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         isSortable: true,
         name: 'Name',
         getSortValue: (w) => (w.name ?? w.id).replaceAll(_nonAlphanumeric, ''),
+        // Fills the cell so the tooltip shows from anywhere in it, not just
+        // over the name text.
         itemCellBuilder: (w, _) => WeaponCodexCard.tooltip(
           weapon: w,
           child: MouseRegion(
             cursor: SystemMouseCursors.none,
-            child: Text(
-              w.name ?? w.id,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelLarge,
+            child: SizedBox.expand(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  w.name ?? w.id,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge,
+                ),
+              ),
             ),
           ),
         ),

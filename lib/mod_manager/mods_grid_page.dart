@@ -1749,7 +1749,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
         if (bestVersion == null) return const SizedBox();
 
-        return Expanded(
+        // Fills the row height. Not an Expanded: the cell's parent is no
+        // longer a Column.
+        return SizedBox(
+          height: double.infinity,
           child: Builder(
             builder: (context) {
               final vramEstimatorState = ref.watch(

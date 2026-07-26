@@ -4,6 +4,7 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/launcher/launcher.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
+import 'package:trios/themes/theme_modifiers.dart';
 import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/toolbar/chatbot_button.dart';
@@ -14,7 +15,6 @@ import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/themes/theme_modifiers.dart';
 import 'package:trios/widgets/glitter_background.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
@@ -282,11 +282,7 @@ class _ReorderableNavList extends StatelessWidget {
           if (!isInDragMode) onTabChanged(tool);
         },
       ),
-      NavDividerEntry() => Padding(
-        key: key,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Divider(height: 1, thickness: 1),
-      ),
+      NavDividerEntry() => _SidebarDivider(key: key),
     };
   }
 }
@@ -447,10 +443,7 @@ class _SidebarNavItem extends StatelessWidget {
                   Expanded(
                     child: Text(
                       label,
-                      style: TextStyle(
-                        color: foreground,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: foreground, fontSize: 13),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
@@ -544,13 +537,17 @@ class _SidebarLayoutToggle extends ConsumerWidget {
 }
 
 class _SidebarDivider extends StatelessWidget {
-  const _SidebarDivider();
+  const _SidebarDivider({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Divider(height: 1, thickness: 1),
+      child: Divider(
+        height: 1,
+        thickness: 1,
+        color: Theme.of(context).colorScheme.onSurface.withAlpha(120),
+      ),
     );
   }
 }

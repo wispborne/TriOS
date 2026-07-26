@@ -215,19 +215,28 @@ final spawnWeightsReadyProvider = Provider.family<bool, bool>(
       ref.watch(_spawnWeightContextProvider(onlyEnabledMods)) != null,
 );
 
+/// Every ship, keyed by hull id. Nothing is filtered out: this is only used to
+/// look up names, sizes, and sprites for ids the (already filtered) faction
+/// data asks about. Null until the ship list has loaded.
+final shipsByHullIdProvider = Provider<Map<String, Ship>?>((ref) {
+  final ships = ref.watch(shipListNotifierProvider(false)).value;
+  if (ships == null) return null;
+  return {for (final ship in ships) ship.id: ship};
+});
+
 final _spawnWeightContextProvider =
     Provider.family<SpawnWeightContext?, bool>((ref, onlyEnabledMods) {
   final defaults = ref.watch(mergedShipRolesProvider(onlyEnabledMods)).value;
-  // The ship list stays unfiltered: it only resolves names and sizes for ids
-  // the (already filtered) faction data asks about.
-  final ships = ref.watch(shipListNotifierProvider(false)).value;
+  final shipsByHullId = ref.watch(shipsByHullIdProvider);
   final variantHullIds = ref.watch(variantHullIdMapProvider);
-  if (defaults == null || ships == null || variantHullIds.isEmpty) return null;
+  if (defaults == null || shipsByHullId == null || variantHullIds.isEmpty) {
+    return null;
+  }
 
   return SpawnWeightContext(
     defaults: defaults,
     variantHullIds: variantHullIds,
-    shipsByHullId: {for (final ship in ships) ship.id: ship},
+    shipsByHullId: shipsByHullId,
   );
 });
 

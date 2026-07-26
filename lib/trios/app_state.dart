@@ -136,6 +136,16 @@ class AppState {
     return mods;
   });
 
+  /// Whether the first scan of the mods folder has finished.
+  ///
+  /// Watch this rather than [modVariants] when all you need to know is "are the
+  /// mods there yet". It's a plain bool, so it stops notifying once it flips to
+  /// true — [modVariants] hands out a new list on every reload, which would
+  /// re-trigger every watcher for no reason.
+  static final modsHaveLoaded = Provider<bool>(
+    (ref) => ref.watch(AppState.modVariants).hasValue,
+  );
+
   static final enabledModVariants = Provider<List<ModVariant>>((ref) {
     final mods = ref.watch(AppState.mods);
     return mods.map((mod) => mod.findFirstEnabled).nonNulls.toList()..sort();

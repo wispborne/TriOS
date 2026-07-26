@@ -429,14 +429,21 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         isSortable: true,
         name: 'Name',
         getSortValue: (h) => (h.name ?? h.id).replaceAll(_nonAlphanumeric, ''),
+        // Fills the cell so the tooltip shows from anywhere in it, not just
+        // over the name text.
         itemCellBuilder: (item, _) => HullmodCodexCard.tooltip(
           hullmod: item,
           child: MouseRegion(
             cursor: SystemMouseCursors.none,
-            child: Text(
-              item.name ?? item.id,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: SizedBox.expand(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  item.name ?? item.id,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
           ),
         ),

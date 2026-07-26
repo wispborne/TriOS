@@ -123,7 +123,11 @@ class FactionViewerController extends Notifier<FactionViewerState> {
 
     var filtered = _filters.applyChipFilters(allFactions);
     filtered = _filters.applyNonChipFilters(filtered);
-    filtered = _applySearch(filtered, _searchQuery);
+    // In spawn-weights mode the search box searches ships in the table, not
+    // factions — filtering factions by a ship name would empty the page.
+    if (persisted.viewMode != FactionViewMode.spawnWeights) {
+      filtered = _applySearch(filtered, _searchQuery);
+    }
 
     return FactionViewerState(
       persisted: persisted,
@@ -245,7 +249,9 @@ class FactionViewerController extends Notifier<FactionViewerState> {
   void _refilter() {
     var filtered = _filters.applyChipFilters(state.allFactions);
     filtered = _filters.applyNonChipFilters(filtered);
-    filtered = _applySearch(filtered, _searchQuery);
+    if (state.viewMode != FactionViewMode.spawnWeights) {
+      filtered = _applySearch(filtered, _searchQuery);
+    }
     state = state.copyWith(
       filteredFactions: filtered,
       searchQuery: _searchQuery,

@@ -131,11 +131,9 @@ class _RowItemContainer extends StatelessWidget {
         SizedBox(
           height: height,
           width: width,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [child],
-          ),
+          // Same placement as before (left, vertically centered), but a cell
+          // that asks for the full width or height now gets it.
+          child: Align(alignment: Alignment.centerLeft, child: child),
         ),
       ],
     );

@@ -7,31 +7,33 @@ import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/ship_viewer/engine_styles_manager.dart';
-import 'package:trios/ship_viewer/hull_styles_manager.dart';
-import 'package:trios/ship_viewer/ship_blueprint_view_state.dart';
-import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/ship_viewer/models/ship.dart';
-import 'package:trios/ship_viewer/models/ship_engine_slot.dart';
-import 'package:trios/ship_viewer/models/ship_engine_style_spec.dart';
-import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
-import 'package:trios/ship_viewer/ships_page_controller.dart';
-import 'package:trios/ship_viewer/ship_module_resolver.dart';
-import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_systems_manager/ship_systems_manager.dart';
-import 'package:trios/weapon_viewer/models/weapon.dart';
-import 'package:trios/weapon_viewer/weapons_manager.dart';
+import 'package:trios/ship_viewer/engine_styles_manager.dart';
+import 'package:trios/ship_viewer/hull_styles_manager.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
+import 'package:trios/ship_viewer/models/ship_engine_slot.dart';
+import 'package:trios/ship_viewer/models/ship_engine_style_spec.dart';
+import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
+import 'package:trios/ship_viewer/ship_blueprint_view_state.dart';
+import 'package:trios/ship_viewer/ship_module_resolver.dart';
+import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/utils/polygon_utils.dart';
 import 'package:trios/ship_viewer/utils/sprite_utils.dart';
-import 'package:trios/utils/logging.dart';
+import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/game_file_resolver.dart';
+import 'package:trios/utils/logging.dart';
+import 'package:trios/viewer_cache/graphics_index_manager.dart';
+import 'package:trios/weapon_viewer/models/weapon.dart';
+import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/widgets/broken_ship_image_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:trios/widgets/overflow_menu_button.dart';
+import 'package:trios/widgets/popup_style_menu_anchor.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
@@ -216,6 +218,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// flames flicker. Only runs while the glow is showing and TriOS is the
   /// window in front — otherwise it's a repaint every frame for nothing.
   late final AnimationController _engineFlickerController;
+
+  /// Whether engine flames flicker, toggled from the blueprint view's own
+  /// overflow menu and saved across restarts. When off, the flames are drawn as
+  /// a single still frame.
+  bool _animateEngines = true;
+
   bool _windowFocused = true;
 
   /// Engine data resolved from providers each build, read by the glow overlay.
@@ -229,6 +237,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// menu and saved across restarts. When off, the shield is drawn as a single
   /// still frame.
   bool _animateShields = true;
+
+  /// What's painted behind the ship, picked from the overflow menu and saved
+  /// across restarts. Only used by the interactive view; thumbnails always
+  /// leave the background alone.
+  ShipBlueprintBackground _background = ShipBlueprintBackground.background2;
 
   /// Loops once every 16 seconds. Drives both the shield fill's slow spin and
   /// the edge ring's ripple. Only runs while a shield is showing, animation is
@@ -319,6 +332,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       _showEngineGlow = saved.showEngineGlow;
       _showShield = saved.showShield;
       _animateShields = saved.animateShields;
+      _animateEngines = saved.animateEngines;
+      _background = saved.background;
     } else {
       _showModules = widget.initialShowModules;
       _showBounds = widget.initialShowBounds;
@@ -353,23 +368,31 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   void _persistBlueprintState() {
     if (!widget.interactive) return;
     try {
-      ref.read(appSettings.notifier).update(
-        (s) => s.copyWith(
-          shipBlueprintViewState: ShipBlueprintViewState(
-            showModules: _showModules,
-            showBounds: _showBounds,
-            showMounts: _showMounts,
-            showArcs: _showArcs,
-            showWeapons: _showWeapons,
-            showDecorativeWeapons: _showDecoWeapons,
-            showEngineGlow: _showEngineGlow,
-            showShield: _showShield,
-            animateShields: _animateShields,
-          ),
-        ),
-      );
+      ref
+          .read(appSettings.notifier)
+          .update(
+            (s) => s.copyWith(
+              shipBlueprintViewState: ShipBlueprintViewState(
+                showModules: _showModules,
+                showBounds: _showBounds,
+                showMounts: _showMounts,
+                showArcs: _showArcs,
+                showWeapons: _showWeapons,
+                showDecorativeWeapons: _showDecoWeapons,
+                showEngineGlow: _showEngineGlow,
+                showShield: _showShield,
+                animateShields: _animateShields,
+                animateEngines: _animateEngines,
+                background: _background,
+              ),
+            ),
+          );
     } catch (e, st) {
-      Fimber.w('Failed to persist ship blueprint view state', ex: e, stacktrace: st);
+      Fimber.w(
+        'Failed to persist ship blueprint view state',
+        ex: e,
+        stacktrace: st,
+      );
     }
   }
 
@@ -400,10 +423,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     }
   }
 
-  /// Runs the flicker only while there's a flame on screen and TriOS is in
-  /// front.
+  /// Runs the flicker only while there's a flame on screen, animation is on,
+  /// and TriOS is in front.
   void _updateEngineFlicker() {
-    final shouldRun = _windowFocused && _engineGlowController.value > 0;
+    final shouldRun =
+        _animateEngines && _windowFocused && _engineGlowController.value > 0;
     if (shouldRun == _engineFlickerController.isAnimating) return;
     if (shouldRun) {
       _engineFlickerController.repeat();
@@ -792,8 +816,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       child: Stack(
         children: [
           // Particle contrails go under the hull sprite, like the game.
-          ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
-              underHull: true),
+          ?_engineGlowPositioned(
+            originDx,
+            originDy,
+            imgW,
+            imgH,
+            underHull: true,
+          ),
           Positioned(
             left: originDx,
             top: originDy,
@@ -817,8 +846,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
             imgW,
             imgH,
           ),
-          ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
-              underHull: false),
+          ?_engineGlowPositioned(
+            originDx,
+            originDy,
+            imgW,
+            imgH,
+            underHull: false,
+          ),
         ],
       ),
     );
@@ -870,9 +904,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   }) {
     final sprites = _engineGlowSprites;
     if (sprites == null) return null;
-    final showTrails = ref.watch(
-      appSettings.select((s) => s.showEngineTrails),
-    );
+    final showTrails = ref.watch(appSettings.select((s) => s.showEngineTrails));
     if (underHull && !showTrails) return null;
     final ship = widget.ship;
     final center = ship.center;
@@ -900,7 +932,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
             isFighter: ship.hullSize?.toUpperCase() == 'FIGHTER',
             maxSpeed: ship.maxSpeed,
             opacity: _engineGlowController,
-            flicker: _engineFlickerController,
+            flicker: _animateEngines ? _engineFlickerController : null,
             defaultColor: _defaultEngineColor,
             underHull: underHull,
             showTrails: showTrails,
@@ -917,7 +949,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     if (type != 'FRONT' && type != 'OMNI') return false;
     final radius = ship.shieldRadius;
     if (radius == null || radius <= 0) return false;
-    if (ship.shieldCenter == null || ship.shieldCenter!.length < 2) return false;
+    if (ship.shieldCenter == null || ship.shieldCenter!.length < 2) {
+      return false;
+    }
     return ship.center != null && ship.center!.length >= 2;
   }
 
@@ -971,6 +1005,44 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
         ),
       ),
     );
+  }
+
+  /// The area the shield covers, in the same coordinates as the hull sprite, or
+  /// null when no shield is being drawn. The initial zoom uses this so a big
+  /// shield bubble isn't cut off by the edge of the viewer.
+  ///
+  /// A front shield only covers a wedge, so we walk the wedge's outer edge
+  /// rather than using the whole circle — otherwise narrow-arc ships would zoom
+  /// out much further than they need to.
+  Rect? _shieldBounds(double imgH) {
+    if (!_showShield) return null;
+    final ship = widget.ship;
+    if (!_shipHasShield(ship)) return null;
+
+    final center = ship.center!;
+    final shieldCenter = ship.shieldCenter!;
+    final origin = Offset(
+      center[0] - shieldCenter[1],
+      (imgH - center[1]) - shieldCenter[0],
+    );
+    // The fill reaches a little past the ring, so it sets the outer edge.
+    final radius = ship.shieldRadius! * _ShieldPainter._fillRadiusMult;
+    final halfArcRad =
+        ((ship.shieldArc ?? 30) + _ShieldPainter._arcPaddingDeg) / 2 * pi / 180;
+
+    var minX = origin.dx, maxX = origin.dx;
+    var minY = origin.dy, maxY = origin.dy;
+    const steps = 36;
+    for (var i = 0; i <= steps; i++) {
+      final gamma = -halfArcRad + 2 * halfArcRad * i / steps;
+      // Same ship-space → screen direction as the shield painter.
+      final point = origin + Offset(-sin(gamma), -cos(gamma)) * radius;
+      minX = min(minX, point.dx);
+      maxX = max(maxX, point.dx);
+      minY = min(minY, point.dy);
+      maxY = max(maxY, point.dy);
+    }
+    return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
 
   Offset _slotScreenPos(ShipWeaponSlot slot, double imgH) {
@@ -1096,6 +1168,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       };
     }
 
+    // Background pictures are the game's own files, so they're looked up the
+    // same way everything else is. Only the interactive view offers them.
+    final fileResolver = widget.interactive
+        ? ref.watch(gameFileResolverProvider(false))
+        : null;
+
     // Engine glow and shield inputs (cached providers; cheap after first load).
     final hasEngines = ship.engineSlotsParsed.isNotEmpty;
     final hasShield = _shipHasShield(ship);
@@ -1216,7 +1294,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
     // Compute the combined bounding rect of parent sprite + all module
     // sprites so the Stack can be sized to contain everything. Module
-    // sprites and armament sprites may extend beyond the parent sprite bounds.
+    // sprites, armament sprites, and the shield may extend beyond the parent
+    // sprite bounds.
     final parentRect = Rect.fromLTWH(0, 0, imgW, imgH);
     final geom = _cachedModuleGeometry;
     final moduleTotalBounds = (_showModules && geom?.totalBounds != null)
@@ -1226,6 +1305,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
         ? parentRect.expandToInclude(moduleTotalBounds)
         : parentRect;
     combinedRect = _expandForArmaments(combinedRect, reservedArmaments);
+    final shieldRect = _shieldBounds(imgH);
+    if (shieldRect != null) {
+      combinedRect = combinedRect.expandToInclude(shieldRect);
+    }
 
     // Offset to shift everything into positive coordinate space.
     final originDx = -combinedRect.left;
@@ -1321,8 +1404,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                 children: [
                   // Particle contrails go under the hull sprite, like the
                   // game.
-                  ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
-                      underHull: true),
+                  ?_engineGlowPositioned(
+                    originDx,
+                    originDy,
+                    imgW,
+                    imgH,
+                    underHull: true,
+                  ),
                   // Parent ship sprite, offset so modules with negative
                   // coordinates still fit within the Stack.
                   Positioned(
@@ -1355,8 +1443,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                   // same detection as the highlight above, so the two always
                   // agree on which module is targeted.
                   ?_buildHoveredModuleTooltip(originDx, originDy),
-                  ?_engineGlowPositioned(originDx, originDy, imgW, imgH,
-                      underHull: false),
+                  ?_engineGlowPositioned(
+                    originDx,
+                    originDy,
+                    imgW,
+                    imgH,
+                    underHull: false,
+                  ),
                   // Shield sits over the ship like in the game, but under the
                   // blueprint's own mount/bounds markers so they stay readable.
                   ?_shieldPositioned(originDx, originDy, imgW, imgH),
@@ -1464,7 +1557,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               );
             }
           },
-          child: ClipRect(
+          child: ClipRRect(
+            borderRadius: _backgroundCornerRadius,
             child: InteractiveViewer(
               transformationController: _controller,
               constrained: false,
@@ -1476,10 +1570,38 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
           ),
         );
 
+        final backgroundColor = _background.color;
+        // Null when the picked picture isn't in this install — the view just
+        // falls back to no background rather than making a fuss.
+        final backgroundImage = fileResolver?.resolve(_background.imagePath);
+
         return SizedBox(
           height: viewportHeight,
           child: Stack(
             children: [
+              if (backgroundImage != null)
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: _backgroundCornerRadius,
+                    child: Image.file(
+                      File(backgroundImage),
+                      fit: BoxFit.cover,
+                      // These are 2048x2048; decoding them full size would
+                      // cost 16MB each for a backdrop nobody looks closely at.
+                      cacheWidth: 1024,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    ),
+                  ),
+                )
+              else if (backgroundColor != null)
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      borderRadius: _backgroundCornerRadius,
+                    ),
+                  ),
+                ),
               viewer,
               if (widget.showToolbar && widget.interactive)
                 Positioned(
@@ -1503,7 +1625,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                     spacing: 4,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (hasShield) _buildBlueprintOverflowMenu(),
+                      if (widget.interactive)
+                        _buildBlueprintOverflowMenu(
+                          hasShield,
+                          hasEngines,
+                          fileResolver,
+                        ),
                       _compactIconButton(
                         onPressed: () =>
                             _toggleLayer(() => _showBounds = !_showBounds),
@@ -1592,6 +1719,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     );
   }
 
+  /// Rounds off the corners of the picked background, and of the ship view
+  /// itself so a panned sprite doesn't spill outside those corners.
+  static const _backgroundCornerRadius = BorderRadius.all(Radius.circular(8));
+
   static final _compactButtonStyle = IconButton.styleFrom(
     minimumSize: const Size(28, 28),
     padding: EdgeInsets.zero,
@@ -1621,26 +1752,139 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
           );
   }
 
-  /// The blueprint view's own three-dot menu. Holds the "Animate shields"
-  /// toggle (and is a home for any future view options).
-  Widget _buildBlueprintOverflowMenu() {
-    return SizedBox(
-      width: 30,
-      child: OverflowMenuButton(
-        iconSize: 16,
-        menuItems: [
-          OverflowMenuCheckItem(
-            title: 'Animate shields',
-            icon: Icons.shield_outlined,
-            checked: _animateShields,
-            onTap: () {
+  /// The blueprint view's own three-dot menu: the animation toggles, plus a
+  /// "Background" submenu holding the flat colors and the game's space
+  /// pictures.
+  Widget _buildBlueprintOverflowMenu(
+    bool hasShield,
+    bool hasEngines,
+    GameFileResolver? fileResolver,
+  ) {
+    final theme = Theme.of(context);
+
+    // Every background choice, paired with the picture file behind it. A
+    // picture this install doesn't have is left off the list entirely.
+    final backgroundChoices =
+        <({ShipBlueprintBackground option, String? file})>[];
+    for (final option in ShipBlueprintBackground.values) {
+      final file = fileResolver?.resolve(option.imagePath);
+      if (option.imagePath != null && file == null) continue;
+      backgroundChoices.add((option: option, file: file));
+    }
+    // Where the flat colors end and the game's pictures begin.
+    final firstPicture = backgroundChoices
+        .firstWhereOrNull((c) => c.file != null)
+        ?.option;
+
+    return PopupStyleMenuAnchor(
+      builder: (context, controller, _) => MovingTooltipWidget.text(
+        message: 'More options',
+        child: IconButton(
+          onPressed: () =>
+              controller.isOpen ? controller.close() : controller.open(),
+          icon: const Icon(Icons.more_vert, size: 16),
+          iconSize: 16,
+          style: _compactButtonStyle,
+        ),
+      ),
+      menuChildren: [
+        if (hasShield)
+          PopupStyleMenuAnchor.checkboxItem(
+            value: _animateShields,
+            onPressed: () {
               setState(() => _animateShields = !_animateShields);
               _updateShieldClock();
               _persistBlueprintState();
             },
-          ).toEntry(0),
-        ],
-      ),
+            child: PopupStyleMenuAnchor.paddedLabel(
+              const Text('Animate shields'),
+            ),
+          ),
+        if (hasEngines)
+          PopupStyleMenuAnchor.checkboxItem(
+            value: _animateEngines,
+            onPressed: () {
+              setState(() => _animateEngines = !_animateEngines);
+              _updateEngineFlicker();
+              _persistBlueprintState();
+            },
+            child: PopupStyleMenuAnchor.paddedLabel(
+              const Text('Animate engines'),
+            ),
+          ),
+        SubmenuButton(
+          menuStyle: PopupStyleMenuAnchor.popupMenuStyle(context),
+          leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+            const Icon(Icons.color_lens, size: 24),
+          ),
+          menuChildren: [
+            for (final choice in backgroundChoices) ...[
+              if (choice.option == firstPicture) const Divider(),
+              MenuItemButton(
+                style: _backgroundItemStyle,
+                leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+                  Row(
+                    spacing: 8,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _background == choice.option
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_unchecked,
+                      ),
+                      _backgroundSwatch(choice.option, choice.file, theme),
+                    ],
+                  ),
+                ),
+                onPressed: () {
+                  setState(() => _background = choice.option);
+                  _persistBlueprintState();
+                },
+                child: Text(choice.option.label),
+              ),
+            ],
+          ],
+          child: Text('Background: ${_background.label}'),
+        ),
+      ],
+    );
+  }
+
+  /// The background list is long, so its rows sit tighter than the menu's
+  /// usual height.
+  static const _backgroundItemStyle = ButtonStyle(
+    padding: WidgetStatePropertyAll(.symmetric(horizontal: 16)),
+    minimumSize: WidgetStatePropertyAll(Size(0, 40)),
+  );
+
+  /// The little preview beside each background choice: the flat color, or a
+  /// crop of the picture. "Transparent" gets a crossed-out empty box, since it
+  /// shows nothing. Which one is picked is shown by the radio icon beside it,
+  /// the same as the mod grid's menus do it.
+  ///
+  /// Wider than it is tall — the pictures are all deep space, and a square this
+  /// small showed too little of one to tell it from the next.
+  Widget _backgroundSwatch(
+    ShipBlueprintBackground option,
+    String? file,
+    ThemeData theme,
+  ) {
+    final color = option.color;
+    return Container(
+      width: 48,
+      height: 28,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(color: color, borderRadius: .circular(4)),
+      child: file != null
+          ? Image.file(
+              File(file),
+              fit: BoxFit.cover,
+              cacheWidth: 96,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            )
+          : color == null
+          ? Icon(Icons.close, size: 14, color: theme.colorScheme.outline)
+          : null,
     );
   }
 
@@ -2890,8 +3134,7 @@ class _EngineGlowPainter extends CustomPainter {
     // × duration — hundreds of pixels hanging off a still sprite. Deliberate
     // preview choice: compress it to at most one hull length by scaling the
     // speed the trail math sees. Spacing, lean, and fade compress together.
-    final naturalLength =
-        speed * (1 + spec.contrailMaxSpeedMult) * duration;
+    final naturalLength = speed * (1 + spec.contrailMaxSpeedMult) * duration;
     final displaySpeed = naturalLength > imgH
         ? speed * imgH / naturalLength
         : speed;
@@ -3032,12 +3275,7 @@ class _EngineGlowPainter extends CustomPainter {
     // jump, tail. Duplicate positions in a triangle strip just make zero-area
     // triangles, which is the standard way to draw a hard colour step.
     final t = min(0.05 / duration, 0.5);
-    final columns = [
-      (0.0, 0.0),
-      (t, min(1.0, 10.0 * t)),
-      (t, 1.0),
-      (1.0, 0.0),
-    ];
+    final columns = [(0.0, 0.0), (t, min(1.0, 10.0 * t)), (t, 1.0), (1.0, 0.0)];
 
     final positions = Float32List(columns.length * 4);
     final texCoords = Float32List(columns.length * 4);
@@ -3162,7 +3400,8 @@ class _EngineGlowPainter extends CustomPainter {
       oldDelegate.maxSpeed != maxSpeed ||
       oldDelegate.defaultColor != defaultColor ||
       oldDelegate.underHull != underHull ||
-      oldDelegate.showTrails != showTrails;
+      oldDelegate.showTrails != showTrails ||
+      !identical(oldDelegate.flicker, flicker);
 }
 
 /// Draws a ship's shield the way the game draws it in combat: a cloudy inner
@@ -3265,8 +3504,7 @@ class _ShieldPainter extends CustomPainter {
       // Ship-space (cosγ forward, sinγ lateral) → screen delta.
       dirs[i] = Offset(-sin(gamma), -cos(gamma));
       // Fade to nothing over the last 10° at each end of the drawn arc.
-      final degFromEnd =
-          min(gamma + halfArcRad, halfArcRad - gamma) * 180 / pi;
+      final degFromEnd = min(gamma + halfArcRad, halfArcRad - gamma) * 180 / pi;
       final edgeFade = (degFromEnd / _arcPaddingDeg).clamp(0.0, 1.0);
       fades[i] = _idleBrightness * edgeFade;
     }

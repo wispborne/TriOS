@@ -15,6 +15,7 @@ import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 
@@ -39,8 +40,10 @@ class FactionListNotifier
   int get schemaVersion => 6;
 
   @override
-  late final CachedVariantStore store =
-      CachedVariantStore(domain, Constants.viewerCacheDirPath);
+  late final CachedVariantStore store = CachedVariantStore(
+    domain,
+    Constants.viewerCacheDirPath,
+  );
 
   /// Longer interval because the downstream merge is expensive.
   @override
@@ -64,11 +67,6 @@ class FactionListNotifier
 
   @override
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
-
-  @override
-  Future<bool> awaitReadiness() async {
-    return ref.watch(AppState.modVariants).hasValue;
-  }
 
   @override
   void onBuildStart() {
@@ -184,9 +182,9 @@ class FactionListNotifier
 
   @override
   FactionsCachePayload decodePayload(Uint8List bytes) {
-    final raw = CachedStreamListNotifier.normalizeForMapper(
-      msgpack.deserialize(bytes),
-    ) as Map<String, dynamic>;
+    final raw =
+        CachedStreamListNotifier.normalizeForMapper(msgpack.deserialize(bytes))
+            as Map<String, dynamic>;
     final fileMaps = (raw['files'] as List).cast<Map<String, dynamic>>();
     final files = <FactionFileData>[];
     for (final map in fileMaps) {
@@ -200,6 +198,18 @@ class FactionListNotifier
   }
 }
 
+/// The last merge result for each toggle value, kept beside the two inputs it
+/// was built from. Handed back again when both are unchanged.
+final _lastMergedFactions =
+    <
+      bool,
+      ({
+        List<FactionFileData> files,
+        List<MergeSource> sources,
+        List<Faction> factions,
+      })
+    >{};
+
 /// Factions built by merging the raw files, in the game's load order.
 ///
 /// With [onlyEnabledMods] on, files from mods that aren't enabled are left
@@ -208,13 +218,26 @@ class FactionListNotifier
 ///
 /// Merging here rather than during the scan means flipping the toggle is
 /// instant: the scan and its cache hold every installed mod either way.
+///
+/// The scan keeps re-emitting while it runs, so when neither the files nor the
+/// sources have changed the previous result is handed back. Riverpod then sees
+/// an unchanged value and leaves the faction viewer and codex index alone.
 final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
   ref,
   onlyEnabledMods,
 ) {
   final files = ref.watch(factionListNotifierProvider).valueOrNull ?? const [];
   if (files.isEmpty) return const [];
-  final mods = ref.watch(AppState.mods);
+
+  // Hand each source's scanned files to `mergeFactions` in load order.
+  final sources = ref.watch(orderedSourcesProvider(onlyEnabledMods));
+
+  final last = _lastMergedFactions[onlyEnabledMods];
+  if (last != null &&
+      identical(last.files, files) &&
+      identical(last.sources, sources)) {
+    return last.factions;
+  }
 
   final filesBySource = <String, List<FactionFileData>>{};
   for (final file in files) {
@@ -223,16 +246,6 @@ final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
         .add(file);
   }
 
-  final variants = mods
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls
-      .where(
-        (variant) =>
-            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
-      );
-
-  // Hand each source's scanned files to `mergeFactions` in load order.
-  final sources = orderedSources(variants);
   final merged = mergeFactions([
     for (final source in sources)
       (
@@ -282,21 +295,21 @@ final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
     }
 
     factions.add(
-      _buildFactionFromJson(
-        mergeKey,
-        result.merged,
-        factionSources,
-        {
-          for (final e in result.sectionAttributions.entries)
-            e.key: [
-              for (final c in e.value)
-                SourceContribution(source: c.source, count: c.count),
-            ],
-        },
-        result.itemAttributions,
-      ),
+      _buildFactionFromJson(mergeKey, result.merged, factionSources, {
+        for (final e in result.sectionAttributions.entries)
+          e.key: [
+            for (final c in e.value)
+              SourceContribution(source: c.source, count: c.count),
+          ],
+      }, result.itemAttributions),
     );
   }
+
+  _lastMergedFactions[onlyEnabledMods] = (
+    files: files,
+    sources: sources,
+    factions: factions,
+  );
   return factions;
 });
 
@@ -347,10 +360,12 @@ Faction _buildFactionFromJson(
             numShips: _toInt(doctrine['numShips']),
             shipSize: _toInt(doctrine['shipSize']),
             aggression: _toInt(doctrine['aggression']),
-            combatFreighterProbability:
-                _toDouble(doctrine['combatFreighterProbability']),
-            autofitRandomizeProbability:
-                _toDouble(doctrine['autofitRandomizeProbability']),
+            combatFreighterProbability: _toDouble(
+              doctrine['combatFreighterProbability'],
+            ),
+            autofitRandomizeProbability: _toDouble(
+              doctrine['autofitRandomizeProbability'],
+            ),
           )
         : null,
     knownShipIds: _stringList(knownShips?['hulls']),

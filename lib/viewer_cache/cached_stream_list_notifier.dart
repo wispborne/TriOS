@@ -7,6 +7,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 
 /// Pseudo-smolId used for vanilla slices. Vanilla has no ModVariant so we key
@@ -75,14 +76,20 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// Extract the list of items contributed by a payload for yield / dedup.
   List<T> itemsFromPayload(P payload);
 
-  /// Resolved list of enabled variants to scan, in the game's mod load order.
-  /// Called once per build, after vanilla. Order determines both how files are
-  /// merged and the dedup winner (first occurrence wins).
-  List<ModVariant> resolveEnabledVariants() => ref
-      .read(AppState.mods)
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
+  /// The mod variants to scan, in the game's mod load order. Called once per
+  /// build, after vanilla. Order decides both how files are merged and the
+  /// dedup winner (first occurrence wins).
+  ///
+  /// Every installed mod is scanned, enabled or not — the "only enabled mods"
+  /// toggles filter later, when the data is merged.
+  ///
+  /// Comes from the same provider [isReadyToScan] watches, so what gets scanned
+  /// and what starts a new scan always agree.
+  List<ModVariant> variantsToScan() => ref
+      .read(orderedSourcesProvider(false))
+      .map((source) => source.variant)
       .nonNulls
-      .sortedByGameLoadOrder();
+      .toList();
 
   /// Path to the game core folder. Null means vanilla parsing is skipped for
   /// this build — used if game detection hasn't resolved yet.
@@ -135,10 +142,36 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// providers here and/or attach dirty listeners. Default is a no-op.
   void onBuildStart() {}
 
-  /// Optional async wait for upstream providers (e.g. `AppState.modVariants`)
-  /// to resolve before the scan starts. Default returns immediately. Return
-  /// false to skip the build entirely (e.g. game path unavailable).
-  Future<bool> awaitReadiness() async => true;
+  /// Whether the scan can start. False skips this build entirely — the mods
+  /// are still loading, or the game path isn't known yet. What this watches
+  /// also decides when a later change starts a new scan.
+  ///
+  /// Only a change to the sources needs a new scan: a mod added, removed,
+  /// switched to another version, or moved to another folder. Only those change
+  /// the files on disk. Enabling or disabling a mod writes nothing, and every
+  /// domain scans mods whether they're on or off, so there'd be nothing new to
+  /// find.
+  ///
+  /// [orderedSourcesProvider] draws that line — it hands back the very same
+  /// list when the sources haven't changed, so watching it here skips those
+  /// rebuilds. Watching `AppState.mods` instead re-read and re-parsed every file
+  /// on every toggle, and the restart re-decoded the cache into new objects, so
+  /// every merge downstream saw "new" data and rebuilt its whole list too.
+  ///
+  /// Nothing here waits, on purpose. `build()` uses `ref` again after this
+  /// returns, and Riverpod doesn't allow that once a dependency has changed — so
+  /// waiting here for the mods crashed the build, because the mods arriving is
+  /// itself the change. Returning false ends the build early instead; the watch
+  /// brings us straight back.
+  Future<bool> isReadyToScan() async {
+    ref.watch(orderedSourcesProvider(false));
+
+    // With no mods installed the source list is just vanilla from the very
+    // start, so it can't tell us whether the mods folder has been read yet.
+    // `modsHaveLoaded` is a bool that settles at true, so watching it doesn't
+    // drag in every later change to the mod list.
+    return ref.watch(AppState.modsHaveLoaded);
+  }
 
   /// Called after Phase 3 completes (or after an early return if vanilla/
   /// no-op). Subclasses typically clear loading-state flags here. The default
@@ -162,7 +195,7 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
 
     onBuildStart();
 
-    final ready = await awaitReadiness();
+    final ready = await isReadyToScan();
     if (_buildToken != myToken) return;
     if (!ready) {
       onBuildComplete(fullScanCompleted: false);
@@ -175,7 +208,7 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
       return;
     }
 
-    final variants = resolveEnabledVariants();
+    final variants = variantsToScan();
     final enabledSmolIds = variants.map((v) => v.smolId).toSet();
     _sources = orderedSources(variants);
 

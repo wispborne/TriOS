@@ -27,6 +27,15 @@ final shipSystemListNotifierProvider =
       ShipSystemListNotifier.new,
     );
 
+/// Ship systems keyed by id, rebuilt only when the system list changes. Prefer
+/// this over building a map from [shipSystemListNotifierProvider] per widget.
+final shipSystemsByIdProvider = Provider<Map<String, ShipSystem>>((ref) {
+  final systems =
+      ref.watch(shipSystemListNotifierProvider).valueOrNull ??
+      const <ShipSystem>[];
+  return {for (final s in systems) s.id: s};
+});
+
 class ShipSystemListNotifier
     extends CachedStreamListNotifier<ShipSystem, ShipSystemsCachePayload> {
   @override
@@ -63,11 +72,6 @@ class ShipSystemListNotifier
   String? get currentGameVersion => ref.watch(AppState.starsectorVersion).value;
 
   @override
-  Future<bool> awaitReadiness() async {
-    return ref.watch(AppState.modVariants).hasValue;
-  }
-
-  @override
   void onBuildStart() {
     ref.read(isLoadingShipSystems.notifier).state = true;
     ref.listen(AppState.smolIds, (previous, next) {
@@ -101,7 +105,7 @@ class ShipSystemListNotifier
   ) {
     _assetRoots = [
       gameCore,
-      for (final variant in resolveEnabledVariants()) variant.modFolder,
+      for (final variant in variantsToScan()) variant.modFolder,
     ];
     return _parseOneFolder(gameCore, null);
   }

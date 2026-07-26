@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -377,18 +376,18 @@ class ShipListNotifier
   }
 
   @override
-  Future<bool> awaitReadiness() async {
-    // Wait for modVariants to resolve on startup without watching it to avoid
-    // re-triggering this entire stream on every mod version switch, which
-    // caused cascading widget rebuilds in the pre-cache implementation.
-    if (!ref.read(AppState.modVariants).hasValue) {
-      final completer = Completer<void>();
-      ref.listen(AppState.modVariants, (prev, next) {
-        if (next.hasValue && !completer.isCompleted) completer.complete();
-      });
-      await completer.future;
-    }
-    return true;
+  Future<bool> isReadyToScan() async {
+    // Narrower than the base class on purpose: this waits for the mods to load
+    // and then stops caring, so switching a mod's version doesn't restart the
+    // whole stream. That used to cascade into widget rebuilds. Use the refresh
+    // button to rescan.
+    //
+    // `modsHaveLoaded` is a bool that settles at true, so watching it can't drag
+    // in later changes to the mod list. Nothing here waits: `build()` uses `ref`
+    // again after this returns, and Riverpod doesn't allow that once a
+    // dependency has changed — so waiting for the mods here would crash on the
+    // very change we were waiting for.
+    return ref.watch(AppState.modsHaveLoaded);
   }
 
   @override

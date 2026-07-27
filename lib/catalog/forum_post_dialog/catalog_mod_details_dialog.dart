@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
+import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
@@ -90,7 +91,11 @@ class _CatalogModDetailsDialogState
     );
 
     final header = ForumPostHeader(
-      data: ModSummaryData.fromCatalog(widget.mod, widget.index),
+      data: ModSummaryData.fromCatalog(
+        widget.mod,
+        widget.index,
+        installedMod: ref.watch(catalogLinksProvider).modForEntry(widget.mod),
+      ),
       showSummary: showHeaderSummary,
       onToggleSummary: () {
         ref
@@ -182,7 +187,14 @@ class _Body extends ConsumerWidget {
     final theme = Theme.of(context);
     final aiMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
 
-    final authorText = mod.description ?? mod.summary;
+    // Text the mod's author wrote, best source first: the catalog entry, then
+    // the mod's own mod_info.json if the user has it installed.
+    final installedMod = ref.watch(catalogLinksProvider).modForEntry(mod);
+    final authorText = firstNonBlank([
+      mod.description,
+      mod.summary,
+      modInfoDescription(installedMod),
+    ]);
     final aiParagraph = index?.llm?.mainMod?.extras?.summary?.paragraph;
     final showAi =
         aiParagraph != null &&

@@ -3,7 +3,23 @@ import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
+
+/// The description in an installed mod's `mod_info.json`. Reads the variant
+/// that's turned on, or the newest one the user has if none is.
+String? modInfoDescription(Mod? installedMod) =>
+    installedMod?.findFirstEnabledOrHighestVersion?.modInfo.description;
+
+/// The text with spaces trimmed off, or null when nothing is left.
+String? trimmedOrNull(String? text) {
+  final trimmed = text?.trim();
+  return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+}
+
+/// The first option that actually says something. Null when none do.
+String? firstNonBlank(List<String?> options) =>
+    options.map(trimmedOrNull).nonNulls.firstOrNull;
 
 /// Everything the [ModSummaryWidget] can show about a mod, gathered from the
 /// three sources we might have: the catalog entry, the forum index
@@ -25,6 +41,10 @@ class ModSummaryData {
 
   /// The mod's own description text (from the catalog entry), if any.
   final String? authorText;
+
+  /// The description from the installed mod's `mod_info.json`. Used when the
+  /// catalog entry has no description of its own.
+  final String? modInfoText;
   final ForumLlmSummary? aiSummary;
   final ForumLlmChangelog? changelog;
   final List<ForumLlmSupportLink> supportLinks;
@@ -52,6 +72,7 @@ class ModSummaryData {
     this.views,
     this.replies,
     this.authorText,
+    this.modInfoText,
     this.aiSummary,
     this.changelog,
     this.supportLinks = const [],
@@ -63,7 +84,13 @@ class ModSummaryData {
 
   /// Builds summary data from a catalog entry and its optional forum
   /// index entry. Used for the card tooltip and the catalog-details dialog.
-  factory ModSummaryData.fromCatalog(CatalogMod mod, ForumModIndex? index) {
+  /// Pass [installedMod] when the user has the mod, so its `mod_info.json`
+  /// description can fill in when the catalog has none.
+  factory ModSummaryData.fromCatalog(
+    CatalogMod mod,
+    ForumModIndex? index, {
+    Mod? installedMod,
+  }) {
     final llmMod = _resolveLlmMod(mod, index);
     final extras = llmMod?.extras;
     final authors = mod.authorsList?.isNotEmpty == true
@@ -81,6 +108,7 @@ class ModSummaryData {
       // is missing OR blank — an empty string would otherwise hide a real
       // description and make us show the AI text instead.
       authorText: mod.summary.isNotNullOrBlank ? mod.summary : mod.description,
+      modInfoText: modInfoDescription(installedMod),
       aiSummary: extras?.summary,
       changelog: extras?.changelog,
       supportLinks: extras?.supportLinks ?? const [],
@@ -97,8 +125,9 @@ class ModSummaryData {
   factory ModSummaryData.fromDetails(
     ForumModDetails details,
     ForumModIndex? index,
-    CatalogMod? mod,
-  ) {
+    CatalogMod? mod, {
+    Mod? installedMod,
+  }) {
     final llmMod = _resolveLlmMod(mod, index);
     final extras = llmMod?.extras;
     return ModSummaryData(
@@ -115,6 +144,7 @@ class ModSummaryData {
       authorText: mod?.summary.isNotNullOrBlank == true
           ? mod?.summary
           : mod?.description,
+      modInfoText: modInfoDescription(installedMod),
       aiSummary: extras?.summary,
       changelog: extras?.changelog,
       supportLinks: extras?.supportLinks ?? const [],

@@ -78,9 +78,10 @@ class ShipBlueprintView extends ConsumerStatefulWidget {
   /// (or always, per the ships-page setting) regardless of this value.
   final bool initialShowEngineGlow;
 
-  /// Whether to render the ship's shield (interactive view only). This is the
-  /// toolbar toggle's initial state; the toggle only appears for ships that
-  /// actually have a FRONT or OMNI shield.
+  /// Whether to render the shields of the ship and its shown modules
+  /// (interactive view only). This is the toolbar toggle's initial state; the
+  /// toggle only appears when the ship or one of its modules actually has a
+  /// FRONT or OMNI shield.
   final bool initialShowShield;
 
   /// Whether to show tooltips on slot hover.
@@ -252,6 +253,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   Map<String, ShieldStyleColors> _shieldColors = const {};
   ShieldSprites? _shieldSprites;
 
+  /// Whether the ship, or a shown module, has a shield to draw. Set on every
+  /// build, since turning modules off can take the last shield off screen.
+  bool _hasShield = false;
+
   /// Fallback flame tint for engine styles missing from `engine_styles.json`.
   static const Color _defaultEngineColor = Color(0xFFFFA94D);
 
@@ -414,7 +419,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// Runs the shield clock only while a shield is on screen, animation is on,
   /// and TriOS is in front.
   void _updateShieldClock() {
-    final shouldRun = _showShield && _animateShields && _windowFocused;
+    final shouldRun =
+        _hasShield && _showShield && _animateShields && _windowFocused;
     if (shouldRun == _shieldClockController.isAnimating) return;
     if (shouldRun) {
       _shieldClockController.repeat();
@@ -624,6 +630,38 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                 Offset(anchorX, anchorY),
               ),
       );
+
+      // Where this module's own shield sits, in parent screen coords. Moved
+      // exactly like the module's weapon slots below.
+      Offset? shieldOrigin;
+      if (_shipHasShield(mod.moduleShip) &&
+          modCenter != null &&
+          modCenter.length >= 2) {
+        final shieldCenter = mod.moduleShip.shieldCenter!;
+        final mcx = modCenter[0];
+        final mcy = modSize.height - modCenter[1];
+
+        // Shield center relative to the module sprite origin.
+        final localX = mcx - shieldCenter[1];
+        final localY = mcy - shieldCenter[0];
+
+        // Offset relative to the module anchor (rotation pivot).
+        final relX = localX - anchorX;
+        final relY = localY - anchorY;
+
+        // Rotate by module angle and translate to the docking position.
+        if (angleDeg != 0) {
+          final cosA = cos(angleRad);
+          final sinA = sin(angleRad);
+          shieldOrigin = Offset(
+            slotX + relX * cosA - relY * sinA,
+            slotY + relX * sinA + relY * cosA,
+          );
+        } else {
+          shieldOrigin = Offset(slotX + relX, slotY + relY);
+        }
+      }
+
       layouts.add(
         _ModuleSpriteLayout(
           left: left,
@@ -636,6 +674,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
           anchorY: anchorY,
           spriteFile: mod.moduleShip.spriteFile!,
           moduleShip: mod.moduleShip,
+          shieldOrigin: shieldOrigin,
         ),
       );
 
@@ -955,23 +994,75 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     return ship.center != null && ship.center!.length >= 2;
   }
 
-  /// Builds the shield overlay positioned over the parent hull sprite, or null
-  /// when there's nothing to draw (toggle off, no shield, or textures not
-  /// decoded yet).
-  Widget? _shieldPositioned(
+  /// Center of the parent hull's shield, in the hull sprite's coordinates, or
+  /// null when the parent has no shield worth drawing.
+  Offset? _parentShieldOrigin(double imgH) {
+    final ship = widget.ship;
+    if (!_shipHasShield(ship)) return null;
+    final center = ship.center!;
+    final shieldCenter = ship.shieldCenter!;
+    return Offset(
+      center[0] - shieldCenter[1],
+      (imgH - center[1]) - shieldCenter[0],
+    );
+  }
+
+  /// Every shield to draw: the parent hull's, plus one for each shown module
+  /// that has its own — a station's shield modules, for example.
+  List<_ShieldRender> _shieldsToDraw(double imgH) {
+    if (!_showShield) return const [];
+
+    final shields = <_ShieldRender>[];
+    final parentOrigin = _parentShieldOrigin(imgH);
+    if (parentOrigin != null) {
+      shields.add(
+        _ShieldRender(ship: widget.ship, origin: parentOrigin, rotationRad: 0),
+      );
+    }
+
+    if (_showModules) {
+      final layouts = _cachedModuleGeometry?.layouts ?? const [];
+      for (final layout in layouts) {
+        final origin = layout.shieldOrigin;
+        if (origin == null) continue;
+        shields.add(
+          _ShieldRender(
+            ship: layout.moduleShip,
+            origin: origin,
+            rotationRad: layout.angleRad,
+          ),
+        );
+      }
+    }
+    return shields;
+  }
+
+  /// Builds one shield overlay per shield on screen, all laid over the parent
+  /// hull sprite. Empty when there's nothing to draw (toggle off, no shields,
+  /// or textures not decoded yet).
+  List<Widget> _shieldsPositioned(
     double originDx,
     double originDy,
     double imgW,
     double imgH,
   ) {
-    if (!_showShield) return null;
-    final ship = widget.ship;
-    if (!_shipHasShield(ship)) return null;
     final sprites = _shieldSprites;
-    if (sprites == null) return null;
+    if (sprites == null) return const [];
+    return [
+      for (final shield in _shieldsToDraw(imgH))
+        _shieldPositioned(shield, sprites, originDx, originDy, imgW, imgH),
+    ];
+  }
 
-    final colors =
-        _shieldColors[ship.style?.toUpperCase()] ?? ShieldStyleColors.fallback;
+  Widget _shieldPositioned(
+    _ShieldRender shield,
+    ShieldSprites sprites,
+    double originDx,
+    double originDy,
+    double imgW,
+    double imgH,
+  ) {
+    final ship = shield.ship;
     final radius = ship.shieldRadius!;
     // The game draws a thinner ring on small hulls.
     final hullSize = ship.hullSize?.toUpperCase();
@@ -991,12 +1082,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
         child: CustomPaint(
           size: Size(imgW, imgH),
           painter: _ShieldPainter(
-            center: ship.center!,
-            imgH: imgH,
-            shieldCenter: ship.shieldCenter!,
+            origin: shield.origin,
+            rotationRad: shield.rotationRad,
             radius: radius,
             arcDegrees: ship.shieldArc ?? 30,
-            colors: colors,
+            colors:
+                _shieldColors[ship.style?.toUpperCase()] ??
+                ShieldStyleColors.fallback,
             fillImage: sprites.fillForRadius(radius),
             ringImage: sprites.ring,
             ringThickness: ringThickness,
@@ -1007,28 +1099,29 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     );
   }
 
-  /// The area the shield covers, in the same coordinates as the hull sprite, or
-  /// null when no shield is being drawn. The initial zoom uses this so a big
-  /// shield bubble isn't cut off by the edge of the viewer.
-  ///
-  /// A front shield only covers a wedge, so we walk the wedge's outer edge
-  /// rather than using the whole circle — otherwise narrow-arc ships would zoom
-  /// out much further than they need to.
+  /// The area every shield on screen covers, in the same coordinates as the
+  /// hull sprite, or null when no shield is being drawn. The initial zoom uses
+  /// this so a big shield bubble — a station module's included — isn't cut off
+  /// by the edge of the viewer.
   Rect? _shieldBounds(double imgH) {
-    if (!_showShield) return null;
-    final ship = widget.ship;
-    if (!_shipHasShield(ship)) return null;
+    Rect? total;
+    for (final shield in _shieldsToDraw(imgH)) {
+      final rect = _shieldWedgeBounds(shield);
+      total = total?.expandToInclude(rect) ?? rect;
+    }
+    return total;
+  }
 
-    final center = ship.center!;
-    final shieldCenter = ship.shieldCenter!;
-    final origin = Offset(
-      center[0] - shieldCenter[1],
-      (imgH - center[1]) - shieldCenter[0],
-    );
+  /// The area one shield covers. A front shield only covers a wedge, so we walk
+  /// the wedge's outer edge rather than using the whole circle — otherwise
+  /// narrow-arc ships would zoom out much further than they need to.
+  Rect _shieldWedgeBounds(_ShieldRender shield) {
+    final ship = shield.ship;
+    final origin = shield.origin;
     // The fill reaches a little past the ring, so it sets the outer edge.
     final radius = ship.shieldRadius! * _ShieldPainter._fillRadiusMult;
-    final halfArcRad =
-        ((ship.shieldArc ?? 30) + _ShieldPainter._arcPaddingDeg) / 2 * pi / 180;
+    final drawnArcDeg = (ship.shieldArc ?? 30) + _ShieldPainter._arcPaddingDeg;
+    final halfArcRad = drawnArcDeg / 2 * pi / 180;
 
     var minX = origin.dx, maxX = origin.dx;
     var minY = origin.dy, maxY = origin.dy;
@@ -1036,7 +1129,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     for (var i = 0; i <= steps; i++) {
       final gamma = -halfArcRad + 2 * halfArcRad * i / steps;
       // Same ship-space → screen direction as the shield painter.
-      final point = origin + Offset(-sin(gamma), -cos(gamma)) * radius;
+      final dir = _ShieldPainter.directionFor(gamma, shield.rotationRad);
+      final point = origin + dir * radius;
       minX = min(minX, point.dx);
       maxX = max(maxX, point.dx);
       minY = min(minY, point.dy);
@@ -1176,7 +1270,12 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
     // Engine glow and shield inputs (cached providers; cheap after first load).
     final hasEngines = ship.engineSlotsParsed.isNotEmpty;
-    final hasShield = _shipHasShield(ship);
+    // Shown modules count too — a station's own hull often has no shield while
+    // its shield modules do.
+    final hasShield =
+        _shipHasShield(ship) ||
+        (_showModules && modules.any((m) => _shipHasShield(m.moduleShip)));
+    _hasShield = hasShield;
     if (hasEngines) {
       _engineStyles = ref.watch(engineStylesProvider).value ?? const {};
       _engineGlowSprites = ref.watch(engineGlowSpritesProvider).value;
@@ -1194,7 +1293,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       if (focused != _windowFocused) _windowFocused = focused;
     }
     if (hasEngines) _updateEngineFlicker();
-    if (hasShield) _updateShieldClock();
+    _updateShieldClock();
 
     // Pin glow on (or release to hover/toggle) when the ships-page setting flips.
     final alwaysShowEngineGlow = ref.watch(
@@ -1450,9 +1549,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                     imgH,
                     underHull: false,
                   ),
-                  // Shield sits over the ship like in the game, but under the
+                  // Shields sit over the ship like in the game, but under the
                   // blueprint's own mount/bounds markers so they stay readable.
-                  ?_shieldPositioned(originDx, originDy, imgW, imgH),
+                  ..._shieldsPositioned(originDx, originDy, imgW, imgH),
                   if (_showBounds)
                     Positioned(
                       left: originDx,
@@ -3410,16 +3509,19 @@ class _EngineGlowPainter extends CustomPainter {
 /// animation), so the blueprint matches what a player sees.
 ///
 /// Only the idle, raised shield is drawn — no hit flashes, no raise/lower
-/// unfold. The arc is centered on the ship's nose (straight up here), which is
-/// exactly right for FRONT shields; OMNI shields are shown the same way, since
-/// an idle omni shield has no target to face.
+/// unfold. The arc is centered on the nose of the hull wearing the shield:
+/// straight up for the ship itself, or along its docking angle for a module.
+/// That's exactly right for FRONT shields; OMNI shields are shown the same way,
+/// since an idle omni shield has no target to face.
 class _ShieldPainter extends CustomPainter {
-  final List<double> center;
-  final double imgH;
+  /// Center of the shield, already converted into the parent hull sprite's
+  /// coordinates.
+  final Offset origin;
 
-  /// Shield center offset from the ship's pivot, `[forward, lateral]`, in the
-  /// same ship-space units as weapon slots.
-  final List<double> shieldCenter;
+  /// How far the hull wearing this shield is turned. Zero for the parent ship,
+  /// or the module's docking angle when the shield is on a module.
+  final double rotationRad;
+
   final double radius;
 
   /// The shield arc from `ship_data.csv`, in degrees.
@@ -3440,9 +3542,8 @@ class _ShieldPainter extends CustomPainter {
   final Animation<double>? clock;
 
   _ShieldPainter({
-    required this.center,
-    required this.imgH,
-    required this.shieldCenter,
+    required this.origin,
+    required this.rotationRad,
     required this.radius,
     required this.arcDegrees,
     required this.colors,
@@ -3463,14 +3564,18 @@ class _ShieldPainter extends CustomPainter {
   /// The fill reaches a little past the ring, same as the game.
   static const double _fillRadiusMult = 1.07;
 
+  /// Which way on screen a point [gamma] radians around the shield's arc lies.
+  /// [rotationRad] turns the whole arc along with the module it sits on.
+  static Offset directionFor(double gamma, double rotationRad) {
+    // Ship-space (cosγ forward, sinγ lateral) → screen delta, turned the same
+    // way the module's sprite and weapon slots are.
+    final a = gamma - rotationRad;
+    return Offset(-sin(a), -cos(a));
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    if (center.length < 2 || shieldCenter.length < 2 || radius <= 0) return;
-
-    final cx = center[0];
-    final cy = imgH - center[1];
-    // Same ship-space → screen transform as the weapon slots and engine glow.
-    final origin = Offset(cx - shieldCenter[1], cy - shieldCenter[0]);
+    if (radius <= 0) return;
 
     final drawnArcDeg = arcDegrees + _arcPaddingDeg;
     if (drawnArcDeg <= 0) return;
@@ -3501,8 +3606,7 @@ class _ShieldPainter extends CustomPainter {
       final frac = i / (pointCount - 1);
       final gamma = -halfArcRad + frac * drawnArcRad;
       gammas[i] = gamma;
-      // Ship-space (cosγ forward, sinγ lateral) → screen delta.
-      dirs[i] = Offset(-sin(gamma), -cos(gamma));
+      dirs[i] = directionFor(gamma, rotationRad);
       // Fade to nothing over the last 10° at each end of the drawn arc.
       final degFromEnd = min(gamma + halfArcRad, halfArcRad - gamma) * 180 / pi;
       final edgeFade = (degFromEnd / _arcPaddingDeg).clamp(0.0, 1.0);
@@ -3650,7 +3754,8 @@ class _ShieldPainter extends CustomPainter {
   bool shouldRepaint(_ShieldPainter oldDelegate) =>
       oldDelegate.radius != radius ||
       oldDelegate.arcDegrees != arcDegrees ||
-      oldDelegate.shieldCenter != shieldCenter ||
+      oldDelegate.origin != origin ||
+      oldDelegate.rotationRad != rotationRad ||
       oldDelegate.colors.inner != colors.inner ||
       oldDelegate.colors.ring != colors.ring ||
       !identical(oldDelegate.fillImage, fillImage) ||
@@ -3666,6 +3771,26 @@ Color _dimmed(Color tint, double mult) => tint.withValues(alpha: tint.a * mult);
 
 /// Same as [_dimmed], packed the way `ui.Vertices` wants its colours.
 int _dimmedInt(Color tint, double mult) => _dimmed(tint, mult).toARGB32();
+
+/// One shield to draw, whether it belongs to the parent hull or to a module.
+class _ShieldRender {
+  /// The hull wearing the shield. Its radius, arc, hull style, and hull size
+  /// are what the shield is drawn from.
+  final Ship ship;
+
+  /// Where the shield's center lands, in the parent hull sprite's coordinates.
+  final Offset origin;
+
+  /// How far the hull wearing the shield is turned. Zero for the parent ship,
+  /// or the module's docking angle when the shield is on a module.
+  final double rotationRad;
+
+  const _ShieldRender({
+    required this.ship,
+    required this.origin,
+    required this.rotationRad,
+  });
+}
 
 class _ModuleGeometry {
   final List<_ModuleSpriteLayout> layouts;
@@ -3702,6 +3827,10 @@ class _ModuleSpriteLayout {
   /// The module ship this sprite represents, used for the hover tooltip.
   final Ship moduleShip;
 
+  /// Center of this module's own shield, in the parent ship's screen coords.
+  /// Null when the module has no shield worth drawing.
+  final Offset? shieldOrigin;
+
   const _ModuleSpriteLayout({
     required this.left,
     required this.top,
@@ -3713,6 +3842,7 @@ class _ModuleSpriteLayout {
     required this.anchorY,
     required this.spriteFile,
     required this.moduleShip,
+    this.shieldOrigin,
   });
 }
 

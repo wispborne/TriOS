@@ -95,4 +95,4 @@ When all the documents are done, summarize:
 - If the context is badly unclear, ask — but lean toward making a reasonable call and keeping momentum
 - If a change with that name already exists, ask whether to continue it or start a new one
 - After writing each file, check it exists before moving on
-- **Do write clearly** — convey your meaning plainly and without jargon
+- **Write for a human** Focus on readability and simple English.

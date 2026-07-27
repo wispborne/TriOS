@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
+import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
@@ -151,6 +152,13 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
     final windowSize = MediaQuery.of(context).size;
     final theme = Theme.of(context);
 
+    // The user's copy of this mod, if they have it. Its mod_info.json fills in
+    // the summary when neither the catalog nor the forum post has one.
+    final catalogMod = widget.mod;
+    final installedMod = catalogMod == null
+        ? null
+        : ref.watch(catalogLinksProvider).modForEntry(catalogMod);
+
     final double maxWidth;
     final double maxHeight;
     final EdgeInsets insetPadding;
@@ -190,7 +198,8 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
                       data: ModSummaryData.fromDetails(
                         widget.details,
                         widget.index,
-                        widget.mod,
+                        catalogMod,
+                        installedMod: installedMod,
                       ),
                       showSummary: ref.watch(
                         appSettings.select(

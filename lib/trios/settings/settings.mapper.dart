@@ -600,14 +600,22 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'weaponsGridState',
     _$weaponsGridState,
     opt: true,
-    def: const WispGridState(groupingSetting: null, columnsState: {}),
+    def: const WispGridState(
+      groupingSetting: GroupingSetting(currentGroupedByKey: 'modId'),
+      sortedColumnKey: 'name',
+      columnsState: {},
+    ),
   );
   static WispGridState _$shipsGridState(Settings v) => v.shipsGridState;
   static const Field<Settings, WispGridState> _f$shipsGridState = Field(
     'shipsGridState',
     _$shipsGridState,
     opt: true,
-    def: const WispGridState(groupingSetting: null, columnsState: {}),
+    def: const WispGridState(
+      groupingSetting: GroupingSetting(currentGroupedByKey: 'mod'),
+      sortedColumnKey: 'hullName',
+      columnsState: {},
+    ),
   );
   static ShipsPageStatePersisted? _$shipsPageState(Settings v) =>
       v.shipsPageState;
@@ -642,7 +650,11 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     'hullmodsGridState',
     _$hullmodsGridState,
     opt: true,
-    def: const WispGridState(groupingSetting: null, columnsState: {}),
+    def: const WispGridState(
+      groupingSetting: GroupingSetting(currentGroupedByKey: 'modVariant'),
+      sortedColumnKey: 'name',
+      columnsState: {},
+    ),
   );
   static HullmodsPageStatePersisted? _$hullmodsPageState(Settings v) =>
       v.hullmodsPageState;

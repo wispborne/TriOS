@@ -137,8 +137,13 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                 forumDetails,
                 widget.forumModIndex,
                 mod,
+                installedMod: widget.installedMod,
               )
-            : ModSummaryData.fromCatalog(mod, widget.forumModIndex);
+            : ModSummaryData.fromCatalog(
+                mod,
+                widget.forumModIndex,
+                installedMod: widget.installedMod,
+              );
 
         return ContextMenuRegion(
           contextMenu: ContextMenu(
@@ -450,7 +455,13 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     BuildContext context,
     CatalogMod mod,
   ) {
-    final authorText = mod.summary ?? mod.description;
+    // Text the mod's author wrote, best source first: the catalog entry, then
+    // the mod's own mod_info.json if the user has it installed.
+    final authorText = firstNonBlank([
+      mod.summary,
+      mod.description,
+      modInfoDescription(widget.installedMod),
+    ]);
     final aiSummary = _targetLlmMod?.extras?.summary;
     final aiSummaryMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
 

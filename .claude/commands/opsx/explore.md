@@ -169,4 +169,4 @@ When things come together, you can offer a short summary — optional. Sometimes
 - **Do sketch things** — a good diagram often explains more than a paragraph
 - **Do look at the real code** — check what actually exists
 - **Do question assumptions** — the user's, and your own
-- **Do write clearly** — convey your meaning plainly and without jargon
+- **Write for a human** Focus on readability and simple English.

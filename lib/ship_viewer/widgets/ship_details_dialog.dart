@@ -114,6 +114,16 @@ Widget _buildShipInfoPane(
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (s.designation != null &&
+                    s.designation != s.hullNameForDisplay())
+                  SelectableText(
+                    s.designation!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.textTheme.bodySmall?.color?.withValues(
+                        alpha: 0.80,
+                      ),
+                    ),
+                  ),
                 SelectableText(s.id, style: theme.textTheme.labelSmall),
                 if (s.isSkin && s.baseHullId != null)
                   Padding(
@@ -190,7 +200,6 @@ Widget _buildShipInfoPane(
         ),
       ),
       _kv('Hull Size', s.hullSizeForDisplay(), theme),
-      _kv('Designation', s.designation, theme),
       _kv('Style', s.style?.toTitleCase(), theme),
       _kv(
         'System',

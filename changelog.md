@@ -11,6 +11,7 @@
   - Popup when a download or install starts.
   - Missing dependencies now have buttons to install or find them.
   - Ship Viewer now shows animated engines and shields.
+  - Ship Viewer now shows an in-game background behind ships (changeable).
   - Ship Viewer now has tooltips for modules.
   - 'Last Updated' column on the Mods page.
   - More background effects (Settings - Theme Modifiers).

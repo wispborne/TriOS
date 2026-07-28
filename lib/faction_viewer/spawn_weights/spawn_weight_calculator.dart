@@ -6,6 +6,8 @@ import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/utils/game_data_merge.dart';
 
+typedef SpawnWeightParams = ({String mergeKey, bool onlyEnabledMods});
+
 /// The roles the game uses to pick warships. The headline "how much of this
 /// faction's fleet is vanilla" number is the share of weight across these.
 const kCombatRoles = [
@@ -169,7 +171,7 @@ final factionSpawnSummariesProvider =
 final factionSpawnWeightsProvider =
     Provider.family<
       FactionSpawnWeights,
-      ({String mergeKey, bool onlyEnabledMods})
+      SpawnWeightParams
     >((ref, key) {
       final mergeKey = key.mergeKey;
       final factions = ref.watch(

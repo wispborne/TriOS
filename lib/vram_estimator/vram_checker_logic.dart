@@ -20,10 +20,13 @@ import 'vram_check_scan_params.dart';
 import 'vram_scan_one_mod.dart';
 import 'vram_scan_task.dart';
 
+typedef VramScanEntry = ({VramScanTask task, VramCheckerMod modInfo});
+typedef VramScanResult = ({Map<String, int> assets, int total});
+
 /// Recursively enumerates all image files in [coreDir], reads their headers,
 /// and returns a map of normalized relative path to computed bytesUsed, plus
 /// the sum of all values.
-Future<({Map<String, int> assets, int total})> scanVanillaAssets(
+Future<VramScanResult> scanVanillaAssets(
   Directory coreDir,
   ReadImageHeaders imageReader, {
   void Function(String)? debugOut,
@@ -307,7 +310,7 @@ class VramChecker {
       final variants = variantsToCheck
           .map((v) => VramCheckerMod(v.modInfo, v.modFolder.path))
           .toList();
-      final taskQueue = Queue<({VramScanTask task, VramCheckerMod modInfo})>();
+      final taskQueue = Queue<VramScanEntry>();
       for (final modInfo in variants) {
         final params = _buildParams(modInfo);
         taskQueue.add((

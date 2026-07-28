@@ -14,6 +14,9 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
+typedef TipsSource = ({Tips tips, File file});
+typedef TipsFileEntry = ({ModVariant variant, File tipsFile});
+
 class TipsNotifier extends AsyncNotifier<List<ModTip>> {
   final deletedTipsStorageManager = _TipsStorageManager();
   final Debouncer _loadDebouncer = Debouncer(
@@ -59,7 +62,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     final unfilteredTips = <ModTip>[];
 
     for (final mod in mods) {
-      final tipsMap = <Tip, List<({ModVariant variant, File tipsFile})>>{};
+      final tipsMap = <Tip, List<TipsFileEntry>>{};
 
       for (final variant in mod.modVariants) {
         try {
@@ -116,7 +119,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
         .toList();
   }
 
-  Future<({Tips tips, File file})?> _loadTipsFromFile(
+  Future<TipsSource?> _loadTipsFromFile(
     ModVariant variant,
   ) async {
     final tipsFile = getTipsFile(variant);
@@ -131,7 +134,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     return null;
   }
 
-  ({File file, Tips tips})? _loadTipsFromFileSync(ModVariant variant) {
+  TipsSource? _loadTipsFromFileSync(ModVariant variant) {
     final tipsFile = getTipsFile(variant);
     if (tipsFile.existsSync()) {
       return (
@@ -393,7 +396,7 @@ class TipsNotifier extends AsyncNotifier<List<ModTip>> {
     }
     final allModTipHashes = modsToCheck.flatMap((it) => it.modVariants).flatMap(
       (variant) {
-        ({File file, Tips tips})? tipsFromFileSync;
+        TipsSource? tipsFromFileSync;
 
         try {
           tipsFromFileSync = _loadTipsFromFileSync(variant);

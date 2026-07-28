@@ -18,6 +18,9 @@ import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/ingame_tooltip_shared.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
+typedef ArmamentGroup = ({int count, Weapon? weapon, String? wingId});
+typedef CountLabel = ({String count, String label});
+
 /// Builds tooltip content for ships, replicating the layout of the game's
 /// ship codex panel: title, two-column stats with sprite, system, mounts,
 /// armaments, hull mods, and design-type footer.
@@ -622,11 +625,11 @@ Map<String, int> _groupMounts(Ship ship) {
 
 /// Groups built-in weapons and wings by display name, preserving the [Weapon]
 /// object (for tooltips) and, for wings, the wing id (for the Codex link).
-Map<String, ({int count, Weapon? weapon, String? wingId})> _groupArmaments(
+Map<String, ArmamentGroup> _groupArmaments(
   Ship ship,
   Map<String, Weapon> weaponsMap,
 ) {
-  final groups = <String, ({int count, Weapon? weapon, String? wingId})>{};
+  final groups = <String, ArmamentGroup>{};
   for (final id
       in ship.builtInWeapons?.values ?? const Iterable<String>.empty()) {
     final weapon = weaponsMap[id];
@@ -669,7 +672,7 @@ Widget _mountWrap(
     fontWeight: FontWeight.bold,
   );
 
-  final items = <({String count, String label})>[
+  final items = <CountLabel>[
     ...groups.entries.map(
       (e) => (count: '${e.value}\u00D7', label: ' ${e.key}'),
     ),
@@ -700,7 +703,7 @@ Widget _mountWrap(
 /// keeps its hover card (and, inside the Codex, click-to-open); wings link to
 /// their fighter entry; unresolved entries (e.g. from a disabled mod) stay plain.
 Widget _armamentWrap(
-  Map<String, ({int count, Weapon? weapon, String? wingId})> groups,
+  Map<String, ArmamentGroup> groups,
   ThemeData theme,
   Color highlightColor,
   CodexEntitySelected? onEntitySelected,
@@ -728,7 +731,7 @@ Widget _armamentWrap(
 /// Resolved weapons/wings get wrapped so they keep their hover card and click;
 /// plain entries stay a bare span so the line reads identically either way.
 InlineSpan _armamentSpan(
-  MapEntry<String, ({int count, Weapon? weapon, String? wingId})> entry,
+  MapEntry<String, ArmamentGroup> entry,
   TextStyle? baseStyle,
   TextStyle? countStyle,
   CodexEntitySelected? onEntitySelected,

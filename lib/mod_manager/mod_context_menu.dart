@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/mod_browser_manager.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/widgets/category_context_menu.dart';
@@ -213,7 +213,9 @@ ContextMenu buildModBulkActionContextMenu(
   );
 }
 
-const _colorPresets = <(String, Color)>[
+typedef ColorPreset = (String, Color);
+
+const _colorPresets = <ColorPreset>[
   ('Red', Color(0xFFE53935)),
   ('Coral', Color(0xFFFF7043)),
   ('Amber', Color(0xFFFFCA28)),
@@ -359,8 +361,8 @@ MenuItem _buildMenuItemViewModDetails(
         }
       }
 
-      // Look up CatalogMod via ModRecord's catalog name
-      CatalogMod? catalogMod;
+      // Look up ModRepoEntry via ModRecord's catalog name
+      ModRepoEntry? catalogMod;
       final modRecords = ref.read(modRecordsStore).valueOrNull;
       final catalogItems = ref
           .read(browseModsNotifierProvider)
@@ -371,7 +373,7 @@ MenuItem _buildMenuItemViewModDetails(
         final catalogName = record?.catalog?.name;
         if (catalogName != null) {
           final key = catalogName.toLowerCase().trim();
-          catalogMod = catalogItems.cast<CatalogMod?>().firstWhere(
+          catalogMod = catalogItems.cast<ModRepoEntry?>().firstWhere(
             (s) => s!.name.toLowerCase().trim() == key,
             orElse: () => null,
           );

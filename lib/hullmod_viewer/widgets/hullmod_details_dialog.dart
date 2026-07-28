@@ -9,12 +9,13 @@ void showHullmodDetailsDialog(BuildContext context, Hullmod h) {
     context: context,
     builder: (ctx) {
       return Dialog(
+        clipBehavior: Clip.antiAlias,
         insetPadding: const EdgeInsets.all(16),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

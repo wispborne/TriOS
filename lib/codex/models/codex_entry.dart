@@ -1,3 +1,4 @@
+import 'package:trios/codex/codex_links.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
 import 'package:trios/fighter_viewer/models/wing.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
@@ -14,7 +15,7 @@ enum CodexEntryType { ship, station, weapon, hullmod, shipSystem, wing, faction 
 /// Called when a clickable cross-reference inside a codex card is tapped. Null
 /// on the viewer tabs (references stay hover-only); set to the Codex
 /// controller's `select` inside the Codex detail panel so a click navigates.
-typedef CodexEntitySelected = void Function((CodexEntryType, String) key);
+typedef CodexEntitySelected = void Function(CodexKey key);
 
 /// A single entry in the combined Codex index. One subclass per category, each
 /// wrapping the existing data object (no data is copied). Kept Flutter-free —
@@ -43,7 +44,7 @@ sealed class CodexEntry {
   Set<String> get modIds;
 
   /// The stable key: `(type, id)`.
-  (CodexEntryType, String) get key => (type, id);
+  CodexKey get key => (type, id);
 }
 
 class ShipCodexEntry extends CodexEntry {

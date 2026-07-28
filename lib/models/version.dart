@@ -6,6 +6,8 @@ import 'package:trios/utils/logging.dart';
 
 part 'version.mapper.dart';
 
+typedef NormalizedVersionParts = (List<String>, List<String>);
+
 @MappableClass()
 class Version with VersionMappable implements Comparable<Version> {
   final String? raw;
@@ -134,7 +136,7 @@ class Version with VersionMappable implements Comparable<Version> {
     return tokens;
   }
 
-  (List<String>, List<String>) _normalizeAndSplitStringsToCompare(
+  NormalizedVersionParts _normalizeAndSplitStringsToCompare(
     String a,
     String b,
   ) {

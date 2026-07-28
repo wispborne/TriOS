@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
-import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
-import 'package:trios/catalog/models/ai_summary_mode.dart';
-import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
-import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
 import 'package:trios/catalog/catalog_mod_card.dart';
+import 'package:trios/catalog/summary_resolver.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -21,16 +18,14 @@ import 'package:trios/utils/extensions.dart';
 /// AI paragraph summary when the AI-summary setting allows it.
 void showCatalogModDetailsDialog(
   BuildContext context, {
-  required CatalogMod mod,
-  ForumModIndex? index,
+  required CatalogMod gathered,
   required void Function(String href) linkLoader,
   bool canUseEmbeddedBrowser = true,
 }) {
   showDialog(
     context: context,
     builder: (ctx) => _CatalogModDetailsDialog(
-      mod: mod,
-      index: index,
+      gathered: gathered,
       linkLoader: linkLoader,
       canUseEmbeddedBrowser: canUseEmbeddedBrowser,
     ),
@@ -38,14 +33,12 @@ void showCatalogModDetailsDialog(
 }
 
 class _CatalogModDetailsDialog extends ConsumerStatefulWidget {
-  final CatalogMod mod;
-  final ForumModIndex? index;
+  final CatalogMod gathered;
   final void Function(String href) linkLoader;
   final bool canUseEmbeddedBrowser;
 
   const _CatalogModDetailsDialog({
-    required this.mod,
-    required this.index,
+    required this.gathered,
     required this.linkLoader,
     required this.canUseEmbeddedBrowser,
   });
@@ -62,14 +55,14 @@ class _CatalogModDetailsDialogState
   List<DownloadGroup> _downloadGroups() {
     final controller = ref.read(catalogPageControllerProvider.notifier);
     return buildDownloadGroups(
-      index: widget.index,
-      catalogMod: widget.mod,
+      catalogMod: widget.gathered.entry,
       isInstalled: (name) => controller.statusForModName(name) != null,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final mod = widget.gathered;
     final windowSize = MediaQuery.of(context).size;
 
     final double maxWidth;
@@ -85,17 +78,13 @@ class _CatalogModDetailsDialogState
       insetPadding = const EdgeInsets.all(24);
     }
 
-    final website = widget.mod.getBestWebsiteUrl();
+    final website = mod.entry.getBestWebsiteUrl();
     final showHeaderSummary = ref.watch(
       appSettings.select((s) => s.catalogShowDialogHeaderSummary),
     );
 
     final header = ForumPostHeader(
-      data: ModSummaryData.fromCatalog(
-        widget.mod,
-        widget.index,
-        installedMod: ref.watch(catalogLinksProvider).modForEntry(widget.mod),
-      ),
+      data: mod,
       showSummary: showHeaderSummary,
       onToggleSummary: () {
         ref
@@ -127,11 +116,8 @@ class _CatalogModDetailsDialogState
         ref,
         candidate,
         modName: modName,
-        // The download row's own mod name is the catalog identity; the thread
-        // id (when known) is a fallback clue.
         sourceHint: DownloadSourceHint(
           catalogName: modName,
-          forumThreadId: widget.index?.topicId.toString(),
         ),
         linkLoader: widget.linkLoader,
       ),
@@ -153,11 +139,6 @@ class _CatalogModDetailsDialogState
           mainAxisSize: _isFullScreen ? MainAxisSize.max : MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // The summary block can be tall, so let it scroll rather than
-            // overflow. When the header shows the summary it already covers
-            // the image and description, so the body (which would duplicate
-            // it) is dropped; when hidden, the header stays pinned and the
-            // body scrolls instead.
             if (showHeaderSummary)
               Flexible(child: SingleChildScrollView(child: header))
             else ...[
@@ -165,7 +146,7 @@ class _CatalogModDetailsDialogState
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: _Body(mod: widget.mod, index: widget.index),
+                  child: _Body(gathered: mod),
                 ),
               ),
             ],
@@ -177,33 +158,25 @@ class _CatalogModDetailsDialogState
 }
 
 class _Body extends ConsumerWidget {
-  final CatalogMod mod;
-  final ForumModIndex? index;
+  final CatalogMod gathered;
 
-  const _Body({required this.mod, this.index});
+  const _Body({required this.gathered});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final aiMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
 
-    // Text the mod's author wrote, best source first: the catalog entry, then
-    // the mod's own mod_info.json if the user has it installed.
-    final installedMod = ref.watch(catalogLinksProvider).modForEntry(mod);
-    final authorText = firstNonBlank([
-      mod.description,
-      mod.summary,
-      modInfoDescription(installedMod),
-    ]);
-    final aiParagraph = index?.llm?.mainMod?.extras?.summary?.paragraph;
-    final showAi =
-        aiParagraph != null &&
-        aiParagraph.isNotEmpty &&
-        switch (aiMode) {
-          AiSummaryMode.always => true,
-          AiSummaryMode.whenNoAuthorText => authorText == null,
-          AiSummaryMode.never => false,
-        };
+    final authorResolved = resolveAuthorText(
+      gathered,
+      authorOrder: AuthorTextOrder.longFirst,
+    );
+    final authorText = authorResolved?.text;
+    final showAi = shouldShowAiWithAuthorText(
+      gathered,
+      aiMode: aiMode,
+      hasAuthorText: authorText != null,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,9 +186,9 @@ class _Body extends ConsumerWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: ModImage(
-              mod: mod,
+              mod: gathered.entry,
               size: 300,
-              fallbackImageUrl: index?.llm?.mainMod?.imageUrl,
+              fallbackImageUrl: gathered.fallbackImageUrl,
             ),
           ),
         ),
@@ -232,7 +205,10 @@ class _Body extends ConsumerWidget {
           ),
         if (showAi) ...[
           const SizedBox(height: 16),
-          SelectableText(aiParagraph, style: theme.textTheme.bodyMedium),
+          SelectableText(
+            gathered.aiParagraph!,
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(height: 8),
           Text(
             'Summary generated by AI. See the ${Constants.appName} About page '

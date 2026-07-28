@@ -77,6 +77,9 @@ typedef SourceItems<T> = ({MergeSource source, List<T> items});
 /// A merged item paired with the source that supplied it.
 typedef MergedItem<T> = ({T item, MergeSource source});
 
+/// A merged side file keyed by its file path.
+typedef MergedFileEntry = ({String path, DeepMergeResult file});
+
 /// Merges parsed objects by id using the CSV rule: first source to supply an
 /// id keeps it, later copies (including vanilla) are dropped.
 List<T> mergeById<T>(List<SourceItems<T>> sources, String Function(T) idOf) {
@@ -725,7 +728,7 @@ List<MergedSpec> _mergeSpecs({
 
   // Map each item id to its merged side file. Duplicate ids across paths
   // keep the first (higher-priority source).
-  final byId = <String, ({String path, DeepMergeResult file})>{};
+  final byId = <String, MergedFileEntry>{};
   for (final path in _pathsInResolutionOrder(sideFiles)) {
     final file = mergedFiles[path];
     if (file == null) continue;

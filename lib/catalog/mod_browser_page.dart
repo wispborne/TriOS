@@ -34,7 +34,6 @@ import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 
 import '../widgets/moving_tooltip.dart';
 import 'catalog_data_sources_dialog.dart';
-import 'forum_data_manager.dart';
 
 class CatalogPage extends ConsumerStatefulWidget {
   final EdgeInsets pagePadding;
@@ -214,9 +213,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
       }
     }
 
-    // Forum data lookup by topic ID (still used by card builders below).
-    final forumLookup = ref.watch(forumDataByTopicId);
-
     return Column(
       children: [
         Expanded(
@@ -378,35 +374,31 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                     padding: EdgeInsets.only(
                                       bottom: widget.pagePadding.bottom,
                                     ),
-                                    itemBuilder: (context, profile, index) {
+                                    itemBuilder: (context, gathered, index) {
                                       final status = catalogController
-                                          .statusForModName(profile.name);
-                                      final forumThreadId = extractForumTopicId(
-                                        profile.urls?[ModUrlType.Forum],
-                                      );
-                                      final forumEntry = forumThreadId != null
-                                          ? forumLookup[forumThreadId]
-                                          : null;
+                                          .statusForModName(
+                                            gathered.entry.name,
+                                          );
 
                                       return SizedBox(
                                         height: 140,
                                         child: CatalogModCard(
-                                          mod: profile,
-                                          installedMod: status?.mod,
+                                          gathered: gathered,
                                           versionCheckComparison:
                                               status?.versionCheck,
-                                          forumModIndex: forumEntry,
                                           canUseEmbeddedBrowser:
                                               currentPlatform !=
                                               TargetPlatform.linux,
                                           linkLoader: (url) {
-                                            selectedModName = profile.name;
+                                            selectedModName =
+                                                gathered.entry.name;
                                             _openInEmbeddedBrowser(url);
                                           },
                                           isSelected:
                                               currentUrl != null &&
                                               currentUrl ==
-                                                  profile.getBestWebsiteUrl(),
+                                                  gathered.entry
+                                                      .getBestWebsiteUrl(),
                                         ),
                                       );
                                     },

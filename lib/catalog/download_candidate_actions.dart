@@ -6,6 +6,7 @@ import 'package:trios/trios/deep_link/deep_link_handler.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/widgets/snackbar.dart';
+import 'package:trios/widgets/trios_app_icon.dart';
 
 /// Runs a download [candidate] the same way everywhere it's offered (card
 /// button, card menu, forum dialog):
@@ -68,13 +69,27 @@ void executeDownloadCandidate(
 IconData downloadCandidateIcon(DownloadCandidate candidate) {
   if (candidate.requiresManualStep) return Icons.open_in_new;
   return switch (candidate.kind) {
-    DownloadCandidateKind.triosDeepLink => Icons.rocket_launch,
+    DownloadCandidateKind.triosDeepLink => Icons.download,
     DownloadCandidateKind.versionChecker => Icons.download,
     DownloadCandidateKind.catalogDirect => Icons.download,
     DownloadCandidateKind.forumDirect => Icons.download,
     DownloadCandidateKind.forumMirror => Icons.cloud_download,
     DownloadCandidateKind.website => Icons.open_in_browser,
   };
+}
+
+/// Widget version of [downloadCandidateIcon] — returns the TriOS logo for
+/// deep-link candidates, a plain [Icon] for everything else.
+Widget downloadCandidateIconWidget(
+  DownloadCandidate candidate, {
+  double size = 16,
+  Color? color,
+}) {
+  if (!candidate.requiresManualStep &&
+      candidate.kind == DownloadCandidateKind.triosDeepLink) {
+    return TriOSAppIcon(width: size, height: size, color: color);
+  }
+  return Icon(downloadCandidateIcon(candidate), size: size, color: color);
 }
 
 /// A short one-line description of where a candidate comes from, e.g.

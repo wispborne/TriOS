@@ -15,8 +15,9 @@ import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
-import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
+import 'package:trios/catalog/summary_resolver.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
@@ -39,12 +40,10 @@ import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
 class CatalogModCard extends ConsumerStatefulWidget {
-  final CatalogMod mod;
+  final CatalogMod gathered;
   final void Function(String) linkLoader;
   final bool isSelected;
-  final Mod? installedMod;
   final VersionCheckComparison? versionCheckComparison;
-  final ForumModIndex? forumModIndex;
 
   /// Whether the app's built-in browser panel is usable on this platform.
   /// Gates the "Open in the built-in browser" actions.
@@ -52,12 +51,10 @@ class CatalogModCard extends ConsumerStatefulWidget {
 
   const CatalogModCard({
     super.key,
-    required this.mod,
+    required this.gathered,
     required this.linkLoader,
     this.isSelected = false,
-    this.installedMod,
     this.versionCheckComparison,
-    this.forumModIndex,
     this.canUseEmbeddedBrowser = true,
   });
 
@@ -66,29 +63,14 @@ class CatalogModCard extends ConsumerStatefulWidget {
 }
 
 class _CatalogModCardState extends ConsumerState<CatalogModCard> {
-  /// The LLM mod this card represents. For a synthesized "part of a thread"
-  /// entry, that's the specific bundled mod (matched by name); otherwise it's
-  /// the thread's main mod. Drives which downloads the install button offers.
-  ForumLlmMod? get _targetLlmMod {
-    final llm = widget.forumModIndex?.llm;
-    if (llm == null) return null;
-    if (widget.mod.isPartOfThread) {
-      final key = widget.mod.name.toLowerCase().trim();
-      return llm.mods.firstWhereOrNull(
-            (m) => m.name.toLowerCase().trim() == key,
-          ) ??
-          llm.mainMod;
-    }
-    return llm.mainMod;
-  }
+  CatalogMod get _g => widget.gathered;
+  ModRepoEntry get _entry => _g.entry;
 
-  /// The installed mod's version checker result, when it has one. Its download
-  /// link is the mod author's own, so it outranks the catalog and forum links.
   VersionCheckerInfo? get _remoteVersion =>
       widget.versionCheckComparison?.remoteVersionCheck?.remoteVersion;
 
   Color _statusBarColor(ThemeData theme) {
-    final mod = widget.installedMod;
+    final mod = _g.installedMod;
     if (mod == null) return Colors.transparent;
 
     if (widget.versionCheckComparison?.hasUpdate == true) {
@@ -102,10 +84,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
 
   @override
   Widget build(BuildContext context) {
-    final mod = widget.mod;
+    final mod = _entry;
     final downloadCandidates = resolveDownloadCandidates(
       mod,
-      _targetLlmMod,
+      _g.llmMod,
       remoteVersion: _remoteVersion,
     );
 
@@ -113,37 +95,19 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     return Builder(
       builder: (context) {
         final websiteUrl = mod.getBestWebsiteUrl();
-        final topicId = widget.forumModIndex?.topicId;
+        final topicId = extractForumTopicId(mod.urls?[ModUrlType.Forum]);
         final forumDetails = topicId == null
             ? null
             : ref.watch(forumDetailsForTopic(topicId));
         final hasForumDetails =
             forumDetails != null && !forumDetails.isPlaceholderDetail;
-        // Clicking any card opens a details dialog: the forum post when it's
-        // cached, otherwise a fallback built from catalog data. Only skip when
-        // there's genuinely nothing to show.
         final hasDetailsToShow =
             hasForumDetails ||
-            widget.forumModIndex != null ||
+            _g.topicUrl != null ||
             (mod.description?.isNotEmpty ?? false) ||
             (mod.summary?.isNotEmpty ?? false) ||
             (mod.images?.isNotEmpty ?? false) ||
             downloadCandidates.isNotEmpty;
-
-        // The hover tooltip: a full mod overview. Prefer rich forum details
-        // (author title, post count, avatar) when the post is cached.
-        final summaryData = hasForumDetails
-            ? ModSummaryData.fromDetails(
-                forumDetails,
-                widget.forumModIndex,
-                mod,
-                installedMod: widget.installedMod,
-              )
-            : ModSummaryData.fromCatalog(
-                mod,
-                widget.forumModIndex,
-                installedMod: widget.installedMod,
-              );
 
         return ContextMenuRegion(
           contextMenu: ContextMenu(
@@ -154,9 +118,8 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                   icon: Icons.info_outline,
                   onSelected: () => showModInfoDialog(
                     context,
-                    mod: widget.installedMod,
+                    mod: _g.installedMod,
                     catalogMod: mod,
-                    forumModIndex: widget.forumModIndex,
                     versionCheckComparison: widget.versionCheckComparison,
                   ),
                 ),
@@ -169,14 +132,14 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                         : candidate.label,
                     leading: MovingTooltipWidget.text(
                       message: candidate.url,
-                      child: Icon(downloadCandidateIcon(candidate), size: 16),
+                      child: downloadCandidateIconWidget(candidate),
                     ),
                     onSelected: () => executeDownloadCandidate(
                       context,
                       ref,
                       candidate,
                       modName: mod.name,
-                      sourceHint: DownloadSourceHint.fromCatalogMod(mod),
+                      sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
                       linkLoader: widget.linkLoader,
                     ),
                   ),
@@ -216,9 +179,9 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                   ),
                 const MenuDivider(),
               ],
-              if (widget.installedMod != null) ...[
+              if (_g.installedMod != null) ...[
                 const MenuHeader(text: 'Installed Mod'),
-                if (widget.installedMod!.isEnabledInGame)
+                if (_g.installedMod!.isEnabledInGame)
                   MenuItem(
                     label: 'Disable',
                     leading: const Icon(Icons.visibility_off, size: 16),
@@ -249,7 +212,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                 ? ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 500),
                     child: ModSummaryWidget(
-                      data: summaryData,
+                      data: _g,
                       config: ModSummaryConfig.tooltip,
                     ),
                   )
@@ -291,7 +254,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                 child: ModImage(
                                   mod: mod,
                                   size: 60,
-                                  fallbackImageUrl: _targetLlmMod?.imageUrl,
+                                  fallbackImageUrl: _g.fallbackImageUrl,
                                 ),
                               ),
                             ],
@@ -324,9 +287,9 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                       ),
                                     ],
                                   ),
-                                  if (mod.authorsList?.isNotEmpty == true)
+                                  if (_g.authors.isNotEmpty)
                                     Text(
-                                      mod.getAuthorsDeduplicated().join(', '),
+                                      _g.authors,
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
                                             fontSize: 10,
@@ -335,10 +298,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                       maxLines: 1,
                                       overflow: .ellipsis,
                                     ),
-                                  if (mod.isPartOfThread)
+                                  if (_g.isPartOfThread)
                                     MovingTooltipWidget.text(
                                       message:
-                                          'Part of the "${mod.partOfThreadTitle}" '
+                                          'Part of the "${_g.partOfThreadTitle}" '
                                           'forum thread.\nClick the card to see '
                                           'the whole thread.',
                                       child: Row(
@@ -356,7 +319,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                           ),
                                           Flexible(
                                             child: Text(
-                                              'part of ${mod.partOfThreadTitle}',
+                                              'part of ${_g.partOfThreadTitle}',
                                               style: theme.textTheme.labelSmall
                                                   ?.copyWith(
                                                     fontSize: 10,
@@ -390,10 +353,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                           CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        if (widget.forumModIndex != null)
-                                          _ForumStats(
-                                            forumModIndex:
-                                                widget.forumModIndex!,
+                                        if (_g.views != null ||
+                                            _g.replies != null)
+                                          _ForumStatsFromGathered(
+                                            gathered: _g,
                                           ),
                                         Tags(mod: mod),
                                       ],
@@ -412,13 +375,13 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                         top: 4,
                         child: _CatalogModGameVersionReq(mod: mod),
                       ),
-                    if (widget.installedMod != null)
+                    if (_g.installedMod != null)
                       Positioned(
                         left: 0,
                         top: 0,
                         bottom: 0,
                         child: MovingTooltipWidget.text(
-                          message: widget.installedMod!.isEnabledInGame
+                          message: _g.installedMod!.isEnabledInGame
                               ? 'Enabled'
                               : 'Installed, disabled',
                           child: Container(
@@ -434,10 +397,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                       bottom: 12,
                       child: CatalogDownloadButton(
                         mod: mod,
-                        installedMod: widget.installedMod,
+                        installedMod: _g.installedMod,
                         versionCheckComparison: widget.versionCheckComparison,
                         linkLoader: widget.linkLoader,
-                        llmMainMod: _targetLlmMod,
+                        llmMainMod: _g.llmMod,
                       ),
                     ),
                   ],
@@ -453,28 +416,17 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   Widget buildDescription(
     ThemeData theme,
     BuildContext context,
-    CatalogMod mod,
+    ModRepoEntry mod,
   ) {
-    // Text the mod's author wrote, best source first: the catalog entry, then
-    // the mod's own mod_info.json if the user has it installed.
-    final authorText = firstNonBlank([
-      mod.summary,
-      mod.description,
-      modInfoDescription(widget.installedMod),
-    ]);
-    final aiSummary = _targetLlmMod?.extras?.summary;
     final aiSummaryMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
-
-    final String? shownText = switch (aiSummaryMode) {
-      AiSummaryMode.always => aiSummary?.sentence ?? authorText,
-      AiSummaryMode.whenNoAuthorText => authorText ?? aiSummary?.sentence,
-      AiSummaryMode.never => authorText,
-    };
-    // The hover tooltip shows the AI paragraph only when the AI sentence is
-    // what's actually displayed; author text keeps its default overflow
-    // tooltip.
-    final bool showingAiSentence =
-        shownText != null && shownText == aiSummary?.sentence;
+    final resolved = resolveSummaryText(
+      _g,
+      aiMode: aiSummaryMode,
+      authorOrder: AuthorTextOrder.shortFirst,
+      aiLength: AiTextLength.sentence,
+    );
+    final shownText = resolved?.text;
+    final showingAiSentence = resolved?.source == ModSummarySource.ai;
 
     final hasNoDescription = shownText == null;
     final description = shownText ?? 'No description...yet!';
@@ -564,19 +516,23 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   /// otherwise the fallback dialog built from catalog data.
   void _openDetailsDialog(BuildContext context, ForumModDetails? forumDetails) {
     if (forumDetails != null && !forumDetails.isPlaceholderDetail) {
+      final topicId =
+          extractForumTopicId(_entry.urls?[ModUrlType.Forum]);
+      final forumIndex = topicId != null
+          ? ref.read(forumDataByTopicId)[topicId]
+          : null;
       showForumPostDialog(
         context,
         details: forumDetails,
-        index: widget.forumModIndex,
-        mod: widget.mod,
+        index: forumIndex,
+        mod: _entry,
         linkLoader: widget.linkLoader,
         canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
       );
     } else {
       showCatalogModDetailsDialog(
         context,
-        mod: widget.mod,
-        index: widget.forumModIndex,
+        gathered: _g,
         linkLoader: widget.linkLoader,
         canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
       );
@@ -586,7 +542,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   /// Enable or disable the installed mod. Moved off the primary card button
   /// so the button stays a pure Install/Update/Installed status.
   void _setModEnabled(bool enabled) {
-    final mod = widget.installedMod;
+    final mod = _g.installedMod;
     if (mod == null) return;
     if (enabled) {
       final variant = mod.findHighestVersion;
@@ -600,7 +556,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   /// Context-menu link entries (Forum / Discord / NexusMods) for this mod.
   /// Empty when the mod has no such links.
   List<MenuItem> _linkEntries(BuildContext context) {
-    final urls = widget.mod.urls;
+    final urls = _entry.urls;
     final forumUrl = urls?[ModUrlType.Forum];
     final discordUrl = urls?[ModUrlType.Discord];
     final nexusUrl = urls?[ModUrlType.NexusMods];
@@ -648,22 +604,16 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     ];
   }
 
-  void _showDebugDialog(BuildContext context, CatalogMod mod) {
-    final forumModIndex = widget.forumModIndex;
-    final targetLlmMod = _targetLlmMod;
+  void _showDebugDialog(BuildContext context, ModRepoEntry mod) {
     final downloadCandidates = resolveDownloadCandidates(
       mod,
-      targetLlmMod,
+      _g.llmMod,
       remoteVersion: _remoteVersion,
     );
 
-    // Note: the forum index's toString already contains its LLM data, so we
-    // don't dump that separately. The per-card download candidate is the one
-    // LLM mod (of possibly several in a thread) that drives this card.
     final sections = <String, String?>{
       'Catalog mod': mod.toString(),
-      'Forum index': forumModIndex?.toString(),
-      'Download candidate (this card)': targetLlmMod?.toString(),
+      'LLM mod (this card)': _g.llmMod?.toString(),
       'Resolved download candidates': downloadCandidates.isEmpty
           ? null
           : downloadCandidates.join('\n\n'),
@@ -736,7 +686,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
 class _CatalogModGameVersionReq extends ConsumerWidget {
   const _CatalogModGameVersionReq({required this.mod});
 
-  final CatalogMod mod;
+  final ModRepoEntry mod;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -823,7 +773,7 @@ class _CatalogModGameVersionReq extends ConsumerWidget {
 }
 
 class ModImage extends StatelessWidget {
-  final CatalogMod mod;
+  final ModRepoEntry mod;
   final int? size;
 
   /// Used when the mod itself has no scraped image, e.g. an image found in the
@@ -912,7 +862,7 @@ class ModImage extends StatelessWidget {
 }
 
 class Tags extends StatelessWidget {
-  final CatalogMod mod;
+  final ModRepoEntry mod;
 
   const Tags({super.key, required this.mod});
 
@@ -971,7 +921,7 @@ enum _CatalogDownloadState {
 }
 
 class CatalogDownloadButton extends ConsumerStatefulWidget {
-  final CatalogMod mod;
+  final ModRepoEntry mod;
   final Mod? installedMod;
   final VersionCheckComparison? versionCheckComparison;
   final void Function(String) linkLoader;
@@ -998,7 +948,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
   bool _clickBusy = false;
   Timer? _busyFallback;
 
-  CatalogMod get mod => widget.mod;
+  ModRepoEntry get mod => widget.mod;
 
   Mod? get installedMod => widget.installedMod;
 
@@ -1105,10 +1055,6 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
     // Download states run the primary candidate (or open the chooser when
     // several candidates tie). A trios primary installs in-app with deps.
     final isTrios = primary?.kind == DownloadCandidateKind.triosDeepLink;
-    // The "Install with TriOS" button wears the TriOS crest instead of a
-    // generic icon.
-    final showTriosBrandIcon =
-        isTrios && state == _CatalogDownloadState.notInstalledDirectDownload;
     final showChooser = tieSet.length > 1;
     void runPrimary() {
       _markBusy();
@@ -1117,7 +1063,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
         ref,
         primary!,
         modName: mod.name,
-        sourceHint: DownloadSourceHint.fromCatalogMod(mod),
+        sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
         linkLoader: linkLoader,
         hasOwnBusyIndicator: true,
       );
@@ -1155,7 +1101,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
         tooltip = 'Installed but disabled.\nRight-click the card to enable.';
         onPressed = null;
       case _CatalogDownloadState.notInstalledDirectDownload:
-        icon = isTrios ? Icons.rocket_launch : Icons.download;
+        icon = Icons.download;
         label = 'Install';
         backgroundColor = theme.statusColors.info;
         foregroundColor = theme.statusColors.onInfo;
@@ -1184,6 +1130,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
     final isDownloadAction =
         state == _CatalogDownloadState.updateDirectDownload ||
         state == _CatalogDownloadState.notInstalledDirectDownload;
+    final showTriosBrandIcon = isTrios && isDownloadAction;
     final useChooser = isDownloadAction && showChooser;
 
     // Installed: an inert status marker. Enable/disable lives in the card's
@@ -1296,7 +1243,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
     final theme = Theme.of(context);
     final subtitle = downloadCandidateSubtitle(candidate);
     return MenuItemButton(
-      leadingIcon: Icon(downloadCandidateIcon(candidate), size: 16),
+      leadingIcon: downloadCandidateIconWidget(candidate),
       onPressed: () {
         _markBusy();
         executeDownloadCandidate(
@@ -1304,7 +1251,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
           ref,
           candidate,
           modName: mod.name,
-          sourceHint: DownloadSourceHint.fromCatalogMod(mod),
+          sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
           linkLoader: linkLoader,
           hasOwnBusyIndicator: true,
         );
@@ -1333,13 +1280,13 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
   }
 }
 
-class _ForumStats extends StatelessWidget {
-  final ForumModIndex forumModIndex;
+class _ForumStatsFromGathered extends StatelessWidget {
+  final CatalogMod gathered;
   static final _decimalFormat = NumberFormat.decimalPattern();
   static final _compactFormat = NumberFormat.compact();
   static final _dateFormat = DateFormat.yMMMMd();
 
-  const _ForumStats({required this.forumModIndex});
+  const _ForumStatsFromGathered({required this.gathered});
 
   @override
   Widget build(BuildContext context) {
@@ -1350,16 +1297,12 @@ class _ForumStats extends StatelessWidget {
       fontSize: 11,
     );
 
-    final date = forumModIndex.lastPostDate;
-    // The age chip = last post in the thread, NOT necessarily a mod update.
-    // A mod can update without the post changing, so the tooltip says "last
-    // forum post". Dim when very old so abandoned threads read that way.
+    final date = gathered.lastPostDate;
     final isStale =
         date != null && DateTime.now().difference(date).inDays > 365;
     final activeStyle = style?.copyWith(
       color: style.color?.withValues(alpha: isStale ? 0.35 : 0.6),
     );
-    final modCount = forumModIndex.llm?.mods.length ?? 0;
 
     Widget segment({
       required IconData icon,
@@ -1378,8 +1321,6 @@ class _ForumStats extends StatelessWidget {
       ),
     );
 
-    // Everything here is secondary info, so it stays on one line and scales
-    // down slightly on narrow cards instead of wrapping or overflowing.
     return FittedBox(
       fit: BoxFit.scaleDown,
       alignment: Alignment.centerLeft,
@@ -1387,18 +1328,20 @@ class _ForumStats extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: 8,
         children: [
-          segment(
-            icon: Icons.visibility,
-            text: _compactFormat.format(forumModIndex.views),
-            tooltip:
-                '${_decimalFormat.format(forumModIndex.views)} forum views',
-          ),
-          segment(
-            icon: Icons.forum,
-            text: _compactFormat.format(forumModIndex.replies),
-            tooltip:
-                '${_decimalFormat.format(forumModIndex.replies)} forum replies',
-          ),
+          if (gathered.views != null)
+            segment(
+              icon: Icons.visibility,
+              text: _compactFormat.format(gathered.views),
+              tooltip:
+                  '${_decimalFormat.format(gathered.views)} forum views',
+            ),
+          if (gathered.replies != null)
+            segment(
+              icon: Icons.forum,
+              text: _compactFormat.format(gathered.replies),
+              tooltip:
+                  '${_decimalFormat.format(gathered.replies)} forum replies',
+            ),
           if (date != null)
             segment(
               icon: Icons.schedule,
@@ -1406,19 +1349,11 @@ class _ForumStats extends StatelessWidget {
               segStyle: activeStyle,
               tooltip: 'Last forum post: ${_dateFormat.format(date)}',
             ),
-          if (modCount > 1)
-            segment(
-              icon: Icons.layers,
-              text: '+${modCount - 1}',
-              tooltip:
-                  'This forum thread has $modCount mods.\nClick the card to see them all.',
-            ),
         ],
       ),
     );
   }
 
-  /// Very short age for the card footer: "3h", "6d", "2mo", "3y".
   static String _compactAge(DateTime date) {
     final diff = DateTime.now().difference(date);
     if (diff.inHours < 1) return '${diff.inMinutes}m';

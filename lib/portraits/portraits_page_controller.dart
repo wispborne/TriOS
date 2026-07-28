@@ -15,6 +15,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portrait_metadata.dart';
 import 'package:trios/portraits/portrait_metadata_manager.dart';
 import 'package:trios/portraits/portrait_model.dart';
+import 'package:trios/portraits/portraits_gridview.dart';
 import 'package:trios/portraits/portrait_replacements_manager.dart';
 import 'package:trios/portraits/portrait_scanner.dart';
 import 'package:trios/trios/app_state.dart';
@@ -628,7 +629,7 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
 
   /// Get filtered and sorted images for a specific pane. Pipeline order:
   /// `enabled → metadata → chips → replaced → search`.
-  List<({Portrait image, ModVariant? variant})> getFilteredImages(
+  List<PortraitEntry> getFilteredImages(
     FilterPane pane,
     List<Mod> allMods,
   ) {
@@ -653,7 +654,7 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
 
     // Convert back to the original ({image, variant}) tuple shape.
     var images = items
-        .map<({Portrait image, ModVariant? variant})>(
+        .map<PortraitEntry>(
           (item) => (image: item.portrait, variant: item.variant),
         )
         .toList();
@@ -668,7 +669,7 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
   }
 
   /// Get all images without filtering (for filter panels).
-  List<({Portrait image, ModVariant? variant})> getAllImages() {
+  List<PortraitEntry> getAllImages() {
     return state.allPortraits.entries
         .expand(
           (element) => element.value.map((e) => (variant: element.key, image: e)),
@@ -719,8 +720,8 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
     };
   }
 
-  List<({Portrait image, ModVariant? variant})> _sortModsAndImages(
-    List<({Portrait image, ModVariant? variant})> modsAndImages,
+  List<PortraitEntry> _sortModsAndImages(
+    List<PortraitEntry> modsAndImages,
     String regexPattern,
   ) {
     final regex = RegExp(regexPattern);
@@ -742,8 +743,8 @@ class PortraitsPageController extends Notifier<PortraitsPageState> {
       });
   }
 
-  List<({Portrait image, ModVariant? variant})> _filterImages(
-    List<({Portrait image, ModVariant? variant})> images,
+  List<PortraitEntry> _filterImages(
+    List<PortraitEntry> images,
     String query,
   ) {
     if (query.isEmpty) return images;

@@ -24,6 +24,8 @@ import 'models/vram_checker_models.dart';
 
 part 'vram_estimator_manager.mapper.dart';
 
+typedef ActiveSelector = ({VramSelectorId selectorId, ReferencedAssetsSelectorConfig config});
+
 @MappableClass()
 class VramEstimatorManagerState with VramEstimatorManagerStateMappable {
   final Map<String, VramMod> modVramInfo;
@@ -367,7 +369,7 @@ class VramEstimatorNotifier
   VramEstimatorManagerState createDefaultState() =>
       VramEstimatorManagerState.initial();
 
-  ({VramSelectorId selectorId, ReferencedAssetsSelectorConfig config})
+  ActiveSelector
   _readActiveSelector() {
     final settings = ref.read(appSettings);
     return (

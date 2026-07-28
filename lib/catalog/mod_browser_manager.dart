@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/cached_json_fetcher.dart';
 import 'package:trios/utils/logging.dart';
@@ -16,7 +16,7 @@ final modRepoFetcher = CachedJsonFetcher(
   logTag: 'mod repo',
 );
 
-final browseModsNotifierProvider = StreamProvider<CatalogModsRepo>((
+final browseModsNotifierProvider = StreamProvider<ModRepoFile>((
   ref,
 ) async* {
   final currentTime = DateTime.now();
@@ -32,7 +32,7 @@ final browseModsNotifierProvider = StreamProvider<CatalogModsRepo>((
   }
 
   try {
-    final catalogMods = CatalogModsRepoMapper.fromJson(modRepo);
+    final catalogMods = ModRepoFileMapper.fromJson(modRepo);
 
     ref.watch(isLoadingCatalog.notifier).state = false;
     Fimber.i(

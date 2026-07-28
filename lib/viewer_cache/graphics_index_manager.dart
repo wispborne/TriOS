@@ -14,6 +14,8 @@ import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 
+typedef GraphicsResolverBundle = ({List<GameFileSource> sources, GameFileResolver resolver});
+
 /// Image file extensions worth indexing. Everything else under `graphics/`
 /// (fonts, stray text files) is skipped.
 const _imageExtensions = {'.png', '.jpg', '.jpeg'};
@@ -54,7 +56,7 @@ final graphicsIndexProvider =
 /// The resolver last handed out for each toggle value, kept next to the source
 /// list it was built from. See [gameFileResolverProvider].
 final _lastResolvers =
-    <bool, ({List<GameFileSource> sources, GameFileResolver resolver})>{};
+    <bool, GraphicsResolverBundle>{};
 
 /// True when both lists hold the very same source objects in the same order.
 bool _sameSources(List<GameFileSource> a, List<GameFileSource> b) {

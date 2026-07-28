@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
@@ -22,11 +22,14 @@ import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+typedef LabeledIconLink = (String, IconData, String);
+typedef LabelValue = (String, String);
+
 /// Shows the mod info dialog for a mod (installed, catalog, or both).
 void showModInfoDialog(
   BuildContext context, {
   Mod? mod,
-  CatalogMod? catalogMod,
+  ModRepoEntry? catalogMod,
   ForumModIndex? forumModIndex,
   VersionCheckComparison? versionCheckComparison,
 }) {
@@ -43,7 +46,7 @@ void showModInfoDialog(
 
 class ModInfoDialog extends ConsumerStatefulWidget {
   final Mod? mod;
-  final CatalogMod? catalogMod;
+  final ModRepoEntry? catalogMod;
   final ForumModIndex? forumModIndex;
   final VersionCheckComparison? versionCheckComparison;
 
@@ -232,7 +235,7 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
   // ───────────────────── LINK BUTTONS ─────────────────────
 
   Widget? _buildLinkButtons(ThemeData theme) {
-    final links = <(String, IconData, String)>[];
+    final links = <LabeledIconLink>[];
 
     // From version checker
     final vcInfo = _variant?.versionCheckerInfo;
@@ -633,7 +636,7 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
     if (forum == null) return null;
 
     final dateFormat = DateFormat.yMMMd();
-    final rows = <(String, String)>[
+    final rows = <LabelValue>[
       ("Views", NumberFormat.compact().format(forum.views)),
       ("Replies", NumberFormat.compact().format(forum.replies)),
       if (forum.lastPostDate != null)

@@ -27,6 +27,9 @@ import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+typedef FileWithLabel = (File, String);
+typedef ResolvedValue<T> = (String, T?);
+
 class FactionProfileDialog extends ConsumerWidget {
   final Faction faction;
   final Directory? gameCoreDir;
@@ -177,8 +180,8 @@ class FactionProfileDialog extends ConsumerWidget {
     );
   }
 
-  List<(File, String)> _factionFiles() {
-    final files = <(File, String)>[];
+  List<FileWithLabel> _factionFiles() {
+    final files = <FileWithLabel>[];
     for (final source in faction.sources) {
       final folder = source.modVariant is ModVariant
           ? (source.modVariant as ModVariant).modFolder
@@ -796,9 +799,9 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
-          child: Padding(
-            padding: .all(16),
-            child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: .all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -832,9 +835,9 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
-          child: Padding(
-            padding: .all(16),
-            child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: .all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -866,9 +869,9 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
-          child: Padding(
-            padding: .all(16),
-            child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: .all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1112,7 +1115,7 @@ class _BlueprintWrap<T> extends StatelessWidget {
       itemMap[id] = item;
     }
 
-    final resolved = <(String, T?)>[];
+    final resolved = <ResolvedValue<T>>[];
     for (final id in ids) {
       resolved.add((id, itemMap[id]));
     }

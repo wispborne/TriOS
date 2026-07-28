@@ -155,7 +155,6 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = CatalogPageStateMapper._());
       CatalogPageStatePersistedMapper.ensureInitialized();
-      CatalogModMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -178,11 +177,18 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
     _$allMods,
     opt: true,
     def: const [],
+    hook: SkipSerializationHook(),
   );
   static List<CatalogMod> _$displayedMods(CatalogPageState v) =>
       v.displayedMods;
   static const Field<CatalogPageState, List<CatalogMod>> _f$displayedMods =
-      Field('displayedMods', _$displayedMods, opt: true, def: const []);
+      Field(
+        'displayedMods',
+        _$displayedMods,
+        opt: true,
+        def: const [],
+        hook: SkipSerializationHook(),
+      );
   static String _$currentSearchQuery(CatalogPageState v) =>
       v.currentSearchQuery;
   static const Field<CatalogPageState, String> _f$currentSearchQuery = Field(
@@ -304,9 +310,9 @@ abstract class CatalogPageStateCopyWith<$R, $In extends CatalogPageState, $Out>
     CatalogPageStatePersisted
   >
   get persisted;
-  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
+  ListCopyWith<$R, CatalogMod, ObjectCopyWith<$R, CatalogMod, CatalogMod>>
   get allMods;
-  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
+  ListCopyWith<$R, CatalogMod, ObjectCopyWith<$R, CatalogMod, CatalogMod>>
   get displayedMods;
   $R call({
     CatalogPageStatePersisted? persisted,
@@ -338,17 +344,17 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
   >
   get persisted => $value.persisted.copyWith.$chain((v) => call(persisted: v));
   @override
-  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
+  ListCopyWith<$R, CatalogMod, ObjectCopyWith<$R, CatalogMod, CatalogMod>>
   get allMods => ListCopyWith(
     $value.allMods,
-    (v, t) => v.copyWith.$chain(t),
+    (v, t) => ObjectCopyWith(v, $identity, t),
     (v) => call(allMods: v),
   );
   @override
-  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
+  ListCopyWith<$R, CatalogMod, ObjectCopyWith<$R, CatalogMod, CatalogMod>>
   get displayedMods => ListCopyWith(
     $value.displayedMods,
-    (v, t) => v.copyWith.$chain(t),
+    (v, t) => ObjectCopyWith(v, $identity, t),
     (v) => call(displayedMods: v),
   );
   @override

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trios/codex/codex_links.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 
 /// Wraps a cross-reference [child] so that, inside the Codex, a click navigates
@@ -10,7 +11,7 @@ import 'package:trios/codex/models/codex_entry.dart';
 Widget asCodexLink(
   Widget child,
   CodexEntitySelected? onSelected,
-  (CodexEntryType, String) entityKey,
+  CodexKey entityKey,
 ) {
   if (onSelected == null) return child;
   return MouseRegion(

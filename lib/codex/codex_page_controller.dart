@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/codex/codex_links.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/trios/app_state.dart';
 
 /// The [Highlightable] key for a Codex entry, used when landing in another
 /// category so the target row glows and scrolls into view.
-String codexHighlightKey((CodexEntryType, String) key) =>
+String codexHighlightKey(CodexKey key) =>
     'codex_${key.$1.name}_${key.$2}';
 
 /// A saved point in the browse history: enough to restore the list, the shown
@@ -13,7 +14,7 @@ String codexHighlightKey((CodexEntryType, String) key) =>
 /// design 6b.
 class CodexSnapshot {
   final CodexEntryType? category;
-  final (CodexEntryType, String)? selected;
+  final CodexKey? selected;
   final String searchQuery;
 
   /// Per-group serialized facet selections for the snapshot's category.
@@ -32,7 +33,7 @@ class CodexPageState {
   final CodexEntryType? category;
 
   /// The entry shown in the detail panel.
-  final (CodexEntryType, String)? selected;
+  final CodexKey? selected;
 
   /// '' = not searching.
   final String searchQuery;
@@ -42,7 +43,7 @@ class CodexPageState {
 
   /// The key of a row that should be highlighted+scrolled-to once (landing in
   /// another category). Cleared after it is consumed by the list.
-  final (CodexEntryType, String)? highlightTarget;
+  final CodexKey? highlightTarget;
 
   const CodexPageState({
     this.category,
@@ -61,12 +62,12 @@ class CodexPageState {
   CodexPageState copyWith({
     CodexEntryType? category,
     bool clearCategory = false,
-    (CodexEntryType, String)? selected,
+    CodexKey? selected,
     bool clearSelected = false,
     String? searchQuery,
     List<CodexSnapshot>? history,
     int? historyIndex,
-    (CodexEntryType, String)? highlightTarget,
+    CodexKey? highlightTarget,
     bool clearHighlight = false,
   }) {
     return CodexPageState(
@@ -161,7 +162,7 @@ class CodexPageController extends Notifier<CodexPageState> {
 
   /// Show [key] in the detail panel; switch category first if needed (landing
   /// in another category → highlight the row).
-  void select((CodexEntryType, String) key) {
+  void select(CodexKey key) {
     final needsSwitch = state.category != key.$1;
     // A "jump" is any selection that lands the row in a list it wasn't already
     // visible in: a different category, or a search result (the list flips from

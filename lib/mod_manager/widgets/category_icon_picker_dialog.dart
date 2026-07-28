@@ -44,7 +44,7 @@ class _CategoryIconPickerDialogState
   String _query = '';
 
   List<SvgCategoryIcon> _filteredSvgIcons = categorySvgIcons;
-  List<({String name, int codePoint})> _filteredMaterialIcons =
+  List<MaterialIconEntry> _filteredMaterialIcons =
       allMaterialIcons;
 
   @override

@@ -37,6 +37,8 @@ import 'package:trios/widgets/popup_style_menu_anchor.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
+typedef BlueprintBackgroundOption = ({ShipBlueprintBackground option, String? file});
+
 /// Displays a ship sprite at 1:1 scale with weapon slot markers and firing
 /// arcs overlaid. Scrollable if the sprite exceeds the available space.
 ///
@@ -242,7 +244,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// What's painted behind the ship, picked from the overflow menu and saved
   /// across restarts. Only used by the interactive view; thumbnails always
   /// leave the background alone.
-  ShipBlueprintBackground _background = ShipBlueprintBackground.background2;
+  ShipBlueprintBackground _background = ShipBlueprintBackground.background4;
 
   /// Loops once every 16 seconds. Drives both the shield fill's slow spin and
   /// the edge ring's ripple. Only runs while a shield is showing, animation is
@@ -1864,7 +1866,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     // Every background choice, paired with the picture file behind it. A
     // picture this install doesn't have is left off the list entirely.
     final backgroundChoices =
-        <({ShipBlueprintBackground option, String? file})>[];
+        <BlueprintBackgroundOption>[];
     for (final option in ShipBlueprintBackground.values) {
       final file = fileResolver?.resolve(option.imagePath);
       if (option.imagePath != null && file == null) continue;

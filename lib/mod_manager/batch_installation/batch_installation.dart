@@ -7,6 +7,8 @@ import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 
+typedef FailedModInstall = ({ModInfo modInfo, Object err, StackTrace? st});
+
 /// Status of the overall batch operation.
 enum BatchStatus { pending, scanning, confirming, installing, complete }
 
@@ -81,7 +83,7 @@ class BatchEntry {
   final List<Directory> installedFolders = [];
 
   /// Per-mod installation failures (for the error dialog).
-  final List<({ModInfo modInfo, Object err, StackTrace? st})> failedMods = [];
+  final List<FailedModInstall> failedMods = [];
 
   /// Completes when this entry reaches a terminal status (done, failed, or
   /// skipped) and its [download] (if any) has been settled.

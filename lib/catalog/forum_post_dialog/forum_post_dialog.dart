@@ -7,10 +7,10 @@ import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
 import 'package:trios/catalog/mod_browser_page_controller.dart';
-import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/downloader.dart';
@@ -29,7 +29,7 @@ void showForumPostDialog(
   BuildContext context, {
   required ForumModDetails details,
   ForumModIndex? index,
-  CatalogMod? mod,
+  ModRepoEntry? mod,
   required void Function(String href) linkLoader,
   bool canUseEmbeddedBrowser = true,
 }) {
@@ -51,7 +51,7 @@ class _ForumPostDialog extends ConsumerStatefulWidget {
 
   /// The matching catalog entry, when we have one. Supplies the mod's own
   /// description and its image for the header.
-  final CatalogMod? mod;
+  final ModRepoEntry? mod;
   final void Function(String href) linkLoader;
   final bool canUseEmbeddedBrowser;
 
@@ -152,12 +152,19 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
     final windowSize = MediaQuery.of(context).size;
     final theme = Theme.of(context);
 
-    // The user's copy of this mod, if they have it. Its mod_info.json fills in
-    // the summary when neither the catalog nor the forum post has one.
     final catalogMod = widget.mod;
     final installedMod = catalogMod == null
         ? null
         : ref.watch(catalogLinksProvider).modForEntry(catalogMod);
+
+    final gathered = catalogMod != null
+        ? gatherCatalogMod(
+            mod: catalogMod,
+            forumIndex: widget.index,
+            forumDetails: widget.details,
+            installedMod: installedMod,
+          )
+        : null;
 
     final double maxWidth;
     final double maxHeight;
@@ -195,12 +202,7 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     ForumPostHeader(
-                      data: ModSummaryData.fromDetails(
-                        widget.details,
-                        widget.index,
-                        catalogMod,
-                        installedMod: installedMod,
-                      ),
+                      data: gathered!,
                       showSummary: ref.watch(
                         appSettings.select(
                           (s) => s.catalogShowDialogHeaderSummary,

@@ -6,7 +6,7 @@
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
-part of 'catalog_mod.dart';
+part of 'mod_repo_entry.dart';
 
 class ModSourceMapper extends EnumMapper<ModSource> {
   ModSourceMapper._();
@@ -120,40 +120,40 @@ extension ModUrlTypeMapperExtension on ModUrlType {
   }
 }
 
-class CatalogModsRepoMapper extends ClassMapperBase<CatalogModsRepo> {
-  CatalogModsRepoMapper._();
+class ModRepoFileMapper extends ClassMapperBase<ModRepoFile> {
+  ModRepoFileMapper._();
 
-  static CatalogModsRepoMapper? _instance;
-  static CatalogModsRepoMapper ensureInitialized() {
+  static ModRepoFileMapper? _instance;
+  static ModRepoFileMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = CatalogModsRepoMapper._());
-      CatalogModMapper.ensureInitialized();
+      MapperContainer.globals.use(_instance = ModRepoFileMapper._());
+      ModRepoEntryMapper.ensureInitialized();
     }
     return _instance!;
   }
 
   @override
-  final String id = 'CatalogModsRepo';
+  final String id = 'ModRepoFile';
 
-  static List<CatalogMod> _$items(CatalogModsRepo v) => v.items;
-  static const Field<CatalogModsRepo, List<CatalogMod>> _f$items = Field(
+  static List<ModRepoEntry> _$items(ModRepoFile v) => v.items;
+  static const Field<ModRepoFile, List<ModRepoEntry>> _f$items = Field(
     'items',
     _$items,
   );
-  static String _$lastUpdated(CatalogModsRepo v) => v.lastUpdated;
-  static const Field<CatalogModsRepo, String> _f$lastUpdated = Field(
+  static String _$lastUpdated(ModRepoFile v) => v.lastUpdated;
+  static const Field<ModRepoFile, String> _f$lastUpdated = Field(
     'lastUpdated',
     _$lastUpdated,
   );
 
   @override
-  final MappableFields<CatalogModsRepo> fields = const {
+  final MappableFields<ModRepoFile> fields = const {
     #items: _f$items,
     #lastUpdated: _f$lastUpdated,
   };
 
-  static CatalogModsRepo _instantiate(DecodingData data) {
-    return CatalogModsRepo(
+  static ModRepoFile _instantiate(DecodingData data) {
+    return ModRepoFile(
       items: data.dec(_f$items),
       lastUpdated: data.dec(_f$lastUpdated),
     );
@@ -162,198 +162,205 @@ class CatalogModsRepoMapper extends ClassMapperBase<CatalogModsRepo> {
   @override
   final Function instantiate = _instantiate;
 
-  static CatalogModsRepo fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<CatalogModsRepo>(map);
+  static ModRepoFile fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ModRepoFile>(map);
   }
 
-  static CatalogModsRepo fromJson(String json) {
-    return ensureInitialized().decodeJson<CatalogModsRepo>(json);
+  static ModRepoFile fromJson(String json) {
+    return ensureInitialized().decodeJson<ModRepoFile>(json);
   }
 }
 
-mixin CatalogModsRepoMappable {
+mixin ModRepoFileMappable {
   String toJson() {
-    return CatalogModsRepoMapper.ensureInitialized()
-        .encodeJson<CatalogModsRepo>(this as CatalogModsRepo);
-  }
-
-  Map<String, dynamic> toMap() {
-    return CatalogModsRepoMapper.ensureInitialized().encodeMap<CatalogModsRepo>(
-      this as CatalogModsRepo,
+    return ModRepoFileMapper.ensureInitialized().encodeJson<ModRepoFile>(
+      this as ModRepoFile,
     );
   }
 
-  CatalogModsRepoCopyWith<CatalogModsRepo, CatalogModsRepo, CatalogModsRepo>
-  get copyWith =>
-      _CatalogModsRepoCopyWithImpl<CatalogModsRepo, CatalogModsRepo>(
-        this as CatalogModsRepo,
+  Map<String, dynamic> toMap() {
+    return ModRepoFileMapper.ensureInitialized().encodeMap<ModRepoFile>(
+      this as ModRepoFile,
+    );
+  }
+
+  ModRepoFileCopyWith<ModRepoFile, ModRepoFile, ModRepoFile> get copyWith =>
+      _ModRepoFileCopyWithImpl<ModRepoFile, ModRepoFile>(
+        this as ModRepoFile,
         $identity,
         $identity,
       );
   @override
   String toString() {
-    return CatalogModsRepoMapper.ensureInitialized().stringifyValue(
-      this as CatalogModsRepo,
+    return ModRepoFileMapper.ensureInitialized().stringifyValue(
+      this as ModRepoFile,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return CatalogModsRepoMapper.ensureInitialized().equalsValue(
-      this as CatalogModsRepo,
+    return ModRepoFileMapper.ensureInitialized().equalsValue(
+      this as ModRepoFile,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return CatalogModsRepoMapper.ensureInitialized().hashValue(
-      this as CatalogModsRepo,
-    );
+    return ModRepoFileMapper.ensureInitialized().hashValue(this as ModRepoFile);
   }
 }
 
-extension CatalogModsRepoValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, CatalogModsRepo, $Out> {
-  CatalogModsRepoCopyWith<$R, CatalogModsRepo, $Out> get $asCatalogModsRepo =>
-      $base.as((v, t, t2) => _CatalogModsRepoCopyWithImpl<$R, $Out>(v, t, t2));
+extension ModRepoFileValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ModRepoFile, $Out> {
+  ModRepoFileCopyWith<$R, ModRepoFile, $Out> get $asModRepoFile =>
+      $base.as((v, t, t2) => _ModRepoFileCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class CatalogModsRepoCopyWith<$R, $In extends CatalogModsRepo, $Out>
+abstract class ModRepoFileCopyWith<$R, $In extends ModRepoFile, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
+  ListCopyWith<
+    $R,
+    ModRepoEntry,
+    ModRepoEntryCopyWith<$R, ModRepoEntry, ModRepoEntry>
+  >
   get items;
-  $R call({List<CatalogMod>? items, String? lastUpdated});
-  CatalogModsRepoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
+  $R call({List<ModRepoEntry>? items, String? lastUpdated});
+  ModRepoFileCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
-class _CatalogModsRepoCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, CatalogModsRepo, $Out>
-    implements CatalogModsRepoCopyWith<$R, CatalogModsRepo, $Out> {
-  _CatalogModsRepoCopyWithImpl(super.value, super.then, super.then2);
+class _ModRepoFileCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ModRepoFile, $Out>
+    implements ModRepoFileCopyWith<$R, ModRepoFile, $Out> {
+  _ModRepoFileCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<CatalogModsRepo> $mapper =
-      CatalogModsRepoMapper.ensureInitialized();
+  late final ClassMapperBase<ModRepoFile> $mapper =
+      ModRepoFileMapper.ensureInitialized();
   @override
-  ListCopyWith<$R, CatalogMod, CatalogModCopyWith<$R, CatalogMod, CatalogMod>>
+  ListCopyWith<
+    $R,
+    ModRepoEntry,
+    ModRepoEntryCopyWith<$R, ModRepoEntry, ModRepoEntry>
+  >
   get items => ListCopyWith(
     $value.items,
     (v, t) => v.copyWith.$chain(t),
     (v) => call(items: v),
   );
   @override
-  $R call({List<CatalogMod>? items, String? lastUpdated}) => $apply(
+  $R call({List<ModRepoEntry>? items, String? lastUpdated}) => $apply(
     FieldCopyWithData({
       if (items != null) #items: items,
       if (lastUpdated != null) #lastUpdated: lastUpdated,
     }),
   );
   @override
-  CatalogModsRepo $make(CopyWithData data) => CatalogModsRepo(
+  ModRepoFile $make(CopyWithData data) => ModRepoFile(
     items: data.get(#items, or: $value.items),
     lastUpdated: data.get(#lastUpdated, or: $value.lastUpdated),
   );
 
   @override
-  CatalogModsRepoCopyWith<$R2, CatalogModsRepo, $Out2> $chain<$R2, $Out2>(
+  ModRepoFileCopyWith<$R2, ModRepoFile, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _CatalogModsRepoCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _ModRepoFileCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
-class CatalogModMapper extends ClassMapperBase<CatalogMod> {
-  CatalogModMapper._();
+class ModRepoEntryMapper extends ClassMapperBase<ModRepoEntry> {
+  ModRepoEntryMapper._();
 
-  static CatalogModMapper? _instance;
-  static CatalogModMapper ensureInitialized() {
+  static ModRepoEntryMapper? _instance;
+  static ModRepoEntryMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = CatalogModMapper._());
+      MapperContainer.globals.use(_instance = ModRepoEntryMapper._());
       ModUrlTypeMapper.ensureInitialized();
       ModSourceMapper.ensureInitialized();
-      CatalogModImageMapper.ensureInitialized();
+      ModRepoImageMapper.ensureInitialized();
     }
     return _instance!;
   }
 
   @override
-  final String id = 'CatalogMod';
+  final String id = 'ModRepoEntry';
 
-  static String _$name(CatalogMod v) => v.name;
-  static const Field<CatalogMod, String> _f$name = Field('name', _$name);
-  static String? _$summary(CatalogMod v) => v.summary;
-  static const Field<CatalogMod, String> _f$summary = Field(
+  static String _$name(ModRepoEntry v) => v.name;
+  static const Field<ModRepoEntry, String> _f$name = Field('name', _$name);
+  static String? _$summary(ModRepoEntry v) => v.summary;
+  static const Field<ModRepoEntry, String> _f$summary = Field(
     'summary',
     _$summary,
     opt: true,
   );
-  static String? _$description(CatalogMod v) => v.description;
-  static const Field<CatalogMod, String> _f$description = Field(
+  static String? _$description(ModRepoEntry v) => v.description;
+  static const Field<ModRepoEntry, String> _f$description = Field(
     'description',
     _$description,
     opt: true,
   );
-  static String? _$modVersion(CatalogMod v) => v.modVersion;
-  static const Field<CatalogMod, String> _f$modVersion = Field(
+  static String? _$modVersion(ModRepoEntry v) => v.modVersion;
+  static const Field<ModRepoEntry, String> _f$modVersion = Field(
     'modVersion',
     _$modVersion,
     opt: true,
   );
-  static String? _$gameVersionReq(CatalogMod v) => v.gameVersionReq;
-  static const Field<CatalogMod, String> _f$gameVersionReq = Field(
+  static String? _$gameVersionReq(ModRepoEntry v) => v.gameVersionReq;
+  static const Field<ModRepoEntry, String> _f$gameVersionReq = Field(
     'gameVersionReq',
     _$gameVersionReq,
     opt: true,
   );
-  static List<String>? _$authorsList(CatalogMod v) => v.authorsList;
-  static const Field<CatalogMod, List<String>> _f$authorsList = Field(
+  static List<String>? _$authorsList(ModRepoEntry v) => v.authorsList;
+  static const Field<ModRepoEntry, List<String>> _f$authorsList = Field(
     'authorsList',
     _$authorsList,
     opt: true,
   );
-  static Map<ModUrlType, String>? _$urls(CatalogMod v) => v.urls;
-  static const Field<CatalogMod, Map<ModUrlType, String>> _f$urls = Field(
+  static Map<ModUrlType, String>? _$urls(ModRepoEntry v) => v.urls;
+  static const Field<ModRepoEntry, Map<ModUrlType, String>> _f$urls = Field(
     'urls',
     _$urls,
     opt: true,
   );
-  static List<ModSource>? _$sources(CatalogMod v) => v.sources;
-  static const Field<CatalogMod, List<ModSource>> _f$sources = Field(
+  static List<ModSource>? _$sources(ModRepoEntry v) => v.sources;
+  static const Field<ModRepoEntry, List<ModSource>> _f$sources = Field(
     'sources',
     _$sources,
     opt: true,
   );
-  static List<String>? _$categories(CatalogMod v) => v.categories;
-  static const Field<CatalogMod, List<String>> _f$categories = Field(
+  static List<String>? _$categories(ModRepoEntry v) => v.categories;
+  static const Field<ModRepoEntry, List<String>> _f$categories = Field(
     'categories',
     _$categories,
     opt: true,
   );
-  static Map<String, CatalogModImage>? _$images(CatalogMod v) => v.images;
-  static const Field<CatalogMod, Map<String, CatalogModImage>> _f$images =
-      Field('images', _$images, opt: true);
-  static DateTime? _$dateTimeCreated(CatalogMod v) => v.dateTimeCreated;
-  static const Field<CatalogMod, DateTime> _f$dateTimeCreated = Field(
+  static Map<String, ModRepoImage>? _$images(ModRepoEntry v) => v.images;
+  static const Field<ModRepoEntry, Map<String, ModRepoImage>> _f$images = Field(
+    'images',
+    _$images,
+    opt: true,
+  );
+  static DateTime? _$dateTimeCreated(ModRepoEntry v) => v.dateTimeCreated;
+  static const Field<ModRepoEntry, DateTime> _f$dateTimeCreated = Field(
     'dateTimeCreated',
     _$dateTimeCreated,
     opt: true,
   );
-  static DateTime? _$dateTimeEdited(CatalogMod v) => v.dateTimeEdited;
-  static const Field<CatalogMod, DateTime> _f$dateTimeEdited = Field(
+  static DateTime? _$dateTimeEdited(ModRepoEntry v) => v.dateTimeEdited;
+  static const Field<ModRepoEntry, DateTime> _f$dateTimeEdited = Field(
     'dateTimeEdited',
     _$dateTimeEdited,
     opt: true,
   );
-  static String? _$partOfThreadTitle(CatalogMod v) => v.partOfThreadTitle;
-  static const Field<CatalogMod, String> _f$partOfThreadTitle = Field(
+  static String? _$partOfThreadTitle(ModRepoEntry v) => v.partOfThreadTitle;
+  static const Field<ModRepoEntry, String> _f$partOfThreadTitle = Field(
     'partOfThreadTitle',
     _$partOfThreadTitle,
     opt: true,
   );
 
   @override
-  final MappableFields<CatalogMod> fields = const {
+  final MappableFields<ModRepoEntry> fields = const {
     #name: _f$name,
     #summary: _f$summary,
     #description: _f$description,
@@ -369,8 +376,8 @@ class CatalogModMapper extends ClassMapperBase<CatalogMod> {
     #partOfThreadTitle: _f$partOfThreadTitle,
   };
 
-  static CatalogMod _instantiate(DecodingData data) {
-    return CatalogMod(
+  static ModRepoEntry _instantiate(DecodingData data) {
+    return ModRepoEntry(
       name: data.dec(_f$name),
       summary: data.dec(_f$summary),
       description: data.dec(_f$description),
@@ -390,62 +397,64 @@ class CatalogModMapper extends ClassMapperBase<CatalogMod> {
   @override
   final Function instantiate = _instantiate;
 
-  static CatalogMod fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<CatalogMod>(map);
+  static ModRepoEntry fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ModRepoEntry>(map);
   }
 
-  static CatalogMod fromJson(String json) {
-    return ensureInitialized().decodeJson<CatalogMod>(json);
+  static ModRepoEntry fromJson(String json) {
+    return ensureInitialized().decodeJson<ModRepoEntry>(json);
   }
 }
 
-mixin CatalogModMappable {
+mixin ModRepoEntryMappable {
   String toJson() {
-    return CatalogModMapper.ensureInitialized().encodeJson<CatalogMod>(
-      this as CatalogMod,
+    return ModRepoEntryMapper.ensureInitialized().encodeJson<ModRepoEntry>(
+      this as ModRepoEntry,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return CatalogModMapper.ensureInitialized().encodeMap<CatalogMod>(
-      this as CatalogMod,
+    return ModRepoEntryMapper.ensureInitialized().encodeMap<ModRepoEntry>(
+      this as ModRepoEntry,
     );
   }
 
-  CatalogModCopyWith<CatalogMod, CatalogMod, CatalogMod> get copyWith =>
-      _CatalogModCopyWithImpl<CatalogMod, CatalogMod>(
-        this as CatalogMod,
+  ModRepoEntryCopyWith<ModRepoEntry, ModRepoEntry, ModRepoEntry> get copyWith =>
+      _ModRepoEntryCopyWithImpl<ModRepoEntry, ModRepoEntry>(
+        this as ModRepoEntry,
         $identity,
         $identity,
       );
   @override
   String toString() {
-    return CatalogModMapper.ensureInitialized().stringifyValue(
-      this as CatalogMod,
+    return ModRepoEntryMapper.ensureInitialized().stringifyValue(
+      this as ModRepoEntry,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return CatalogModMapper.ensureInitialized().equalsValue(
-      this as CatalogMod,
+    return ModRepoEntryMapper.ensureInitialized().equalsValue(
+      this as ModRepoEntry,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return CatalogModMapper.ensureInitialized().hashValue(this as CatalogMod);
+    return ModRepoEntryMapper.ensureInitialized().hashValue(
+      this as ModRepoEntry,
+    );
   }
 }
 
-extension CatalogModValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, CatalogMod, $Out> {
-  CatalogModCopyWith<$R, CatalogMod, $Out> get $asCatalogMod =>
-      $base.as((v, t, t2) => _CatalogModCopyWithImpl<$R, $Out>(v, t, t2));
+extension ModRepoEntryValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ModRepoEntry, $Out> {
+  ModRepoEntryCopyWith<$R, ModRepoEntry, $Out> get $asModRepoEntry =>
+      $base.as((v, t, t2) => _ModRepoEntryCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class CatalogModCopyWith<$R, $In extends CatalogMod, $Out>
+abstract class ModRepoEntryCopyWith<$R, $In extends ModRepoEntry, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get authorsList;
   MapCopyWith<$R, ModUrlType, String, ObjectCopyWith<$R, String, String>>?
@@ -456,8 +465,8 @@ abstract class CatalogModCopyWith<$R, $In extends CatalogMod, $Out>
   MapCopyWith<
     $R,
     String,
-    CatalogModImage,
-    CatalogModImageCopyWith<$R, CatalogModImage, CatalogModImage>
+    ModRepoImage,
+    ModRepoImageCopyWith<$R, ModRepoImage, ModRepoImage>
   >?
   get images;
   $R call({
@@ -470,22 +479,22 @@ abstract class CatalogModCopyWith<$R, $In extends CatalogMod, $Out>
     Map<ModUrlType, String>? urls,
     List<ModSource>? sources,
     List<String>? categories,
-    Map<String, CatalogModImage>? images,
+    Map<String, ModRepoImage>? images,
     DateTime? dateTimeCreated,
     DateTime? dateTimeEdited,
     String? partOfThreadTitle,
   });
-  CatalogModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+  ModRepoEntryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
-class _CatalogModCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, CatalogMod, $Out>
-    implements CatalogModCopyWith<$R, CatalogMod, $Out> {
-  _CatalogModCopyWithImpl(super.value, super.then, super.then2);
+class _ModRepoEntryCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ModRepoEntry, $Out>
+    implements ModRepoEntryCopyWith<$R, ModRepoEntry, $Out> {
+  _ModRepoEntryCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<CatalogMod> $mapper =
-      CatalogModMapper.ensureInitialized();
+  late final ClassMapperBase<ModRepoEntry> $mapper =
+      ModRepoEntryMapper.ensureInitialized();
   @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
   get authorsList => $value.authorsList != null
@@ -526,8 +535,8 @@ class _CatalogModCopyWithImpl<$R, $Out>
   MapCopyWith<
     $R,
     String,
-    CatalogModImage,
-    CatalogModImageCopyWith<$R, CatalogModImage, CatalogModImage>
+    ModRepoImage,
+    ModRepoImageCopyWith<$R, ModRepoImage, ModRepoImage>
   >?
   get images => $value.images != null
       ? MapCopyWith(
@@ -569,7 +578,7 @@ class _CatalogModCopyWithImpl<$R, $Out>
     }),
   );
   @override
-  CatalogMod $make(CopyWithData data) => CatalogMod(
+  ModRepoEntry $make(CopyWithData data) => ModRepoEntry(
     name: data.get(#name, or: $value.name),
     summary: data.get(#summary, or: $value.summary),
     description: data.get(#description, or: $value.description),
@@ -589,66 +598,66 @@ class _CatalogModCopyWithImpl<$R, $Out>
   );
 
   @override
-  CatalogModCopyWith<$R2, CatalogMod, $Out2> $chain<$R2, $Out2>(
+  ModRepoEntryCopyWith<$R2, ModRepoEntry, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _CatalogModCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _ModRepoEntryCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
-class CatalogModImageMapper extends ClassMapperBase<CatalogModImage> {
-  CatalogModImageMapper._();
+class ModRepoImageMapper extends ClassMapperBase<ModRepoImage> {
+  ModRepoImageMapper._();
 
-  static CatalogModImageMapper? _instance;
-  static CatalogModImageMapper ensureInitialized() {
+  static ModRepoImageMapper? _instance;
+  static ModRepoImageMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = CatalogModImageMapper._());
+      MapperContainer.globals.use(_instance = ModRepoImageMapper._());
     }
     return _instance!;
   }
 
   @override
-  final String id = 'CatalogModImage';
+  final String id = 'ModRepoImage';
 
-  static String _$id(CatalogModImage v) => v.id;
-  static const Field<CatalogModImage, String> _f$id = Field('id', _$id);
-  static String? _$filename(CatalogModImage v) => v.filename;
-  static const Field<CatalogModImage, String> _f$filename = Field(
+  static String _$id(ModRepoImage v) => v.id;
+  static const Field<ModRepoImage, String> _f$id = Field('id', _$id);
+  static String? _$filename(ModRepoImage v) => v.filename;
+  static const Field<ModRepoImage, String> _f$filename = Field(
     'filename',
     _$filename,
     opt: true,
   );
-  static String? _$description(CatalogModImage v) => v.description;
-  static const Field<CatalogModImage, String> _f$description = Field(
+  static String? _$description(ModRepoImage v) => v.description;
+  static const Field<ModRepoImage, String> _f$description = Field(
     'description',
     _$description,
     opt: true,
   );
-  static String? _$contentType(CatalogModImage v) => v.contentType;
-  static const Field<CatalogModImage, String> _f$contentType = Field(
+  static String? _$contentType(ModRepoImage v) => v.contentType;
+  static const Field<ModRepoImage, String> _f$contentType = Field(
     'contentType',
     _$contentType,
     opt: true,
   );
-  static int? _$size(CatalogModImage v) => v.size;
-  static const Field<CatalogModImage, int> _f$size = Field(
+  static int? _$size(ModRepoImage v) => v.size;
+  static const Field<ModRepoImage, int> _f$size = Field(
     'size',
     _$size,
     opt: true,
   );
-  static String? _$url(CatalogModImage v) => v.url;
-  static const Field<CatalogModImage, String> _f$url = Field(
+  static String? _$url(ModRepoImage v) => v.url;
+  static const Field<ModRepoImage, String> _f$url = Field(
     'url',
     _$url,
     opt: true,
   );
-  static String? _$proxyUrl(CatalogModImage v) => v.proxyUrl;
-  static const Field<CatalogModImage, String> _f$proxyUrl = Field(
+  static String? _$proxyUrl(ModRepoImage v) => v.proxyUrl;
+  static const Field<ModRepoImage, String> _f$proxyUrl = Field(
     'proxyUrl',
     _$proxyUrl,
     opt: true,
   );
 
   @override
-  final MappableFields<CatalogModImage> fields = const {
+  final MappableFields<ModRepoImage> fields = const {
     #id: _f$id,
     #filename: _f$filename,
     #description: _f$description,
@@ -658,8 +667,8 @@ class CatalogModImageMapper extends ClassMapperBase<CatalogModImage> {
     #proxyUrl: _f$proxyUrl,
   };
 
-  static CatalogModImage _instantiate(DecodingData data) {
-    return CatalogModImage(
+  static ModRepoImage _instantiate(DecodingData data) {
+    return ModRepoImage(
       id: data.dec(_f$id),
       filename: data.dec(_f$filename),
       description: data.dec(_f$description),
@@ -673,64 +682,64 @@ class CatalogModImageMapper extends ClassMapperBase<CatalogModImage> {
   @override
   final Function instantiate = _instantiate;
 
-  static CatalogModImage fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<CatalogModImage>(map);
+  static ModRepoImage fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ModRepoImage>(map);
   }
 
-  static CatalogModImage fromJson(String json) {
-    return ensureInitialized().decodeJson<CatalogModImage>(json);
+  static ModRepoImage fromJson(String json) {
+    return ensureInitialized().decodeJson<ModRepoImage>(json);
   }
 }
 
-mixin CatalogModImageMappable {
+mixin ModRepoImageMappable {
   String toJson() {
-    return CatalogModImageMapper.ensureInitialized()
-        .encodeJson<CatalogModImage>(this as CatalogModImage);
-  }
-
-  Map<String, dynamic> toMap() {
-    return CatalogModImageMapper.ensureInitialized().encodeMap<CatalogModImage>(
-      this as CatalogModImage,
+    return ModRepoImageMapper.ensureInitialized().encodeJson<ModRepoImage>(
+      this as ModRepoImage,
     );
   }
 
-  CatalogModImageCopyWith<CatalogModImage, CatalogModImage, CatalogModImage>
-  get copyWith =>
-      _CatalogModImageCopyWithImpl<CatalogModImage, CatalogModImage>(
-        this as CatalogModImage,
+  Map<String, dynamic> toMap() {
+    return ModRepoImageMapper.ensureInitialized().encodeMap<ModRepoImage>(
+      this as ModRepoImage,
+    );
+  }
+
+  ModRepoImageCopyWith<ModRepoImage, ModRepoImage, ModRepoImage> get copyWith =>
+      _ModRepoImageCopyWithImpl<ModRepoImage, ModRepoImage>(
+        this as ModRepoImage,
         $identity,
         $identity,
       );
   @override
   String toString() {
-    return CatalogModImageMapper.ensureInitialized().stringifyValue(
-      this as CatalogModImage,
+    return ModRepoImageMapper.ensureInitialized().stringifyValue(
+      this as ModRepoImage,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return CatalogModImageMapper.ensureInitialized().equalsValue(
-      this as CatalogModImage,
+    return ModRepoImageMapper.ensureInitialized().equalsValue(
+      this as ModRepoImage,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return CatalogModImageMapper.ensureInitialized().hashValue(
-      this as CatalogModImage,
+    return ModRepoImageMapper.ensureInitialized().hashValue(
+      this as ModRepoImage,
     );
   }
 }
 
-extension CatalogModImageValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, CatalogModImage, $Out> {
-  CatalogModImageCopyWith<$R, CatalogModImage, $Out> get $asCatalogModImage =>
-      $base.as((v, t, t2) => _CatalogModImageCopyWithImpl<$R, $Out>(v, t, t2));
+extension ModRepoImageValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ModRepoImage, $Out> {
+  ModRepoImageCopyWith<$R, ModRepoImage, $Out> get $asModRepoImage =>
+      $base.as((v, t, t2) => _ModRepoImageCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class CatalogModImageCopyWith<$R, $In extends CatalogModImage, $Out>
+abstract class ModRepoImageCopyWith<$R, $In extends ModRepoImage, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   $R call({
     String? id,
@@ -741,19 +750,17 @@ abstract class CatalogModImageCopyWith<$R, $In extends CatalogModImage, $Out>
     String? url,
     String? proxyUrl,
   });
-  CatalogModImageCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
+  ModRepoImageCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
-class _CatalogModImageCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, CatalogModImage, $Out>
-    implements CatalogModImageCopyWith<$R, CatalogModImage, $Out> {
-  _CatalogModImageCopyWithImpl(super.value, super.then, super.then2);
+class _ModRepoImageCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ModRepoImage, $Out>
+    implements ModRepoImageCopyWith<$R, ModRepoImage, $Out> {
+  _ModRepoImageCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<CatalogModImage> $mapper =
-      CatalogModImageMapper.ensureInitialized();
+  late final ClassMapperBase<ModRepoImage> $mapper =
+      ModRepoImageMapper.ensureInitialized();
   @override
   $R call({
     String? id,
@@ -775,7 +782,7 @@ class _CatalogModImageCopyWithImpl<$R, $Out>
     }),
   );
   @override
-  CatalogModImage $make(CopyWithData data) => CatalogModImage(
+  ModRepoImage $make(CopyWithData data) => ModRepoImage(
     id: data.get(#id, or: $value.id),
     filename: data.get(#filename, or: $value.filename),
     description: data.get(#description, or: $value.description),
@@ -786,8 +793,8 @@ class _CatalogModImageCopyWithImpl<$R, $Out>
   );
 
   @override
-  CatalogModImageCopyWith<$R2, CatalogModImage, $Out2> $chain<$R2, $Out2>(
+  ModRepoImageCopyWith<$R2, ModRepoImage, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _CatalogModImageCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _ModRepoImageCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

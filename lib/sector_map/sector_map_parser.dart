@@ -4,6 +4,10 @@ import 'package:trios/sector_map/finder/hazard.dart';
 import 'package:trios/sector_map/models/sector.dart';
 import 'package:xml/xml_events.dart';
 
+typedef Point2d = ({double x, double y});
+typedef HyperspaceLink = ({String systemId, String anchorId});
+typedef PlanetInfo = ({String type, String name, String systemId});
+
 /// Landmark `j0.f3` type ids the finder cares about.
 const _landmarkTypeIds = {
   'derelict_cryosleeper',
@@ -65,17 +69,17 @@ class _Parser {
   // Collected, keyed by Sstm object id.
   final sstm = <String, _SstmInfo>{};
   final conName = <String, String>{};
-  final tokenLoc = <String, ({double x, double y})>{}; // anchor token -> pos
-  final ufhl = <({String systemId, String anchorId})>[];
+  final tokenLoc = <String, Point2d>{}; // anchor token -> pos
+  final ufhl = <HyperspaceLink>[];
   final entityToSystem = <String, String>{}; // entityId -> systemId
   final starColor = <String, List<int>>{}; // systemId -> rgba
   final markets = <_RawMarket>[];
-  final fleetLoc = <String, ({double x, double y})>{}; // fltId -> own loc
+  final fleetLoc = <String, Point2d>{}; // fltId -> own loc
   String? playerFleetRef;
 
   // Finder data.
   // Non-star planets, keyed by Plnt object id.
-  final plntInfo = <String, ({String type, String name, String systemId})>{};
+  final plntInfo = <String, PlanetInfo>{};
   // Conditions per market primaryEntity (planet/entity id) -> condition ids.
   final marketConditionsByEntity = <String, List<String>>{};
   final stableLocBySystem = <String, int>{}; // systemId -> count
@@ -294,7 +298,7 @@ class _Parser {
 
   Sector _assemble(String gameVersion) {
     // system -> hyperspace position (dedup by system, first anchor wins)
-    final systemPos = <String, ({double x, double y})>{};
+    final systemPos = <String, Point2d>{};
     for (final o in ufhl) {
       if (systemPos.containsKey(o.systemId)) continue;
       final loc = tokenLoc[o.anchorId];
@@ -356,7 +360,7 @@ class _Parser {
 
     // player marker: if in a system, use that system's hyperspace position;
     // otherwise the fleet's own loc (which is hyperspace coords).
-    ({double x, double y})? playerPos;
+    Point2d? playerPos;
     if (playerFleetRef != null) {
       final sysId = entityToSystem[playerFleetRef!];
       if (sysId != null) {
@@ -404,7 +408,7 @@ class _RawMarket {
 }
 
 /// Parses a Starsector vector serialized as "x|y".
-({double x, double y})? _parseVec(String s) {
+Point2d? _parseVec(String s) {
   final parts = s.split('|');
   if (parts.length != 2) return null;
   final x = double.tryParse(parts[0]);

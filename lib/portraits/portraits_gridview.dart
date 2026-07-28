@@ -17,14 +17,17 @@ import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+typedef PortraitEntry = ({Portrait image, ModVariant? variant});
+typedef PortraitReplacement = ({Portrait? replacementPortrait, ModVariant? replacementMod});
+
 class PortraitsGridView extends ConsumerWidget {
-  final List<({Portrait image, ModVariant? variant})> modsAndImages;
-  final List<({Portrait image, ModVariant? variant})> allPortraits;
+  final List<PortraitEntry> modsAndImages;
+  final List<PortraitEntry> allPortraits;
   final Map<String, Portrait> replacements;
   final double portraitSize;
   final Future<void> Function(
     Portrait,
-    List<({Portrait image, ModVariant? variant})>,
+    List<PortraitEntry>,
   )
   onAddRandomReplacement;
   final bool isDraggable;
@@ -47,10 +50,10 @@ class PortraitsGridView extends ConsumerWidget {
   });
 
   // Helper method to find replacement details using pre-built lookup map
-  ({Portrait? replacementPortrait, ModVariant? replacementMod})?
+  PortraitReplacement?
   _findReplacementDetails(
     String replacementPath,
-    Map<String, ({Portrait image, ModVariant? variant})> portraitsByPath,
+    Map<String, PortraitEntry> portraitsByPath,
   ) {
     final item = portraitsByPath[replacementPath];
     if (item == null) return null;
@@ -102,7 +105,7 @@ class PortraitsGridView extends ConsumerWidget {
     const gridSpacing = 8.0;
 
     // Pre-build lookup map for replacement details (O(1) instead of O(n))
-    final portraitsByPath = <String, ({Portrait image, ModVariant? variant})>{};
+    final portraitsByPath = <String, PortraitEntry>{};
     for (final item in allPortraits) {
       portraitsByPath[item.image.imageFile.path] = item;
     }
@@ -130,7 +133,7 @@ class PortraitsGridView extends ConsumerWidget {
 
             // Get replacement details if replacement exists
             String? replacementBytesAsReadableKB;
-            ({Portrait? replacementPortrait, ModVariant? replacementMod})?
+            PortraitReplacement?
             replacementDetails;
 
             if (hasReplacement) {

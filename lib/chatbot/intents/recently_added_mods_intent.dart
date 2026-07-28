@@ -4,6 +4,8 @@ import '../chatbot_engine.dart';
 import '../chatbot_models.dart';
 import 'mod_aware_intent.dart';
 
+typedef RecentMod = ({String name, String version, int firstSeen});
+
 /// Lists mods that were recently added, using firstSeen metadata.
 class RecentlyAddedModsIntent extends ChatIntent with ModAwareIntent {
   @override
@@ -63,7 +65,7 @@ class RecentlyAddedModsIntent extends ChatIntent with ModAwareIntent {
     }
 
     // Pair each mod with its firstSeen timestamp
-    final modsWithDate = <({String name, String version, int firstSeen})>[];
+    final modsWithDate = <RecentMod>[];
     for (final mod in mods) {
       final modMeta = metadata.getMergedModMetadata(mod.id);
       if (modMeta == null) continue;

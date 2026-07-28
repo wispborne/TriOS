@@ -37,6 +37,9 @@ import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
 
+/// A group header in the category list: the key, display label, and entry count.
+typedef CodexSectionInfo = ({String key, String label, int count});
+
 /// Marker object for a locked (spoiler-hidden) placeholder row in the category
 /// list. Every locked row is identical, so a single const instance is reused.
 class _CodexLockedRow {
@@ -569,7 +572,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
               if (identical(row, _codexLockedRow)) {
                 return _buildLockedRow(context);
               }
-              if (row is ({String key, String label, int count})) {
+              if (row is CodexSectionInfo) {
                 return _buildGroupHeaderRow(
                   context,
                   category,
@@ -888,7 +891,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
   /// scrolls it exactly into view and plays its glow.
   void _landOnTarget(
     CodexEntryType category,
-    (CodexEntryType, String) target,
+    CodexKey target,
     List<CodexEntry> entries,
     CodexGrouping grouping,
   ) {

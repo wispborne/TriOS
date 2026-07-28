@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_links.dart';
-import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
 import 'package:trios/trios/app_state.dart';
@@ -83,7 +83,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       installedMods: ref.read(AppState.mods),
       records: current,
     );
-    final matchedCatalogByModId = <String, CatalogMod>{};
+    final matchedCatalogByModId = <String, ModRepoEntry>{};
     for (final link in links) {
       matchedCatalogByModId.putIfAbsent(link.mod.id, () => link.entry);
     }
@@ -227,8 +227,8 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     }
   }
 
-  /// Builds a [CatalogSource] from a [CatalogMod].
-  CatalogSource _buildCatalogSource(CatalogMod catalogMod, DateTime now) {
+  /// Builds a [CatalogSource] from a [ModRepoEntry].
+  CatalogSource _buildCatalogSource(ModRepoEntry catalogMod, DateTime now) {
     final urls = catalogMod.getUrls();
     final forumUrl = urls[ModUrlType.Forum];
     final nexusUrl = urls[ModUrlType.NexusMods];
@@ -314,7 +314,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       // a bare one built from the hint when it isn't.
       final catalog =
           ref.read(browseModsNotifierProvider).valueOrNull?.items ??
-          const <CatalogMod>[];
+          const <ModRepoEntry>[];
       final key = catalogEntryKey(catalogName);
       final catalogMod = catalog.firstWhereOrNull(
         (m) => catalogEntryKey(m.name) == key,

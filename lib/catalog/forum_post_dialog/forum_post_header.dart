@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
-import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -13,7 +13,7 @@ import 'package:trios/widgets/text_trios.dart';
 /// when false it shows just the title. Either way it keeps the grouped per-mod
 /// download rows and the open-in-browser / window actions.
 class ForumPostHeader extends StatelessWidget {
-  final ModSummaryData data;
+  final CatalogMod data;
 
   /// Whether to show the full mod summary. When false, only the title shows —
   /// the informational block is hidden per the user's setting.
@@ -399,7 +399,7 @@ class _DownloadSplitButton extends StatelessWidget {
     final hasMenu = candidates.length > 1;
 
     final button = ElevatedButton.icon(
-      icon: Icon(downloadCandidateIcon(mainCandidate), size: 16),
+      icon: downloadCandidateIconWidget(mainCandidate),
       label: Text(label, style: theme.textTheme.labelMedium),
       style: ElevatedButton.styleFrom(
         visualDensity: VisualDensity.compact,
@@ -444,7 +444,7 @@ class _DownloadSplitButton extends StatelessWidget {
     final theme = Theme.of(context);
     final subtitle = downloadCandidateSubtitle(candidate);
     return MenuItemButton(
-      leadingIcon: Icon(downloadCandidateIcon(candidate), size: 16),
+      leadingIcon: downloadCandidateIconWidget(candidate),
       onPressed: () => onDownload(candidate, modName),
       child: MovingTooltipWidget.text(
         message: candidate.url,

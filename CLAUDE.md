@@ -8,8 +8,8 @@ All-in-one Starsector launcher, mod manager, and toolkit. Flutter desktop app �
 
 ## Claude Directive
 
-- Do not use jargon.
-- Do not use Opus 4.7. If you are using Opus 4.7, switch to Opus 4.6 instead.
+- Focus on human-readable output. Do not use jargon.
+- Check with the user first if you're not Opus 4.6 and offer to switch using `/model claude-opus-4-6[1m]`.
 - Use the `idea` connector when available.
 - Avoid Powershell when possible. Allow the user to verify changes manually; don't run the app yourself.
 
@@ -82,11 +82,14 @@ Feature work is planned with OpenSpec, under `openspec/`:
 - **Platform-native bits**: `windows/`, `macos/`, `linux/` for native runners. Archive support via 7-Zip CLI wrapper (`lib/compression/`). Crash reporting via Sentry (initialized in `main.dart`).
 - **Generated files** are excluded from analysis: `build/**`, `lib/**.freezed.dart`, `lib/**.g.dart`, `lib/libarchive/libarchive_bindings.dart`.
 
+## Code Conventions
+- Don't use inline Dart records — e.g. `({String text, int count})` as a return type. Add a typedef so the type has a name.
+- Prefer Dart's dot shorthand — e.g. `.all(8.0)` over `EdgeInsets.all(8.0)`.
+
 ## UI Conventions
 
 - Align widgets using an 8.0 dip grid.
 - Use the new `spacing` parameter on `Row`/`Column` instead of `SizedBox` separators when spacing is even.
-- Prefer Dart's dot shorthand — e.g. `.all(8.0)` over `EdgeInsets.all(8.0)`.
 - Instead of using `tooltip`, use `MovingTooltipWidget.text`.
 
 ## Common Widgets
@@ -380,6 +383,4 @@ Filter values: `null` (indifferent), `true` (include), `false` (exclude). If any
 
 ## Starsector Game Code
 
-- Copied to `starsector-core` for convenient reference. Not added to git.
-- Critical: read only! Do not modify the game code.
-- Game obfuscated code is decompiled in `starsector-core/decompiled_obf`.
+- You have a skill to read starsector game code; use to validate assumptions.

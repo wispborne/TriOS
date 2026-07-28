@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:stringr/stringr.dart';
 import 'package:text_search/text_search.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 
 import '../models/mod.dart';
@@ -160,20 +161,23 @@ List<ModVariant> searchModVariants(
 
 final Map<String, List<TextSearchItemTerm>> _catalogModSearchTagsCache = {};
 
-List<TextSearchItemTerm> getCatalogModSearchTags(CatalogMod mod) {
+List<TextSearchItemTerm> getCatalogModSearchTags(ModRepoEntry mod) {
   return _catalogModSearchTagsCache.putIfAbsent(
     mod.name,
     () => createCatalogModSearchTags(mod),
   );
 }
 
-List<CatalogMod> searchCatalogMods(List<CatalogMod> mods, String? query) {
+List<CatalogMod> searchCatalogMods(
+  List<CatalogMod> mods,
+  String? query,
+) {
   if (query == null || query.isEmpty) {
     return mods;
   }
 
   List<TextSearchItem<CatalogMod>> items = mods
-      .map((mod) => TextSearchItem(mod, getCatalogModSearchTags(mod)))
+      .map((mod) => TextSearchItem(mod, getCatalogModSearchTags(mod.entry)))
       .toList();
   List<String> queryParts = query
       .split(',')
@@ -187,11 +191,12 @@ List<CatalogMod> searchCatalogMods(List<CatalogMod> mods, String? query) {
     bool isNegative = queryPart.startsWith('-');
     String actualQuery = isNegative ? queryPart.substring(1) : queryPart;
 
-    List<TextSearchItem<CatalogMod>> matchingItems = items.where((item) {
-      return item.terms.any(
-        (term) => term.term.contains(actualQuery.toLowerCase()),
-      );
-    }).toList();
+    List<TextSearchItem<CatalogMod>> matchingItems =
+        items.where((item) {
+          return item.terms.any(
+            (term) => term.term.contains(actualQuery.toLowerCase()),
+          );
+        }).toList();
 
     if (isNegative) {
       negativeResults.addAll(matchingItems.map((item) => item.object));
@@ -211,7 +216,7 @@ List<CatalogMod> searchCatalogMods(List<CatalogMod> mods, String? query) {
   }
 }
 
-List<TextSearchItemTerm> createCatalogModSearchTags(CatalogMod mod) {
+List<TextSearchItemTerm> createCatalogModSearchTags(ModRepoEntry mod) {
   List<TextSearchItemTerm> tags = [];
 
   void addTag(String? term, double penalty) {

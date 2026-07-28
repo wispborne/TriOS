@@ -1030,7 +1030,7 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
 
   Future<void> _addRandomReplacement(
     Portrait originalPortrait,
-    List<({Portrait image, ModVariant? variant})> allPortraits,
+    List<PortraitEntry> allPortraits,
   ) async {
     try {
       // Filter out the original portrait and get a random replacement

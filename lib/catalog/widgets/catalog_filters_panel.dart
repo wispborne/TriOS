@@ -15,7 +15,6 @@ class CatalogFiltersPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.watch(catalogPageControllerProvider.notifier);
-    // Watch state so the panel rebuilds when active-count or selections change.
     ref.watch(catalogPageControllerProvider);
 
     return FiltersPanel(

@@ -10,6 +10,8 @@ import 'package:trios/sector_map/sector_map_controller.dart';
 import 'package:trios/sector_map/widgets/sector_map_painter.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
+typedef RevealSet = ({Set<String> constellationIds});
+
 /// The escalating reveal: a single Hint button that steps from "somewhere in
 /// these N constellations" down to the exact system, then hands off to the
 /// atlas. Positions stay hidden until the player asks for them.
@@ -103,7 +105,7 @@ class HintLadder extends ConsumerWidget {
     );
   }
 
-  ({Set<String> constellationIds}) _revealSets(ScoredSystem match, int level) {
+  RevealSet _revealSets(ScoredSystem match, int level) {
     final conId = match.system.constellationId;
     if (level <= 0 || conId == null) {
       return (constellationIds: const <String>{});
@@ -150,7 +152,7 @@ class HintLadder extends ConsumerWidget {
   String _revealText(
     ScoredSystem match,
     int level,
-    ({Set<String> constellationIds}) reveal,
+    RevealSet reveal,
   ) {
     if (level <= 0) {
       return 'Tune the knobs until the count is small, then reveal a hint to '

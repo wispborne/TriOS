@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:csv/csv.dart';
 
+typedef StrippedCsvResult = ({String cleanContent, List<int> lineNumberMap});
+
 class CsvJsonParsingUtils {
   /// Removes comments (`#`) outside of quotes in CSV lines.
   static String removeCsvLineComments(String line) {
@@ -83,7 +85,7 @@ class CsvJsonParsingUtils {
   ///
   /// Each entry in the returned `lineNumberMap` is the 1-indexed source line
   /// where the corresponding emitted logical row began.
-  static ({String cleanContent, List<int> lineNumberMap})
+  static StrippedCsvResult
   stripCsvCommentsAndTrackLines(String content) {
     final outRows = <String>[];
     final lineMap = <int>[];
@@ -208,7 +210,7 @@ extension CsvStringUtils on String {
   String removeJsonComments() => CsvJsonParsingUtils.removeJsonComments(this);
 
   /// Removes comment lines from CSV, returns cleaned content + line number map.
-  ({String cleanContent, List<int> lineNumberMap})
+  StrippedCsvResult
   stripCsvCommentsAndTrackLines() =>
       CsvJsonParsingUtils.stripCsvCommentsAndTrackLines(this);
 }

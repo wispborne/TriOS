@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/catalog_mod_card.dart';
-import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
-import 'package:trios/catalog/widgets/mod_summary/mod_summary_data.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/summary_resolver.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -14,18 +14,7 @@ import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Where a mod's summary text came from. Shown as a small note under the
-/// summary so the reader knows who wrote it.
-enum ModSummarySource {
-  /// The mod index TriOS downloads, which gathers posts from Discord.
-  modIndex,
-
-  /// The `mod_info.json` inside the copy of the mod the user has installed.
-  modInfoFile,
-
-  /// Written by AI from the mod's forum post.
-  ai,
-}
+typedef CleanedChangelog = ({String? date, String body});
 
 /// Which fields the [ModSummaryWidget] shows, plus sizing and whether it's
 /// interactive. Two presets cover the two uses: [tooltip] (passive hover card)
@@ -87,7 +76,7 @@ class ModSummaryConfig {
 /// donation links. Used as the catalog-card hover tooltip and as the header of
 /// the mod pop-ups.
 class ModSummaryWidget extends ConsumerWidget {
-  final ModSummaryData data;
+  final CatalogMod data;
   final ModSummaryConfig config;
   final Widget? headerButtons;
 
@@ -107,7 +96,14 @@ class ModSummaryWidget extends ConsumerWidget {
     final theme = Theme.of(context);
     final aiMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
 
-    final summary = config.showSummary ? _resolveSummary(data, aiMode) : null;
+    final summary = config.showSummary
+        ? resolveSummaryText(
+            data,
+            aiMode: aiMode,
+            aiLength: AiTextLength.paragraph,
+            authorOrder: AuthorTextOrder.shortFirst,
+          )
+        : null;
     final saveCompat = data.saveCompatibility?.trim();
     final showSaveCompat =
         config.showSaveCompatibility && (saveCompat?.isNotEmpty ?? false);
@@ -127,8 +123,6 @@ class ModSummaryWidget extends ConsumerWidget {
       spacing: 12,
       children: [
         _HeaderRow(data: data, config: config, headerButtons: headerButtons),
-        // A divider keeps the "who/when" header visually apart from the
-        // "what" content below it.
         ?(hasContent ? Divider(height: 1, color: theme.dividerColor) : null),
         ?(summary != null
             ? Column(
@@ -162,38 +156,6 @@ class ModSummaryWidget extends ConsumerWidget {
     );
   }
 
-  /// Picks the summary to show and says where it came from, following the
-  /// user's AI-summary setting. Null when there's nothing to show.
-  static ({String text, ModSummarySource source})? _resolveSummary(
-    ModSummaryData data,
-    AiSummaryMode aiMode,
-  ) {
-    final fromModIndex = trimmedOrNull(data.authorText);
-    final fromModInfoFile = trimmedOrNull(data.modInfoText);
-    final fromAi = aiMode == AiSummaryMode.never
-        ? null
-        : trimmedOrNull(data.aiSummary?.paragraph);
-
-    // Text the mod's author wrote comes first, unless the user asked to always
-    // see the AI version.
-    final inOrder = aiMode == AiSummaryMode.always
-        ? [
-            (fromAi, ModSummarySource.ai),
-            (fromModIndex, ModSummarySource.modIndex),
-            (fromModInfoFile, ModSummarySource.modInfoFile),
-          ]
-        : [
-            (fromModIndex, ModSummarySource.modIndex),
-            (fromModInfoFile, ModSummarySource.modInfoFile),
-            (fromAi, ModSummarySource.ai),
-          ];
-
-    for (final (text, source) in inOrder) {
-      if (text != null) return (text: text, source: source);
-    }
-    return null;
-  }
-
   static bool _changelogHasContent(ForumLlmChangelog? changelog) {
     if (changelog == null) return false;
     final hasEntries = changelog.entries?.isNotEmpty ?? false;
@@ -204,7 +166,7 @@ class ModSummaryWidget extends ConsumerWidget {
 
 /// Image on the left, then the title / author / dates / stats column.
 class _HeaderRow extends StatelessWidget {
-  final ModSummaryData data;
+  final CatalogMod data;
   final ModSummaryConfig config;
   final Widget? headerButtons;
 
@@ -216,19 +178,18 @@ class _HeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final catalogMod = data.catalogMod;
     return Row(
       crossAxisAlignment: .start,
       spacing: 12,
       children: [
-        if (config.showImage && catalogMod != null)
+        if (config.showImage)
           ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: config.imageSize,
               maxHeight: config.imageSize,
             ),
             child: ModImage(
-              mod: catalogMod,
+              mod: data.entry,
               size: config.imageSize.round(),
               fallbackImageUrl: data.fallbackImageUrl,
             ),
@@ -246,7 +207,7 @@ class _HeaderRow extends StatelessWidget {
 }
 
 class _InfoColumn extends StatelessWidget {
-  final ModSummaryData data;
+  final CatalogMod data;
   final ModSummaryConfig config;
   final Widget? headerButtons;
 
@@ -287,7 +248,7 @@ class _InfoColumn extends StatelessWidget {
             ?headerButtons,
           ],
         ),
-        if (config.showAuthor && data.author.trim().isNotEmpty)
+        if (config.showAuthor && data.authors.trim().isNotEmpty)
           _AuthorChip(data: data, interactive: config.interactive),
         if (config.showCategory && (data.category?.trim().isNotEmpty ?? false))
           Text('in ${data.category!.trim()}', style: mutedStyle),
@@ -323,7 +284,7 @@ class _InfoColumn extends StatelessWidget {
 /// Author avatar + name, with forum title and post count when known. Opens the
 /// author's forum profile on tap when interactive.
 class _AuthorChip extends StatelessWidget {
-  final ModSummaryData data;
+  final CatalogMod data;
   final bool interactive;
 
   const _AuthorChip({required this.data, required this.interactive});
@@ -339,7 +300,7 @@ class _AuthorChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final profileUrl = interactive ? _authorProfileUrl(data.author) : null;
+    final profileUrl = interactive ? _authorProfileUrl(data.authors) : null;
     final postCount = data.authorPostCount;
     final postCountText = postCount != null
         ? '${ModSummaryWidget._decimalFormat.format(postCount)} posts'
@@ -358,7 +319,7 @@ class _AuthorChip extends StatelessWidget {
             mainAxisSize: .min,
             children: [
               Text(
-                data.author,
+                data.authors,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -397,7 +358,7 @@ class _AuthorChip extends StatelessWidget {
 
     final message = [
       if (profileUrl != null)
-        "Open ${data.author}'s forum profile in your browser",
+        "Open ${data.authors}'s forum profile in your browser",
       ?postCountText,
     ].join('\n');
 
@@ -514,7 +475,7 @@ class _SummarySection extends StatelessWidget {
     ModSummarySource.modInfoFile => "Summary from mod_info.json.",
     ModSummarySource.ai =>
       'Summary generated by AI. See the ${Constants.appName} About page for '
-      'AI Disclosure.',
+          'AI Disclosure.',
   };
 
   @override
@@ -642,7 +603,7 @@ class _ChangelogSection extends StatelessWidget {
   /// Tidies a raw changelog body: expands `&nbsp;`, strips markdown `#`
   /// heading markers, and drops a leading header line that just repeats the
   /// version (keeping any release date it carried).
-  static ({String? date, String body}) _clean(String version, String raw) {
+  static CleanedChangelog _clean(String version, String raw) {
     final lines = raw.replaceAll('&nbsp;', ' ').split('\n');
     String? date;
     if (lines.isNotEmpty) {
@@ -674,9 +635,9 @@ class _ChangelogSection extends StatelessWidget {
     final hasEntries = entries != null && entries.isNotEmpty;
     final hasLink = link?.isNotEmpty ?? false;
 
-    final versionStyle =
-        (interactive ? theme.textTheme.bodyMedium : theme.textTheme.labelMedium)
-            ?.copyWith(fontWeight: FontWeight.bold);
+    final versionStyle = (theme.textTheme.labelMedium)?.copyWith(
+      fontWeight: FontWeight.bold,
+    );
     final dateStyle = theme.textTheme.labelSmall?.copyWith(
       color: theme.textTheme.labelSmall?.color?.withValues(alpha: 0.6),
     );
@@ -686,15 +647,14 @@ class _ChangelogSection extends StatelessWidget {
         ? entries.entries.take(maxEntries).toList()
         : const <MapEntry<String, String>>[];
 
-    Widget titleRowFor(({String? date, String body}) cleaned, String version) =>
-        Row(
-          mainAxisSize: .min,
-          spacing: 8,
-          children: [
-            Text(version, style: versionStyle),
-            if (cleaned.date != null) Text(cleaned.date!, style: dateStyle),
-          ],
-        );
+    Widget titleRowFor(CleanedChangelog cleaned, String version) => Row(
+      mainAxisSize: .min,
+      spacing: 8,
+      children: [
+        Text(version, style: versionStyle),
+        if (cleaned.date != null) Text(cleaned.date!, style: dateStyle),
+      ],
+    );
 
     // In a tooltip nothing can be clicked, so lay it all out flat with a short
     // preview of each entry.
@@ -738,16 +698,14 @@ class _ChangelogSection extends StatelessWidget {
     final fullChangelogLink = hasLink
         ? MovingTooltipWidget.text(
             message: link!,
-            child: ActionChip(
-              label: Text('Open full changelog'),
-              avatar: Icon(
-                Icons.open_in_new,
-                color: theme.colorScheme.onSurface,
-              ),
+            child: TextButton.icon(
               onPressed: () => launchUrl(Uri.parse(link)),
-              visualDensity: VisualDensity.compact,
-              color: WidgetStatePropertyAll(
-                theme.colorScheme.surfaceContainerLow,
+              icon: Icon(Icons.open_in_new, size: 14),
+              label: Text('Full changelog'),
+              style: TextButton.styleFrom(
+                textStyle: theme.textTheme.bodySmall,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
             ),
           )
@@ -837,9 +795,7 @@ class _DisclosureState extends State<_Disclosure> {
       children: [
         InkWell(
           onTap: () => setState(() => _isOpen = !_isOpen),
-          borderRadius: BorderRadius.circular(
-            TriOSThemeConstants.cornerRadius,
-          ),
+          borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
           child: Padding(
             padding: const .symmetric(vertical: 2),
             child: Row(

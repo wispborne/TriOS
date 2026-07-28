@@ -1,7 +1,7 @@
 import 'package:trios/catalog/models/forum_link.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
@@ -82,7 +82,7 @@ class DownloadCandidate {
 /// the version checker reports is a stale link, so the version checker's
 /// download goes ahead of it.
 List<DownloadCandidate> resolveDownloadCandidates(
-  CatalogMod mod,
+  ModRepoEntry mod,
   ForumLlmMod? llmMainMod, {
   VersionCheckerInfo? remoteVersion,
 }) {
@@ -308,7 +308,7 @@ class DownloadGroup {
 List<DownloadGroup> buildDownloadGroups({
   ForumModIndex? index,
   List<ForumLink>? scrapedLinks,
-  CatalogMod? catalogMod,
+  ModRepoEntry? catalogMod,
   required bool Function(String name) isInstalled,
 }) {
   final mods = index?.llm?.mods ?? const <ForumLlmMod>[];

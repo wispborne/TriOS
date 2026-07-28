@@ -19,6 +19,8 @@ import 'package:trios/widgets/background_effects/rain_effect.dart';
 import 'package:trios/widgets/background_effects/starfield_effect.dart';
 import 'package:trios/widgets/rainbow_accent_bar.dart';
 
+typedef ResolvedColors = ({List<Color> colors, double opacityScale, bool isRainbow});
+
 /// Hosts one animated background [BackgroundEffect] (chosen by the user) behind
 /// [child]. Owns the shared scaffolding — motion easing tied to app focus,
 /// canvas sizing, cursor tracking, theme-color resolution, and the on/off +
@@ -223,7 +225,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
   /// Colors come from [themeKey]'s theme, or the active theme when null. The
   /// Pride theme uses the rainbow palette instead of its swatch, and renders
   /// less transparent (a higher [opacityScale]).
-  ({List<Color> colors, double opacityScale, bool isRainbow}) _resolveColors(
+  ResolvedColors _resolveColors(
     BuildContext context,
     String? themeKey,
   ) {

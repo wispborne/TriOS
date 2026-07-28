@@ -1,4 +1,4 @@
-import 'package:trios/catalog/models/forum_mod_index.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
@@ -8,6 +8,8 @@ import 'package:trios/thirdparty/dartx/map.dart';
 final _groupingRegex = RegExp(r'(\d+|[a-zA-Z]+|[-\.]+)');
 final _sepRegex = RegExp(r'[\s\-\u2013_]+');
 final _isLetterRegex = RegExp(r'[a-zA-Z]');
+
+typedef NormalizedSearchTokens = (List<String>, List<String>);
 
 const _suffixOrder = [
   'dev',
@@ -30,7 +32,7 @@ String _normalizeSeparators(String s) {
   return s.replaceAll(_sepRegex, '.');
 }
 
-(List<String>, List<String>) _normalizeAndSplitTokens(
+NormalizedSearchTokens _normalizeAndSplitTokens(
   List<String> aTokens,
   List<String> bTokens,
 ) {
@@ -203,8 +205,8 @@ final _nonAlphanumericStart = RegExp(r'^[^a-zA-Z0-9]');
 /// Compares mod names alphabetically, placing names starting with
 /// non-alphanumeric characters (brackets, symbols) at the end.
 int nameCompare(CatalogMod a, CatalogMod b) {
-  final aName = a.name;
-  final bName = b.name;
+  final aName = a.title;
+  final bName = b.title;
   final aIsBracket = _nonAlphanumericStart.hasMatch(aName);
   final bIsBracket = _nonAlphanumericStart.hasMatch(bName);
   if (aIsBracket != bIsBracket) return aIsBracket ? 1 : -1;
@@ -217,8 +219,9 @@ int nameCompare(CatalogMod a, CatalogMod b) {
 List<String> extractCategories(List<CatalogMod> mods) {
   final categories = <String>{};
   for (final mod in mods) {
-    if (mod.categories != null) {
-      for (final cat in mod.categories!) {
+    final cats = mod.entry.categories;
+    if (cats != null) {
+      for (final cat in cats) {
         if (cat.trim().isNotEmpty) categories.add(cat);
       }
     }
@@ -234,16 +237,16 @@ Map<String, Set<String>> extractVersionGroups(List<CatalogMod> mods) {
   final versionModCount = <String, int>{};
 
   for (final mod in mods) {
-    if (mod.gameVersionReq != null && mod.gameVersionReq!.isNotEmpty) {
-      final base = normalizeBaseVersion(mod.gameVersionReq);
+    final ver = mod.entry.gameVersionReq;
+    if (ver != null && ver.isNotEmpty) {
+      final base = normalizeBaseVersion(ver);
       if (base.isNotEmpty) {
-        versionMap.putIfAbsent(base, () => {}).add(mod.gameVersionReq!);
+        versionMap.putIfAbsent(base, () => {}).add(ver);
         versionModCount[base] = (versionModCount[base] ?? 0) + 1;
       }
     }
   }
 
-  // Filter to 3+ mods and sort newest-first
   final filtered = Map.fromEntries(
     versionMap.entries.where((e) => (versionModCount[e.key] ?? 0) >= 3).toList()
       ..sort((a, b) => compareVersions(b.key, a.key)),
@@ -274,20 +277,12 @@ enum CatalogSortKey {
   };
 }
 
-/// Looks up the [ForumModIndex] for a [CatalogMod] using the forum URL.
-ForumModIndex? _forumFor(CatalogMod mod, Map<int, ForumModIndex> forumLookup) {
-  final id = extractForumTopicId(mod.urls?[ModUrlType.Forum]);
-  return id != null ? forumLookup[id] : null;
-}
-
-/// Sorts a list of catalog mods by the given sort key. Returns a new list.
-/// [forumLookup] is needed for [CatalogSortKey.mostViewed] and
-/// [CatalogSortKey.lastActivity]; mods without forum data sort last.
+/// Sorts a list of gathered catalog mods by the given sort key. Returns a new
+/// list. Views, dates, and replies are on the gathered model — no lookup needed.
 List<CatalogMod> sortCatalogMods(
   List<CatalogMod> mods,
   CatalogSortKey sortKey, {
   bool ascending = true,
-  Map<int, ForumModIndex> forumLookup = const {},
 }) {
   final sorted = List<CatalogMod>.from(mods);
   final flip = ascending ? 1 : -1;
@@ -296,10 +291,8 @@ List<CatalogMod> sortCatalogMods(
       sorted.sort((a, b) => nameCompare(a, b) * flip);
     case CatalogSortKey.date:
       sorted.sort((a, b) {
-        final da =
-            (a.dateTimeCreated ?? _forumFor(a, forumLookup)?.createdDate);
-        final db =
-            (b.dateTimeCreated ?? _forumFor(b, forumLookup)?.createdDate);
+        final da = a.postDate;
+        final db = b.postDate;
         if (da == null && db == null) return nameCompare(a, b);
         if (da == null) return 1;
         if (db == null) return -1;
@@ -308,8 +301,8 @@ List<CatalogMod> sortCatalogMods(
       });
     case CatalogSortKey.version:
       sorted.sort((a, b) {
-        final aVer = a.gameVersionReq ?? '';
-        final bVer = b.gameVersionReq ?? '';
+        final aVer = a.entry.gameVersionReq ?? '';
+        final bVer = b.entry.gameVersionReq ?? '';
         if (aVer.isEmpty && bVer.isEmpty) return nameCompare(a, b);
         if (aVer.isEmpty) return 1;
         if (bVer.isEmpty) return -1;
@@ -318,32 +311,32 @@ List<CatalogMod> sortCatalogMods(
       });
     case CatalogSortKey.mostViewed:
       sorted.sort((a, b) {
-        final af = _forumFor(a, forumLookup);
-        final bf = _forumFor(b, forumLookup);
-        if (af == null && bf == null) return nameCompare(a, b);
-        if (af == null) return 1;
-        if (bf == null) return -1;
-        final cmp = af.views.compareTo(bf.views) * flip;
+        final av = a.views;
+        final bv = b.views;
+        if (av == null && bv == null) return nameCompare(a, b);
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        final cmp = av.compareTo(bv) * flip;
         return cmp != 0 ? cmp : nameCompare(a, b);
       });
     case CatalogSortKey.mostReplies:
       sorted.sort((a, b) {
-        final af = _forumFor(a, forumLookup);
-        final bf = _forumFor(b, forumLookup);
-        if (af == null && bf == null) return nameCompare(a, b);
-        if (af == null) return 1;
-        if (bf == null) return -1;
-        final cmp = af.replies.compareTo(bf.replies) * flip;
+        final ar = a.replies;
+        final br = b.replies;
+        if (ar == null && br == null) return nameCompare(a, b);
+        if (ar == null) return 1;
+        if (br == null) return -1;
+        final cmp = ar.compareTo(br) * flip;
         return cmp != 0 ? cmp : nameCompare(a, b);
       });
     case CatalogSortKey.lastActivity:
       sorted.sort((a, b) {
-        final af = _forumFor(a, forumLookup)?.lastPostDate;
-        final bf = _forumFor(b, forumLookup)?.lastPostDate;
-        if (af == null && bf == null) return nameCompare(a, b);
-        if (af == null) return 1;
-        if (bf == null) return -1;
-        final cmp = af.compareTo(bf) * flip;
+        final al = a.lastPostDate;
+        final bl = b.lastPostDate;
+        if (al == null && bl == null) return nameCompare(a, b);
+        if (al == null) return 1;
+        if (bl == null) return -1;
+        final cmp = al.compareTo(bl) * flip;
         return cmp != 0 ? cmp : nameCompare(a, b);
       });
   }

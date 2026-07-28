@@ -5,8 +5,10 @@
 // Total base icons: 2146
 
 
+typedef MaterialIconEntry = ({String name, int codePoint});
+
 /// Every base Material icon (no _sharp/_rounded/_outlined variants).
-const List<({String name, int codePoint})> allMaterialIcons = [
+const List<MaterialIconEntry> allMaterialIcons = [
   (name: 'ten_k', codePoint: 0xe000),
   (name: 'ten_mp', codePoint: 0xe001),
   (name: 'eleven_mp', codePoint: 0xe002),

@@ -12,6 +12,9 @@ import 'package:trios/utils/game_data_merge.dart';
 
 part 'ship.mapper.dart';
 
+/// (size, type) pair for categorizing weapon mount slots.
+typedef SlotSpec = (String, String);
+
 @MappableClass(caseStyle: CaseStyle.lowerCase)
 class Ship with ShipMappable implements WispGridItem {
   @override
@@ -341,8 +344,8 @@ class Ship with ShipMappable implements WispGridItem {
   late final int mountableWeaponSlotCount =
       weaponSlots?.where((s) => s.isMountable).length ?? 0;
 
-  late final Map<(String, String), int> _mountableSlotCounts = () {
-    final counts = <(String, String), int>{};
+  late final Map<SlotSpec, int> _mountableSlotCounts = () {
+    final counts = <SlotSpec, int>{};
     for (final s in weaponSlots ?? <ShipWeaponSlot>[]) {
       if (!s.isMountable) continue;
       final key = (s.typeUppercase, s.sizeUppercase);

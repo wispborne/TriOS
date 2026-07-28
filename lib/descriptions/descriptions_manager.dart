@@ -10,22 +10,24 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
 
+typedef DescriptionKey = (String, String);
+
 final isLoadingDescriptions = StateProvider<bool>((ref) => false);
 
 final descriptionsNotifierProvider =
     StreamNotifierProvider<
       DescriptionsNotifier,
-      Map<(String, String), DescriptionEntry>
+      Map<DescriptionKey, DescriptionEntry>
     >(DescriptionsNotifier.new);
 
 /// Returns the [DescriptionEntry] for a given `(id, type)` key, or null.
 final descriptionProvider =
-    Provider.family<DescriptionEntry?, (String, String)>((ref, key) {
+    Provider.family<DescriptionEntry?, DescriptionKey>((ref, key) {
       return ref.watch(descriptionsNotifierProvider).valueOrNull?[key];
     });
 
 class DescriptionsNotifier
-    extends StreamNotifier<Map<(String, String), DescriptionEntry>> {
+    extends StreamNotifier<Map<DescriptionKey, DescriptionEntry>> {
   static const _kVanillaKey = kVanillaSourceKey;
 
   /// Raw `descriptions.csv` rows per source, for `mergeDescriptions`.
@@ -33,7 +35,7 @@ class DescriptionsNotifier
   String? _cachedGameCorePath;
 
   @override
-  Stream<Map<(String, String), DescriptionEntry>> build() async* {
+  Stream<Map<DescriptionKey, DescriptionEntry>> build() async* {
     ref.read(isLoadingDescriptions.notifier).state = true;
     final gameCorePath = ref.watch(AppState.gameCoreFolder).value?.path;
 
@@ -116,7 +118,7 @@ class DescriptionsNotifier
   }
 
   /// Merges `descriptions.csv` rows across sources. See `mergeDescriptions`.
-  Map<(String, String), DescriptionEntry> _composeDescriptions(
+  Map<DescriptionKey, DescriptionEntry> _composeDescriptions(
     List<ModVariant> variants,
   ) {
     final merged = mergeDescriptions([

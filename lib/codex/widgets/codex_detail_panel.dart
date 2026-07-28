@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:trios/codex/codex_index.dart';
+import 'package:trios/codex/codex_links.dart';
 import 'package:trios/codex/codex_page_controller.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
@@ -28,7 +29,7 @@ import 'package:trios/widgets/moving_tooltip.dart';
 
 /// The middle panel: renders the reused per-type card for the selected entry.
 class CodexDetailPanel extends ConsumerWidget {
-  final (CodexEntryType, String)? selected;
+  final CodexKey? selected;
 
   const CodexDetailPanel({super.key, required this.selected});
 

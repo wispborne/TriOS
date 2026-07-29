@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/catalog_mod_card.dart';
-import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/summary_resolver.dart';
 import 'package:trios/trios/constants.dart';
@@ -190,11 +190,7 @@ class _HeaderRow extends StatelessWidget {
               maxWidth: config.imageSize,
               maxHeight: config.imageSize,
             ),
-            child: ModImage(
-              mod: data.entry,
-              size: config.imageSize.round(),
-              fallbackImageUrl: data.fallbackImageUrl,
-            ),
+            child: ModImage(mod: data, size: config.imageSize.round()),
           ),
         Expanded(
           child: _InfoColumn(
@@ -316,29 +312,32 @@ class _AuthorChip extends StatelessWidget {
         spacing: 8,
         children: [
           _Avatar(path: data.authorAvatarPath),
-          Column(
-            crossAxisAlignment: .start,
-            mainAxisSize: .min,
-            children: [
-              Text(
-                data.authors,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (data.authorTitle?.isNotEmpty ?? false)
+          Flexible(
+            child: Column(
+              crossAxisAlignment: .start,
+              mainAxisSize: .min,
+              children: [
                 Text(
-                  data.authorTitle!,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: theme.textTheme.labelSmall?.color?.withValues(
-                      alpha: 0.7,
-                    ),
+                  data.authors,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-            ],
+                if (data.authorTitle?.isNotEmpty ?? false)
+                  Text(
+                    data.authorTitle!,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                      color: theme.textTheme.labelSmall?.color?.withValues(
+                        alpha: 0.7,
+                      ),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -377,7 +376,7 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final url = _resolveAvatarUrl(path);
+    final url = path;
     final placeholder = CircleAvatar(
       radius: 20,
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
@@ -393,18 +392,6 @@ class _Avatar extends StatelessWidget {
         errorBuilder: (_, _, _) => placeholder,
       ),
     );
-  }
-
-  String? _resolveAvatarUrl(String? p) {
-    if (p == null || p.isEmpty) return null;
-    if (p.startsWith('http://') || p.startsWith('https://')) return p;
-    try {
-      return Uri.parse(
-        'https://fractalsoftworks.com/forum/',
-      ).resolve(p).toString();
-    } catch (_) {
-      return null;
-    }
   }
 }
 

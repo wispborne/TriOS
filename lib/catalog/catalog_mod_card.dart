@@ -17,6 +17,7 @@ import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/mod_image_source.dart';
 import 'package:trios/catalog/summary_resolver.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
@@ -63,14 +64,15 @@ class CatalogModCard extends ConsumerStatefulWidget {
 }
 
 class _CatalogModCardState extends ConsumerState<CatalogModCard> {
-  CatalogMod get _g => widget.gathered;
-  ModRepoEntry get _entry => _g.entry;
+  CatalogMod get _catalogMod => widget.gathered;
+
+  ModRepoEntry get _entry => _catalogMod.entry;
 
   VersionCheckerInfo? get _remoteVersion =>
       widget.versionCheckComparison?.remoteVersionCheck?.remoteVersion;
 
   Color _statusBarColor(ThemeData theme) {
-    final mod = _g.installedMod;
+    final mod = _catalogMod.installedMod;
     if (mod == null) return Colors.transparent;
 
     if (widget.versionCheckComparison?.hasUpdate == true) {
@@ -87,7 +89,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     final mod = _entry;
     final downloadCandidates = resolveDownloadCandidates(
       mod,
-      _g.llmMod,
+      _catalogMod.llmMod,
       remoteVersion: _remoteVersion,
     );
 
@@ -101,9 +103,20 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
             : ref.watch(forumDetailsForTopic(topicId));
         final hasForumDetails =
             forumDetails != null && !forumDetails.isPlaceholderDetail;
+        final forumIndex = topicId != null
+            ? ref.watch(forumDataByTopicId)[topicId]
+            : null;
+        final enrichedMod = hasForumDetails
+            ? gatherCatalogMod(
+                mod: _entry,
+                forumIndex: forumIndex,
+                forumDetails: forumDetails,
+                installedMod: _catalogMod.installedMod,
+              )
+            : _catalogMod;
         final hasDetailsToShow =
             hasForumDetails ||
-            _g.topicUrl != null ||
+            enrichedMod.topicUrl != null ||
             (mod.description?.isNotEmpty ?? false) ||
             (mod.summary?.isNotEmpty ?? false) ||
             (mod.images?.isNotEmpty ?? false) ||
@@ -118,7 +131,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                   icon: Icons.info_outline,
                   onSelected: () => showModInfoDialog(
                     context,
-                    mod: _g.installedMod,
+                    mod: _catalogMod.installedMod,
                     catalogMod: mod,
                     versionCheckComparison: widget.versionCheckComparison,
                   ),
@@ -179,9 +192,9 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                   ),
                 const MenuDivider(),
               ],
-              if (_g.installedMod != null) ...[
+              if (_catalogMod.installedMod != null) ...[
                 const MenuHeader(text: 'Installed Mod'),
-                if (_g.installedMod!.isEnabledInGame)
+                if (_catalogMod.installedMod!.isEnabledInGame)
                   MenuItem(
                     label: 'Disable',
                     leading: const Icon(Icons.visibility_off, size: 16),
@@ -212,7 +225,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                 ? ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 500),
                     child: ModSummaryWidget(
-                      data: _g,
+                      data: enrichedMod,
                       config: ModSummaryConfig.tooltip,
                     ),
                   )
@@ -251,11 +264,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                   minWidth: 60.0,
                                   maxHeight: 60.0,
                                 ),
-                                child: ModImage(
-                                  mod: mod,
-                                  size: 60,
-                                  fallbackImageUrl: _g.fallbackImageUrl,
-                                ),
+                                child: ModImage(mod: enrichedMod, size: 60),
                               ),
                             ],
                           ),
@@ -287,9 +296,9 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                       ),
                                     ],
                                   ),
-                                  if (_g.authors.isNotEmpty)
+                                  if (enrichedMod.authors.isNotEmpty)
                                     Text(
-                                      _g.authors,
+                                      enrichedMod.authors,
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
                                             fontSize: 10,
@@ -298,10 +307,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                       maxLines: 1,
                                       overflow: .ellipsis,
                                     ),
-                                  if (_g.isPartOfThread)
+                                  if (enrichedMod.isPartOfThread)
                                     MovingTooltipWidget.text(
                                       message:
-                                          'Part of the "${_g.partOfThreadTitle}" '
+                                          'Part of the "${enrichedMod.partOfThreadTitle}" '
                                           'forum thread.\nClick the card to see '
                                           'the whole thread.',
                                       child: Row(
@@ -319,7 +328,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                           ),
                                           Flexible(
                                             child: Text(
-                                              'part of ${_g.partOfThreadTitle}',
+                                              'part of ${enrichedMod.partOfThreadTitle}',
                                               style: theme.textTheme.labelSmall
                                                   ?.copyWith(
                                                     fontSize: 10,
@@ -353,10 +362,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                           CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        if (_g.views != null ||
-                                            _g.replies != null)
+                                        if (enrichedMod.views != null ||
+                                            enrichedMod.replies != null)
                                           _ForumStatsFromGathered(
-                                            gathered: _g,
+                                            gathered: enrichedMod,
                                           ),
                                         Tags(mod: mod),
                                       ],
@@ -375,13 +384,13 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                         top: 4,
                         child: _CatalogModGameVersionReq(mod: mod),
                       ),
-                    if (_g.installedMod != null)
+                    if (_catalogMod.installedMod != null)
                       Positioned(
                         left: 0,
                         top: 0,
                         bottom: 0,
                         child: MovingTooltipWidget.text(
-                          message: _g.installedMod!.isEnabledInGame
+                          message: _catalogMod.installedMod!.isEnabledInGame
                               ? 'Enabled'
                               : 'Installed, disabled',
                           child: Container(
@@ -397,10 +406,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                       bottom: 12,
                       child: CatalogDownloadButton(
                         mod: mod,
-                        installedMod: _g.installedMod,
+                        installedMod: _catalogMod.installedMod,
                         versionCheckComparison: widget.versionCheckComparison,
                         linkLoader: widget.linkLoader,
-                        llmMainMod: _g.llmMod,
+                        llmMainMod: _catalogMod.llmMod,
                       ),
                     ),
                   ],
@@ -420,7 +429,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   ) {
     final aiSummaryMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
     final resolved = resolveSummaryText(
-      _g,
+      _catalogMod,
       aiMode: aiSummaryMode,
       authorOrder: AuthorTextOrder.shortFirst,
       aiLength: AiTextLength.sentence,
@@ -516,8 +525,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   /// otherwise the fallback dialog built from catalog data.
   void _openDetailsDialog(BuildContext context, ForumModDetails? forumDetails) {
     if (forumDetails != null && !forumDetails.isPlaceholderDetail) {
-      final topicId =
-          extractForumTopicId(_entry.urls?[ModUrlType.Forum]);
+      final topicId = extractForumTopicId(_entry.urls?[ModUrlType.Forum]);
       final forumIndex = topicId != null
           ? ref.read(forumDataByTopicId)[topicId]
           : null;
@@ -532,7 +540,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     } else {
       showCatalogModDetailsDialog(
         context,
-        gathered: _g,
+        gathered: _catalogMod,
         linkLoader: widget.linkLoader,
         canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
       );
@@ -542,7 +550,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   /// Enable or disable the installed mod. Moved off the primary card button
   /// so the button stays a pure Install/Update/Installed status.
   void _setModEnabled(bool enabled) {
-    final mod = _g.installedMod;
+    final mod = _catalogMod.installedMod;
     if (mod == null) return;
     if (enabled) {
       final variant = mod.findHighestVersion;
@@ -607,13 +615,13 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   void _showDebugDialog(BuildContext context, ModRepoEntry mod) {
     final downloadCandidates = resolveDownloadCandidates(
       mod,
-      _g.llmMod,
+      _catalogMod.llmMod,
       remoteVersion: _remoteVersion,
     );
 
     final sections = <String, String?>{
       'Catalog mod': mod.toString(),
-      'LLM mod (this card)': _g.llmMod?.toString(),
+      'LLM mod (this card)': _catalogMod.llmMod?.toString(),
       'Resolved download candidates': downloadCandidates.isEmpty
           ? null
           : downloadCandidates.join('\n\n'),
@@ -773,79 +781,64 @@ class _CatalogModGameVersionReq extends ConsumerWidget {
 }
 
 class ModImage extends StatelessWidget {
-  final ModRepoEntry mod;
+  final CatalogMod mod;
   final int? size;
 
-  /// Used when the mod itself has no scraped image, e.g. an image found in the
-  /// AI-extracted forum data.
-  final String? fallbackImageUrl;
-
-  const ModImage({
-    super.key,
-    required this.mod,
-    this.size,
-    this.fallbackImageUrl,
-  });
+  const ModImage({super.key, required this.mod, this.size});
 
   @override
   Widget build(BuildContext context) {
-    final mainImage = mod.images?.values.isNotEmpty == true
-        ? mod.images?.values.first
-        : null;
+    final ModImageSource? source = mod.catalogImage;
 
-    // Prefer the mod's own scraped image; otherwise fall back to the image
-    // from the AI-extracted forum data, if any.
-    final String? imageUrl = mainImage?.url ?? fallbackImageUrl;
+    if (source == null) return _defaultImage();
 
-    if (imageUrl != null) {
-      final description = mainImage?.description;
-      return MovingTooltipWidget.framed(
-        tooltipWidget: Builder(
-          builder: (context) {
-            final media = MediaQuery.of(context);
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: media.size.width * 0.9,
-                maxHeight: media.size.height * 0.9,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible(
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.scaleDown,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _defaultImage(),
-                    ),
-                  ),
-                  if (description != null && description.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        description,
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
-        child: Image.network(
-          imageUrl,
-          fit: .scaleDown,
-          cacheWidth: size == null ? null : size! * 2,
-          errorBuilder: (context, error, stackTrace) {
-            return _defaultImage();
-          },
-        ),
-      );
-    } else {
-      return _defaultImage();
-    }
+    return MovingTooltipWidget.framed(
+      tooltipWidget: Builder(
+        builder: (context) {
+          final media = MediaQuery.of(context);
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: media.size.width * 0.9,
+              maxHeight: media.size.height * 0.9,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Flexible(
+                  child: _buildImage(source, fit: BoxFit.scaleDown),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      child: _buildImage(
+        source,
+        fit: BoxFit.scaleDown,
+        cacheWidth: size == null ? null : size! * 2,
+      ),
+    );
   }
+
+  Widget _buildImage(
+    ModImageSource source, {
+    BoxFit? fit,
+    int? cacheWidth,
+  }) => switch (source) {
+    WebModImage(:final url) => Image.network(
+      url,
+      fit: fit,
+      cacheWidth: cacheWidth,
+      errorBuilder: (_, _, _) => _defaultImage(),
+    ),
+    FileModImage(:final file) => Image.file(
+      file,
+      fit: fit,
+      cacheWidth: cacheWidth,
+      errorBuilder: (_, _, _) => _defaultImage(),
+    ),
+  };
 
   Widget _defaultImage() {
     return Container(
@@ -1332,8 +1325,7 @@ class _ForumStatsFromGathered extends StatelessWidget {
             segment(
               icon: Icons.visibility,
               text: _compactFormat.format(gathered.views),
-              tooltip:
-                  '${_decimalFormat.format(gathered.views)} forum views',
+              tooltip: '${_decimalFormat.format(gathered.views)} forum views',
             ),
           if (gathered.replies != null)
             segment(

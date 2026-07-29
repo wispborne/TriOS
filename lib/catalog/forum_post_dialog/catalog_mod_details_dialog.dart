@@ -116,9 +116,7 @@ class _CatalogModDetailsDialogState
         ref,
         candidate,
         modName: modName,
-        sourceHint: DownloadSourceHint(
-          catalogName: modName,
-        ),
+        sourceHint: DownloadSourceHint(catalogName: modName),
         linkLoader: widget.linkLoader,
       ),
     );
@@ -185,11 +183,7 @@ class _Body extends ConsumerWidget {
           constraints: const BoxConstraints(maxHeight: 300),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: ModImage(
-              mod: gathered.entry,
-              size: 300,
-              fallbackImageUrl: gathered.fallbackImageUrl,
-            ),
+            child: ModImage(mod: gathered, size: 300),
           ),
         ),
         const SizedBox(height: 16),

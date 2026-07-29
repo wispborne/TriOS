@@ -2,14 +2,15 @@ import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
+import 'package:trios/catalog/models/mod_image_source.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/models/mod.dart';
-import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/strip_markdown.dart';
 
 /// The description in an installed mod's `mod_info.json`. Reads the variant
 /// that's turned on, or the newest one the user has if none is.
@@ -20,6 +21,14 @@ String? modInfoDescription(Mod? installedMod) =>
 String? trimmedOrNull(String? text) {
   final trimmed = text?.trim();
   return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+}
+
+/// Mod text with any markdown taken off, or null when nothing is left. The
+/// catalog shows these texts as-is, so markers like `**bold**` would show up
+/// on screen.
+String? _asPlainText(String? text) {
+  final trimmed = trimmedOrNull(text);
+  return trimmed == null ? null : trimmedOrNull(stripMarkdown(trimmed));
 }
 
 /// Everything the app knows about one catalog mod, combined from the catalog
@@ -71,11 +80,9 @@ class CatalogMod {
 
   // -- Images --
 
-  /// The catalog image URL from the entry's `images` map.
-  final String? catalogImageUrl;
-
-  /// A fallback image from the AI block, when the entry has no scraped image.
-  final String? fallbackImageUrl;
+  /// The best available image: scraped catalog image, AI-block image, author
+  /// avatar, or the installed mod's icon on disk.
+  final ModImageSource? catalogImage;
 
   // -- Forum facts --
 
@@ -118,8 +125,7 @@ class CatalogMod {
     this.changelog,
     this.supportLinks = const [],
     this.saveCompatibility,
-    this.catalogImageUrl,
-    this.fallbackImageUrl,
+    this.catalogImage,
     this.category,
     this.postDate,
     this.lastEditDate,
@@ -135,6 +141,18 @@ class CatalogMod {
   });
 
   bool get isPartOfThread => partOfThreadTitle != null;
+}
+
+String? _resolveAvatarUrl(String? p) {
+  if (p == null || p.isEmpty) return null;
+  if (p.startsWith('http://') || p.startsWith('https://')) return p;
+  try {
+    return Uri.parse(
+      'https://fractalsoftworks.com/forum/',
+    ).resolve(p).toString();
+  } catch (_) {
+    return null;
+  }
 }
 
 /// Picks the LLM mod entry this catalog mod represents: for a mod bundled in
@@ -199,7 +217,7 @@ CatalogMod gatherCatalogMod({
   // Forum details carry richer author metadata; index fills in the rest.
   final authorTitle = forumDetails?.authorTitle;
   final authorPostCount = forumDetails?.authorPostCount;
-  final authorAvatarPath = forumDetails?.authorAvatarPath;
+  final avatarPathResolved = _resolveAvatarUrl(forumDetails?.authorAvatarPath);
 
   // Title: prefer the catalog entry name, then details, then index.
   final title = mod.name.isNotEmpty
@@ -215,7 +233,13 @@ CatalogMod gatherCatalogMod({
   // Category: details first, then index.
   final category = forumDetails?.category ?? forumIndex?.category;
 
-  final mainImage = mod.images?.values.firstOrNull?.url ?? llmMod?.image;
+  final mainImage =
+      ModImageSource.web(mod.images?.values.firstOrNull?.url) ??
+      ModImageSource.web(llmMod?.imageUrl) ??
+      ModImageSource.web(avatarPathResolved) ??
+      ModImageSource.file(
+        installedMod?.findFirstEnabledOrHighestVersion?.iconFilePath,
+      );
 
   return CatalogMod(
     entry: mod,
@@ -224,18 +248,17 @@ CatalogMod gatherCatalogMod({
     partOfThreadTitle: mod.partOfThreadTitle,
     authorTitle: authorTitle,
     authorPostCount: authorPostCount,
-    authorAvatarPath: authorAvatarPath,
-    summaryText: mod.summary.isNotNullOrBlank ? mod.summary : null,
-    descriptionText: mod.description.isNotNullOrBlank ? mod.description : null,
-    modInfoText: modInfoDescription(installedMod),
-    aiSentence: extras?.summary?.sentence,
-    aiParagraph: extras?.summary?.paragraph,
+    authorAvatarPath: avatarPathResolved,
+    summaryText: _asPlainText(mod.summary),
+    descriptionText: _asPlainText(mod.description),
+    modInfoText: _asPlainText(modInfoDescription(installedMod)),
+    aiSentence: _asPlainText(extras?.summary?.sentence),
+    aiParagraph: _asPlainText(extras?.summary?.paragraph),
     llmMod: llmMod,
     changelog: extras?.changelog,
     supportLinks: extras?.supportLinks ?? const [],
     saveCompatibility: extras?.saveCompatibility,
-    catalogImageUrl: mainImage,
-    fallbackImageUrl: llmMod?.imageUrl,
+    catalogImage: mainImage,
     category: category,
     postDate: postDate,
     lastEditDate: lastEditDate,
@@ -272,6 +295,8 @@ final catalogModsProvider = Provider<List<CatalogMod>>((ref) {
       installedMod: installedMod,
     );
   }).toList();
-  Fimber.i('catalogModsProvider built ${result.length} mods in ${sw.elapsedMilliseconds}ms');
+  Fimber.i(
+    'catalogModsProvider built ${result.length} mods in ${sw.elapsedMilliseconds}ms',
+  );
   return result;
 });

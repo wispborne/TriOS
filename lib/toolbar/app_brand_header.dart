@@ -21,7 +21,7 @@ class AppBrandHeader extends ConsumerWidget {
     final modifiers = ref.watch(appSettings.select((s) => s.themeModifiers));
     final appName = context.appNameWithModifiers(modifiers);
     final iconSize = compact ? 24.0 : 48.0;
-    final blurRadius = compact ? 8.0 : 10.0;
+    final blurRadius = compact ? 10.0 : 10.0;
 
     return Row(
       mainAxisSize: MainAxisSize.min,

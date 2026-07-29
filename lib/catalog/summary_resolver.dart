@@ -40,18 +40,16 @@ ResolvedText? resolveSummaryText(
           aiLength == AiTextLength.sentence ? mod.aiSentence : mod.aiParagraph,
         );
 
-  final inOrder = aiMode == AiSummaryMode.always
-      ? [
-          (aiText, ModSummarySource.ai),
-          (authorText, ModSummarySource.modIndex),
-        ]
-      : [
-          (authorText, ModSummarySource.modIndex),
-          (aiText, ModSummarySource.ai),
-        ];
+  final aiResolved = aiText == null
+      ? null
+      : (text: aiText, source: ModSummarySource.ai);
 
-  for (final (text, source) in inOrder) {
-    if (text != null) return (text: text, source: source);
+  final inOrder = aiMode == AiSummaryMode.always
+      ? [aiResolved, authorText]
+      : [authorText, aiResolved];
+
+  for (final resolved in inOrder) {
+    if (resolved != null) return resolved;
   }
   return null;
 }
@@ -60,11 +58,7 @@ ResolvedText? resolveSummaryText(
 ResolvedText? resolveAuthorText(
   CatalogMod mod, {
   required AuthorTextOrder authorOrder,
-}) {
-  final text = _pickAuthorText(mod, authorOrder);
-  if (text == null) return null;
-  return (text: text, source: ModSummarySource.modIndex);
-}
+}) => _pickAuthorText(mod, authorOrder);
 
 /// Whether the AI paragraph should be shown beside the author's own text.
 bool shouldShowAiWithAuthorText(
@@ -85,18 +79,24 @@ bool shouldShowAiWithAuthorText(
 /// Picks the best author-written text in the requested order, trying summary,
 /// description, and mod_info.json. The `modInfoFile` source is only used as a
 /// last resort in both orders.
-String? _pickAuthorText(CatalogMod mod, AuthorTextOrder order) {
+ResolvedText? _pickAuthorText(CatalogMod mod, AuthorTextOrder order) {
+  final fromIndex = ModSummarySource.modIndex;
+  final fromFile = ModSummarySource.modInfoFile;
   final candidates = switch (order) {
     AuthorTextOrder.shortFirst => [
-        mod.summaryText,
-        mod.descriptionText,
-        mod.modInfoText,
+        (mod.summaryText, fromIndex),
+        (mod.descriptionText, fromIndex),
+        (mod.modInfoText, fromFile),
       ],
     AuthorTextOrder.longFirst => [
-        mod.descriptionText,
-        mod.summaryText,
-        mod.modInfoText,
+        (mod.descriptionText, fromIndex),
+        (mod.summaryText, fromIndex),
+        (mod.modInfoText, fromFile),
       ],
   };
-  return firstNonBlank(candidates);
+  for (final (text, source) in candidates) {
+    final trimmed = trimmedOrNull(text);
+    if (trimmed != null) return (text: trimmed, source: source);
+  }
+  return null;
 }

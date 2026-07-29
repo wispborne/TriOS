@@ -129,11 +129,13 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         )
         .toList();
     final mutedUpdates = modsWithUpdates
-        .where(
-          (mod) =>
-              modsMetadata?.getMergedModMetadata(mod.id)?.areUpdatesMuted ==
-              true,
-        )
+        .where((mod) {
+          final metadata = modsMetadata?.getMergedModMetadata(mod.id);
+          return metadata != null &&
+              metadata.isUpdateHidden(
+                mod.updateCheck(versionCheck)?.remoteVersionString,
+              );
+        })
         .toList();
     final pinnedUpdateMods = switch (modsGridUpdateVisibility) {
       ModsGridUpdateVisibility.showAll => modsWithUpdates,
@@ -1943,6 +1945,12 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               versionCheckComparison?.remoteVersionCheck,
             );
         final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
+        final remoteVersion = versionCheckComparison?.remoteVersionString;
+        // Only this one version is muted, rather than the mod being silenced.
+        final isVersionMuted =
+            !areUpdatesMuted &&
+            metadata != null &&
+            metadata.isUpdateHidden(remoteVersion);
 
         return mod.modVariants.isEmpty
             ? const Text("")
@@ -2050,16 +2058,20 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       )
                     else
                       SizedBox(width: 20),
-                    (areUpdatesMuted)
+                    (areUpdatesMuted || isVersionMuted)
                         ? MovingTooltipWidget.text(
-                            message: "Updates muted",
+                            message: isVersionMuted
+                                ? "Update $remoteVersion is muted. You'll be notified for the next version."
+                                : "Updates muted",
                             child: Padding(
                               padding: const EdgeInsets.only(
                                 left: 4.0,
                                 right: 8,
                               ),
                               child: Icon(
-                                Icons.notifications_off,
+                                isVersionMuted
+                                    ? Icons.notifications_paused
+                                    : Icons.notifications_off,
                                 size: 20.0,
                                 color: theme.colorScheme.onSurface.withValues(
                                   alpha: 0.5,

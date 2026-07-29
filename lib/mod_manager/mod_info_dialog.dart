@@ -571,6 +571,12 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
 
     final dateFormat = Constants.dateTimeFormat;
     final isMuted = modMetadata.areUpdatesMuted;
+    final mutedVersion = modMetadata.mutedUpdateVersion;
+    final updatesStatus = isMuted
+        ? 'Muted'
+        : mutedVersion != null
+        ? '$mutedVersion muted'
+        : 'Unmuted';
 
     return Wrap(
       spacing: 24,
@@ -586,7 +592,7 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
             style: theme.textTheme.bodyMedium,
           ),
         Text(
-          "Updates: ${isMuted ? 'Muted' : 'Unmuted'}",
+          "Updates: $updatesStatus",
           style: theme.textTheme.bodyMedium,
         ),
       ],

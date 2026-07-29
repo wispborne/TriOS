@@ -22,10 +22,6 @@ String? trimmedOrNull(String? text) {
   return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
 }
 
-/// The first option that actually says something. Null when none do.
-String? firstNonBlank(List<String?> options) =>
-    options.map(trimmedOrNull).nonNulls.firstOrNull;
-
 /// Everything the app knows about one catalog mod, combined from the catalog
 /// entry, the forum index entry, the AI-written `llm` block, the cached forum
 /// post details, and the installed mod on disk.

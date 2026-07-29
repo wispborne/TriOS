@@ -231,6 +231,12 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
     opt: true,
     def: false,
   );
+  static String? _$mutedUpdateVersion(ModMetadata v) => v.mutedUpdateVersion;
+  static const Field<ModMetadata, String> _f$mutedUpdateVersion = Field(
+    'mutedUpdateVersion',
+    _$mutedUpdateVersion,
+    opt: true,
+  );
   static Color? _$color(ModMetadata v) => v.color;
   static const Field<ModMetadata, Color> _f$color = Field(
     'color',
@@ -246,6 +252,7 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
     #isFavorited: _f$isFavorited,
     #lastEnabled: _f$lastEnabled,
     #areUpdatesMuted: _f$areUpdatesMuted,
+    #mutedUpdateVersion: _f$mutedUpdateVersion,
     #color: _f$color,
   };
 
@@ -256,6 +263,7 @@ class ModMetadataMapper extends ClassMapperBase<ModMetadata> {
       isFavorited: data.dec(_f$isFavorited),
       lastEnabled: data.dec(_f$lastEnabled),
       areUpdatesMuted: data.dec(_f$areUpdatesMuted),
+      mutedUpdateVersion: data.dec(_f$mutedUpdateVersion),
       color: data.dec(_f$color),
     );
   }
@@ -333,6 +341,7 @@ abstract class ModMetadataCopyWith<$R, $In extends ModMetadata, $Out>
     bool? isFavorited,
     int? lastEnabled,
     bool? areUpdatesMuted,
+    String? mutedUpdateVersion,
     Color? color,
   });
   ModMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
@@ -365,6 +374,7 @@ class _ModMetadataCopyWithImpl<$R, $Out>
     bool? isFavorited,
     Object? lastEnabled = $none,
     bool? areUpdatesMuted,
+    Object? mutedUpdateVersion = $none,
     Object? color = $none,
   }) => $apply(
     FieldCopyWithData({
@@ -373,6 +383,7 @@ class _ModMetadataCopyWithImpl<$R, $Out>
       if (isFavorited != null) #isFavorited: isFavorited,
       if (lastEnabled != $none) #lastEnabled: lastEnabled,
       if (areUpdatesMuted != null) #areUpdatesMuted: areUpdatesMuted,
+      if (mutedUpdateVersion != $none) #mutedUpdateVersion: mutedUpdateVersion,
       if (color != $none) #color: color,
     }),
   );
@@ -383,6 +394,10 @@ class _ModMetadataCopyWithImpl<$R, $Out>
     isFavorited: data.get(#isFavorited, or: $value.isFavorited),
     lastEnabled: data.get(#lastEnabled, or: $value.lastEnabled),
     areUpdatesMuted: data.get(#areUpdatesMuted, or: $value.areUpdatesMuted),
+    mutedUpdateVersion: data.get(
+      #mutedUpdateVersion,
+      or: $value.mutedUpdateVersion,
+    ),
     color: data.get(#color, or: $value.color),
   );
 

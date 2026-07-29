@@ -236,6 +236,14 @@ class ModMetadata with ModMetadataMappable {
   final bool isFavorited;
   final bool areUpdatesMuted;
 
+  /// The remote version the user chose to ignore, e.g. "1.5.0".
+  /// Null means no version is muted.
+  ///
+  /// This mutes one broken update without going quiet on the mod forever.
+  /// Once the mod's version file advertises a different version, this stops
+  /// matching and updates show again on their own.
+  final String? mutedUpdateVersion;
+
   /// Timestamp of when the mod variant was last enabled by TriOS.
   final int? lastEnabled;
 
@@ -249,6 +257,7 @@ class ModMetadata with ModMetadataMappable {
     this.isFavorited = false,
     this.lastEnabled,
     this.areUpdatesMuted = false,
+    this.mutedUpdateVersion,
     this.color,
   });
 
@@ -256,6 +265,15 @@ class ModMetadata with ModMetadataMappable {
     variantsMetadata: {},
     firstSeen: DateTime.now().millisecondsSinceEpoch,
   );
+
+  /// Whether an update to [remoteVersion] should be hidden from the user.
+  ///
+  /// True if the mod's updates are muted entirely, or if [remoteVersion] is the
+  /// single version the user muted. Pass the remote version as it's displayed,
+  /// e.g. "1.5.0".
+  bool isUpdateHidden(String? remoteVersion) =>
+      areUpdatesMuted ||
+      (mutedUpdateVersion != null && mutedUpdateVersion == remoteVersion);
 
   /// Merges all fields from this (user) and [base], with user data overriding what it explicitly sets.
   ModMetadata backfillWith(ModMetadata base) {
@@ -276,6 +294,9 @@ class ModMetadata with ModMetadataMappable {
       isFavorited: isFavorited,
       lastEnabled: lastEnabled ?? base.lastEnabled,
       areUpdatesMuted: areUpdatesMuted ?? base.areUpdatesMuted,
+      // Only the user ever sets this, so take their value as-is. Falling back
+      // to base would undo an unmute.
+      mutedUpdateVersion: mutedUpdateVersion,
       color: color ?? base.color,
     );
   }

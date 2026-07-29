@@ -1106,6 +1106,13 @@ class VersionCheckComparison {
 
   bool get hasUpdate => comparisonInt != null && comparisonInt! < 0;
 
+  /// The remote version as it's displayed, e.g. "1.5.0". Null if the remote
+  /// version file wasn't read or had no version in it.
+  ///
+  /// Used to check the version against the one the user muted.
+  String? get remoteVersionString =>
+      remoteVersionCheck?.remoteVersion?.modVersion?.toString();
+
   /// The actual comparison of the local and remote versions.
   /// Returns 0 if the versions are the same, -1 if the remote version is newer, and 1 if the local version is newer.
   /// Usually, you should use [VersionCheckComparison] instead.

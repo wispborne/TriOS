@@ -137,7 +137,6 @@ class AppSidebar extends ConsumerWidget {
                     ),
                   _SidebarRulesHotReload(isCollapsed: isCollapsed),
                   const _SidebarDivider(),
-                  _SidebarLayoutToggle(isCollapsed: isCollapsed),
                   _SidebarNavItem.fromTool(
                     tool: TriOSTools.settings,
                     isSelected: currentPage == TriOSTools.settings,

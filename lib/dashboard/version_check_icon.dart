@@ -51,15 +51,26 @@ class VersionCheckIcon extends ConsumerWidget {
         .watch(AppState.modsMetadata)
         .valueOrNull
         ?.getMergedModMetadata(modId);
+    final remoteVersion = remoteVersionCheck?.remoteVersion?.modVersion
+        ?.toString();
     final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
+    // Only this one version is muted, rather than the mod being silenced.
+    final isVersionMuted =
+        !areUpdatesMuted &&
+        metadata != null &&
+        metadata.isUpdateHidden(remoteVersion);
 
-    return (areUpdatesMuted)
+    return (areUpdatesMuted || isVersionMuted)
         ? MovingTooltipWidget.text(
-            message: "Updates muted",
+            message: isVersionMuted
+                ? "Update $remoteVersion is muted. You'll be notified for the next version."
+                : "Updates muted",
             child: Padding(
               padding: const .only(right: 6),
               child: Icon(
-                Icons.notifications_off,
+                isVersionMuted
+                    ? Icons.notifications_paused
+                    : Icons.notifications_off,
                 size: 20.0,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),

@@ -107,6 +107,13 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
   }
 
   Widget _buildTelosSvg({required Color color}) {
+    return Image.asset(
+      "assets/images/telos_faction_crest.png",
+      // colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      color: color,
+      width: widget.width,
+      height: widget.height,
+    );
     return SvgPicture.asset(
       "assets/images/telos_faction_crest.svg",
       colorFilter: ColorFilter.mode(color, BlendMode.srcIn),

@@ -145,7 +145,9 @@ extension ModExt on Mod {
     final versionCheckComparison = updateCheck(versionCheckResultsNew);
     final updateInt = versionCheckComparison?.comparisonInt;
     final metadata = modsMetadata?.getMergedModMetadata(id);
-    final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
+    final isUpdateHidden =
+        metadata != null &&
+        metadata.isUpdateHidden(versionCheckComparison?.remoteVersionString);
     final changelogUrl = ref
         .read(AppState.changelogsProvider.notifier)
         .getChangelogUrl(
@@ -156,14 +158,14 @@ extension ModExt on Mod {
     if (updateInt == null) {
       // Missing version checker
       return -20;
-    } else if (updateInt == -1 && !areUpdatesMuted) {
+    } else if (updateInt == -1 && !isUpdateHidden) {
       // Needs update
       if (changelogUrl.isNotNullOrEmpty()) {
         return 21;
       } else {
         return 20;
       }
-    } else if (updateInt >= 0 || areUpdatesMuted) {
+    } else if (updateInt >= 0 || isUpdateHidden) {
       // Up to date or local newer than remote (time traveler)
       if (changelogUrl.isNotNullOrEmpty()) {
         return 1;

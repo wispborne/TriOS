@@ -147,6 +147,20 @@ void main() {
       expect(result?.text, 'Description');
     });
 
+    test('mod_info text is credited to the mod_info file', () {
+      final mod = _make(modInfoText: 'From mod_info.json');
+
+      final result = resolveSummaryText(
+        mod,
+        aiMode: AiSummaryMode.never,
+        aiLength: AiTextLength.sentence,
+        authorOrder: AuthorTextOrder.shortFirst,
+      );
+
+      expect(result?.text, 'From mod_info.json');
+      expect(result?.source, ModSummarySource.modInfoFile);
+    });
+
     test('paragraph AI length uses paragraph', () {
       final mod = _make(
         aiSentence: 'AI sentence',
@@ -177,6 +191,19 @@ void main() {
       );
 
       expect(result?.text, 'Summary');
+      expect(result?.source, ModSummarySource.modIndex);
+    });
+
+    test('falls back to mod_info text and credits the file', () {
+      final mod = _make(modInfoText: 'From mod_info.json');
+
+      final result = resolveAuthorText(
+        mod,
+        authorOrder: AuthorTextOrder.longFirst,
+      );
+
+      expect(result?.text, 'From mod_info.json');
+      expect(result?.source, ModSummarySource.modInfoFile);
     });
 
     test('returns null when no author text exists', () {

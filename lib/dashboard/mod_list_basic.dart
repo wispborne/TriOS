@@ -524,14 +524,17 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                 final mutedModsWithUpdates = modsMetadata == null
                     ? <Mod?>[]
                     : modsWithUpdates
-                          .where(
-                            (mod) =>
-                                mod != null &&
-                                modsMetadata
-                                        .getMergedModMetadata(mod.id)
-                                        ?.areUpdatesMuted ==
-                                    true,
-                          )
+                          .where((mod) {
+                            if (mod == null) return false;
+                            final metadata = modsMetadata
+                                .getMergedModMetadata(mod.id);
+                            return metadata != null &&
+                                metadata.isUpdateHidden(
+                                  mod
+                                      .updateCheck(versionCheck)
+                                      ?.remoteVersionString,
+                                );
+                          })
                           .toList();
 
                 final updatesToDisplay =

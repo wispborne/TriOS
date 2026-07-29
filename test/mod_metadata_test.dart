@@ -158,6 +158,100 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // Muting updates
+  // ---------------------------------------------------------------------------
+  group('ModMetadata update muting', () {
+    test('empty() mutes nothing', () {
+      final metadata = ModMetadata.empty();
+
+      expect(metadata.mutedUpdateVersion, isNull);
+      expect(metadata.isUpdateHidden('1.5.0'), isFalse);
+    });
+
+    test('hides the update when the remote version is the muted one', () {
+      final metadata = ModMetadata(firstSeen: 1, mutedUpdateVersion: '1.5.0');
+
+      expect(metadata.isUpdateHidden('1.5.0'), isTrue);
+    });
+
+    test('shows the update once the remote version changes', () {
+      // This is the whole point: the mute lifts on its own when the mod author
+      // publishes a different version.
+      final metadata = ModMetadata(firstSeen: 1, mutedUpdateVersion: '1.5.0');
+
+      expect(metadata.isUpdateHidden('1.5.1'), isFalse);
+      expect(metadata.isUpdateHidden('2.0.0'), isFalse);
+    });
+
+    test('shows the update when no version is muted', () {
+      final metadata = ModMetadata(firstSeen: 1);
+
+      expect(metadata.isUpdateHidden('1.5.0'), isFalse);
+      expect(metadata.isUpdateHidden(null), isFalse);
+    });
+
+    test('a muted version does not match a missing remote version', () {
+      final metadata = ModMetadata(firstSeen: 1, mutedUpdateVersion: '1.5.0');
+
+      expect(metadata.isUpdateHidden(null), isFalse);
+    });
+
+    test('muting all updates hides every version', () {
+      final metadata = ModMetadata(firstSeen: 1, areUpdatesMuted: true);
+
+      expect(metadata.isUpdateHidden('1.5.0'), isTrue);
+      expect(metadata.isUpdateHidden('9.9.9'), isTrue);
+      expect(metadata.isUpdateHidden(null), isTrue);
+    });
+
+    test('muting all updates wins over a muted version', () {
+      final metadata = ModMetadata(
+        firstSeen: 1,
+        areUpdatesMuted: true,
+        mutedUpdateVersion: '1.5.0',
+      );
+
+      expect(metadata.isUpdateHidden('2.0.0'), isTrue);
+    });
+
+    test('copyWith() can clear the muted version', () {
+      final muted = ModMetadata(firstSeen: 1, mutedUpdateVersion: '1.5.0');
+
+      final unmuted = muted.copyWith(mutedUpdateVersion: null);
+
+      expect(unmuted.mutedUpdateVersion, isNull);
+      expect(unmuted.isUpdateHidden('1.5.0'), isFalse);
+    });
+
+    test('copyWith() can set the muted version', () {
+      final metadata = ModMetadata(firstSeen: 1);
+
+      final muted = metadata.copyWith(mutedUpdateVersion: '1.5.0');
+
+      expect(muted.mutedUpdateVersion, '1.5.0');
+    });
+
+    test('backfillWith() keeps an unmuted user value unmuted', () {
+      // Only the user ever sets this, so base must never revive a cleared mute.
+      final user = ModMetadata(firstSeen: 1, mutedUpdateVersion: null);
+      final base = ModMetadata(firstSeen: 2, mutedUpdateVersion: '1.5.0');
+
+      final merged = user.backfillWith(base);
+
+      expect(merged.mutedUpdateVersion, isNull);
+    });
+
+    test('backfillWith() keeps the user muted version', () {
+      final user = ModMetadata(firstSeen: 1, mutedUpdateVersion: '1.5.0');
+      final base = ModMetadata(firstSeen: 2);
+
+      final merged = user.backfillWith(base);
+
+      expect(merged.mutedUpdateVersion, '1.5.0');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // ModsMetadata
   // ---------------------------------------------------------------------------
   group('ModsMetadata', () {

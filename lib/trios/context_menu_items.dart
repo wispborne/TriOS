@@ -471,32 +471,101 @@ MenuItem buildMenuItemOpenInSidebar(
   );
 }
 
+/// The single entry for muting a mod's updates.
+///
+/// Clicking it mutes just the update being advertised right now. That's the
+/// common case: an author ships a broken update and fixes it later, and the
+/// user only wants quiet until then. A muted version un-mutes itself as soon as
+/// the mod advertises a different version.
+///
+/// The submenu also offers muting the mod's updates for good. When there's no
+/// single update to pick out, this falls back to that all-updates mute.
 MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
   final modsMetadata = ref.watch(AppState.modsMetadata).value;
-  final isMuted =
-      modsMetadata?.getMergedModMetadata(mod.id)?.areUpdatesMuted == true;
+  final metadata = modsMetadata?.getMergedModMetadata(mod.id);
+  final areUpdatesMuted = metadata?.areUpdatesMuted == true;
 
-  return MenuItem(
-    label: isMuted ? 'Unmute Updates' : 'Mute Updates',
-    icon: isMuted ? Icons.notifications : Icons.notifications_off,
-    onSelected: () {
+  void setAllUpdatesMuted(bool muted) {
+    ref
+        .read(AppState.modsMetadata.notifier)
+        .updateModUserMetadata(
+          mod.id,
+          (oldMetadata) => oldMetadata.copyWith(areUpdatesMuted: muted),
+        );
+    if (!muted) {
+      // Checks stop while a mod is fully muted, so the cached result is stale.
       ref
-          .read(AppState.modsMetadata.notifier)
-          .updateModUserMetadata(
-            mod.id,
-            (oldMetadata) => oldMetadata.copyWith(areUpdatesMuted: !isMuted),
+          .read(AppState.versionCheckResults.notifier)
+          .refresh(
+            skipCache: true,
+            specificVariantsToCheck: [mod.findFirstEnabledOrHighestVersion!],
+            evenIfMuted: true,
           );
-      if (isMuted) {
-        // Fire version check for the mod.
-        ref
-            .read(AppState.versionCheckResults.notifier)
-            .refresh(
-              skipCache: true,
-              specificVariantsToCheck: [mod.findFirstEnabledOrHighestVersion!],
-              evenIfMuted: true,
-            );
-      }
-    },
+    }
+  }
+
+  // Already fully muted, so the only thing left to offer is turning it back on.
+  if (areUpdatesMuted) {
+    return MenuItem(
+      label: 'Unmute updates',
+      icon: Icons.notifications,
+      onSelected: () => setAllUpdatesMuted(false),
+    );
+  }
+
+  final versionCheckResults = ref.watch(AppState.versionCheckResults).value;
+  final comparison = mod.updateCheck(versionCheckResults);
+  final remoteVersion = comparison?.remoteVersionString;
+  final isVersionMuted =
+      remoteVersion != null && metadata?.mutedUpdateVersion == remoteVersion;
+
+  // No single update to pick out, so offer the all-updates mute on its own.
+  if (remoteVersion == null ||
+      (!isVersionMuted && comparison?.hasUpdate != true)) {
+    return MenuItem(
+      label: 'Mute updates',
+      icon: Icons.notifications_off,
+      onSelected: () => setAllUpdatesMuted(true),
+    );
+  }
+
+  void toggleVersionMute() {
+    // No re-check needed afterwards. Muting one version never stops the update
+    // checks, so the cached result is already current.
+    ref
+        .read(AppState.modsMetadata.notifier)
+        .updateModUserMetadata(
+          mod.id,
+          (oldMetadata) => oldMetadata.copyWith(
+            mutedUpdateVersion: isVersionMuted ? null : remoteVersion,
+          ),
+        );
+  }
+
+  final thisUpdateLabel = isVersionMuted
+      ? 'Unmute this update ($remoteVersion)'
+      : 'Mute this update ($remoteVersion)';
+  final thisUpdateIcon = isVersionMuted
+      ? Icons.notifications
+      : Icons.notifications_paused;
+
+  return MenuItem.submenu(
+    label: thisUpdateLabel,
+    icon: thisUpdateIcon,
+    // Clicking the top-level item does the common thing straight away.
+    onSelected: toggleVersionMute,
+    items: [
+      MenuItem(
+        label: thisUpdateLabel,
+        icon: thisUpdateIcon,
+        onSelected: toggleVersionMute,
+      ),
+      MenuItem(
+        label: 'Mute all updates',
+        icon: Icons.notifications_off,
+        onSelected: () => setAllUpdatesMuted(true),
+      ),
+    ],
   );
 }
 

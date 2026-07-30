@@ -242,7 +242,12 @@ void main() {
 
       expect(gathered.authorTitle, 'Modding Legend');
       expect(gathered.authorPostCount, 500);
-      expect(gathered.authorAvatarPath, '/avatars/detail.png');
+      // Forum avatar paths are relative to the forum root; gathering turns
+      // them into a full URL so they can be loaded as a web image.
+      expect(
+        gathered.authorAvatarPath,
+        'https://fractalsoftworks.com/avatars/detail.png',
+      );
       expect(gathered.postDate, DateTime(2024, 6, 1));
       expect(gathered.lastEditDate, DateTime(2024, 7, 1));
       expect(gathered.category, 'Mods');

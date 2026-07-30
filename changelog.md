@@ -16,6 +16,7 @@
   - 'Last Updated' column on the Mods page.
   - More background effects (Settings - Theme Modifiers).
   - May now mute updates for just one version of a mod.
+  - May now search by built-in hullmod.
 - Fixed
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.
   - Ships/weapons/etc with stats should now reflect any mods' changes to those stats.

@@ -153,6 +153,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
   List<Ship>? _searchIndexItems;
 
+  /// Hullmods by id, so the `hullmod:` search field can match built-in
+  /// hullmods by their display name. Kept here rather than read from `state`
+  /// because searching also runs during `build()`, before state is set.
+  Map<String, Hullmod> _hullmodsById = const {};
+
   /// The "Only Enabled Mods" value the current ship list was merged with, so
   /// [_emitAfterFilterMutation] can tell when a re-merge is needed.
   bool? _mergedWithShowEnabled;
@@ -246,6 +251,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
     final shipSystems = shipSystemsAsync.value ?? [];
     final shipSystemsMap = shipSystems.associateBy((e) => e.id);
     final hullmodsMap = (hullmodsAsync.value ?? []).associateBy((e) => e.id);
+    _hullmodsById = hullmodsMap;
 
     final weaponsAsync = ref.watch(weaponListNotifierProvider(showEnabled));
     final weapons = weaponsAsync.value ?? [];
@@ -699,6 +705,27 @@ class ShipsPageController extends Notifier<ShipsPageState> {
           if (op != DslOperator.equals) return false;
           final modName = ship.modVariant?.modInfo.nameOrId.toLowerCase() ?? '';
           return modName.contains(value.toLowerCase());
+        },
+      ),
+      SearchField<Ship>(
+        key: 'hullmod',
+        description: 'Built-in hullmod, by name or ID',
+        valueSuggestions: (ships) =>
+            ships
+                .expand((s) => s.builtInMods ?? const <String>[])
+                .map((id) => _hullmodsById[id]?.name ?? id)
+                .where((name) => name.isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort(),
+        matches: (ship, op, value) {
+          if (op != DslOperator.equals) return false;
+          final search = value.toLowerCase();
+          return (ship.builtInMods ?? const <String>[]).any((id) {
+            if (id.toLowerCase().contains(search)) return true;
+            final name = _hullmodsById[id]?.name?.toLowerCase();
+            return name != null && name.contains(search);
+          });
         },
       ),
       SearchField.multiValue(

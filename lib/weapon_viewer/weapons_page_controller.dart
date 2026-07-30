@@ -605,10 +605,48 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
         'Spread added per shot',
         (w) => w.spreadPerShot,
       ),
+      // Stats TriOS works out itself, rather than reading from the CSV.
+      // These account for charge-up, burst size and beam behaviour, so they
+      // differ from the raw `dps` column for burst beams and multi-shot guns.
       SearchField.numeric(
-        'spreaddecay',
-        'Spread decay per second',
-        (w) => w.spreadDecayPerSec,
+        'effectivedps',
+        'Damage per second, allowing for charge-up and bursts',
+        (w) => w.effectiveDps,
+      ),
+      SearchField.numeric(
+        'sustaineddps',
+        'Damage per second once ammo regeneration is the limit',
+        (w) => w.sustainedDps,
+      ),
+      SearchField.numeric(
+        'burstdamage',
+        'Damage dealt by one burst (burst beams only)',
+        (w) => w.burstDamage,
+      ),
+      SearchField.numeric(
+        'refire',
+        'Seconds between shots or bursts',
+        (w) => w.refireDelay,
+      ),
+      SearchField.numeric(
+        'fluxperdamage',
+        'Flux spent per point of damage; lower is more efficient',
+        (w) => w.fluxPerDamage,
+      ),
+      SearchField.numeric(
+        'fluxpersec',
+        'Flux spent per second while firing',
+        (w) => w.fluxPerSecond,
+      ),
+      SearchField.numeric(
+        'sustainedflux',
+        'Flux spent per second at the sustained rate of fire',
+        (w) => w.sustainedFluxPerSecond,
+      ),
+      SearchField.numeric(
+        'empburst',
+        'EMP damage per activation',
+        (w) => w.empPerActivation,
       ),
       // Weapon identity (string, with value suggestions)
       SearchField.string(

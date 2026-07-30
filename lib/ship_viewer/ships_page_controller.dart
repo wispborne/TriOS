@@ -690,6 +690,8 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       SearchField.string('defense', 'Defense system ID', (s) => s.defenseId),
       SearchField.string(
           'manufacturer', 'Tech/manufacturer', (s) => s.techManufacturer),
+      SearchField.string(
+          'designation', 'Ship designation', (s) => s.designation),
       SearchField.string('style', 'Visual style', (s) => s.style),
       SearchField<Ship>(
         key: 'mod',
@@ -744,20 +746,54 @@ class ShipsPageController extends Notifier<ShipsPageState> {
           'dissipation', 'Flux dissipation', (s) => s.fluxDissipation),
       SearchField.numeric('op', 'Ordnance points', (s) => s.ordnancePoints),
       SearchField.numeric('speed', 'Max speed', (s) => s.maxSpeed),
+      SearchField.numeric('accel', 'Acceleration', (s) => s.acceleration),
+      SearchField.numeric('decel', 'Deceleration', (s) => s.deceleration),
+      SearchField.numeric('turnrate', 'Max turn rate', (s) => s.maxTurnRate),
+      SearchField.numeric(
+          'turnaccel', 'Turn acceleration', (s) => s.turnAcceleration),
       SearchField.numeric('bays', 'Fighter bays', (s) => s.fighterBays),
       SearchField.numeric('shieldarc', 'Shield arc', (s) => s.shieldArc),
       SearchField.numeric(
           'shieldeff', 'Shield efficiency', (s) => s.shieldEfficiency),
-      SearchField.numeric('crew', 'Minimum crew', (s) => s.minCrew),
+      SearchField.numeric(
+          'shieldupkeep', 'Shield upkeep', (s) => s.shieldUpkeep),
+      SearchField.numeric('phasecost', 'Phase cost', (s) => s.phaseCost),
+      SearchField.numeric('phaseupkeep', 'Phase upkeep', (s) => s.phaseUpkeep),
+      SearchField.numeric('mincrew', 'Minimum crew', (s) => s.minCrew),
+      SearchField.numeric('maxcrew', 'Maximum crew', (s) => s.maxCrew),
       SearchField.numeric('cargo', 'Cargo capacity', (s) => s.cargo),
       SearchField.numeric('fuel', 'Fuel capacity', (s) => s.fuel),
+      SearchField.numeric(
+          'fuelperly', 'Fuel used per light year', (s) => s.fuelPerLY),
+      SearchField.numeric('range', 'Range', (s) => s.range),
       SearchField.numeric('burn', 'Max burn', (s) => s.maxBurn),
       SearchField.numeric('mass', 'Ship mass', (s) => s.mass),
       SearchField.numeric('dp', 'Deployment points', (s) => s.deploymentPoints),
+      SearchField.numeric('fleetpts', 'Fleet points', (s) => s.fleetPts),
       SearchField.numeric('cost', 'Base credit value', (s) => s.baseValue),
       SearchField.numeric(
           'slots', 'Weapon slots', (s) => s.mountableWeaponSlotCount),
       SearchField.numeric('peak', 'Peak CR seconds', (s) => s.peakCrSec),
+      SearchField.numeric(
+          'crday', 'CR recovered per day', (s) => s.crPercentPerDay),
+      SearchField.numeric('crdeploy', 'CR cost to deploy', (s) => s.crToDeploy),
+      SearchField.numeric(
+          'crloss', 'CR lost per second past peak', (s) => s.crLossPerSec),
+      SearchField.numeric('supplies', 'Supplies per month', (s) => s.suppliesMo),
+      SearchField.numeric(
+          'sensorprofile', 'Sensor profile', (s) => s.sensorProfile),
+      SearchField.numeric(
+          'sensorstrength', 'Sensor strength', (s) => s.sensorStrength),
+      SearchField.numeric('minpieces', 'Minimum debris pieces',
+              (s) => s.minPieces),
+      SearchField.numeric('maxpieces', 'Maximum debris pieces',
+              (s) => s.maxPieces),
+      SearchField.numeric('builtinweapons', 'Number of built-in weapons',
+              (s) => s.builtInWeapons?.length ?? 0),
+      SearchField.numeric('builtinmods', 'Number of built-in hullmods',
+              (s) => s.builtInMods?.length ?? 0),
+      SearchField.numeric('builtinwings', 'Number of built-in fighter wings',
+              (s) => s.builtInWings?.length ?? 0),
       // Weapon slot fields by size, type, and size+type combination
       for (final size in const ['SMALL', 'MEDIUM', 'LARGE'])
         SearchField.numeric<Ship>(

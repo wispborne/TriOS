@@ -1069,7 +1069,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
         backgroundColor = theme.colorScheme.primary;
         foregroundColor = theme.colorScheme.onPrimary;
         tooltip = isTrios
-            ? 'Update available.\nInstall with TriOS (also installs the mods it needs)'
+            ? 'Update available.\n\nThis mod supports Install with TriOS'
             : 'Update available';
         onPressed = runPrimary;
       case _CatalogDownloadState.updateWebsite:
@@ -1099,7 +1099,7 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
         backgroundColor = theme.statusColors.info;
         foregroundColor = theme.statusColors.onInfo;
         tooltip = isTrios
-            ? 'Install ${mod.name} with TriOS\n(also installs the mods it needs)'
+            ? 'Download ${mod.name}.\n\nThis mod supports Install with TriOS.'
             : 'Download ${mod.name}';
         onPressed = runPrimary;
       case _CatalogDownloadState.notInstalledWebsite:

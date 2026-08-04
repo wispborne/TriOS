@@ -41,6 +41,9 @@ class ShipsPageState with ShipsPageStateMappable {
   final Map<String, Weapon> weaponsMap;
   final Map<String, Hullmod> hullmodsMap;
   final Set<String> shipsWithModuleIds;
+
+  /// Ships that are used as a module on some other ship.
+  final Set<String> moduleShipIds;
   final List<Ship> allShips;
   final List<Ship> filteredShips;
   final List<Ship> shipsBeforeGridFilter;
@@ -55,6 +58,8 @@ class ShipsPageState with ShipsPageStateMappable {
 
   bool get alwaysShowEngineGlow => persisted.alwaysShowEngineGlow;
 
+  bool get advancedFilters => persisted.advancedFilters;
+
   const ShipsPageState({
     this.persisted = const ShipsPageStatePersisted(),
     this.shipSearchIndices = const {},
@@ -62,6 +67,7 @@ class ShipsPageState with ShipsPageStateMappable {
     this.weaponsMap = const {},
     this.hullmodsMap = const {},
     this.shipsWithModuleIds = const {},
+    this.moduleShipIds = const {},
     this.allShips = const [],
     this.filteredShips = const [],
     this.shipsBeforeGridFilter = const [],
@@ -84,11 +90,15 @@ class ShipsPageStatePersisted with ShipsPageStatePersistedMappable {
   final bool useContainFit;
   final bool alwaysShowEngineGlow;
 
+  /// Advanced filters: number sliders, and an "any" / "all" choice per group.
+  final bool advancedFilters;
+
   const ShipsPageStatePersisted({
     this.splitPane = false,
     this.showFilters = false,
     this.useContainFit = false,
     this.alwaysShowEngineGlow = false,
+    this.advancedFilters = false,
   });
 }
 
@@ -273,6 +283,9 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
     final itemsChanged = !identical(allShips, _searchIndexItems);
     _searchIndexItems = allShips;
+    // Sliders cover the whole ship list, not the filtered subset, so their
+    // ends don't move as you filter.
+    if (itemsChanged) _filters.updateRanges(allShips);
     final shipSearchIndices = itemsChanged
         ? _updateSearchIndices(allShips)
         : stateOrNull?.shipSearchIndices ?? _updateSearchIndices(allShips);
@@ -285,6 +298,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             showFilters: saved?.showFilters ?? false,
             useContainFit: saved?.useContainFit ?? false,
             alwaysShowEngineGlow: saved?.alwaysShowEngineGlow ?? false,
+            advancedFilters: saved?.advancedFilters ?? false,
           ),
         ))
         .copyWith(
@@ -292,6 +306,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       weaponsMap: weaponsMap,
       hullmodsMap: hullmodsMap,
       shipsWithModuleIds: shipsWithModuleIds,
+      moduleShipIds: computeModuleShipIds(moduleVariants, variantHullIdMap),
       allShips: allShips,
       shipSearchIndices: shipSearchIndices,
       isLoading: isLoadingShips,
@@ -340,6 +355,13 @@ class ShipsPageController extends Notifier<ShipsPageState> {
               SpoilerLevel.showAllSpoilers => Icons.visibility_outlined,
             },
             inactiveValue: SpoilerLevel.showAllSpoilers,
+          ),
+          BoolField<Ship>(
+            id: 'hideModules',
+            label: 'Hide Modules',
+            tooltip: 'Hide ships that are used as modules on other ships.',
+            predicate: (ship) =>
+            !(stateOrNull?.moduleShipIds.contains(ship.id) ?? false),
           ),
           BoolField<Ship>(
             id: 'hasModules',
@@ -462,6 +484,62 @@ class ShipsPageController extends Notifier<ShipsPageState> {
         collapsedByDefault: true,
         valueGetter: (ship) => ship.designation ?? '',
       ),
+      // Number sliders (advanced mode only).
+      RangeFilterGroup<Ship>(
+        id: 'rangeDeploymentPoints',
+        name: 'Deployment Points',
+        valueGetter: (ship) => ship.deploymentPoints,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeSpeed',
+        name: 'Max Speed',
+        valueGetter: (ship) => ship.maxSpeed,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeOrdnancePoints',
+        name: 'Ordnance Points',
+        valueGetter: (ship) => ship.ordnancePoints,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeArmor',
+        name: 'Armor',
+        valueGetter: (ship) => ship.armorRating,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeHull',
+        name: 'Hull',
+        valueGetter: (ship) => ship.hitpoints,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeFluxDissipation',
+        name: 'Flux Dissipation',
+        valueGetter: (ship) => ship.fluxDissipation,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeFluxCapacity',
+        name: 'Flux Capacity',
+        valueGetter: (ship) => ship.maxFlux,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeMaxBurn',
+        name: 'Max Burn',
+        valueGetter: (ship) => ship.maxBurn,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeFuel',
+        name: 'Fuel Capacity',
+        valueGetter: (ship) => ship.fuel,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeCargo',
+        name: 'Cargo Capacity',
+        valueGetter: (ship) => ship.cargo,
+      ),
+      RangeFilterGroup<Ship>(
+        id: 'rangeCrew',
+        name: 'Crew Capacity',
+        valueGetter: (ship) => ship.maxCrew,
+      ),
     ];
     return FilterScopeController<Ship>(scope: _scope, groups: groups);
   }
@@ -521,6 +599,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
                 showFilters: newState.showFilters,
                 useContainFit: newState.useContainFit,
                 alwaysShowEngineGlow: newState.alwaysShowEngineGlow,
+                advancedFilters: newState.advancedFilters,
               ),
             ),
       );
@@ -593,6 +672,16 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       persisted: state.persisted.copyWith(showFilters: !state.showFilters),
     );
     state = updatedState;
+    _persistState(state);
+  }
+
+  /// Turn advanced filters on or off. This only decides whether the per-group
+  /// "any" / "all" buttons are on show, so no re-filtering is needed.
+  void setAdvancedMode(bool advanced) {
+    if (advanced == state.advancedFilters) return;
+    state = state.copyWith(
+      persisted: state.persisted.copyWith(advancedFilters: advanced),
+    );
     _persistState(state);
   }
 

@@ -48,8 +48,12 @@ class FilterGridPersistButton extends ConsumerWidget {
               : theme.colorScheme.onSurface.withAlpha(100),
         ),
         style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          minimumSize: const Size(0, 12),
+          padding: EdgeInsets.zero,
+          // Small on purpose: this sits in a 300-wide filter panel header
+          // where the group's name needs the room.
+          minimumSize: const Size(24, 28),
+          maximumSize: const Size(24, 28),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
     );

@@ -317,8 +317,10 @@ class ShipListNotifier
 
   /// 3: sprite paths are stored as the data file writes them, not joined to
   /// the mod folder.
+  /// 4: `modules` written as one object (not a list) is now read, so old
+  /// caches are missing those modules.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   late final CachedVariantStore store =
@@ -558,19 +560,24 @@ class ShipListNotifier
         hullIdMap[variantId] = hullId;
 
         // Only create full ShipVariant objects for variants with modules.
-        // Modules in .variant files are a List<Map> of single-entry objects:
-        //   [{"WS0017": "module_variant_id"}, {"WS0018": "other_variant"}]
-        // Flatten into a single Map<String, String> for the model.
+        // The game accepts two shapes for `modules`, so we do too:
+        //   a list of single-entry objects (what vanilla writes)
+        //     [{"WS0017": "module_variant_id"}, {"WS0018": "other_variant"}]
+        //   or one object of slot id → variant id (some mods write this)
+        //     {"WS0017": "module_variant_id", "WS0018": "other_variant"}
+        // Flatten either into a single Map<String, String> for the model.
         final modulesRaw = map['modules'];
-        if (modulesRaw == null || modulesRaw is! List || modulesRaw.isEmpty) {
-          continue;
-        }
-
         final flatModules = <String, String>{};
-        for (final entry in modulesRaw) {
-          if (entry is Map) {
-            for (final kv in entry.entries) {
-              flatModules[kv.key.toString()] = kv.value.toString();
+        if (modulesRaw is Map) {
+          for (final kv in modulesRaw.entries) {
+            flatModules[kv.key.toString()] = kv.value.toString();
+          }
+        } else if (modulesRaw is List) {
+          for (final entry in modulesRaw) {
+            if (entry is Map) {
+              for (final kv in entry.entries) {
+                flatModules[kv.key.toString()] = kv.value.toString();
+              }
             }
           }
         }

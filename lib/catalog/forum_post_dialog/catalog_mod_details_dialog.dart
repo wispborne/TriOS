@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
-import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/catalog/catalog_page_controller.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/catalog/summary_resolver.dart';

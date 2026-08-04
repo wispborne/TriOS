@@ -187,22 +187,24 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
     final scope = notifier.scopeFor(pane);
     final groups = notifier.filterGroupsFor(pane);
 
-    return FiltersPanel(
-      onHide: () => notifier.setShowFilters(pane, false),
-      scrollController: scrollController,
-      width: 200,
-      activeFilterCount: activeFilterCount,
-      showClearAll: groups.any((g) => g.isActive),
-      onClearAll: () => notifier.clearAllFilters(pane),
-      filterWidgets: [
-        for (final g in groups)
-          FilterGroupRenderer<PortraitFilterItem>(
-            group: g,
-            scope: scope,
-            items: filterItems,
-            onChanged: () => notifier.onGroupChanged(pane, g.id),
-          ),
-      ],
+    return Card(
+      child: FiltersPanel(
+        onHide: () => notifier.setShowFilters(pane, false),
+        scrollController: scrollController,
+        width: 200,
+        activeFilterCount: activeFilterCount,
+        showClearAll: groups.any((g) => g.isActive),
+        onClearAll: () => notifier.clearAllFilters(pane),
+        filterWidgets: [
+          for (final g in groups)
+            FilterGroupRenderer<PortraitFilterItem>(
+              group: g,
+              scope: scope,
+              items: filterItems,
+              onChanged: () => notifier.onGroupChanged(pane, g.id),
+            ),
+        ],
+      ),
     );
   }
 

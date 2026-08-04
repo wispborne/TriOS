@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
-import 'package:trios/catalog/mod_browser_manager.dart';
+import 'package:trios/catalog/catalog_manager.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/cached_json_fetcher.dart';
 import 'package:trios/utils/extensions.dart';

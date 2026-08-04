@@ -13,6 +13,8 @@
   - Ship Viewer now shows animated engines and shields.
   - Ship Viewer now shows an in-game background behind ships (changeable).
   - Ship Viewer now has tooltips for modules.
+  - Ship and Weapons viewers now have any/all filter options (using Advanced checkbox).
+  - Ship and Weapons viewers now show more filters, including ranges (e.g. 12 - 60 DP).
   - 'Last Updated' column on the Mods page.
   - More background effects (Settings - Theme Modifiers).
   - May now mute updates for just one version of a mod.
@@ -29,12 +31,14 @@
   - Large ships/stations are now properly centered and zoomed on load.
   - Ship/station modules now show up immediately.
   - Faction Viewer: "Only Enabled Mods" now actually only shows data from enabled mods.
-  - Missing ship, weapon and hullmod images. TriOS now looks for an image the way the game does — every enabled mod in load order, then the game files — instead of only in the mod that named it. Fixes cases like the Autopulse Laser showing no image with Emergent Threats enabled, and means mods that only replace artwork now show up.
+  - Some ship modules did not show up.
+    - Happened when the mod used a json map instead of a json array of pairs like Vanilla.
 - Changed
   - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
   - About page now has an AI disclosure section.
   - Ship blueprint view options are now persisted.
   - New app logo by Vexlia.
+  - TriOS cache backups are now 7zipped to save space.
 
 # 1.6.1
 - Added

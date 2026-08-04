@@ -23,6 +23,7 @@ import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_details_dialog.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_image_cell.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
@@ -230,27 +231,62 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     );
   }
 
-  FiltersPanel buildFilterPanel(
+  Widget buildFilterPanel(
     ThemeData theme,
     List<Weapon> displayedWeapons,
     WeaponsPageState controllerState,
-    WeaponsPageController controller,
-  ) {
-    return FiltersPanel(
-      onHide: controller.toggleShowFilters,
-      scrollController: _filterScrollController,
-      activeFilterCount: controller.activeFilterCount,
-      showClearAll: controller.filterGroups.any((g) => g.isActive),
-      onClearAll: controller.clearAllFilters,
-      filterWidgets: [
-        for (final g in controller.filterGroups)
-          FilterGroupRenderer<Weapon>(
-            group: g,
-            scope: controller.scope,
-            items: displayedWeapons,
-            onChanged: () => controller.onGroupChanged(g.id),
-          ),
-      ],
+    WeaponsPageController controller, {
+    bool inDialog = false,
+  }) {
+    return ConditionalWrap(
+      condition: !inDialog,
+      wrapper: (child) => Card(child: child),
+      child: FiltersPanel(
+        onHide: inDialog
+            ? () => Navigator.of(context).pop()
+            : controller.toggleShowFilters,
+        // The dialog gets its own scrolling; the shared controller can only
+        // drive one list at a time.
+        scrollController: inDialog ? null : _filterScrollController,
+        width: inDialog ? 560 : 300,
+        showSearch: true,
+        isAdvanced: controllerState.advancedFilters,
+        onAdvancedChanged: controller.setAdvancedMode,
+        onExpand: inDialog ? null : _openFilterDialog,
+        activeFilterCount: controller.activeFilterCount,
+        showClearAll: controller.filterGroups.any((g) => g.isActive),
+        onClearAll: controller.clearAllFilters,
+        filterWidgets: [
+          for (final g in controller.filterGroups)
+            FilterGroupRenderer<Weapon>(
+              group: g,
+              scope: controller.scope,
+              items: displayedWeapons,
+              onChanged: () => controller.onGroupChanged(g.id),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows the same filters in a bigger window. Changes apply as you make
+  /// them, so the grid behind keeps up.
+  void _openFilterDialog() {
+    showFilterPanelDialog(
+      context,
+      (_) => Consumer(
+        builder: (context, ref, _) {
+          final state = ref.watch(weaponsPageControllerProvider);
+          final controller = ref.watch(weaponsPageControllerProvider.notifier);
+          return buildFilterPanel(
+            Theme.of(context),
+            state.weaponsBeforeGridFilter,
+            state,
+            controller,
+            inDialog: true,
+          );
+        },
+      ),
     );
   }
 

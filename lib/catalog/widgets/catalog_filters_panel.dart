@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/catalog/catalog_page_controller.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
@@ -17,21 +17,24 @@ class CatalogFiltersPanel extends ConsumerWidget {
     final controller = ref.watch(catalogPageControllerProvider.notifier);
     ref.watch(catalogPageControllerProvider);
 
-    return FiltersPanel(
-      width: 270,
-      onHide: controller.toggleShowFilters,
-      activeFilterCount: controller.activeFilterCount,
-      showClearAll: controller.filterGroups.any((g) => g.isActive),
-      onClearAll: controller.clearAllFilters,
-      filterWidgets: [
-        for (final g in controller.filterGroups)
-          FilterGroupRenderer<CatalogMod>(
-            group: g,
-            scope: controller.scope,
-            items: items,
-            onChanged: () => controller.onGroupChanged(g.id),
-          ),
-      ],
+    return Card(
+      margin: .zero,
+      child: FiltersPanel(
+        onHide: controller.toggleShowFilters,
+        activeFilterCount: controller.activeFilterCount,
+        showClearAll: controller.filterGroups.any((g) => g.isActive),
+        onClearAll: controller.clearAllFilters,
+        showSearch: false,
+        filterWidgets: [
+          for (final g in controller.filterGroups)
+            FilterGroupRenderer<CatalogMod>(
+              group: g,
+              scope: controller.scope,
+              items: items,
+              onChanged: () => controller.onGroupChanged(g.id),
+            ),
+        ],
+      ),
     );
   }
 }

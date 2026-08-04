@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/catalog/catalog_page_controller.dart';
 import 'package:trios/faction_viewer/faction_viewer_controller.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/catalog_card_click_action.dart';

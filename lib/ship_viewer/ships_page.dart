@@ -3,11 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:super_clipboard/super_clipboard.dart';
-import 'package:trios/widgets/snackbar.dart';
 import 'package:multi_split_view/multi_split_view.dart';
-import 'package:trios/descriptions/description_entry.dart';
-import 'package:trios/descriptions/descriptions_manager.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
@@ -25,14 +22,15 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
-import 'package:trios/widgets/description_with_substitutions.dart';
+import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
-import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/smart_search/smart_search_bar.dart';
+import 'package:trios/widgets/snackbar.dart';
+import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/viewer_split_pane.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
 
@@ -226,26 +224,59 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     );
   }
 
-  FiltersPanel buildFilterPanel(
+  Widget buildFilterPanel(
     ThemeData theme,
     List<Ship> displayedShips,
     ShipsPageState controllerState,
-    ShipsPageController controller,
-  ) {
-    return FiltersPanel(
-      onHide: controller.toggleShowFilters,
-      activeFilterCount: controller.activeFilterCount,
-      showClearAll: controller.filterGroups.any((g) => g.isActive),
-      onClearAll: controller.clearAllFilters,
-      filterWidgets: [
-        for (final g in controller.filterGroups)
-          FilterGroupRenderer<Ship>(
-            group: g,
-            scope: controller.scope,
-            items: displayedShips,
-            onChanged: () => controller.onGroupChanged(g.id),
-          ),
-      ],
+    ShipsPageController controller, {
+    bool inDialog = false,
+  }) {
+    return ConditionalWrap(
+      condition: !inDialog,
+      wrapper: (child) => Card(child: child),
+      child: FiltersPanel(
+        onHide: inDialog
+            ? () => Navigator.of(context).pop()
+            : controller.toggleShowFilters,
+        width: inDialog ? 560 : 300,
+        showSearch: true,
+        isAdvanced: controllerState.advancedFilters,
+        onAdvancedChanged: controller.setAdvancedMode,
+        onExpand: inDialog ? null : _openFilterDialog,
+        activeFilterCount: controller.activeFilterCount,
+        showClearAll: controller.filterGroups.any((g) => g.isActive),
+        onClearAll: controller.clearAllFilters,
+        filterWidgets: [
+          for (final g in controller.filterGroups)
+            FilterGroupRenderer<Ship>(
+              group: g,
+              scope: controller.scope,
+              items: displayedShips,
+              onChanged: () => controller.onGroupChanged(g.id),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Shows the same filters in a bigger window. Changes apply as you make
+  /// them, so the grid behind keeps up.
+  void _openFilterDialog() {
+    showFilterPanelDialog(
+      context,
+      (_) => Consumer(
+        builder: (context, ref, _) {
+          final state = ref.watch(shipsPageControllerProvider);
+          final controller = ref.watch(shipsPageControllerProvider.notifier);
+          return buildFilterPanel(
+            Theme.of(context),
+            state.shipsBeforeGridFilter,
+            state,
+            controller,
+            inDialog: true,
+          );
+        },
+      ),
     );
   }
 
@@ -283,14 +314,16 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           showBottomScrollbar: ScrollbarVisibility.always,
         ),
         rowBuilder: ({required item, required modifiers, required child}) =>
-            Padding(
-              padding: const .only(top: 4),
-              child: SizedBox(
-                height: 40,
-                child: InkWell(
-                  onTap: () => showShipDetailsDialog(context, ref, item),
-                  child: Container(
-                    color: Colors.transparent,
+            SizedBox(
+              height: 48,
+              child: InkWell(
+                onTap: () => showShipDetailsDialog(context, ref, item),
+                // The highlight fills the whole row; the top padding goes
+                // inside so it doesn't leave an unhighlighted strip.
+                child: Container(
+                  color: Colors.transparent,
+                  child: Padding(
+                    padding: const .only(top: 4),
                     child: buildRowContextMenu(item, child),
                   ),
                 ),
@@ -608,7 +641,6 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       ],
     );
   }
-
 }
 
 // Ship image loader with basic caching
@@ -747,7 +779,9 @@ class _ShipImageCellState extends State<ShipImageCell> {
       showSnackBar(
         context: context,
         type: SnackBarType.warn,
-        content: const Text('Copying images is not supported on this platform.'),
+        content: const Text(
+          'Copying images is not supported on this platform.',
+        ),
       );
       return;
     }

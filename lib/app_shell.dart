@@ -7,7 +7,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scaled_app/scaled_app.dart';
 import 'package:toastification/toastification.dart';
-import 'package:trios/catalog/mod_browser_page.dart';
+import 'package:trios/catalog/catalog_page.dart';
 import 'package:trios/chipper/chipper_app.dart';
 import 'package:trios/codex/codex_page.dart';
 import 'package:trios/dashboard/dashboard.dart';
@@ -251,7 +251,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const HullmodsPage(),
       const FactionViewerPage(),
       const SettingsPage(pagePadding: 8.0),
-      const CatalogPage(pagePadding: .all(8)),
+      const CatalogPage(pagePadding: .only(left: 8, top: 8, right: 8)),
       const TipsPage(),
       const SectorMapPage(),
       const CodexPage(),

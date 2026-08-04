@@ -46,9 +46,9 @@ Each card SHALL display: load status with a colored status dot, parsed item coun
 - **WHEN** the user hovers any icon-only button in the dialog (copy URL, refresh, clear, open folder)
 - **THEN** a tooltip explains the button's purpose
 
-### Requirement: Parity API on `mod_browser_manager`
+### Requirement: Parity API on `catalog_manager`
 
-The system SHALL expose public top-level functions in `lib/catalog/mod_browser_manager.dart` mirroring those in `lib/catalog/forum_data_manager.dart`:
+The system SHALL expose public top-level functions in `lib/catalog/catalog_manager.dart` mirroring those in `lib/catalog/forum_data_manager.dart`:
 
 - `Future<String> forceRefreshModRepo()` — bypasses the cache TTL and refetches
 - `void clearModRepoCache()` — deletes both `mod_repo.json` and `mod_repo.meta` from the cache directory

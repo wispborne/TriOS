@@ -35,6 +35,10 @@ class FilterScopeController<T> {
     Iterable<T> out = items;
     for (final g in groups) {
       if (g is ChipFilterGroup<T> && g.isActive) {
+        // "all" mode has to know which values the data actually has, so it
+        // doesn't ask for one that's gone with a mod and match nothing. The
+        // extra pass only runs for groups in that mode.
+        if (g.logicMode == ChipLogicMode.all) g.updateKnownValues(items);
         out = out.where(g.matches);
       }
     }
@@ -51,6 +55,26 @@ class FilterScopeController<T> {
       out = out.where(g.matches);
     }
     return out.toList();
+  }
+
+  /// Apply just the range groups. Only needed by pages that don't call
+  /// [applyNonChipFilters] (which already covers them).
+  List<T> applyRangeFilters(Iterable<T> items) {
+    Iterable<T> out = items;
+    for (final g in groups) {
+      if (g is RangeFilterGroup<T> && g.isActive) {
+        out = out.where(g.matches);
+      }
+    }
+    return out.toList();
+  }
+
+  /// Refresh every range group's data range. Pass the full item list (before
+  /// filtering) so the sliders don't shrink as filters are applied.
+  void updateRanges(Iterable<T> items) {
+    for (final g in groups) {
+      if (g is RangeFilterGroup<T>) g.updateRange(items);
+    }
   }
 
   int get activeCount {
@@ -105,6 +129,8 @@ class FilterScopeController<T> {
       if (group == null) continue;
       final selections = entry.value.selections;
       if (group is ChipFilterGroup<T>) {
+        // The logic mode isn't a chip value, so it applies straight away.
+        group.restoreLogicMode(selections[ChipFilterGroup.logicKey]);
         // Stage raw chip selections; apply-merge later when data is present.
         _pendingChipSelections[entry.key] = {
           for (final e in selections.entries)

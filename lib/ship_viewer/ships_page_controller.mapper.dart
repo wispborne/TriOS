@@ -121,6 +121,13 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
     opt: true,
     def: const {},
   );
+  static Set<String> _$moduleShipIds(ShipsPageState v) => v.moduleShipIds;
+  static const Field<ShipsPageState, Set<String>> _f$moduleShipIds = Field(
+    'moduleShipIds',
+    _$moduleShipIds,
+    opt: true,
+    def: const {},
+  );
   static List<Ship> _$allShips(ShipsPageState v) => v.allShips;
   static const Field<ShipsPageState, List<Ship>> _f$allShips = Field(
     'allShips',
@@ -167,6 +174,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
     #weaponsMap: _f$weaponsMap,
     #hullmodsMap: _f$hullmodsMap,
     #shipsWithModuleIds: _f$shipsWithModuleIds,
+    #moduleShipIds: _f$moduleShipIds,
     #allShips: _f$allShips,
     #filteredShips: _f$filteredShips,
     #shipsBeforeGridFilter: _f$shipsBeforeGridFilter,
@@ -182,6 +190,7 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
       weaponsMap: data.dec(_f$weaponsMap),
       hullmodsMap: data.dec(_f$hullmodsMap),
       shipsWithModuleIds: data.dec(_f$shipsWithModuleIds),
+      moduleShipIds: data.dec(_f$moduleShipIds),
       allShips: data.dec(_f$allShips),
       filteredShips: data.dec(_f$filteredShips),
       shipsBeforeGridFilter: data.dec(_f$shipsBeforeGridFilter),
@@ -287,6 +296,7 @@ abstract class ShipsPageStateCopyWith<$R, $In extends ShipsPageState, $Out>
     Map<String, Weapon>? weaponsMap,
     Map<String, Hullmod>? hullmodsMap,
     Set<String>? shipsWithModuleIds,
+    Set<String>? moduleShipIds,
     List<Ship>? allShips,
     List<Ship>? filteredShips,
     List<Ship>? shipsBeforeGridFilter,
@@ -380,6 +390,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
     Map<String, Weapon>? weaponsMap,
     Map<String, Hullmod>? hullmodsMap,
     Set<String>? shipsWithModuleIds,
+    Set<String>? moduleShipIds,
     List<Ship>? allShips,
     List<Ship>? filteredShips,
     List<Ship>? shipsBeforeGridFilter,
@@ -393,6 +404,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
       if (weaponsMap != null) #weaponsMap: weaponsMap,
       if (hullmodsMap != null) #hullmodsMap: hullmodsMap,
       if (shipsWithModuleIds != null) #shipsWithModuleIds: shipsWithModuleIds,
+      if (moduleShipIds != null) #moduleShipIds: moduleShipIds,
       if (allShips != null) #allShips: allShips,
       if (filteredShips != null) #filteredShips: filteredShips,
       if (shipsBeforeGridFilter != null)
@@ -415,6 +427,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
       #shipsWithModuleIds,
       or: $value.shipsWithModuleIds,
     ),
+    moduleShipIds: data.get(#moduleShipIds, or: $value.moduleShipIds),
     allShips: data.get(#allShips, or: $value.allShips),
     filteredShips: data.get(#filteredShips, or: $value.filteredShips),
     shipsBeforeGridFilter: data.get(
@@ -481,6 +494,13 @@ class ShipsPageStatePersistedMapper
         opt: true,
         def: false,
       );
+  static bool _$advancedFilters(ShipsPageStatePersisted v) => v.advancedFilters;
+  static const Field<ShipsPageStatePersisted, bool> _f$advancedFilters = Field(
+    'advancedFilters',
+    _$advancedFilters,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<ShipsPageStatePersisted> fields = const {
@@ -488,6 +508,7 @@ class ShipsPageStatePersistedMapper
     #showFilters: _f$showFilters,
     #useContainFit: _f$useContainFit,
     #alwaysShowEngineGlow: _f$alwaysShowEngineGlow,
+    #advancedFilters: _f$advancedFilters,
   };
 
   static ShipsPageStatePersisted _instantiate(DecodingData data) {
@@ -496,6 +517,7 @@ class ShipsPageStatePersistedMapper
       showFilters: data.dec(_f$showFilters),
       useContainFit: data.dec(_f$useContainFit),
       alwaysShowEngineGlow: data.dec(_f$alwaysShowEngineGlow),
+      advancedFilters: data.dec(_f$advancedFilters),
     );
   }
 
@@ -574,6 +596,7 @@ abstract class ShipsPageStatePersistedCopyWith<
     bool? showFilters,
     bool? useContainFit,
     bool? alwaysShowEngineGlow,
+    bool? advancedFilters,
   });
   ShipsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -595,6 +618,7 @@ class _ShipsPageStatePersistedCopyWithImpl<$R, $Out>
     bool? showFilters,
     bool? useContainFit,
     bool? alwaysShowEngineGlow,
+    bool? advancedFilters,
   }) => $apply(
     FieldCopyWithData({
       if (splitPane != null) #splitPane: splitPane,
@@ -602,6 +626,7 @@ class _ShipsPageStatePersistedCopyWithImpl<$R, $Out>
       if (useContainFit != null) #useContainFit: useContainFit,
       if (alwaysShowEngineGlow != null)
         #alwaysShowEngineGlow: alwaysShowEngineGlow,
+      if (advancedFilters != null) #advancedFilters: advancedFilters,
     }),
   );
   @override
@@ -613,6 +638,7 @@ class _ShipsPageStatePersistedCopyWithImpl<$R, $Out>
       #alwaysShowEngineGlow,
       or: $value.alwaysShowEngineGlow,
     ),
+    advancedFilters: data.get(#advancedFilters, or: $value.advancedFilters),
   );
 
   @override

@@ -99,6 +99,10 @@ class WeaponsPageStatePersistedMapper
     opt: true,
     def: false,
   );
+  static bool _$advancedFilters(WeaponsPageStatePersisted v) =>
+      v.advancedFilters;
+  static const Field<WeaponsPageStatePersisted, bool> _f$advancedFilters =
+      Field('advancedFilters', _$advancedFilters, opt: true, def: false);
 
   @override
   final MappableFields<WeaponsPageStatePersisted> fields = const {
@@ -106,6 +110,7 @@ class WeaponsPageStatePersistedMapper
     #useContainFit: _f$useContainFit,
     #showFilters: _f$showFilters,
     #alwaysShowGlow: _f$alwaysShowGlow,
+    #advancedFilters: _f$advancedFilters,
   };
 
   static WeaponsPageStatePersisted _instantiate(DecodingData data) {
@@ -114,6 +119,7 @@ class WeaponsPageStatePersistedMapper
       useContainFit: data.dec(_f$useContainFit),
       showFilters: data.dec(_f$showFilters),
       alwaysShowGlow: data.dec(_f$alwaysShowGlow),
+      advancedFilters: data.dec(_f$advancedFilters),
     );
   }
 
@@ -196,6 +202,7 @@ abstract class WeaponsPageStatePersistedCopyWith<
     bool? useContainFit,
     bool? showFilters,
     bool? alwaysShowGlow,
+    bool? advancedFilters,
   });
   WeaponsPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -217,12 +224,14 @@ class _WeaponsPageStatePersistedCopyWithImpl<$R, $Out>
     bool? useContainFit,
     bool? showFilters,
     bool? alwaysShowGlow,
+    bool? advancedFilters,
   }) => $apply(
     FieldCopyWithData({
       if (splitPane != null) #splitPane: splitPane,
       if (useContainFit != null) #useContainFit: useContainFit,
       if (showFilters != null) #showFilters: showFilters,
       if (alwaysShowGlow != null) #alwaysShowGlow: alwaysShowGlow,
+      if (advancedFilters != null) #advancedFilters: advancedFilters,
     }),
   );
   @override
@@ -232,6 +241,7 @@ class _WeaponsPageStatePersistedCopyWithImpl<$R, $Out>
         useContainFit: data.get(#useContainFit, or: $value.useContainFit),
         showFilters: data.get(#showFilters, or: $value.showFilters),
         alwaysShowGlow: data.get(#alwaysShowGlow, or: $value.alwaysShowGlow),
+        advancedFilters: data.get(#advancedFilters, or: $value.advancedFilters),
       );
 
   @override

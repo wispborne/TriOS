@@ -227,21 +227,23 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
 
     return Padding(
       padding: const EdgeInsets.only(left: 4, top: 4, bottom: 8),
-      child: FiltersPanel(
-        onHide: controller.toggleShowFilters,
-        scrollController: _filterScrollController,
-        activeFilterCount: controller.activeFilterCount,
-        showClearAll: controller.filterGroups.any((g) => g.isActive),
-        onClearAll: controller.clearAllFilters,
-        filterWidgets: [
-          for (final g in controller.filterGroups)
-            FilterGroupRenderer<Faction>(
-              group: g,
-              scope: controller.scope,
-              items: controllerState.allFactions,
-              onChanged: () => controller.onGroupChanged(g.id),
-            ),
-        ],
+      child: Card(
+        child: FiltersPanel(
+          onHide: controller.toggleShowFilters,
+          scrollController: _filterScrollController,
+          activeFilterCount: controller.activeFilterCount,
+          showClearAll: controller.filterGroups.any((g) => g.isActive),
+          onClearAll: controller.clearAllFilters,
+          filterWidgets: [
+            for (final g in controller.filterGroups)
+              FilterGroupRenderer<Faction>(
+                group: g,
+                scope: controller.scope,
+                items: controllerState.allFactions,
+                onChanged: () => controller.onGroupChanged(g.id),
+              ),
+          ],
+        ),
       ),
     );
   }

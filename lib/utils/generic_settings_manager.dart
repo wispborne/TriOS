@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 // import 'package:toml/toml.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/utils/backup_compression.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -256,11 +257,34 @@ abstract class GenericAsyncSettingsManager<T> {
     await settingsFile.copy(backupFile.path);
     await settingsFile.setLastModified(DateTime.now());
     Fimber.i("Backup of $fileName created at ${backupFile.path}");
+    await compressBackupFile(backupFile);
   }
 
   File getBackupFile() {
     final backupFileName = "${fileName}_backup.bak";
     return File(p.join(settingsFile.parent.path, backupFileName));
+  }
+
+  /// Where the backup ends up once it's been zipped up.
+  File getBackupArchiveFile() {
+    final backupFileName = "${fileName}_backup.7z";
+    return File(p.join(settingsFile.parent.path, backupFileName));
+  }
+
+  /// When the last backup was made, or null if there isn't one.
+  ///
+  /// Looks at both the zipped and the plain backup, since compression can fail
+  /// and leave a plain one behind.
+  Future<DateTime?> lastBackupTime() async {
+    DateTime? newest;
+    for (final file in [getBackupArchiveFile(), getBackupFile()]) {
+      if (!await file.exists()) continue;
+      final modified = await file.lastModified();
+      if (newest == null || modified.isAfter(newest)) {
+        newest = modified;
+      }
+    }
+    return newest;
   }
 
   Future<File> _getFile() async {

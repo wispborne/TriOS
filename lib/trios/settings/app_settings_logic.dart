@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/settings.dart';
+import 'package:trios/utils/backup_compression.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
@@ -200,14 +201,21 @@ class SettingsFileManager {
   void _createBackupSync() {
     int backupNumber = 1;
     File backupFile;
+    File archiveFile;
+    // Older backups have been zipped up, so skip a number if either kind is
+    // already using it. Otherwise we'd overwrite a backup we still have.
     do {
-      final backupFileName = "${_fileName}_backup_$backupNumber.bak";
-      backupFile = File(p.join(_settingsFile.parent.path, backupFileName));
+      final backupName = "${_fileName}_backup_$backupNumber";
+      backupFile = File(p.join(_settingsFile.parent.path, "$backupName.bak"));
+      archiveFile = File(p.join(_settingsFile.parent.path, "$backupName.7z"));
       backupNumber++;
-    } while (backupFile.existsSync());
+    } while (backupFile.existsSync() || archiveFile.existsSync());
 
     _settingsFile.copySync(backupFile.path);
     Fimber.i("Backup of $_fileName created at ${backupFile.path}");
+    // Zipping this up runs 7-Zip, so don't make startup wait on it. It only
+    // touches the copy, so nothing else here cares when it finishes.
+    unawaited(compressBackupFile(backupFile));
   }
 
   /// Attempts to load [Settings] from disk, returning `null` on failure.

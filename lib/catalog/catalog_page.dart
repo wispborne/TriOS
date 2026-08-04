@@ -1,14 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/catalog/catalog_mod_card.dart';
+import 'package:trios/catalog/catalog_page_controller.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
-import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/catalog/side_rail/side_rail.dart';
 import 'package:trios/catalog/side_rail/side_rail_panel.dart';
 import 'package:trios/catalog/widgets/catalog_filters_panel.dart';
@@ -25,13 +23,12 @@ import 'package:trios/utils/util.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
+import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 
 import '../main.dart';
 import '../trios/download_manager/downloader.dart';
-import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
-
 import '../widgets/moving_tooltip.dart';
 import 'catalog_data_sources_dialog.dart';
 
@@ -330,12 +327,19 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                         children: [
                           if (catalogState.showFilters)
                             Padding(
-                              padding: const EdgeInsets.only(right: 4, top: 4),
+                              padding: const EdgeInsets.only(
+                                top: 4,
+                                bottom: 8,
+                                right: 8,
+                              ),
                               child: CatalogFiltersPanel(items: allMods),
                             )
                           else
                             Padding(
-                              padding: const EdgeInsets.only(right: 12, top: 4),
+                              padding: const EdgeInsets.only(
+                                top: 4,
+                                right: 16,
+                              ),
                               child: CollapsedFilterButton(
                                 onTap: catalogController.toggleShowFilters,
                                 activeFilterCount:
@@ -354,54 +358,57 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       ),
                                     ),
                                   )
-                                : WispAdaptiveGridView<CatalogMod>(
-                                    items: displayedMods,
-                                    minItemWidth: ref.watch(
-                                      appSettings.select(
-                                        (s) => s.catalogMinItemWidth,
-                                      ),
-                                    ),
-                                    horizontalSpacing: ref.watch(
-                                      appSettings.select(
-                                        (s) => s.catalogCardSpacing,
-                                      ),
-                                    ),
-                                    verticalSpacing: ref.watch(
-                                      appSettings.select(
-                                        (s) => s.catalogCardSpacing,
-                                      ),
-                                    ),
-                                    padding: EdgeInsets.only(
-                                      bottom: widget.pagePadding.bottom,
-                                    ),
-                                    itemBuilder: (context, gathered, index) {
-                                      final status = catalogController
-                                          .statusForModName(
-                                            gathered.entry.name,
-                                          );
-
-                                      return SizedBox(
-                                        height: 140,
-                                        child: CatalogModCard(
-                                          gathered: gathered,
-                                          versionCheckComparison:
-                                              status?.versionCheck,
-                                          canUseEmbeddedBrowser:
-                                              currentPlatform !=
-                                              TargetPlatform.linux,
-                                          linkLoader: (url) {
-                                            selectedModName =
-                                                gathered.entry.name;
-                                            _openInEmbeddedBrowser(url);
-                                          },
-                                          isSelected:
-                                              currentUrl != null &&
-                                              currentUrl ==
-                                                  gathered.entry
-                                                      .getBestWebsiteUrl(),
+                                : Padding(
+                                    padding: const .only(top: 4),
+                                    child: WispAdaptiveGridView<CatalogMod>(
+                                      items: displayedMods,
+                                      minItemWidth: ref.watch(
+                                        appSettings.select(
+                                          (s) => s.catalogMinItemWidth,
                                         ),
-                                      );
-                                    },
+                                      ),
+                                      horizontalSpacing: ref.watch(
+                                        appSettings.select(
+                                          (s) => s.catalogCardSpacing,
+                                        ),
+                                      ),
+                                      verticalSpacing: ref.watch(
+                                        appSettings.select(
+                                          (s) => s.catalogCardSpacing,
+                                        ),
+                                      ),
+                                      padding: EdgeInsets.only(
+                                        bottom: widget.pagePadding.bottom,
+                                      ),
+                                      itemBuilder: (context, gathered, index) {
+                                        final status = catalogController
+                                            .statusForModName(
+                                              gathered.entry.name,
+                                            );
+
+                                        return SizedBox(
+                                          height: 140,
+                                          child: CatalogModCard(
+                                            gathered: gathered,
+                                            versionCheckComparison:
+                                                status?.versionCheck,
+                                            canUseEmbeddedBrowser:
+                                                currentPlatform !=
+                                                TargetPlatform.linux,
+                                            linkLoader: (url) {
+                                              selectedModName =
+                                                  gathered.entry.name;
+                                              _openInEmbeddedBrowser(url);
+                                            },
+                                            isSelected:
+                                                currentUrl != null &&
+                                                currentUrl ==
+                                                    gathered.entry
+                                                        .getBestWebsiteUrl(),
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                           ),
                         ],
@@ -947,60 +954,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
         ),
       ],
     );
-    // },
-    // loading: () => const Center(child: CircularProgressIndicator()),
-    // error: (error, stack) => Center(
-    //   child: SelectableText('Error loading weapons: $error'),
-    // ),
-    // );
   }
-
-  // static CacheManager? _adblockListCacheManager;
-
-  // Only supported on Android, iOS, MacOS: https://inappwebview.dev/docs/webview/content-blockers
-  // void downloadAdBlockList() async {
-  //   try {
-  //     _adblockListCacheManager ??= CacheManager(
-  //         Config("trios_adblock_list_cache", stalePeriod: const Duration(days: 3)));
-  //   } catch (ex, st) {
-  //     Fimber.e('Failed to create mod catalog adblock list cache manager',
-  //         ex: ex, stacktrace: st);
-  //   }
-  //
-  //   if (_adblockListCacheManager == null) return;
-  //
-  //   try {
-  //     final cacheManagerLocal = _adblockListCacheManager!;
-  //     final adblockList = await (await cacheManagerLocal.getSingleFile(
-  //             "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"))
-  //         .readAsLines()
-  //       ..removeWhere((line) => line.trim().startsWith("#") || line.isEmpty);
-  //
-  //     List<String> transformed = adblockList.map((entry) {
-  //       // Extract the domain part by splitting and taking the second part
-  //       String domain = entry.split(" ")[1];
-  //       // Convert to the desired regex pattern format
-  //       return '.*.$domain/.*';
-  //     })
-  //         .whereType<String>()
-  //         .toList();
-  //
-  //     for (final adUrlFilter in transformed) {
-  //       contentBlockers.add(ContentBlocker(
-  //           trigger: ContentBlockerTrigger(
-  //             urlFilter: adUrlFilter,
-  //           ),
-  //           action: ContentBlockerAction(
-  //             type: ContentBlockerActionType.BLOCK,
-  //           )));
-  //     }
-  //
-  //     webViewController?.setSettings(
-  //         settings: webSettings!..contentBlockers = contentBlockers);
-  //   } catch (ex, st) {
-  //     Fimber.w("Failed to download adblock list.", ex: ex, stacktrace: st);
-  //   }
-  // }
 
   @override
   void dispose() {
@@ -1123,71 +1077,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
         ),
       ],
     );
-  }
-}
-
-// Custom widget for asynchronously checking file existence and displaying the image
-class WeaponImageCell extends StatefulWidget {
-  final List<String> imagePaths;
-
-  const WeaponImageCell({super.key, required this.imagePaths});
-
-  @override
-  State<WeaponImageCell> createState() => _WeaponImageCellState();
-}
-
-class _WeaponImageCellState extends State<WeaponImageCell> {
-  static final Map<String, bool> _fileExistsCache = {};
-
-  String? _existingImagePath;
-
-  @override
-  void initState() {
-    super.initState();
-    _findExistingImagePath();
-  }
-
-  void _findExistingImagePath() async {
-    for (String path in widget.imagePaths) {
-      if (_fileExistsCache.containsKey(path)) {
-        if (_fileExistsCache[path] == true) {
-          _existingImagePath = path;
-          break;
-        }
-      } else {
-        bool exists = await File(path).exists();
-        _fileExistsCache[path] = exists;
-        if (exists) {
-          _existingImagePath = path;
-          break;
-        }
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        // Trigger a rebuild with the found image path
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_existingImagePath == null) {
-      // While checking or if no image is found, show a placeholder
-      return const SizedBox(
-        width: 50,
-        height: 50,
-        child: Center(child: Icon(Icons.image_not_supported)),
-      );
-    } else {
-      return Image.file(
-        File(_existingImagePath!),
-        width: 50,
-        height: 50,
-        fit: BoxFit.contain,
-      );
-    }
   }
 }
 

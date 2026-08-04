@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
-import 'package:trios/catalog/mod_browser_manager.dart';
+import 'package:trios/catalog/catalog_manager.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_records/mod_record.dart';

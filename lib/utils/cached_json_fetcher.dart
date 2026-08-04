@@ -7,7 +7,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/logging.dart';
 
 /// Small reusable HTTP-JSON fetcher with a TTL'd on-disk cache and a stale
-/// fallback when the network fetch fails. Both [mod_browser_manager] and
+/// fallback when the network fetch fails. Both [catalog_manager] and
 /// [forum_data_manager] use one of these to avoid re-implementing the same
 /// cache/TTL/stale-fallback dance.
 class CachedJsonFetcher {

@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -342,6 +344,8 @@ class _DeepLinkConfirmationDialogState
           style: theme.textTheme.bodySmall?.copyWith(
             color: hasError
                 ? theme.colorScheme.error
+                : entry.alreadyInstalled
+                ? theme.triosExtensions.warning
                 : theme.colorScheme.onSurface.withValues(alpha: 0.6),
             fontStyle: FontStyle.italic,
           ),

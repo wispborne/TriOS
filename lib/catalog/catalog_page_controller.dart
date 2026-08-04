@@ -1,7 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_links.dart';
-import 'package:trios/catalog/mod_browser_manager.dart';
+import 'package:trios/catalog/catalog_manager.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
@@ -16,7 +16,7 @@ import 'package:trios/utils/mod_search.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
 
-part 'mod_browser_page_controller.mapper.dart';
+part 'catalog_page_controller.mapper.dart';
 
 const String kCatalogPageId = 'catalog';
 

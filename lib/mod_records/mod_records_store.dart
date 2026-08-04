@@ -12,7 +12,7 @@ import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../catalog/forum_data_manager.dart';
-import '../catalog/mod_browser_manager.dart';
+import '../catalog/catalog_manager.dart';
 
 /// Riverpod provider for the mod records store.
 final modRecordsStore =

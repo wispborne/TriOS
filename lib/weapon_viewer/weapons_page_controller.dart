@@ -27,11 +27,15 @@ class WeaponsPageStatePersisted with WeaponsPageStatePersistedMappable {
   final bool showFilters;
   final bool alwaysShowGlow;
 
+  /// Advanced filters: number sliders, and an "any" / "all" choice per group.
+  final bool advancedFilters;
+
   const WeaponsPageStatePersisted({
     this.splitPane = false,
     this.useContainFit = false,
     this.showFilters = false,
     this.alwaysShowGlow = false,
+    this.advancedFilters = false,
   });
 }
 
@@ -52,6 +56,8 @@ class WeaponsPageState with WeaponsPageStateMappable {
   bool get showFilters => persisted.showFilters;
 
   bool get alwaysShowGlow => persisted.alwaysShowGlow;
+
+  bool get advancedFilters => persisted.advancedFilters;
 
   const WeaponsPageState({
     this.persisted = const WeaponsPageStatePersisted(),
@@ -150,6 +156,9 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
 
     final itemsChanged = !identical(allWeapons, _searchIndexItems);
     _searchIndexItems = allWeapons;
+    // Sliders cover the whole weapon list, not the filtered subset, so their
+    // ends don't move as you filter.
+    if (itemsChanged) _filters.updateRanges(allWeapons);
     final weaponValuesByWeaponId = itemsChanged
         ? _updateSearchIndices(allWeapons)
         : stateOrNull?.weaponSearchIndices ?? _updateSearchIndices(allWeapons);
@@ -162,6 +171,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
                     useContainFit: saved?.useContainFit ?? false,
                     showFilters: saved?.showFilters ?? false,
                     alwaysShowGlow: saved?.alwaysShowGlow ?? false,
+                    advancedFilters: saved?.advancedFilters ?? false,
                   ),
                 ))
             .copyWith(
@@ -260,6 +270,42 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
         collapsedByDefault: true,
         valueGetter: (weapon) => weapon.techManufacturer ?? '',
       ),
+      // Number sliders (advanced mode only).
+      RangeFilterGroup<Weapon>(
+        id: 'rangeDamage',
+        name: 'Damage per Shot',
+        valueGetter: (weapon) => weapon.damagePerShot,
+      ),
+      RangeFilterGroup<Weapon>(
+        id: 'rangeDps',
+        name: 'Damage per Second',
+        valueGetter: (weapon) => weapon.damagePerSecond,
+      ),
+      RangeFilterGroup<Weapon>(
+        id: 'rangeOps',
+        name: 'Ordnance Points',
+        valueGetter: (weapon) => weapon.ops,
+      ),
+      RangeFilterGroup<Weapon>(
+        id: 'rangeRange',
+        name: 'Range',
+        valueGetter: (weapon) => weapon.range,
+      ),
+      RangeFilterGroup<Weapon>(
+        id: 'rangeFluxPerSecond',
+        name: 'Flux per Second',
+        valueGetter: (weapon) => weapon.fluxPerSecond,
+      ),
+      RangeFilterGroup<Weapon>(
+        id: 'rangeTurnRate',
+        name: 'Turn Rate',
+        valueGetter: (weapon) => weapon.turnRate,
+      ),
+      RangeFilterGroup<Weapon>(
+        id: 'rangeAmmo',
+        name: 'Ammo',
+        valueGetter: (weapon) => weapon.ammo,
+      ),
     ];
     return FilterScopeController<Weapon>(scope: _scope, groups: groups);
   }
@@ -288,6 +334,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
             useContainFit: newState.useContainFit,
             showFilters: newState.showFilters,
             alwaysShowGlow: newState.alwaysShowGlow,
+            advancedFilters: newState.advancedFilters,
           ),
         );
       });
@@ -309,6 +356,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
   ) {
     var weapons = _applyEnabledAndHidden(currentState.allWeapons.toList());
     weapons = _applySpoilers(weapons);
+    weapons = _filters.applyRangeFilters(weapons);
 
     final weaponsBeforeGridFilter = weapons.toList();
 
@@ -386,6 +434,16 @@ class WeaponsPageController extends Notifier<WeaponsPageState> {
       persisted: state.persisted.copyWith(showFilters: !state.showFilters),
     );
     state = updatedState;
+    _persistState(state);
+  }
+
+  /// Turn advanced filters on or off. This only decides whether the per-group
+  /// "any" / "all" buttons are on show, so no re-filtering is needed.
+  void setAdvancedMode(bool advanced) {
+    if (advanced == state.advancedFilters) return;
+    state = state.copyWith(
+      persisted: state.persisted.copyWith(advancedFilters: advanced),
+    );
     _persistState(state);
   }
 

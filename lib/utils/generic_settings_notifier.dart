@@ -36,11 +36,9 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
         _isInitialized = true;
         // Create a backup on initial load (max of once every 30 mins), just in case something catastrophic happens during runtime and wipes the main one.
         try {
-          if (!settingsManager.getBackupFile().existsSync() ||
-              DateTime.now().difference(
-                    settingsManager.getBackupFile().lastModifiedSync(),
-                  ) >
-                  Duration(minutes: 30)) {
+          final lastBackup = await settingsManager.lastBackupTime();
+          if (lastBackup == null ||
+              DateTime.now().difference(lastBackup) > Duration(minutes: 30)) {
             settingsManager.createBackup();
           }
         } catch (e, stackTrace) {

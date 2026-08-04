@@ -4,6 +4,7 @@ import 'package:trios/widgets/filter_engine/filter_scope.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persist_button.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/range_filter_widget.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 
 /// Dispatches a [FilterGroup] to its type-specific UI.
@@ -31,7 +32,9 @@ class FilterGroupRenderer<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final g = group;
+    final options = FilterPanelOptions.of(context);
     if (g is ChipFilterGroup<T>) {
+      // Chip groups do their own search filtering, chip by chip.
       return GridFilterWidget<T>(
         filter: g,
         items: items,
@@ -44,16 +47,42 @@ class FilterGroupRenderer<T> extends StatelessWidget {
         },
       );
     }
+    if (g is RangeFilterGroup<T>) {
+      if (!_nameMatchesSearch(options.searchTerm, [g.name])) {
+        return const SizedBox.shrink();
+      }
+      return RangeFilterWidget<T>(group: g, scope: scope, onChanged: onChanged);
+    }
     if (g is BoolFilterGroup<T>) {
+      if (!_nameMatchesSearch(options.searchTerm, [g.name])) {
+        return const SizedBox.shrink();
+      }
       return _BoolRow<T>(group: g, onChanged: onChanged);
     }
     if (g is EnumFilterGroup<T, dynamic>) {
+      if (!_nameMatchesSearch(options.searchTerm, [g.name])) {
+        return const SizedBox.shrink();
+      }
       return _EnumRow<T>(group: g, onChanged: onChanged);
     }
     if (g is CompositeFilterGroup<T>) {
+      if (!_nameMatchesSearch(options.searchTerm, [
+        g.name,
+        for (final f in g.fields) f.label,
+      ])) {
+        return const SizedBox.shrink();
+      }
       return _CompositeCard<T>(group: g, scope: scope, onChanged: onChanged);
     }
     return const SizedBox.shrink();
+  }
+
+  /// Groups with no chips (sliders, checkboxes, dropdowns) match the panel's
+  /// search box on their own name and field labels.
+  bool _nameMatchesSearch(String searchTerm, List<String> names) {
+    if (searchTerm.isEmpty) return true;
+    final needle = searchTerm.toLowerCase();
+    return names.any((n) => n.toLowerCase().contains(needle));
   }
 }
 

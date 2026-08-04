@@ -104,7 +104,7 @@ Because `getBestWebsiteUrl()` returns null for Discord-only mods and those mods 
 The Catalog page's overflow button (previously `buildCatalogOverflowButton` implemented with `PopupStyleMenuAnchor` and `MenuItemButton`) SHALL be replaced with the shared `OverflowMenuButton` widget from `lib/widgets/overflow_menu_button.dart`, matching the pattern used by other viewer pages (ships, weapons, hullmods, portraits). The existing "Data sources…" entry SHALL migrate to an `OverflowMenuItem.toEntry(...)` without behavior change.
 
 #### Scenario: Overflow menu is constructed via OverflowMenuButton
-- **WHEN** inspecting `mod_browser_page.dart` after the change
+- **WHEN** inspecting `catalog_page.dart` after the change
 - **THEN** the overflow button is built using `OverflowMenuButton(menuItems: ...)` and no `PopupStyleMenuAnchor` remains in that file
 
 #### Scenario: Data sources entry still works

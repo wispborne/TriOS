@@ -6,7 +6,7 @@ import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_post_dialog/forum_post_header.dart';
 import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
-import 'package:trios/catalog/mod_browser_page_controller.dart';
+import 'package:trios/catalog/catalog_page_controller.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';

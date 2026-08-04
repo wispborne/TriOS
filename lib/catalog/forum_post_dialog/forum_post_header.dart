@@ -202,6 +202,10 @@ class _DownloadSection extends StatelessWidget {
     final otherGroups = groups
         .where((g) => g.modName != null && g.role != LlmModRole.main)
         .toList();
+    // A lone main download is the mod the dialog is already named after, so
+    // its name on the button would just be said twice. Everything under "Also
+    // in this thread" is a different mod, so those always say which.
+    final showMainNames = mainGroups.length > 1;
 
     return Column(
       crossAxisAlignment: .start,
@@ -211,6 +215,7 @@ class _DownloadSection extends StatelessWidget {
         for (final group in mainGroups)
           _DownloadRow(
             group: group,
+            showGroupName: showMainNames,
             fallbackModName: fallbackModName,
             onDownload: onDownload,
           ),
@@ -220,6 +225,7 @@ class _DownloadSection extends StatelessWidget {
           for (final group in otherGroups)
             _DownloadRow(
               group: group,
+              showGroupName: true,
               fallbackModName: fallbackModName,
               onDownload: onDownload,
             ),
@@ -234,10 +240,13 @@ class _DownloadRow extends StatelessWidget {
   final String fallbackModName;
   final void Function(DownloadCandidate candidate, String modName) onDownload;
 
+  final bool showGroupName;
+
   const _DownloadRow({
     required this.group,
     required this.fallbackModName,
     required this.onDownload,
+    required this.showGroupName,
   });
 
   static String? _roleLabel(LlmModRole role) => switch (role) {
@@ -272,24 +281,24 @@ class _DownloadRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 6,
               children: [
-                Flexible(
-                  child: Text(
-                    group.modName!,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                button,
+                if (showGroupName)
+                  Flexible(
+                    child: Text(
+                      group.modName!,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
                 if (roleLabel != null) _RoleTag(label: roleLabel),
               ],
             ),
             _DependencyLine(group: group),
           ],
         ),
-        const SizedBox(width: 8),
-        button,
       ],
     );
   }
@@ -334,10 +343,9 @@ class _DependencyLine extends StatelessWidget {
       color: theme.textTheme.labelSmall?.color?.withValues(alpha: 0.7),
     );
 
-    if (group.installsDependencies) {
-      return Text('Install incl. dependencies', style: style);
+    if (group.installsDependencies || group.dependencies.isEmpty) {
+      return const SizedBox.shrink();
     }
-    if (group.dependencies.isEmpty) return const SizedBox.shrink();
 
     return Wrap(
       spacing: 8,

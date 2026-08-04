@@ -231,27 +231,29 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
     );
   }
 
-  FiltersPanel _buildFilterPanel(
+  Widget _buildFilterPanel(
     ThemeData theme,
     List<Hullmod> displayedHullmods,
     HullmodsPageState controllerState,
     HullmodsPageController controller,
   ) {
-    return FiltersPanel(
-      onHide: controller.toggleShowFilters,
-      scrollController: _filterScrollController,
-      activeFilterCount: controller.activeFilterCount,
-      showClearAll: controller.filterGroups.any((g) => g.isActive),
-      onClearAll: controller.clearAllFilters,
-      filterWidgets: [
-        for (final g in controller.filterGroups)
-          FilterGroupRenderer<Hullmod>(
-            group: g,
-            scope: controller.scope,
-            items: displayedHullmods,
-            onChanged: () => controller.onGroupChanged(g.id),
-          ),
-      ],
+    return Card(
+      child: FiltersPanel(
+        onHide: controller.toggleShowFilters,
+        scrollController: _filterScrollController,
+        activeFilterCount: controller.activeFilterCount,
+        showClearAll: controller.filterGroups.any((g) => g.isActive),
+        onClearAll: controller.clearAllFilters,
+        filterWidgets: [
+          for (final g in controller.filterGroups)
+            FilterGroupRenderer<Hullmod>(
+              group: g,
+              scope: controller.scope,
+              items: displayedHullmods,
+              onChanged: () => controller.onGroupChanged(g.id),
+            ),
+        ],
+      ),
     );
   }
 

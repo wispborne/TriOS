@@ -107,6 +107,28 @@ List<ResolvedModule> resolveModulesWithIndex(
   return resolved;
 }
 
+/// Compute the set of ship IDs that are used as a module on some other ship.
+///
+/// Reads the module mappings straight off every variant that has them, so a
+/// hull is counted no matter which variant of its parent docks it. Module
+/// entries name a variant ID, so each one is turned into a hull ID via
+/// [variantHullIdMap].
+Set<String> computeModuleShipIds(
+  Map<String, ShipVariant> moduleVariants,
+  Map<String, String> variantHullIdMap,
+) {
+  final result = <String>{};
+  for (final variant in moduleVariants.values) {
+    final modules = variant.modules;
+    if (modules == null) continue;
+    for (final moduleVariantId in modules.values) {
+      final hullId = variantHullIdMap[moduleVariantId];
+      if (hullId != null) result.add(hullId);
+    }
+  }
+  return result;
+}
+
 /// Compute the set of ship IDs that have at least one resolvable station
 /// module. Builds `shipById` once and reuses it across all ships, so the
 /// inner loop is O(1) map lookups per ship instead of O(N) inserts.

@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/filter_engine/filter_group.dart';
 import 'package:trios/widgets/filter_engine/filter_scope.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persist_button.dart';
@@ -9,6 +13,42 @@ import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+
+/// Panel-wide settings that individual filter groups read: the panel's search
+/// box and whether advanced mode is on.
+///
+/// [FiltersPanel] supplies this. Groups are built by the page, above the
+/// panel, so they can't be given these as constructor arguments.
+class FilterPanelOptions extends InheritedWidget {
+  /// What the user typed in the panel's search box. Empty means "show all".
+  final String searchTerm;
+
+  /// Whether the panel is in advanced mode.
+  final bool isAdvanced;
+
+  const FilterPanelOptions({
+    super.key,
+    required this.searchTerm,
+    required this.isAdvanced,
+    required super.child,
+  });
+
+  static const FilterPanelOptions _defaults = FilterPanelOptions(
+    searchTerm: '',
+    isAdvanced: false,
+    child: SizedBox.shrink(),
+  );
+
+  /// Returns the enclosing panel's options, or plain defaults when a filter
+  /// group is rendered outside a [FiltersPanel].
+  static FilterPanelOptions of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<FilterPanelOptions>() ??
+      _defaults;
+
+  @override
+  bool updateShouldNotify(FilterPanelOptions oldWidget) =>
+      searchTerm != oldWidget.searchTerm || isAdvanced != oldWidget.isAdvanced;
+}
 
 /// Widget rendering a single [ChipFilterGroup] with lock-button, tri-state
 /// chips, include/exclude counts and a collapsible header.
@@ -43,6 +83,13 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
   List<String> _uniqueValues = [];
   Map<String, int> _valueCounts = const {};
   late bool _isExpanded = !widget.filter.collapsedByDefault;
+
+  /// The panel's search term, read in `build` so the button callbacks can use
+  /// it without another context lookup.
+  String _searchTerm = '';
+
+  /// Chips left after the panel's search box is applied.
+  List<String> _searchedValues = const [];
 
   @override
   void initState() {
@@ -107,9 +154,9 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
     }
   }
 
-  /// If the group is currently locked, mirror the new selections to
+  /// If the group is currently locked, mirror the group's state to
   /// persistence so settings reflect the latest state.
-  void _maybePersist(Map<String, bool?> newFilterStates) {
+  void _maybePersist() {
     final key = FilterGroupPersistence.keyFor(widget.scope, widget.filter.id);
     final isLocked = ref
         .read(appSettings)
@@ -118,15 +165,28 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
     if (!isLocked) return;
     ref
         .read(filterGroupPersistenceProvider)
-        .write(widget.scope, widget.filter.id, newFilterStates);
+        .write(widget.scope, widget.filter.id, widget.filter.serialize());
   }
 
   void _emit(Map<String, bool?> newFilterStates) {
     widget.onSelectionChanged(newFilterStates);
-    _maybePersist(newFilterStates);
+    _maybePersist();
   }
 
+  /// Values the All / Clear / Exclude buttons act on. They stick to what the
+  /// search box is showing; holding shift acts on the whole group instead.
+  List<String> get _valuesToActOn =>
+      HardwareKeyboard.instance.isShiftPressed || _searchTerm.isEmpty
+      ? _uniqueValues
+      : _searchedValues;
+
   void _toggleValue(String value) {
+    // Shift-click solos: everything else in the group is cleared.
+    if (HardwareKeyboard.instance.isShiftPressed) {
+      _emit({value: true});
+      return;
+    }
+
     final newFilterStates = Map<String, bool?>.from(widget.filterStates);
 
     bool? currentState = widget.filterStates[value];
@@ -149,16 +209,48 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
     _emit(newFilterStates);
   }
 
-  void _selectAll() {
+  void _setAll(bool state) {
     final newFilterStates = Map<String, bool?>.from(widget.filterStates);
-    for (final value in _uniqueValues) {
-      newFilterStates[value] = true;
+    for (final value in _valuesToActOn) {
+      newFilterStates[value] = state;
     }
     _emit(newFilterStates);
   }
 
   void _clearAll() {
-    _emit({});
+    // With no search on, wipe the lot — including any values that aren't in
+    // the current data (loaded from settings for mods that aren't on).
+    if (_searchTerm.isEmpty || HardwareKeyboard.instance.isShiftPressed) {
+      _emit({});
+      return;
+    }
+    final newFilterStates = Map<String, bool?>.from(widget.filterStates);
+    for (final value in _searchedValues) {
+      newFilterStates.remove(value);
+    }
+    _emit(newFilterStates);
+  }
+
+  void _toggleLogicMode() {
+    widget.filter.logicMode = widget.filter.logicMode == ChipLogicMode.any
+        ? ChipLogicMode.all
+        : ChipLogicMode.any;
+    setState(() {});
+    // Re-runs filtering with the new mode and saves it if the group is locked.
+    _emit(Map<String, bool?>.from(widget.filterStates));
+  }
+
+  /// Chips left after the panel's search box is applied. A group whose own
+  /// name matches keeps all of its chips.
+  List<String> _applySearch(String term) {
+    if (term.isEmpty) return _uniqueValues;
+    final needle = term.toLowerCase();
+    if (widget.filter.name.toLowerCase().contains(needle)) return _uniqueValues;
+    return _uniqueValues.where((value) {
+      if (value.toLowerCase().contains(needle)) return true;
+      final display = widget.filter.displayNameGetter?.call(value);
+      return display != null && display.toLowerCase().contains(needle);
+    }).toList();
   }
 
   int get includedCount =>
@@ -202,10 +294,71 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
     );
   }
 
+  /// Header buttons are kept small on purpose: the panel is only 300 wide and
+  /// the group's name needs the room more than the buttons do.
+  ButtonStyle _headerButtonStyle(ThemeData theme) => TextButton.styleFrom(
+    padding: EdgeInsets.zero,
+    minimumSize: const Size(24, 28),
+    maximumSize: const Size(24, 28),
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    foregroundColor: theme.colorScheme.onSurface,
+  );
+
+  /// The "any" / "all" button. "any" is the old behaviour: one of the
+  /// included values is enough. "all" demands every one of them.
+  Widget _buildLogicButton(ThemeData theme) {
+    final isAll = widget.filter.logicMode == ChipLogicMode.all;
+    return MovingTooltipWidget.text(
+      message: isAll
+          ? 'All: only shows items that have every value you include.\n'
+                'Click for "any".'
+          : 'Any: shows items with at least one of the values you include.\n'
+                'Click for "all".',
+      child: TextButton(
+        onPressed: _toggleLogicMode,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          minimumSize: const Size(0, 28),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          foregroundColor: isAll
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurface,
+        ),
+        child: Text(
+          isAll ? 'all' : 'any',
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: isAll ? FontWeight.bold : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tooltip for the include-all / exclude-all / clear-all buttons, with a
+  /// note about the search box when one is in use.
+  String _allButtonsTooltip(String label) => _searchTerm.isEmpty
+      ? label
+      : '$label\nOnly the values the search is showing.\n'
+            'Hold shift to do the whole group.';
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasFilters = widget.filterStates.isNotEmpty;
+    final options = FilterPanelOptions.of(context);
+    _searchTerm = options.searchTerm;
+    _searchedValues = _applySearch(_searchTerm);
+
+    // Nothing in this group matches the search — hide it entirely.
+    if (_searchTerm.isNotEmpty && _searchedValues.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // The logic button hides in simple mode, unless it's set to something
+    // other than the default — a group must never filter differently with no
+    // visible reason why.
+    final showLogicButton =
+        options.isAdvanced || widget.filter.logicMode != ChipLogicMode.any;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -226,46 +379,67 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
               padding: const EdgeInsets.all(4),
               child: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    child: TextTriOS(
-                      widget.filter.name,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
+                  // Expanded, with no Spacer after it: the name takes all the
+                  // room the buttons don't need, and everything else sits on
+                  // the right.
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: 8,
+                        right: 4,
+                        top: 2,
+                        bottom: 2,
+                      ),
+                      child: TextTriOS(
+                        widget.filter.name,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: _selectAll,
-                    icon: const Icon(Icons.check_box, size: 16),
-                    tooltip: 'Include all',
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      minimumSize: const Size(0, 32),
-                      foregroundColor: theme.colorScheme.onSurface,
+                  if (showLogicButton) _buildLogicButton(theme),
+                  // The all/exclude/clear buttons act on the chips below, so
+                  // they're only here while those chips are on screen. A shut
+                  // group shows its counts instead.
+                  if (_isExpanded) ...[
+                    MovingTooltipWidget.text(
+                      message: _allButtonsTooltip('Include all'),
+                      child: IconButton(
+                        onPressed: () => _setAll(true),
+                        icon: const Icon(Icons.check_box, size: 16),
+                        style: _headerButtonStyle(theme),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    onPressed: _clearAll,
-                    icon: const Icon(Icons.check_box_outline_blank, size: 16),
-                    tooltip: 'Clear all filters',
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      minimumSize: const Size(0, 32),
-                      foregroundColor: theme.colorScheme.onSurface,
+                    MovingTooltipWidget.text(
+                      message: _allButtonsTooltip('Exclude all'),
+                      child: IconButton(
+                        onPressed: () => _setAll(false),
+                        icon: const Icon(
+                          Icons.indeterminate_check_box,
+                          size: 16,
+                        ),
+                        style: _headerButtonStyle(theme),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Spacer(),
-                  if (hasFilters)
+                    MovingTooltipWidget.text(
+                      message: _allButtonsTooltip('Clear all filters'),
+                      child: IconButton(
+                        onPressed: _clearAll,
+                        icon: const Icon(
+                          Icons.check_box_outline_blank,
+                          size: 16,
+                        ),
+                        style: _headerButtonStyle(theme),
+                      ),
+                    ),
+                  ],
+                  // Counts stand in for the chips while the group is shut.
+                  if (hasFilters && !_isExpanded)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
+                        horizontal: 4,
                         vertical: 2,
                       ),
                       child: Row(
@@ -308,8 +482,7 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
                   FilterGridPersistButton(
                     scope: widget.scope,
                     filterGroupId: widget.filter.id,
-                    currentSelections: () =>
-                        Map<String, Object?>.from(widget.filterStates),
+                    currentSelections: () => widget.filter.serialize(),
                   ),
                 ],
               ),
@@ -327,7 +500,7 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
                     child: Wrap(
                       spacing: 4,
                       runSpacing: 4,
-                      children: _uniqueValues.map((value) {
+                      children: _searchedValues.map((value) {
                         final state = widget.filterStates[value];
 
                         Color? chipColor;
@@ -410,6 +583,20 @@ class FiltersPanel extends StatefulWidget {
   final ScrollController? scrollController;
   final double width;
 
+  /// Shows a search box that narrows the filters down to matching chips.
+  /// Off by default so panels that don't need it look unchanged.
+  final bool showSearch;
+
+  /// Whether advanced mode is on. Advanced mode shows the per-group
+  /// "any" / "all" buttons and the number-range sliders.
+  final bool isAdvanced;
+
+  /// When set, the panel shows an "Advanced" checkbox.
+  final ValueChanged<bool>? onAdvancedChanged;
+
+  /// When set, the panel shows a button that opens it in a bigger dialog.
+  final VoidCallback? onExpand;
+
   const FiltersPanel({
     super.key,
     required this.onHide,
@@ -419,6 +606,10 @@ class FiltersPanel extends StatefulWidget {
     this.onClearAll,
     this.scrollController,
     this.width = 300,
+    this.showSearch = false,
+    this.isAdvanced = false,
+    this.onAdvancedChanged,
+    this.onExpand,
   });
 
   @override
@@ -427,6 +618,9 @@ class FiltersPanel extends StatefulWidget {
 
 class _FiltersPanelState extends State<FiltersPanel> {
   late final ScrollController _ownedController;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  String _searchTerm = '';
 
   @override
   void initState() {
@@ -438,6 +632,8 @@ class _FiltersPanelState extends State<FiltersPanel> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
     if (widget.scrollController == null) {
       _ownedController.dispose();
     }
@@ -447,99 +643,227 @@ class _FiltersPanelState extends State<FiltersPanel> {
   ScrollController get _controller =>
       widget.scrollController ?? _ownedController;
 
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      setState(() => _searchTerm = value.trim());
+    });
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() => _searchTerm = '');
+  }
+
+  /// Search box plus the "Advanced" checkbox, shown above the filter groups.
+  Widget _buildSearchRow(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        spacing: 8,
+        children: [
+          if (widget.showSearch)
+            Expanded(
+              child: SizedBox(
+                height: 32,
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  style: theme.textTheme.labelLarge,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: 'Filter filters',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    prefixIcon: const Icon(Icons.search, size: 16),
+                    prefixIconConstraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                    suffixIcon: _searchController.text.isEmpty
+                        ? null
+                        : MovingTooltipWidget.text(
+                            message: 'Clear search',
+                            child: IconButton(
+                              onPressed: _clearSearch,
+                              icon: const Icon(Icons.close, size: 16),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                            ),
+                          ),
+                    suffixIconConstraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            ),
+          if (widget.onAdvancedChanged != null)
+            MovingTooltipWidget.text(
+              message:
+                  'Advanced filters: adds an "any" / "all" choice to each '
+                  'group, for asking that items have every value you pick '
+                  'rather than just one of them.',
+              child: CheckboxWithLabel(
+                label: 'Advanced',
+                labelStyle: theme.textTheme.labelLarge,
+                value: widget.isAdvanced,
+                onChanged: (value) => widget.onAdvancedChanged!(value ?? false),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Card(
-          margin: .zero,
-          child: Scrollbar(
-            thumbVisibility: true,
-            controller: _controller,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 8,
-                right: 16,
-                top: 8,
-                bottom: 8,
-              ),
-              child: SizedBox(
-                width: widget.width,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Scrollbar(
+        thumbVisibility: true,
+        controller: _controller,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 8, right: 16, top: 8, bottom: 8),
+          child: SizedBox(
+            width: widget.width,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        MovingTooltipWidget.text(
-                          message: "Hide filters",
-                          child: InkWell(
-                            onTap: widget.onHide,
-                            borderRadius: BorderRadius.circular(
-                              TriOSThemeConstants.cornerRadius,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Row(
-                                spacing: 8,
-                                children: [
-                                  const Icon(Icons.filter_list, size: 16),
-                                  Text(
-                                    'Filters',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  ActiveFilterCountPill(
-                                    count: widget.activeFilterCount,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                    MovingTooltipWidget.text(
+                      message: "Hide filters",
+                      child: InkWell(
+                        onTap: widget.onHide,
+                        borderRadius: BorderRadius.circular(
+                          TriOSThemeConstants.cornerRadius,
                         ),
-                        const Spacer(),
-                        if (widget.showClearAll)
-                          TriOSToolbarItem(
-                            elevation: 0,
-                            child: TextButton.icon(
-                              onPressed: widget.onClearAll,
-                              icon: const Icon(Icons.clear_all, size: 16),
-                              label: const Text('Clear All'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: theme.colorScheme.onSurface,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            spacing: 8,
+                            children: [
+                              const Icon(Icons.filter_list, size: 16),
+                              Text(
+                                'Filters',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(
-                          context,
-                        ).copyWith(scrollbars: false),
-                        child: SingleChildScrollView(
-                          controller: _controller,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 4,
-                            children: widget.filterWidgets,
+                              ActiveFilterCountPill(
+                                count: widget.activeFilterCount,
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
+                    const Spacer(),
+                    // Disable button for now, not sure if I want to support the dialog.
+                    // if (widget.onExpand != null)
+                    //   MovingTooltipWidget.text(
+                    //     message: 'Open the filters in a bigger window',
+                    //     child: IconButton(
+                    //       onPressed: widget.onExpand,
+                    //       icon: const Icon(Icons.open_in_full, size: 16),
+                    //       style: TextButton.styleFrom(
+                    //         foregroundColor: theme.colorScheme.onSurface,
+                    //       ),
+                    //     ),
+                    //   ),
+                    if (widget.showClearAll)
+                      TriOSToolbarItem(
+                        elevation: 0,
+                        child: TextButton.icon(
+                          onPressed: widget.onClearAll,
+                          icon: const Icon(Icons.clear_all, size: 16),
+                          label: const Text('Clear All'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 8),
+                if (widget.showSearch || widget.onAdvancedChanged != null)
+                  _buildSearchRow(theme),
+                Expanded(
+                  // Groups read the search term and advanced flag from
+                  // here; the page builds them before this panel exists,
+                  // so they can't be passed in directly.
+                  child: FilterPanelOptions(
+                    searchTerm: _searchTerm,
+                    isAdvanced: widget.isAdvanced,
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(
+                        context,
+                      ).copyWith(scrollbars: false),
+                      child: SingleChildScrollView(
+                        controller: _controller,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          // No spacing here: groups hidden by the search
+                          // box would still leave a gap. Each group card
+                          // brings its own margin.
+                          children: widget.filterWidgets,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Opens the filter panel in a bigger window. Changes apply as you make them,
+/// same as in the sidebar — there's no Save or Cancel.
+///
+/// [panelBuilder] must build the panel from live state (wrap it in a
+/// `Consumer`), otherwise the dialog won't keep up with the changes made in
+/// it.
+Future<void> showFilterPanelDialog(
+  BuildContext context,
+  WidgetBuilder panelBuilder,
+) {
+  return showDialog<void>(
+    context: context,
+    builder: (context) => Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640, maxHeight: 800),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(child: panelBuilder(context)),
+              // Align(
+              //   alignment: Alignment.centerRight,
+              //   child: TextButton(
+              //     onPressed: () => Navigator.of(context).pop(),
+              //     child: const Text('Done'),
+              //   ),
+              // ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 /// A small pill showing the number of active filter values across all categories.

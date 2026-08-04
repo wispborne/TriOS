@@ -23,6 +23,17 @@ sealed class FilterGroup<T> {
   void clear();
 }
 
+/// How a chip group treats the values the user marked "include".
+enum ChipLogicMode {
+  /// The item needs at least one of the included values. This is the default
+  /// and how chip groups have always worked.
+  any,
+
+  /// The item needs every included value. Lets you ask for combinations, e.g.
+  /// a ship with both a large ballistic slot and a large missile slot.
+  all,
+}
+
 /// Tri-state multi-value chip group (the former `GridFilter<T>`).
 ///
 /// State map values: `true` = include, `false` = exclude, `null` = no filter.
@@ -42,6 +53,17 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
 
   final Map<String, bool?> filterStates = {};
 
+  /// Key used to store [logicMode] alongside the chip states in the persisted
+  /// map. Starts with an underscore so it can't collide with a real value.
+  static const String logicKey = '_logic';
+
+  /// Whether included values are combined with "any" or "all".
+  ChipLogicMode logicMode;
+
+  /// Every value the current data has, as of the last [updateKnownValues].
+  /// Empty means "we haven't looked", and nothing is treated as unknown.
+  Set<String> _knownValues = const {};
+
   ChipFilterGroup({
     required this.id,
     required this.name,
@@ -51,6 +73,7 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
     this.sortComparator,
     this.useDefaultSort = false,
     this.collapsedByDefault = false,
+    this.logicMode = ChipLogicMode.any,
   });
 
   Set<String> get includedValues => filterStates.entries
@@ -73,7 +96,8 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
   ///
   /// 1. If any of the item's values is explicitly excluded, reject.
   /// 2. Else if any value in the state map is explicitly included, the item
-  ///    must have at least one included value.
+  ///    must have at least one included value ("any" mode) or all of them
+  ///    ("all" mode).
   /// 3. Else (only exclusions or empty state), accept.
   @override
   bool matches(T item) {
@@ -87,19 +111,52 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
 
     final hasIncluded = filterStates.values.contains(true);
     if (hasIncluded) {
+      if (logicMode == ChipLogicMode.all) {
+        return requiredValues.every(values.contains);
+      }
       return values.any((v) => filterStates[v] == true);
     }
 
     return true;
   }
 
+  /// The included values "all" mode actually asks for.
+  ///
+  /// Picks stay put when a mod is turned off, so a group can hold values the
+  /// current data has never heard of and shows no chip for. In "any" mode
+  /// those sit there harmlessly; in "all" mode they would demand something
+  /// nothing has, emptying the list with nothing on screen to explain it. So
+  /// they're skipped, the same way the rest of the engine leaves values it
+  /// doesn't recognise inert.
+  Iterable<String> get requiredValues => _knownValues.isEmpty
+      ? includedValues
+      : includedValues.where(_knownValues.contains);
+
+  /// Record which values [items] actually have, for [requiredValues].
+  void updateKnownValues(Iterable<T> items) {
+    final seen = <String>{};
+    for (final item in items) {
+      if (valuesGetter != null) {
+        seen.addAll(valuesGetter!(item));
+      } else {
+        seen.add(valueGetter(item));
+      }
+    }
+    _knownValues = seen;
+  }
+
   @override
-  Map<String, Object?> serialize() => Map<String, Object?>.from(filterStates);
+  Map<String, Object?> serialize() => {
+    ...filterStates,
+    if (logicMode != ChipLogicMode.any) logicKey: logicMode.name,
+  };
 
   @override
   void restore(Map<String, Object?> selections) {
     filterStates.clear();
+    restoreLogicMode(selections[logicKey]);
     for (final e in selections.entries) {
+      if (e.key == logicKey) continue;
       final v = e.value;
       if (v == null) {
         filterStates[e.key] = null;
@@ -109,13 +166,197 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
     }
   }
 
+  /// Reads a persisted logic mode name. Anything unrecognised falls back to
+  /// [ChipLogicMode.any].
+  void restoreLogicMode(Object? value) {
+    for (final mode in ChipLogicMode.values) {
+      if (mode.name == value) {
+        logicMode = mode;
+        return;
+      }
+    }
+    logicMode = ChipLogicMode.any;
+  }
+
   @override
-  void clear() => filterStates.clear();
+  void clear() {
+    filterStates.clear();
+    logicMode = ChipLogicMode.any;
+  }
 
   /// Replace all selections with [states].
   void setSelections(Map<String, bool?> states) {
     filterStates.clear();
     filterStates.addAll(states);
+  }
+}
+
+/// Numeric range group, shown as a two-handle slider.
+///
+/// [min] and [max] are the range found in the data; call [updateRange] when
+/// the item list changes. [curMin] and [curMax] are what the user picked. The
+/// group only filters while the handles are inside the data range.
+///
+/// Items with no value for this stat (a null getter result) are dropped while
+/// the filter is on — "between 10 and 30" can't be true of a missing number.
+class RangeFilterGroup<T> extends FilterGroup<T> {
+  @override
+  final String id;
+
+  @override
+  final String name;
+
+  final num? Function(T) valueGetter;
+
+  /// Shown after the numbers, e.g. "su" or "%". Optional.
+  final String? suffix;
+
+  /// When true, the top handle at the far right means "and above", so nothing
+  /// falls off the end when new mods add higher values.
+  final bool allowGreater;
+
+  num min = 0;
+  num max = 0;
+  num curMin = 0;
+  num curMax = 0;
+
+  /// Every distinct value in the data, sorted. Handles snap to these.
+  List<num> stops = const [];
+
+  /// True once [updateRange] has seen at least one item with a value.
+  bool hasData = false;
+
+  // Selection read from settings before the data was loaded. Applied (and
+  // clamped) by the next [updateRange].
+  num? _pendingMin;
+  num? _pendingMax;
+
+  RangeFilterGroup({
+    required this.id,
+    required this.name,
+    required this.valueGetter,
+    this.suffix,
+    this.allowGreater = true,
+  });
+
+  @override
+  bool get isActive => hasData && (curMin > min || curMax < max);
+
+  @override
+  int get activeCount => isActive ? 1 : 0;
+
+  @override
+  bool matches(T item) {
+    if (!isActive) return true;
+    final value = valueGetter(item);
+    if (value == null) return false;
+    if (value < curMin) return false;
+    if (allowGreater && curMax >= max) return true;
+    return value <= curMax;
+  }
+
+  /// Recompute [min]/[max]/[stops] from [items] and keep the user's selection
+  /// sensible. A handle sitting at either end stays at that end.
+  void updateRange(Iterable<T> items) {
+    final values = <num>{};
+    for (final item in items) {
+      final value = valueGetter(item);
+      if (value != null) values.add(value);
+    }
+
+    if (values.isEmpty) {
+      hasData = false;
+      min = 0;
+      max = 0;
+      curMin = 0;
+      curMax = 0;
+      stops = const [];
+      return;
+    }
+
+    final sorted = values.toList()..sort();
+    final wasAtBottom = !hasData || curMin <= min;
+    final wasAtTop = !hasData || curMax >= max;
+
+    stops = sorted;
+    min = sorted.first;
+    max = sorted.last;
+    hasData = true;
+
+    if (_pendingMin != null || _pendingMax != null) {
+      curMin = (_pendingMin ?? min).clamp(min, max);
+      curMax = (_pendingMax ?? max).clamp(min, max);
+      _pendingMin = null;
+      _pendingMax = null;
+      return;
+    }
+
+    curMin = wasAtBottom ? min : curMin.clamp(min, max);
+    curMax = wasAtTop ? max : curMax.clamp(min, max);
+  }
+
+  /// Position in [stops] of the value nearest [value].
+  ///
+  /// Sliders run over these positions rather than over the numbers
+  /// themselves. Stats like hull run from 30 to ten million, so spacing a
+  /// slider by value would squash every real ship into the first sliver of
+  /// the track. One notch per real value keeps all of it reachable.
+  int stopIndexFor(num value) {
+    if (stops.isEmpty) return 0;
+    var low = 0;
+    var high = stops.length - 1;
+    while (low < high) {
+      final mid = (low + high) ~/ 2;
+      if (stops[mid] < value) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+    // `low` is the first stop at or above the value; the one below it may be
+    // the closer of the two.
+    if (low > 0 &&
+        (stops[low] - value).abs() > (value - stops[low - 1]).abs()) {
+      return low - 1;
+    }
+    return low;
+  }
+
+  /// Nearest value that actually exists in the data, so handles land on
+  /// meaningful stops instead of arbitrary decimals.
+  num snapTo(num value) {
+    if (stops.isEmpty) return value;
+    return stops[stopIndexFor(value)];
+  }
+
+  void setRange(num newMin, num newMax) {
+    curMin = newMin.clamp(min, max);
+    curMax = newMax.clamp(min, max);
+  }
+
+  @override
+  Map<String, Object?> serialize() => {'min': curMin, 'max': curMax};
+
+  @override
+  void restore(Map<String, Object?> selections) {
+    final low = selections['min'];
+    final high = selections['max'];
+    _pendingMin = low is num ? low : null;
+    _pendingMax = high is num ? high : null;
+    if (hasData) {
+      curMin = (_pendingMin ?? min).clamp(min, max);
+      curMax = (_pendingMax ?? max).clamp(min, max);
+      _pendingMin = null;
+      _pendingMax = null;
+    }
+  }
+
+  @override
+  void clear() {
+    _pendingMin = null;
+    _pendingMax = null;
+    curMin = min;
+    curMax = max;
   }
 }
 
@@ -302,7 +543,8 @@ class EnumField<T, E extends Enum> extends FilterField<T> {
   }) : selected = defaultValue;
 
   @override
-  bool get isActive => alwaysActive || selected != (inactiveValue ?? defaultValue);
+  bool get isActive =>
+      alwaysActive || selected != (inactiveValue ?? defaultValue);
 
   @override
   bool matches(T item) => predicate(item, selected);

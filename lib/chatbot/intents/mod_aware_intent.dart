@@ -21,13 +21,13 @@ mixin ModAwareIntent {
       ref.read(AppState.modCompatibility);
 
   VersionCheckerState? get versionCheckResults =>
-      ref.read(AppState.versionCheckResults).valueOrNull;
+      ref.read(AppState.versionCheckResults).value;
 
   String? get starsectorVersion =>
-      ref.read(AppState.starsectorVersion).valueOrNull;
+      ref.read(AppState.starsectorVersion).value;
 
   ModsMetadata? get modsMetadata =>
-      ref.read(AppState.modsMetadata).valueOrNull;
+      ref.read(AppState.modsMetadata).value;
 
   bool get isModDataLoaded => mods.isNotEmpty;
 

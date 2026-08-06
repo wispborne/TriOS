@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 
+import '../riverpod_test_helpers.dart';
+
 /// Covers partial reloads (`reloadModVariantsFromFolders` with `onlyFolders`),
 /// especially that a variant whose folder was deleted on disk is removed from
 /// state instead of lingering as a ghost entry. See Sentry TRIOS-21S.
@@ -25,7 +27,7 @@ void main() {
       return folder;
     }
 
-    ProviderContainer makeContainer() => ProviderContainer(
+    ProviderContainer makeContainer() => createTestContainer(
       overrides: [
         AppState.gameFolder.overrideWith((ref) => Future.value(gameDir)),
         AppState.modsFolder.overrideWith((ref) => Future.value(modsDir)),

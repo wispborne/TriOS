@@ -181,7 +181,7 @@ final modRepoEntriesProvider = Provider<List<ModRepoEntry>>((ref) {
 final catalogLinksProvider = Provider<CatalogLinks>((ref) {
   final entries = ref.watch(modRepoEntriesProvider);
   final mods = ref.watch(AppState.mods);
-  final records = ref.watch(modRecordsStore).valueOrNull;
+  final records = ref.watch(modRecordsStore).value;
   return CatalogLinks(
     matchCatalogToInstalled(
       entries: entries,

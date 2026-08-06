@@ -121,7 +121,7 @@ class CodexDetailPanel extends ConsumerWidget {
         height: 220,
         child: FactionCard(
           faction: faction,
-          gameCoreDir: ref.watch(AppState.gameCoreFolder).valueOrNull,
+          gameCoreDir: ref.watch(AppState.gameCoreFolder).value,
           onlyEnabledMods: ref.watch(
             appSettings.select((s) => s.codexEnabledModsOnly),
           ),
@@ -197,7 +197,7 @@ class CodexDetailPanel extends ConsumerWidget {
       case HullmodCodexEntry(:final hullmod):
         return () => showHullmodDetailsDialog(context, hullmod);
       case FactionCodexEntry(:final faction):
-        final gameCoreDir = ref.read(AppState.gameCoreFolder).valueOrNull;
+        final gameCoreDir = ref.read(AppState.gameCoreFolder).value;
         final onlyEnabledMods = ref.read(appSettings).codexEnabledModsOnly;
         return () => showDialog(
           context: context,
@@ -324,7 +324,7 @@ class _ShipUsedByFactions extends ConsumerWidget {
         .whereType<FactionCodexEntry>()
         .map((e) => e.faction)
         .toList();
-    final gameCoreDir = ref.watch(AppState.gameCoreFolder).valueOrNull;
+    final gameCoreDir = ref.watch(AppState.gameCoreFolder).value;
 
     // The hull the game would check known-ship membership against: a skin
     // resolves to its base hull, otherwise the ship's own id.

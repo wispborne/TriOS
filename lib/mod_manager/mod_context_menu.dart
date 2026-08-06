@@ -363,10 +363,10 @@ MenuItem _buildMenuItemViewModDetails(
 
       // Look up ModRepoEntry via ModRecord's catalog name
       ModRepoEntry? catalogMod;
-      final modRecords = ref.read(modRecordsStore).valueOrNull;
+      final modRecords = ref.read(modRecordsStore).value;
       final catalogItems = ref
           .read(browseModsNotifierProvider)
-          .valueOrNull
+          .value
           ?.items;
       if (modRecords != null && catalogItems != null) {
         final record = modRecords.records[mod.id];

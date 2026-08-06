@@ -1252,13 +1252,13 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     if (widget.showSlotTooltips) {
       _shipSystemsMap = {
         for (final s
-            in ref.watch(shipSystemListNotifierProvider).valueOrNull ??
+            in ref.watch(shipSystemListNotifierProvider).value ??
                 const <ShipSystem>[])
           s.id: s,
       };
       _hullmodsMap = {
         for (final h
-            in ref.watch(hullmodListNotifierProvider).valueOrNull ??
+            in ref.watch(hullmodListNotifierProvider).value ??
                 const <Hullmod>[])
           h.id: h,
       };
@@ -2027,7 +2027,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// Resolves a built-in weapon ID to its display name, falling back to the
   /// raw ID if the weapons list hasn't loaded yet.
   String _builtInWeaponName(String weaponId) {
-    final weapons = ref.read(weaponListNotifierProvider(false)).valueOrNull;
+    final weapons = ref.read(weaponListNotifierProvider(false)).value;
     if (weapons != null) {
       final weapon = weapons.firstWhereOrNull((w) => w.id == weaponId);
       if (weapon?.name != null) return weapon!.name!;

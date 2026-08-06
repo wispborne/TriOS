@@ -8,7 +8,7 @@ mixin ProfileAwareIntent {
   Ref get ref;
 
   ModProfiles? get modProfiles =>
-      ref.read(modProfilesProvider).valueOrNull;
+      ref.read(modProfilesProvider).value;
 
   ModProfile? get currentProfile {
     final profiles = modProfiles;

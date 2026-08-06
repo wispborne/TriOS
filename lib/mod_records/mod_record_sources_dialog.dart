@@ -105,7 +105,7 @@ class _ModRecordSourcesDialogState
   void _onSave() {
     final currentRecord = ref
         .read(modRecordsStore)
-        .valueOrNull
+        .value
         ?.records[widget.recordKey];
     if (currentRecord == null) return;
 
@@ -215,7 +215,7 @@ class _ModRecordSourcesDialogState
   Widget build(BuildContext context) {
     final record = ref
         .watch(modRecordsStore)
-        .valueOrNull
+        .value
         ?.records[widget.recordKey];
     final theme = Theme.of(context);
     final dateFmt = DateFormat.yMd().add_jm();

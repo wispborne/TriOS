@@ -54,11 +54,12 @@ import 'intents/vram_estimate_intent.dart';
 import 'intents/weapon_count_intent.dart';
 
 final chatbotControllerProvider =
-    AutoDisposeNotifierProvider<ChatbotController, ConversationContext>(
+    NotifierProvider<ChatbotController, ConversationContext>(
       () => ChatbotController(),
+      isAutoDispose: true,
     );
 
-class ChatbotController extends AutoDisposeNotifier<ConversationContext> {
+class ChatbotController extends Notifier<ConversationContext> {
   static ConversationContext _persisted = const ConversationContext();
 
   late final ChatbotEngine _engine;

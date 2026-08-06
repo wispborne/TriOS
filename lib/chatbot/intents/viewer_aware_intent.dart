@@ -15,16 +15,16 @@ mixin ViewerAwareIntent {
 
   /// Every mod, enabled or not, so questions about an installed mod still get
   /// an answer while it's switched off.
-  List<Ship>? get ships => ref.read(shipListNotifierProvider(false)).valueOrNull;
+  List<Ship>? get ships => ref.read(shipListNotifierProvider(false)).value;
 
   List<Weapon>? get weapons =>
-      ref.read(weaponListNotifierProvider(false)).valueOrNull;
+      ref.read(weaponListNotifierProvider(false)).value;
 
   List<Hullmod>? get hullmods =>
-      ref.read(hullmodListNotifierProvider).valueOrNull;
+      ref.read(hullmodListNotifierProvider).value;
 
   Map<ModVariant?, List<Portrait>>? get portraits =>
-      ref.read(AppState.portraits).valueOrNull;
+      ref.read(AppState.portraits).value;
 
   static const noViewerDataMessage =
       "Viewer data hasn't loaded yet. Make sure your game folder is "

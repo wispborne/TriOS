@@ -714,7 +714,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                                 .showEnabled,
                           ),
                         )
-                        .valueOrNull ??
+                        .value ??
                     const [],
               ),
             );

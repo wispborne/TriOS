@@ -620,7 +620,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                                 .showEnabled,
                           ),
                         )
-                        .valueOrNull ??
+                        .value ??
                     const [],
               ),
             );

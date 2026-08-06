@@ -696,7 +696,7 @@ class _CatalogModGameVersionReq extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final installedVersion = ref.watch(AppState.starsectorVersion).valueOrNull;
+    final installedVersion = ref.watch(AppState.starsectorVersion).value;
     // true  = made for the installed game version (positive standout)
     // false = made for a different/older game version (warning)
     // null  = installed or required version unknown (neutral)

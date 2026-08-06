@@ -40,9 +40,17 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
   /// A list of booleans indicating whether each child has been built.
   List<bool> _isBuilt = [];
 
+  /// The index currently on screen.
+  ///
+  /// Pages that have scrolled out of view are kept alive, and `PageView` does
+  /// not build them again, so they cannot learn the new index from a rebuild of
+  /// this widget. Each page listens to this instead.
+  late final ValueNotifier<int> _visibleIndex;
+
   @override
   void initState() {
     super.initState();
+    _visibleIndex = ValueNotifier(widget.index);
     _pageController =
         widget.controller ?? PageController(initialPage: widget.index);
     runZonedGuarded(
@@ -60,6 +68,7 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
   void didUpdateWidget(LazyIndexedStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.index != oldWidget.index) {
+      _visibleIndex.value = widget.index;
       _pageController.jumpToPage(widget.index);
       if (!(_isBuilt.getOrNull(widget.index) ?? false)) {
         setState(() {
@@ -74,6 +83,7 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
     if (widget.controller == null) {
       _pageController.dispose();
     }
+    _visibleIndex.dispose();
     super.dispose();
   }
 
@@ -85,11 +95,17 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
       // Prevent swipe gesture navigation
       itemCount: widget.children.length,
       itemBuilder: (context, index) {
-        if (_isBuilt.getOrNull(index) ?? false) {
-          return widget.children[index];
-        } else {
+        if (!(_isBuilt.getOrNull(index) ?? false)) {
           return const SizedBox.shrink();
         }
+        // Only the page on screen gets tickers. This stops animations on
+        // hidden tabs from drawing frames.
+        return ValueListenableBuilder(
+          valueListenable: _visibleIndex,
+          child: widget.children[index],
+          builder: (context, visibleIndex, child) =>
+              TickerMode(enabled: visibleIndex == index, child: child!),
+        );
       },
     );
   }

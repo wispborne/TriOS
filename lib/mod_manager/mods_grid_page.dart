@@ -7,7 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/dashboard/mod_list_basic.dart';
@@ -113,7 +113,10 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final searchState = ref.watch(modsGridSearchControllerProvider);
     final modsMatchingSearch = searchState.filteredMods;
     final modsMetadata = ref.watch(AppState.modsMetadata).value;
-    final versionCheck = ref.watch(AppState.versionCheckResults).valueOrNull;
+    // Read once here, not inside the sort comparator below. A comparator runs
+    // n*log(n) times per sort, and every ref.watch re-subscribes to the provider.
+    final pinFavorites = ref.watch(appSettings.select((s) => s.pinFavorites));
+    final versionCheck = ref.watch(AppState.versionCheckResults).value;
     final modsGridUpdateVisibility = ref.watch(
       appSettings.select((s) => s.modsGridUpdateVisibility),
     );
@@ -407,20 +410,21 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   defaultSortField: ModGridSortField.name.name,
                   groups: _allGroupOptions,
                   preSortComparator: (left, right) {
-                    final leftMetadata = modsMetadata?.getMergedModMetadata(
-                      left.id,
-                    );
-                    final rightMetadata = modsMetadata?.getMergedModMetadata(
-                      right.id,
-                    );
+                    if (!pinFavorites) return null;
 
-                    if (ref.watch(appSettings.select((s) => s.pinFavorites))) {
-                      final leftFavorited = leftMetadata?.isFavorited == true;
-                      final rightFavorited = rightMetadata?.isFavorited == true;
+                    final leftFavorited =
+                        modsMetadata
+                            ?.getMergedModMetadata(left.id)
+                            ?.isFavorited ==
+                        true;
+                    final rightFavorited =
+                        modsMetadata
+                            ?.getMergedModMetadata(right.id)
+                            ?.isFavorited ==
+                        true;
 
-                      if (leftFavorited != rightFavorited) {
-                        return leftFavorited ? -1 : 1;
-                      }
+                    if (leftFavorited != rightFavorited) {
+                      return leftFavorited ? -1 : 1;
                     }
 
                     return null;
@@ -2395,7 +2399,7 @@ class MissingDependencyButton extends ConsumerWidget {
                     // the same way mod records match installed mods.
                     final catalog = ref
                         .watch(browseModsNotifierProvider)
-                        .valueOrNull
+                        .value
                         ?.items;
                     final candidates = <String>{
                       if (missingDependency.name != null)

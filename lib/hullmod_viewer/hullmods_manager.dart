@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
@@ -29,7 +30,7 @@ final hullmodListNotifierProvider =
 /// this over building a map from [hullmodListNotifierProvider] per widget.
 final hullmodsByIdProvider = Provider<Map<String, Hullmod>>((ref) {
   final hullmods =
-      ref.watch(hullmodListNotifierProvider).valueOrNull ?? const <Hullmod>[];
+      ref.watch(hullmodListNotifierProvider).value ?? const <Hullmod>[];
   return {for (final h in hullmods) h.id: h};
 });
 

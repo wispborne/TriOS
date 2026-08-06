@@ -54,7 +54,7 @@ class VramEstimateIntent extends ChatIntent with ModAwareIntent {
   @override
   ChatResponse respond(String input, ConversationContext context) {
     final vramState =
-        ref.read(AppState.vramEstimatorProvider).valueOrNull;
+        ref.read(AppState.vramEstimatorProvider).value;
 
     if (vramState == null || vramState.modVramInfo.isEmpty) {
       return const ChatResponse(

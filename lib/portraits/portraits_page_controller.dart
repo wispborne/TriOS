@@ -9,6 +9,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -141,7 +142,8 @@ class PortraitsPageState with PortraitsPageStateMappable {
 }
 
 /// Controller for the portraits page using Notifier.
-class PortraitsPageController extends Notifier<PortraitsPageState> {
+class PortraitsPageController extends Notifier<PortraitsPageState>
+    with NotifyOnNewState {
   static final _mainScope = const FilterScope(kPortraitsPageId, scopeId: 'main');
   static final _leftScope = const FilterScope(kPortraitsPageId, scopeId: 'left');
   static final _rightScope =

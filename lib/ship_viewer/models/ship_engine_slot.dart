@@ -1,4 +1,5 @@
 import 'package:trios/ship_viewer/models/ship_engine_style_spec.dart';
+import 'package:trios/utils/game_json_values.dart';
 
 /// One engine slot parsed from a `.ship` file's `engineSlots` array.
 ///
@@ -44,17 +45,18 @@ class ShipEngineSlot {
   /// location (the only field we strictly need to place a glow).
   static ShipEngineSlot? fromRaw(dynamic raw) {
     if (raw is! Map) return null;
-    final loc = (raw['location'] as List?)
-        ?.map((e) => (e as num).toDouble())
-        .toList();
+    final rawLoc = raw['location'];
+    final loc = rawLoc is List
+        ? rawLoc.map(doubleFromGameJson).nonNulls.toList()
+        : null;
     if (loc == null || loc.length < 2) return null;
     final rawSpec = raw['styleSpec'];
     return ShipEngineSlot(
       location: loc,
-      angle: (raw['angle'] as num?)?.toDouble() ?? 180,
-      length: (raw['length'] as num?)?.toDouble() ?? 0,
-      width: (raw['width'] as num?)?.toDouble() ?? 0,
-      contrailSize: (raw['contrailSize'] as num?)?.toDouble(),
+      angle: doubleFromGameJson(raw['angle']) ?? 180,
+      length: doubleFromGameJson(raw['length']) ?? 0,
+      width: doubleFromGameJson(raw['width']) ?? 0,
+      contrailSize: doubleFromGameJson(raw['contrailSize']),
       style: raw['style'] as String?,
       styleId: raw['styleId'] as String?,
       styleSpec: rawSpec is Map ? EngineStyleSpec.fromJson(rawSpec) : null,

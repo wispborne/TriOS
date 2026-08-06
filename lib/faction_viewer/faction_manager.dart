@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/faction_viewer/factions_csv.dart';
@@ -13,6 +14,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/game_json_values.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
@@ -224,7 +226,7 @@ final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
   ref,
   onlyEnabledMods,
 ) {
-  final files = ref.watch(factionListNotifierProvider).valueOrNull ?? const [];
+  final files = ref.watch(factionListNotifierProvider).value ?? const [];
   if (files.isEmpty) return const [];
 
   // Hand each source's scanned files to `mergeFactions` in load order.
@@ -292,15 +294,21 @@ final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
       continue;
     }
 
-    factions.add(
-      _buildFactionFromJson(mergeKey, result.merged, factionSources, {
-        for (final e in result.sectionAttributions.entries)
-          e.key: [
-            for (final c in e.value)
-              SourceContribution(source: c.source, count: c.count),
-          ],
-      }, result.itemAttributions),
-    );
+    // One faction with bad data is dropped with a log line; the rest of the
+    // list still builds.
+    try {
+      factions.add(
+        _buildFactionFromJson(mergeKey, result.merged, factionSources, {
+          for (final e in result.sectionAttributions.entries)
+            e.key: [
+              for (final c in e.value)
+                SourceContribution(source: c.source, count: c.count),
+            ],
+        }, result.itemAttributions),
+      );
+    } catch (e) {
+      Fimber.w('Building faction "$mergeKey" failed: $e');
+    }
   }
 
   _lastMergedFactions[onlyEnabledMods] = (
@@ -345,7 +353,7 @@ Faction _buildFactionFromJson(
     brightUIColor: _toIntList(data['brightUIColor']),
     logo: data['logo'] as String?,
     crest: data['crest'] as String?,
-    showInIntelTab: data['showInIntelTab'] as bool? ?? true,
+    showInIntelTab: boolFromGameJson(data['showInIntelTab']) ?? true,
     shipNamePrefix: data['shipNamePrefix']?.toString(),
     shipNameSources: data['shipNameSources'] as Map<String, dynamic>?,
     doctrine: doctrine != null

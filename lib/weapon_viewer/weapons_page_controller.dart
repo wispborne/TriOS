@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -92,7 +94,8 @@ final weaponsPageControllerProvider =
 /// the weapon list, which is merged differently depending on the toggle.
 final _onlyEnabledModsChanged = StateProvider<int>((ref) => 0);
 
-class WeaponsPageController extends Notifier<WeaponsPageState> {
+class WeaponsPageController extends Notifier<WeaponsPageState>
+    with NotifyOnNewState {
   static final _scope = const FilterScope(kWeaponsPageId);
 
   late final FilterScopeController<Weapon> _filters;

@@ -5,7 +5,7 @@ import 'package:trios/chipper/chipper_state.dart';
 mixin LogAwareIntent {
   Ref get ref;
 
-  LogChips? get logChips => ref.read(ChipperState.logRawContents).valueOrNull;
+  LogChips? get logChips => ref.read(ChipperState.logRawContents).value;
 
   bool get isLogLoaded => logChips != null;
 

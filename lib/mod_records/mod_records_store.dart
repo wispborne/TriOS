@@ -37,7 +37,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
 
     // Re-populate whenever mod variants change.
     ref.listen(AppState.modVariants, (prev, next) {
-      final current = state.valueOrNull;
+      final current = state.value;
       if (current != null && next.hasValue) {
         _autoPopulate(current);
       }
@@ -45,7 +45,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
 
     // Re-populate whenever catalog data is refreshed.
     ref.listen(browseModsNotifierProvider, (prev, next) {
-      final current = state.valueOrNull;
+      final current = state.value;
       if (current != null && next.hasValue) {
         _autoPopulate(current);
       }
@@ -53,7 +53,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
 
     // Re-populate whenever forum data is refreshed.
     ref.listen(forumDataProvider, (prev, next) {
-      final current = state.valueOrNull;
+      final current = state.value;
       if (current != null && next.hasValue) {
         _autoPopulate(current);
       }
@@ -67,7 +67,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
   void _autoPopulate(ModRecords current) {
     final modVariants = ref.read(AppState.modVariants).value ?? [];
     final catalogAsync = ref.read(browseModsNotifierProvider);
-    final catalog = catalogAsync.valueOrNull?.items ?? [];
+    final catalog = catalogAsync.value?.items ?? [];
     final forumIndex = ref.read(forumDataByTopicId);
     final now = DateTime.now();
     bool isDirty = false;
@@ -143,6 +143,15 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       }
     }
 
+    // Catalog names already claimed by a record with a real mod id. Collected
+    // once because the loop below used to scan every record for every catalog
+    // entry. Only the installed-mods loop above adds records with a mod id, so
+    // this set can't go stale while the catalog loop runs.
+    final catalogNamesOnRealRecords = {
+      for (final record in records.values)
+        if (record.modId != null) record.catalog?.name,
+    };
+
     // Create records for unmatched catalog entries (catalog-only mods).
     for (final catalogMod in catalog) {
       if (matchedCatalogNames.contains(catalogMod.name)) continue;
@@ -150,9 +159,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       final syntheticKey = ModRecord.syntheticKey(catalogMod.name);
 
       // Skip if already merged into a real-ID record.
-      if (records.values.any(
-        (r) => r.catalog?.name == catalogMod.name && r.modId != null,
-      )) {
+      if (catalogNamesOnRealRecords.contains(catalogMod.name)) {
         if (records.containsKey(syntheticKey)) {
           records.remove(syntheticKey);
           isDirty = true;
@@ -223,7 +230,13 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
         "ModRecords auto-populated: ${records.length} records "
         "(${modVariants.length} installed, ${catalog.length} catalog).",
       );
-      updateState((s) => ModRecords(records: records));
+      // isDirty already tracked every real change, so let updateState skip its
+      // own check. That check hashes the whole record set, which is expensive
+      // here and can't tell us anything we don't already know.
+      updateState(
+        (s) => ModRecords(records: records),
+        skipChangeCheck: true,
+      );
     }
   }
 
@@ -297,7 +310,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     if (catalogName == null) return;
 
     final syntheticKey = ModRecord.syntheticKey(catalogName);
-    if (state.valueOrNull?.records.containsKey(syntheticKey) == true) {
+    if (state.value?.records.containsKey(syntheticKey) == true) {
       await mergeSyntheticIntoReal(syntheticKey, modId);
     }
 
@@ -313,7 +326,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
       // Otherwise attach one: from the current catalog entry when it's loaded,
       // a bare one built from the hint when it isn't.
       final catalog =
-          ref.read(browseModsNotifierProvider).valueOrNull?.items ??
+          ref.read(browseModsNotifierProvider).value?.items ??
           const <ModRepoEntry>[];
       final key = catalogEntryKey(catalogName);
       final catalogMod = catalog.firstWhereOrNull(
@@ -336,23 +349,23 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
   // --- Lookup helpers ---
 
   ModRecord? lookupByModId(String modId) =>
-      state.valueOrNull?.records[modId];
+      state.value?.records[modId];
 
   ModRecord? lookupByForumThreadId(String threadId) =>
-      state.valueOrNull?.records.values.cast<ModRecord?>().firstWhere(
+      state.value?.records.values.cast<ModRecord?>().firstWhere(
         (r) => r!.forumThreadId == threadId,
         orElse: () => null,
       );
 
   ModRecord? lookupByNexusModId(String nexusId) =>
-      state.valueOrNull?.records.values.cast<ModRecord?>().firstWhere(
+      state.value?.records.values.cast<ModRecord?>().firstWhere(
         (r) => r!.nexusModsId == nexusId,
         orElse: () => null,
       );
 
   ModRecord? lookupByCatalogName(String name) {
     final normalized = name.toLowerCase().trim();
-    return state.valueOrNull?.records.values.cast<ModRecord?>().firstWhere(
+    return state.value?.records.values.cast<ModRecord?>().firstWhere(
       (r) => r!.catalog?.name?.toLowerCase().trim() == normalized,
       orElse: () => null,
     );

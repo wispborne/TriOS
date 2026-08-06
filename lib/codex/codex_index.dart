@@ -116,21 +116,21 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
     appSettings.select((s) => s.codexEnabledModsOnly),
   );
   final ships =
-      ref.watch(shipListNotifierProvider(enabledModsOnly)).valueOrNull ??
+      ref.watch(shipListNotifierProvider(enabledModsOnly)).value ??
       const [];
   final weapons =
-      ref.watch(weaponListNotifierProvider(enabledModsOnly)).valueOrNull ??
+      ref.watch(weaponListNotifierProvider(enabledModsOnly)).value ??
       const [];
   final hullmods =
-      ref.watch(hullmodListNotifierProvider).valueOrNull ?? const [];
+      ref.watch(hullmodListNotifierProvider).value ?? const [];
   final factions = ref.watch(mergedFactionListProvider(enabledModsOnly));
   final systems =
-      ref.watch(shipSystemListNotifierProvider).valueOrNull ?? const [];
-  final wings = ref.watch(wingListNotifierProvider).valueOrNull ?? const [];
+      ref.watch(shipSystemListNotifierProvider).value ?? const [];
+  final wings = ref.watch(wingListNotifierProvider).value ?? const [];
   // Watch the descriptions map once and look up directly — one family watch
   // per ship system is far too slow (each watch walks the element ancestors).
   final descriptions =
-      ref.watch(descriptionsNotifierProvider).valueOrNull ?? const {};
+      ref.watch(descriptionsNotifierProvider).value ?? const {};
 
   // Ship name by hull id, so a wing can show the name of the ship behind it
   // (wing rows have no name column of their own).
@@ -196,7 +196,7 @@ final _codexModuleShipIdsProvider = Provider<Set<String>>((ref) {
               ref.watch(appSettings.select((s) => s.codexEnabledModsOnly)),
             ),
           )
-          .valueOrNull ??
+          .value ??
       const [];
   final moduleVariants = ref.watch(moduleVariantsProvider);
   final variantHullIdMap = ref.watch(variantHullIdMapProvider);

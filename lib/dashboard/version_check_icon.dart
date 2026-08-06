@@ -49,7 +49,7 @@ class VersionCheckIcon extends ConsumerWidget {
     };
     final metadata = ref
         .watch(AppState.modsMetadata)
-        .valueOrNull
+        .value
         ?.getMergedModMetadata(modId);
     final remoteVersion = remoteVersionCheck?.remoteVersion?.modVersion
         ?.toString();

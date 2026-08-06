@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:path/path.dart' as p;
 import 'package:trios/descriptions/description_entry.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -23,7 +24,7 @@ final descriptionsNotifierProvider =
 /// Returns the [DescriptionEntry] for a given `(id, type)` key, or null.
 final descriptionProvider =
     Provider.family<DescriptionEntry?, DescriptionKey>((ref, key) {
-      return ref.watch(descriptionsNotifierProvider).valueOrNull?[key];
+      return ref.watch(descriptionsNotifierProvider).value?[key];
     });
 
 class DescriptionsNotifier

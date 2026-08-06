@@ -34,7 +34,7 @@ class _SectorMapPageState extends ConsumerState<SectorMapPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final saves = (ref.watch(saveFileProvider).valueOrNull ?? []).toList()
+    final saves = (ref.watch(saveFileProvider).value ?? []).toList()
       ..sort(
         (a, b) => (b.saveDate ?? DateTime(0)).compareTo(a.saveDate ?? DateTime(0)),
       );
@@ -70,7 +70,7 @@ class _SectorMapPageState extends ConsumerState<SectorMapPage>
     final sectorAsync = state.source == null
         ? null
         : ref.watch(sectorMapProvider(state.source!));
-    final sector = sectorAsync?.valueOrNull;
+    final sector = sectorAsync?.value;
 
     SaveFile? selectedSave;
     for (final s in saves) {

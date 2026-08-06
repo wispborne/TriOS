@@ -207,6 +207,12 @@ class ModProfileManagerNotifier
         .toList();
     final profileShallows = profile.enabledModVariants;
 
+    // Look-up tables built once. Searching the lists directly meant scanning
+    // every variant for every changed mod, and each comparison rebuilt the
+    // variant's smolId string. That was the slowest part of toggling a mod.
+    final variantsBySmolId = {for (final v in modVariants) v.smolId: v};
+    final modsById = {for (final mod in allMods) mod.id: mod};
+
     // Map of modId to ShallowModVariant
     final currentModIdToShallow = {
       for (var item in currentlyEnabledShallows) item.modId: item,
@@ -229,14 +235,11 @@ class ModProfileManagerNotifier
           return currentVariant.smolVariantId != profileVariant.smolVariantId;
         })
         .map((modId) {
-          final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
-          final fromVariant = modVariants.firstWhereOrNull(
-            (v) => v.smolId == currentModIdToShallow[modId]!.smolVariantId,
-          );
+          final mod = modsById[modId];
+          final fromVariant =
+              variantsBySmolId[currentModIdToShallow[modId]!.smolVariantId];
           final modProfileVariant = profileModIdToShallow[modId];
-          final toVariant = modVariants.firstWhereOrNull((v) {
-            return v.smolId == modProfileVariant!.smolVariantId;
-          });
+          final toVariant = variantsBySmolId[modProfileVariant!.smolVariantId];
 
           if (toVariant == null) {
             // Missing variant
@@ -273,11 +276,9 @@ class ModProfileManagerNotifier
     );
 
     final toEnable = modIdsToEnable.map((modId) {
-      final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
+      final mod = modsById[modId];
       final modProfileVariant = profileModIdToShallow[modId];
-      final toVariant = modVariants.firstWhereOrNull(
-        (v) => v.smolId == modProfileVariant!.smolVariantId,
-      );
+      final toVariant = variantsBySmolId[modProfileVariant!.smolVariantId];
 
       if (mod == null) {
         // Missing mod
@@ -326,11 +327,9 @@ class ModProfileManagerNotifier
     );
 
     final toDisable = modIdsToDisable.map((modId) {
-      final mod = allMods.firstWhereOrNull((mod) => mod.id == modId);
+      final mod = modsById[modId];
       final modProfileVariant = profileModIdToShallow[modId];
-      final fromVariant = modVariants.firstWhereOrNull(
-        (v) => v.smolId == modProfileVariant?.smolVariantId,
-      );
+      final fromVariant = variantsBySmolId[modProfileVariant?.smolVariantId];
 
       // Disable
       return ModChange(

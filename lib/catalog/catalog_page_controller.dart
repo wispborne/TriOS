@@ -1,5 +1,6 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/catalog_manager.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
@@ -85,7 +86,8 @@ class CatalogEntryStatus {
   const CatalogEntryStatus({required this.mod, this.versionCheck});
 }
 
-class CatalogPageController extends Notifier<CatalogPageState> {
+class CatalogPageController extends Notifier<CatalogPageState>
+    with NotifyOnNewState {
   static const FilterScope _scope = FilterScope(kCatalogPageId);
 
   late final FilterScopeController<CatalogMod> _filters;
@@ -124,7 +126,7 @@ class CatalogPageController extends Notifier<CatalogPageState> {
     _links = ref.watch(catalogLinksProvider);
     _versionCheckState = ref
         .watch(AppState.versionCheckResults)
-        .valueOrNull;
+        .value;
     _versionGroupOptions = extractVersionGroups(allMods);
 
     if (stateOrNull == null) {

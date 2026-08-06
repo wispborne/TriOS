@@ -22,7 +22,7 @@ final resolvedModulesProvider =
     Provider.family<List<ResolvedModule>, String>((ref, shipId) {
   // Every mod, enabled or not: this only looks up module hulls by id for ids
   // the parent ship already names, so a narrower list would just lose modules.
-  final allShips = ref.watch(shipListNotifierProvider(false)).valueOrNull ?? [];
+  final allShips = ref.watch(shipListNotifierProvider(false)).value ?? [];
   final moduleVariants = ref.watch(moduleVariantsProvider);
   final variantHullIdMap = ref.watch(variantHullIdMapProvider);
 

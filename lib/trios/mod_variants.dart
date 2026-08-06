@@ -24,6 +24,15 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   bool shouldAutomaticallyReloadOnFilesChanged = true;
   bool _isReloadingInternal = false;
 
+  /// True once the mods folder has actually been read.
+  ///
+  /// Until then the state can be an empty list that only means "we haven't
+  /// looked yet" — [reloadModVariantsFromFolders] returns without scanning if
+  /// the game folder isn't known. Callers that need "are the mods there yet"
+  /// should use [AppState.modsHaveLoaded], which reads this.
+  ///
+  bool hasScannedModsFolder = false;
+
   @override
   Future<List<ModVariant>> build() async {
     // if (state.value == null && !state.hasError) {
@@ -142,6 +151,13 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
       if (gamePath == null || modsPath == null) {
         return;
       }
+      // Reading a mod needs the game core folder, so without it
+      // `getModsVariantsInFolder` finds nothing. Stop here rather than
+      // publishing an empty list that reads as "this user has no mods" and
+      // starts every viewer scanning vanilla only.
+      if (ref.watch(AppState.gameCoreFolder).value == null) {
+        return;
+      }
 
       // Only existing folders can be rescanned. Folders that are gone
       // (deleted or renamed) still get their old entries removed from state
@@ -174,6 +190,13 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
             )).nonNulls.flattened.toList();
 
       if (folders == null) {
+        Fimber.i(
+          'Mod folder scan finished: ${variants.length} variant(s) in '
+          '${modsPath.path}',
+        );
+        // Set before publishing so watchers of `modsHaveLoaded` see `true` on
+        // the same emission that carries the scanned variants.
+        hasScannedModsFolder = true;
         state = AsyncValue.data(variants);
         ModVariant.iconCache.clear();
       } else {

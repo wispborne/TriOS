@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:path/path.dart' as p;
 import 'package:trios/faction_viewer/faction_viewer_controller.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
@@ -788,9 +789,9 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
   }
 
   void _showShipDialog(BuildContext context, Ship ship) {
-    final shipSystems = ref.read(shipSystemListNotifierProvider).valueOrNull ?? [];
+    final shipSystems = ref.read(shipSystemListNotifierProvider).value ?? [];
     final shipSystemsMap = {for (final s in shipSystems) s.id: s};
-    final weapons = ref.read(weaponListNotifierProvider(onlyEnabledMods)).valueOrNull ?? [];
+    final weapons = ref.read(weaponListNotifierProvider(onlyEnabledMods)).value ?? [];
     final weaponsMap = {for (final w in weapons) w.id: w};
 
     showDialog(
@@ -894,9 +895,9 @@ class _FleetSectionState extends ConsumerState<_FleetSection> {
   }
 
   Widget _shipTooltip(Ship ship, Widget child) {
-    final shipSystems = ref.watch(shipSystemListNotifierProvider).valueOrNull ?? [];
+    final shipSystems = ref.watch(shipSystemListNotifierProvider).value ?? [];
     final shipSystemsMap = {for (final s in shipSystems) s.id: s};
-    final weapons = ref.watch(weaponListNotifierProvider(onlyEnabledMods)).valueOrNull ?? [];
+    final weapons = ref.watch(weaponListNotifierProvider(onlyEnabledMods)).value ?? [];
     final weaponsMap = {for (final w in weapons) w.id: w};
     return ShipCodexCard.tooltip(
       ship: ship,
@@ -959,7 +960,7 @@ class _BlueprintSection<T> extends StatelessWidget {
   /// tag-matched items in load order (both are re-sorted by name for display).
   List<String> _effectiveIds() {
     if (tags.isEmpty || getItemTags == null) return ids;
-    final allItems = ref.watch(provider).valueOrNull ?? [];
+    final allItems = ref.watch(provider).value ?? [];
     final wanted = tags.map((t) => t.toLowerCase()).toSet();
     final seen = ids.toSet();
     final combined = <String>[...ids];
@@ -976,7 +977,7 @@ class _BlueprintSection<T> extends StatelessWidget {
   /// Applies [spoilerFilter] (if any) to [ids] using items from [provider].
   List<String> _applySpoiler(List<String> ids) {
     if (spoilerFilter == null) return ids;
-    final allItems = ref.watch(provider).valueOrNull ?? [];
+    final allItems = ref.watch(provider).value ?? [];
     final itemMap = <String, T>{
       for (final item in allItems) (item as dynamic).id as String: item,
     };
@@ -1108,7 +1109,7 @@ class _BlueprintWrap<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allItems = ref.watch(provider).valueOrNull ?? [];
+    final allItems = ref.watch(provider).value ?? [];
     final itemMap = <String, T>{};
     for (final item in allItems) {
       final id = (item as dynamic).id as String;

@@ -53,7 +53,7 @@ class AppUpdateIntent extends ChatIntent {
   @override
   ChatResponse respond(String input, ConversationContext context) {
     final updateState =
-        ref.read(AppState.selfUpdate).valueOrNull;
+        ref.read(AppState.selfUpdate).value;
 
     if (updateState == null) {
       return ChatResponse(

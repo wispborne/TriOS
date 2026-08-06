@@ -52,7 +52,7 @@ final finderEngineProvider = Provider.family<FinderEngine?, SectorSource>((
   ref,
   source,
 ) {
-  final sector = ref.watch(sectorMapProvider(source)).valueOrNull;
+  final sector = ref.watch(sectorMapProvider(source)).value;
   return sector == null ? null : FinderEngine(sector);
 });
 

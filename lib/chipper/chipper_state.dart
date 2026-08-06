@@ -2,7 +2,7 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/chipper/views/chipper_home.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/app_worker.dart';

@@ -26,7 +26,12 @@ class ModInfoJson with ModInfoJsonMappable {
   final List<Dependency> dependencies;
   final String? description;
   final String? originalGameVersion;
+
+  // The game accepts `"utility": "true"` (quoted) as well as a real boolean,
+  // and mods use both. The hook accepts both too.
+  @MappableField(hook: BoolHook())
   final bool utility;
+  @MappableField(hook: BoolHook())
   final bool totalConversion;
 
   /// Optional override for where the mod sits in the game's load order.

@@ -221,7 +221,9 @@ class PortraitsNotifier
             stacktrace: st,
           );
         }
-        if (_buildToken == myToken) {
+        // Never prune after a scan of zero variants — an early build before
+        // the mods folder is read would delete every mod's cache file.
+        if (_buildToken == myToken && variants.isNotEmpty) {
           try {
             await _store.pruneExcept(enabledSmolIds);
           } catch (e, st) {

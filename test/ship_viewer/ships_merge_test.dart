@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_info.dart';
@@ -14,6 +13,8 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
+
+import '../riverpod_test_helpers.dart';
 
 /// Stands in for the real scanner so tests can hand it fixed raw data.
 class _FakeShipListNotifier extends ShipListNotifier {
@@ -72,7 +73,7 @@ Future<List<Ship>> _build({
   List<GameFileSource> imageSources = const [],
   bool onlyEnabledMods = false,
 }) async {
-  final container = ProviderContainer(
+  final container = createTestContainer(
     overrides: [
       shipSourcesProvider.overrideWith(() => _FakeShipListNotifier(payloads)),
       AppState.mods.overrideWithValue(mods),
@@ -81,10 +82,9 @@ Future<List<Ship>> _build({
       ),
     ],
   );
-  addTearDown(container.dispose);
 
-  await container.read(shipSourcesProvider.future);
-  return container.read(shipListNotifierProvider(onlyEnabledMods)).valueOrNull ??
+  await awaitFirstValue(container, shipSourcesProvider);
+  return container.read(shipListNotifierProvider(onlyEnabledMods)).value ??
       const [];
 }
 

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
@@ -18,6 +19,7 @@ import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/game_file_resolver.dart';
+import 'package:trios/utils/game_json_values.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
@@ -80,24 +82,43 @@ final shipListNotifierProvider =
       );
   final orderedSrcs = orderedSources(variants);
 
-  return sources.whenData((payloads) {
-    final key = orderedSrcs.map((s) => s.key).join('\n');
-    final memo = _lastMergedShips[onlyEnabledMods];
-    if (memo != null &&
-        identical(memo.payloads, payloads) &&
-        memo.key == key &&
-        identical(memo.resolver, resolver)) {
-      return memo.ships;
-    }
-    final ships = _buildShips(payloads, orderedSrcs, resolver);
-    _lastMergedShips[onlyEnabledMods] = (
-      payloads: payloads,
-      key: key,
-      resolver: resolver,
-      ships: ships,
-    );
-    return ships;
-  });
+  final memo = _lastMergedShips[onlyEnabledMods];
+
+  // The raw scan stream restarts when the mod list changes, and exposes no
+  // payloads until its cache read finishes. Mapping that through would blank
+  // the page for a few seconds — keep showing the last list that built.
+  final payloads = sources.value;
+  if (payloads == null) {
+    return memo != null
+        ? AsyncValue.data(memo.ships)
+        : const AsyncValue.loading();
+  }
+
+  final key = orderedSrcs.map((s) => s.key).join('\n');
+  if (memo != null &&
+      identical(memo.payloads, payloads) &&
+      memo.key == key &&
+      identical(memo.resolver, resolver)) {
+    return AsyncValue.data(memo.ships);
+  }
+  // One bad file used to take the whole page down: the exception escaped
+  // this provider, Riverpod cached it, and the ships list stayed empty with
+  // nothing in the log to say why. Log what broke and keep showing the last
+  // list that built.
+  final List<Ship> ships;
+  try {
+    ships = _buildShips(payloads, orderedSrcs, resolver);
+  } catch (e, st) {
+    Fimber.e('Building the ships list failed.', ex: e, stacktrace: st);
+    return AsyncValue.data(memo?.ships ?? const <Ship>[]);
+  }
+  _lastMergedShips[onlyEnabledMods] = (
+    payloads: payloads,
+    key: key,
+    resolver: resolver,
+    ships: ships,
+  );
+  return AsyncValue.data(ships);
 });
 
 /// `.ship`/`.skin` field names mapped to friendly area names for the
@@ -188,25 +209,27 @@ Ship? _buildHull(
   final data = <String, dynamic>{...spec.row};
   File? dataFile;
 
-  final side = spec.sideFile;
-  if (side != null) {
-    final fields = <String, dynamic>{...side};
-    dataFile = (fields.remove('_dataFile') as String?)?.toFile();
-
-    final rawSlots = fields.remove('weaponSlots');
-    if (rawSlots is List) {
-      data['weaponSlots'] = rawSlots
-          .map((e) => ShipWeaponSlotMapper.fromMap(Map<String, dynamic>.from(e)))
-          .toList();
-    }
-    data.addAll(fields);
-  }
-
-  // The winning .ship file says which image to use; any mod, or the game core,
-  // can be the one that actually has it.
-  data['spriteFile'] = resolver.resolve(data['spriteName'] as String?);
-
   try {
+    final side = spec.sideFile;
+    if (side != null) {
+      final fields = <String, dynamic>{...side};
+      dataFile = (fields.remove('_dataFile') as String?)?.toFile();
+
+      final rawSlots = fields.remove('weaponSlots');
+      if (rawSlots is List) {
+        data['weaponSlots'] = rawSlots
+            .map(
+              (e) => ShipWeaponSlotMapper.fromMap(Map<String, dynamic>.from(e)),
+            )
+            .toList();
+      }
+      data.addAll(fields);
+    }
+
+    // The winning .ship file says which image to use; any mod, or the game
+    // core, can be the one that actually has it.
+    data['spriteFile'] = resolver.resolve(data['spriteName'] as String?);
+
     return ShipMapper.fromMap({
       for (final e in data.entries) e.key.toLowerCase(): e.value,
     })
@@ -261,21 +284,27 @@ List<Ship> _resolveSkins(
         continue;
       }
 
-      final ship = _resolveSkin(
-        skin,
-        baseHull,
-        resolver.resolve(skin.spriteName),
-        entry.value.winningSource?.variant,
-      )
-        ..modSources = buildItemModSources(
-          rowContributors: const [],
-          sideFileContributors: entry.value.contributors,
-          sideFileChangedKeys: entry.value.topLevelKeysBySource(),
-          areaNames: _shipAreaNames,
-          hasStatsRow: false,
+      final Ship ship;
+      try {
+        ship = _resolveSkin(
+          skin,
+          baseHull,
+          resolver.resolve(skin.spriteName),
+          entry.value.winningSource?.variant,
         )
-        ..csvFile = baseHull.csvFile
-        ..dataFile = dataFile?.toFile();
+          ..modSources = buildItemModSources(
+            rowContributors: const [],
+            sideFileContributors: entry.value.contributors,
+            sideFileChangedKeys: entry.value.topLevelKeysBySource(),
+            areaNames: _shipAreaNames,
+            hasStatsRow: false,
+          )
+          ..csvFile = baseHull.csvFile
+          ..dataFile = dataFile?.toFile();
+      } catch (e) {
+        failures.add('skin "${entry.key}": $e');
+        continue;
+      }
       resolved.add(ship);
       // A resolved skin can itself be another skin's base hull.
       available[ship.id] = ship;
@@ -375,21 +404,6 @@ class ShipListNotifier
         '[ships] .variant parsing errors:\n${_pendingVariantErrors.join('\n')}',
       );
     }
-  }
-
-  @override
-  Future<bool> isReadyToScan() async {
-    // Narrower than the base class on purpose: this waits for the mods to load
-    // and then stops caring, so switching a mod's version doesn't restart the
-    // whole stream. That used to cascade into widget rebuilds. Use the refresh
-    // button to rescan.
-    //
-    // `modsHaveLoaded` is a bool that settles at true, so watching it can't drag
-    // in later changes to the mod list. Nothing here waits: `build()` uses `ref`
-    // again after this returns, and Riverpod doesn't allow that once a
-    // dependency has changed — so waiting for the mods here would crash on the
-    // very change we were waiting for.
-    return ref.watch(AppState.modsHaveLoaded);
   }
 
   @override
@@ -795,8 +809,8 @@ Ship _resolveSkin(
       if (changes == null || changes is! Map<String, dynamic>) return slot;
       return ShipWeaponSlot(
         id: slot.id,
-        angle: (changes['angle'] as num?)?.toDouble() ?? slot.angle,
-        arc: (changes['arc'] as num?)?.toDouble() ?? slot.arc,
+        angle: doubleFromGameJson(changes['angle']) ?? slot.angle,
+        arc: doubleFromGameJson(changes['arc']) ?? slot.arc,
         mount: changes['mount'] as String? ?? slot.mount,
         size: changes['size'] as String? ?? slot.size,
         type: changes['type'] as String? ?? slot.type,

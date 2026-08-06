@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
@@ -41,7 +40,7 @@ class ModMetadataStore extends GenericSettingsAsyncNotifier<ModsMetadata> {
     ref.listen(AppState.smolIds, (prev, newMods) {
       if (!listEquals(prev, newMods)) {
         final newMods = ref.read(AppState.mods);
-        final currentSettings = state.valueOrNull;
+        final currentSettings = state.value;
         if (currentSettings == null) return;
         _initializeMissingMetadata(
           newMods,

@@ -56,7 +56,7 @@ class ModTipsIntent extends ChatIntent with ModAwareIntent {
 
   @override
   ChatResponse respond(String input, ConversationContext context) {
-    final tips = ref.read(AppState.tipsProvider).valueOrNull;
+    final tips = ref.read(AppState.tipsProvider).value;
 
     if (tips == null || tips.isEmpty) {
       return const ChatResponse(

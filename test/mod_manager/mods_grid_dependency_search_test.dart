@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/mod_manager/mods_grid_page_controller.dart';
 import 'package:trios/models/mod.dart';
@@ -9,6 +8,8 @@ import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/app_state.dart';
+
+import '../riverpod_test_helpers.dart';
 
 Mod _mod(
   String id, {
@@ -51,14 +52,13 @@ final _diableAvionics = _mod(
 final _lazyLib = _mod('lw_lazylib', name: 'LazyLib', author: 'LazyWizard');
 
 List<String> _search(String query, {List<Mod>? mods}) {
-  final container = ProviderContainer(
+  final container = createTestContainer(
     overrides: [
       AppState.mods.overrideWithValue(
         mods ?? [_nexerelin, _diableAvionics, _lazyLib],
       ),
     ],
   );
-  addTearDown(container.dispose);
 
   final controller = container.read(modsGridSearchControllerProvider.notifier);
   controller.updateSearchQuery(query);

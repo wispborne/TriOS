@@ -4,6 +4,8 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_systems_manager/ship_systems_manager.dart';
@@ -150,7 +152,8 @@ bool tagsMatchShipSpoilerLevel(
 final _onlyEnabledModsChanged = StateProvider<int>((ref) => 0);
 
 /// Controller for the ships page using Notifier (synchronous)
-class ShipsPageController extends Notifier<ShipsPageState> {
+class ShipsPageController extends Notifier<ShipsPageState>
+    with NotifyOnNewState {
   final vanillaName = 'Vanilla';
 
   static final _scope = const FilterScope(kShipsPageId);

@@ -271,7 +271,9 @@ class Fimber {
     }
 
     if (!didLoggingInitializeSuccessfully) {
-      print(message());
+      if (kDebugMode) {
+        print(message());
+      }
       return;
     }
 
@@ -304,7 +306,9 @@ class Fimber {
     }
 
     if (!didLoggingInitializeSuccessfully) {
-      print(message);
+      if (kDebugMode) {
+        print(message);
+      }
       return;
     }
 
@@ -335,7 +339,9 @@ class Fimber {
     }
 
     if (!didLoggingInitializeSuccessfully) {
-      print(message);
+      if (kDebugMode) {
+        print(message);
+      }
       return;
     }
 
@@ -366,7 +372,9 @@ class Fimber {
     }
 
     if (!didLoggingInitializeSuccessfully) {
-      print(message);
+      if (kDebugMode) {
+        print(message);
+      }
       return;
     }
 
@@ -397,7 +405,9 @@ class Fimber {
     }
 
     if (!didLoggingInitializeSuccessfully) {
-      print(message);
+      if (kDebugMode) {
+        print(message);
+      }
       return;
     }
 
@@ -423,40 +433,31 @@ class Fimber {
   }
 }
 
-class RiverpodDebugObserver extends ProviderObserver {
+base class RiverpodDebugObserver extends ProviderObserver {
   @override
-  void didAddProvider(
-    ProviderBase<Object?> provider,
-    Object? value,
-    ProviderContainer container,
-  ) {}
+  void didAddProvider(ProviderObserverContext context, Object? value) {}
 
   @override
-  void didDisposeProvider(
-    ProviderBase<Object?> provider,
-    ProviderContainer container,
-  ) {}
+  void didDisposeProvider(ProviderObserverContext context) {}
 
   @override
   void didUpdateProvider(
-    ProviderBase<Object?> provider,
+    ProviderObserverContext context,
     Object? previousValue,
     Object? newValue,
-    ProviderContainer container,
   ) {
     if (_loggingSettings.shouldDebugRiverpod) {
       Fimber.d(
-        "Provider: $provider, prev: ${previousValue.toString().take(200)}, new: ${newValue.toString().take(200)}, container: ${container.toString().take(200)}",
+        "Provider: ${context.provider}, prev: ${previousValue.toString().take(200)}, new: ${newValue.toString().take(200)}, container: ${context.container.toString().take(200)}",
       );
     }
   }
 
   @override
   void providerDidFail(
-    ProviderBase<Object?> provider,
+    ProviderObserverContext context,
     Object error,
     StackTrace stackTrace,
-    ProviderContainer container,
   ) {}
 }
 

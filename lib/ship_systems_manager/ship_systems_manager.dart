@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
@@ -31,7 +32,7 @@ final shipSystemListNotifierProvider =
 /// this over building a map from [shipSystemListNotifierProvider] per widget.
 final shipSystemsByIdProvider = Provider<Map<String, ShipSystem>>((ref) {
   final systems =
-      ref.watch(shipSystemListNotifierProvider).valueOrNull ??
+      ref.watch(shipSystemListNotifierProvider).value ??
       const <ShipSystem>[];
   return {for (final s in systems) s.id: s};
 });

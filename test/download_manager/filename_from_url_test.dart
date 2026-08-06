@@ -1,7 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/downloader.dart';
+
+import '../riverpod_test_helpers.dart';
 
 /// Regression test for the "Not a supported archive format" download bug.
 ///
@@ -16,7 +17,7 @@ void main() {
 
   setUp(() {
     // The real provider; fetchFileNameFromUrl does no network/ref work.
-    downloadManager = ProviderContainer().read(downloadManagerInstance);
+    downloadManager = createTestContainer().read(downloadManagerInstance);
   });
 
   bool isSupportedArchive(String name) => Constants.supportedArchiveExtensions

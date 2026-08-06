@@ -81,7 +81,7 @@ final gameFileResolverProvider = Provider.family<GameFileResolver, bool>((
   ref,
   onlyEnabledMods,
 ) {
-  final payloads = ref.watch(graphicsIndexProvider).valueOrNull ?? const [];
+  final payloads = ref.watch(graphicsIndexProvider).value ?? const [];
 
   final bySourceKey = {
     for (final payload in payloads) payload.sourceKey: payload,

@@ -224,7 +224,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
     // Total VRAM, shown only when reliably known. Estimated usage uses the same
     // shared calculation as the scan progress panel's "Enabled" cohort, so the
     // bar and the panel always agree.
-    final totalVram = ref.watch(AppState.gpuInfo).valueOrNull?.freeVRAM;
+    final totalVram = ref.watch(AppState.gpuInfo).value?.freeVRAM;
     final estimatedVramBytes = estimateVramUsageForMods(
       ref.watch(AppState.mods).where((m) => m.isEnabledOnUi).toList(),
       vramState.modVramInfo,

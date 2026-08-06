@@ -52,7 +52,7 @@ class ModsByCategoryIntent extends ChatIntent with ModAwareIntent {
   @override
   ChatResponse respond(String input, ConversationContext context) {
     final store =
-        ref.read(categoryManagerProvider).valueOrNull;
+        ref.read(categoryManagerProvider).value;
 
     if (store == null || store.categories.isEmpty) {
       return const ChatResponse(

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
@@ -10,6 +9,8 @@ import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/app_state.dart';
+
+import '../riverpod_test_helpers.dart';
 
 /// Stands in for the real scanner so tests can hand it a fixed set of files.
 class _FakeFactionListNotifier extends FactionListNotifier {
@@ -66,7 +67,7 @@ Future<({List<Faction> all, List<Faction> enabledOnly})> _merge({
   required List<FactionFileData> files,
   required List<Mod> mods,
 }) async {
-  final container = ProviderContainer(
+  final container = createTestContainer(
     overrides: [
       factionListNotifierProvider.overrideWith(
         () => _FakeFactionListNotifier(files),
@@ -74,9 +75,8 @@ Future<({List<Faction> all, List<Faction> enabledOnly})> _merge({
       AppState.mods.overrideWithValue(mods),
     ],
   );
-  addTearDown(container.dispose);
 
-  await container.read(factionListNotifierProvider.future);
+  await awaitFirstValue(container, factionListNotifierProvider);
   return (
     all: container.read(mergedFactionListProvider(false)),
     enabledOnly: container.read(mergedFactionListProvider(true)),

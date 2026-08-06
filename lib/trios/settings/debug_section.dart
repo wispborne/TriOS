@@ -655,7 +655,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                 builder: (context) {
                   final cacheTime = forumDataFetcher.getCacheTimestamp();
                   final forumBundle =
-                      ref.watch(forumDataProvider).valueOrNull;
+                      ref.watch(forumDataProvider).value;
                   final entryCount = forumBundle?.index.length;
                   final String status;
                   if (cacheTime != null) {
@@ -718,9 +718,9 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
                     label: const Text('Show Forum Data'),
                     onPressed: () {
                       final bundle =
-                          ref.read(forumDataProvider).valueOrNull;
+                          ref.read(forumDataProvider).value;
                       final records =
-                          ref.read(modRecordsStore).valueOrNull;
+                          ref.read(modRecordsStore).value;
                       final matchedCount = records?.records.values
                               .where(
                                 (r) => r.forumData != null,

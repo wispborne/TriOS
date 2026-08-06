@@ -12,17 +12,17 @@ mixin SettingsAwareIntent {
 
   Settings get settings => ref.read(appSettings);
 
-  Directory? get gameFolder => ref.read(AppState.gameFolder).valueOrNull;
+  Directory? get gameFolder => ref.read(AppState.gameFolder).value;
 
-  Directory? get modsFolder => ref.read(AppState.modsFolder).valueOrNull;
+  Directory? get modsFolder => ref.read(AppState.modsFolder).value;
 
-  Directory? get savesFolder => ref.read(AppState.savesFolder).valueOrNull;
+  Directory? get savesFolder => ref.read(AppState.savesFolder).value;
 
   bool get isGameRunning =>
-      ref.read(AppState.isGameRunning).valueOrNull == true;
+      ref.read(AppState.isGameRunning).value == true;
 
   String? get currentRam => ref.read(currentRamAmountInMb);
 
   VmparamsManagerState? get vmparamsState =>
-      ref.read(vmparamsManagerProvider).valueOrNull;
+      ref.read(vmparamsManagerProvider).value;
 }

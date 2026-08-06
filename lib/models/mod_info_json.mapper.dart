@@ -211,6 +211,7 @@ class ModInfoJsonMapper extends ClassMapperBase<ModInfoJson> {
     _$utility,
     opt: true,
     def: false,
+    hook: BoolHook(),
   );
   static bool _$totalConversion(ModInfoJson v) => v.totalConversion;
   static const Field<ModInfoJson, bool> _f$totalConversion = Field(
@@ -218,6 +219,7 @@ class ModInfoJsonMapper extends ClassMapperBase<ModInfoJson> {
     _$totalConversion,
     opt: true,
     def: false,
+    hook: BoolHook(),
   );
   static String? _$sortString(ModInfoJson v) => v.sortString;
   static const Field<ModInfoJson, String> _f$sortString = Field(

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:csv/csv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
@@ -68,24 +69,41 @@ final weaponListNotifierProvider =
       );
   final orderedSrcs = orderedSources(variants);
 
-  return sources.whenData((payloads) {
-    final key = orderedSrcs.map((s) => s.key).join('\n');
-    final memo = _lastMergedWeapons[onlyEnabledMods];
-    if (memo != null &&
-        identical(memo.payloads, payloads) &&
-        memo.key == key &&
-        identical(memo.resolver, resolver)) {
-      return memo.weapons;
-    }
-    final weapons = _buildWeapons(payloads, orderedSrcs, resolver);
-    _lastMergedWeapons[onlyEnabledMods] = (
-      payloads: payloads,
-      key: key,
-      resolver: resolver,
-      weapons: weapons,
-    );
-    return weapons;
-  });
+  final memo = _lastMergedWeapons[onlyEnabledMods];
+
+  // The raw scan stream restarts when the mod list changes, and exposes no
+  // payloads until its cache read finishes. Mapping that through would blank
+  // the page for a few seconds — keep showing the last list that built.
+  final payloads = sources.value;
+  if (payloads == null) {
+    return memo != null
+        ? AsyncValue.data(memo.weapons)
+        : const AsyncValue.loading();
+  }
+
+  final key = orderedSrcs.map((s) => s.key).join('\n');
+  if (memo != null &&
+      identical(memo.payloads, payloads) &&
+      memo.key == key &&
+      identical(memo.resolver, resolver)) {
+    return AsyncValue.data(memo.weapons);
+  }
+  // Last resort: if the merge itself throws, log it and keep showing the
+  // last list that built instead of taking the whole page down.
+  final List<Weapon> weapons;
+  try {
+    weapons = _buildWeapons(payloads, orderedSrcs, resolver);
+  } catch (e, st) {
+    Fimber.e('Building the weapons list failed.', ex: e, stacktrace: st);
+    return AsyncValue.data(memo?.weapons ?? const <Weapon>[]);
+  }
+  _lastMergedWeapons[onlyEnabledMods] = (
+    payloads: payloads,
+    key: key,
+    resolver: resolver,
+    weapons: weapons,
+  );
+  return AsyncValue.data(weapons);
 });
 
 /// Weapons keyed by id, rebuilt only when the weapons list changes. Prefer
@@ -95,7 +113,7 @@ final weaponsByIdProvider = Provider.family<Map<String, Weapon>, bool>((
   onlyEnabledMods,
 ) {
   final weapons =
-      ref.watch(weaponListNotifierProvider(onlyEnabledMods)).valueOrNull ??
+      ref.watch(weaponListNotifierProvider(onlyEnabledMods)).value ??
       const <Weapon>[];
   return {for (final w in weapons) w.id: w};
 });

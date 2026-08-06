@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
@@ -79,7 +80,8 @@ final hullmodsPageControllerProvider =
       () => HullmodsPageController(),
     );
 
-class HullmodsPageController extends Notifier<HullmodsPageState> {
+class HullmodsPageController extends Notifier<HullmodsPageState>
+    with NotifyOnNewState {
   static final _scope = const FilterScope(kHullmodsPageId);
 
   late final FilterScopeController<Hullmod> _filters;

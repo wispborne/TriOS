@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:mutex/mutex.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/logging.dart';
 
-abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T> {
+abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T>
+    with NotifyOnNewState {
   late final GenericAsyncSettingsManager<T> settingsManager;
   bool _isInitialized = false;
 

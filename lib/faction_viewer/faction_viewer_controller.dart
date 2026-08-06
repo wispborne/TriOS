@@ -1,5 +1,6 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -86,7 +87,8 @@ final factionViewerControllerProvider =
       () => FactionViewerController(),
     );
 
-class FactionViewerController extends Notifier<FactionViewerState> {
+class FactionViewerController extends Notifier<FactionViewerState>
+    with NotifyOnNewState {
   static final _scope = const FilterScope(kFactionViewerPageId);
 
   late final FilterScopeController<Faction> _filters;

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/utils/game_data_merge.dart';
@@ -10,6 +9,8 @@ import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/trios/app_state.dart';
+
+import '../riverpod_test_helpers.dart';
 
 void main() {
   group('mergedShipRolesProvider', () {
@@ -45,13 +46,12 @@ void main() {
       List<Mod> mods, {
       required bool onlyEnabledMods,
     }) async {
-      final container = ProviderContainer(
+      final container = createTestContainer(
         overrides: [
           AppState.gameCoreFolder.overrideWith((ref) async => gameCore),
           AppState.mods.overrideWithValue(mods),
         ],
       );
-      addTearDown(container.dispose);
 
       final provider = mergedShipRolesProvider(onlyEnabledMods);
       container.listen(provider, (_, _) {}, fireImmediately: true);

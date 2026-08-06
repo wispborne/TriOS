@@ -54,7 +54,7 @@ class ModAuditIntent extends ChatIntent with ModAwareIntent {
   @override
   ChatResponse respond(String input, ConversationContext context) {
     final entries =
-        ref.read(AppState.modAudit).valueOrNull;
+        ref.read(AppState.modAudit).value;
 
     if (entries == null || entries.isEmpty) {
       return const ChatResponse(

@@ -237,7 +237,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
           if (e is HullmodCodexEntry) e.hullmod.id: e.hullmod,
       };
     }
-    _gameCoreDir = ref.watch(AppState.gameCoreFolder).valueOrNull;
+    _gameCoreDir = ref.watch(AppState.gameCoreFolder).value;
 
     // Count basis for the active category's facets (pre-chip-filter).
     final category = state.category;

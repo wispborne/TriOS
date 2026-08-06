@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod.dart';
@@ -10,6 +9,8 @@ import 'package:trios/models/version.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
+
+import '../riverpod_test_helpers.dart';
 
 /// Stands in for the real folder walk so tests can hand it a fixed index.
 class _FakeGraphicsIndexNotifier extends GraphicsIndexNotifier {
@@ -59,7 +60,7 @@ void main() {
       required bool modEnabled,
       required bool onlyEnabledMods,
     }) async {
-      final container = ProviderContainer(
+      final container = createTestContainer(
         overrides: [
           graphicsIndexProvider.overrideWith(
             () => _FakeGraphicsIndexNotifier(payloads),
@@ -73,9 +74,8 @@ void main() {
           ]),
         ],
       );
-      addTearDown(container.dispose);
 
-      await container.read(graphicsIndexProvider.future);
+      await awaitFirstValue(container, graphicsIndexProvider);
       return container
           .read(gameFileResolverProvider(onlyEnabledMods))
           .resolve(spritePath);

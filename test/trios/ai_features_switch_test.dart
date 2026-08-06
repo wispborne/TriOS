@@ -1,11 +1,12 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
+
+import '../riverpod_test_helpers.dart';
 
 /// Stands in for the real settings notifier so nothing touches the settings
 /// file on disk.
@@ -22,7 +23,7 @@ AiSummaryMode _effectiveMode({
   required bool aiEnabled,
   required AiSummaryMode savedMode,
 }) {
-  final container = ProviderContainer(
+  final container = createTestContainer(
     overrides: [
       appSettings.overrideWith(
         () => _FakeSettings(
@@ -34,7 +35,6 @@ AiSummaryMode _effectiveMode({
       ),
     ],
   );
-  addTearDown(container.dispose);
   return container.read(effectiveCatalogAiSummaryModeProvider);
 }
 
@@ -65,7 +65,7 @@ void main() {
     });
 
     test('turning the switch off and back on restores the saved level', () {
-      final container = ProviderContainer(
+      final container = createTestContainer(
         overrides: [
           appSettings.overrideWith(
             () => _FakeSettings(
@@ -77,7 +77,6 @@ void main() {
           ),
         ],
       );
-      addTearDown(container.dispose);
 
       expect(
         container.read(effectiveCatalogAiSummaryModeProvider),

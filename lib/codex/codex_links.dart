@@ -39,9 +39,9 @@ final codexLinksProvider = Provider<Map<CodexKey, List<CodexKey>>>((ref) {
               ref.watch(appSettings.select((s) => s.codexEnabledModsOnly)),
             ),
           )
-          .valueOrNull ??
+          .value ??
       const [];
-  final wings = ref.watch(wingListNotifierProvider).valueOrNull ?? const [];
+  final wings = ref.watch(wingListNotifierProvider).value ?? const [];
   final moduleVariants = ref.watch(moduleVariantsProvider);
   final variantHullIdMap = ref.watch(variantHullIdMapProvider);
   // HashMap/HashSet: insertion order is maintained by the default map/set

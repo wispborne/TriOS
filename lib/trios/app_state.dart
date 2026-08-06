@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+import 'package:flutter_riverpod/legacy.dart' show StateProvider, StateController;
 import 'package:trios/changelogs/mod_changelogs_manager.dart';
 import 'package:trios/compression/archive.dart';
 import 'package:trios/vmparams/vmparams_manager.dart';
@@ -142,9 +142,14 @@ class AppState {
   /// mods there yet". It's a plain bool, so it stops notifying once it flips to
   /// true — [modVariants] hands out a new list on every reload, which would
   /// re-trigger every watcher for no reason.
-  static final modsHaveLoaded = Provider<bool>(
-    (ref) => ref.watch(AppState.modVariants).hasValue,
-  );
+  ///
+  /// Don't use `hasValue` for this. [modVariants] publishes an empty list
+  /// before the game folder is known, and an empty list reads the same as "this
+  /// user has no mods". Only the notifier knows whether it actually looked.
+  static final modsHaveLoaded = Provider<bool>((ref) {
+    ref.watch(AppState.modVariants);
+    return ref.read(AppState.modVariants.notifier).hasScannedModsFolder;
+  });
 
   static final enabledModVariants = Provider<List<ModVariant>>((ref) {
     final mods = ref.watch(AppState.mods);

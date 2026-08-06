@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderOrFamily;
 import 'package:open_filex/open_filex.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/catalog_manager.dart';
@@ -62,13 +63,13 @@ class _CatalogDataSourcesDialogState
     final modRepoAsync = ref.watch(browseModsNotifierProvider);
     final isLoadingMod = ref.watch(isLoadingCatalog);
     final modRepoStatus = _statusFor(modRepoAsync, _modRepoCachedAt);
-    final modRepoCount = modRepoAsync.valueOrNull?.items.length;
+    final modRepoCount = modRepoAsync.value?.items.length;
 
     // --- QB's Forum Bundle state ---
     final forumAsync = ref.watch(forumDataProvider);
     final isLoadingForum = ref.watch(isLoadingForumData);
     final forumStatus = _statusFor(forumAsync, _forumCachedAt);
-    final forumCount = forumAsync.valueOrNull?.index.length;
+    final forumCount = forumAsync.value?.index.length;
 
     return AlertDialog(
       title: const Text('Catalog Data Sources'),

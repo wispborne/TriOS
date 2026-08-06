@@ -123,7 +123,7 @@ class PendingDownloadClicks extends Notifier<Set<DownloadTarget>> {
     // Ask the same question the buttons ask, so a finished download left over
     // from earlier in the session can't hand off to nothing.
     ref.listen(downloadManager, (_, next) {
-      final downloads = next.valueOrNull ?? const <Download>[];
+      final downloads = next.value ?? const <Download>[];
       for (final target in state.toList()) {
         if (findActiveDownload(downloads, target) != null) clear(target);
       }

@@ -58,9 +58,9 @@ class PermissionIssuesIntent extends ChatIntent {
   @override
   ChatResponse respond(String input, ConversationContext context) {
     final canWrite =
-        ref.read(AppState.canWriteToModsFolder).valueOrNull;
+        ref.read(AppState.canWriteToModsFolder).value;
     final canWriteStarsector =
-        ref.read(AppState.canWriteToStarsectorFolder).valueOrNull;
+        ref.read(AppState.canWriteToStarsectorFolder).value;
 
     final buf = StringBuffer('File Permission Check\n');
 

@@ -58,7 +58,7 @@ class ModChangelogIntent extends ChatIntent with ModAwareIntent {
     if (guard != null) return guard;
 
     final changelogs =
-        ref.read(AppState.changelogsProvider).valueOrNull;
+        ref.read(AppState.changelogsProvider).value;
 
     if (changelogs == null || changelogs.isEmpty) {
       return const ChatResponse(

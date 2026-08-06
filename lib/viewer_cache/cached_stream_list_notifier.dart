@@ -397,7 +397,11 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     }
 
     // ── Phase 3: prune (only on a clean full scan) ────────────────────────
-    if (fullScanCompleted) {
+    // Never prune after a scan of zero variants. Early builds run before the
+    // mods folder has been read, complete instantly as a "full scan" of
+    // nothing, and an empty keep-list here would delete every mod's cache
+    // file — forcing a full re-parse on every launch.
+    if (fullScanCompleted && variants.isNotEmpty) {
       try {
         await store.pruneExcept(enabledSmolIds);
       } catch (e, st) {

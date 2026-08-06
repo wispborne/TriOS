@@ -7,6 +7,7 @@ import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/game_json_values.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
@@ -32,9 +33,11 @@ class ShieldStyleColors {
 /// Returns null if the value isn't a usable color list.
 Color? _colorFromList(dynamic value) {
   if (value is! List || value.length < 3) return null;
-  int channel(int i) => (value[i] as num).round().clamp(0, 255);
+  int? channel(int i) => doubleFromGameJson(value[i])?.round().clamp(0, 255);
+  final r = channel(0), g = channel(1), b = channel(2);
   final a = value.length >= 4 ? channel(3) : 255;
-  return Color.fromARGB(a, channel(0), channel(1), channel(2));
+  if (r == null || g == null || b == null || a == null) return null;
+  return Color.fromARGB(a, r, g, b);
 }
 
 /// Merged `hull_styles.json` shield colors from the game core plus every

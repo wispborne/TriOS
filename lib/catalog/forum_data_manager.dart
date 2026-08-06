@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/catalog/models/forum_data_bundle.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
@@ -60,7 +61,7 @@ final forumDataProvider = StreamProvider<ForumDataBundle>((ref) async* {
 /// O(1) lookup map from topicId to ForumModIndex, built from the latest
 /// forum data bundle.
 final forumDataByTopicId = Provider<Map<int, ForumModIndex>>((ref) {
-  final bundle = ref.watch(forumDataProvider).valueOrNull;
+  final bundle = ref.watch(forumDataProvider).value;
   if (bundle == null) return {};
   return {for (final entry in bundle.index) entry.topicId: entry};
 });
@@ -128,7 +129,7 @@ final forumDetailsForTopic = Provider.family<ForumModDetails?, int>((
   ref,
   topicId,
 ) {
-  final map = ref.watch(forumDetailsByTopicId).valueOrNull;
+  final map = ref.watch(forumDetailsByTopicId).value;
   return map?[topicId];
 });
 

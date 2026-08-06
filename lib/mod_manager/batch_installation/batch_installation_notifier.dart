@@ -677,7 +677,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
             // file whose name matches a catalog-only record): merge by name.
             final syntheticKey = ModRecord.syntheticKey(modInfo.nameOrId);
             if (store.lookupByModId(modId) == null &&
-                store.state.valueOrNull?.records.containsKey(syntheticKey) ==
+                store.state.value?.records.containsKey(syntheticKey) ==
                     true) {
               await store.mergeSyntheticIntoReal(syntheticKey, modId);
             }

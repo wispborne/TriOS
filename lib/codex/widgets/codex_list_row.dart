@@ -147,7 +147,7 @@ class _CodexListRowState extends ConsumerState<CodexListRow> {
       case ShipSystemCodexEntry(:final system):
         return _fileImage(system.icon);
       case FactionCodexEntry(:final faction):
-        final dir = ref.watch(AppState.gameCoreFolder).valueOrNull;
+        final dir = ref.watch(AppState.gameCoreFolder).value;
         final file = faction.resolveImageFile(
           faction.crest ?? faction.logo,
           dir,

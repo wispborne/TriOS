@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_info.dart';
@@ -14,6 +13,8 @@ import 'package:trios/viewer_cache/graphics_index_manager.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/models/weapons_cache_payload.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
+
+import '../riverpod_test_helpers.dart';
 
 /// Stands in for the real scanner so tests can hand it fixed raw data.
 class _FakeWeaponListNotifier extends WeaponListNotifier {
@@ -58,7 +59,7 @@ Future<List<Weapon>> _build({
   List<GameFileSource> imageSources = const [],
   bool onlyEnabledMods = false,
 }) async {
-  final container = ProviderContainer(
+  final container = createTestContainer(
     overrides: [
       weaponSourcesProvider.overrideWith(
         () => _FakeWeaponListNotifier(payloads),
@@ -69,12 +70,11 @@ Future<List<Weapon>> _build({
       ),
     ],
   );
-  addTearDown(container.dispose);
 
-  await container.read(weaponSourcesProvider.future);
+  await awaitFirstValue(container, weaponSourcesProvider);
   return container
           .read(weaponListNotifierProvider(onlyEnabledMods))
-          .valueOrNull ??
+          .value ??
       const [];
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/cached_json_fetcher.dart';

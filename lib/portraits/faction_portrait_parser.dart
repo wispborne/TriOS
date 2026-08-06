@@ -4,7 +4,6 @@ import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/portraits/portrait_metadata.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -151,8 +150,7 @@ class FactionPortraitParser {
 
     try {
       final content = await factionFile.readAsString();
-      final jsonContent = content.removeJsonComments();
-      final factionData = await jsonContent.parseJsonToMapAsync();
+      final factionData = await content.parseJsonToMapAsync();
 
       final factionId = factionData['id'] as String?;
       if (factionId == null) return {};

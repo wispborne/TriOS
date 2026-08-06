@@ -549,8 +549,7 @@ class ShipListNotifier
     for (final file in variantFiles) {
       try {
         final raw = await file.readAsString(encoding: utf8);
-        final cleaned = raw.removeJsonComments();
-        final map = await cleaned.parseJsonToMapAsync();
+        final map = await raw.parseJsonToMapAsync();
 
         final variantId = map['variantId'] as String?;
         final hullId = map['hullId'] as String?;
@@ -634,7 +633,7 @@ Future<_ShipScanResult> _scanShipsFolder(
         .where((f) => f.path.endsWith('.ship'))) {
       try {
         final raw = await shipFile.readAsString(encoding: utf8);
-        final map = await raw.removeJsonComments().parseJsonToMapAsync();
+        final map = await raw.parseJsonToMapAsync();
         if (map['hullId'] == null) {
           errors.add('[$modName] .ship file ${shipFile.path} missing "hullId"');
           continue;
@@ -661,7 +660,7 @@ Future<_ShipScanResult> _scanShipsFolder(
         .where((f) => f.path.endsWith('.skin'))) {
       try {
         final raw = await skinFile.readAsString(encoding: utf8);
-        final map = await raw.removeJsonComments().parseJsonToMapAsync();
+        final map = await raw.parseJsonToMapAsync();
         map['_dataFile'] = skinFile.path;
         map.removeWhere((_, value) => value == null);
         skinFiles[p

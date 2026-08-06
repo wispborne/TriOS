@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
@@ -74,7 +73,7 @@ final mergedShipRolesProvider =
 
     try {
       final content = await file.readAsStringUtf8OrLatin1();
-      final json = await content.removeJsonComments().parseJsonToMapAsync();
+      final json = await content.parseJsonToMapAsync();
       jsonSources.add((source: source, json: json));
       sourceFiles[source.name] = file;
     } catch (e, st) {

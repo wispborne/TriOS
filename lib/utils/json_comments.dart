@@ -1,11 +1,16 @@
-/// Starsector JSON files frequently include `//` line comments and
-/// `/* */` block comments, which are not valid JSON. This strips them
-/// before `jsonDecode`. String literals are respected — a `//` inside
-/// a string is preserved.
+/// Strips `//` line comments and `/* */` block comments, which the game's own
+/// JSON parser has no idea about. String literals are respected, including
+/// `\"` escapes, so a `//` inside a string is kept.
 ///
-/// Pass `stripHashLineComments: true` to additionally strip `#` line
-/// comments (through the next newline) outside string literals. Default
-/// `false` preserves legacy behavior for every existing caller.
+/// Use this for files the game never reads — `.version` files, and anything
+/// TriOS scans on a best-effort basis — where being stricter than the game
+/// buys nothing. `parseJsonToMap()` already handles everything the game
+/// itself accepts, `#` comments included, so don't reach for this to prepare
+/// a file the game loads.
+///
+/// Pass `stripHashLineComments: true` to also strip `#` line comments outside
+/// strings. That is quote-aware in a way the game's own stripper isn't, so it
+/// keeps a `#` that follows a `\"` on the same line.
 String stripJsonComments(String src, {bool stripHashLineComments = false}) {
   final sb = StringBuffer();
   var i = 0;

@@ -243,7 +243,7 @@ Future<Map<String, String>> _buildVariantHullIdMap(Directory folder) async {
   for (final file in variantFiles) {
     try {
       final raw = await file.readAsString(encoding: utf8);
-      final map = await raw.removeJsonComments().parseJsonToMapAsync();
+      final map = await raw.parseJsonToMapAsync();
       final variantId = map['variantId'] as String?;
       final hullId = map['hullId'] as String?;
       if (variantId != null && hullId != null) {

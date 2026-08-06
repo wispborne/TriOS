@@ -11,8 +11,8 @@ import 'package:path/path.dart' as p;
 // import 'package:toml/toml.dart';
 import 'package:trios/themes/theme.dart';
 import 'package:trios/themes/theme_modifiers.dart';
+import 'package:trios/starsector_json/starsector_json.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/thirdparty/yaml/yaml.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/util.dart';
 
@@ -111,62 +111,12 @@ extension StringExt on String {
     return this;
   }
 
-  /// YAML-parse an already-fixed string and re-encode as JSON. Slow path
-  /// fallback. Lives as a method so callers that have already run
-  /// [_applyJsonFixups] don't run it again.
-  String _fixJsonViaYaml(String fixed) {
-    try {
-      return json.encode(loadYamlValue(fixed));
-    } catch (e) {
-      Fimber.d("Unable to fix json: ${fixed.take(2000)}", ex: e);
-      rethrow;
-    }
-  }
-
-  /// Cheap string-level fixups for near-JSON Starsector mod files:
-  /// tabs, escaped `#`, unquoted-key-before-quote, trailing commas, trailing
-  /// semicolons, `//` line comments.
-  String _applyJsonFixups() {
-    var fixed = replaceAll(r"\#", "#").trim();
-    fixed = fixed.replaceAll("\t", "  ");
-    fixed = fixed.replaceAllMapped(RegExp(r'(\w):"'), (m) => '${m[1]}: "');
-    fixed = fixed.trimEnd(",");
-    fixed = fixed.replaceAll(RegExp(r';$', multiLine: true), ',');
-    fixed = fixed
-        .split("\n")
-        .where((it) => !it.trim().startsWith("//"))
-        .join("\n");
-    return fixed;
-  }
-
-  /// Parse a JSON-ish Starsector file into a map.
+  /// Parse a JSON-ish Starsector file into a map, the same way the game does.
   ///
-  /// Tries three strategies in order of cost:
-  ///   1. `jsonDecode` on the raw input.
-  ///   2. `jsonDecode` after cheap string-level fixups (tabs, trailing commas,
-  ///      `//` comments, etc.).
-  ///   3. YAML parse + re-encode as a last resort (handles anything else).
-  ///
-  /// Most vanilla files take path 1; most modded files take path 2. Path 3
-  /// is the slow one that used to dominate cold-load profiles.
-  Map<String, dynamic> parseJsonToMap() {
-    try {
-      final decoded = jsonDecode(this);
-      if (decoded is Map<String, dynamic>) return decoded;
-    } on FormatException {
-      // Fall through to fixup pass.
-    }
-
-    final fixed = _applyJsonFixups();
-    try {
-      final decoded = jsonDecode(fixed);
-      if (decoded is Map<String, dynamic>) return decoded;
-    } on FormatException {
-      // Fall through to YAML.
-    }
-
-    return jsonDecode(_fixJsonViaYaml(fixed));
-  }
+  /// See `lib/starsector_json/README.md` for what that means: `#` comments are
+  /// stripped, unquoted keys and trailing commas are fine, and anything the
+  /// game refuses is refused here too.
+  Map<String, dynamic> parseJsonToMap() => parseStarsectorJson(this);
 
   Future<Map<String, dynamic>> parseJsonToMapAsync() {
     return Future.microtask(() => parseJsonToMap());

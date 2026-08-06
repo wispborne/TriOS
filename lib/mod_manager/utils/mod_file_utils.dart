@@ -13,6 +13,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/json_comments.dart';
 import 'package:trios/utils/logging.dart';
 
 /// Reads and parses a mod_info.json file from a mod folder.
@@ -35,10 +36,10 @@ Future<ModInfo?> getModInfo(
       var rawString = await withFileHandleLimit(
         () => modInfoFile.readAsString(),
       );
-      var jsonEncodedYaml = await rawString.parseJsonToMapAsync();
+      var modInfoJson = await rawString.parseJsonToMapAsync();
 
       final model = ModInfo.fromJsonModel(
-        ModInfoJsonMapper.fromMap(jsonEncodedYaml),
+        ModInfoJsonMapper.fromMap(modInfoJson),
         modFolder,
       );
 
@@ -100,6 +101,15 @@ File? getVersionFile(Directory modFolder) {
   }
 }
 
+/// Parses a `.version` file, whether it came off disk or off the web.
+///
+/// `.version` isn't a game format — the game never loads these, the Version
+/// Checker mod and TriOS do — so `//` and `/* */` comments get stripped first.
+/// Modders write them, and refusing the file would just mean no update check
+/// for that mod.
+Map<String, dynamic> parseVersionCheckerJson(String text) =>
+    stripJsonComments(text).parseJsonToMap();
+
 /// Reads and parses a version checker JSON file.
 ///
 /// Cleans up the mod thread ID by removing non-numeric characters
@@ -108,7 +118,7 @@ VersionCheckerInfo? getVersionCheckerInfo(File versionFile) {
   if (!versionFile.existsSync()) return null;
   try {
     var info = VersionCheckerInfoMapper.fromMap(
-      versionFile.readAsStringSync().parseJsonToMap(),
+      parseVersionCheckerJson(versionFile.readAsStringSync()),
     );
 
     if (info.modThreadId != null) {

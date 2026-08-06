@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:trios/vram_estimator/selectors/references/_json_utils.dart';
+import 'package:trios/utils/json_comments.dart';
 
 void main() {
   group('stripJsonComments default mode (legacy)', () {

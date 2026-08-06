@@ -414,9 +414,7 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
       .where((file) => file.path.endsWith('.wpn'))) {
     try {
       final wpnContent = await wpnFile.readAsString(encoding: utf8);
-      final jsonData = await wpnContent
-          .removeJsonComments()
-          .parseJsonToMapAsync();
+      final jsonData = await wpnContent.parseJsonToMapAsync();
 
       // Omit keys the mod didn't set, so a partial file doesn't blank out
       // fields from another mod during the merge.
@@ -586,7 +584,7 @@ Future<Map<String, Map<String, dynamic>>> _indexMissileSpecs(
   for (final projFile in projFiles) {
     try {
       final content = await projFile.readAsString(encoding: utf8);
-      final json = await content.removeJsonComments().parseJsonToMapAsync();
+      final json = await content.parseJsonToMapAsync();
       final id = json['id'] as String?;
       final specClass = (json['specClass'] as String?)?.toLowerCase();
       if (id == null || specClass != 'missile') continue;

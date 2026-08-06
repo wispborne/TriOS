@@ -4,7 +4,7 @@ import 'package:csv/csv.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/selectors/path_normalizer.dart';
-import 'package:trios/vram_estimator/selectors/references/_json_utils.dart';
+import 'package:trios/utils/json_comments.dart';
 import 'package:trios/vram_estimator/selectors/references/reference_parser.dart';
 import 'package:trios/vram_estimator/selectors/vram_asset_selector.dart';
 
@@ -54,10 +54,9 @@ class ShipReferences extends ReferenceParser {
     VramSelectorContext ctx,
   ) async {
     try {
-      // stripJsonComments handles inline `//`, `/* */`, and `#` comments
-      // that parseJsonToMap's internal fixups miss (it only strips
-      // whole-line `//`). parseJsonToMapAsync then handles unquoted enum
-      // values, trailing commas, tabs etc. via its YAML fallback.
+      // Strip `//` and `/* */` comments, which the game's parser rejects.
+      // This is a best-effort scan, so reading a file the game would refuse
+      // is better than skipping it. parseJsonToMapAsync handles the rest.
       final raw = await file.readAsString();
       final cleaned = stripJsonComments(raw, stripHashLineComments: true);
       final decoded = await cleaned.parseJsonToMapAsync();

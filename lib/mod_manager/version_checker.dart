@@ -339,7 +339,7 @@ Future<VersionCheckerInfo> fetchRemoteVersionCheckerInfo(
     throw VersionFileFetchException(response.statusCode);
   }
 
-  return VersionCheckerInfoMapper.fromMap(await body.parseJsonToMapAsync());
+  return VersionCheckerInfoMapper.fromMap(parseVersionCheckerJson(body));
 }
 
 /// Thrown by [fetchRemoteVersionCheckerInfo] when the server returns a non-200

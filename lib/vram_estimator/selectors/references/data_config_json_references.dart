@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/models/vram_checker_models.dart';
 import 'package:trios/vram_estimator/selectors/path_normalizer.dart';
-import 'package:trios/vram_estimator/selectors/references/_json_utils.dart';
+import 'package:trios/utils/json_comments.dart';
 import 'package:trios/vram_estimator/selectors/references/reference_parser.dart';
 import 'package:trios/vram_estimator/selectors/vram_asset_selector.dart';
 
@@ -60,8 +60,9 @@ class DataConfigJsonReferences extends ReferenceParser {
     VramSelectorContext ctx,
   ) async {
     try {
-      // Strip inline comments first (parseJsonToMap's fixups only catch
-      // whole-line `//`), then parseJsonToMapAsync handles the rest.
+      // Strip `//` and `/* */` comments, which the game's parser rejects.
+      // This is a best-effort scan, so reading a file the game would refuse
+      // is better than skipping it. parseJsonToMapAsync handles the rest.
       // Walking the structured result yields only string values (not
       // keys), which is what we want — keys are config names, not paths.
       final raw = await file.readAsString();

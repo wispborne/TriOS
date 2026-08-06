@@ -11,7 +11,6 @@ import 'package:trios/faction_viewer/models/factions_cache_payload.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
-import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
@@ -134,8 +133,7 @@ class FactionListNotifier
 
         try {
           final content = await entity.readAsStringUtf8OrLatin1();
-          final jsonContent = content.removeJsonComments();
-          final factionData = await jsonContent.parseJsonToMapAsync();
+          final factionData = await content.parseJsonToMapAsync();
 
           // Starsector associates overlay faction files by relative path, not
           // by the `id` field (vanilla persean_league.faction declares id

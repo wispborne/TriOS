@@ -336,6 +336,7 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
     'requires',
     _$requires,
     opt: true,
+    hook: RequiredModsHook(),
   );
   static List<ForumLlmDownload> _$downloads(ForumLlmMod v) => v.downloads;
   static const Field<ForumLlmMod, List<ForumLlmDownload>> _f$downloads = Field(
@@ -984,10 +985,11 @@ class ForumLlmSummaryMapper extends ClassMapperBase<ForumLlmSummary> {
     'sentence',
     _$sentence,
   );
-  static String _$paragraph(ForumLlmSummary v) => v.paragraph;
+  static String? _$paragraph(ForumLlmSummary v) => v.paragraph;
   static const Field<ForumLlmSummary, String> _f$paragraph = Field(
     'paragraph',
     _$paragraph,
+    opt: true,
   );
 
   @override
@@ -1080,10 +1082,10 @@ class _ForumLlmSummaryCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ForumLlmSummary> $mapper =
       ForumLlmSummaryMapper.ensureInitialized();
   @override
-  $R call({String? sentence, String? paragraph}) => $apply(
+  $R call({String? sentence, Object? paragraph = $none}) => $apply(
     FieldCopyWithData({
       if (sentence != null) #sentence: sentence,
-      if (paragraph != null) #paragraph: paragraph,
+      if (paragraph != $none) #paragraph: paragraph,
     }),
   );
   @override

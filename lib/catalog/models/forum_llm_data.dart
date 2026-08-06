@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/utils/log_collapser.dart';
 
 part 'forum_llm_data.mapper.dart';
 
@@ -7,6 +8,25 @@ part 'forum_llm_data.mapper.dart';
 /// its LLM data (null) instead of failing the whole bundle parse.
 class ForumLlmDataHook extends MappingHook {
   const ForumLlmDataHook();
+
+  /// Blocks dropped so far in the bundle being decoded.
+  static LogCollapser _dropped = LogCollapser();
+
+  /// Logs everything dropped during one bundle parse as a single line, then
+  /// starts counting again. The forum data manager calls this once the bundle
+  /// is decoded.
+  ///
+  /// One line per bundle rather than one per topic: the bundle holds thousands
+  /// of entries, and a change to the scraper's output breaks all of them at
+  /// once.
+  static void flushDroppedBlocks() {
+    _dropped.flush(
+      'Forum bundle llm blocks',
+      noun: 'dropped block',
+      asInfo: true,
+    );
+    _dropped = LogCollapser();
+  }
 
   @override
   ForumLlmData? beforeDecode(dynamic value) {
@@ -16,9 +36,30 @@ class ForumLlmDataHook extends MappingHook {
       return ForumLlmDataMapper.fromMap(
         Map<String, dynamic>.from(value as Map),
       );
-    } catch (_) {
+    } catch (ex) {
+      // Don't stay silent: a dropped block means the mod shows up in the
+      // catalog with no summary, no downloads, and no changelog.
+      _dropped.add('$ex');
       return null;
     }
+  }
+}
+
+/// The bundle writes a mod's requirements either as a list or as one
+/// comma-separated string ("GraphicsLib, MagicLib, LazyLib"). Accept both.
+class RequiredModsHook extends MappingHook {
+  const RequiredModsHook();
+
+  @override
+  dynamic beforeDecode(dynamic value) {
+    if (value is String) {
+      return value
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return value;
   }
 }
 
@@ -58,6 +99,7 @@ class ForumLlmMod with ForumLlmModMappable {
   final LlmModRole role;
 
   /// Names of mods this mod requires (e.g. "LazyLib").
+  @MappableField(hook: RequiredModsHook())
   final List<String>? requires;
   final List<ForumLlmDownload> downloads;
   final ForumLlmExtras? extras;
@@ -146,9 +188,11 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
 @MappableClass()
 class ForumLlmSummary with ForumLlmSummaryMappable {
   final String sentence;
-  final String paragraph;
 
-  ForumLlmSummary({required this.sentence, required this.paragraph});
+  /// A handful of bundle entries only have the one-sentence version.
+  final String? paragraph;
+
+  ForumLlmSummary({required this.sentence, this.paragraph});
 }
 
 /// A mod's changelog: version-to-changes entries and/or a link to an

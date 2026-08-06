@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stringr/stringr.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/mod_search.dart';
@@ -94,6 +95,11 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
     add(info.description);
     add(mod.hasEnabledVariant ? 'true' : 'false');
 
+    for (final dependency in info.dependencies) {
+      add(dependency.name);
+      add(dependency.id);
+    }
+
     final alphaName = info.name?.slugify();
     if (alphaName != null && alphaName.isNotEmpty) {
       add(alphaName);
@@ -114,6 +120,9 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
 
     return values;
   }
+
+  static List<Dependency> _dependenciesOf(Mod mod) =>
+      mod.findFirstEnabledOrHighestVersion?.modInfo.dependencies ?? const [];
 
   List<SearchField<Mod>> _buildSearchFields() {
     return [
@@ -171,6 +180,28 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
         'gameversion',
         'Game version compatibility',
         (m) => m.findFirstEnabledOrHighestVersion?.modInfo.gameVersion,
+      ),
+      SearchField<Mod>(
+        key: 'dependency',
+        description: 'Name or ID of a mod it requires',
+        valueSuggestions: (mods) => mods
+            .expand(_dependenciesOf)
+            .expand((dep) => [dep.name, dep.id])
+            .whereType<String>()
+            .map((v) => v.toLowerCase())
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
+        matches: (mod, op, value) {
+          if (op != DslOperator.equals) return false;
+          final lowerValue = value.toLowerCase();
+          return _dependenciesOf(mod).any(
+            (dep) =>
+                (dep.name?.toLowerCase().contains(lowerValue) ?? false) ||
+                (dep.id?.toLowerCase().contains(lowerValue) ?? false),
+          );
+        },
       ),
       SearchField<Mod>(
         key: 'enabled',

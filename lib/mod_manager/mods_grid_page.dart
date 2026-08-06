@@ -11,9 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/dashboard/mod_list_basic.dart';
-import 'package:trios/dashboard/mod_list_basic_entry.dart';
 import 'package:trios/dashboard/mod_summary_widget.dart';
-import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/catalog_manager.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
@@ -38,9 +36,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/context_menu_items.dart';
-import 'package:trios/trios/download_manager/download_manager.dart';
-import 'package:trios/trios/download_manager/download_status.dart';
-import 'package:trios/mod_manager/version_checker.dart';
+import 'package:trios/trios/download_manager/download_target.dart';
 import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
@@ -53,6 +49,8 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
+import 'package:trios/widgets/mod_download/mod_download_button.dart';
+import 'package:trios/widgets/mod_download/mod_update_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/popup_style_menu_anchor.dart';
@@ -128,15 +126,13 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
           (mod) => modsGridUpdatesShowDisabledMods || mod.hasEnabledVariant,
         )
         .toList();
-    final mutedUpdates = modsWithUpdates
-        .where((mod) {
-          final metadata = modsMetadata?.getMergedModMetadata(mod.id);
-          return metadata != null &&
-              metadata.isUpdateHidden(
-                mod.updateCheck(versionCheck)?.remoteVersionString,
-              );
-        })
-        .toList();
+    final mutedUpdates = modsWithUpdates.where((mod) {
+      final metadata = modsMetadata?.getMergedModMetadata(mod.id);
+      return metadata != null &&
+          metadata.isUpdateHidden(
+            mod.updateCheck(versionCheck)?.remoteVersionString,
+          );
+    }).toList();
     final pinnedUpdateMods = switch (modsGridUpdateVisibility) {
       ModsGridUpdateVisibility.showAll => modsWithUpdates,
       ModsGridUpdateVisibility.showUnmuted =>
@@ -2079,133 +2075,15 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                               ),
                             ),
                           )
-                        : () {
-                            final updateUrl = remoteVersionCheck
-                                ?.remoteVersion
-                                ?.directDownloadURL;
-                            final downloads =
-                                ref.watch(downloadManager).value ?? [];
-                            final activeDownload = updateUrl == null
-                                ? null
-                                : downloads
-                                      .where(
-                                        (d) =>
-                                            d.task.request.url ==
-                                                updateUrl.fixModDownloadUrl() &&
-                                            d.isInProgress,
-                                      )
-                                      .firstOrNull;
-                            if (activeDownload != null) {
-                              return ListenableBuilder(
-                                listenable: Listenable.merge([
-                                  activeDownload.task.status,
-                                  activeDownload.task.downloaded,
-                                  activeDownload.installProgress,
-                                ]),
-                                builder: (context, _) {
-                                  final status =
-                                      activeDownload.task.status.value;
-                                  final dlAmount =
-                                      activeDownload.task.downloaded.value;
-                                  final isInstalling =
-                                      status == DownloadStatus.completed &&
-                                      !activeDownload.installComplete.value;
-                                  double? progress;
-                                  if (isInstalling) {
-                                    progress = null;
-                                  } else if (status ==
-                                          DownloadStatus.downloading &&
-                                      dlAmount.totalBytes > 0) {
-                                    progress = dlAmount.progressRatio;
-                                  }
-                                  return MovingTooltipWidget.text(
-                                    message: isInstalling
-                                        ? 'Installing...'
-                                        : 'Downloading...',
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 2),
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          value: progress,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                            return MovingTooltipWidget(
-                              tooltipWidget:
-                                  ModListBasicEntry.buildVersionCheckTextReadoutForTooltip(
-                                    mod,
-                                    null,
-                                    versionCheckComparison?.comparisonInt,
-                                    localVersionCheck,
-                                    remoteVersionCheck,
-                                  ),
-                              child: Disable(
-                                isEnabled: !isGameRunning,
-                                child: InkWell(
-                                  onTap: () {
-                                    if (remoteVersionCheck?.remoteVersion !=
-                                            null &&
-                                        versionCheckComparison?.comparisonInt ==
-                                            -1) {
-                                      ref
-                                          .read(downloadManager.notifier)
-                                          .downloadUpdateViaBrowser(
-                                            remoteVersionCheck!.remoteVersion!,
-                                            activateVariantOnComplete: false,
-                                            modInfo: bestVersion.modInfo,
-                                          );
-                                    } else {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          content:
-                                              ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                                mod,
-                                                changelogUrl,
-                                                localVersionCheck,
-                                                remoteVersionCheck,
-                                                versionCheckComparison
-                                                    ?.comparisonInt,
-                                              ),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  onSecondaryTap: () => showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      content:
-                                          ModListBasicEntry.changeAndVersionCheckAlertDialogContent(
-                                            mod,
-                                            changelogUrl,
-                                            localVersionCheck,
-                                            remoteVersionCheck,
-                                            versionCheckComparison
-                                                ?.comparisonInt,
-                                          ),
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5.0,
-                                    ),
-                                    child: VersionCheckIcon.fromComparison(
-                                      comparison: versionCheckComparison,
-                                      modId: mod.id,
-                                      theme: theme,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }(),
+                        : ModUpdateIcon(
+                            mod: mod,
+                            modInfo: bestVersion.modInfo,
+                            comparison: versionCheckComparison,
+                            changelogUrl: changelogUrl,
+                            isEnabled: !isGameRunning,
+                            spinnerSize: 24,
+                            spinnerPadding: const EdgeInsets.only(left: 2),
+                          ),
                   ],
                   // ),
                 ),
@@ -2528,10 +2406,11 @@ class MissingDependencyButton extends ConsumerWidget {
                     final catalogMatch = (catalog == null || candidates.isEmpty)
                         ? null
                         : catalog.firstWhereOrNull(
-                            (m) => candidates.contains(m.name.alphanumericLower()),
+                            (m) =>
+                                candidates.contains(m.name.alphanumericLower()),
                           );
-                    final directDownloadUrl =
-                        catalogMatch?.getUrls()[ModUrlType.DirectDownload];
+                    final directDownloadUrl = catalogMatch
+                        ?.getUrls()[ModUrlType.DirectDownload];
                     final hasDirectDownload =
                         directDownloadUrl != null &&
                         directDownloadUrl.isNotEmpty;
@@ -2582,6 +2461,34 @@ class MissingDependencyButton extends ConsumerWidget {
                       height: 20,
                     );
 
+                    // Only the one-click branches start a download, so only
+                    // they show progress.
+                    final downloadTarget = hasDirectDownload
+                        ? DownloadTarget(
+                            modId: missingDependency.id,
+                            url: directDownloadUrl,
+                            catalogName: catalogMatch?.name,
+                            displayName: missingDependency.nameOrId,
+                          )
+                        : null;
+
+                    // Asks first, and only starts spinning once the user says
+                    // yes — backing out of the dialog leaves the button alone.
+                    Future<void> confirmAndDownload() async {
+                      final started = await confirmAndDownloadModViaManager(
+                        context,
+                        ref,
+                        modName: missingDependency.nameOrId,
+                        downloadUrl: directDownloadUrl!,
+                        activateVariantOnComplete: false,
+                      );
+                      if (started) {
+                        ref
+                            .read(pendingDownloadClicks.notifier)
+                            .markClicked(downloadTarget!);
+                      }
+                    }
+
                     if (isOutdated) {
                       final outdatedTooltip =
                           "You have $installedVersion. This mod needs "
@@ -2594,13 +2501,7 @@ class MissingDependencyButton extends ConsumerWidget {
                         tooltipMessage =
                             "$outdatedTooltip Click to download the latest version.";
                         leading = downloadIcon;
-                        onPressed = () => confirmAndDownloadModViaManager(
-                          context,
-                          ref,
-                          modName: missingDependency.nameOrId,
-                          downloadUrl: directDownloadUrl,
-                          activateVariantOnComplete: false,
-                        );
+                        onPressed = confirmAndDownload;
                       } else if (websiteUrl != null) {
                         text = updateText;
                         tooltipMessage =
@@ -2614,24 +2515,35 @@ class MissingDependencyButton extends ConsumerWidget {
                         onPressed = searchOnline;
                       }
                     } else if (hasDirectDownload) {
-                      text = "Install ${missingDependency.formattedNameVersion}";
+                      text =
+                          "Install ${missingDependency.formattedNameVersion}";
                       tooltipMessage =
                           "Download and install ${missingDependency.nameOrId} "
                           "with ${Constants.appName}";
                       leading = downloadIcon;
-                      onPressed = () => confirmAndDownloadModViaManager(
-                        context,
-                        ref,
-                        modName: missingDependency.nameOrId,
-                        downloadUrl: directDownloadUrl,
-                        activateVariantOnComplete: false,
-                      );
+                      onPressed = confirmAndDownload;
                     } else {
                       text =
                           "Search ${missingDependency.formattedNameVersionId}";
                       tooltipMessage = null;
                       leading = searchIcon;
                       onPressed = searchOnline;
+                    }
+
+                    if (downloadTarget != null) {
+                      return ModDownloadButton(
+                        target: downloadTarget,
+                        variant: ModDownloadButtonVariant.outlined,
+                        style: buttonStyle,
+                        icon: leading,
+                        label: Text(text),
+                        tooltip: tooltipMessage,
+                        onPressed: onPressed,
+                        spinnerSize: 20,
+                        // confirmAndDownload marks it once the user says yes,
+                        // so the click itself mustn't.
+                        markPendingOnPress: false,
+                      );
                     }
 
                     final button = OutlinedButton(

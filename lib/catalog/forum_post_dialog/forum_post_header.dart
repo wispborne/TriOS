@@ -4,7 +4,9 @@ import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
+import 'package:trios/trios/download_manager/download_target.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/mod_download/mod_download_button.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 
@@ -406,33 +408,44 @@ class _DownloadSplitButton extends StatelessWidget {
     final label = primary != null ? 'Install' : 'Open download page';
     final hasMenu = candidates.length > 1;
 
-    final button = ElevatedButton.icon(
+    // This row's downloads are named after its mod, whichever candidate the
+    // user ends up picking.
+    final target = DownloadTarget(
+      url: mainCandidate.url,
+      catalogName: modName,
+      displayName: modName,
+    );
+
+    final button = ModDownloadButton(
+      target: target,
+      variant: ModDownloadButtonVariant.elevated,
       icon: downloadCandidateIconWidget(mainCandidate),
       label: Text(label, style: theme.textTheme.labelMedium),
       style: ElevatedButton.styleFrom(
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
+      spinnerSize: 20,
+      // Opening a download page isn't a download, so it never spins.
+      markPendingOnPress: primary != null,
+      tooltip: _tooltip(mainCandidate),
       onPressed: () => onDownload(mainCandidate, modName),
     );
 
-    if (!hasMenu) {
-      return MovingTooltipWidget.text(
-        message: _tooltip(mainCandidate),
-        child: button,
-      );
-    }
+    if (!hasMenu) return button;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        MovingTooltipWidget.text(
-          message: _tooltip(mainCandidate),
-          child: button,
-        ),
+        button,
         MenuAnchor(
           menuChildren: [
-            for (final candidate in candidates) _menuItem(context, candidate),
+            for (final candidate in candidates)
+              DownloadCandidateMenuItem(
+                candidate: candidate,
+                target: target,
+                onSelected: () => onDownload(candidate, modName),
+              ),
           ],
           builder: (context, controller, _) => MovingTooltipWidget.text(
             message: 'Other download options',
@@ -445,35 +458,6 @@ class _DownloadSplitButton extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _menuItem(BuildContext context, DownloadCandidate candidate) {
-    final theme = Theme.of(context);
-    final subtitle = downloadCandidateSubtitle(candidate);
-    return MenuItemButton(
-      leadingIcon: downloadCandidateIconWidget(candidate),
-      onPressed: () => onDownload(candidate, modName),
-      child: MovingTooltipWidget.text(
-        message: candidate.url,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(candidate.label),
-              if (subtitle.isNotEmpty)
-                Text(
-                  subtitle,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.hintColor,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

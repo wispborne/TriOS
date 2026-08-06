@@ -7,6 +7,7 @@ import 'package:trios/mod_manager/batch_installation/batch_installation_notifier
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/activity_panel/activity_entry.dart';
+import 'package:trios/trios/activity_panel/activity_filters.dart';
 import 'package:trios/trios/activity_panel/activity_item_tile.dart';
 import 'package:trios/trios/activity_panel/activity_panel_controller.dart';
 import 'package:trios/trios/activity_panel/batch_activity_tile.dart';
@@ -19,49 +20,30 @@ import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
-({
+/// Everything the activity button and its tooltip need to draw themselves:
+/// installs still running, downloads still running, and finished mods the user
+/// hasn't seen yet.
+typedef ActivityData = ({
   List<BatchEntry> activeBatchEntries,
   List<ActivityEntry> unseenEntries,
   List<Download> inProgress,
-}) _computeActivityData({
+});
+
+ActivityData _computeActivityData({
   required BatchInstallation? batch,
   required ActivityHistory? history,
   required int unseenCount,
   required List<Download> downloads,
 }) {
-  final activeBatchEntries =
-      batch?.entries
-          .where(
-            (e) =>
-                e.status == BatchEntryStatus.queued ||
-                e.status == BatchEntryStatus.scanning ||
-                e.status == BatchEntryStatus.scanned ||
-                e.status == BatchEntryStatus.extracting,
-          )
-          .toList() ??
-      const [];
-
   final unseenEntries = (history != null && unseenCount > 0)
       ? history.entries.take(unseenCount).toList()
       : const <ActivityEntry>[];
 
   return (
-    activeBatchEntries: activeBatchEntries,
+    activeBatchEntries: activeBatchEntries(batch),
     unseenEntries: unseenEntries,
-    inProgress: _inProgressDownloads(downloads),
+    inProgress: inProgressDownloads(downloads),
   );
-}
-
-List<Download> _inProgressDownloads(List<Download> downloads) {
-  return downloads.where((d) {
-    final status = d.task.status.value;
-    if (status == DownloadStatus.failed ||
-        status == DownloadStatus.canceled) {
-      return false;
-    }
-    return !status.isCompleted ||
-        (!d.installComplete.value && !d.installCancelled.value);
-  }).toList();
 }
 
 /// Toolbar icon that toggles the Activity Panel.
@@ -237,7 +219,8 @@ class _ActivityTooltipContent extends ConsumerWidget {
               padding: const .only(bottom: 4),
               child: Text('Installation Activity'),
             ),
-            for (final entry in data.activeBatchEntries) BatchEntryTile(entry: entry),
+            for (final entry in data.activeBatchEntries)
+              BatchEntryTile(entry: entry),
             for (final d in data.inProgress)
               InProgressActivityTile(
                 download: d,
@@ -301,7 +284,7 @@ class _ActivityPopupState extends ConsumerState<_ActivityPopup>
     final entries = ref.watch(recentInstallPopupProvider);
     final activityStarts = ref.watch(activityStartedPopupProvider);
     final downloads = activityStarts > 0
-        ? _inProgressDownloads(ref.watch(downloadManager).value ?? [])
+        ? inProgressDownloads(ref.watch(downloadManager).value ?? [])
         : const <Download>[];
     // Local archives skip the download step, so only say "Downloading" when
     // something is actually still coming down the wire.
@@ -365,12 +348,7 @@ class _ActivityPopupState extends ConsumerState<_ActivityPopup>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const .only(
-                      left: 16,
-                      right: 8,
-                      top: 8,
-                      bottom: 4,
-                    ),
+                    padding: const .only(left: 16, right: 8, top: 8, bottom: 4),
                     child: Row(
                       children: [
                         Expanded(
@@ -402,13 +380,9 @@ class _ActivityPopupState extends ConsumerState<_ActivityPopup>
                               ),
                               label: const Text('Enable All'),
                               style: TextButton.styleFrom(
-                                padding: .symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
+                                padding: .symmetric(horizontal: 8, vertical: 4),
                                 minimumSize: Size.zero,
-                                tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                             ),
                           ),

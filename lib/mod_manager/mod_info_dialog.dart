@@ -13,10 +13,11 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
-import 'package:trios/trios/download_manager/download_status.dart';
+import 'package:trios/trios/download_manager/download_target.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/mod_type_icon.dart';
+import 'package:trios/widgets/mod_download/mod_download_button.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -80,7 +81,8 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
     final installed = variant?.modInfo.author;
     if (installed.isNotNullOrEmpty()) return installed;
     final catalogAuthors = widget.catalogMod?.getAuthors();
-    if (catalogAuthors != null && catalogAuthors.isNotEmpty) return catalogAuthors.join(", ");
+    if (catalogAuthors != null && catalogAuthors.isNotEmpty)
+      return catalogAuthors.join(", ");
     return null;
   }
 
@@ -591,10 +593,7 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
             "Last enabled: ${dateFormat.format(DateTime.fromMillisecondsSinceEpoch(modMetadata.lastEnabled!))}",
             style: theme.textTheme.bodyMedium,
           ),
-        Text(
-          "Updates: $updatesStatus",
-          style: theme.textTheme.bodyMedium,
-        ),
+        Text("Updates: $updatesStatus", style: theme.textTheme.bodyMedium),
       ],
     );
   }
@@ -811,74 +810,30 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
           if (hasUpdate)
             () {
               final directUrl = _variant?.versionCheckerInfo?.directDownloadURL;
-              final activeDownload = directUrl == null
-                  ? null
-                  : (ref.watch(downloadManager).value ?? [])
-                        .where(
-                          (d) =>
-                              d.task.request.url == directUrl && d.isInProgress,
-                        )
-                        .firstOrNull;
-              if (activeDownload != null) {
-                return ListenableBuilder(
-                  listenable: Listenable.merge([
-                    activeDownload.task.status,
-                    activeDownload.task.downloaded,
-                    activeDownload.installProgress,
-                  ]),
-                  builder: (context, _) {
-                    final status = activeDownload.task.status.value;
-                    final dlAmount = activeDownload.task.downloaded.value;
-                    final isInstalling =
-                        status == DownloadStatus.completed &&
-                        !activeDownload.installComplete.value;
-                    double? progress;
-                    if (isInstalling) {
-                      progress = null;
-                    } else if (status == DownloadStatus.downloading &&
-                        dlAmount.totalBytes > 0) {
-                      progress = dlAmount.progressRatio;
-                    }
-                    return MovingTooltipWidget.text(
-                      message: isInstalling
-                          ? "Installing..."
-                          : "Downloading...",
-                      child: FilledButton.tonalIcon(
-                        icon: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            value: progress,
-                          ),
-                        ),
-                        label: const Text("Update"),
-                        onPressed: null,
-                      ),
-                    );
-                  },
-                );
-              }
-              return MovingTooltipWidget.text(
-                message: "Update available",
-                child: FilledButton.tonalIcon(
-                  icon: const Icon(Icons.update, size: 18),
-                  label: const Text("Update"),
-                  onPressed: () {
-                    if (directUrl != null) {
-                      ref
-                          .read(downloadManager.notifier)
-                          .downloadAndInstallMod(
-                            _variant!.modInfo.nameOrId,
-                            directUrl,
-                            activateVariantOnComplete: false,
-                            modInfo: _variant!.modInfo,
-                            sourceHint: null,
-                          );
-                      Navigator.of(context).pop();
-                    }
-                  },
+              return ModDownloadButton(
+                target: DownloadTarget(
+                  modId: mod.id,
+                  url: directUrl,
+                  displayName: _variant?.modInfo.nameOrId,
                 ),
+                variant: ModDownloadButtonVariant.filledTonal,
+                icon: const Icon(Icons.update, size: 18),
+                label: const Text("Update"),
+                tooltip: "Update available",
+                onPressed: directUrl == null
+                    ? null
+                    : () {
+                        ref
+                            .read(downloadManager.notifier)
+                            .downloadAndInstallMod(
+                              _variant!.modInfo.nameOrId,
+                              directUrl,
+                              activateVariantOnComplete: false,
+                              modInfo: _variant!.modInfo,
+                              sourceHint: null,
+                            );
+                        Navigator.of(context).pop();
+                      },
               );
             }(),
 

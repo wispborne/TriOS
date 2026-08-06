@@ -133,7 +133,10 @@ class CompletedActivityTile extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          if (showActions && !isFailed && !isCancelled && variant != null)
+                          if (showActions &&
+                              !isFailed &&
+                              !isCancelled &&
+                              variant != null)
                             MovingTooltipWidget.text(
                               message: 'Open mod folder',
                               child: SizedBox(
@@ -223,7 +226,10 @@ class CompletedActivityTile extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (showActions && !isFailed && !isCancelled && variant != null)
+                            if (showActions &&
+                                !isFailed &&
+                                !isCancelled &&
+                                variant != null)
                               if (!isEnabled && mod != null)
                                 MovingTooltipWidget.text(
                                   message: 'Enable this mod',

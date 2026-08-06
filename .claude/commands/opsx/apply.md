@@ -139,4 +139,4 @@ This skill supports the "actions on a change" model:
 - **Can be invoked anytime**: Before all artifacts are done (if tasks exist), after partial implementation, interleaved with other actions
 - **Allows artifact updates**: If implementation reveals design issues, suggest updating artifacts - not phase-locked, work fluidly
 
-- **Write for a human** Focus on readability and simple English.
+- **Write in plain English.** No jargon, no metaphorical shorthand ("the atom", "the primitive", "the seam", "surface area", "the contract"). Don't narrate a journey — state the point, then the reason. No theatrical framing ("worth noting", "the key insight here"). One idea per sentence. If a reader has to decode what you mean, rewrite it.

@@ -39,6 +39,7 @@
   - Ship blueprint view options are now persisted.
   - New app logo by Vexlia.
   - TriOS cache backups are now 7zipped to save space.
+  - Mod search now searches for their dependencies also.
 
 # 1.6.1
 - Added

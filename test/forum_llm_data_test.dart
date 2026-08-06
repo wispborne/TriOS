@@ -125,6 +125,54 @@ void main() {
       expect(mod.downloads.single.confidence, LlmDownloadConfidence.unknown);
     });
 
+    test('requires written as a comma-separated string parses as a list', () {
+      final entry = baseIndexEntry()
+        ..['llm'] = {
+          'mods': [
+            {
+              'name': 'Test Mod',
+              'role': 'main',
+              'requires': 'GraphicsLib, MagicLib, LazyLib',
+            },
+          ],
+        };
+
+      final mod = ForumModIndexMapper.fromMap(entry).llm!.mods.single;
+      expect(mod.requires, ['GraphicsLib', 'MagicLib', 'LazyLib']);
+    });
+
+    test('requires written as a single string parses as a one-item list', () {
+      final entry = baseIndexEntry()
+        ..['llm'] = {
+          'mods': [
+            {'name': 'Test Mod', 'role': 'main', 'requires': 'LAZYLIB'},
+          ],
+        };
+
+      final mod = ForumModIndexMapper.fromMap(entry).llm!.mods.single;
+      expect(mod.requires, ['LAZYLIB']);
+    });
+
+    test('summary with only a sentence parses', () {
+      final entry = baseIndexEntry()
+        ..['llm'] = {
+          'mods': [
+            {
+              'name': 'Test Mod',
+              'role': 'main',
+              'extras': {
+                'summary': {'sentence': 'A short summary.'},
+              },
+            },
+          ],
+        };
+
+      final summary =
+          ForumModIndexMapper.fromMap(entry).llm!.mods.single.extras!.summary!;
+      expect(summary.sentence, 'A short summary.');
+      expect(summary.paragraph, isNull);
+    });
+
     test('malformed llm block decodes to null instead of throwing', () {
       final entry = baseIndexEntry()
         ..['llm'] = {

@@ -78,11 +78,8 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
 
     final entries = sources
         .map(
-          (s) => BatchEntry(
-            id: const Uuid().v4(),
-            source: s,
-            download: download,
-          ),
+          (s) =>
+              BatchEntry(id: const Uuid().v4(), source: s, download: download),
         )
         .toList();
 
@@ -152,7 +149,8 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
 
       // If _extractAll is still running, it'll pick up this scanned entry.
       // But if extraction already finished, we must handle it ourselves.
-      final extractionDone = batch.status == BatchStatus.installing &&
+      final extractionDone =
+          batch.status == BatchStatus.installing &&
           !batch.entries.any((e) => e.status == BatchEntryStatus.extracting);
       final batchComplete = batch.status == BatchStatus.complete;
 
@@ -496,15 +494,15 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
           dryRun: false,
           onProgress: (completed, total) {
             entry.extractionProgress = (completed, total);
-            entry.download?.installProgress.value = TriOSDownloadProgress(
-              completed,
-              total,
-              customStatus: "$completed / $total files",
-            );
+            entry.download?.installProgress.value = entry.progressDisplay;
             _notify();
           },
           onPhaseChanged: (phase) {
             entry.extractionPhase = phase;
+            // Keep the download's row in step with the entry's, so a
+            // downloaded mod says "Moving into place..." too instead of
+            // sitting on a finished-looking file count.
+            entry.download?.installProgress.value = entry.progressDisplay;
             _notify();
           },
         );
@@ -541,8 +539,8 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
       ..currentModName = null
       ..errorDetail = entry.failedMods.isNotEmpty
           ? entry.failedMods
-              .map((f) => "${f.modInfo.nameOrId}: ${f.err}")
-              .join('\n')
+                .map((f) => "${f.modInfo.nameOrId}: ${f.err}")
+                .join('\n')
           : null
       ..status = entry.failedMods.isNotEmpty
           ? BatchEntryStatus.failed
@@ -617,8 +615,9 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     }
 
     // Activate newly installed variants when the mod was already enabled.
-    final allInstalledModInfos =
-        unrecorded.expand((e) => e.installedMods).toList();
+    final allInstalledModInfos = unrecorded
+        .expand((e) => e.installedMods)
+        .toList();
     if (allInstalledModInfos.isNotEmpty &&
         ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==
             ModUpdateBehavior.switchToNewVersionIfWasEnabled) {
@@ -688,7 +687,8 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
             (v) => v.smolId == modInfo.smolId,
           );
           await store.updateRecord(modId, (existing) {
-            final base = existing ??
+            final base =
+                existing ??
                 ModRecord(recordKey: modId, modId: modId, firstSeen: now);
             final updatedSources = Map<String, ModRecordSource>.of(
               base.sources,
@@ -779,8 +779,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     // actually failed (not every mod in the archive).
     final failedWithErrors = unrecorded
         .where(
-          (e) =>
-              e.status == BatchEntryStatus.failed && e.failedMods.isNotEmpty,
+          (e) => e.status == BatchEntryStatus.failed && e.failedMods.isNotEmpty,
         )
         .toList();
     if (failedWithErrors.isNotEmpty) {

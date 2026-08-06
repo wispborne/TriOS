@@ -309,6 +309,7 @@ class ModRepoEntryMapper extends ClassMapperBase<ModRepoEntry> {
     'gameVersionReq',
     _$gameVersionReq,
     opt: true,
+    hook: GameVersionHook(),
   );
   static List<String>? _$authorsList(ModRepoEntry v) => v.authorsList;
   static const Field<ModRepoEntry, List<String>> _f$authorsList = Field(

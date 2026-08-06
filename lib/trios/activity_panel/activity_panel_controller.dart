@@ -76,10 +76,9 @@ class _ActivityHistoryManager
 
 /// Ephemeral count of completions the user hasn't seen yet.
 /// Clears when the panel is opened.
-final activityUnseenCount =
-    NotifierProvider<ActivityUnseenCountNotifier, int>(
-      ActivityUnseenCountNotifier.new,
-    );
+final activityUnseenCount = NotifierProvider<ActivityUnseenCountNotifier, int>(
+  ActivityUnseenCountNotifier.new,
+);
 
 class ActivityUnseenCountNotifier extends Notifier<int> {
   @override
@@ -133,9 +132,7 @@ class ActivityStartedPopupNotifier extends Notifier<int> {
 
 /// Convenience: toggle panel open state (persisted in Settings).
 void toggleActivityPanel(WidgetRef ref) {
-  final wasOpen = ref.read(
-    appSettings.select((s) => s.isActivityPanelOpen),
-  );
+  final wasOpen = ref.read(appSettings.select((s) => s.isActivityPanelOpen));
   ref
       .read(appSettings.notifier)
       .update((s) => s.copyWith(isActivityPanelOpen: !wasOpen));

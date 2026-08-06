@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/models/forum_data_bundle.dart';
+import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/trios/constants.dart';
@@ -40,6 +41,7 @@ final forumDataProvider = StreamProvider<ForumDataBundle>((ref) async* {
       'updatedAt': decoded['updatedAt'],
       'index': decoded['index'],
     });
+    ForumLlmDataHook.flushDroppedBlocks();
 
     ref.watch(isLoadingForumData.notifier).state = false;
     Fimber.i(

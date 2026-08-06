@@ -280,7 +280,7 @@ class _ModSummaryWidgetState extends ConsumerState<ModSummaryWidget> {
                     color: TriOSThemeConstants.vanillaErrorColor,
                   ),
                 ),
-              if (widget.showIconTip)
+              if (widget.showIconTip && modVariant.iconFilePath == null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Opacity(

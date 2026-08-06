@@ -169,4 +169,4 @@ When things come together, you can offer a short summary — optional. Sometimes
 - **Do sketch things** — a good diagram often explains more than a paragraph
 - **Do look at the real code** — check what actually exists
 - **Do question assumptions** — the user's, and your own
-- **Write for a human** Focus on readability and simple English.
+- **Write in plain English.** No jargon, no metaphorical shorthand ("the atom", "the primitive", "the seam", "surface area", "the contract"). Don't narrate a journey — state the point, then the reason. No theatrical framing ("worth noting", "the key insight here"). One idea per sentence. If a reader has to decode what you mean, rewrite it.

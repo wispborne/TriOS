@@ -2,6 +2,31 @@ import 'package:dart_mappable/dart_mappable.dart';
 
 part 'mod_repo_entry.mapper.dart';
 
+/// Puts back the leading "0." on game versions that are missing it.
+///
+/// The catalog reads the version out of the forum thread title, so it inherits
+/// whatever the mod author typed — e.g. "[97a-RC11]" or ".98a". Every real
+/// Starsector version starts with "0.", and without it the version badge reads
+/// wrong and the Game Version filter grows a bogus bucket.
+///
+/// Deliberately narrow: only a leading dot, or two or more digits before the
+/// first dot. That leaves a hypothetical "1.0a" alone.
+class GameVersionHook extends MappingHook {
+  const GameVersionHook();
+
+  static final _startsWithTwoDigits = RegExp(r'^\d{2}');
+
+  @override
+  dynamic beforeDecode(dynamic value) {
+    if (value is! String) return value;
+    final version = value.trim();
+    if (version.isEmpty || version.startsWith('0.')) return value;
+    if (version.startsWith('.')) return '0$version';
+    if (_startsWithTwoDigits.hasMatch(version)) return '0.$version';
+    return value;
+  }
+}
+
 @MappableClass()
 class ModRepoFile with ModRepoFileMappable {
   final List<ModRepoEntry> items;
@@ -16,6 +41,7 @@ class ModRepoEntry with ModRepoEntryMappable {
   final String? summary;
   final String? description;
   final String? modVersion;
+  @MappableField(hook: GameVersionHook())
   final String? gameVersionReq;
   final List<String>? authorsList;
   final Map<ModUrlType, String>? urls;

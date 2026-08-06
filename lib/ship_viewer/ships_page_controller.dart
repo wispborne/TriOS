@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod.dart';
@@ -200,7 +201,12 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   EnumField<Ship, SpoilerLevel> get _spoilerField =>
       _general.fieldById('spoiler') as EnumField<Ship, SpoilerLevel>;
 
+  BoolField<Ship> get _showModuleShipsField =>
+      _general.fieldById('showModuleShips') as BoolField<Ship>;
+
   bool get showEnabled => _showEnabledField.value;
+
+  bool get showModuleShips => _showModuleShipsField.value;
 
   SpoilerLevel get spoilerLevelToShow => _spoilerField.selected;
 
@@ -283,6 +289,11 @@ class ShipsPageController extends Notifier<ShipsPageState> {
 
     final itemsChanged = !identical(allShips, _searchIndexItems);
     _searchIndexItems = allShips;
+    // Module data is published after the ship list, so this often changes on a
+    // later build than the ships do. The filter depends on it, so track it too.
+    final moduleShipIds = computeModuleShipIds(moduleVariants, variantHullIdMap);
+    final moduleShipsChanged =
+        stateOrNull == null || !setEquals(stateOrNull!.moduleShipIds, moduleShipIds);
     // Sliders cover the whole ship list, not the filtered subset, so their
     // ends don't move as you filter.
     if (itemsChanged) _filters.updateRanges(allShips);
@@ -306,13 +317,14 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       weaponsMap: weaponsMap,
       hullmodsMap: hullmodsMap,
       shipsWithModuleIds: shipsWithModuleIds,
-      moduleShipIds: computeModuleShipIds(moduleVariants, variantHullIdMap),
+      moduleShipIds: moduleShipIds,
       allShips: allShips,
       shipSearchIndices: shipSearchIndices,
       isLoading: isLoadingShips,
     );
 
-    if (!itemsChanged && !showEnabled && stateOrNull != null) {
+    if (!itemsChanged && !moduleShipsChanged && !showEnabled &&
+        stateOrNull != null) {
       return initialState.copyWith(
         filteredShips: stateOrNull!.filteredShips,
         shipsBeforeGridFilter: stateOrNull!.shipsBeforeGridFilter,
@@ -357,13 +369,6 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             inactiveValue: SpoilerLevel.showAllSpoilers,
           ),
           BoolField<Ship>(
-            id: 'hideModules',
-            label: 'Hide Modules',
-            tooltip: 'Hide ships that are used as modules on other ships.',
-            predicate: (ship) =>
-            !(stateOrNull?.moduleShipIds.contains(ship.id) ?? false),
-          ),
-          BoolField<Ship>(
             id: 'hasModules',
             label: 'Has Modules',
             tooltip: 'Only show ships that have modules.',
@@ -376,6 +381,21 @@ class ShipsPageController extends Notifier<ShipsPageState> {
             tooltip: 'Only show ships that have built-in weapons.',
             predicate: (ship) =>
                 ship.builtInWeapons != null && ship.builtInWeapons!.isNotEmpty,
+          ),
+          BoolField<Ship>(
+            id: 'showModuleShips',
+            label: 'Show Ships That Are Modules',
+            tooltip: 'Show ships that are used as modules on other ships.',
+            // Starts off, and being off is what hides ships. The engine only
+            // runs a predicate when a field is on, so the real work is in
+            // [_applyShowModuleShips] — same trick as "Show Hidden Weapons".
+            predicate: (_) => true,
+            // A field counts as active when it differs from its default, so
+            // the default is the *unfiltered* state (ticked). Off then reads as
+            // an active filter, which is what it is, and clearing the filters
+            // brings the module ships back.
+            defaultValue: true,
+            initialValue: false,
           ),
         ],
       ),
@@ -624,6 +644,7 @@ class ShipsPageController extends Notifier<ShipsPageState> {
   ShipsPageState _processAllFilters(ShipsPageState currentState,
       List<Mod> mods,) {
     var ships = _filters.applyNonChipFilters(currentState.allShips);
+    ships = _applyShowModuleShips(ships, currentState.moduleShipIds);
 
     final shipsBeforeGridFilter = ships.toList();
 
@@ -639,6 +660,14 @@ class ShipsPageController extends Notifier<ShipsPageState> {
       filteredShips: ships,
       shipsBeforeGridFilter: shipsBeforeGridFilter,
     );
+  }
+
+  /// Drops ships that are used as modules unless the box is ticked. The
+  /// *unticked* state is the one that filters, which the composite group's
+  /// plain AND can't express, so it runs here instead.
+  List<Ship> _applyShowModuleShips(List<Ship> ships, Set<String> moduleShipIds) {
+    if (showModuleShips || moduleShipIds.isEmpty) return ships;
+    return ships.where((ship) => !moduleShipIds.contains(ship.id)).toList();
   }
 
   void updateSearchQuery(String query) {

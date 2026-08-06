@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:trios/mod_manager/mod_install_source.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/models/download_progress.dart';
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
@@ -122,6 +123,42 @@ class BatchEntry {
 
   /// Whether this mod is already installed.
   bool get hasConflict => scanResult?.existingVariant != null;
+
+  /// What this entry's progress bar should say right now, or null when there's
+  /// nothing to show yet.
+  ///
+  /// Only the extracting step has files to count. The steps after it (moving
+  /// the finished folder into place) have nothing to count, so they say what
+  /// they're doing instead of sitting on a full-looking file count.
+  ///
+  /// Both the Activity Panel's own tile and the download tile behind a
+  /// downloaded mod read this, so the two always say the same thing.
+  TriOSDownloadProgress? get progressDisplay {
+    final phase = extractionPhase;
+    final counted = extractionProgress;
+    // "Extracting" is the phase name 7-Zip reports while unpacking files.
+    final isCountingFiles = phase == null || phase == 'Extracting';
+
+    if (counted == null) {
+      return phase == null
+          ? null
+          : TriOSDownloadProgress(
+              0,
+              0,
+              isIndeterminate: true,
+              customStatus: '$phase...',
+            );
+    }
+
+    return TriOSDownloadProgress(
+      counted.$1,
+      counted.$2,
+      isIndeterminate: !isCountingFiles,
+      customStatus: isCountingFiles
+          ? '${counted.$1} / ${counted.$2} files'
+          : '$phase...',
+    );
+  }
 }
 
 /// A batch of mod archives being installed together.
@@ -137,8 +174,7 @@ class BatchInstallation {
   });
 
   /// Number of entries that have finished (done, failed, or skipped).
-  int get completedCount =>
-      entries.where((e) => e.status.isTerminal).length;
+  int get completedCount => entries.where((e) => e.status.isTerminal).length;
 
   /// Number of entries that can be installed (not broken from scan).
   int get installableCount => entries

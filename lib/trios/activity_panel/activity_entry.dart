@@ -3,17 +3,10 @@ import 'package:dart_mappable/dart_mappable.dart';
 part 'activity_entry.mapper.dart';
 
 @MappableEnum()
-enum ActivitySourceType {
-  download,
-  archive,
-}
+enum ActivitySourceType { download, archive }
 
 @MappableEnum()
-enum ActivityStatus {
-  completed,
-  failed,
-  cancelled,
-}
+enum ActivityStatus { completed, failed, cancelled }
 
 @MappableClass()
 class ActivityEntry with ActivityEntryMappable {

@@ -5,6 +5,8 @@ import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/trios/deep_link/deep_link_handler.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/download_manager/download_target.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/trios_app_icon.dart';
 
@@ -100,4 +102,63 @@ String downloadCandidateSubtitle(DownloadCandidate candidate) {
     if (candidate.requiresManualStep) 'opens in browser',
   ];
   return parts.join(' · ');
+}
+
+/// One row in a download chooser menu: the candidate's icon, its label and
+/// where it comes from, and its full URL on hover.
+///
+/// Picking a row tells [target]'s button to start showing progress — but only
+/// for a candidate that really downloads something. A website or manual-step
+/// link just opens a browser tab, so it would leave the button spinning at
+/// nothing.
+class DownloadCandidateMenuItem extends ConsumerWidget {
+  final DownloadCandidate candidate;
+
+  /// The button this menu belongs to.
+  final DownloadTarget target;
+
+  /// Runs the candidate.
+  final VoidCallback onSelected;
+
+  const DownloadCandidateMenuItem({
+    super.key,
+    required this.candidate,
+    required this.target,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final subtitle = downloadCandidateSubtitle(candidate);
+    return MenuItemButton(
+      leadingIcon: downloadCandidateIconWidget(candidate),
+      onPressed: () {
+        if (candidate.isOneClick) {
+          ref.read(pendingDownloadClicks.notifier).markClicked(target);
+        }
+        onSelected();
+      },
+      child: MovingTooltipWidget.text(
+        message: candidate.url,
+        child: Padding(
+          padding: const .symmetric(vertical: 4.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(candidate.label),
+              if (subtitle.isNotEmpty)
+                Text(
+                  subtitle,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

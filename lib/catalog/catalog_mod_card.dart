@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,15 +7,13 @@ import 'package:intl/intl.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
-import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
 import 'package:trios/catalog/forum_post_dialog/catalog_mod_details_dialog.dart';
-import 'package:trios/catalog/models/ai_summary_mode.dart';
+import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
-import 'package:trios/catalog/models/forum_mod_index.dart';
-import 'package:trios/catalog/models/mod_repo_entry.dart';
-import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/models/mod_image_source.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/summary_resolver.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
@@ -28,12 +24,13 @@ import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
-import 'package:trios/trios/deep_link/deep_link_handler.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
+import 'package:trios/trios/download_manager/download_target.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/mod_download/mod_download_button.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/stroke_text.dart';
@@ -805,9 +802,7 @@ class ModImage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Flexible(
-                  child: _buildImage(source, fit: BoxFit.scaleDown),
-                ),
+                Flexible(child: _buildImage(source, fit: BoxFit.scaleDown)),
               ],
             ),
           );
@@ -821,24 +816,21 @@ class ModImage extends StatelessWidget {
     );
   }
 
-  Widget _buildImage(
-    ModImageSource source, {
-    BoxFit? fit,
-    int? cacheWidth,
-  }) => switch (source) {
-    WebModImage(:final url) => Image.network(
-      url,
-      fit: fit,
-      cacheWidth: cacheWidth,
-      errorBuilder: (_, _, _) => _defaultImage(),
-    ),
-    FileModImage(:final file) => Image.file(
-      file,
-      fit: fit,
-      cacheWidth: cacheWidth,
-      errorBuilder: (_, _, _) => _defaultImage(),
-    ),
-  };
+  Widget _buildImage(ModImageSource source, {BoxFit? fit, int? cacheWidth}) =>
+      switch (source) {
+        WebModImage(:final url) => Image.network(
+          url,
+          fit: fit,
+          cacheWidth: cacheWidth,
+          errorBuilder: (_, _, _) => _defaultImage(),
+        ),
+        FileModImage(:final file) => Image.file(
+          file,
+          fit: fit,
+          cacheWidth: cacheWidth,
+          errorBuilder: (_, _, _) => _defaultImage(),
+        ),
+      };
 
   Widget _defaultImage() {
     return Container(
@@ -913,7 +905,7 @@ enum _CatalogDownloadState {
   noDownloadLink,
 }
 
-class CatalogDownloadButton extends ConsumerStatefulWidget {
+class CatalogDownloadButton extends ConsumerWidget {
   final ModRepoEntry mod;
   final Mod? installedMod;
   final VersionCheckComparison? versionCheckComparison;
@@ -928,48 +920,6 @@ class CatalogDownloadButton extends ConsumerStatefulWidget {
     required this.linkLoader,
     this.llmMainMod,
   });
-
-  @override
-  ConsumerState<CatalogDownloadButton> createState() =>
-      _CatalogDownloadButtonState();
-}
-
-class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
-  /// True between clicking a one-click download action and a real signal
-  /// taking over (deep-link dialog ready, or the download appearing in the
-  /// download manager). Drives the button spinner during that gap.
-  bool _clickBusy = false;
-  Timer? _busyFallback;
-
-  ModRepoEntry get mod => widget.mod;
-
-  Mod? get installedMod => widget.installedMod;
-
-  VersionCheckComparison? get versionCheckComparison =>
-      widget.versionCheckComparison;
-
-  void Function(String) get linkLoader => widget.linkLoader;
-
-  ForumLlmMod? get llmMainMod => widget.llmMainMod;
-
-  void _markBusy() {
-    _busyFallback?.cancel();
-    // Safety net: never spin forever if no completion signal arrives (e.g.
-    // a de-duplicated double-click, or a download that fails to register).
-    _busyFallback = Timer(const Duration(seconds: 10), _clearBusy);
-    setState(() => _clickBusy = true);
-  }
-
-  void _clearBusy() {
-    _busyFallback?.cancel();
-    if (_clickBusy && mounted) setState(() => _clickBusy = false);
-  }
-
-  @override
-  void dispose() {
-    _busyFallback?.cancel();
-    super.dispose();
-  }
 
   _CatalogDownloadState _resolveState({
     required bool hasOneClick,
@@ -995,25 +945,8 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-
-    // The click-busy spinner hands off to real signals: the deep-link
-    // confirmation dialog becoming ready, or the download manager picking up
-    // a download for this mod (whose own in-progress state then drives the
-    // spinner until install finishes).
-    ref.listen(deepLinkProcessing, (previous, next) {
-      if (previous == true && next == false) _clearBusy();
-    });
-    ref.listen(downloadManager, (previous, next) {
-      final downloads = next.valueOrNull ?? const <Download>[];
-      if (downloads.any((d) => d.displayName == mod.name)) _clearBusy();
-    });
-    final activeDownload = ref
-        .watch(downloadManager)
-        .valueOrNull
-        ?.firstWhereOrNull((d) => d.displayName == mod.name && d.isInProgress);
-    final isBusy = _clickBusy || activeDownload != null;
 
     final candidates = resolveDownloadCandidates(
       mod,
@@ -1045,12 +978,20 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
         state == _CatalogDownloadState.installedEnabled ||
         state == _CatalogDownloadState.installedDisabled;
 
+    // What this button's downloads are called, so it can spot its own download
+    // no matter where it was started from.
+    final target = DownloadTarget(
+      modId: installedMod?.id,
+      url: primary?.url,
+      catalogName: mod.name,
+      displayName: mod.name,
+    );
+
     // Download states run the primary candidate (or open the chooser when
     // several candidates tie). A trios primary installs in-app with deps.
     final isTrios = primary?.kind == DownloadCandidateKind.triosDeepLink;
     final showChooser = tieSet.length > 1;
     void runPrimary() {
-      _markBusy();
       executeDownloadCandidate(
         context,
         ref,
@@ -1156,120 +1097,93 @@ class _CatalogDownloadButtonState extends ConsumerState<CatalogDownloadButton> {
       );
     }
 
-    Widget buildButton(VoidCallback? onTap) => SizedBox(
-      height: 30,
-      child: FilledButton.icon(
-        // While busy, ignore clicks; the disabled colors match the enabled
-        // ones so the button doesn't gray out under the spinner.
-        onPressed: isBusy ? null : onTap,
-        style: FilledButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: foregroundColor,
-          disabledBackgroundColor: backgroundColor,
-          disabledForegroundColor: foregroundColor,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          visualDensity: VisualDensity.compact,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        icon: isBusy
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: foregroundColor,
-                ),
-              )
-            : showTriosBrandIcon
-            ? TriOSAppIcon(width: 14, height: 14, color: foregroundColor)
-            : Icon(icon, size: 14),
-        label: Padding(
-          padding: const .only(right: 4),
-          child: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-          ),
-        ),
-      ),
-    );
-
-    final Widget buttonChild;
-    if (useChooser) {
-      buttonChild = MenuAnchor(
-        menuChildren: [
-          for (final candidate in tieSet) _downloadMenuItem(context, candidate),
-        ],
-        builder: (context, controller, _) => buildButton(
-          () => controller.isOpen ? controller.close() : controller.open(),
-        ),
-      );
-    } else {
-      buttonChild = buildButton(onPressed);
-    }
-
-    if (hasUpdate && installedMod != null && versionCheckComparison != null) {
-      final comparison = versionCheckComparison!;
-      return MovingTooltipWidget.framed(
-        tooltipWidget: SizedBox(
-          width: 400,
-          child: VersionCheckTextReadout(
-            comparison.comparisonInt,
-            comparison.variant.versionCheckerInfo,
-            comparison.remoteVersionCheck,
-            installedMod!,
-            true,
-            false,
-          ),
-        ),
-        child: buttonChild,
-      );
-    }
-
+    // The update states show the full version-check readout on hover instead
+    // of a line of text.
+    final Widget? richTooltip =
+        hasUpdate && installedMod != null && versionCheckComparison != null
+        ? SizedBox(
+            width: 400,
+            child: VersionCheckTextReadout(
+              versionCheckComparison!.comparisonInt,
+              versionCheckComparison!.variant.versionCheckerInfo,
+              versionCheckComparison!.remoteVersionCheck,
+              installedMod!,
+              true,
+              false,
+            ),
+          )
+        : null;
     final tooltipText = useChooser
         ? 'Several downloads available.\nClick to choose'
         : tooltip;
-    return MovingTooltipWidget.text(message: tooltipText, child: buttonChild);
-  }
 
-  /// One row in the tie-break chooser opened from the button.
-  Widget _downloadMenuItem(BuildContext context, DownloadCandidate candidate) {
-    final theme = Theme.of(context);
-    final subtitle = downloadCandidateSubtitle(candidate);
-    return MenuItemButton(
-      leadingIcon: downloadCandidateIconWidget(candidate),
-      onPressed: () {
-        _markBusy();
-        executeDownloadCandidate(
-          context,
-          ref,
-          candidate,
-          modName: mod.name,
-          sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
-          linkLoader: linkLoader,
-          hasOwnBusyIndicator: true,
-        );
-      },
-      child: MovingTooltipWidget.text(
-        message: candidate.url,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(candidate.label),
-              if (subtitle.isNotEmpty)
-                Text(
-                  subtitle,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.hintColor,
-                  ),
+    Widget buildButton(VoidCallback? onTap, {required bool marksPending}) =>
+        SizedBox(
+          height: 30,
+          child: ModDownloadButton(
+            target: target,
+            onPressed: onTap,
+            markPendingOnPress: marksPending,
+            // The disabled colors match the enabled ones so the button doesn't
+            // gray out under the spinner.
+            style: FilledButton.styleFrom(
+              backgroundColor: backgroundColor,
+              foregroundColor: foregroundColor,
+              disabledBackgroundColor: backgroundColor,
+              disabledForegroundColor: foregroundColor,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            spinnerSize: 20,
+            spinnerColor: foregroundColor,
+            icon: showTriosBrandIcon
+                ? TriOSAppIcon(width: 14, height: 14, color: foregroundColor)
+                : Icon(icon, size: 14),
+            label: Padding(
+              padding: const .only(right: 4),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
                 ),
-            ],
+              ),
+            ),
+            tooltip: tooltipText,
+            tooltipWidget: richTooltip,
           ),
+        );
+
+    if (useChooser) {
+      return MenuAnchor(
+        menuChildren: [
+          for (final candidate in tieSet)
+            DownloadCandidateMenuItem(
+              candidate: candidate,
+              target: target,
+              onSelected: () => executeDownloadCandidate(
+                context,
+                ref,
+                candidate,
+                modName: mod.name,
+                sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
+                linkLoader: linkLoader,
+                hasOwnBusyIndicator: true,
+              ),
+            ),
+        ],
+        // Clicking only opens the menu, so it isn't a download click; the menu
+        // item that starts one marks it instead.
+        builder: (context, controller, _) => buildButton(
+          () => controller.isOpen ? controller.close() : controller.open(),
+          marksPending: false,
         ),
-      ),
-    );
+      );
+    }
+
+    // Website and no-link states don't start a download, so they never spin.
+    return buildButton(onPressed, marksPending: isDownloadAction);
   }
 }
 

@@ -8,12 +8,6 @@ context: |
   UI: Material Design, 8dp grid alignment, WispGrid for data grids
   
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  all:
+    - Write in plain English. No jargon or metaphorical shorthand. State the point first, then the reason. One idea per sentence. No theatrical framing.

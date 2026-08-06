@@ -95,4 +95,4 @@ When all the documents are done, summarize:
 - If the context is badly unclear, ask — but lean toward making a reasonable call and keeping momentum
 - If a change with that name already exists, ask whether to continue it or start a new one
 - After writing each file, check it exists before moving on
-- **Write for a human** Focus on readability and simple English.
+- **Write in plain English.** No jargon, no metaphorical shorthand ("the atom", "the primitive", "the seam", "surface area", "the contract"). Don't narrate a journey — state the point, then the reason. No theatrical framing ("worth noting", "the key insight here"). One idea per sentence. If a reader has to decode what you mean, rewrite it.

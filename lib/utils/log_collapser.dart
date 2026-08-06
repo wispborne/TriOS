@@ -30,7 +30,8 @@ class LogCollapser {
   /// Stays quiet if this exact summary was logged under [label] recently.
   ///
   /// [label] prefixes the count (e.g. "Merging weapons: 12 issues.").
-  void flush(String label, {String noun = 'issue'}) {
+  /// Pass [asInfo] when the problems aren't worth a warning.
+  void flush(String label, {String noun = 'issue', bool asInfo = false}) {
     if (_counts.isEmpty) return;
 
     final total = _counts.values.fold(0, (sum, n) => sum + n);
@@ -52,7 +53,11 @@ class LogCollapser {
     recent.insert(0, message);
     if (recent.length > _recentCap) recent.removeLast();
 
-    Fimber.w(message);
+    if (asInfo) {
+      Fimber.i(message);
+    } else {
+      Fimber.w(message);
+    }
   }
 
   /// Forgets what's already been logged, so the next [flush] speaks up again.

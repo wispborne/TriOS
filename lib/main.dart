@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// import 'package:flutter_riverpod/legacy.dart' show StateProvider;
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
@@ -61,6 +61,54 @@ Future<Rect> _convertLogicalToPhysicalPixels(Rect r) async {
   );
   final s = (d.scaleFactor ?? 1).toDouble();
   return Rect.fromLTWH(r.left * s, r.top * s, r.width * s, r.height * s);
+}
+
+/// Window size used when nothing is saved, or when the saved size is unusable.
+const _defaultWindowSize = Size(1050, 800);
+
+/// The whole area covered by every display, in logical pixels.
+///
+/// Uses each display's full size rather than its work area, because this is a
+/// ceiling on how big a window may be, not a question of what the user can see.
+Rect _desktopBounds(List<Display> displays) => displays
+    .map((d) => (d.visiblePosition ?? Offset.zero) & d.size)
+    .reduce((a, b) => a.expandToInclude(b));
+
+/// Caps a saved window size to something the machine can actually draw.
+///
+/// A window bigger than the whole desktop is a bad reading rather than a real
+/// preference, and an extreme one is fatal: graphics drivers commonly refuse a
+/// surface longer than 8192 pixels on a side, so the window opens blank and the
+/// app dies. That repeats on every launch and survives reinstalling, because
+/// the size lives in the settings file and not in the install folder.
+Future<Rect> _clampWindowFrameToDesktop(Rect frame) async {
+  final displays = await ScreenRetriever.instance.getAllDisplays();
+  if (displays.isEmpty) return frame;
+  final desktop = _desktopBounds(displays);
+
+  double usable(double saved, double fallback, double limit) {
+    if (!saved.isFinite || saved <= 0) return fallback;
+    return math.min(saved, limit);
+  }
+
+  return Rect.fromLTWH(
+    frame.left.isFinite ? frame.left : 0,
+    frame.top.isFinite ? frame.top : 0,
+    usable(frame.width, _defaultWindowSize.width, desktop.width),
+    usable(frame.height, _defaultWindowSize.height, desktop.height),
+  );
+}
+
+/// Whether window bounds reported by the OS are worth saving. GTK and Windows
+/// can both hand back an unconstrained size while the window is changing state,
+/// and saving that would leave the next launch unable to start.
+Future<bool> _isWindowFrameWorthSaving(Rect frame) async {
+  if (!frame.width.isFinite || !frame.height.isFinite) return false;
+  if (frame.width <= 0 || frame.height <= 0) return false;
+  final displays = await ScreenRetriever.instance.getAllDisplays();
+  if (displays.isEmpty) return true;
+  final desktop = _desktopBounds(displays);
+  return frame.width <= desktop.width && frame.height <= desktop.height;
 }
 
 Future<void> _ensureWindowIsVisible() async {
@@ -329,9 +377,10 @@ void main(List<String> args) async {
     Rect windowFrame = Rect.fromLTWH(
       settings?.windowXPos ?? 0,
       settings?.windowYPos ?? 0,
-      settings?.windowWidth ?? 1050,
-      settings?.windowHeight ?? 800,
+      settings?.windowWidth ?? _defaultWindowSize.width,
+      settings?.windowHeight ?? _defaultWindowSize.height,
     );
+    windowFrame = await _clampWindowFrameToDesktop(windowFrame);
     setWindowFrame(await _convertLogicalToPhysicalPixels(windowFrame));
 
     // If the window is off screen, move it to the first display.
@@ -426,7 +475,7 @@ void _runTriOS(Settings? appSettings, {required bool withSentry}) => runApp(
       condition: withSentry,
       wrapper: (appWidget) => SentryWidget(child: appWidget),
       child: ProviderScope(
-        // retry: (retryCount, error) => null, // disable automatic retry added in riverpod 3.0
+        retry: (retryCount, error) => null, // disable automatic retry added in riverpod 3.0
         observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
         child: ExcludeSemantics(
           excluding:
@@ -581,6 +630,12 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
 
     // Don't save window size if minimized, we want to restore to the previous size.
     if (!await windowManager.isMinimized()) {
+      // A maximized window doesn't write its size, so only a size that will
+      // actually be restored needs checking.
+      if (!isMaximized && !await _isWindowFrameWorthSaving(windowFrame)) {
+        Fimber.w("Ignoring bad window bounds from the OS: $windowFrame");
+        return;
+      }
       ref
           .read(appSettings.notifier)
           .update(

@@ -33,6 +33,7 @@
   - Faction Viewer: "Only Enabled Mods" now actually only shows data from enabled mods.
   - Some ship modules did not show up.
     - Happened when the mod used a json map instead of a json array of pairs like Vanilla.
+  - Crash on launch on Linux if the window size was set larger than all monitors.
 - Changed
   - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
   - About page now has an AI disclosure section.

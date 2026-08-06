@@ -442,7 +442,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         builder: (context) {
                           if (controller == null) return child;
                           return ContextMenuRegion(
-                            contextMenu:
+                            contextMenuBuilder: () =>
                                 (controller!.checkedItemIdsReadonly.length) > 1
                                 ? buildModBulkActionContextMenu(
                                     (controller!.lastDisplayedItemsReadonly)

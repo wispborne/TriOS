@@ -295,7 +295,7 @@ class CompletedActivityTile extends ConsumerWidget {
 
     if (mod != null) {
       tile = ContextMenuRegion(
-        contextMenu: buildModContextMenu(mod, ref, context),
+        contextMenuBuilder: () => buildModContextMenu(mod, ref, context),
         child: tile,
       );
     }

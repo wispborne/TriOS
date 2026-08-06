@@ -15,7 +15,7 @@ import '../core/utils/menu_route_options.dart';
 typedef ContextMenuRegionBuilder<T> =
     Widget Function(
       BuildContext context,
-      ContextMenu contextMenu,
+      ContextMenu? contextMenu,
       Offset pointerPosition,
       void Function() showMenu,
       Widget? child,
@@ -25,15 +25,25 @@ typedef ContextMenuRegionBuilder<T> =
 class ContextMenuRegion<T> extends StatefulWidget {
   const ContextMenuRegion({
     super.key,
-    required this.contextMenu,
+    this.contextMenu,
+    this.contextMenuBuilder,
     this.enableGestures = true,
     this.onItemSelected,
     this.builder,
     this.child,
     this.routeOptions,
-  });
+  }) : assert(
+         (contextMenu == null) != (contextMenuBuilder == null),
+         'Pass either contextMenu or contextMenuBuilder, but not both.',
+       );
 
-  final ContextMenu contextMenu;
+  final ContextMenu? contextMenu;
+
+  /// Builds the menu when the user opens it, instead of up front.
+  ///
+  /// Use this for menus on list rows. Building a menu for every row on every
+  /// rebuild costs real time, and most rows are never right-clicked.
+  final ContextMenu Function()? contextMenuBuilder;
 
   /// Whether to enable built-in gestures on the widget.
   ///
@@ -94,8 +104,9 @@ class _ContextMenuRegionState<T> extends State<ContextMenuRegion<T>> {
   }
 
   void _showMenu(BuildContext context, Offset position) async {
-    final menu = widget.contextMenu.copyWith(
-      position: widget.contextMenu.position ?? position,
+    final contextMenu = widget.contextMenu ?? widget.contextMenuBuilder!();
+    final menu = contextMenu.copyWith(
+      position: contextMenu.position ?? position,
     );
     final value = await showContextMenu(
       context,

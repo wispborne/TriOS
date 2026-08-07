@@ -43,6 +43,15 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     return _downloads;
   }
 
+  /// We hand out the same list every time and add to it in place, so Riverpod's
+  /// default check ("is the new state equal to the old one?") always says no
+  /// change and nobody hears about a new download. Say yes instead.
+  @override
+  bool updateShouldNotify(
+    AsyncValue<List<Download>> previous,
+    AsyncValue<List<Download>> next,
+  ) => true;
+
   /// Adds a download to the download manager.
   /// Displays a toast with the download progress.
   /// If [modInfo] is provided, the download will be a [ModDownload] instead of a [Download],

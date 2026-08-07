@@ -86,11 +86,11 @@ class _ModVersionSelectionDropdownState
       (false, true) =>
         rainbowAccent
             ? theme.colorScheme.surfaceContainerHigh
-            : theme.colorScheme.secondary,
+            : theme.colorScheme.secondary.mix(theme.colorScheme.surfaceContainerLow, 0.90)!,
       _ => theme.colorScheme.surfaceContainerLow,
     };
 
-    final textColor = switch ((useWarningUi, isEnabled)) {
+    final textColor = switch ((useWarningUi, false)) {
       (true, _) => theme.colorScheme.onSecondary.darker(20),
       (false, true) => theme.colorScheme.onSecondary,
       _ => theme.colorScheme.onSurface,
@@ -99,7 +99,7 @@ class _ModVersionSelectionDropdownState
     final borderColor = (isButtonEnabled && !isButtonPseudoDisabled)
         ? (useWarningUi
               ? TriOSThemeConstants.vanillaErrorColor.darker(20)
-              : theme.colorScheme.secondary.darker(20))
+              : theme.colorScheme.secondary.darker(isEnabled ? 1 : 30))
         : TriOSThemeConstants.vanillaErrorColor.withOpacity(isEnabled ? 0.8 : 0.4);
 
     Color? getGameCompatibilityTextColor(ModVariant variant) {
@@ -288,52 +288,52 @@ class _ModVersionSelectionDropdownState
                     // Main tap area — enable/disable
                     Expanded(
                       child: MovingTooltipWidget.text(
-                        message: isEnabled && errorTooltip == null
-                            ? "Click to disable"
-                            : null,
-                        child: InkWell(
-                          onTap: () async {
-                            if (!mounted) return;
-                            try {
-                              isEnabled
-                                  ? await switchToVariant(null)
-                                  : await switchToVariant(
-                                      widget.mod.findHighestVersion,
-                                    );
-                            } catch (e, st) {
-                              Fimber.e(
-                                "Error changing active mod variant: $e\n$st",
-                              );
-                            }
-                          },
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 32,
-                                child: useWarningUi
-                                    ? Center(
-                                        child: Padding(
-                                          padding: const .only(left: 12),
-                                          child: warningIcon,
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                              Expanded(
-                                child: Center(
-                                  child: TextTriOS(
-                                    isEnabled
-                                        ? enabledVariant!.modInfo.version
-                                              .toString()
-                                        : "Enable",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                            message: isEnabled && errorTooltip == null
+                                ? "Click to disable"
+                                : null,
+                            child: InkWell(
+                              onTap: () async {
+                                if (!mounted) return;
+                                try {
+                                  isEnabled
+                                      ? await switchToVariant(null)
+                                      : await switchToVariant(
+                                          widget.mod.findHighestVersion,
+                                        );
+                                } catch (e, st) {
+                                  Fimber.e(
+                                    "Error changing active mod variant: $e\n$st",
+                                  );
+                                }
+                              },
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 32,
+                                    child: useWarningUi
+                                        ? Center(
+                                            child: Padding(
+                                              padding: const .only(left: 12),
+                                              child: warningIcon,
+                                            ),
+                                          )
+                                        : null,
                                   ),
-                                ),
+                                  Expanded(
+                                    child: Center(
+                                      child: TextTriOS(
+                                        isEnabled
+                                            ? enabledVariant!.modInfo.version
+                                                  .toString()
+                                            : "Enable",
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
                       ),
                     ),
                     // Sub-button on right side

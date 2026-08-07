@@ -72,6 +72,8 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
             height: widget.height,
           ),
         );
+      case AppIconOverride.bi:
+        return _buildBiGradientIcon();
       case AppIconOverride.defaultIcon:
         // Fall through to existing theme-driven logic.
         break;
@@ -83,6 +85,10 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
       return _maybeBlur(
         Image.asset(iconAsset, width: widget.width, height: widget.height),
       );
+    }
+
+    if (theme.iconGradient == 'bi' && widget.color == null) {
+      return _buildBiGradientIcon();
     }
 
     final isRainbow = theme.rainbowAccent && widget.color == null;
@@ -104,6 +110,27 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
   Widget _buildRainbowIcon(ThemeData theme) {
     final svg = _buildTelosSvg(color: Colors.white);
     return _maybeBlur(_buildAnimatedRainbow(svg));
+  }
+
+  /// The crest in the bi flag's three stripes: magenta on the top 40%, purple
+  /// through the middle 25%, blue on the bottom 35%. Each color is repeated at
+  /// both ends of its stripe so the edges stay hard instead of blending. Not
+  /// animated, unlike the rainbow icon.
+  Widget _buildBiGradientIcon() {
+    _stopController();
+    final [magenta, purple, blue] = biPrideColors;
+    return _maybeBlur(
+      ShaderMask(
+        shaderCallback: (bounds) => LinearGradient(
+          colors: [magenta, magenta, purple, purple, blue, blue],
+          stops: const [0.0, 0.4, 0.4, 0.65, 0.65, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(bounds),
+        blendMode: BlendMode.srcIn,
+        child: _buildTelosSvg(color: Colors.white),
+      ),
+    );
   }
 
   Widget _buildTelosSvg({required Color color}) {

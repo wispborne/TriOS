@@ -33,6 +33,8 @@ class AppIconOverrideMapper extends EnumMapper<AppIconOverride> {
         return AppIconOverride.pride;
       case r'hegemony':
         return AppIconOverride.hegemony;
+      case r'bi':
+        return AppIconOverride.bi;
       default:
         return AppIconOverride.values[0];
     }
@@ -47,6 +49,8 @@ class AppIconOverrideMapper extends EnumMapper<AppIconOverride> {
         return r'pride';
       case AppIconOverride.hegemony:
         return r'hegemony';
+      case AppIconOverride.bi:
+        return r'bi';
     }
   }
 }
@@ -81,6 +85,8 @@ class AppNameOverrideMapper extends EnumMapper<AppNameOverride> {
         return AppNameOverride.defaultName;
       case r'hegOS':
         return AppNameOverride.hegOS;
+      case r'biOS':
+        return AppNameOverride.biOS;
       default:
         return AppNameOverride.values[0];
     }
@@ -93,6 +99,8 @@ class AppNameOverrideMapper extends EnumMapper<AppNameOverride> {
         return r'defaultName';
       case AppNameOverride.hegOS:
         return r'hegOS';
+      case AppNameOverride.biOS:
+        return r'biOS';
     }
   }
 }

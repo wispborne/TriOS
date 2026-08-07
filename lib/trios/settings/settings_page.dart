@@ -1553,6 +1553,10 @@ class _ThemeModifiersSection extends ConsumerWidget {
                                   value: AppIconOverride.hegemony,
                                   label: "Hegemony",
                                 ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.bi,
+                                  label: "BiOS",
+                                ),
                               ],
                             ),
                           ],
@@ -1587,6 +1591,10 @@ class _ThemeModifiersSection extends ConsumerWidget {
                                 DropdownMenuEntry(
                                   value: AppNameOverride.hegOS,
                                   label: "HegOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.biOS,
+                                  label: "BiOS",
                                 ),
                               ],
                             ),

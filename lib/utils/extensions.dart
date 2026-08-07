@@ -1255,6 +1255,8 @@ extension TriOSBuildContextTheme on ThemeData {
 
   String? get iconAsset => extension<TriOSThemeExtension>()?.iconAsset;
 
+  String? get iconGradient => extension<TriOSThemeExtension>()?.iconGradient;
+
   /// Access semantic status colors from the current theme.
   TriOSThemeExtension get statusColors => extension<TriOSThemeExtension>()!;
 
@@ -1271,5 +1273,9 @@ extension TriOSBuildContext on BuildContext {
   /// Use this for visual display (sidebar, about page).
   /// Use [appName] for string interpolation in messages.
   String appNameWithModifiers(ThemeModifiers modifiers) =>
-      modifiers.appNameOverride == AppNameOverride.hegOS ? "HegOS" : appName;
+      switch (modifiers.appNameOverride) {
+        AppNameOverride.hegOS => "HegOS",
+        AppNameOverride.biOS => "BiOS",
+        AppNameOverride.defaultName => appName,
+      };
 }

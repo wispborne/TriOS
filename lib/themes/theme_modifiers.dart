@@ -4,10 +4,10 @@ import 'package:trios/utils/dart_mappable_utils.dart';
 part 'theme_modifiers.mapper.dart';
 
 @MappableEnum(defaultValue: AppIconOverride.defaultIcon)
-enum AppIconOverride { defaultIcon, pride, hegemony }
+enum AppIconOverride { defaultIcon, pride, hegemony, bi }
 
 @MappableEnum(defaultValue: AppNameOverride.defaultName)
-enum AppNameOverride { defaultName, hegOS }
+enum AppNameOverride { defaultName, hegOS, biOS }
 
 @MappableEnum(defaultValue: LaunchButtonOverride.defaultStyle)
 enum LaunchButtonOverride { defaultStyle, pride }

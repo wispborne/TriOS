@@ -11,6 +11,13 @@ const rainbowColors = [
   Color(0xFFAA00FF), // Violet
 ];
 
+/// Bi pride flag colors, used by the BiOS theme's app icon.
+const biPrideColors = [
+  Color(0xFFD60270), // Magenta
+  Color(0xFF9B4F96), // Purple
+  Color(0xFF0038A8), // Blue
+];
+
 /// Wraps a child widget with a rainbow gradient border.
 class RainbowBorder extends StatelessWidget {
   final Widget child;

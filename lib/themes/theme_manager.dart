@@ -87,6 +87,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
             fontFamily: themeData["fontFamily"],
             rainbowAccent: themeData["rainbowAccent"] ?? false,
             iconAsset: themeData["iconAsset"],
+            iconGradient: themeData["iconGradient"],
             appNameOverride: themeData["appNameOverride"],
             successSeed: themeData["successSeed"],
             warningSeed: themeData["warningSeed"],
@@ -138,6 +139,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     return TriOSThemeExtension(
       rainbowAccent: swatch.rainbowAccent,
       iconAsset: swatch.iconAsset,
+      iconGradient: swatch.iconGradient,
       appNameOverride: swatch.appNameOverride,
       success: semantic.success.base,
       onSuccess: semantic.success.onBase,

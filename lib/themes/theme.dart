@@ -31,6 +31,10 @@ class TriOSTheme {
   final String? fontFamily;
   final bool rainbowAccent;
   final String? iconAsset;
+
+  /// Name of a gradient to draw the app icon with, when the theme doesn't set
+  /// its own [iconAsset]. Only "bi" is understood right now.
+  final String? iconGradient;
   final String? appNameOverride;
 
   // Semantic status color seeds (optional overrides).
@@ -55,6 +59,7 @@ class TriOSTheme {
     this.fontFamily,
     this.rainbowAccent = false,
     this.iconAsset,
+    this.iconGradient,
     this.appNameOverride,
     this.successSeed,
     this.warningSeed,
@@ -79,6 +84,7 @@ class TriOSTheme {
     this.fontFamily,
     this.rainbowAccent = false,
     this.iconAsset,
+    this.iconGradient,
     this.appNameOverride,
     String? successSeed,
     String? warningSeed,
@@ -106,7 +112,7 @@ class TriOSTheme {
 
   @override
   String toString() {
-    return 'TriOSTheme{id: $id, displayName: $displayName, isDark: $isDark, primary: $primary, secondary: $secondary, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError, fontFamily: $fontFamily, rainbowAccent: $rainbowAccent, successSeed: $successSeed, warningSeed: $warningSeed, infoSeed: $infoSeed, neutralSeed: $neutralSeed}';
+    return 'TriOSTheme{id: $id, displayName: $displayName, isDark: $isDark, primary: $primary, secondary: $secondary, surface: $surface, surfaceContainer: $surfaceContainer, error: $error, onPrimary: $onPrimary, onSecondary: $onSecondary, onSurface: $onSurface, onError: $onError, fontFamily: $fontFamily, rainbowAccent: $rainbowAccent, iconGradient: $iconGradient, successSeed: $successSeed, warningSeed: $warningSeed, infoSeed: $infoSeed, neutralSeed: $neutralSeed}';
   }
 
   TriOSTheme copyWith({
@@ -125,6 +131,7 @@ class TriOSTheme {
     String? fontFamily,
     bool? rainbowAccent,
     String? iconAsset,
+    String? iconGradient,
     String? appNameOverride,
     Color? successSeed,
     Color? warningSeed,
@@ -147,6 +154,7 @@ class TriOSTheme {
       fontFamily: fontFamily ?? this.fontFamily,
       rainbowAccent: rainbowAccent ?? this.rainbowAccent,
       iconAsset: iconAsset ?? this.iconAsset,
+      iconGradient: iconGradient ?? this.iconGradient,
       appNameOverride: appNameOverride ?? this.appNameOverride,
       successSeed: successSeed ?? this.successSeed,
       warningSeed: warningSeed ?? this.warningSeed,
@@ -160,6 +168,7 @@ class TriOSTheme {
 class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
   final bool rainbowAccent;
   final String? iconAsset;
+  final String? iconGradient;
   final String? appNameOverride;
 
   // Success
@@ -189,6 +198,7 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
   const TriOSThemeExtension({
     this.rainbowAccent = false,
     this.iconAsset,
+    this.iconGradient,
     this.appNameOverride,
     this.success = const Color(0xFF4CAF50),
     this.onSuccess = const Color(0xFFFFFFFF),
@@ -212,6 +222,7 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
   TriOSThemeExtension copyWith({
     bool? rainbowAccent,
     String? iconAsset,
+    String? iconGradient,
     String? appNameOverride,
     Color? success,
     Color? onSuccess,
@@ -233,6 +244,7 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
     return TriOSThemeExtension(
       rainbowAccent: rainbowAccent ?? this.rainbowAccent,
       iconAsset: iconAsset ?? this.iconAsset,
+      iconGradient: iconGradient ?? this.iconGradient,
       appNameOverride: appNameOverride ?? this.appNameOverride,
       success: success ?? this.success,
       onSuccess: onSuccess ?? this.onSuccess,
@@ -259,6 +271,7 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
     return TriOSThemeExtension(
       rainbowAccent: t < 0.5 ? rainbowAccent : other.rainbowAccent,
       iconAsset: t < 0.5 ? iconAsset : other.iconAsset,
+      iconGradient: t < 0.5 ? iconGradient : other.iconGradient,
       appNameOverride: t < 0.5 ? appNameOverride : other.appNameOverride,
       success: Color.lerp(success, other.success, t)!,
       onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,

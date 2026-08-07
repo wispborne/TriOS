@@ -28,24 +28,17 @@
       "surface": "#F0F0F0",
       "surfaceContainer": "#FFFFFF"
     },
-    "Trans (pink)": {
-      "isDark": false,
-      "primary": "#229AC9",
-      "secondary": "#1189B8",
-      "surface": "#EEEEEE",
-      "surfaceContainer": "#D56474",
-      "onPrimary": "#EEEEEE",
-      "onSecondary": "#EEEEEE",
-      "onSurface": "#FFFFFF"
-    },
-    "Trans (blue)": {
-      "isDark": false,
-      "primary": "#E67585",
-      "secondary": "#F78696",
-      "surface": "#EEEEEE",
-      "surfaceContainer": "#0078A7",
-      "onPrimary": "#EEEEEE",
-      "onSecondary": "#EEEEEE"
+    "BiOS": {
+      "isDark": true,
+      "primary": "#D60270",
+      "secondary": "#2E5BD8",
+      "surface": "#17101F",
+      "surfaceContainer": "#1F1329",
+      "onPrimary": "#FFFFFF",
+      "iconGradient": "bi",
+      "appNameOverride": "BiOS",
+      "infoSeed": "#0038A8",
+      "successSeed": "#9B4F96"
     },
     "Comes": {
       "isDark": true,
@@ -169,6 +162,25 @@
       "surface": "#17171A",
       "surfaceContainer": "#17171A",
       "onPrimary": "#FDFDFD"
+    },
+    "Trans (pink)": {
+      "isDark": false,
+      "primary": "#229AC9",
+      "secondary": "#1189B8",
+      "surface": "#EEEEEE",
+      "surfaceContainer": "#D56474",
+      "onPrimary": "#EEEEEE",
+      "onSecondary": "#EEEEEE",
+      "onSurface": "#FFFFFF"
+    },
+    "Trans (blue)": {
+      "isDark": false,
+      "primary": "#E67585",
+      "secondary": "#F78696",
+      "surface": "#EEEEEE",
+      "surfaceContainer": "#0078A7",
+      "onPrimary": "#EEEEEE",
+      "onSecondary": "#EEEEEE"
     },
     "Türkiye": {
       "isDark": true,

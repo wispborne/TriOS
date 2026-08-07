@@ -6,6 +6,17 @@ import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cache_envelope.dart';
+import 'package:trios/viewer_cache/cache_fingerprint.dart';
+
+/// One source's cached payload, with the fingerprint recorded when it was
+/// written. [fingerprint] is null for files written before fingerprints
+/// existed.
+class CachedEntry {
+  final Uint8List payload;
+  final CacheFingerprint? fingerprint;
+
+  const CachedEntry({required this.payload, this.fingerprint});
+}
 
 /// One-file-per-variant disk cache for a single domain (ships/weapons/hullmods).
 ///
@@ -32,14 +43,14 @@ class CachedVariantStore {
   /// reads whose envelope `schemaVersion` equals `currentSchemaVersion`.
   /// Version mismatches and decode failures are treated as misses, with info-
   /// level logs summarizing counts.
-  Future<Map<SmolId, Uint8List>> readAll(
+  Future<Map<SmolId, CachedEntry>> readAll(
     Set<SmolId> smolIds,
     int currentSchemaVersion,
   ) async {
-    if (smolIds.isEmpty) return <SmolId, Uint8List>{};
+    if (smolIds.isEmpty) return <SmolId, CachedEntry>{};
 
     final dir = _domainDir;
-    if (!await dir.exists()) return <SmolId, Uint8List>{};
+    if (!await dir.exists()) return <SmolId, CachedEntry>{};
 
     final results = await Future.wait(
       smolIds.map(
@@ -47,13 +58,13 @@ class CachedVariantStore {
       ),
     );
 
-    final out = <SmolId, Uint8List>{};
+    final out = <SmolId, CachedEntry>{};
     var versionMisses = 0;
     var decodeMisses = 0;
     for (var i = 0; i < results.length; i++) {
       final r = results[i];
-      if (r.payload != null) {
-        out[r.key] = r.payload!;
+      if (r.entry != null) {
+        out[r.key] = r.entry!;
       } else if (r.reason == _MissReason.versionMismatch) {
         versionMisses++;
       } else if (r.reason == _MissReason.decodeFailed) {
@@ -76,14 +87,14 @@ class CachedVariantStore {
 
   /// Read vanilla cache. Miss if file absent, corrupt, version mismatched, or
   /// envelope's game version doesn't match `currentGameVersion`.
-  Future<Uint8List?> readVanilla(
+  Future<CachedEntry?> readVanilla(
     String currentGameVersion,
     int currentSchemaVersion,
   ) async {
     final dir = _domainDir;
     if (!await dir.exists()) return null;
     final r = await _readOne(_vanillaKey, currentSchemaVersion, isVanilla: true);
-    if (r.payload == null) return null;
+    if (r.entry == null) return null;
     if (r.gameVersion != currentGameVersion) {
       Fimber.i(
         '[$domain] vanilla cache: game version mismatch '
@@ -91,7 +102,7 @@ class CachedVariantStore {
       );
       return null;
     }
-    return r.payload;
+    return r.entry;
   }
 
   Future<_ReadResult> _readOne(
@@ -114,7 +125,10 @@ class CachedVariantStore {
       }
       return _ReadResult(
         key: key,
-        payload: envelope.payload,
+        entry: CachedEntry(
+          payload: envelope.payload,
+          fingerprint: envelope.fingerprint,
+        ),
         gameVersion: envelope.gameVersion,
       );
     } catch (e) {
@@ -129,14 +143,16 @@ class CachedVariantStore {
   Future<void> write(
     SmolId smolId,
     Uint8List payload,
-    int schemaVersion,
-  ) {
+    int schemaVersion, {
+    CacheFingerprint? fingerprint,
+  }) {
     return _queueWrite(
       key: smolId,
       envelope: CacheEnvelope(
         schemaVersion: schemaVersion,
         smolId: smolId,
         payload: payload,
+        fingerprint: fingerprint,
       ),
     );
   }
@@ -146,8 +162,9 @@ class CachedVariantStore {
   Future<void> writeVanilla(
     String gameVersion,
     Uint8List payload,
-    int schemaVersion,
-  ) {
+    int schemaVersion, {
+    CacheFingerprint? fingerprint,
+  }) {
     return _queueWrite(
       key: _vanillaKey,
       envelope: CacheEnvelope(
@@ -155,6 +172,7 @@ class CachedVariantStore {
         smolId: _vanillaKey,
         gameVersion: gameVersion,
         payload: payload,
+        fingerprint: fingerprint,
       ),
     );
   }
@@ -231,13 +249,13 @@ enum _MissReason { notFound, decodeFailed, versionMismatch }
 
 class _ReadResult {
   final String key;
-  final Uint8List? payload;
+  final CachedEntry? entry;
   final String? gameVersion;
   final _MissReason? reason;
 
   _ReadResult({
     required this.key,
-    this.payload,
+    this.entry,
     this.gameVersion,
     this.reason,
   });

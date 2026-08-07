@@ -13,6 +13,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
+import 'package:trios/viewer_cache/parse_recorder.dart';
 
 typedef GraphicsResolverBundle = ({List<GameFileSource> sources, GameFileResolver resolver});
 
@@ -152,12 +153,14 @@ class GraphicsIndexNotifier
   Future<GraphicsIndexPayload?> parseVanilla(
     Directory gameCore,
     List<GraphicsIndexPayload> allItemsSoFar,
+    ParseRecorder recorder,
   ) => _indexOneFolder(gameCore, kVanillaSourceKey);
 
   @override
   Future<GraphicsIndexPayload?> parseVariant(
     ModVariant variant,
     List<GraphicsIndexPayload> allItemsSoFar,
+    ParseRecorder recorder,
   ) => _indexOneFolder(variant.modFolder, variant.smolId);
 
   Future<GraphicsIndexPayload?> _indexOneFolder(

@@ -152,7 +152,11 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
       total: total,
       visible: visible,
       isLoading: controllerState.isLoading,
-      onRefresh: () => ref.invalidate(hullmodListNotifierProvider),
+      onRefresh: () {
+        // Refresh means "look at every file again", so skip no mods this time.
+        ref.read(hullmodListNotifierProvider.notifier).requestFullParse();
+        ref.invalidate(hullmodListNotifierProvider);
+      },
       searchBox: SmartSearchBar(
         fields: controller.searchFieldsMeta,
         recentHistory: ref.watch(

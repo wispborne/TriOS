@@ -25,6 +25,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
+import 'package:trios/viewer_cache/parse_recorder.dart';
 
 final isLoadingShipsList = StateProvider<bool>((ref) => false);
 final isShipsListDirty = StateProvider<bool>((ref) => false);
@@ -431,24 +432,27 @@ class ShipListNotifier
   Future<ShipsCachePayload?> parseVanilla(
     Directory gameCore,
     List<ShipsCachePayload> allItemsSoFar,
+    ParseRecorder recorder,
   ) async {
-    return _parseOneFolder(gameCore, null);
+    return _parseOneFolder(gameCore, null, recorder);
   }
 
   @override
   Future<ShipsCachePayload?> parseVariant(
     ModVariant variant,
     List<ShipsCachePayload> allItemsSoFar,
+    ParseRecorder recorder,
   ) async {
-    return _parseOneFolder(variant.modFolder, variant);
+    return _parseOneFolder(variant.modFolder, variant, recorder);
   }
 
   Future<ShipsCachePayload?> _parseOneFolder(
     Directory folder,
     ModVariant? modVariant,
+    ParseRecorder recorder,
   ) async {
     try {
-      final scan = await _scanShipsFolder(folder, modVariant);
+      final scan = await _scanShipsFolder(folder, modVariant, recorder);
       scan.errors.forEach(addError);
       scan.infos.forEach(addInfo);
 
@@ -457,6 +461,7 @@ class ShipListNotifier
         folder,
         modVariant,
         variantErrors,
+        recorder,
       );
       _pendingVariantErrors.addAll(variantErrors);
 
@@ -544,6 +549,7 @@ class ShipListNotifier
     Directory folder,
     ModVariant? modVariant,
     List<String> errors,
+    ParseRecorder recorder,
   ) async {
     final variantsDir = Directory(p.join(folder.path, 'data/variants'));
     final moduleVariants = <String, ShipVariant>{};
@@ -551,17 +557,20 @@ class ShipListNotifier
     final modName = modVariant?.modInfo.nameOrId ?? kVanillaSourceName;
 
     if (!await variantsDir.exists()) {
+      recorder.directory(variantsDir, const [], recursive: true);
       return _VariantParseResult(moduleVariants, hullIdMap);
     }
 
-    final variantFiles = await variantsDir
-        .list(recursive: true)
-        .where((e) => e is File && e.path.endsWith('.variant'))
-        .cast<File>()
+    final allEntries = await variantsDir.list(recursive: true).toList();
+    recorder.directory(variantsDir, allEntries, recursive: true);
+    final variantFiles = allEntries
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.variant'))
         .toList();
 
     for (final file in variantFiles) {
       try {
+        recorder.file(file);
         final raw = await file.readAsString(encoding: utf8);
         final map = await raw.parseJsonToMapAsync();
 
@@ -633,6 +642,7 @@ class _ShipScanResult {
 Future<_ShipScanResult> _scanShipsFolder(
   Directory folder,
   ModVariant? modVariant,
+  ParseRecorder recorder,
 ) async {
   final errors = <String>[];
   final infos = <String>[];
@@ -640,12 +650,16 @@ Future<_ShipScanResult> _scanShipsFolder(
 
   final shipFiles = <String, Map<String, dynamic>>{};
   final hullsDir = Directory(p.join(folder.path, 'data/hulls'));
-  if (await hullsDir.exists()) {
-    for (final shipFile in hullsDir
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.ship'))) {
+  if (!await hullsDir.exists()) {
+    recorder.directory(hullsDir, const []);
+  } else {
+    final hullEntries = hullsDir.listSync();
+    recorder.directory(hullsDir, hullEntries);
+    for (final shipFile in hullEntries.whereType<File>().where(
+      (f) => f.path.endsWith('.ship'),
+    )) {
       try {
+        recorder.file(shipFile);
         final raw = await shipFile.readAsString(encoding: utf8);
         final map = await raw.parseJsonToMapAsync();
         if (map['hullId'] == null) {
@@ -667,12 +681,16 @@ Future<_ShipScanResult> _scanShipsFolder(
 
   final skinFiles = <String, Map<String, dynamic>>{};
   final skinsDir = Directory(p.join(folder.path, 'data/hulls/skins'));
-  if (await skinsDir.exists()) {
-    for (final skinFile in skinsDir
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.skin'))) {
+  if (!await skinsDir.exists()) {
+    recorder.directory(skinsDir, const [], recursive: true);
+  } else {
+    final skinEntries = skinsDir.listSync(recursive: true);
+    recorder.directory(skinsDir, skinEntries, recursive: true);
+    for (final skinFile in skinEntries.whereType<File>().where(
+      (f) => f.path.endsWith('.skin'),
+    )) {
       try {
+        recorder.file(skinFile);
         final raw = await skinFile.readAsString(encoding: utf8);
         final map = await raw.parseJsonToMapAsync();
         map['_dataFile'] = skinFile.path;
@@ -697,6 +715,7 @@ Future<_ShipScanResult> _scanShipsFolder(
   if (!hasCsv) {
     infos.add('[$modName] Ship CSV file not found at $shipsCsvFile');
   } else {
+    recorder.file(shipsCsvFile);
     String content;
     try {
       content = await shipsCsvFile.readAsStringUtf8OrLatin1();

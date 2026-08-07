@@ -19,6 +19,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
+import 'package:trios/viewer_cache/parse_recorder.dart';
 
 final isLoadingShipSystems = StateProvider<bool>((ref) => false);
 final isShipSystemsListDirty = StateProvider<bool>((ref) => false);
@@ -60,7 +61,9 @@ class ShipSystemListNotifier
   /// folder — most often a vanilla icon (e.g. Blackrock's Plasma Injector
   /// reuses the core `burn_drive.png`). The game resolves such paths across
   /// the merged file system, so we search core and every enabled mod folder
-  /// as fallbacks. Set by `parseVanilla`, which always runs first in a scan.
+  /// as fallbacks. Set by `onScanStart`, which runs on every build before any
+  /// parse — a folder whose files haven't changed gets its parse skipped, so
+  /// this can't be filled in during one.
   List<Directory> _assetRoots = const [];
 
   @override
@@ -100,31 +103,40 @@ class ShipSystemListNotifier
   }
 
   @override
+  void onScanStart(Directory gameCore, List<ModVariant> variants) {
+    _assetRoots = [gameCore, for (final variant in variants) variant.modFolder];
+  }
+
+  @override
   Future<ShipSystemsCachePayload?> parseVanilla(
     Directory gameCore,
     List<ShipSystem> allItemsSoFar,
+    ParseRecorder recorder,
   ) {
-    _assetRoots = [
-      gameCore,
-      for (final variant in variantsToScan()) variant.modFolder,
-    ];
-    return _parseOneFolder(gameCore, null);
+    return _parseOneFolder(gameCore, null, recorder);
   }
 
   @override
   Future<ShipSystemsCachePayload?> parseVariant(
     ModVariant variant,
     List<ShipSystem> allItemsSoFar,
+    ParseRecorder recorder,
   ) {
-    return _parseOneFolder(variant.modFolder, variant);
+    return _parseOneFolder(variant.modFolder, variant, recorder);
   }
 
   Future<ShipSystemsCachePayload?> _parseOneFolder(
     Directory folder,
     ModVariant? modVariant,
+    ParseRecorder recorder,
   ) async {
     try {
-      final result = await _parseShipSystems(folder, modVariant, _assetRoots);
+      final result = await _parseShipSystems(
+        folder,
+        modVariant,
+        _assetRoots,
+        recorder,
+      );
       result.errors.forEach(addError);
       return ShipSystemsCachePayload(systems: result.systems);
     } catch (e, st) {
@@ -167,6 +179,7 @@ Future<_SystemParseResult> _parseShipSystems(
   Directory folder,
   ModVariant? modVariant,
   List<Directory> assetRoots,
+  ParseRecorder recorder,
 ) async {
   int filesProcessed = 0;
   final systemsCsv = p
@@ -178,10 +191,23 @@ Future<_SystemParseResult> _parseShipSystems(
   final errors = <String>[];
   final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
+  // The parse only looks for one file, but a mod without it still gets a
+  // payload (an empty one) and so needs a fingerprint to be skippable. The
+  // folder listing stands in for the existence check: the CSV appearing later
+  // changes the listing. Icon paths resolved through other mods' folders are
+  // not recorded — a skipped mod keeps its cached icon paths until its own
+  // files change or the user presses refresh.
+  final systemsDir = systemsCsv.parent;
+  recorder.directory(
+    systemsDir,
+    systemsDir.existsSync() ? systemsDir.listSync() : const [],
+  );
+
   if (!await systemsCsv.exists()) {
     // Most mods don't add ship systems; a missing file isn't an error.
     return _SystemParseResult(systems, errors, filesProcessed);
   }
+  recorder.file(systemsCsv);
 
   String content;
   try {

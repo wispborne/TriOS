@@ -146,7 +146,11 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       total: total,
       visible: visible,
       isLoading: controllerState.isLoading,
-      onRefresh: () => ref.invalidate(shipSourcesProvider),
+      onRefresh: () {
+        // Refresh means "look at every file again", so skip no mods this time.
+        ref.read(shipSourcesProvider.notifier).requestFullParse();
+        ref.invalidate(shipSourcesProvider);
+      },
       searchBox: SmartSearchBar(
         fields: controller.searchFieldsMeta,
         recentHistory: ref.watch(

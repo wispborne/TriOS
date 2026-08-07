@@ -300,7 +300,7 @@ class PortraitsNotifier
     final enabledSmolIds = enabledVariants.map((v) => v.smolId).toSet();
 
     final vanillaF = gameVersion == null
-        ? Future<Uint8List?>.value(null)
+        ? Future<CachedEntry?>.value(null)
         : _store.readVanilla(gameVersion, _schemaVersion);
     final modF = _store.readAll(enabledSmolIds, _schemaVersion);
 
@@ -309,7 +309,7 @@ class PortraitsNotifier
 
     final seeded = <ModVariant?, List<Portrait>>{};
 
-    final vanillaBytes = results[0] as Uint8List?;
+    final vanillaBytes = (results[0] as CachedEntry?)?.payload;
     if (vanillaBytes != null) {
       final payload = _tryDecode(vanillaBytes, 'vanilla');
       if (payload != null) {
@@ -320,9 +320,9 @@ class PortraitsNotifier
       }
     }
 
-    final modBytes = results[1] as Map<String, Uint8List>;
+    final modEntries = results[1] as Map<String, CachedEntry>;
     for (final variant in enabledVariants) {
-      final bytes = modBytes[variant.smolId];
+      final bytes = modEntries[variant.smolId]?.payload;
       if (bytes == null) continue;
       final payload = _tryDecode(bytes, variant.smolId);
       if (payload != null) {

@@ -17,6 +17,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
+import 'package:trios/viewer_cache/parse_recorder.dart';
 
 final isLoadingHullmodsList = StateProvider<bool>((ref) => false);
 final isHullmodsListDirty = StateProvider<bool>((ref) => false);
@@ -94,24 +95,27 @@ class HullmodListNotifier
   Future<HullmodsCachePayload?> parseVanilla(
     Directory gameCore,
     List<Hullmod> allItemsSoFar,
+    ParseRecorder recorder,
   ) {
-    return _parseOneFolder(gameCore, null);
+    return _parseOneFolder(gameCore, null, recorder);
   }
 
   @override
   Future<HullmodsCachePayload?> parseVariant(
     ModVariant variant,
     List<Hullmod> allItemsSoFar,
+    ParseRecorder recorder,
   ) {
-    return _parseOneFolder(variant.modFolder, variant);
+    return _parseOneFolder(variant.modFolder, variant, recorder);
   }
 
   Future<HullmodsCachePayload?> _parseOneFolder(
     Directory folder,
     ModVariant? modVariant,
+    ParseRecorder recorder,
   ) async {
     try {
-      final result = await _parseHullmodsCsv(folder, modVariant);
+      final result = await _parseHullmodsCsv(folder, modVariant, recorder);
       result.errors.forEach(addError);
       result.infos.forEach(addInfo);
       return HullmodsCachePayload(hullmods: result.hullmods);
@@ -175,6 +179,7 @@ class HullmodListNotifier
 Future<HullmodParseResult> _parseHullmodsCsv(
   Directory folder,
   ModVariant? modVariant,
+  ParseRecorder recorder,
 ) async {
   int filesProcessed = 0;
 
@@ -189,10 +194,21 @@ Future<HullmodParseResult> _parseHullmodsCsv(
   final infos = <String>[];
   final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
+  // The parse only looks for one file, but a mod without it still gets a
+  // payload (an empty one) and so needs a fingerprint to be skippable. The
+  // folder listing stands in for the existence check: the CSV appearing later
+  // changes the listing.
+  final hullmodsDir = hullmodsCsvFile.parent;
+  recorder.directory(
+    hullmodsDir,
+    hullmodsDir.existsSync() ? hullmodsDir.listSync() : const [],
+  );
+
   if (!await hullmodsCsvFile.exists()) {
     infos.add('[$modName] Hullmods CSV file not found at $hullmodsCsvFile');
     return HullmodParseResult(hullmods, errors, infos, filesProcessed);
   }
+  recorder.file(hullmodsCsvFile);
 
   String content;
   try {

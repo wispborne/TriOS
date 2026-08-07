@@ -9,6 +9,7 @@ import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
+import 'package:trios/viewer_cache/parse_recorder.dart';
 
 /// Pseudo-smolId used for vanilla slices. Vanilla has no ModVariant so we key
 /// its entry in `_slices` with this sentinel. Distinct from the on-disk
@@ -111,15 +112,40 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// override this higher. The final result is always pushed regardless.
   Duration get progressiveYieldInterval => const Duration(milliseconds: 500);
 
+  /// Domains the user has asked to read everything again, ignoring
+  /// fingerprints. Set by the refresh button via [requestFullParse], cleared
+  /// when the forced build finishes its full scan. Static on purpose: refresh
+  /// invalidates the provider, which replaces the notifier instance, so an
+  /// instance field would not survive to the build that needs it.
+  static final Set<String> _forceFullParse = {};
+
+  /// The refresh button calls this (through the notifier instance, before
+  /// invalidating the provider) so the next build parses every source instead
+  /// of skipping ones whose files haven't changed.
+  void requestFullParse() => _forceFullParse.add(domain);
+
   /// Parse vanilla data. `allItemsSoFar` is the cache-seeded union available
   /// at the time of parse — used by ship skin resolution for cross-variant
   /// lookups. Empty if `providesItemContext` is false.
-  Future<P?> parseVanilla(Directory gameCore, List<T> allItemsSoFar);
+  ///
+  /// The parse should tell [recorder] about every folder it lists and every
+  /// file it reads, so the next launch can skip it if nothing changed. A parse
+  /// that doesn't record anything just gets no fingerprint and runs every
+  /// launch, as before.
+  Future<P?> parseVanilla(
+    Directory gameCore,
+    List<T> allItemsSoFar,
+    ParseRecorder recorder,
+  );
 
   /// Parse a single mod variant. Return `null` to skip (parse error); the
   /// variant's existing cache entry (if any) is preserved rather than
-  /// overwritten or pruned.
-  Future<P?> parseVariant(ModVariant variant, List<T> allItemsSoFar);
+  /// overwritten or pruned. See [parseVanilla] for what [recorder] is for.
+  Future<P?> parseVariant(
+    ModVariant variant,
+    List<T> allItemsSoFar,
+    ParseRecorder recorder,
+  );
 
   /// Hook called immediately after a cached payload is decoded in Phase 1.
   /// Subclasses use this to reattach late member fields whose values aren't
@@ -141,6 +167,13 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// Called before Phase 1 starts; subclasses typically flip loading-state
   /// providers here and/or attach dirty listeners. Default is a no-op.
   void onBuildStart() {}
+
+  /// Called once per build, after the game core folder and the list of mods to
+  /// scan are known and before any parse runs. Subclasses that need something
+  /// set up for every parse do it here — [parseVanilla] is not a safe place
+  /// for it, since a vanilla folder whose files haven't changed is skipped.
+  /// Default is a no-op.
+  void onScanStart(Directory gameCore, List<ModVariant> variants) {}
 
   /// Whether the scan can start. False skips this build entirely — the mods
   /// are still loading, or the game path isn't known yet. What this watches
@@ -228,21 +261,22 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     final variants = variantsToScan();
     final enabledSmolIds = variants.map((v) => v.smolId).toSet();
     _sources = orderedSources(variants);
+    onScanStart(coreDir, variants);
 
     // ── Phase 1: parallel cache read ──────────────────────────────────────
     final cacheStart = DateTime.now();
     final gameVersion = currentGameVersion;
 
-    final vanillaBytesF = gameVersion == null
-        ? Future<Uint8List?>.value(null)
+    final vanillaEntryF = gameVersion == null
+        ? Future<CachedEntry?>.value(null)
         : store.readVanilla(gameVersion, schemaVersion);
-    final cachedBytesF = store.readAll(enabledSmolIds, schemaVersion);
+    final cachedEntriesF = store.readAll(enabledSmolIds, schemaVersion);
 
-    final results = await Future.wait<dynamic>([vanillaBytesF, cachedBytesF]);
+    final results = await Future.wait<dynamic>([vanillaEntryF, cachedEntriesF]);
     if (_buildToken != myToken) return;
 
-    final vanillaBytes = results[0] as Uint8List?;
-    final cachedBytes = results[1] as Map<SmolId, Uint8List>;
+    final vanillaEntry = results[0] as CachedEntry?;
+    final cachedEntries = results[1] as Map<SmolId, CachedEntry>;
 
     var cacheHits = 0;
 
@@ -250,8 +284,8 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     /// against the fresh parse below.
     final seededFromCache = <String>{};
 
-    if (vanillaBytes != null) {
-      final decoded = _tryDecode(vanillaBytes);
+    if (vanillaEntry != null) {
+      final decoded = _tryDecode(vanillaEntry.payload);
       if (decoded != null) {
         rehydratePayload(decoded, null);
         _slices[_kVanillaSliceKey] = decoded;
@@ -262,7 +296,7 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
 
     // Seed variant slices in mod order so the flatten respects dedup priority.
     for (final variant in variants) {
-      final bytes = cachedBytes[variant.smolId];
+      final bytes = cachedEntries[variant.smolId]?.payload;
       if (bytes == null) continue;
       final decoded = _tryDecode(bytes);
       if (decoded != null) {
@@ -294,7 +328,14 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     final yieldInterval = progressiveYieldInterval;
     var lastYieldTime = DateTime.fromMillisecondsSinceEpoch(0);
     var freshCount = 0;
+    var skippedUnchanged = 0;
     var fullScanCompleted = false;
+
+    /// Whether the user pressed refresh. Read at the start and cleared only
+    /// when this build finishes its full scan — a superseded build must leave
+    /// the request in place for the build that replaces it, or the refresh
+    /// silently does nothing.
+    final forceFullParse = _forceFullParse.contains(domain);
 
     /// Whether the fresh scan found anything the cache didn't already have.
     /// Pushing a rebuilt list is expensive downstream — every merge and every
@@ -304,36 +345,62 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
 
     final wantsContext = providesItemContext;
 
+    /// Whether [entry]'s fingerprint says nothing in [folder] that the last
+    /// parse read has changed — so the Phase 1 slice is already correct and
+    /// the parse can be skipped.
+    bool canSkipParse(CachedEntry? entry, String sliceKey, Directory folder) =>
+        !forceFullParse &&
+        seededFromCache.contains(sliceKey) &&
+        entry?.fingerprint != null &&
+        entry!.fingerprint!.isUnchanged(folder);
+
     try {
       // Vanilla first.
       {
         if (_buildToken != myToken) return;
-        final vanillaPayload = await parseVanilla(
-          coreDir,
-          wantsContext ? _flatten() : const [],
-        );
-        if (_buildToken != myToken) return;
-        if (vanillaPayload != null) {
-          freshCount++;
-          final bytes = _tryEncode(vanillaPayload);
-          final unchanged =
-              bytes != null &&
-              seededFromCache.contains(_kVanillaSliceKey) &&
-              _sameBytes(bytes, vanillaBytes);
-          if (!unchanged) {
-            _slices[_kVanillaSliceKey] = vanillaPayload;
-            anySliceChanged = true;
-            final now = DateTime.now();
-            if (now.difference(lastYieldTime) >= yieldInterval) {
-              yield _flatten();
-              lastYieldTime = now;
+        if (canSkipParse(vanillaEntry, _kVanillaSliceKey, coreDir)) {
+          skippedUnchanged++;
+        } else {
+          final recorder = ParseRecorder(coreDir);
+          final vanillaPayload = await parseVanilla(
+            coreDir,
+            wantsContext ? _flatten() : const [],
+            recorder,
+          );
+          if (_buildToken != myToken) return;
+          if (vanillaPayload != null) {
+            freshCount++;
+            final bytes = _tryEncode(vanillaPayload);
+            final unchanged =
+                bytes != null &&
+                seededFromCache.contains(_kVanillaSliceKey) &&
+                _sameBytes(bytes, vanillaEntry?.payload);
+            if (!unchanged) {
+              _slices[_kVanillaSliceKey] = vanillaPayload;
+              anySliceChanged = true;
+              final now = DateTime.now();
+              if (now.difference(lastYieldTime) >= yieldInterval) {
+                yield _flatten();
+                lastYieldTime = now;
+              }
             }
-            if (gameVersion != null && bytes != null) {
+            // Reaching a parse means the fingerprint was missing or stale.
+            // Write even when the payload bytes are unchanged — the write is
+            // what stores the fingerprint that lets the next launch skip.
+            final fingerprint = recorder.build();
+            if (gameVersion != null &&
+                bytes != null &&
+                (!unchanged || fingerprint != null)) {
               final token = myToken;
               // Fire-and-forget; guard token at write time.
               unawaited(() async {
                 if (_buildToken != token) return;
-                await store.writeVanilla(gameVersion, bytes, schemaVersion);
+                await store.writeVanilla(
+                  gameVersion,
+                  bytes,
+                  schemaVersion,
+                  fingerprint: fingerprint,
+                );
               }());
             }
           }
@@ -342,9 +409,16 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
 
       for (final variant in variants) {
         if (_buildToken != myToken) return;
+        final entry = cachedEntries[variant.smolId];
+        if (canSkipParse(entry, variant.smolId, variant.modFolder)) {
+          skippedUnchanged++;
+          continue;
+        }
+        final recorder = ParseRecorder(variant.modFolder);
         final payload = await parseVariant(
           variant,
           wantsContext ? _flatten() : const [],
+          recorder,
         );
         if (_buildToken != myToken) return;
         if (payload == null) continue;
@@ -353,22 +427,29 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
         final unchanged =
             bytes != null &&
             seededFromCache.contains(variant.smolId) &&
-            _sameBytes(bytes, cachedBytes[variant.smolId]);
-        if (unchanged) continue;
-
-        _slices[variant.smolId] = payload;
-        anySliceChanged = true;
-        final now = DateTime.now();
-        if (now.difference(lastYieldTime) >= yieldInterval) {
-          yield _flatten();
-          lastYieldTime = now;
+            _sameBytes(bytes, entry?.payload);
+        if (!unchanged) {
+          _slices[variant.smolId] = payload;
+          anySliceChanged = true;
+          final now = DateTime.now();
+          if (now.difference(lastYieldTime) >= yieldInterval) {
+            yield _flatten();
+            lastYieldTime = now;
+          }
         }
-        if (bytes != null) {
+        // Same as vanilla: write on unchanged bytes too, for the fingerprint.
+        final fingerprint = recorder.build();
+        if (bytes != null && (!unchanged || fingerprint != null)) {
           final token = myToken;
           final smolId = variant.smolId;
           unawaited(() async {
             if (_buildToken != token) return;
-            await store.write(smolId, bytes, schemaVersion);
+            await store.write(
+              smolId,
+              bytes,
+              schemaVersion,
+              fingerprint: fingerprint,
+            );
           }());
         }
       }
@@ -378,6 +459,7 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
       // nothing new, since what's already on screen is that same list.
       if (anySliceChanged) yield _flatten();
       fullScanCompleted = true;
+      if (forceFullParse) _forceFullParse.remove(domain);
     } catch (e, st) {
       Fimber.w('[$domain] fresh scan aborted: $e', ex: e, stacktrace: st);
     }
@@ -429,6 +511,7 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     final scanMs = DateTime.now().difference(scanStart).inMilliseconds;
     Fimber.i(
       'Loaded $cacheHits from cache in ${cacheMs}ms; '
+      'skipped $skippedUnchanged unchanged, '
       'refreshed $freshCount variants in ${scanMs}ms ($domain).',
     );
 

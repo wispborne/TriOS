@@ -40,6 +40,7 @@
   - A few ships/weapons didn't load because of invalid data, whereas Starsector set default values and loaded them.
     - e.g. `armaa_hazard_torso` has `DS` as its `energy/second`; this now loads.
 - Changed
+  - Greatly sped up the check for new/updated files on program launch.
   - Changed the json parser to a rewrite of the actual Starsector json parser.
     - It's 5.4x faster on average, too; previously, TriOS would use a real json parser (fast), then use a yaml parser as a fallback for "Starsector json" (slow).
   - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.

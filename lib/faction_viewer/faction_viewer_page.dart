@@ -84,7 +84,12 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
           total: controllerState.allFactions.length,
           visible: controllerState.filteredFactions.length,
           isLoading: isLoading,
-          onRefresh: () => ref.invalidate(factionListNotifierProvider),
+          onRefresh: () {
+            // Refresh means "look at every file again", so skip no mods this
+            // time.
+            ref.read(factionListNotifierProvider.notifier).requestFullParse();
+            ref.invalidate(factionListNotifierProvider);
+          },
           searchBox: SmartSearchBar(
             fields: controller.searchFieldsMeta,
             recentHistory: ref.watch(

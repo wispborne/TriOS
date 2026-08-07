@@ -19,6 +19,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
+import 'package:trios/viewer_cache/parse_recorder.dart';
 
 final isLoadingFactionsList = StateProvider<bool>((ref) => false);
 final isFactionsListDirty = StateProvider<bool>((ref) => false);
@@ -90,26 +91,32 @@ class FactionListNotifier
   Future<FactionsCachePayload?> parseVanilla(
     Directory gameCore,
     List<FactionFileData> allItemsSoFar,
+    ParseRecorder recorder,
   ) async {
-    return _parseFactionFolder(gameCore, null);
+    return _parseFactionFolder(gameCore, null, recorder);
   }
 
   @override
   Future<FactionsCachePayload?> parseVariant(
     ModVariant variant,
     List<FactionFileData> allItemsSoFar,
+    ParseRecorder recorder,
   ) async {
-    return _parseFactionFolder(variant.modFolder, variant);
+    return _parseFactionFolder(variant.modFolder, variant, recorder);
   }
 
   Future<FactionsCachePayload?> _parseFactionFolder(
     Directory folder,
     ModVariant? modVariant,
+    ParseRecorder recorder,
   ) async {
     final factionsDir = Directory(
       p.join(folder.path, 'data', 'world', 'factions'),
     );
-    if (!await factionsDir.exists()) return null;
+    if (!await factionsDir.exists()) {
+      recorder.directory(factionsDir, const [], recursive: true);
+      return null;
+    }
 
     final modName = modVariant?.modInfo.nameOrId ?? kVanillaSourceName;
     final sourceName = modName;
@@ -122,6 +129,7 @@ class FactionListNotifier
     final csvFile = File(p.join(factionsDir.path, 'factions.csv'));
     if (await csvFile.exists()) {
       try {
+        recorder.file(csvFile);
         final csvContent = await csvFile.readAsStringUtf8OrLatin1();
         registeredKeys = parseFactionsCsvKeys(csvContent);
       } catch (e) {
@@ -130,10 +138,13 @@ class FactionListNotifier
     }
 
     try {
-      await for (final entity in factionsDir.list(recursive: true)) {
+      final allEntries = await factionsDir.list(recursive: true).toList();
+      recorder.directory(factionsDir, allEntries, recursive: true);
+      for (final entity in allEntries) {
         if (entity is! File || !entity.path.endsWith('.faction')) continue;
 
         try {
+          recorder.file(entity);
           final content = await entity.readAsStringUtf8OrLatin1();
           final factionData = await content.parseJsonToMapAsync();
 

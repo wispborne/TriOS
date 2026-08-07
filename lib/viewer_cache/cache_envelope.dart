@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:trios/utils/logging.dart';
+import 'package:trios/viewer_cache/cache_fingerprint.dart';
 
 /// Wrapper written to every cache file. Pairs an opaque domain payload with
 /// metadata needed for schema-versioning and self-healing on load.
@@ -11,11 +12,19 @@ class CacheEnvelope {
   final String? gameVersion;
   final Uint8List payload;
 
+  /// What the parse that produced [payload] read from disk. Used to skip the
+  /// next parse when nothing changed. Optional in both directions with no
+  /// `schemaVersion` bump: it changes nothing about how the payload is read,
+  /// so old files without it and new files carrying it both decode fine.
+  /// A payload with no fingerprint just gets parsed fresh.
+  final CacheFingerprint? fingerprint;
+
   const CacheEnvelope({
     required this.schemaVersion,
     required this.smolId,
     required this.payload,
     this.gameVersion,
+    this.fingerprint,
   });
 
   Uint8List encode() {
@@ -26,6 +35,9 @@ class CacheEnvelope {
     };
     if (gameVersion != null) {
       map['gameVersion'] = gameVersion;
+    }
+    if (fingerprint != null) {
+      map['fingerprint'] = fingerprint!.toEncodable();
     }
     return msgpack.serialize(map);
   }
@@ -56,6 +68,9 @@ class CacheEnvelope {
         smolId: smolId,
         gameVersion: gv is String ? gv : null,
         payload: payloadBytes,
+        // A corrupt fingerprint decodes to null and the payload still loads —
+        // the variant just gets parsed fresh.
+        fingerprint: CacheFingerprint.tryDecode(raw['fingerprint']),
       );
     } catch (e) {
       Fimber.v(() => 'CacheEnvelope decode failed: $e');

@@ -21,6 +21,7 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
+import 'package:trios/viewer_cache/parse_recorder.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/models/weapons_cache_payload.dart';
 
@@ -344,24 +345,27 @@ class WeaponListNotifier
   Future<WeaponsCachePayload?> parseVanilla(
     Directory gameCore,
     List<WeaponsCachePayload> allItemsSoFar,
+    ParseRecorder recorder,
   ) {
-    return _parseOneFolder(gameCore, null);
+    return _parseOneFolder(gameCore, null, recorder);
   }
 
   @override
   Future<WeaponsCachePayload?> parseVariant(
     ModVariant variant,
     List<WeaponsCachePayload> allItemsSoFar,
+    ParseRecorder recorder,
   ) {
-    return _parseOneFolder(variant.modFolder, variant);
+    return _parseOneFolder(variant.modFolder, variant, recorder);
   }
 
   Future<WeaponsCachePayload?> _parseOneFolder(
     Directory folder,
     ModVariant? modVariant,
+    ParseRecorder recorder,
   ) async {
     try {
-      final result = await _scanWeaponsFolder(folder, modVariant);
+      final result = await _scanWeaponsFolder(folder, modVariant, recorder);
       result.errors.forEach(addError);
       result.infos.forEach(addInfo);
       return result.payload;
@@ -422,6 +426,7 @@ class _WeaponScanResult {
 Future<_WeaponScanResult> _scanWeaponsFolder(
   Directory folder,
   ModVariant? modVariant,
+  ParseRecorder recorder,
 ) async {
   final errors = <String>[];
   final infos = <String>[];
@@ -434,10 +439,15 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
       .normalize
       .toFile();
 
-  final wpnFolders = _wpnFolders
-      .map((sub) => Directory(p.join(folder.path, sub)))
-      .where((dir) => dir.existsSync())
-      .toList();
+  final wpnFolders = <Directory>[];
+  for (final sub in _wpnFolders) {
+    final dir = Directory(p.join(folder.path, sub));
+    if (dir.existsSync()) {
+      wpnFolders.add(dir);
+    } else {
+      recorder.directory(dir, const []);
+    }
+  }
   if (wpnFolders.isEmpty) {
     infos.add('[$modName] No weapon folders under ${folder.path}');
     return _WeaponScanResult(null, errors, infos);
@@ -445,14 +455,21 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
 
   // Missile projectiles defined here. Launchers are matched to them after the
   // full scan, so a launcher can find a missile another mod defines.
-  final missileSpecs = await _indexMissileSpecs(folder);
+  final missileSpecs = await _indexMissileSpecs(folder, recorder);
+
+  final wpnEntries = <FileSystemEntity>[];
+  for (final dir in wpnFolders) {
+    final entries = dir.listSync();
+    recorder.directory(dir, entries);
+    wpnEntries.addAll(entries);
+  }
 
   final wpnFiles = <String, Map<String, dynamic>>{};
-  for (final wpnFile in wpnFolders
-      .expand((dir) => dir.listSync())
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.wpn'))) {
+  for (final wpnFile in wpnEntries.whereType<File>().where(
+    (file) => file.path.endsWith('.wpn'),
+  )) {
     try {
+      recorder.file(wpnFile);
       final wpnContent = await wpnFile.readAsString(encoding: utf8);
       final jsonData = await wpnContent.parseJsonToMapAsync();
 
@@ -505,6 +522,7 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
   if (!await weaponsCsvFile.exists()) {
     infos.add('[$modName] Weapons CSV file not found at $weaponsCsvFile');
   } else {
+    recorder.file(weaponsCsvFile);
     String content;
     try {
       content = await weaponsCsvFile.readAsStringUtf8OrLatin1();
@@ -615,18 +633,28 @@ List<String>? _toStringList(dynamic value) {
 /// is kept as written; it is matched to a real file after the full scan.
 Future<Map<String, Map<String, dynamic>>> _indexMissileSpecs(
   Directory folder,
+  ParseRecorder recorder,
 ) async {
   final result = <String, Map<String, dynamic>>{};
 
-  final projFiles = _projFolders
-      .map((sub) => p.join(folder.path, sub).toDirectory())
-      .where((dir) => dir.existsSync())
-      .expand((dir) => dir.listSync(recursive: true))
-      .whereType<File>()
-      .where((file) => file.path.endsWith('.proj'));
+  final projEntries = <FileSystemEntity>[];
+  for (final sub in _projFolders) {
+    final dir = p.join(folder.path, sub).toDirectory();
+    if (!dir.existsSync()) {
+      recorder.directory(dir, const [], recursive: true);
+      continue;
+    }
+    final entries = dir.listSync(recursive: true);
+    recorder.directory(dir, entries, recursive: true);
+    projEntries.addAll(entries);
+  }
+  final projFiles = projEntries.whereType<File>().where(
+    (file) => file.path.endsWith('.proj'),
+  );
 
   for (final projFile in projFiles) {
     try {
+      recorder.file(projFile);
       final content = await projFile.readAsString(encoding: utf8);
       final json = await content.parseJsonToMapAsync();
       final id = json['id'] as String?;

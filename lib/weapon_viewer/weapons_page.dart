@@ -152,7 +152,11 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
       total: total,
       visible: visible,
       isLoading: controllerState.isLoading,
-      onRefresh: () => ref.invalidate(weaponSourcesProvider),
+      onRefresh: () {
+        // Refresh means "look at every file again", so skip no mods this time.
+        ref.read(weaponSourcesProvider.notifier).requestFullParse();
+        ref.invalidate(weaponSourcesProvider);
+      },
       searchBox: SmartSearchBar(
         fields: controller.searchFieldsMeta,
         recentHistory: ref.watch(

@@ -545,6 +545,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
         ElevatedButton.icon(
           icon: const Icon(Icons.diversity_1),
           onPressed: () {
+            ref.read(weaponSourcesProvider.notifier).requestFullParse();
             showSnackBar(
               context: ref.read(AppState.appContext)!,
               content: Text(
@@ -565,6 +566,7 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.rocket),
                 onPressed: () async {
+                  ref.read(shipSourcesProvider.notifier).requestFullParse();
                   showSnackBar(
                     context: ref.read(AppState.appContext)!,
                     content: Text(

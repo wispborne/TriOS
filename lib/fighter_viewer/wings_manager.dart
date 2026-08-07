@@ -18,6 +18,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
+import 'package:trios/viewer_cache/parse_recorder.dart';
 
 final isLoadingWingsList = StateProvider<bool>((ref) => false);
 
@@ -77,24 +78,27 @@ class WingListNotifier extends CachedStreamListNotifier<Wing, WingsCachePayload>
   Future<WingsCachePayload?> parseVanilla(
     Directory gameCore,
     List<Wing> allItemsSoFar,
+    ParseRecorder recorder,
   ) {
-    return _parseOneFolder(gameCore, null);
+    return _parseOneFolder(gameCore, null, recorder);
   }
 
   @override
   Future<WingsCachePayload?> parseVariant(
     ModVariant variant,
     List<Wing> allItemsSoFar,
+    ParseRecorder recorder,
   ) {
-    return _parseOneFolder(variant.modFolder, variant);
+    return _parseOneFolder(variant.modFolder, variant, recorder);
   }
 
   Future<WingsCachePayload?> _parseOneFolder(
     Directory folder,
     ModVariant? modVariant,
+    ParseRecorder recorder,
   ) async {
     try {
-      final result = await _parseWingsCsv(folder, modVariant);
+      final result = await _parseWingsCsv(folder, modVariant, recorder);
       result.errors.forEach(addError);
       return WingsCachePayload(wings: result.wings);
     } catch (e, st) {
@@ -144,6 +148,7 @@ class WingListNotifier extends CachedStreamListNotifier<Wing, WingsCachePayload>
 Future<_WingParseResult> _parseWingsCsv(
   Directory folder,
   ModVariant? modVariant,
+  ParseRecorder recorder,
 ) async {
   final wingsCsv = p
       .join(folder.path, 'data/hulls/wing_data.csv')
@@ -155,14 +160,25 @@ Future<_WingParseResult> _parseWingsCsv(
   final errors = <String>[];
   final modName = modVariant?.modInfo.nameOrId ?? 'Vanilla';
 
+  // The parse only looks for one file, but a mod without it still gets a
+  // payload (an empty one) and so needs a fingerprint to be skippable. The
+  // folder listing stands in for the existence check: the CSV appearing later
+  // changes the listing.
+  final hullsDir = wingsCsv.parent;
+  recorder.directory(
+    hullsDir,
+    hullsDir.existsSync() ? hullsDir.listSync() : const [],
+  );
+
   if (!await wingsCsv.exists()) {
     // Most mods have no wings; not an error worth surfacing.
     return _WingParseResult(wings, errors);
   }
+  recorder.file(wingsCsv);
 
   // Map every variant id in this folder to its hull id, so a wing's `variant`
   // resolves to the ship behind it. Missing entries degrade to a null hull id.
-  final variantHullIds = await _buildVariantHullIdMap(folder);
+  final variantHullIds = await _buildVariantHullIdMap(folder, recorder);
 
   String content;
   try {
@@ -230,19 +246,27 @@ Future<_WingParseResult> _parseWingsCsv(
 
 /// Scans `data/variants` under [folder] and returns `variantId -> hullId`,
 /// following `ShipListNotifier`'s `.variant` parsing.
-Future<Map<String, String>> _buildVariantHullIdMap(Directory folder) async {
+Future<Map<String, String>> _buildVariantHullIdMap(
+  Directory folder,
+  ParseRecorder recorder,
+) async {
   final result = <String, String>{};
   final variantsDir = Directory(p.join(folder.path, 'data/variants'));
-  if (!await variantsDir.exists()) return result;
+  if (!await variantsDir.exists()) {
+    recorder.directory(variantsDir, const [], recursive: true);
+    return result;
+  }
 
-  final variantFiles = await variantsDir
-      .list(recursive: true)
-      .where((e) => e is File && e.path.endsWith('.variant'))
-      .cast<File>()
+  final allEntries = await variantsDir.list(recursive: true).toList();
+  recorder.directory(variantsDir, allEntries, recursive: true);
+  final variantFiles = allEntries
+      .whereType<File>()
+      .where((f) => f.path.endsWith('.variant'))
       .toList();
 
   for (final file in variantFiles) {
     try {
+      recorder.file(file);
       final raw = await file.readAsString(encoding: utf8);
       final map = await raw.parseJsonToMapAsync();
       final variantId = map['variantId'] as String?;

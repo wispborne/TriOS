@@ -177,6 +177,10 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// no-op). Subclasses typically clear loading-state flags here. The default
   /// impl flushes accumulated errors/infos to the log — subclasses that
   /// override should call `super.onBuildComplete(...)` if they want the same.
+  ///
+  /// Not called when the build stops because the mods aren't loaded yet. That
+  /// build is going to run again in a moment, and clearing the loading flags in
+  /// between would drop the page's spinner while the mods are still loading.
   void onBuildComplete({required bool fullScanCompleted}) {
     if (_buildErrors.isNotEmpty) {
       Fimber.w('[$domain] parsing errors:\n${_buildErrors.join('\n')}');
@@ -198,6 +202,19 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     final ready = await isReadyToScan();
     if (_buildToken != myToken) return;
     if (!ready) {
+      // The mods folder hasn't been read yet. This build starts over as soon
+      // as it has, so leave the loading flag on — `onBuildComplete` clears it,
+      // and a cleared flag makes the page look finished and empty while the
+      // mods are still loading.
+      //
+      // Two cases mean no mods are ever coming, and there the build finishes
+      // so the page can show that it's empty instead of spinning forever: no
+      // game folder set, and a mods folder that failed to read. A game folder
+      // that's still being read counts as "coming", not as "not set".
+      final gameFolder = ref.watch(AppState.gameCoreFolder);
+      final hasNoGameFolder = gameFolder.hasValue && gameFolder.value == null;
+      final modsFailedToLoad = ref.watch(AppState.modVariants).hasError;
+      if (!hasNoGameFolder && !modsFailedToLoad) return;
       onBuildComplete(fullScanCompleted: false);
       return;
     }

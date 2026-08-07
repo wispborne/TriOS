@@ -187,3 +187,47 @@ class StringArrayHook extends MappingHook {
     return value;
   }
 }
+
+/// A data map with its unusable numbers blanked out, plus one message per
+/// blanked field saying what was there instead.
+typedef CleanedNumbers = ({
+  Map<String, dynamic> data,
+  Map<String, String> errors,
+});
+
+/// Blanks out values that should have been numbers but aren't, and explains
+/// each one.
+///
+/// The game does the same thing quietly. It reads every number in
+/// `weapon_data.csv` and `ship_data.csv` with `optDouble`/`optInt`, which fall
+/// back to a default when the cell holds something like `DS` or `0.0.05`.
+/// dart_mappable throws instead, which would drop a whole weapon or ship over
+/// one bad cell. This keeps the item and leaves the one stat blank.
+///
+/// Which fields are numbers comes from [mapper], so this can't drift from the
+/// model. Keys in [data] must already be in the mapper's own key style.
+/// The returned errors are keyed by Dart field name, so UI can look up the
+/// stat it is about to draw; the message names the column as the file writes
+/// it.
+CleanedNumbers blankUnusableNumbers<T extends Object>(
+  ClassMapperBase<T> mapper,
+  Map<String, dynamic> data,
+) {
+  Map<String, dynamic>? cleaned;
+  Map<String, String>? errors;
+
+  for (final field in mapper.fields.values) {
+    if (field is! Field<T, double> && field is! Field<T, int>) continue;
+
+    final value = data[field.key];
+    if (value == null || value is num) continue;
+    if (num.tryParse(value.toString()) != null) continue;
+
+    cleaned ??= {...data};
+    errors ??= {};
+    cleaned[field.key] = null;
+    errors[field.name] = '"${field.key}" is "$value", which is not a number.';
+  }
+
+  return (data: cleaned ?? data, errors: errors ?? const {});
+}

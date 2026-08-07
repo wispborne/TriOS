@@ -12,6 +12,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
+import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/game_file_resolver.dart';
@@ -191,6 +192,7 @@ List<Weapon> _buildWeapons(
 
   final weapons = <Weapon>[];
   final failures = LogCollapser();
+  final badCells = LogCollapser();
   for (final spec in specs) {
     final data = <String, dynamic>{...spec.row};
 
@@ -230,11 +232,19 @@ List<Weapon> _buildWeapons(
       }
     }
 
+    // A cell holding a word where a number belongs is common in mods with a
+    // shifted column or a typo. The game shrugs those off, so blank the one
+    // stat and keep the weapon instead of dropping it.
+    final cleaned = blankUnusableNumbers(WeaponMapper.ensureInitialized(), {
+      for (final e in data.entries) e.key.toLowerCase(): e.value,
+    });
+    for (final error in cleaned.errors.values) {
+      badCells.add('[${spec.rowSource.name}] "${spec.id}": $error');
+    }
+
     try {
       weapons.add(
-        WeaponMapper.fromMap({
-          for (final e in data.entries) e.key.toLowerCase(): e.value,
-        })
+        WeaponMapper.fromMap(cleaned.data)
           ..modVariant = spec.rowSource.variant
           ..spriteModVariant = spec.sideFileSource?.variant
           ..modSources = buildItemModSources(
@@ -243,6 +253,7 @@ List<Weapon> _buildWeapons(
             sideFileChangedKeys: spec.sideFileChangedKeys,
             areaNames: _weaponAreaNames,
           )
+          ..fieldErrors = cleaned.errors
           ..csvFile = bySourceKey[spec.rowSource.key]?.csvFilePath?.toFile()
           ..wpnFile = wpnFilePath?.toFile(),
       );
@@ -250,6 +261,8 @@ List<Weapon> _buildWeapons(
       failures.add('[${spec.rowSource.name}] "${spec.id}": $e');
     }
   }
+  // The weapon still loaded, so this is the mod's data to fix, not ours.
+  badCells.flush('Reading weapon stats', noun: 'unusable cell', asInfo: true);
   failures.flush('Building weapons', noun: 'failure');
   return weapons;
 }

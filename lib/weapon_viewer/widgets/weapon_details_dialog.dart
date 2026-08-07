@@ -216,8 +216,8 @@ Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
           _chip('Spread/Shot', _fmtNum(w.spreadPerShot)),
           _chip('Spread Decay/Sec', _fmtNum(w.spreadDecayPerSec)),
           _chip('Autofire Acc Bonus', _fmtNum(w.autofireAccBonus)),
-          if ((w.extraArcForAI ?? '').isNotEmpty)
-            _chip('Extra Arc (AI)', w.extraArcForAI!),
+          if ((w.extraArcForAI ?? 0) > 0)
+            _chip('Extra Arc (AI)', _fmtNum(w.extraArcForAI)),
         ],
       ),
       // Projectile

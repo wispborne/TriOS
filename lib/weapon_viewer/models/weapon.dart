@@ -67,7 +67,7 @@ class Weapon with WeaponMappable implements WispGridItem {
   @MappableField(key: 'proj hitpoints')
   final double? projHitpoints;
   final double? autofireAccBonus;
-  final String? extraArcForAI;
+  final double? extraArcForAI;
   final String? hints;
   final String? tags;
   final String? groupTag;
@@ -144,6 +144,13 @@ class Weapon with WeaponMappable implements WispGridItem {
   /// Mod attribution for the details dialog. Rebuilt each load, not serialized.
   @MappableField(hook: SkipSerializationHook())
   ItemModSources? modSources;
+
+  /// Cells in `weapon_data.csv` that should have held a number but didn't,
+  /// keyed by the field they belong to (`energyPerSecond`, not
+  /// `energy/second`). The stat is null on this weapon; the message says what
+  /// was in the file. Rebuilt each load, not serialized.
+  @MappableField(hook: SkipSerializationHook())
+  Map<String, String> fieldErrors = const {};
 
   @MappableField(hook: FileHook())
   File? csvFile;

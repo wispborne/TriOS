@@ -34,6 +34,8 @@
   - Some ship modules did not show up.
     - Happened when the mod used a json map instead of a json array of pairs like Vanilla.
   - Crash on launch on Linux if the window size was set larger than all monitors.
+  - A few ships/weapons didn't load because of invalid data, whereas Starsector set default values and loaded them.
+    - e.g. `armaa_hazard_torso` has `DS` as its `energy/second`; this now loads.
 - Changed
   - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
   - About page now has an AI disclosure section.

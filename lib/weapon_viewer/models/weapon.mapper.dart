@@ -206,8 +206,8 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'autofireaccbonus',
     opt: true,
   );
-  static String? _$extraArcForAI(Weapon v) => v.extraArcForAI;
-  static const Field<Weapon, String> _f$extraArcForAI = Field(
+  static double? _$extraArcForAI(Weapon v) => v.extraArcForAI;
+  static const Field<Weapon, double> _f$extraArcForAI = Field(
     'extraArcForAI',
     _$extraArcForAI,
     key: r'extraarcforai',
@@ -490,6 +490,13 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'modsources',
     hook: SkipSerializationHook(),
   );
+  static Map<String, String> _$fieldErrors(Weapon v) => v.fieldErrors;
+  static const Field<Weapon, Map<String, String>> _f$fieldErrors = Field(
+    'fieldErrors',
+    _$fieldErrors,
+    key: r'fielderrors',
+    hook: SkipSerializationHook(),
+  );
   static File? _$csvFile(Weapon v) => v.csvFile;
   static const Field<Weapon, File> _f$csvFile = Field(
     'csvFile',
@@ -686,6 +693,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #modVariant: _f$modVariant,
     #spriteModVariant: _f$spriteModVariant,
     #modSources: _f$modSources,
+    #fieldErrors: _f$fieldErrors,
     #csvFile: _f$csvFile,
     #wpnFile: _f$wpnFile,
     #hintsAsSet: _f$hintsAsSet,
@@ -874,7 +882,7 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     double? flightTime,
     double? projHitpoints,
     double? autofireAccBonus,
-    String? extraArcForAI,
+    double? extraArcForAI,
     String? hints,
     String? tags,
     String? groupTag,

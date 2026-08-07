@@ -78,6 +78,17 @@
       "surfaceContainer": "#0E162B",
       "onPrimary": "#A8DBFC"
     },
+    "Lavender": {
+      "isDark": true,
+      "primary": "#C0A2E8",
+      "secondary": "#E3B7D8",
+      "surface": "#1A1524",
+      "surfaceContainer": "#241D31",
+      "onPrimary": "#241D31",
+      "onSecondary": "#241D31",
+      "infoSeed": "#9A8CE0",
+      "successSeed": "#8FBF9F"
+    },
     "Nia": {
       "isDark": true,
       "primary": "#BE00FF",

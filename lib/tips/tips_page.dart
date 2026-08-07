@@ -1,26 +1,20 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/models/mod.dart';
-import 'package:trios/themes/theme_manager.dart';
-import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/tips/tip.dart';
-import 'package:trios/trios/app_state.dart';
+import 'package:trios/tips/tips_page_controller.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/dense_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:trios/widgets/viewer_toolbar.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 import 'package:trios/trios/constants_theme.dart';
-
-/// Grouping mode, like in your Kotlin code.
-enum TipsGrouping { none, mod }
 
 /// A screen that shows tips in a grid, with optional grouping, selection, etc.
 class TipsPage extends ConsumerStatefulWidget {
@@ -37,212 +31,146 @@ class _TipsPageState extends ConsumerState<TipsPage>
 
   final SearchController _searchController = SearchController();
   final ScrollController _scrollController = ScrollController();
-  bool _onlyEnabled = false;
-  bool _showHidden = false;
-  TipsGrouping _grouping = TipsGrouping.none;
-  final Map<ModTip, bool> _selectionStates = {};
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    // Watch the tips.
-    final tipsAsync = ref.watch(AppState.tipsProvider);
+    final state = ref.watch(tipsPageControllerProvider);
+    final controller = ref.read(tipsPageControllerProvider.notifier);
     final textColor = Theme.of(context).colorScheme.onSurface;
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(4),
-          child: SizedBox(
-            height: 50,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8, right: 8),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+        ViewerToolbar(
+          entityName: 'Tips',
+          total: state.allTips.length,
+          visible: state.visibleTips.length,
+          isLoading: state.isLoading,
+          onRefresh: controller.refresh,
+          searchBox: buildSearchBox(controller),
+          leadingActions: [
+            MovingTooltipWidget.text(
+              message: 'About Tips Hider',
+              child: IconButton(
+                icon: const Icon(Icons.info),
+                onPressed: () => _showAboutDialog(context),
+              ),
+            ),
+          ],
+          trailingActions: [
+            TriOSToolbarItem(
+              child: PopupMenuButton<TipsGrouping>(
+                onSelected: controller.setGrouping,
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: TipsGrouping.none,
+                    child: Text('No Grouping'),
+                  ),
+                  PopupMenuItem(
+                    value: TipsGrouping.mod,
+                    child: Text('Group By Mod'),
+                  ),
+                ],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                    const SizedBox(width: 4),
-                    Text(
-                      'Tips',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineSmall?.copyWith(fontSize: 20),
-                    ),
-                    const SizedBox(width: 4),
-                    MovingTooltipWidget.text(
-                      message: 'About Tips Hider',
-                      child: IconButton(
-                        icon: const Icon(Icons.info),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text('Tips Hider'),
-                                icon: const Icon(Icons.lightbulb),
-                                iconColor: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface,
-                                content: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 900,
-                                  ),
-                                  child: const Text(
-                                    "Shows all loading screen tips, which mod adds them, and how often they appear (freq)."
-                                    "\nYou may hide a tip to stop it from showing ingame. TriOS will automatically re-apply your changes if a mod is updated.",
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('Close'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
+                      const Icon(Icons.filter_list),
+                      const SizedBox(width: 4),
+                      Text(
+                        state.grouping == TipsGrouping.none
+                            ? 'No Grouping'
+                            : 'Group By Mod',
                       ),
-                    ),
-                    MovingTooltipWidget.text(
-                      message: 'Reload tips',
-                      child: IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: () {
-                          ref.invalidate(AppState.tipsProvider);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    TriOSToolbarCheckboxButton(
-                      onChanged: (newValue) =>
-                          setState(() => _onlyEnabled = newValue ?? true),
-                      value: _onlyEnabled,
-                      text: 'Enabled Mods Only',
-                    ),
-                    const SizedBox(width: 8),
-                    TriOSToolbarItem(
-                      child: PopupMenuButton<TipsGrouping>(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.filter_list),
-                              const SizedBox(width: 4),
-                              Text(
-                                _grouping == TipsGrouping.none
-                                    ? 'No Grouping'
-                                    : 'Group By Mod',
-                              ),
-                            ],
-                          ),
-                        ),
-                        onSelected: (value) =>
-                            setState(() => _grouping = value),
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(
-                            value: TipsGrouping.none,
-                            child: Text('No Grouping'),
-                          ),
-                          PopupMenuItem(
-                            value: TipsGrouping.mod,
-                            child: Text('Group By Mod'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    TriOSToolbarItem(
-                      child: TextButton.icon(
-                        onPressed: () {
-                          // Select or deselect all.
-                          final allSelected = _selectionStates.values.every(
-                            (v) => v,
-                          );
-                          setState(() {
-                            for (final key in _selectionStates.keys) {
-                              _selectionStates[key] = !allSelected;
-                            }
-                          });
-                        },
-                        icon: Icon(Icons.select_all, color: textColor),
-                        label: Text(
-                          'Select All',
-                          style: TextStyle(color: textColor),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildDeleteButton(context),
-                    const SizedBox(width: 8),
-                    SizedBox(width: 300, child: buildSearchBox()),
-                    const SizedBox(width: 8),
-                    MovingTooltipWidget.text(
-                      message: 'Whether hidden tips are shown',
-                      child: TriOSToolbarCheckboxButton(
-                        onChanged: (newValue) =>
-                            setState(() => _showHidden = newValue ?? true),
-                        value: _showHidden,
-                        text: 'Show Hidden',
-                      ),
-                    ),
-                  ],
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(width: 8),
+            TriOSToolbarItem(
+              child: TextButton.icon(
+                onPressed: () => controller.toggleSelectAll(state.visibleTips),
+                icon: Icon(Icons.select_all, color: textColor),
+                label: Text('Select All', style: TextStyle(color: textColor)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _buildHideButton(context, state, controller),
+            const SizedBox(width: 8),
+            TriOSToolbarCheckboxButton(
+              onChanged: (_) => controller.toggleOnlyEnabledMods(),
+              value: state.onlyEnabledMods,
+              text: 'Enabled Mods Only',
+            ),
+            const SizedBox(width: 8),
+            MovingTooltipWidget.text(
+              message:
+                  "Hidden tips are tips that have a freq of 0, so they don't "
+                  "appear ingame.",
+              child: TriOSToolbarCheckboxButton(
+                onChanged: (_) => controller.toggleShowHidden(),
+                value: state.showHidden,
+                text: 'Show Hidden',
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: tipsAsync.when(
-            data: (tips) {
-              return _buildBody(tips, context);
-            },
-            loading: () => Center(child: ThemedCircularProgressIndicator()),
-            error: (err, st) {
-              Fimber.e('Error loading tips: $err', ex: err, stacktrace: st);
-              return Center(child: Text('Error: $err'));
-            },
-          ),
-        ),
+        Expanded(child: _buildBody(context, state, controller)),
       ],
     );
   }
 
-  Widget _buildDeleteButton(BuildContext context) {
-    final selectedTips = _selectionStates.entries
-        .where((entry) => entry.value)
-        .map((entry) => entry.key)
-        .toList();
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Tips Hider'),
+          icon: const Icon(Icons.lightbulb),
+          iconColor: Theme.of(context).colorScheme.onSurface,
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: const Text(
+              "Shows all loading screen tips, which mod adds them, and how often they appear (freq)."
+              "\nYou may hide a tip to stop it from showing ingame. TriOS will automatically re-apply your changes if a mod is updated.",
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-    final isEnabled = selectedTips.isNotEmpty;
-
-    final hiddenCount = selectedTips
-        .where((t) => ref.read(AppState.tipsProvider.notifier).isHidden(t))
-        .length;
-    final notHiddenCount = selectedTips.length - hiddenCount;
-    final showUnhide = hiddenCount > notHiddenCount;
-
-    final buttonLabel = showUnhide ? 'Unhide Selected' : 'Hide Selected';
-    final buttonIcon = showUnhide ? Icons.visibility : Icons.delete;
+  Widget _buildHideButton(
+    BuildContext context,
+    TipsPageState state,
+    TipsPageController controller,
+  ) {
+    final selectedTips = state.selectedTips.toList();
+    final hiddenCount = controller.selectedHiddenCount;
+    final showUnhide = hiddenCount > selectedTips.length - hiddenCount;
 
     return Disable(
-      isEnabled: isEnabled,
+      isEnabled: selectedTips.isNotEmpty,
       child: TriOSToolbarItem(
         child: TextButton.icon(
           onPressed: () {
             if (showUnhide) {
-              _unhideTips(selectedTips);
+              controller.unhideTips(selectedTips);
             } else {
-              _hideTips(selectedTips);
+              controller.hideTips(selectedTips);
             }
           },
-          icon: Icon(buttonIcon),
-          label: Text(buttonLabel),
+          icon: Icon(showUnhide ? Icons.visibility : Icons.delete),
+          label: Text(showUnhide ? 'Unhide Selected' : 'Hide Selected'),
           style: ButtonStyle(
             foregroundColor: WidgetStateProperty.all(
               Theme.of(context).colorScheme.onSurface,
@@ -256,79 +184,25 @@ class _TipsPageState extends ConsumerState<TipsPage>
     );
   }
 
-  void _hideTips(List<ModTip> selectedTips) {
-    if (selectedTips.isNotEmpty) {
-      ref
-          .read(AppState.tipsProvider.notifier)
-          .hideTips(selectedTips, dryRun: false);
-      setState(() {
-        for (final tip in selectedTips) {
-          _selectionStates.remove(tip);
-        }
-      });
+  Widget _buildBody(
+    BuildContext context,
+    TipsPageState state,
+    TipsPageController controller,
+  ) {
+    if (state.errorMessage != null) {
+      return Center(child: Text('Error: ${state.errorMessage}'));
     }
-  }
-
-  void _unhideTips(List<ModTip> selectedTips) {
-    if (selectedTips.isNotEmpty) {
-      ref.read(AppState.tipsProvider.notifier).unhideTips(selectedTips);
-      setState(() {
-        for (final tip in selectedTips) {
-          _selectionStates.remove(tip);
-        }
-      });
+    if (state.isLoading && state.allTips.isEmpty) {
+      return Center(child: ThemedCircularProgressIndicator());
     }
-  }
-
-  Widget _buildBody(List<ModTip> tips, BuildContext context) {
-    final allMods = ref.read(AppState.mods);
-    // Filter tips if onlyEnabled is set.
-    List<ModTip> filtered = _onlyEnabled
-        ? tips
-              .where(
-                (tip) => tip.variants.any(
-                  (variant) => variant.isEnabled(allMods) == true,
-                ),
-              )
-              .toList()
-        : tips;
-
-    final hiddenTips = ref
-        .watch(AppState.tipsProvider.notifier)
-        .getHidden(filtered);
-    filtered = _showHidden ? filtered : filtered - hiddenTips;
-
-    if (filtered.isEmpty) {
+    if (state.visibleTips.isEmpty) {
       return const Center(child: Text('No tips (or mods) found.'));
     }
 
-    // Ensure we have an entry in _selectionStates for each tip.
-    for (final tip in filtered) {
-      _selectionStates.putIfAbsent(tip, () => false);
-    }
+    final hiddenTips = state.hiddenTips.toSet();
 
-    final searchQuery = _searchController.value.text;
-    if (searchQuery.isNotEmpty) {
-      filtered = filtered.where((item) {
-        return item.toMap().values.any((value) {
-          return value.toString().toLowerCase().contains(
-            searchQuery.toLowerCase(),
-          );
-        });
-      }).toList();
-    }
-
-    if (_grouping == TipsGrouping.mod) {
-      // Group tips by mod.
-      final Map<Mod, List<ModTip>> grouped = {};
-      for (final t in filtered) {
-        final mod = t.variants.firstOrNull?.mod(allMods);
-        if (mod == null) {
-          continue;
-        }
-        grouped.putIfAbsent(mod, () => []).add(t);
-      }
-      final List<Mod> sortedKeys = grouped.keys.toList()..sort();
+    if (state.grouping == TipsGrouping.mod) {
+      final grouped = controller.groupVisibleTipsByMod();
 
       return Scrollbar(
         controller: _scrollController,
@@ -341,7 +215,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final mod in sortedKeys) ...[
+                for (final entry in grouped.entries) ...[
                   Padding(
                     padding: const EdgeInsets.only(top: 16, bottom: 8),
                     child: Row(
@@ -350,12 +224,12 @@ class _TipsPageState extends ConsumerState<TipsPage>
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ModIcon.fromMod(
-                            mod,
+                            entry.key,
                             padding: const EdgeInsets.only(left: 4),
                           ),
                         ),
                         Text(
-                          '${mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} (${grouped[mod]?.length ?? 0})',
+                          '${entry.key.findFirstEnabledOrHighestVersion?.modInfo.nameOrId} (${entry.value.length})',
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
@@ -368,54 +242,33 @@ class _TipsPageState extends ConsumerState<TipsPage>
                                 Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
-                            onPressed: () {
-                              final areAllSelected = grouped[mod]!.every(
-                                (t) => _selectionStates[t] ?? false,
-                              );
-                              setState(() {
-                                for (final tip in grouped[mod]!) {
-                                  _selectionStates[tip] = !areAllSelected;
-                                }
-                              });
-                            },
+                            onPressed: () =>
+                                controller.toggleSelectAll(entry.value),
                             child: Text('Select'),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Builder(
-                    builder: (context) {
-                      final List<ModTip> modTips = grouped[mod]!
-                        ..sort(
-                          (a, b) =>
-                              (b.tipObj.tip?.length ?? 0) -
-                              (a.tipObj.tip?.length ?? 0),
-                        );
-                      return WispAdaptiveGridView<ModTip>(
-                        items: modTips,
-                        minItemWidth: 350,
-                        shrinkWrap: true,
-                        horizontalSpacing: 8,
-                        verticalSpacing: 8,
-                        padding: const EdgeInsets.only(bottom: 8),
-                        itemBuilder: (context, tip, index) {
-                          return TipCardView(
-                            tip: tip,
-                            isSelected: _selectionStates[tip] ?? false,
-                            isHidden: hiddenTips.contains(tip),
-                            showMod: false,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectionStates[tip] = selected;
-                              });
-                            },
-                            hideTips: () => _hideSelectedAndClickedTip(tip),
-                            unhideTips: () => _unhideSelectedAndClickedTip(tip),
-                          );
-                        },
-                      );
-                    },
+                  WispAdaptiveGridView<ModTip>(
+                    items: entry.value,
+                    minItemWidth: 350,
+                    shrinkWrap: true,
+                    horizontalSpacing: 8,
+                    verticalSpacing: 8,
+                    padding: const EdgeInsets.only(bottom: 8),
+                    itemBuilder: (context, tip, index) => TipCardView(
+                      tip: tip,
+                      isSelected: state.selectedTips.contains(tip),
+                      isHidden: hiddenTips.contains(tip),
+                      showMod: false,
+                      onSelected: (selected) =>
+                          controller.setSelected(tip, selected),
+                      hideTips: () =>
+                          controller.hideTips({...state.selectedTips, tip}),
+                      unhideTips: () =>
+                          controller.unhideTips({...state.selectedTips, tip}),
+                    ),
                   ),
                 ],
               ],
@@ -423,93 +276,65 @@ class _TipsPageState extends ConsumerState<TipsPage>
           ),
         ),
       );
-    } else {
-      // No grouping: show a grid sorted by tip text length (descending).
-      final List<ModTip> modTips = filtered
-        ..sort(
-          (a, b) => (b.tipObj.tip?.length ?? 0) - (a.tipObj.tip?.length ?? 0),
-        );
+    }
 
-      return Padding(
-        padding: const EdgeInsets.only(left: 8, right: 8),
-        child: Scrollbar(
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, right: 8),
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: WispAdaptiveGridView<ModTip>(
           controller: _scrollController,
-          thumbVisibility: true,
-          child: WispAdaptiveGridView<ModTip>(
-            controller: _scrollController,
-            items: modTips,
-            minItemWidth: 350,
-            horizontalSpacing: 8,
-            verticalSpacing: 8,
-            padding: const EdgeInsets.only(bottom: 8),
-            itemBuilder: (context, tip, index) {
-              return TipCardView(
-                tip: tip,
-                isSelected: _selectionStates[tip] ?? false,
-                isHidden: hiddenTips.contains(tip),
-                onSelected: (selected) {
-                  setState(() {
-                    _selectionStates[tip] = selected;
-                  });
-                },
-                hideTips: () => _hideSelectedAndClickedTip(tip),
-                unhideTips: () => _unhideSelectedAndClickedTip(tip),
-              );
-            },
+          items: state.visibleTips,
+          minItemWidth: 350,
+          horizontalSpacing: 8,
+          verticalSpacing: 8,
+          padding: const EdgeInsets.only(bottom: 8),
+          itemBuilder: (context, tip, index) => TipCardView(
+            tip: tip,
+            isSelected: state.selectedTips.contains(tip),
+            isHidden: hiddenTips.contains(tip),
+            onSelected: (selected) => controller.setSelected(tip, selected),
+            hideTips: () => controller.hideTips({...state.selectedTips, tip}),
+            unhideTips: () =>
+                controller.unhideTips({...state.selectedTips, tip}),
           ),
         ),
-      );
-    }
+      ),
+    );
   }
 
-  List<ModTip> _getSelectedTips() {
-    return _selectionStates.entries
-        .where((entry) => entry.value)
-        .map((entry) => entry.key)
-        .toList();
-  }
-
-  void _unhideSelectedAndClickedTip(ModTip tip) {
-    _unhideTips(_getSelectedTips() + [tip]);
-  }
-
-  void _hideSelectedAndClickedTip(ModTip tip) {
-    _hideTips(_getSelectedTips() + [tip]);
-  }
-
-  SizedBox buildSearchBox() {
+  Widget buildSearchBox(TipsPageController controller) {
     return SizedBox(
       height: 30,
       child: SearchAnchor(
         searchController: _searchController,
-        builder: (BuildContext context, SearchController controller) {
+        builder: (BuildContext context, SearchController searchController) {
           return SearchBar(
-            controller: controller,
+            controller: searchController,
             leading: const Icon(Icons.search),
             hintText: "Filter...",
             trailing: [
-              controller.value.text.isEmpty
+              searchController.value.text.isEmpty
                   ? Container()
                   : IconButton(
                       icon: const Icon(Icons.clear),
                       constraints: const BoxConstraints(),
                       padding: EdgeInsets.zero,
                       onPressed: () {
-                        controller.clear();
-                        setState(() {});
+                        searchController.clear();
+                        controller.setSearchQuery('');
                       },
                     ),
             ],
             backgroundColor: WidgetStateProperty.all(
               Theme.of(context).colorScheme.surfaceContainer,
             ),
-            onChanged: (value) {
-              setState(() {});
-            },
+            onChanged: controller.setSearchQuery,
           );
         },
         suggestionsBuilder:
-            (BuildContext context, SearchController controller) {
+            (BuildContext context, SearchController searchController) {
               return [];
             },
       ),
@@ -604,7 +429,9 @@ class _TipCardViewState extends ConsumerState<TipCardView> {
                     : isHidden
                     ? theme.colorScheme.surfaceContainerLowest
                     : theme.colorScheme.surfaceContainer.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+                borderRadius: BorderRadius.circular(
+                  TriOSThemeConstants.cornerRadius,
+                ),
               ),
               padding: const EdgeInsets.all(8.0),
               child: Column(

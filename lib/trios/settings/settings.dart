@@ -12,6 +12,7 @@ import 'package:trios/ship_viewer/ship_blueprint_view_state.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
 import 'package:trios/sector_map/sector_map_controller.dart';
+import 'package:trios/tips/tips_page_controller.dart';
 import 'package:trios/toolbar/nav_order_entry.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
@@ -112,6 +113,8 @@ class Settings with SettingsMappable {
   @MappableField(hook: SafeDecodeHook())
   final FactionViewerStatePersisted? factionViewerState;
   final WispGridState factionsGridState;
+  @MappableField(hook: SafeDecodeHook())
+  final TipsPageStatePersisted? tipsPageState;
 
   /// Per-filter-group persisted selections, keyed by
   /// `"{pageId}::{filterGroupId}"`.
@@ -288,6 +291,7 @@ class Settings with SettingsMappable {
       groupingSetting: null,
       columnsState: {},
     ),
+    this.tipsPageState,
     this.persistedFilterGroups = const {},
     this.customGameExePath,
     this.useCustomGameExePath = false,

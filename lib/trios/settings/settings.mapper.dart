@@ -394,6 +394,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       HullmodsPageStatePersistedMapper.ensureInitialized();
       PortraitsPageStatePersistedMapper.ensureInitialized();
       FactionViewerStatePersistedMapper.ensureInitialized();
+      TipsPageStatePersistedMapper.ensureInitialized();
       PersistedFilterGroupMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
@@ -689,6 +690,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     _$factionsGridState,
     opt: true,
     def: const WispGridState(groupingSetting: null, columnsState: {}),
+  );
+  static TipsPageStatePersisted? _$tipsPageState(Settings v) => v.tipsPageState;
+  static const Field<Settings, TipsPageStatePersisted> _f$tipsPageState = Field(
+    'tipsPageState',
+    _$tipsPageState,
+    opt: true,
+    hook: SafeDecodeHook(),
   );
   static Map<String, PersistedFilterGroup> _$persistedFilterGroups(
     Settings v,
@@ -1237,6 +1245,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #portraitsPageState: _f$portraitsPageState,
     #factionViewerState: _f$factionViewerState,
     #factionsGridState: _f$factionsGridState,
+    #tipsPageState: _f$tipsPageState,
     #persistedFilterGroups: _f$persistedFilterGroups,
     #customGameExePath: _f$customGameExePath,
     #useCustomGameExePath: _f$useCustomGameExePath,
@@ -1348,6 +1357,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       portraitsPageState: data.dec(_f$portraitsPageState),
       factionViewerState: data.dec(_f$factionViewerState),
       factionsGridState: data.dec(_f$factionsGridState),
+      tipsPageState: data.dec(_f$tipsPageState),
       persistedFilterGroups: data.dec(_f$persistedFilterGroups),
       customGameExePath: data.dec(_f$customGameExePath),
       useCustomGameExePath: data.dec(_f$useCustomGameExePath),
@@ -1538,6 +1548,12 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
   >?
   get factionViewerState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get factionsGridState;
+  TipsPageStatePersistedCopyWith<
+    $R,
+    TipsPageStatePersisted,
+    TipsPageStatePersisted
+  >?
+  get tipsPageState;
   MapCopyWith<
     $R,
     String,
@@ -1609,6 +1625,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     PortraitsPageStatePersisted? portraitsPageState,
     FactionViewerStatePersisted? factionViewerState,
     WispGridState? factionsGridState,
+    TipsPageStatePersisted? tipsPageState,
     Map<String, PersistedFilterGroup>? persistedFilterGroups,
     String? customGameExePath,
     bool? useCustomGameExePath,
@@ -1790,6 +1807,14 @@ class _SettingsCopyWithImpl<$R, $Out>
     (v) => call(factionsGridState: v),
   );
   @override
+  TipsPageStatePersistedCopyWith<
+    $R,
+    TipsPageStatePersisted,
+    TipsPageStatePersisted
+  >?
+  get tipsPageState =>
+      $value.tipsPageState?.copyWith.$chain((v) => call(tipsPageState: v));
+  @override
   MapCopyWith<
     $R,
     String,
@@ -1901,6 +1926,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? portraitsPageState = $none,
     Object? factionViewerState = $none,
     WispGridState? factionsGridState,
+    Object? tipsPageState = $none,
     Map<String, PersistedFilterGroup>? persistedFilterGroups,
     Object? customGameExePath = $none,
     bool? useCustomGameExePath,
@@ -2011,6 +2037,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (portraitsPageState != $none) #portraitsPageState: portraitsPageState,
       if (factionViewerState != $none) #factionViewerState: factionViewerState,
       if (factionsGridState != null) #factionsGridState: factionsGridState,
+      if (tipsPageState != $none) #tipsPageState: tipsPageState,
       if (persistedFilterGroups != null)
         #persistedFilterGroups: persistedFilterGroups,
       if (customGameExePath != $none) #customGameExePath: customGameExePath,
@@ -2203,6 +2230,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       #factionsGridState,
       or: $value.factionsGridState,
     ),
+    tipsPageState: data.get(#tipsPageState, or: $value.tipsPageState),
     persistedFilterGroups: data.get(
       #persistedFilterGroups,
       or: $value.persistedFilterGroups,

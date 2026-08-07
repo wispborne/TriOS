@@ -19,6 +19,7 @@
   - More background effects (Settings - Theme Modifiers).
   - May now mute updates for just one version of a mod.
   - May now search by built-in hullmod.
+  - Added BiOS theme.
 - Fixed
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.
   - Ships/weapons/etc with stats should now reflect any mods' changes to those stats.
@@ -37,12 +38,18 @@
   - A few ships/weapons didn't load because of invalid data, whereas Starsector set default values and loaded them.
     - e.g. `armaa_hazard_torso` has `DS` as its `energy/second`; this now loads.
 - Changed
+  - Changed the json parser to a rewrite of the actual Starsector json parser.
+    - It's 5.4x faster on average, too; previously, TriOS would use a real json parser (fast), then use a yaml parser as a fallback for "Starsector json" (slow).
   - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
   - About page now has an AI disclosure section.
   - Ship blueprint view options are now persisted.
   - New app logo by Vexlia.
   - TriOS cache backups are now 7zipped to save space.
   - Mod search now searches for their dependencies also.
+  - Under-the-hood upgrade from Riverpod (state management) 2 to 3.
+    - This should improve performance by not running any logic on pages that are not visible.
+    - But it's also a large change, so please report any bugs I may not have found!
+  - Tweaked button colors on the Mods page so enabled mod buttons are less bright and don't look as bad with themes.
 
 # 1.6.1
 - Added

@@ -37,6 +37,10 @@ class Weapon with WeaponMappable implements WispGridItem {
   final double? ammoPerSec;
   @MappableField(key: 'reload size')
   final double? reloadSize;
+
+  /// The `type` column of `weapon_data.csv`, which holds the damage type
+  /// (`KINETIC`, `HIGH_EXPLOSIVE`, and so on) — not the mount. The mount is
+  /// [weaponType]. Kept raw; [damageType] is the one to read.
   final String? type;
   @MappableField(key: 'energy/shot')
   final double? energyPerShot;
@@ -88,7 +92,11 @@ class Weapon with WeaponMappable implements WispGridItem {
 
   // Fields from the .wpn files
   final String? specClass;
-  @MappableField(key: 'type')
+
+  /// The mount this weapon fits: `BALLISTIC`, `ENERGY` or `MISSILE`. The `.wpn`
+  /// file calls this `type`; it is read under another name because
+  /// `weapon_data.csv` uses `type` for the damage type, which is [type] here.
+  @MappableField(key: 'mounttype')
   final String? weaponType;
   final String? size;
   final String? damageType;
@@ -127,9 +135,9 @@ class Weapon with WeaponMappable implements WispGridItem {
 
   final String? mountTypeOverride;
 
-  /// Returns the effective mount type, considering mountTypeOverride.
-  /// Use this wherever mount type display or slot compatibility is needed.
-  String? get effectiveMountType => mountTypeOverride ?? type;
+  /// The mount type to show, and to check a slot against. The game does the
+  /// same fallback: `mountTypeOverride` defaults to the `.wpn`'s `type`.
+  String? get effectiveMountType => mountTypeOverride ?? weaponType;
 
   /// The mod that supplied this weapon's `weapon_data.csv` row.
   @MappableField(hook: SkipSerializationHook())

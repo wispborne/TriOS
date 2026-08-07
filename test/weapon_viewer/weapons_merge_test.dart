@@ -219,6 +219,60 @@ void main() {
       expect(laser.spriteModVariant?.modInfo.name, 'Z-tweak');
     });
 
+    test('the mount type and the damage type stay apart', () async {
+      // Both files call their field "type", but they mean different things:
+      // in the .wpn it is the mount, in weapon_data.csv it is the damage.
+      // The game keeps them apart, so TriOS has to as well.
+      final weapons = await _build(
+        payloads: [
+          WeaponsCachePayload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {'id': 'lightmg', 'name': 'Light MG', 'type': 'KINETIC'},
+            ],
+            wpnFiles: {
+              'weapons/lightmg.wpn': {
+                'id': 'lightmg',
+                'mountType': 'BALLISTIC',
+                'size': 'SMALL',
+              },
+            },
+          ),
+        ],
+        mods: const [],
+      );
+
+      final mg = weapons.single;
+      expect(mg.weaponType, 'BALLISTIC');
+      expect(mg.effectiveMountType, 'BALLISTIC');
+      expect(mg.type, 'KINETIC');
+      expect(mg.damageType, 'KINETIC');
+    });
+
+    test('mountTypeOverride wins over the .wpn mount type', () async {
+      final weapons = await _build(
+        payloads: [
+          WeaponsCachePayload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {'id': 'hybrid', 'name': 'Hybrid', 'type': 'ENERGY'},
+            ],
+            wpnFiles: {
+              'weapons/hybrid.wpn': {
+                'id': 'hybrid',
+                'mountType': 'BALLISTIC',
+                'mountTypeOverride': 'HYBRID',
+              },
+            },
+          ),
+        ],
+        mods: const [],
+      );
+
+      expect(weapons.single.effectiveMountType, 'HYBRID');
+      expect(weapons.single.weaponType, 'BALLISTIC');
+    });
+
     test('a row with no .wpn anywhere still appears, without a sprite', () async {
       final weapons = await _build(
         payloads: [

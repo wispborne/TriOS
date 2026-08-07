@@ -323,7 +323,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
   static const Field<Weapon, String> _f$weaponType = Field(
     'weaponType',
     _$weaponType,
-    key: r'type',
+    key: r'mounttype',
     opt: true,
   );
   static String? _$size(Weapon v) => v.size;

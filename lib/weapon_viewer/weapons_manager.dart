@@ -137,7 +137,7 @@ const _weaponAreaNames = <String, String>{
   'hardpointAngleOffsets': 'mount positions',
   'renderHints': 'render hints',
   'specClass': 'spec class',
-  'type': 'mount type',
+  'mountType': 'mount type',
   'mountTypeOverride': 'mount type',
   'size': 'size',
   'damageType': 'damage type',
@@ -145,6 +145,16 @@ const _weaponAreaNames = <String, String>{
   'id': '',
   'wpnFile': '',
 };
+
+/// Where the game looks for `.wpn` files, and it does not look inside
+/// subfolders of these. Ship system weapons (flare launchers and the like) live
+/// in the second folder and have a `weapon_data.csv` row like any other weapon.
+/// See `WeaponSpecLoader` in the game.
+const _wpnFolders = ['data/weapons', 'data/shipsystems/wpn'];
+
+/// Where the game looks for `.proj` files. Scanned for the missile sprites
+/// drawn on a loaded launcher.
+const _projFolders = ['data/weapons', 'data/shipsystems/proj'];
 
 /// The eight image layers a `.wpn` file can name.
 const _weaponSpriteFields = [
@@ -196,10 +206,6 @@ List<Weapon> _buildWeapons(
   for (final spec in specs) {
     final data = <String, dynamic>{...spec.row};
 
-    // Save CSV `type` (damage type) before `.wpn`'s `type` (mount type)
-    // overwrites it.
-    final csvDamageType = data['type'];
-
     final side = spec.sideFile;
     String? wpnFilePath;
     if (side != null) {
@@ -207,7 +213,7 @@ List<Weapon> _buildWeapons(
       wpnFilePath = fields.remove('wpnFile') as String?;
       data.addAll(fields);
       // .wpn files rarely have damageType; fall back to the CSV type column.
-      data['damageType'] ??= csvDamageType;
+      data['damageType'] ??= data['type'];
     }
 
     // The winning .wpn file says which images to use; any mod, or the game
@@ -284,10 +290,10 @@ class WeaponListNotifier
   @override
   String get domain => 'weapons';
 
-  /// 3: sprite paths are stored as the data file writes them, not joined to
-  /// the mod folder, and `.proj` missiles moved into the payload.
+  /// 4: `.wpn` files are keyed by folder + file name and are read from
+  /// `data/shipsystems/wpn` too, and the mount type moved off the `type` key.
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   late final CachedVariantStore store =
@@ -428,9 +434,12 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
       .normalize
       .toFile();
 
-  final wpnFilesDir = Directory(p.join(folder.path, 'data/weapons'));
-  if (!await wpnFilesDir.exists()) {
-    infos.add('[$modName] No data/weapons folder at ${wpnFilesDir.path}');
+  final wpnFolders = _wpnFolders
+      .map((sub) => Directory(p.join(folder.path, sub)))
+      .where((dir) => dir.existsSync())
+      .toList();
+  if (wpnFolders.isEmpty) {
+    infos.add('[$modName] No weapon folders under ${folder.path}');
     return _WeaponScanResult(null, errors, infos);
   }
 
@@ -439,8 +448,8 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
   final missileSpecs = await _indexMissileSpecs(folder);
 
   final wpnFiles = <String, Map<String, dynamic>>{};
-  for (final wpnFile in wpnFilesDir
-      .listSync()
+  for (final wpnFile in wpnFolders
+      .expand((dir) => dir.listSync())
       .whereType<File>()
       .where((file) => file.path.endsWith('.wpn'))) {
     try {
@@ -456,7 +465,9 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
 
       put('id', jsonData['id']);
       put('specClass', jsonData['specClass']);
-      put('type', jsonData['type']);
+      // The .wpn calls the mount type "type", and so does weapon_data.csv for
+      // the damage type. Renamed here so the two stop overwriting each other.
+      put('mountType', jsonData['type']);
       put('mountTypeOverride', jsonData['mountTypeOverride']);
       put('size', jsonData['size']);
       put('damageType', jsonData['damageType']);
@@ -481,8 +492,10 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
         continue;
       }
 
-      // Keyed on path relative to data/weapons (not on the id inside).
-      wpnFiles[p.basename(wpnFile.path)] = fields;
+      // Keyed on folder + file name (not on the id inside), so a weapon and a
+      // ship system weapon can share a file name without one hiding the other.
+      final folderName = p.basename(wpnFile.parent.path);
+      wpnFiles['$folderName/${p.basename(wpnFile.path)}'] = fields;
     } catch (e) {
       errors.add('[$modName] Failed to parse .wpn file ${wpnFile.path}: $e');
     }
@@ -596,19 +609,19 @@ List<String>? _toStringList(dynamic value) {
   return value.map((e) => e.toString()).toList();
 }
 
-/// Scans `data/weapons` (recursively, to catch the `proj/` subfolder) and
-/// builds a `projectileSpecId -> {sprite, size, center}` index for
-/// missile-type projectiles defined in this folder. The sprite path is kept as
-/// written; it is matched to a real file after the full scan.
+/// Scans [_projFolders] (recursively, to catch the `proj/` subfolder under
+/// `data/weapons`) and builds a `projectileSpecId -> {sprite, size, center}`
+/// index for missile-type projectiles defined in this folder. The sprite path
+/// is kept as written; it is matched to a real file after the full scan.
 Future<Map<String, Map<String, dynamic>>> _indexMissileSpecs(
   Directory folder,
 ) async {
   final result = <String, Map<String, dynamic>>{};
-  final projDir = p.join(folder.path, 'data/weapons').toDirectory();
-  if (!await projDir.exists()) return result;
 
-  final projFiles = projDir
-      .listSync(recursive: true)
+  final projFiles = _projFolders
+      .map((sub) => p.join(folder.path, sub).toDirectory())
+      .where((dir) => dir.existsSync())
+      .expand((dir) => dir.listSync(recursive: true))
       .whereType<File>()
       .where((file) => file.path.endsWith('.proj'));
 

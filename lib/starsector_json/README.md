@@ -99,9 +99,18 @@ uses that form.
 Measured over a full install — 59,566 files, 108 MB — with
 `test/benchmark/json_parse_benchmark.dart`.
 
-**Speed:** 843 ms against 3853 ms, so about 4.6x faster. `parseJsonToMap()`
-spends 85% of its time in the YAML fallback; this has no fallback to spend time
-in.
+**Speed:** 718 ms against 3853 ms, so about 5.4x faster. The old
+`parseJsonToMap()` spent 85% of its time in the YAML fallback; this has no
+fallback to spend time in.
+
+That 718 ms started as 843 ms; the difference is scan work. The comment
+stripper jumps from `#` to `#` with `indexOf` and strips `\r`s with
+`replaceAll` instead of walking every character, and the parser's three
+per-character loops (whitespace, quoted strings, bare tokens) scan by index
+and settle the line/character bookkeeping in one step. The bookkeeping still
+comes out identical — a full-install comparison against the unoptimized code
+(every file, parsed whole and cut short, error messages included) found no
+difference.
 
 **Which files each one reads:** 11 files this reads that `parseJsonToMap()`
 can't, including vanilla `data/config/settings.json` and

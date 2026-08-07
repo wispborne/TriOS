@@ -24,15 +24,36 @@ const int _closeBracket = 0x5D;
 const int _openBrace = 0x7B;
 const int _closeBrace = 0x7D;
 
-/// Characters that end an unquoted token: `,` `:` `]` `}` `/` `\` `"` `[` `{`
-/// `;` `=` `#`. Taken straight from `JSONTokener.nextValue`.
-final Uint8List _tokenEnders = _buildTokenEnders();
+/// Characters that end an unquoted token: any control character, or one of
+/// `,` `:` `]` `}` `/` `\` `"` `[` `{` `;` `=` `#`. The enders are taken
+/// straight from `JSONTokener.nextValue`; folding the control characters into
+/// the same table makes the token scan a single lookup per character.
+final Uint8List _tokenStops = _buildTokenStops();
 
-Uint8List _buildTokenEnders() {
+Uint8List _buildTokenStops() {
   final table = Uint8List(128);
+  for (var char = 0; char < _space; char++) {
+    table[char] = 1;
+  }
   for (final char in r',:]}/\"[{;=#'.codeUnits) {
     table[char] = 1;
   }
+  return table;
+}
+
+/// Characters that end the fast scan through a quoted string: NUL, the line
+/// breaks, the backslash, and both quote characters — all below 0x60. Which
+/// quote actually closes the string is sorted out at the stop.
+final Uint8List _stringStops = _buildStringStops();
+
+Uint8List _buildStringStops() {
+  final table = Uint8List(0x60);
+  table[0] = 1;
+  table[_lineFeed] = 1;
+  table[_carriageReturn] = 1;
+  table[_doubleQuote] = 1;
+  table[_singleQuote] = 1;
+  table[_backslash] = 1;
   return table;
 }
 
@@ -99,10 +120,38 @@ class _Tokener {
   }
 
   /// Next character that isn't whitespace, or 0 at the end of the text.
+  ///
+  /// Does what calling [next] in a loop would, but works in local variables
+  /// and writes the fields back once at the end. This is the hottest loop in
+  /// the parser — it runs between every two tokens — and indentation makes up
+  /// a good share of a file's bytes.
   int nextClean() {
+    final text = _text;
+    final length = text.length;
+    var index = _index;
+    var line = _line;
+    var character = _character;
+    var previous = _previous;
     while (true) {
-      final char = next();
-      if (char == 0 || char > _space) return char;
+      final char = index < length ? text.codeUnitAt(index) : 0;
+      index++;
+      if (previous == _carriageReturn) {
+        line++;
+        character = char == _lineFeed ? 0 : 1;
+      } else if (char == _lineFeed) {
+        line++;
+        character = 0;
+      } else {
+        character++;
+      }
+      previous = char;
+      if (char == 0 || char > _space) {
+        _index = index;
+        _line = line;
+        _character = character;
+        _previous = previous;
+        return char;
+      }
     }
   }
 
@@ -115,18 +164,47 @@ class _Tokener {
   ///
   /// Java builds this up character by character. Here the common case — no
   /// backslash anywhere — is one substring instead.
+  ///
+  /// The scan itself skips [next]'s bookkeeping: none of the characters it
+  /// passes over can be a line break (one would end the scan), so reading them
+  /// only moves [_character] along. The position fields end up exactly where a
+  /// [next]-per-character loop would leave them, in every case — that matters
+  /// because error messages carry the position.
   String readString(int quote) {
+    final text = _text;
+    final length = text.length;
     final start = _index;
-    while (true) {
-      final char = next();
-      if (char == quote) return _text.substring(start, _index - 1);
-      if (char == 0 || char == _lineFeed || char == _carriageReturn) {
-        throw syntaxError('Unterminated string');
+    var i = start;
+    while (i < length) {
+      final char = text.codeUnitAt(i);
+      if (char < 0x60 && _stringStops[char] != 0) {
+        if (char == quote) {
+          _character += i + 1 - start;
+          _index = i + 1;
+          _previous = quote;
+          return text.substring(start, i);
+        }
+        if (char == _doubleQuote || char == _singleQuote) {
+          // The other kind of quote, which is an ordinary character here.
+          i++;
+          continue;
+        }
+        break;
       }
-      if (char == _backslash) {
-        return _readStringWithEscapes(_text.substring(start, _index - 1), quote);
-      }
+      i++;
     }
+
+    // A backslash, a line break, an embedded NUL, or the end of the text.
+    // Settle up for the characters scanned so far, then take the last step
+    // through [next] so the bookkeeping for it stays in one place.
+    _character += i - start;
+    _index = i;
+    if (i > start) _previous = text.codeUnitAt(i - 1);
+    final char = next();
+    if (char != _backslash) {
+      throw syntaxError('Unterminated string');
+    }
+    return _readStringWithEscapes(text.substring(start, i), quote);
   }
 
   /// Finishes a string that turned out to contain a backslash. [head] is
@@ -193,7 +271,7 @@ class _Tokener {
 
   /// One value: a string, an array, an object, or a bare token.
   Object? readValue() {
-    var char = nextClean();
+    final char = nextClean();
     switch (char) {
       case _doubleQuote:
       case _singleQuote:
@@ -209,12 +287,47 @@ class _Tokener {
 
     // A bare token runs until a control character or one of the enders. Spaces
     // are not enders, so `two words` is a single token — it just gets trimmed.
+    //
+    // The scan reads ahead directly instead of going through [next]: a token
+    // character is never a line break, so passing one only moves [_character]
+    // along. What Java does at the end — read the stopping character, then
+    // step back over it — is replayed onto the position fields by hand, so
+    // they land exactly where [next]-then-[back] would put them. That includes
+    // the odd cases: reading a `\n` and stepping back leaves [_character] at
+    // -1 with the line already counted, and stopping at the end of the text
+    // counts the end-marker read the same way [next] does.
     final start = _index - 1;
-    while (char >= _space && !(char < 128 && _tokenEnders[char] != 0)) {
-      char = next();
+    final text = _text;
+    final length = text.length;
+    var stop = start;
+    while (stop < length) {
+      final c = text.codeUnitAt(stop);
+      if (c < 128 && _tokenStops[c] != 0) break;
+      stop++;
     }
-    back();
-    final token = _text.substring(start, _index).trim();
+    if (stop == start) {
+      // The character we were handed is itself a stopper; no reads happened,
+      // so this is just the step back over it.
+      back();
+    } else {
+      _character += stop - start - 1;
+      if (stop == length) {
+        _character++;
+        _previous = 0;
+      } else {
+        final c = text.codeUnitAt(stop);
+        if (c == _lineFeed) {
+          _line++;
+          _character = 0;
+        } else {
+          _character++;
+        }
+        _previous = c;
+      }
+      _index = stop;
+      _character--;
+    }
+    final token = text.substring(start, stop).trim();
     if (token.isEmpty) throw syntaxError('Missing value');
     return stringToValue(token);
   }
@@ -248,7 +361,12 @@ class _Tokener {
       }
 
       final value = readValue();
-      if (map.containsKey(key)) {
+      // Store first and see whether the map grew, so each pair costs one map
+      // lookup instead of a containsKey plus a store. When a throw follows,
+      // the half-updated map goes down with it, so no caller can tell.
+      final sizeBefore = map.length;
+      map[key] = value;
+      if (map.length == sizeBefore) {
         throw StarsectorJsonException('Duplicate key "$key"');
       }
       if (value is double && !value.isFinite) {
@@ -256,7 +374,6 @@ class _Tokener {
           'JSON does not allow non-finite numbers.',
         );
       }
-      map[key] = value;
 
       char = nextClean();
       if (char == _comma || char == _semicolon) {

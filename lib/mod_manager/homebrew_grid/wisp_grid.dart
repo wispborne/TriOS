@@ -254,11 +254,15 @@ class _WispGridState<T extends WispGridItem>
       (grp) => grp.key == groupingSetting?.currentGroupedByKey,
     );
     final secondaryKey = groupingSetting?.secondaryGroupedByKey;
-    final WispGridGroup<T>? secondaryGrouping = (primaryGrouping == null ||
+    final secondaryCandidate = (primaryGrouping == null ||
             secondaryKey == null ||
             secondaryKey == primaryGrouping.key)
         ? null
         : widget.groups.firstWhereOrNull((g) => g.key == secondaryKey);
+    // The "no grouping" group puts everything in one bucket and draws no
+    // header, so as a second level it would only add an empty header row.
+    final WispGridGroup<T>? secondaryGrouping =
+        secondaryCandidate?.isGroupVisible == true ? secondaryCandidate : null;
 
     final defaultSortField = widget.defaultSortField ?? columns.first.key;
     final activeSortField = gridState.sortedColumnKey ?? defaultSortField;

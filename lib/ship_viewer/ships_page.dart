@@ -329,7 +329,13 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                 ),
               ),
             ),
-        groups: [UngroupedShipGridGroup(), ModShipGridGroup()],
+        groups: [
+          UngroupedShipGridGroup(),
+          ModShipGridGroup(),
+          HullSizeShipGridGroup(),
+          TechShipGridGroup(),
+          DesignationShipGridGroup(),
+        ],
       ),
     );
   }
@@ -830,4 +836,57 @@ class ModShipGridGroup extends WispGridGroup<Ship> {
   @override
   Comparable getGroupSortValue(Ship item) =>
       item.modVariant?.modInfo.nameOrId.toLowerCase() ?? '';
+}
+
+class HullSizeShipGridGroup extends WispGridGroup<Ship> {
+  HullSizeShipGridGroup() : super('hullSize', 'Hull Size');
+
+  /// Smallest to largest, so the groups don't come out in alphabetical order.
+  static const _sizeOrder = [
+    'Frigate',
+    'Destroyer',
+    'Cruiser',
+    'Capital',
+    'Station',
+  ];
+
+  static String _sizeName(Ship ship) =>
+      ship.isStation ? 'Station' : ship.hullSizeForDisplay();
+
+  @override
+  String getGroupName(Ship item, {Comparable? groupSortValue}) =>
+      _sizeName(item);
+
+  @override
+  Comparable getGroupSortValue(Ship item) {
+    final name = _sizeName(item);
+    final position = _sizeOrder.indexOf(name);
+    // Sizes we don't know about go last, sorted by name.
+    return position >= 0 ? '$position' : '${_sizeOrder.length} $name';
+  }
+}
+
+class TechShipGridGroup extends WispGridGroup<Ship> {
+  TechShipGridGroup() : super('techManufacturer', 'Tech/Manufacturer');
+
+  @override
+  String getGroupName(Ship item, {Comparable? groupSortValue}) =>
+      item.techManufacturer?.nullIfEmpty() ?? 'None';
+
+  // Case-folded so "Low Tech" and "LOW TECH" land in the same group.
+  @override
+  Comparable getGroupSortValue(Ship item) =>
+      item.techManufacturer?.toUpperCase() ?? '';
+}
+
+class DesignationShipGridGroup extends WispGridGroup<Ship> {
+  DesignationShipGridGroup() : super('designation', 'Designation');
+
+  @override
+  String getGroupName(Ship item, {Comparable? groupSortValue}) =>
+      item.designation?.nullIfEmpty() ?? 'None';
+
+  @override
+  Comparable getGroupSortValue(Ship item) =>
+      item.designation?.toUpperCase() ?? '';
 }

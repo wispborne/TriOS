@@ -20,6 +20,7 @@
   - May now mute updates for just one version of a mod.
   - May now search by built-in hullmod.
   - Added Lavender and BiOS themes.
+  - Ship Viewer may now group ships by hull size, tech/manufacturer, or designation.
 - Fixed
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.
   - Ships/weapons/etc with stats should now reflect any mods' changes to those stats.

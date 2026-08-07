@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../mod_class_names.dart';
 import '../utils.dart';
 
 /// Splits [text] into alternating normal/highlighted [TextSpan]s wherever
@@ -37,6 +38,50 @@ List<TextSpan> _highlightSpans(
       ),
     );
     start = idx + query.length;
+  }
+  return spans;
+}
+
+/// Like [_highlightSpans], but first picks out any mod class name in [text] and
+/// gives it [modStyle] instead of [style]. Used for free-form text such as an
+/// error message or a "Caused by:" line, where the mod's name is buried in a
+/// sentence rather than in a field of its own.
+List<TextSpan> _spansWithModNames(
+  String? text,
+  TextStyle style,
+  TextStyle modStyle,
+  String? query,
+  Color highlightBg,
+) {
+  if (text == null || text.isEmpty) {
+    return [TextSpan(text: text, style: style)];
+  }
+
+  final spans = <TextSpan>[];
+  int start = 0;
+  for (final match in classNameInTextPattern.allMatches(text)) {
+    if (!isModClassName(match[0])) continue;
+    if (match.start > start) {
+      spans.addAll(
+        _highlightSpans(
+          text.substring(start, match.start),
+          style,
+          query,
+          highlightBg,
+        ),
+      );
+    }
+    spans.addAll(_highlightSpans(match[0], modStyle, query, highlightBg));
+    start = match.end;
+  }
+
+  if (spans.isEmpty) {
+    return _highlightSpans(text, style, query, highlightBg);
+  }
+  if (start < text.length) {
+    spans.addAll(
+      _highlightSpans(text.substring(start), style, query, highlightBg),
+    );
   }
   return spans;
 }
@@ -126,12 +171,16 @@ class GeneralErrorLogLineWidget extends StatelessWidget {
     final levelStyle = TextStyle(
       color: theme.colorScheme.onSurface.withAlpha(200),
     );
+    final modColor = theme.colorScheme.tertiary;
     final namespaceStyle = TextStyle(
-      color: theme.colorScheme.tertiary.withAlpha(200),
+      color: isModClassName(logLine.namespace)
+          ? modColor.withAlpha(200)
+          : theme.colorScheme.onSurface.withAlpha(160),
     );
     final errorStyle = TextStyle(
       color: theme.colorScheme.onSurface.withAlpha(240),
     );
+    final errorModStyle = TextStyle(color: modColor);
 
     return Text.rich(
       softWrap: logLine.shouldWrap,
@@ -157,9 +206,10 @@ class GeneralErrorLogLineWidget extends StatelessWidget {
             highlightQuery,
             hl,
           ),
-          ..._highlightSpans(
+          ..._spansWithModNames(
             logLine.error?.prepend(" "),
             errorStyle,
+            errorModStyle,
             highlightQuery,
             hl,
           ),
@@ -228,25 +278,25 @@ class StacktraceLogLineWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final obfColor = theme.colorScheme.onSurface.withAlpha(200);
-    final isObf = logLine.classAndLine == "Unknown Source";
-    final importantColor = theme.colorScheme.tertiary;
+    final gameColor = theme.colorScheme.onSurface.withAlpha(200);
+    final isMod = isModClassName(logLine.namespace);
+    final modColor = theme.colorScheme.tertiary;
     final hl = theme.colorScheme.primary.withAlpha(80);
 
     final atStyle = TextStyle(color: theme.hintColor);
     final namespaceStyle = TextStyle(
-      color: isObf ? obfColor : importantColor.withAlpha(180),
+      color: isMod ? modColor.withAlpha(180) : gameColor,
     );
     final methodStyle = TextStyle(
-      color: isObf ? obfColor : importantColor.withAlpha(240),
+      color: isMod ? modColor.withAlpha(240) : gameColor,
     );
     final classStyle = TextStyle(
-      color: isObf ? obfColor : importantColor.withAlpha(240),
+      color: isMod ? modColor.withAlpha(240) : gameColor,
     );
 
     return Text.rich(
       softWrap: logLine.shouldWrap,
-      style: TextStyle(color: isObf ? obfColor : importantColor.withAlpha(240)),
+      style: TextStyle(color: isMod ? modColor.withAlpha(240) : gameColor),
       TextSpan(
         children: [
           const TextSpan(text: "    "),
@@ -316,14 +366,16 @@ class UnknownLogLineWidget extends StatelessWidget {
     final baseStyle = TextStyle(
       color: theme.colorScheme.onSurface.withAlpha(180),
     );
+    final modStyle = TextStyle(color: theme.colorScheme.tertiary);
     final hl = theme.colorScheme.primary.withAlpha(80);
 
     return Text.rich(
       softWrap: logLine.shouldWrap,
       TextSpan(
-        children: _highlightSpans(
+        children: _spansWithModNames(
           logLine.fullError,
           baseStyle,
+          modStyle,
           highlightQuery,
           hl,
         ),

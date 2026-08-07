@@ -22,6 +22,7 @@
   - Added Lavender and BiOS themes.
   - Ship Viewer may now group ships by hull size, tech/manufacturer, or designation.
 - Fixed
+  - Table columns may now be as wide as the window itself.
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.
   - Ships/weapons/etc with stats should now reflect any mods' changes to those stats.
   - Deep links now correctly check for already-installed mods on app cold starts.

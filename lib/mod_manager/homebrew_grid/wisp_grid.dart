@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -655,76 +657,90 @@ class _WispGridState<T extends WispGridItem>
             .sum +
         (visibleColumnsForWidth.length + 4) * WispGrid.gridRowSpacing;
 
-    // Start with the content area
-    Widget content = _buildVerticalScrollView(displayedMods, totalRowWidth);
+    // If the columns don't fill the window, stretch the grid to the window
+    // anyway. The header's last area is empty filler; giving it the leftover
+    // space is what lets the user drag a column wider. Sized to the columns
+    // alone, the filler is always zero wide, so dragging can only move width
+    // from one column to another and the table can never grow.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gridWidth = constraints.maxWidth.isFinite
+            ? max(totalRowWidth, constraints.maxWidth)
+            : totalRowWidth;
 
-    // Apply scrollbars based on configuration
-    if (widget.scrollbarConfig.showLeftScrollbar != ScrollbarVisibility.never) {
-      content = Scrollbar(
-        controller: _gridScrollControllerVertical,
-        scrollbarOrientation: ScrollbarOrientation.left,
-        thumbVisibility:
-            widget.scrollbarConfig.showLeftScrollbar ==
-            ScrollbarVisibility.always,
-        child: content,
-      );
-    }
+        // Start with the content area
+        Widget content = _buildVerticalScrollView(displayedMods, gridWidth);
 
-    // Apply horizontal scrollbar if needed
-    if (widget.scrollbarConfig.showBottomScrollbar !=
-        ScrollbarVisibility.never) {
-      content = Scrollbar(
-        controller: _gridScrollControllerHorizontal,
-        scrollbarOrientation: ScrollbarOrientation.bottom,
-        thumbVisibility:
-            widget.scrollbarConfig.showBottomScrollbar ==
-            ScrollbarVisibility.always,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          controller: _gridScrollControllerHorizontal,
-          child: SizedBox(
-            width: totalRowWidth,
+        // Apply scrollbars based on configuration
+        if (widget.scrollbarConfig.showLeftScrollbar !=
+            ScrollbarVisibility.never) {
+          content = Scrollbar(
+            controller: _gridScrollControllerVertical,
+            scrollbarOrientation: ScrollbarOrientation.left,
+            thumbVisibility:
+                widget.scrollbarConfig.showLeftScrollbar ==
+                ScrollbarVisibility.always,
             child: content,
-          ),
-        ),
-      );
-    } else {
-      // Even without scrollbar, we still need the horizontal scroll view
-      content = SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        controller: _gridScrollControllerHorizontal,
-        child: SizedBox(
-          width: totalRowWidth,
-          child: content,
-        ),
-      );
-    }
+          );
+        }
 
-    // Apply RIGHT scrollbar OUTSIDE horizontal scroll so it stays
-    // pinned to the visible viewport edge, not the content edge.
-    if (widget.scrollbarConfig.showRightScrollbar !=
-        ScrollbarVisibility.never) {
-      content = Scrollbar(
-        controller: _gridScrollControllerVertical,
-        scrollbarOrientation: ScrollbarOrientation.right,
-        thumbVisibility:
-            widget.scrollbarConfig.showRightScrollbar ==
-            ScrollbarVisibility.always,
-        // Allow vertical scroll notifications through regardless of depth,
-        // since the horizontal SingleChildScrollView sits between this
-        // Scrollbar and the vertical CustomScrollView.
-        notificationPredicate: (notification) =>
-            notification.metrics.axis == Axis.vertical,
-        child: content,
-      );
-    }
+        // Apply horizontal scrollbar if needed
+        if (widget.scrollbarConfig.showBottomScrollbar !=
+            ScrollbarVisibility.never) {
+          content = Scrollbar(
+            controller: _gridScrollControllerHorizontal,
+            scrollbarOrientation: ScrollbarOrientation.bottom,
+            thumbVisibility:
+                widget.scrollbarConfig.showBottomScrollbar ==
+                ScrollbarVisibility.always,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              controller: _gridScrollControllerHorizontal,
+              child: SizedBox(
+                width: gridWidth,
+                child: content,
+              ),
+            ),
+          );
+        } else {
+          // Even without scrollbar, we still need the horizontal scroll view
+          content = SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            controller: _gridScrollControllerHorizontal,
+            child: SizedBox(
+              width: gridWidth,
+              child: content,
+            ),
+          );
+        }
 
-    return content;
+        // Apply RIGHT scrollbar OUTSIDE horizontal scroll so it stays
+        // pinned to the visible viewport edge, not the content edge.
+        if (widget.scrollbarConfig.showRightScrollbar !=
+            ScrollbarVisibility.never) {
+          content = Scrollbar(
+            controller: _gridScrollControllerVertical,
+            scrollbarOrientation: ScrollbarOrientation.right,
+            thumbVisibility:
+                widget.scrollbarConfig.showRightScrollbar ==
+                ScrollbarVisibility.always,
+            // Allow vertical scroll notifications through regardless of depth,
+            // since the horizontal SingleChildScrollView sits between this
+            // Scrollbar and the vertical CustomScrollView.
+            notificationPredicate: (notification) =>
+                notification.metrics.axis == Axis.vertical,
+            child: content,
+          );
+        }
+
+        return content;
+      },
+    );
   }
 
   Widget _buildVerticalScrollView(
     List<Widget> displayedMods,
-    double totalRowWidth,
+    double gridWidth,
   ) {
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -742,7 +758,7 @@ class _WispGridState<T extends WispGridItem>
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 0),
-                    child: SizedBox(width: totalRowWidth, child: item),
+                    child: SizedBox(width: gridWidth, child: item),
                   ),
                   const Spacer(),
                 ],

@@ -55,6 +55,15 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
   WispGridController<Ship>? _gridController;
   Widget? _cachedBuild;
 
+  /// The rows in the order shown on screen, for Previous/Next paging in the
+  /// details dialog. De-duplicated by id in case a grouping ever lists an item
+  /// twice. Falls back to [fallback] before the grid has reported in.
+  List<Ship> _shipsInDisplayedOrder(List<Ship> fallback) {
+    final displayed = _gridController?.lastDisplayedItemsReadonly ?? fallback;
+    final seen = <String>{};
+    return displayed.where((ship) => seen.add(ship.id)).toList();
+  }
+
   @override
   List<Area> get areas {
     final controllerState = ref.read(shipsPageControllerProvider);
@@ -306,9 +315,14 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             );
           });
         },
-        onLoaded: (controller) {
-          _gridController = controller;
-        },
+        // Only keep the top grid's controller. The bottom grid is disposed
+        // when the split pane turns off, and a controller pointing at a
+        // disposed grid hands out a stale row order.
+        onLoaded: isTop
+            ? (controller) {
+                _gridController = controller;
+              }
+            : null,
         columns: columns,
         items: items,
         itemExtent: 48,
@@ -321,7 +335,12 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             SizedBox(
               height: 48,
               child: InkWell(
-                onTap: () => showShipDetailsDialog(context, ref, item),
+                onTap: () => showShipDetailsDialog(
+                  context,
+                  ref,
+                  item,
+                  siblings: _shipsInDisplayedOrder(items),
+                ),
                 // The highlight fills the whole row; the top padding goes
                 // inside so it doesn't leave an unhighlighted strip.
                 child: Container(

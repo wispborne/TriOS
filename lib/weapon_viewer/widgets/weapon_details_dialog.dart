@@ -4,14 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
+import 'package:trios/widgets/dialog_pager.dart';
 import 'package:trios/widgets/merge_mod_sources_view.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 
 /// Shows the full weapon details dialog — the same dialog opened by clicking a
 /// row in the Weapons viewer. Extracted here so the Codex can open it too.
-void showWeaponDetailsDialog(BuildContext context, Weapon w) {
-  final theme = Theme.of(context);
+///
+/// Pass [siblings] (the weapons in display order) to get Previous/Next paging
+/// in the dialog. With no list, the dialog shows just [w] with no paging.
+void showWeaponDetailsDialog(
+  BuildContext context,
+  Weapon w, {
+  List<Weapon>? siblings,
+}) {
+  final items = (siblings != null && siblings.any((other) => other.id == w.id))
+      ? siblings
+      : [w];
+  final startIndex = items.indexWhere((other) => other.id == w.id);
 
   showDialog(
     context: context,
@@ -19,67 +30,92 @@ void showWeaponDetailsDialog(BuildContext context, Weapon w) {
       return Dialog(
         clipBehavior: Clip.antiAlias,
         insetPadding: const EdgeInsets.all(16),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildInfoPane(w, theme, ctx),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Wrap(
-                        spacing: 4,
-                        children: [
-                          if (w.wpnFile != null)
-                            IconButton(
-                              tooltip: 'Open .wpn file',
-                              icon: const Icon(Icons.edit_note),
-                              onPressed: () =>
-                                  w.wpnFile!.absolute.showInExplorer(),
-                            ),
-                          IconButton(
-                            tooltip: 'Open weapon_data.csv',
-                            icon: const Icon(Icons.edit_note),
-                            onPressed: () =>
-                                w.csvFile?.absolute.showInExplorer(),
-                          ),
-                          if (w.allSpriteFiles.isNotEmpty)
-                            IconButton(
-                              tooltip: 'Open weapon data folder(s)',
-                              icon: const Icon(Icons.folder),
-                              onPressed: () {
-                                w.csvFile?.parent.path.openAsUriInBrowser();
-                                final wpnParent = w.wpnFile?.parent;
-                                if (wpnParent != null &&
-                                    wpnParent.path != w.csvFile?.parent.path) {
-                                  wpnParent.path.openAsUriInBrowser();
-                                }
-                              },
-                            ),
-                        ],
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                ],
+        child: DialogPager<Weapon>(
+          items: items,
+          startIndex: startIndex,
+          itemBuilder: (ctx, weapon, pagerControls) =>
+              buildWeaponDetailsDialogBody(
+                ctx,
+                weapon,
+                pagerControls: pagerControls,
               ),
-            ),
-          ),
         ),
       );
     },
   );
 }
 
-Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
+/// The weapon dialog's contents for one weapon. [pagerControls] is the
+/// Previous/Next button pair from [DialogPager]; it sits in the top-right
+/// corner, left of the Close icon.
+Widget buildWeaponDetailsDialogBody(
+  BuildContext context,
+  Weapon w, {
+  Widget pagerControls = const SizedBox.shrink(),
+}) {
+  final theme = Theme.of(context);
+
+  return ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 600),
+    child: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildInfoPane(w, theme, context, pagerControls),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Wrap(
+                  spacing: 4,
+                  children: [
+                    if (w.wpnFile != null)
+                      IconButton(
+                        tooltip: 'Open .wpn file',
+                        icon: const Icon(Icons.edit_note),
+                        onPressed: () => w.wpnFile!.absolute.showInExplorer(),
+                      ),
+                    IconButton(
+                      tooltip: 'Open weapon_data.csv',
+                      icon: const Icon(Icons.edit_note),
+                      onPressed: () => w.csvFile?.absolute.showInExplorer(),
+                    ),
+                    if (w.allSpriteFiles.isNotEmpty)
+                      IconButton(
+                        tooltip: 'Open weapon data folder(s)',
+                        icon: const Icon(Icons.folder),
+                        onPressed: () {
+                          w.csvFile?.parent.path.openAsUriInBrowser();
+                          final wpnParent = w.wpnFile?.parent;
+                          if (wpnParent != null &&
+                              wpnParent.path != w.csvFile?.parent.path) {
+                            wpnParent.path.openAsUriInBrowser();
+                          }
+                        },
+                      ),
+                  ],
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Column _buildInfoPane(
+  Weapon w,
+  ThemeData theme,
+  BuildContext context,
+  Widget pagerControls,
+) {
   final imagePaths = w.allSpriteFiles;
 
   Widget section(String title) => Padding(
@@ -113,6 +149,7 @@ Column _buildInfoPane(Weapon w, ThemeData theme, BuildContext context) {
               ],
             ),
           ),
+          pagerControls,
           IconButton(
             tooltip: 'Close',
             icon: const Icon(Icons.close),

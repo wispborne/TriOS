@@ -5,12 +5,24 @@ import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/dialog_pager.dart';
 import 'package:trios/widgets/merge_mod_sources_view.dart';
 
 /// Shows the full ship details dialog — the same dialog opened by clicking a
 /// row in the Ships viewer. Extracted here so the Codex can open it too.
-void showShipDetailsDialog(BuildContext context, WidgetRef ref, Ship s) {
-  final theme = Theme.of(context);
+///
+/// Pass [siblings] (the ships in display order) to get Previous/Next paging
+/// in the dialog. With no list, the dialog shows just [s] with no paging.
+void showShipDetailsDialog(
+  BuildContext context,
+  WidgetRef ref,
+  Ship s, {
+  List<Ship>? siblings,
+}) {
+  final items = (siblings != null && siblings.any((other) => other.id == s.id))
+      ? siblings
+      : [s];
+  final startIndex = items.indexWhere((other) => other.id == s.id);
 
   showDialog(
     context: context,
@@ -18,66 +30,87 @@ void showShipDetailsDialog(BuildContext context, WidgetRef ref, Ship s) {
       return Dialog(
         clipBehavior: Clip.antiAlias,
         insetPadding: const EdgeInsets.all(32),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1050),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildShipInfoPane(
-                    ctx,
-                    s,
-                    theme,
-                    ref.read(shipsPageControllerProvider),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Wrap(
-                        spacing: 4,
-                        children: [
-                          if (s.dataFile != null)
-                            IconButton(
-                              tooltip:
-                                  'Open ${s.isSkin ? '.skin' : '.ship'} file',
-                              icon: const Icon(Icons.edit_note),
-                              onPressed: () =>
-                                  s.dataFile!.absolute.showInExplorer(),
-                            ),
-                          IconButton(
-                            tooltip: 'Open ship_data.csv',
-                            icon: const Icon(Icons.edit_note),
-                            onPressed: () =>
-                                s.csvFile?.absolute.showInExplorer(),
-                          ),
-                          if (s.spriteFile != null)
-                            IconButton(
-                              tooltip: 'Open Folder',
-                              icon: const Icon(Icons.folder),
-                              onPressed: () => s.spriteFile!
-                                  .toFile()
-                                  .parent
-                                  .path
-                                  .openAsUriInBrowser(),
-                            ),
-                        ],
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+        child: DialogPager<Ship>(
+          items: items,
+          startIndex: startIndex,
+          itemBuilder: (ctx, ship, pagerControls) => buildShipDetailsDialogBody(
+            ctx,
+            ref,
+            ship,
+            pagerControls: pagerControls,
           ),
         ),
       );
     },
+  );
+}
+
+/// The ship dialog's contents for one ship. [pagerControls] is the
+/// Previous/Next button pair from [DialogPager]; it sits in the top-right
+/// corner, left of the Close icon.
+Widget buildShipDetailsDialogBody(
+  BuildContext context,
+  WidgetRef ref,
+  Ship s, {
+  Widget pagerControls = const SizedBox.shrink(),
+}) {
+  final theme = Theme.of(context);
+
+  return ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 1050),
+    child: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildShipInfoPane(
+              context,
+              s,
+              theme,
+              ref.read(shipsPageControllerProvider),
+              pagerControls,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Wrap(
+                  spacing: 4,
+                  children: [
+                    if (s.dataFile != null)
+                      IconButton(
+                        tooltip: 'Open ${s.isSkin ? '.skin' : '.ship'} file',
+                        icon: const Icon(Icons.edit_note),
+                        onPressed: () => s.dataFile!.absolute.showInExplorer(),
+                      ),
+                    IconButton(
+                      tooltip: 'Open ship_data.csv',
+                      icon: const Icon(Icons.edit_note),
+                      onPressed: () => s.csvFile?.absolute.showInExplorer(),
+                    ),
+                    if (s.spriteFile != null)
+                      IconButton(
+                        tooltip: 'Open Folder',
+                        icon: const Icon(Icons.folder),
+                        onPressed: () => s.spriteFile!
+                            .toFile()
+                            .parent
+                            .path
+                            .openAsUriInBrowser(),
+                      ),
+                  ],
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
   );
 }
 
@@ -86,6 +119,7 @@ Widget _buildShipInfoPane(
   Ship s,
   ThemeData theme,
   ShipsPageState controllerState,
+  Widget pagerControls,
 ) {
   Widget section(String title) => Padding(
     padding: const EdgeInsets.only(top: 12, bottom: 4),
@@ -158,6 +192,7 @@ Widget _buildShipInfoPane(
               ],
             ),
           ),
+          pagerControls,
           IconButton(
             tooltip: 'Close',
             icon: const Icon(Icons.close),

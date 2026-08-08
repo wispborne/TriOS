@@ -25,6 +25,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_details_dialog.dart';
+import 'package:trios/widgets/dialog_pager.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 /// The middle panel: renders the reused per-type card for the selected entry.
@@ -190,12 +191,10 @@ class CodexDetailPanel extends ConsumerWidget {
     CodexEntry entry,
   ) {
     switch (entry) {
-      case ShipCodexEntry(:final ship):
-        return () => showShipDetailsDialog(context, ref, ship);
-      case WeaponCodexEntry(:final weapon):
-        return () => showWeaponDetailsDialog(context, weapon);
-      case HullmodCodexEntry(:final hullmod):
-        return () => showHullmodDetailsDialog(context, hullmod);
+      case ShipCodexEntry():
+      case WeaponCodexEntry():
+      case HullmodCodexEntry():
+        return () => _showPagedDetailsDialog(context, ref, entry);
       case FactionCodexEntry(:final faction):
         final gameCoreDir = ref.read(AppState.gameCoreFolder).value;
         final onlyEnabledMods = ref.read(appSettings).codexEnabledModsOnly;
@@ -211,6 +210,62 @@ class CodexDetailPanel extends ConsumerWidget {
       case ShipSystemCodexEntry():
         return null;
     }
+  }
+
+  /// Opens one details dialog that can page through the Codex's visible list
+  /// with Previous/Next and the arrow keys, crossing between ships, weapons
+  /// and hullmods. Entry types with no dialog of their own (wings, ship
+  /// systems, factions) are left out of the list, so paging skips them. The
+  /// list is captured here, when the dialog opens, so it doesn't shift under
+  /// the user if the index refreshes.
+  void _showPagedDetailsDialog(
+    BuildContext context,
+    WidgetRef ref,
+    CodexEntry entry,
+  ) {
+    final pageable = ref
+        .read(codexVisibleIndexProvider)
+        .where(
+          (e) =>
+              e is ShipCodexEntry ||
+              e is WeaponCodexEntry ||
+              e is HullmodCodexEntry,
+        )
+        .toList();
+    final startIndex = pageable.indexWhere((e) => e.key == entry.key);
+    final items = startIndex >= 0 ? pageable : [entry];
+
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        insetPadding: const EdgeInsets.all(16),
+        child: DialogPager<CodexEntry>(
+          items: items,
+          startIndex: startIndex < 0 ? 0 : startIndex,
+          itemBuilder: (ctx, item, pagerControls) => switch (item) {
+            ShipCodexEntry(:final ship) => buildShipDetailsDialogBody(
+              ctx,
+              ref,
+              ship,
+              pagerControls: pagerControls,
+            ),
+            WeaponCodexEntry(:final weapon) => buildWeaponDetailsDialogBody(
+              ctx,
+              weapon,
+              pagerControls: pagerControls,
+            ),
+            HullmodCodexEntry(:final hullmod) => buildHullmodDetailsDialogBody(
+              ctx,
+              hullmod,
+              pagerControls: pagerControls,
+            ),
+            // The pageable list only holds the three types above.
+            _ => const SizedBox.shrink(),
+          },
+        ),
+      ),
+    );
   }
 
   /// A small "mod source" badge shown in the header when the entry comes from a

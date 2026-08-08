@@ -54,6 +54,15 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
   WispGridController<Hullmod>? _gridController;
   Widget? _cachedBuild;
 
+  /// The rows in the order shown on screen, for Previous/Next paging in the
+  /// details dialog. De-duplicated by id in case a grouping ever lists an item
+  /// twice. Falls back to [fallback] before the grid has reported in.
+  List<Hullmod> _hullmodsInDisplayedOrder(List<Hullmod> fallback) {
+    final displayed = _gridController?.lastDisplayedItemsReadonly ?? fallback;
+    final seen = <String>{};
+    return displayed.where((hullmod) => seen.add(hullmod.id)).toList();
+  }
+
   @override
   List<Area> get areas {
     final controllerState = ref.read(hullmodsPageControllerProvider);
@@ -248,6 +257,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
         activeFilterCount: controller.activeFilterCount,
         showClearAll: controller.filterGroups.any((g) => g.isActive),
         onClearAll: controller.clearAllFilters,
+        showSearch: true,
         filterWidgets: [
           for (final g in controller.filterGroups)
             FilterGroupRenderer<Hullmod>(
@@ -283,9 +293,14 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             );
           });
         },
-        onLoaded: (controller) {
-          _gridController = controller;
-        },
+        // Only keep the top grid's controller. The bottom grid is disposed
+        // when the split pane turns off, and a controller pointing at a
+        // disposed grid hands out a stale row order.
+        onLoaded: isTop
+            ? (controller) {
+                _gridController = controller;
+              }
+            : null,
         columns: columns,
         items: items,
         itemExtent: 40,
@@ -298,7 +313,11 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
             SizedBox(
               height: 40,
               child: InkWell(
-                onTap: () => showHullmodDetailsDialog(context, item),
+                onTap: () => showHullmodDetailsDialog(
+                  context,
+                  item,
+                  siblings: _hullmodsInDisplayedOrder(items),
+                ),
                 child: Container(
                   color: Colors.transparent,
                   child: _buildRowContextMenu(item, child),

@@ -21,6 +21,11 @@
   - May now search by built-in hullmod.
   - Added Lavender and BiOS themes.
   - Ship Viewer may now group ships by hull size, tech/manufacturer, or designation.
+  - Ship Viewer now shows custom shield textures, with a huge caveat.
+    - Shield textures are only set via code, so TriOS cannot detect them automatically.
+    - Mods must include a `data/config/trios.json` for the shield textures to show up in TriOS.
+    - 16 mods have support out of the box (since I already happened to have them installed and could search).
+  - Ship, weapon, and hullmod viewers now have Previous/Next buttons. Arrow keys work too.
 - Fixed
   - Table columns may now be as wide as the window itself.
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.
@@ -54,6 +59,7 @@
     - But it's also a large change, so please report any bugs I may not have found!
   - Tweaked button colors on the Mods page so enabled mod buttons are less bright and don't look as bad with themes.
     - You can revert this via an option in the menu on the Mods page.
+  - Improved log parser highlighting logic.
 
 # 1.6.1
 - Added

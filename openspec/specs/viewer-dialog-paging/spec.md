@@ -10,7 +10,7 @@ after the current one without closing.
 ### The controls
 
 - Each of the three dialogs shows a **Previous** and a **Next** control in its
-  bottom button row, to the left of **Close**.
+  top-right corner, to the left of the **Close** icon.
 - They are icon buttons (left and right chevrons) with tooltips reading
   "Previous (Left arrow)" and "Next (Right arrow)".
 - **Previous** is disabled on the first item in the list. **Next** is disabled
@@ -22,6 +22,7 @@ after the current one without closing.
 
 - Left arrow and Up arrow do the same as Previous.
 - Right arrow and Down arrow do the same as Next.
+- Holding an arrow key down keeps stepping (key repeat works).
 - At the ends of the list the key does nothing.
 - Arrow keys are ignored while a text field or a piece of selected text inside
   the dialog has keyboard focus, so text selection still works normally.
@@ -31,6 +32,8 @@ after the current one without closing.
 - Opened from a viewer grid: the order is the order shown on screen — the
   grid's current sort direction, grouping and filters. It is captured when the
   dialog opens and does not change while the dialog is open.
+- Items inside a collapsed group are still part of the order: paging steps
+  through entries whose rows are hidden under a collapsed group header.
 - Opened from the Codex: the order is the Codex's current list of visible
   entries. Paging can move between kinds, so Next on the last ship goes to the
   first weapon if that's what the Codex list shows.

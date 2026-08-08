@@ -54,6 +54,15 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
   WispGridController<Weapon>? _gridController;
   Widget? _cachedBuild;
 
+  /// The rows in the order shown on screen, for Previous/Next paging in the
+  /// details dialog. De-duplicated by id in case a grouping ever lists an item
+  /// twice. Falls back to [fallback] before the grid has reported in.
+  List<Weapon> _weaponsInDisplayedOrder(List<Weapon> fallback) {
+    final displayed = _gridController?.lastDisplayedItemsReadonly ?? fallback;
+    final seen = <String>{};
+    return displayed.where((weapon) => seen.add(weapon.id)).toList();
+  }
+
   @override
   List<Area> get areas {
     final controllerState = ref.read(weaponsPageControllerProvider);
@@ -316,9 +325,14 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             );
           });
         },
-        onLoaded: (controller) {
-          _gridController = controller;
-        },
+        // Only keep the top grid's controller. The bottom grid is disposed
+        // when the split pane turns off, and a controller pointing at a
+        // disposed grid hands out a stale row order.
+        onLoaded: isTop
+            ? (controller) {
+                _gridController = controller;
+              }
+            : null,
         columns: columns,
         items: items,
         itemExtent: 40,
@@ -331,7 +345,11 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             SizedBox(
               height: 40,
               child: InkWell(
-                onTap: () => showWeaponDetailsDialog(context, item),
+                onTap: () => showWeaponDetailsDialog(
+                  context,
+                  item,
+                  siblings: _weaponsInDisplayedOrder(items),
+                ),
                 child: Container(
                   // Needed to add hit detection for right-clicking.
                   color: Colors.transparent,

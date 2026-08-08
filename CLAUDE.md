@@ -223,6 +223,7 @@ See [Shared viewer widgets](#shared-viewer-widgets) and [WispGrid](#wispgrid) un
 
 ### Dialogs & Functions
 
+- `DialogPager<T>` (`lib/widgets/dialog_pager.dart`) — Previous/Next paging inside a details dialog. Holds the position in a list, steps on arrow keys, and hands the button pair to the dialog's body builder. Used by the ship/weapon/hullmod details dialogs and the Codex.
 - `showExportOrCopyDialog()` (`lib/widgets/export_to_csv_dialog.dart`) — Dialog for exporting data as CSV or copying to clipboard.
 - `DragDropInstallModOverlay` (`lib/widgets/file_card.dart`) — Drag-drop overlay for mod installation.
 - `TriOSChangelogViewer` (`lib/widgets/changelog_viewer.dart`) — Formatted changelog display.

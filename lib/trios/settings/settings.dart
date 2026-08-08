@@ -126,6 +126,7 @@ class Settings with SettingsMappable {
   final bool pinFavorites;
   final bool dashboardModListColorful;
   final bool modsGridColorful;
+  final bool modsGridHighContrastEnableButton;
   final bool modsGridUpdatesShowDisabledMods;
   final bool modsGridShowModInAllCategories;
 
@@ -303,6 +304,7 @@ class Settings with SettingsMappable {
     this.pinFavorites = true,
     this.dashboardModListColorful = false,
     this.modsGridColorful = false,
+    this.modsGridHighContrastEnableButton = false,
     this.modsGridUpdatesShowDisabledMods = true,
     this.modsGridShowModInAllCategories = false,
     this.shouldAutoUpdateOnLaunch = false,

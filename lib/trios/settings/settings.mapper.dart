@@ -782,6 +782,15 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool _$modsGridHighContrastEnableButton(Settings v) =>
+      v.modsGridHighContrastEnableButton;
+  static const Field<Settings, bool> _f$modsGridHighContrastEnableButton =
+      Field(
+        'modsGridHighContrastEnableButton',
+        _$modsGridHighContrastEnableButton,
+        opt: true,
+        def: false,
+      );
   static bool _$modsGridUpdatesShowDisabledMods(Settings v) =>
       v.modsGridUpdatesShowDisabledMods;
   static const Field<Settings, bool> _f$modsGridUpdatesShowDisabledMods = Field(
@@ -1257,6 +1266,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #pinFavorites: _f$pinFavorites,
     #dashboardModListColorful: _f$dashboardModListColorful,
     #modsGridColorful: _f$modsGridColorful,
+    #modsGridHighContrastEnableButton: _f$modsGridHighContrastEnableButton,
     #modsGridUpdatesShowDisabledMods: _f$modsGridUpdatesShowDisabledMods,
     #modsGridShowModInAllCategories: _f$modsGridShowModInAllCategories,
     #shouldAutoUpdateOnLaunch: _f$shouldAutoUpdateOnLaunch,
@@ -1369,6 +1379,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       pinFavorites: data.dec(_f$pinFavorites),
       dashboardModListColorful: data.dec(_f$dashboardModListColorful),
       modsGridColorful: data.dec(_f$modsGridColorful),
+      modsGridHighContrastEnableButton: data.dec(
+        _f$modsGridHighContrastEnableButton,
+      ),
       modsGridUpdatesShowDisabledMods: data.dec(
         _f$modsGridUpdatesShowDisabledMods,
       ),
@@ -1637,6 +1650,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? pinFavorites,
     bool? dashboardModListColorful,
     bool? modsGridColorful,
+    bool? modsGridHighContrastEnableButton,
     bool? modsGridUpdatesShowDisabledMods,
     bool? modsGridShowModInAllCategories,
     bool? shouldAutoUpdateOnLaunch,
@@ -1938,6 +1952,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? pinFavorites,
     bool? dashboardModListColorful,
     bool? modsGridColorful,
+    bool? modsGridHighContrastEnableButton,
     bool? modsGridUpdatesShowDisabledMods,
     bool? modsGridShowModInAllCategories,
     bool? shouldAutoUpdateOnLaunch,
@@ -2055,6 +2070,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (dashboardModListColorful != null)
         #dashboardModListColorful: dashboardModListColorful,
       if (modsGridColorful != null) #modsGridColorful: modsGridColorful,
+      if (modsGridHighContrastEnableButton != null)
+        #modsGridHighContrastEnableButton: modsGridHighContrastEnableButton,
       if (modsGridUpdatesShowDisabledMods != null)
         #modsGridUpdatesShowDisabledMods: modsGridUpdatesShowDisabledMods,
       if (modsGridShowModInAllCategories != null)
@@ -2266,6 +2283,10 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.dashboardModListColorful,
     ),
     modsGridColorful: data.get(#modsGridColorful, or: $value.modsGridColorful),
+    modsGridHighContrastEnableButton: data.get(
+      #modsGridHighContrastEnableButton,
+      or: $value.modsGridHighContrastEnableButton,
+    ),
     modsGridUpdatesShowDisabledMods: data.get(
       #modsGridUpdatesShowDisabledMods,
       or: $value.modsGridUpdatesShowDisabledMods,

@@ -1414,6 +1414,27 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               child: const Text("Colorful"),
             ),
           ),
+          PopupStyleMenuAnchor.checkboxItem(
+            value: ref.watch(
+              appSettings.select((s) => s.modsGridHighContrastEnableButton),
+            ),
+            onPressed: () {
+              final current = ref
+                  .read(appSettings)
+                  .modsGridHighContrastEnableButton;
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (s) =>
+                        s.copyWith(modsGridHighContrastEnableButton: !current),
+                  );
+            },
+            child: MovingTooltipWidget.text(
+              message:
+                  "It doesn't mean you're old.",
+              child: const Text("High Contrast Enable Button"),
+            ),
+          ),
           if (ref.watch(
             appSettings.select(
               (s) =>

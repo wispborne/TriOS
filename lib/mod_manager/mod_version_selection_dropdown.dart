@@ -8,6 +8,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
@@ -64,6 +65,9 @@ class _ModVersionSelectionDropdownState
     final useWarningUi =
         hasMultipleEnabled || hasMultipleSameVersionInModsFolder;
     final rainbowAccent = theme.rainbowAccent;
+    final useHighContrastEnableButton = ref.watch(
+      appSettings.select((s) => s.modsGridHighContrastEnableButton),
+    );
 
     // TODO consolidate this logic with the logic in smol2.
     final areAllDependenciesSatisfied = modDependenciesSatisfied?.every(
@@ -86,11 +90,21 @@ class _ModVersionSelectionDropdownState
       (false, true) =>
         rainbowAccent
             ? theme.colorScheme.surfaceContainerHigh
-            : theme.colorScheme.secondary.mix(theme.colorScheme.surfaceContainerLow, 0.90)!,
+            : useHighContrastEnableButton
+            ? theme.colorScheme.secondary
+            : theme.colorScheme.secondary.mix(
+                theme.colorScheme.surfaceContainerLow,
+                0.90,
+              )!,
       _ => theme.colorScheme.surfaceContainerLow,
     };
 
-    final textColor = switch ((useWarningUi, false)) {
+    // Only the high-contrast button fills with the accent color, so only it
+    // needs the matching text color.
+    final textColor = switch ((
+      useWarningUi,
+      isEnabled && useHighContrastEnableButton,
+    )) {
       (true, _) => theme.colorScheme.onSecondary.darker(20),
       (false, true) => theme.colorScheme.onSecondary,
       _ => theme.colorScheme.onSurface,
@@ -99,7 +113,9 @@ class _ModVersionSelectionDropdownState
     final borderColor = (isButtonEnabled && !isButtonPseudoDisabled)
         ? (useWarningUi
               ? TriOSThemeConstants.vanillaErrorColor.darker(20)
-              : theme.colorScheme.secondary.darker(isEnabled ? 1 : 30))
+              : theme.colorScheme.secondary.darker(
+                  useHighContrastEnableButton ? 20 : (isEnabled ? 1 : 30),
+                ))
         : TriOSThemeConstants.vanillaErrorColor.withOpacity(isEnabled ? 0.8 : 0.4);
 
     Color? getGameCompatibilityTextColor(ModVariant variant) {

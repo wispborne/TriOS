@@ -53,6 +53,7 @@
     - This should improve performance by not running any logic on pages that are not visible.
     - But it's also a large change, so please report any bugs I may not have found!
   - Tweaked button colors on the Mods page so enabled mod buttons are less bright and don't look as bad with themes.
+    - You can revert this via an option in the menu on the Mods page.
 
 # 1.6.1
 - Added

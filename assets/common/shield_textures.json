@@ -1,0 +1,103 @@
+{
+	# Shield textures that mods set from Java code, which TriOS can't read from
+	# their files. Same format as the `data/config/trios.json` a mod can ship;
+	# this list is just the lowest-priority source, so a mod's own file wins.
+	#
+	# Every entry below was read out of the mod's compiled code or source, and
+	# only covers textures applied unconditionally when a ship is created — the
+	# way the ship looks sitting still. Textures a mod swaps in mid-combat, and
+	# hullmods players install themselves, are left out on purpose.
+	#
+	# An entry costs nothing when its mod isn't installed: the texture path
+	# doesn't resolve and the entry is dropped.
+	"shields": {
+		"byHullmod": {
+			# Knights of Ludd
+			"kol_shields": {"textureInner": "graphics/kol/fx/kol_shield_fx.png"},
+			"zea_dawn_shield_style": {"textureInner": "graphics/zea/fx/zea_shield_dawn.png"},
+			"zea_dusk_shield_style": {"textureInner": "graphics/zea/fx/zea_shield_dusk.png"},
+			"zea_edf_shield_style": {"textureInner": "graphics/zea/fx/zea_shield_elysia.png"},
+
+			# Tahlan Shipworks
+			"tahlan_knightrefit": {"textureInner": "graphics/tahlan/fx/tahlan_tempshield.png"},
+			"tahlan_admechrefit": {"textureInner": "graphics/tahlan/fx/tahlan_tempshield.png"},
+			"tahlan_noname": {"textureInner": "graphics/tahlan/fx/tahlan_tempshield.png"},
+			"tahlan_outcast_engineering": {"textureInner": "graphics/tahlan/fx/tahlan_tempshield.png"},
+			"tahlan_heavyconduits": {"textureInner": "graphics/tahlan/fx/tahlan_pinshield.png"},
+			"tahlan_daemoncore": {"textureInner": "graphics/tahlan/fx/tahlan_shellshield.png"},
+			"tahlan_phaseharmonics": {"textureInner": "graphics/tahlan/fx/tahlan_nxashield.png"},
+			"tahlan_savethshield": {"textureInner": "graphics/tahlan/fx/tahlan_savshield.png"},
+
+			# ScalarTech Solutions
+			"tahlan_scalarspecs": {"textureInner": "graphics/tahlan/fx/tahlan_scalarshield.png"},
+
+			# Random Assortment of Things
+			"rat_genesis_hullmod": {"textureInner": "graphics/fx/rat_primordial_shields256.png"},
+			"rat_genesis_serpent_hullmod": {"textureInner": "graphics/fx/rat_primordial_shields256.png"},
+			"rat_genesis_construct_hullmod": {"textureInner": "graphics/fx/rat_primordial_shields256.png"},
+			"rat_exogrid": {"textureInner": "graphics/fx/rat_exo_shields256.png"},
+
+			# Bultach Coalition
+			"BT_shieldsChanger": {"textureInner": "graphics/fx/shields/bultach_256.png"},
+			"BT_shieldsChanger_Gestalt": {"textureInner": "graphics/fx/shields/bultach_gestalt_256.png"},
+
+			# Goathead Aviation Bureau
+			"goat_hullstyle": {"textureInner": "graphics/goat/fx/shield_inner.png"},
+			"goat_hullstyle_sax": {"textureInner": "graphics/goat/fx/shield_inner_sax.png"},
+			"goat_oscillating": {"textureInner": "graphics/goat/fx/shield_inner_s.png"},
+
+			# FSF Military Corporation
+			"aEP_SpecialHull": {"textureInner": "graphics/aEP_hullstyle/shield_inner.png"},
+
+			# Nightcross Armory
+			"na_rcs": {"textureInner": "graphics/fx/na_shields.png"},
+
+			# Lost Sector
+			"nskr_focused_shield": {"textureInner": "graphics/fx/nskr_protShield.png"},
+
+			# Seeker - Unidentified Contact
+			"SKR_shield": {"textureInner": "graphics/SEEKER/fx/SKR_derelictShield_in.png"},
+
+			# Appro-Light Council
+			"AL_elementmod": {"textureInner": "graphics/fx/AL_chain_shield.png"},
+		},
+		"byHull": {
+			# Knights of Ludd: ElysianShieldStyle uses a second texture on ships
+			# that also have zea_conformal_shield built in.
+			"zea_edf_kiyohime": {"textureInner": "graphics/zea/fx/zea_shield_elysia_2.png"},
+			"zea_edf_ryujin": {"textureInner": "graphics/zea/fx/zea_shield_elysia_2.png"},
+
+			# VIC: vic_dynamicshields picks one of three textures from the
+			# shield's radius (256 and 128 are its cutoffs), so these are listed
+			# per hull. Each comment is that hull's shieldRadius.
+			"vic_apollyon": {"textureInner": "graphics/fx/shield/vic_shields256.png"},        # 297
+			"vic_oriax": {"textureInner": "graphics/fx/shield/vic_shields256.png"},           # 270
+			"vic_raum": {"textureInner": "graphics/fx/shield/vic_shields256.png"},            # 291
+			"vic_cresil": {"textureInner": "graphics/fx/shield/vic_shields128.png"},          # 157.5
+			"vic_focalor_l": {"textureInner": "graphics/fx/shield/vic_shields128.png"},       # 164.5
+			"vic_focalor_m": {"textureInner": "graphics/fx/shield/vic_shields128.png"},       # 164.5
+			"vic_samael": {"textureInner": "graphics/fx/shield/vic_shields128.png"},          # 128
+			"vic_stolas": {"textureInner": "graphics/fx/shield/vic_shields128.png"},          # 198
+			"vic_stolas_bounty": {"textureInner": "graphics/fx/shield/vic_shields128.png"},   # 196
+			"vic_thamuz": {"textureInner": "graphics/fx/shield/vic_shields128.png"},          # 182
+			"vic_valafar": {"textureInner": "graphics/fx/shield/vic_shields128.png"},         # 143
+			"vic_jezebeth": {"textureInner": "graphics/fx/shield/vic_shields64.png"},         # 125.5
+			"vic_kobal": {"textureInner": "graphics/fx/shield/vic_shields64.png"},            # 78
+			"vic_moloch": {"textureInner": "graphics/fx/shield/vic_shields64.png"},           # 114
+			"vic_pruflas": {"textureInner": "graphics/fx/shield/vic_shields64.png"},          # 82
+			"vic_shabriri": {"textureInner": "graphics/fx/shield/vic_shields64.png"},         # 21.5
+			"vic_xaphan": {"textureInner": "graphics/fx/shield/vic_shields64.png"},           # 83.5
+
+			# Rumours of Neoteric Designs: highshield7s does the same thing.
+			"Quasar7s": {"textureInner": "graphics/fx/seven_shields128.png"},                 # 255.5
+			"Stella_Tempestas7s": {"textureInner": "graphics/fx/seven_shields128.png"},       # 246.5
+			"Strider7s": {"textureInner": "graphics/fx/seven_shields128.png"},                # 136
+			"Glider7s": {"textureInner": "graphics/fx/seven_shields128.png"},                 # 130.5
+			"sandshark7s": {"textureInner": "graphics/fx/seven_shields128.png"},              # 132
+			"tarantula7s": {"textureInner": "graphics/fx/seven_shields128.png"},              # 131
+			"elipsion7s": {"textureInner": "graphics/fx/seven_shields64.png"},                # 115
+			"Saltare7s": {"textureInner": "graphics/fx/seven_shields64.png"},                 # 61.5
+			"Vespa7s": {"textureInner": "graphics/fx/seven_shields64.png"},                   # 53
+		},
+	},
+}

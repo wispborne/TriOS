@@ -18,6 +18,7 @@ How the shield should look and behave. All rules below come from the decompiled 
 ## Inner fill
 
 - Texture picked by radius: `graphics/fx/shields256.png` at radius ≥ 128, `graphics/fx/shields128c.png` at ≥ 64, else `graphics/fx/shields64.png`. The texture is a soft rim glow with cloudy mottling, mapped as a full circle across the shield.
+- A hull can replace this texture with its own. Mods that set shield textures from Java code are listed in TriOS's own file and in any `data/config/trios.json` a mod ships; see the `mod-shield-texture-mapping` spec. A hull with no entry, and every vanilla hull, uses the radius-picked texture above.
 - Drawn twice with additive blending, the two copies counter-rotating. Color is the hull style's `shieldInnerColor`; its alpha (75 in vanilla) scales the whole fill.
 - Vertex alpha runs from 0 at the shield center to full at the edge, times the idle brightness factor 0.55.
 

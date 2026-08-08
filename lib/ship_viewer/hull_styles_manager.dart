@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/ship_viewer/utils/sprite_utils.dart';
@@ -8,6 +9,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/game_json_values.dart';
+import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
@@ -157,4 +159,189 @@ final shieldSpritesProvider = FutureProvider<ShieldSprites?>((ref) async {
     fill256: fill256,
     ring: ring,
   );
+});
+
+/// Every shield texture override from every mod, as file paths, before the
+/// images are loaded.
+///
+/// Only the fill texture is here. The game takes a ring texture too
+/// (`ShieldAPI.setRadius`), but never draws it — it always draws the ring with
+/// `graphics/hud/line8x8.png`, the same as TriOS does. So a ring texture in a
+/// mod's file would be a value nothing anywhere uses.
+class ShieldTextureOverridePaths {
+  /// Hullmod id → the fill texture ships with that built-in hullmod use.
+  final Map<String, String> byHullmod;
+
+  /// Hull id → the fill texture that hull uses, whatever its hullmods say.
+  final Map<String, String> byHull;
+
+  const ShieldTextureOverridePaths({
+    required this.byHullmod,
+    required this.byHull,
+  });
+
+  static const empty = ShieldTextureOverridePaths(byHullmod: {}, byHull: {});
+
+  bool get isEmpty => byHullmod.isEmpty && byHull.isEmpty;
+
+  /// The fill texture for one hull: its own entry if it has one, otherwise the
+  /// first of its built-in hullmods that has an entry. Null when neither
+  /// matches, which means the ship draws the vanilla shield.
+  ///
+  /// A hull entry wins because it is the more specific thing the mod said. Mods
+  /// use it for the exceptions to their own hullmod rule.
+  String? forShip(String hullId, List<String>? builtInMods) {
+    final hullEntry = byHull[hullId];
+    if (hullEntry != null) return hullEntry;
+    for (final hullmod in builtInMods ?? const <String>[]) {
+      final entry = byHullmod[hullmod];
+      if (entry != null) return entry;
+    }
+    return null;
+  }
+}
+
+/// Reads the `shields` section out of a merged `trios.json`.
+///
+/// Anything shaped wrong is skipped rather than thrown, so one bad entry in one
+/// mod can't stop the rest from loading.
+ShieldTextureOverridePaths parseShieldTextureOverrides(
+  Map<String, dynamic> merged,
+) {
+  final shields = merged['shields'];
+  if (shields is! Map) return ShieldTextureOverridePaths.empty;
+  return ShieldTextureOverridePaths(
+    byHullmod: _shieldOverrideMap(shields['byHullmod']),
+    byHull: _shieldOverrideMap(shields['byHull']),
+  );
+}
+
+Map<String, String> _shieldOverrideMap(dynamic value) {
+  if (value is! Map) return const {};
+  final result = <String, String>{};
+  for (final entry in value.entries) {
+    final id = entry.key;
+    final fields = entry.value;
+    if (id is! String || fields is! Map) continue;
+    final inner = fields['textureInner'];
+    // An entry that names no fill texture says nothing.
+    if (inner is! String || inner.isEmpty) continue;
+    result[id] = inner;
+  }
+  return result;
+}
+
+/// Shield texture overrides with their images already decoded, ready to draw.
+class ShieldTextureImages {
+  final ShieldTextureOverridePaths paths;
+
+  /// Decoded fill images, keyed by the path written in the mod's file.
+  final Map<String, ui.Image> fillsByPath;
+
+  const ShieldTextureImages({required this.paths, required this.fillsByPath});
+
+  static const empty = ShieldTextureImages(
+    paths: ShieldTextureOverridePaths.empty,
+    fillsByPath: {},
+  );
+
+  /// The fill image to draw for one hull, or null to draw the vanilla one.
+  ui.Image? fillFor(String hullId, List<String>? builtInMods) {
+    final path = paths.forShip(hullId, builtInMods);
+    if (path == null) return null;
+    return fillsByPath[path];
+  }
+}
+
+/// TriOS's own shield texture list, shipped with the app. Read as if it were a
+/// mod's file, and applied before any mod's, so a mod always wins.
+const _builtInShieldTexturesAsset = 'assets/common/shield_textures.json';
+
+/// The source name shown for TriOS's built-in list when merging.
+const _builtInShieldTexturesSource = MergeSource(
+  key: 'trios_built_in_shield_textures',
+  name: 'TriOS',
+);
+
+/// Shield textures mods assign from Java code.
+///
+/// Comes from two places: TriOS's own list of mods it already knows about, and
+/// a `data/config/trios.json` a mod can ship for itself. The mod's file wins,
+/// so a mod can correct or add to what TriOS ships. Writing an empty
+/// `textureInner` clears an entry, putting that ship back to the vanilla shield.
+///
+/// The game never reads `trios.json`. It exists because `ShieldAPI.setRadius`
+/// swaps shield textures at runtime and nothing else on disk records it.
+final shieldTextureOverridesProvider = FutureProvider<ShieldTextureImages>((
+  ref,
+) async {
+  final core = ref.watch(AppState.gameCoreFolder).value;
+  // Every mod, enabled or not — same as the other shield visuals.
+  final sources = ref.watch(orderedSourcesProvider(false));
+  final resolver = ref.watch(gameFileResolverProvider(false));
+
+  final jsonSources = <SourceJson>[];
+
+  // TriOS's list goes first so every mod's file is applied over it.
+  try {
+    jsonSources.add((
+      source: _builtInShieldTexturesSource,
+      json: (await rootBundle.loadString(
+        _builtInShieldTexturesAsset,
+      )).parseJsonToMap(),
+    ));
+  } catch (e, st) {
+    Fimber.w(
+      'Failed to read TriOS\'s built-in shield texture list: $e',
+      ex: e,
+      stacktrace: st,
+    );
+  }
+
+  for (final source in sources) {
+    final folder = source.isVanilla ? core : source.variant!.modFolder;
+    if (folder == null || folder.path.isEmpty) continue;
+
+    final file = p.join(folder.path, 'data', 'config', 'trios.json').toFile();
+    if (!await file.exists()) continue;
+    try {
+      jsonSources.add((
+        source: source,
+        json: (await file.readAsString()).parseJsonToMap(),
+      ));
+    } catch (e, st) {
+      Fimber.w(
+        'Failed to parse trios.json in ${folder.path}: $e',
+        ex: e,
+        stacktrace: st,
+      );
+    }
+  }
+  if (jsonSources.isEmpty) return ShieldTextureImages.empty;
+
+  final paths = parseShieldTextureOverrides(
+    mergeTriosModConfig(jsonSources).merged,
+  );
+  if (paths.isEmpty) return ShieldTextureImages.empty;
+
+  final issues = LogCollapser();
+  final wantedPaths = {...paths.byHullmod.values, ...paths.byHull.values};
+
+  final fillsByPath = <String, ui.Image>{};
+  for (final path in wantedPaths) {
+    final onDisk = resolver.resolve(path);
+    if (onDisk == null) {
+      issues.add('No file found for shield texture "$path".');
+      continue;
+    }
+    final image = await loadDecodedImage(onDisk);
+    if (image == null) {
+      issues.add('Could not read shield texture "$path".');
+      continue;
+    }
+    fillsByPath[path] = image;
+  }
+  issues.flush('Loading mod shield textures');
+
+  return ShieldTextureImages(paths: paths, fillsByPath: fillsByPath);
 });

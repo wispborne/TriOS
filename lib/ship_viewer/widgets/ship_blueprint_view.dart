@@ -254,6 +254,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// Shield data resolved from providers each build, read by the overlay.
   Map<String, ShieldStyleColors> _shieldColors = const {};
   ShieldSprites? _shieldSprites;
+  ShieldTextureImages _shieldTextures = ShieldTextureImages.empty;
 
   /// Whether the ship, or a shown module, has a shield to draw. Set on every
   /// build, since turning modules off can take the last shield off screen.
@@ -1091,7 +1092,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
             colors:
                 _shieldColors[ship.style?.toUpperCase()] ??
                 ShieldStyleColors.fallback,
-            fillImage: sprites.fillForRadius(radius),
+            // A mod can name its own shield texture for this hull in its
+            // trios.json; otherwise the game's own texture for this radius.
+            fillImage:
+                _shieldTextures.fillFor(ship.id, ship.builtInMods) ??
+                sprites.fillForRadius(radius),
             ringImage: sprites.ring,
             ringThickness: ringThickness,
             clock: _animateShields ? _shieldClockController : null,
@@ -1286,6 +1291,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       _shieldColors =
           ref.watch(hullStyleShieldColorsProvider).value ?? const {};
       _shieldSprites = ref.watch(shieldSpritesProvider).value;
+      _shieldTextures =
+          ref.watch(shieldTextureOverridesProvider).value ??
+          ShieldTextureImages.empty;
     }
 
     // Pause the engine flicker and the shield clock while TriOS is behind

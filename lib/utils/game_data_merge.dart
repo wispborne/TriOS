@@ -468,6 +468,16 @@ DeepMergeResult mergeHullStyles(List<SourceJson> sources) {
   return result;
 }
 
+/// Deep merges `data/config/trios.json` across sources.
+///
+/// This file is written by mod authors for TriOS. The game never reads it.
+DeepMergeResult mergeTriosModConfig(List<SourceJson> sources) {
+  final issues = LogCollapser();
+  final result = _deepMerge(sources, issues);
+  issues.flush('Merging TriOS mod config');
+  return result;
+}
+
 Map<String, DeepMergeResult> _mergeFilesByPath(
   List<SourceFiles> sources,
   LogCollapser issues,

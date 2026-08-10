@@ -31,7 +31,6 @@ import '../../models/version.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
 import '../../themes/theme_modifiers.dart';
-import '../../widgets/restartable_app.dart';
 import '../../widgets/trios_dropdown_menu.dart';
 import '../../widgets/trios_expansion_tile.dart';
 import '../app_state.dart';
@@ -1135,8 +1134,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       child: MovingTooltipWidget.text(
                         message:
                             "Enable screen reader use."
-                            "\nOff by default: uses extra RAM and causes freezes with text fields on some Linux distros."
-                            "\nYou may need to fully restart ${Constants.appName} to apply the change.",
+                            "\nOff by default: uses extra RAM and causes freezes with text fields on some Linux distros.",
                         child: CheckboxWithLabel(
                           value: ref.watch(
                             appSettings.select(
@@ -1152,7 +1150,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     enableAccessibilitySemantics: value,
                                   ),
                                 );
-                            RestartableApp.softRestartApp(context);
                           },
                           label:
                               "Enable screen reader support (accessibility)",

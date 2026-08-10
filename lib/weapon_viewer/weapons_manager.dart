@@ -169,6 +169,35 @@ const _weaponSpriteFields = [
   'hardpointGlowSprite',
 ];
 
+/// Packs one source's scanned raw data into the msgpack blob a
+/// [WeaponsCachePayload] carries in memory (and in its cache file).
+Uint8List encodeWeaponsRawData(WeaponsRawData raw) {
+  return msgpack.serialize(<String, dynamic>{
+    'rows': raw.rows,
+    'wpnFiles': raw.wpnFiles,
+    'missileSpecs': raw.missileSpecs,
+  });
+}
+
+/// Decodes [WeaponsCachePayload.rawDataBytes]. Called once per source per
+/// merge; don't keep the result.
+WeaponsRawData decodeWeaponsRawData(Uint8List bytes) {
+  final raw = CachedStreamListNotifier.normalizeForMapper(
+    msgpack.deserialize(bytes),
+  ) as Map<String, dynamic>;
+
+  Map<String, Map<String, dynamic>> filesFrom(String key) => {
+    for (final e in (raw[key] as Map? ?? const {}).entries)
+      e.key.toString(): (e.value as Map).cast<String, dynamic>(),
+  };
+
+  return WeaponsRawData(
+    rows: (raw['rows'] as List).cast<Map<String, dynamic>>(),
+    wpnFiles: filesFrom('wpnFiles'),
+    missileSpecs: filesFrom('missileSpecs'),
+  );
+}
+
 List<Weapon> _buildWeapons(
   List<WeaponsCachePayload> payloads,
   List<MergeSource> sources,
@@ -177,13 +206,20 @@ List<Weapon> _buildWeapons(
   if (payloads.isEmpty) return const [];
   final bySourceKey = {for (final payload in payloads) payload.sourceKey: payload};
 
+  // The heavy raw data stays msgpack-encoded on the payloads. Decode it for
+  // this merge only; it all becomes garbage when this function returns.
+  final rawBySourceKey = {
+    for (final payload in payloads)
+      payload.sourceKey: decodeWeaponsRawData(payload.rawDataBytes),
+  };
+
   // Projectiles from every source, in load order, so a launcher in one mod can
   // find the missile it fires even when another mod defines it.
   final missileSpecs = <String, Map<String, dynamic>>{};
   for (final source in sources) {
-    final payload = bySourceKey[source.key];
-    if (payload == null) continue;
-    for (final entry in payload.missileSpecs.entries) {
+    final raw = rawBySourceKey[source.key];
+    if (raw == null) continue;
+    for (final entry in raw.missileSpecs.entries) {
       missileSpecs.putIfAbsent(entry.key, () => entry.value);
     }
   }
@@ -191,13 +227,13 @@ List<Weapon> _buildWeapons(
   final specs = mergeWeapons(
     rows: [
       for (final source in sources)
-        if (bySourceKey[source.key] case final payload?)
-          (source: source, items: payload.rows),
+        if (rawBySourceKey[source.key] case final raw?)
+          (source: source, items: raw.rows),
     ],
     sideFiles: [
       for (final source in sources)
-        if (bySourceKey[source.key] case final payload?)
-          (source: source, filesByPath: payload.wpnFiles),
+        if (rawBySourceKey[source.key] case final raw?)
+          (source: source, filesByPath: raw.wpnFiles),
     ],
   );
 
@@ -293,8 +329,10 @@ class WeaponListNotifier
 
   /// 4: `.wpn` files are keyed by folder + file name and are read from
   /// `data/shipsystems/wpn` too, and the mount type moved off the `type` key.
+  /// 5: rows, `.wpn` files and missile specs are nested as one msgpack blob
+  /// (`rawData`) so they can stay encoded in memory between merges.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   late final CachedVariantStore store =
@@ -383,31 +421,21 @@ class WeaponListNotifier
   Uint8List encodePayload(WeaponsCachePayload payload) {
     return msgpack.serialize(<String, dynamic>{
       'sourceKey': payload.sourceKey,
-      'rows': payload.rows,
-      'wpnFiles': payload.wpnFiles,
       'csvFilePath': payload.csvFilePath,
-      'missileSpecs': payload.missileSpecs,
+      'rawData': payload.rawDataBytes,
     });
   }
 
   @override
   WeaponsCachePayload decodePayload(Uint8List bytes) {
-    final raw = CachedStreamListNotifier.normalizeForMapper(
-      msgpack.deserialize(bytes),
-    ) as Map<String, dynamic>;
+    // No normalizeForMapper over the envelope: a Uint8List is a List, so it
+    // would expand the raw-data blob into a per-byte list of ints.
+    final raw = msgpack.deserialize(bytes) as Map;
 
     return WeaponsCachePayload(
       sourceKey: raw['sourceKey'] as String,
-      rows: (raw['rows'] as List).cast<Map<String, dynamic>>(),
-      wpnFiles: {
-        for (final e in (raw['wpnFiles'] as Map).entries)
-          e.key.toString(): (e.value as Map).cast<String, dynamic>(),
-      },
       csvFilePath: raw['csvFilePath'] as String?,
-      missileSpecs: {
-        for (final e in (raw['missileSpecs'] as Map? ?? const {}).entries)
-          e.key.toString(): (e.value as Map).cast<String, dynamic>(),
-      },
+      rawDataBytes: raw['rawData'] as Uint8List,
     );
   }
 }
@@ -566,10 +594,14 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
   return _WeaponScanResult(
     WeaponsCachePayload(
       sourceKey: sourceKey,
-      rows: rows,
-      wpnFiles: wpnFiles,
       csvFilePath: await weaponsCsvFile.exists() ? weaponsCsvFile.path : null,
-      missileSpecs: missileSpecs,
+      rawDataBytes: encodeWeaponsRawData(
+        WeaponsRawData(
+          rows: rows,
+          wpnFiles: wpnFiles,
+          missileSpecs: missileSpecs,
+        ),
+      ),
     ),
     errors,
     infos,

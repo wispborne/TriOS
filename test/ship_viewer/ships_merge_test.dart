@@ -48,11 +48,11 @@ ShipsCachePayload _payload({
   Map<String, Map<String, dynamic>> skinFiles = const {},
 }) => ShipsCachePayload(
   sourceKey: sourceKey,
-  rows: rows,
-  shipFiles: shipFiles,
-  skinFiles: skinFiles,
   moduleVariants: const {},
   hullIdMap: const {},
+  rawDataBytes: encodeShipsRawData(
+    ShipsRawData(rows: rows, shipFiles: shipFiles, skinFiles: skinFiles),
+  ),
 );
 
 /// A source that ships the given images, spelled as they are on disk.

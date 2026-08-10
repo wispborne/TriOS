@@ -147,6 +147,35 @@ const _shipAreaNames = <String, String>{
   '_dataFile': '',
 };
 
+/// Packs one source's scanned raw data into the msgpack blob a
+/// [ShipsCachePayload] carries in memory (and in its cache file).
+Uint8List encodeShipsRawData(ShipsRawData raw) {
+  return msgpack.serialize(<String, dynamic>{
+    'rows': raw.rows,
+    'shipFiles': raw.shipFiles,
+    'skinFiles': raw.skinFiles,
+  });
+}
+
+/// Decodes [ShipsCachePayload.rawDataBytes]. Called once per source per
+/// merge; don't keep the result.
+ShipsRawData decodeShipsRawData(Uint8List bytes) {
+  final raw = CachedStreamListNotifier.normalizeForMapper(
+    msgpack.deserialize(bytes),
+  ) as Map<String, dynamic>;
+
+  Map<String, Map<String, dynamic>> filesFrom(String key) => {
+    for (final e in (raw[key] as Map).entries)
+      e.key.toString(): (e.value as Map).cast<String, dynamic>(),
+  };
+
+  return ShipsRawData(
+    rows: (raw['rows'] as List).cast<Map<String, dynamic>>(),
+    shipFiles: filesFrom('shipFiles'),
+    skinFiles: filesFrom('skinFiles'),
+  );
+}
+
 List<Ship> _buildShips(
   List<ShipsCachePayload> payloads,
   List<MergeSource> sources,
@@ -155,16 +184,23 @@ List<Ship> _buildShips(
   if (payloads.isEmpty) return const [];
   final bySourceKey = {for (final payload in payloads) payload.sourceKey: payload};
 
+  // The heavy raw data stays msgpack-encoded on the payloads. Decode it for
+  // this merge only; it all becomes garbage when this function returns.
+  final rawBySourceKey = {
+    for (final payload in payloads)
+      payload.sourceKey: decodeShipsRawData(payload.rawDataBytes),
+  };
+
   final specs = mergeShips(
     rows: [
       for (final source in sources)
-        if (bySourceKey[source.key] case final payload?)
-          (source: source, items: payload.rows),
+        if (rawBySourceKey[source.key] case final raw?)
+          (source: source, items: raw.rows),
     ],
     sideFiles: [
       for (final source in sources)
-        if (bySourceKey[source.key] case final payload?)
-          (source: source, filesByPath: payload.shipFiles),
+        if (rawBySourceKey[source.key] case final raw?)
+          (source: source, filesByPath: raw.shipFiles),
     ],
   );
 
@@ -184,8 +220,8 @@ List<Ship> _buildShips(
     _resolveSkins(
       mergeShipSkins([
         for (final source in sources)
-          if (bySourceKey[source.key] case final payload?)
-            (source: source, filesByPath: payload.skinFiles),
+          if (rawBySourceKey[source.key] case final raw?)
+            (source: source, filesByPath: raw.skinFiles),
       ]),
       ships,
       failures,
@@ -349,8 +385,10 @@ class ShipListNotifier
   /// the mod folder.
   /// 4: `modules` written as one object (not a list) is now read, so old
   /// caches are missing those modules.
+  /// 5: rows, `.ship` and `.skin` files are nested as one msgpack blob
+  /// (`rawData`) so they can stay encoded in memory between merges.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   late final CachedVariantStore store =
@@ -475,12 +513,16 @@ class ShipListNotifier
 
       return ShipsCachePayload(
         sourceKey: modVariant?.smolId ?? kVanillaSourceKey,
-        rows: scan.rows,
-        shipFiles: scan.shipFiles,
-        skinFiles: scan.skinFiles,
         csvFilePath: scan.csvFilePath,
         moduleVariants: variantResult.moduleVariants,
         hullIdMap: variantResult.hullIdMap,
+        rawDataBytes: encodeShipsRawData(
+          ShipsRawData(
+            rows: scan.rows,
+            shipFiles: scan.shipFiles,
+            skinFiles: scan.skinFiles,
+          ),
+        ),
       );
     } catch (e, st) {
       Fimber.w(
@@ -496,46 +538,39 @@ class ShipListNotifier
   Uint8List encodePayload(ShipsCachePayload payload) {
     return msgpack.serialize(<String, dynamic>{
       'sourceKey': payload.sourceKey,
-      'rows': payload.rows,
-      'shipFiles': payload.shipFiles,
-      'skinFiles': payload.skinFiles,
       'csvFilePath': payload.csvFilePath,
       'moduleVariants': payload.moduleVariants.map(
         (k, v) => MapEntry(k, v.toMap()),
       ),
       'hullIdMap': payload.hullIdMap,
+      'rawData': payload.rawDataBytes,
     });
   }
 
   @override
   ShipsCachePayload decodePayload(Uint8List bytes) {
-    final raw = CachedStreamListNotifier.normalizeForMapper(
-      msgpack.deserialize(bytes),
-    ) as Map<String, dynamic>;
-
-    Map<String, Map<String, dynamic>> filesFrom(String key) => {
-      for (final e in (raw[key] as Map).entries)
-        e.key.toString(): (e.value as Map).cast<String, dynamic>(),
-    };
+    // No normalizeForMapper over the whole envelope: a Uint8List is a List,
+    // so it would expand the raw-data blob into a per-byte list of ints.
+    final raw = msgpack.deserialize(bytes) as Map;
 
     final moduleVariants = <String, ShipVariant>{};
-    (raw['moduleVariants'] as Map<String, dynamic>).forEach((k, v) {
-      moduleVariants[k] = ShipVariantMapper.fromMap(v as Map<String, dynamic>);
+    (raw['moduleVariants'] as Map).forEach((k, v) {
+      moduleVariants[k.toString()] = ShipVariantMapper.fromMap(
+        CachedStreamListNotifier.normalizeForMapper(v) as Map<String, dynamic>,
+      );
     });
 
-    final hullIdMap = <String, String>{};
-    (raw['hullIdMap'] as Map<String, dynamic>).forEach((k, v) {
-      hullIdMap[k] = v.toString();
-    });
+    final hullIdMap = <String, String>{
+      for (final e in (raw['hullIdMap'] as Map).entries)
+        e.key.toString(): e.value.toString(),
+    };
 
     return ShipsCachePayload(
       sourceKey: raw['sourceKey'] as String,
-      rows: (raw['rows'] as List).cast<Map<String, dynamic>>(),
-      shipFiles: filesFrom('shipFiles'),
-      skinFiles: filesFrom('skinFiles'),
       csvFilePath: raw['csvFilePath'] as String?,
       moduleVariants: moduleVariants,
       hullIdMap: hullIdMap,
+      rawDataBytes: raw['rawData'] as Uint8List,
     );
   }
 

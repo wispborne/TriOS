@@ -41,6 +41,18 @@ ModVariant _variant(String name) => ModVariant(
 Mod _mod(ModVariant variant, {bool enabled = true}) =>
     Mod(id: variant.modInfo.id, isEnabledInGame: enabled, modVariants: [variant]);
 
+WeaponsCachePayload _payload({
+  required String sourceKey,
+  List<Map<String, dynamic>> rows = const [],
+  Map<String, Map<String, dynamic>> wpnFiles = const {},
+  Map<String, Map<String, dynamic>> missileSpecs = const {},
+}) => WeaponsCachePayload(
+  sourceKey: sourceKey,
+  rawDataBytes: encodeWeaponsRawData(
+    WeaponsRawData(rows: rows, wpnFiles: wpnFiles, missileSpecs: missileSpecs),
+  ),
+);
+
 /// A source that ships the given images, spelled as they are on disk.
 GameFileSource _source(String folder, List<String> imageFiles) =>
     GameFileSource(
@@ -85,7 +97,7 @@ void main() {
 
       final weapons = await _build(
         payloads: [
-          WeaponsCachePayload(
+          _payload(
             sourceKey: kVanillaSourceKey,
             rows: [
               {'id': 'lightmg', 'name': 'Light MG', 'damage/shot': 10},
@@ -97,7 +109,7 @@ void main() {
               },
             },
           ),
-          WeaponsCachePayload(
+          _payload(
             sourceKey: rebalance.smolId,
             rows: [
               {'id': 'lightmg', 'name': 'Light MG', 'damage/shot': 99},
@@ -133,7 +145,7 @@ void main() {
 
       final weapons = await _build(
         payloads: [
-          WeaponsCachePayload(
+          _payload(
             sourceKey: parent.smolId,
             rows: [
               {'id': 'homing_laser', 'name': 'Homing Laser', 'damage/shot': 250},
@@ -146,7 +158,7 @@ void main() {
             },
           ),
           // The add-on ships a full weapon_data.csv and no .wpn files at all.
-          WeaponsCachePayload(
+          _payload(
             sourceKey: addon.smolId,
             rows: [
               {'id': 'homing_laser', 'name': 'Homing Laser', 'damage/shot': 300},
@@ -179,7 +191,7 @@ void main() {
 
       final weapons = await _build(
         payloads: [
-          WeaponsCachePayload(
+          _payload(
             sourceKey: kVanillaSourceKey,
             rows: [
               {'id': 'laser', 'name': 'Laser'},
@@ -192,7 +204,7 @@ void main() {
               },
             },
           ),
-          WeaponsCachePayload(
+          _payload(
             sourceKey: tweak.smolId,
             rows: const [],
             wpnFiles: {
@@ -225,7 +237,7 @@ void main() {
       // The game keeps them apart, so TriOS has to as well.
       final weapons = await _build(
         payloads: [
-          WeaponsCachePayload(
+          _payload(
             sourceKey: kVanillaSourceKey,
             rows: [
               {'id': 'lightmg', 'name': 'Light MG', 'type': 'KINETIC'},
@@ -252,7 +264,7 @@ void main() {
     test('mountTypeOverride wins over the .wpn mount type', () async {
       final weapons = await _build(
         payloads: [
-          WeaponsCachePayload(
+          _payload(
             sourceKey: kVanillaSourceKey,
             rows: [
               {'id': 'hybrid', 'name': 'Hybrid', 'type': 'ENERGY'},
@@ -276,7 +288,7 @@ void main() {
     test('a row with no .wpn anywhere still appears, without a sprite', () async {
       final weapons = await _build(
         payloads: [
-          WeaponsCachePayload(
+          _payload(
             sourceKey: kVanillaSourceKey,
             rows: [
               {'id': 'orphan', 'name': 'Orphan'},
@@ -300,7 +312,7 @@ void main() {
 
         final weapons = await _build(
           payloads: [
-            WeaponsCachePayload(
+            _payload(
               sourceKey: kVanillaSourceKey,
               rows: [
                 {'id': 'autopulse', 'name': 'Autopulse Laser'},
@@ -313,7 +325,7 @@ void main() {
                 },
               },
             ),
-            WeaponsCachePayload(
+            _payload(
               sourceKey: threats.smolId,
               rows: const [],
               wpnFiles: {
@@ -347,7 +359,7 @@ void main() {
 
       final weapons = await _build(
         payloads: [
-          WeaponsCachePayload(
+          _payload(
             sourceKey: launchers.smolId,
             rows: [
               {'id': 'pod', 'name': 'Missile Pod'},
@@ -360,7 +372,7 @@ void main() {
               },
             },
           ),
-          WeaponsCachePayload(
+          _payload(
             sourceKey: missiles.smolId,
             rows: const [],
             wpnFiles: const {},

@@ -780,14 +780,19 @@ class _FiltersPanelState extends State<FiltersPanel> {
                     //     ),
                     //   ),
                     if (widget.showClearAll)
-                      TriOSToolbarItem(
-                        elevation: 0,
-                        child: TextButton.icon(
-                          onPressed: widget.onClearAll,
-                          icon: const Icon(Icons.clear_all, size: 16),
-                          label: const Text('Clear All'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: theme.colorScheme.onSurface,
+                      MovingTooltipWidget.text(
+                        message:
+                            "Resets filters back to default."
+                            "\nSome filters are applied by default, such as spoiler warnings.",
+                        child: TriOSToolbarItem(
+                          elevation: 0,
+                          child: TextButton.icon(
+                            onPressed: widget.onClearAll,
+                            icon: const Icon(Icons.clear_all, size: 16),
+                            label: const Text('Clear All'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: theme.colorScheme.onSurface,
+                            ),
                           ),
                         ),
                       ),

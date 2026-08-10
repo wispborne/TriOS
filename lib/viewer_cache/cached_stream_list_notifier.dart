@@ -7,6 +7,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/string_pool.dart';
 import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/parse_recorder.dart';
@@ -545,15 +546,23 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// Recursively normalize msgpack-deserialized structures so nested maps are
   /// `Map<String, dynamic>` (dart_mappable's `fromMap` requires this top-to-
   /// bottom; msgpack returns `Map<dynamic, dynamic>` at every level).
+  ///
+  /// Keys and string values go through [sharedString]. This is where pooling
+  /// pays off on a normal launch: launches read the msgpack cache rather than
+  /// re-parsing files, and this walk is the only place the cache path creates
+  /// strings. The msgpack-created originals become garbage.
   static dynamic normalizeForMapper(dynamic value) {
     if (value is Map) {
       return <String, dynamic>{
         for (final e in value.entries)
-          e.key.toString(): normalizeForMapper(e.value),
+          sharedString(e.key.toString()): normalizeForMapper(e.value),
       };
     }
     if (value is List) {
       return value.map(normalizeForMapper).toList();
+    }
+    if (value is String) {
+      return sharedString(value);
     }
     return value;
   }

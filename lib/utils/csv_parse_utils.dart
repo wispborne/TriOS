@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:csv/csv.dart';
+import 'package:trios/utils/string_pool.dart';
 
 typedef StrippedCsvResult = ({String cleanContent, List<int> lineNumberMap});
 
@@ -28,6 +29,17 @@ class CsvJsonParsingUtils {
   }
 
   /// Converts a single CSV row to a [Map<String, dynamic>] with typed values.
+  ///
+  /// A blank cell stores nothing: the key is absent from the map, not present
+  /// with a null value. `row['x']` reads the same either way, so readers must
+  /// use `row['x']` and never `containsKey`. One thing does change: a
+  /// dart_mappable field that is non-nullable with a default value takes its
+  /// default for an absent key, where an explicit null would fail. Storing
+  /// blank cells cost ~50 MB on a large mod install, which is why they're
+  /// skipped.
+  ///
+  /// String values go through [sharedString], so a value repeated across mods
+  /// (`SMALL`, `BALLISTIC`, tech types) is stored once.
   static Map<String, dynamic> rowToTypedMap(
     List<dynamic> row,
     List<String> headers,
@@ -39,13 +51,14 @@ class CsvJsonParsingUtils {
       dynamic value = row.length > i ? row[i] : null;
 
       if (value == null || (value is String && value.trim().isEmpty)) {
-        result[key] = null;
+        continue;
       } else if (value.toString().toUpperCase() == 'TRUE') {
         result[key] = true;
       } else if (value.toString().toUpperCase() == 'FALSE') {
         result[key] = false;
       } else {
-        result[key] = num.tryParse(value.toString()) ?? value.toString();
+        result[key] =
+            num.tryParse(value.toString()) ?? sharedString(value.toString());
       }
     }
 

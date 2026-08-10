@@ -15,6 +15,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/string_pool.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/parse_recorder.dart';
@@ -260,8 +261,9 @@ Future<HullmodParseResult> _parseHullmodsCsv(
       final key = headers[j];
       dynamic value = row.length > j ? row[j] : null;
 
+      // Blank cell: store nothing. Read rows with row['x'], never
+      // containsKey — see rowToTypedMap in csv_parse_utils.dart.
       if (value == null || (value is String && value.trim().isEmpty)) {
-        hullmodData[key] = null;
         continue;
       }
 
@@ -271,7 +273,7 @@ Future<HullmodParseResult> _parseHullmodsCsv(
         value = false;
       } else {
         final numValue = num.tryParse(value.toString());
-        value = numValue ?? value.toString();
+        value = numValue ?? sharedString(value.toString());
       }
 
       hullmodData[key] = value;
@@ -286,7 +288,10 @@ Future<HullmodParseResult> _parseHullmodsCsv(
       // `sprite` is kept as the CSV writes it. Which mod actually has the
       // image is decided when the icon is drawn.
 
-      // Create Hullmod instance
+      // This raw row goes straight into fromMap, and blank cells are absent
+      // keys rather than nulls. That's only safe because `id` is the model's
+      // sole non-nullable field and blank ids were skipped above — a new
+      // non-nullable field with a default would silently take its default.
       final hullmod = HullmodMapper.fromMap(
         {for (final e in hullmodData.entries) e.key.toLowerCase(): e.value},
       )

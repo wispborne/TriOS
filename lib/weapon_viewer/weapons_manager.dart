@@ -18,6 +18,7 @@ import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/string_pool.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
@@ -293,8 +294,11 @@ class WeaponListNotifier
 
   /// 4: `.wpn` files are keyed by folder + file name and are read from
   /// `data/shipsystems/wpn` too, and the mount type moved off the `type` key.
+  /// 5: blank CSV cells are no longer stored in rows. Old caches hold rows
+  /// full of null entries, and unchanged mods are never re-parsed, so without
+  /// this bump the memory saving would never reach cached mods.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   late final CachedVariantStore store =
@@ -577,14 +581,14 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
 }
 
 /// Turns one CSV line into a map, coercing `TRUE`/`FALSE` and numbers the way
-/// the viewers expect. Blank cells become null.
+/// the viewers expect. Blank cells store nothing (read rows with row['x'],
+/// never containsKey — see rowToTypedMap in csv_parse_utils.dart).
 Map<String, dynamic> _typedRow(List<dynamic> row, List<String> headers) {
   final data = <String, dynamic>{};
   for (var j = 0; j < headers.length; j++) {
     dynamic value = row.length > j ? row[j] : null;
 
     if (value == null || (value is String && value.trim().isEmpty)) {
-      data[headers[j]] = null;
       continue;
     }
 
@@ -593,7 +597,7 @@ Map<String, dynamic> _typedRow(List<dynamic> row, List<String> headers) {
     } else if (value.toString().toUpperCase() == 'FALSE') {
       value = false;
     } else {
-      value = num.tryParse(value.toString()) ?? value.toString();
+      value = num.tryParse(value.toString()) ?? sharedString(value.toString());
     }
 
     data[headers[j]] = value;

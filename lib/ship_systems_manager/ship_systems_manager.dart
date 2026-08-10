@@ -254,6 +254,10 @@ Future<_SystemParseResult> _parseShipSystems(
     }
 
     try {
+      // This raw row goes straight into fromMap, and blank cells are absent
+      // keys rather than nulls. That's only safe because `id` is the model's
+      // sole non-nullable field and blank ids were skipped above — a new
+      // non-nullable field with a default would silently take its default.
       final sys = ShipSystemMapper.fromMap(data);
       sys.modVariant = modVariant;
       systems.add(sys);

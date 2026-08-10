@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:trios/starsector_json/hash_comments.dart';
 import 'package:trios/starsector_json/java_values.dart';
 import 'package:trios/starsector_json/json_exception.dart';
+import 'package:trios/utils/string_pool.dart';
 
 const int _tab = 0x09;
 const int _lineFeed = 0x0A;
@@ -165,6 +166,10 @@ class _Tokener {
   /// Java builds this up character by character. Here the common case — no
   /// backslash anywhere — is one substring instead.
   ///
+  /// Returns go through [sharedString]: mod data repeats the same keys and
+  /// short values across tens of thousands of files, and pooling them here
+  /// covers every quoted string in every parsed file at once.
+  ///
   /// The scan itself skips [next]'s bookkeeping: none of the characters it
   /// passes over can be a line break (one would end the scan), so reading them
   /// only moves [_character] along. The position fields end up exactly where a
@@ -182,7 +187,7 @@ class _Tokener {
           _character += i + 1 - start;
           _index = i + 1;
           _previous = quote;
-          return text.substring(start, i);
+          return sharedString(text.substring(start, i));
         }
         if (char == _doubleQuote || char == _singleQuote) {
           // The other kind of quote, which is an ordinary character here.
@@ -204,7 +209,7 @@ class _Tokener {
     if (char != _backslash) {
       throw syntaxError('Unterminated string');
     }
-    return _readStringWithEscapes(text.substring(start, i), quote);
+    return sharedString(_readStringWithEscapes(text.substring(start, i), quote));
   }
 
   /// Finishes a string that turned out to contain a backslash. [head] is
@@ -329,7 +334,11 @@ class _Tokener {
     }
     final token = text.substring(start, stop).trim();
     if (token.isEmpty) throw syntaxError('Missing value');
-    return stringToValue(token);
+    // Bare tokens that stay strings are pooled like quoted strings are:
+    // unquoted values (`renderHints":[RENDER_LOADED_MISSILES]`) repeat across
+    // thousands of .wpn files.
+    final value = stringToValue(token);
+    return value is String ? sharedString(value) : value;
   }
 
   /// `JSONObject(JSONTokener)`.

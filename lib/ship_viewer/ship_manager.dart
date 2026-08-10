@@ -22,6 +22,7 @@ import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/utils/game_json_values.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/string_pool.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
@@ -349,8 +350,11 @@ class ShipListNotifier
   /// the mod folder.
   /// 4: `modules` written as one object (not a list) is now read, so old
   /// caches are missing those modules.
+  /// 5: blank CSV cells are no longer stored in rows. Old caches hold rows
+  /// full of null entries, and unchanged mods are never re-parsed, so without
+  /// this bump the memory saving would never reach cached mods.
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   late final CachedVariantStore store =
@@ -750,8 +754,9 @@ Future<_ShipScanResult> _scanShipsFolder(
           for (var j = 0; j < headers.length; j++) {
             dynamic value = csvRows[i].length > j ? csvRows[i][j] : null;
 
+            // Blank cell: store nothing. Read rows with row['x'], never
+            // containsKey — see rowToTypedMap in csv_parse_utils.dart.
             if (value == null || (value is String && value.trim().isEmpty)) {
-              data[headers[j]] = null;
               continue;
             }
 
@@ -760,7 +765,9 @@ Future<_ShipScanResult> _scanShipsFolder(
             } else if (value.toString().toUpperCase() == 'FALSE') {
               value = false;
             } else {
-              value = num.tryParse(value.toString()) ?? value.toString();
+              value =
+                  num.tryParse(value.toString()) ??
+                  sharedString(value.toString());
             }
 
             data[headers[j]] = value;

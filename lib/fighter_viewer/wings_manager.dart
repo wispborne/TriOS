@@ -16,6 +16,7 @@ import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/string_pool.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/parse_recorder.dart';
@@ -220,10 +221,13 @@ Future<_WingParseResult> _parseWingsCsv(
           } else if (up == 'FALSE') {
             value = false;
           } else {
-            value = num.tryParse(value) ?? value;
+            value = num.tryParse(value) ?? sharedString(value);
           }
         }
       }
+      // Blank cell: store nothing. Read rows with row['x'], never
+      // containsKey — see rowToTypedMap in csv_parse_utils.dart.
+      if (value == null) continue;
       data[headers[j]] = value;
     }
 
@@ -231,6 +235,10 @@ Future<_WingParseResult> _parseWingsCsv(
     if (wingId == null || wingId.isEmpty) continue;
 
     try {
+      // This raw row goes straight into fromMap, and blank cells are absent
+      // keys rather than nulls. That's only safe because `id` is the model's
+      // sole non-nullable field and blank ids were skipped above — a new
+      // non-nullable field with a default would silently take its default.
       final wing = WingMapper.fromMap(data);
       wing.modVariant = modVariant;
       final variantId = wing.variant;

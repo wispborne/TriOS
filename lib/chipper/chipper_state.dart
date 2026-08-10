@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateProvider;
@@ -41,15 +40,26 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
 
   void parseLogAndSetState(LogFile? next) {
     if (next == null || state.isLoading) return;
+    final contents = next.contents;
+    final filepath = next.filepath;
+    if (contents == null && filepath == null) return;
     state = const AsyncValue.loading();
 
-    ref.read(appWorkerProvider).run(handleNewLogContent, next.contents).then((LogChips? chips) {
-      state = AsyncValue.data(chips?..filepath = next.filepath);
-      // setState(() {
-      //   Fimber.i("Parsing false");
-      //   parsing = false;
-      // });
-    });
+    // When we only have a path, the worker reads the file itself. Sending the
+    // log as a string pinned a copy of the whole log (36 MB for an 18 MB
+    // file) in the worker isolate for the life of the app.
+    final parseJob = contents != null
+        ? ref.read(appWorkerProvider).run(handleNewLogContent, contents)
+        : ref.read(appWorkerProvider).run(parseLogFromDisk, filepath!);
+
+    parseJob
+        .then((LogChips? chips) {
+          state = AsyncValue.data(chips?..filepath = next.filepath);
+        })
+        .catchError((Object e, StackTrace st) {
+          Fimber.w("Couldn't read or parse log.", ex: e, stacktrace: st);
+          state = AsyncValue.error(e, st);
+        });
   }
 
   void loadDefaultLog() async {
@@ -57,23 +67,18 @@ class _ChipperLogParserNotifier extends AsyncNotifier<LogChips?> {
     final gameFilesPath = getLogPath(gamePath!);
 
     if (gameFilesPath.existsSync()) {
-      gameFilesPath.readAsBytes().then((bytes) async {
-        final stopwatch = Stopwatch()..start();
-        final content = utf8.decode(bytes, allowMalformed: true);
-        final parsedLog = parseLogAndSetState(
-          LogFile(gameFilesPath.path, content),
-        );
-        stopwatch.stop();
-        Fimber.i("Parsed log in ${stopwatch.elapsedMilliseconds}ms");
-        return parsedLog;
-      });
+      parseLogAndSetState(LogFile(gameFilesPath.path, null));
     }
   }
 }
 
+/// A log to parse. When [contents] is null the worker isolate reads
+/// [filepath] from disk itself, which keeps the log's text out of the UI
+/// isolate entirely. [contents] is for logs with no local file: clipboard
+/// pastes and logs fetched from a dropped `.url` shortcut.
 class LogFile {
   final String? filepath;
-  final String contents;
+  final String? contents;
 
   LogFile(this.filepath, this.contents);
 }

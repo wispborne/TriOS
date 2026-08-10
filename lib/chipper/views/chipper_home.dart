@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:cross_file/cross_file.dart';
@@ -234,7 +235,7 @@ class DesktopDropState extends ConsumerState<DesktopDrop> {
   }
 }
 
-Future<String?> handleDroppedLogFile(String droppedFilePaths) async {
+Future<LogFile?> handleDroppedLogFile(String droppedFilePaths) async {
   final files = [droppedFilePaths].map((e) => XFile(e)).toList();
   // the `.toList` avoids concurrent modification errors by creating a shallow copy.
   for (final file in files.toList()) {
@@ -258,7 +259,6 @@ Future<String?> handleDroppedLogFile(String droppedFilePaths) async {
 
   // No need to filter by name for now, in case file has (Copy) or (1) in it.
   // .firstWhereOrNull((element) => element.name == "starsector.log");
-  String? logStream;
 
   // Check if file is a url or an actual file
   if (droppedFile.name.endsWith(".url")) {
@@ -269,29 +269,38 @@ Future<String?> handleDroppedLogFile(String droppedFilePaths) async {
       final uri = Uri.parse(url);
       try {
         Fimber.i("Fetching and streaming online url $uri");
-        logStream = (await http.get(
+        final logText = (await http.get(
           uri,
           headers: {'Content-Type': 'text/plain'},
         )).body; //get()).bodyBytes;//.onError((error, stackTrace) => );
+        return LogFile(droppedFile.path, logText);
       } catch (e) {
         Fimber.w("Failed to read $url", ex: e);
       }
     }
-  } else {
-    try {
-      logStream = utf8.decode(
-        (await droppedFile.readAsBytes()),
-        allowMalformed: true,
-      ); //.openRead().map((chunk) => utf8.decode(chunk, allowMalformed: true));
-    } catch (e) {
-      Fimber.w("Couldn't parse text file.", ex: e);
-    }
+    return null;
   }
 
-  return logStream;
+  // A plain file: hand back just the path and let the worker isolate read it,
+  // so the log's text stays off the UI isolate.
+  return LogFile(droppedFile.path, null);
 }
 
 Future<LogChips?> handleNewLogContent(String logContent) {
   // final wrongLogRegex = RegExp(".*\.log\./d", caseSensitive: false);
   return LogParser().parse(logContent);
+}
+
+/// Runs in the worker isolate: reads and decodes the log there, so the full
+/// text never crosses the isolate boundary and is garbage-collected as soon
+/// as parsing finishes.
+Future<LogChips?> parseLogFromDisk(String path) async {
+  final stopwatch = Stopwatch()..start();
+  final content = utf8.decode(
+    await File(path).readAsBytes(),
+    allowMalformed: true,
+  );
+  final chips = await LogParser().parse(content);
+  Fimber.i("Read and parsed log in ${stopwatch.elapsedMilliseconds}ms");
+  return chips;
 }

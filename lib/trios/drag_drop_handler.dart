@@ -143,13 +143,13 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           }
         } else {
           final firstFile = files.first;
-          handleDroppedLogFile(firstFile.path).then((content) {
-            if (content == null) {
+          handleDroppedLogFile(firstFile.path).then((logFile) {
+            if (logFile == null) {
               return; // TODO ref.read(ChipperState.logRawContents).value;
             }
             return ref
                 .read(ChipperState.logRawContents.notifier)
-                .parseLogAndSetState(LogFile(firstFile.path, content));
+                .parseLogAndSetState(logFile);
           });
           widget.onDroppedLog?.call(firstFile.path);
         }

@@ -232,13 +232,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             .read(ChipperState.logRawContents.notifier)
                             .parseLogAndSetState(LogFile(file.path, content));
                       } else if (file.path != null) {
-                        final content = utf8.decode(
-                          File(file.path!).readAsBytesSync().toList(),
-                          allowMalformed: true,
-                        );
+                        // Path only: the worker isolate reads the file itself.
                         ref
                             .read(ChipperState.logRawContents.notifier)
-                            .parseLogAndSetState(LogFile(file.path, content));
+                            .parseLogAndSetState(LogFile(file.path, null));
                       }
                     } else {
                       Fimber.w("Error reading file! $result");

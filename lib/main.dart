@@ -478,9 +478,11 @@ void _runTriOS(Settings? appSettings, {required bool withSentry}) => runApp(
         retry: (retryCount, error) => null, // disable automatic retry added in riverpod 3.0
         observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
         child: ExcludeSemantics(
-          excluding:
-              Platform.isLinux &&
-              appSettings?.enableAccessibilitySemanticsOnLinux != true,
+          // Off unless turned on in settings. When anything on the system asks
+          // for accessibility data (a screen reader, or any tool that uses the
+          // OS accessibility interface), Flutter keeps an accessibility node
+          // for every widget on every open page — tens of MB.
+          excluding: appSettings?.enableAccessibilitySemantics != true,
           child: TriOSApp(),
         ),
       ),

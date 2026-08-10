@@ -1130,38 +1130,35 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: _DeepLinkRegistrationButton(),
                       ),
-                    if (Platform.isLinux)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: MovingTooltipWidget.text(
-                          message:
-                              "The Flutter framework (what ${Constants.appName} uses) has a bug that causes freezes related to text fields on some Linux distros."
-                              "\nDisabling accessibility semantics fixes those freezes."
-                              "\nYou may need to fully restart ${Constants.appName} to apply the changes.",
-                          child: CheckboxWithLabel(
-                            value: ref.watch(
-                              appSettings.select(
-                                (value) =>
-                                    value.enableAccessibilitySemanticsOnLinux ==
-                                    true,
-                              ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: MovingTooltipWidget.text(
+                        message:
+                            "Enable screen reader use."
+                            "\nOff by default: uses extra RAM and causes freezes with text fields on some Linux distros."
+                            "\nYou may need to fully restart ${Constants.appName} to apply the change.",
+                        child: CheckboxWithLabel(
+                          value: ref.watch(
+                            appSettings.select(
+                              (value) =>
+                                  value.enableAccessibilitySemantics == true,
                             ),
-                            onChanged: (value) {
-                              ref
-                                  .read(appSettings.notifier)
-                                  .update(
-                                    (state) => state.copyWith(
-                                      enableAccessibilitySemanticsOnLinux:
-                                          value,
-                                    ),
-                                  );
-                              RestartableApp.softRestartApp(context);
-                            },
-                            label:
-                                "Enable Accessibility Semantics (may cause freezes)",
                           ),
+                          onChanged: (value) {
+                            ref
+                                .read(appSettings.notifier)
+                                .update(
+                                  (state) => state.copyWith(
+                                    enableAccessibilitySemantics: value,
+                                  ),
+                                );
+                            RestartableApp.softRestartApp(context);
+                          },
+                          label:
+                              "Enable screen reader support (accessibility)",
                         ),
                       ),
+                    ),
                   ],
                 ),
                 SettingsGroup(
@@ -1169,9 +1166,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   children: [
                     MovingTooltipWidget.text(
                       message:
-                          "When checked, ${Constants.appName} never shows anything "
-                          "AI-related, such as the AI mod summaries on the "
-                          "Catalog page (currently the only AI feature).",
+                          "When checked, ${Constants.appName} never shows anything AI-related:"
+                              "\n- Generated mod summaries on the Catalog page",
                       child: CheckboxWithLabel(
                         value: !ref.watch(
                           appSettings.select((s) => s.enableAiFeatures),

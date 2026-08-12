@@ -129,6 +129,7 @@ class Settings with SettingsMappable {
   final bool modsGridHighContrastEnableButton;
   final bool modsGridUpdatesShowDisabledMods;
   final bool modsGridShowModInAllCategories;
+  final bool modsGridShowDataWarnings;
 
   // Settings Page
   @Deprecated(
@@ -307,6 +308,7 @@ class Settings with SettingsMappable {
     this.modsGridHighContrastEnableButton = false,
     this.modsGridUpdatesShowDisabledMods = true,
     this.modsGridShowModInAllCategories = false,
+    this.modsGridShowDataWarnings = true,
     this.shouldAutoUpdateOnLaunch = false,
     this.secondsBetweenModFolderChecks = 15,
     this.toastDurationSeconds = 7,

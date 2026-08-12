@@ -18,6 +18,8 @@ import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/mod_context_menu.dart';
+import 'package:trios/mod_manager/mod_data_issues.dart';
+import 'package:trios/mod_manager/mod_data_warning_icon.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_summary_panel.dart';
@@ -1432,7 +1434,23 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             child: MovingTooltipWidget.text(
               message:
                   "It doesn't mean you're old.",
-              child: const Text("High Contrast Enable Button"),
+              child: const Text("Mod Buttons: High Contrast"),
+            ),
+          ),
+          PopupStyleMenuAnchor.checkboxItem(
+            value: ref.watch(
+              appSettings.select((s) => s.modsGridShowDataWarnings),
+            ),
+            onPressed: () {
+              final current = ref.read(appSettings).modsGridShowDataWarnings;
+              ref
+                  .read(appSettings.notifier)
+                  .update((s) => s.copyWith(modsGridShowDataWarnings: !current));
+            },
+            child: MovingTooltipWidget.text(
+              message:
+                  "Show a warning icon next to mods whose data has a problem, like a mod whose .version file and mod_info.json don't agree on the version.",
+              child: const Text("Show Mod Data Warnings"),
             ),
           ),
           if (ref.watch(
@@ -2248,19 +2266,32 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         );
         final compatTextColor = compatWithGame.getGameCompatibilityColor();
 
-        final nameWidget = modColor == null
+        final showDataWarnings = ref.watch(
+          appSettings.select((s) => s.modsGridShowDataWarnings),
+        );
+        final dataIssues = showDataWarnings
+            ? checkModDataIssues(bestVersion)
+            : const <ModDataIssue>[];
+
+        final nameWidget = modColor == null && dataIssues.isEmpty
             ? nameText
             : Row(
                 spacing: 8.0,
                 children: [
-                  Container(
-                    width: 4.0,
-                    height: 16.0,
-                    decoration: BoxDecoration(
-                      color: modColor,
-                      borderRadius: BorderRadius.circular(4.0),
+                  if (dataIssues.isNotEmpty)
+                    ModDataWarningIcon(
+                      modName: bestVersion.modInfo.nameOrId,
+                      issues: dataIssues,
                     ),
-                  ),
+                  if (modColor != null)
+                    Container(
+                      width: 4.0,
+                      height: 16.0,
+                      decoration: BoxDecoration(
+                        color: modColor,
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                    ),
                   Expanded(child: nameText),
                 ],
               );

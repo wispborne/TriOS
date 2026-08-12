@@ -31,6 +31,7 @@ import '../../models/version.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
 import '../../themes/theme_modifiers.dart';
+import '../../widgets/restartable_app.dart';
 import '../../widgets/trios_dropdown_menu.dart';
 import '../../widgets/trios_expansion_tile.dart';
 import '../app_state.dart';
@@ -1129,33 +1130,38 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: _DeepLinkRegistrationButton(),
                       ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: MovingTooltipWidget.text(
-                        message:
-                            "Enable screen reader use."
-                            "\nOff by default: uses extra RAM and causes freezes with text fields on some Linux distros.",
-                        child: CheckboxWithLabel(
-                          value: ref.watch(
-                            appSettings.select(
-                              (value) =>
-                                  value.enableAccessibilitySemantics == true,
+                    if (Platform.isLinux)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: MovingTooltipWidget.text(
+                          message:
+                              "The Flutter framework (what ${Constants.appName} uses) has a bug that causes freezes related to text fields on some Linux distros."
+                              "\nDisabling accessibility semantics fixes those freezes."
+                              "\nYou may need to fully restart ${Constants.appName} to apply the changes.",
+                          child: CheckboxWithLabel(
+                            value: ref.watch(
+                              appSettings.select(
+                                (value) =>
+                                    value.enableAccessibilitySemanticsOnLinux ==
+                                    true,
+                              ),
                             ),
+                            onChanged: (value) {
+                              ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      enableAccessibilitySemanticsOnLinux:
+                                          value,
+                                    ),
+                                  );
+                              RestartableApp.softRestartApp(context);
+                            },
+                            label:
+                                "Enable Accessibility Semantics (may cause freezes)",
                           ),
-                          onChanged: (value) {
-                            ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (state) => state.copyWith(
-                                    enableAccessibilitySemantics: value,
-                                  ),
-                                );
-                          },
-                          label:
-                              "Enable screen reader support (accessibility)",
                         ),
                       ),
-                    ),
                   ],
                 ),
                 SettingsGroup(

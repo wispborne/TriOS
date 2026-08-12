@@ -919,15 +919,15 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: 1.0,
   );
-  static bool _$enableAccessibilitySemantics(Settings v) =>
-      v.enableAccessibilitySemantics;
-  static const Field<Settings, bool> _f$enableAccessibilitySemantics = Field(
-    'enableAccessibilitySemantics',
-    _$enableAccessibilitySemantics,
-    key: r'enableAccessibilitySemanticsOnLinux',
-    opt: true,
-    def: false,
-  );
+  static bool _$enableAccessibilitySemanticsOnLinux(Settings v) =>
+      v.enableAccessibilitySemanticsOnLinux;
+  static const Field<Settings, bool> _f$enableAccessibilitySemanticsOnLinux =
+      Field(
+        'enableAccessibilitySemanticsOnLinux',
+        _$enableAccessibilitySemanticsOnLinux,
+        opt: true,
+        def: false,
+      );
   static bool? _$hasHiddenForumDarkModeTip(Settings v) =>
       v.hasHiddenForumDarkModeTip;
   static const Field<Settings, bool> _f$hasHiddenForumDarkModeTip = Field(
@@ -1284,7 +1284,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #checkIfGameIsRunning: _f$checkIfGameIsRunning,
     #compressionLib: _f$compressionLib,
     #windowScaleFactor: _f$windowScaleFactor,
-    #enableAccessibilitySemantics: _f$enableAccessibilitySemantics,
+    #enableAccessibilitySemanticsOnLinux:
+        _f$enableAccessibilitySemanticsOnLinux,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
     #enableAiFeatures: _f$enableAiFeatures,
     #catalogBrowserPanelOpen: _f$catalogBrowserPanelOpen,
@@ -1404,7 +1405,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       checkIfGameIsRunning: data.dec(_f$checkIfGameIsRunning),
       compressionLib: data.dec(_f$compressionLib),
       windowScaleFactor: data.dec(_f$windowScaleFactor),
-      enableAccessibilitySemantics: data.dec(_f$enableAccessibilitySemantics),
+      enableAccessibilitySemanticsOnLinux: data.dec(
+        _f$enableAccessibilitySemanticsOnLinux,
+      ),
       hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
       enableAiFeatures: data.dec(_f$enableAiFeatures),
       catalogBrowserPanelOpen: data.dec(_f$catalogBrowserPanelOpen),
@@ -1665,7 +1668,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? checkIfGameIsRunning,
     CompressionLib? compressionLib,
     double? windowScaleFactor,
-    bool? enableAccessibilitySemantics,
+    bool? enableAccessibilitySemanticsOnLinux,
     bool? hasHiddenForumDarkModeTip,
     bool? enableAiFeatures,
     bool? catalogBrowserPanelOpen,
@@ -1967,7 +1970,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? checkIfGameIsRunning,
     CompressionLib? compressionLib,
     double? windowScaleFactor,
-    bool? enableAccessibilitySemantics,
+    bool? enableAccessibilitySemanticsOnLinux,
     Object? hasHiddenForumDarkModeTip = $none,
     bool? enableAiFeatures,
     bool? catalogBrowserPanelOpen,
@@ -2099,8 +2102,9 @@ class _SettingsCopyWithImpl<$R, $Out>
         #checkIfGameIsRunning: checkIfGameIsRunning,
       if (compressionLib != null) #compressionLib: compressionLib,
       if (windowScaleFactor != null) #windowScaleFactor: windowScaleFactor,
-      if (enableAccessibilitySemantics != null)
-        #enableAccessibilitySemantics: enableAccessibilitySemantics,
+      if (enableAccessibilitySemanticsOnLinux != null)
+        #enableAccessibilitySemanticsOnLinux:
+            enableAccessibilitySemanticsOnLinux,
       if (hasHiddenForumDarkModeTip != $none)
         #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
       if (enableAiFeatures != null) #enableAiFeatures: enableAiFeatures,
@@ -2348,9 +2352,9 @@ class _SettingsCopyWithImpl<$R, $Out>
       #windowScaleFactor,
       or: $value.windowScaleFactor,
     ),
-    enableAccessibilitySemantics: data.get(
-      #enableAccessibilitySemantics,
-      or: $value.enableAccessibilitySemantics,
+    enableAccessibilitySemanticsOnLinux: data.get(
+      #enableAccessibilitySemanticsOnLinux,
+      or: $value.enableAccessibilitySemanticsOnLinux,
     ),
     hasHiddenForumDarkModeTip: data.get(
       #hasHiddenForumDarkModeTip,

@@ -353,15 +353,15 @@ void main(List<String> args) async {
         },
         appRunner: () {
           Fimber.i("Sentry initialized.");
-          _runTriOS(withSentry: true);
+          _runTriOS(settings, withSentry: true);
         },
       );
     } catch (e) {
       Fimber.e("Error initializing Sentry.", ex: e);
-      _runTriOS(withSentry: false);
+      _runTriOS(settings, withSentry: false);
     }
   } else {
-    _runTriOS(withSentry: false);
+    _runTriOS(settings, withSentry: false);
   }
 
   try {
@@ -469,7 +469,7 @@ Future<void> _migrateCacheFiles() async {
 }
 
 // ignore: missing_provider_scope
-void _runTriOS({required bool withSentry}) => runApp(
+void _runTriOS(Settings? appSettings, {required bool withSentry}) => runApp(
   RestartableApp(
     child: ConditionalWrap(
       condition: withSentry,
@@ -477,34 +477,16 @@ void _runTriOS({required bool withSentry}) => runApp(
       child: ProviderScope(
         retry: (retryCount, error) => null, // disable automatic retry added in riverpod 3.0
         observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
-        child: const _SemanticsGate(child: TriOSApp()),
+        child: ExcludeSemantics(
+          excluding:
+              Platform.isLinux &&
+              appSettings?.enableAccessibilitySemanticsOnLinux != true,
+          child: TriOSApp(),
+        ),
       ),
     ),
   ),
 );
-
-/// Applies the screen reader setting live. Watching the provider here (inside
-/// the ProviderScope) makes the settings checkbox take effect immediately;
-/// the old approach — capture the value at startup and soft-restart the app
-/// to re-read it — raced the debounced settings write and sometimes lost the
-/// change.
-class _SemanticsGate extends ConsumerWidget {
-  const _SemanticsGate({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(
-      appSettings.select((s) => s.enableAccessibilitySemantics),
-    );
-    // Off unless turned on in settings. When anything on the system asks for
-    // accessibility data (a screen reader, or any tool that uses the OS
-    // accessibility interface), Flutter keeps an accessibility node for every
-    // widget on every open page — tens of MB.
-    return ExcludeSemantics(excluding: !enabled, child: child);
-  }
-}
 
 class TriOSApp extends ConsumerStatefulWidget {
   const TriOSApp({super.key});

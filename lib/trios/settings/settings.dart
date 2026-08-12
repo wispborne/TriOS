@@ -149,14 +149,7 @@ class Settings with SettingsMappable {
   final bool checkIfGameIsRunning;
   final CompressionLib compressionLib;
   final double windowScaleFactor;
-
-  /// Whether Flutter builds accessibility data (used by screen readers). Off
-  /// by default: when anything on the system asks for it, Flutter keeps an
-  /// accessibility node for every widget on every open page (tens of MB), and
-  /// it causes text-field freezes on some Linux distros. The old Linux-only
-  /// name is kept as the storage key so a saved choice still loads.
-  @MappableField(key: 'enableAccessibilitySemanticsOnLinux')
-  final bool enableAccessibilitySemantics;
+  final bool enableAccessibilitySemanticsOnLinux;
 
   final bool? hasHiddenForumDarkModeTip;
 
@@ -329,7 +322,7 @@ class Settings with SettingsMappable {
     this.checkIfGameIsRunning = true,
     this.compressionLib = CompressionLib.sevenZip,
     this.windowScaleFactor = 1.0,
-    this.enableAccessibilitySemantics = false,
+    this.enableAccessibilitySemanticsOnLinux = false,
     this.hasHiddenForumDarkModeTip,
     this.enableAiFeatures = true,
     this.catalogBrowserPanelOpen = false,

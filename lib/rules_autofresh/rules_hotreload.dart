@@ -52,6 +52,14 @@ class _RulesHotReloadState extends ConsumerState<RulesHotReload> {
   }
 
   @override
+  void dispose() {
+    // The poll loops run until this controller closes; without this they
+    // keep running (and keep this widget in memory) after the page is gone.
+    fileChanges.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     fileChanges.close();
     final modVariants = ref.watch(AppState.modVariants).value;

@@ -22,6 +22,15 @@ class EnabledModsNotifier extends AsyncNotifier<EnabledMods> {
 
   @override
   Future<EnabledMods> build() async {
+    // The poll loop in refreshEnabledMods runs until its controller closes,
+    // and the loop holds a reference to this notifier. Without this close,
+    // a soft restart (onboarding, settings wipe) left the loop running
+    // forever, and it pinned the old provider container — a full copy of the
+    // app's state, hundreds of MB — in memory.
+    ref.onDispose(() {
+      _enabledModsWatcher?.close();
+      _enabledModsWatcher = null;
+    });
     return fileLock.protect(() async {
       await refreshEnabledMods();
       return state.value ?? const EnabledMods({});

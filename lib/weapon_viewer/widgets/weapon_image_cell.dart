@@ -5,23 +5,18 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:super_clipboard/super_clipboard.dart';
-import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/thirdparty/flutter_context_menu/components/menu_item.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/models/context_menu_entry.dart';
 import 'package:trios/thirdparty/flutter_context_menu/widgets/context_menu_region.dart';
+import 'package:trios/utils/decoded_image_cache.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/snackbar.dart';
 
-// Decoded-image cache for the layered weapon composite, keyed by file path.
-final Map<String, Future<ui.Image?>> _weaponDecodedImageCache = {};
-
-Future<ui.Image?> _loadWeaponImage(String path) {
-  return _weaponDecodedImageCache.putIfAbsent(path, () => decodeImageFile(path));
-}
+Future<ui.Image?> _loadWeaponImage(String path) => loadDecodedImage(path);
 
 /// One composited sprite layer, positioned in weapon-pixel space where the
 /// origin is the weapon's mount center.

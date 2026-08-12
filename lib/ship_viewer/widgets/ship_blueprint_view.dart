@@ -22,6 +22,7 @@ import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/utils/polygon_utils.dart';
 import 'package:trios/ship_viewer/utils/sprite_utils.dart';
+import 'package:trios/utils/decoded_image_cache.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/trios/app_state.dart';

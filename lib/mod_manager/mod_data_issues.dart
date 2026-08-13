@@ -48,7 +48,7 @@ ModDataIssue? _checkVersionCheckerVersionMatchesModInfo(ModVariant variant) {
   return ModDataIssue(
     type: ModDataIssueType.versionCheckerMismatch,
     summary:
-        "Version Checker says $versionCheckerVersion but mod_info.json says $modInfoVersion",
+        "This mod's Version Checker says $versionCheckerVersion but its mod_info.json says $modInfoVersion",
     detail:
         "The mod's .version file and its mod_info.json list different versions."
         " This is a mistake by the mod author."

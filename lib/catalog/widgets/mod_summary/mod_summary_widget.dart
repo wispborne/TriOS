@@ -498,9 +498,9 @@ class _SummarySection extends StatelessWidget {
           'AI Disclosure.',
   };
 
-  /// Names the one place the catalog found this mod. Falls back to the catalog
-  /// itself when the mod was found in more than one place, or in none, since
-  /// there's no way to tell which of them wrote the summary.
+  /// Names the one place the catalog found this mod. Falls back to Discord
+  /// when the mod was found in more than one place, or in none, since
+  /// the forum doesn't have its own description and we don't read from NexusMods.
   static String _placeName(List<ModSource> catalogSources) =>
       catalogSources.length == 1
       ? switch (catalogSources.single) {
@@ -509,7 +509,7 @@ class _SummarySection extends StatelessWidget {
           ModSource.Index => 'the forum mod index',
           ModSource.NexusMods => 'Nexus Mods',
         }
-      : 'the mod catalog';
+      : 'Discord';
 
   @override
   Widget build(BuildContext context) {

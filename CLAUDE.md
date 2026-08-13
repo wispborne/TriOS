@@ -385,3 +385,17 @@ Filter values: `null` (indifferent), `true` (include), `false` (exclude). If any
 ## Starsector Game Code
 
 - You have a skill to read starsector game code; use to validate assumptions.
+
+## Agent skills
+
+### Issue tracker
+
+Work is tracked as OpenSpec changes under `openspec/changes/<change-id>/`, not GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default triage names, written as a `Status:` line in a change's `proposal.md`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

@@ -707,6 +707,13 @@ class _CatalogModGameVersionReq extends ConsumerWidget {
       installedVersion,
     );
 
+    // Show the same version the Game Version filter uses, so every badge reads
+    // the same way no matter how the mod author wrote it in the thread title
+    // ("0.98a-RC5" and "0.98a" both show as "0.98"). The tooltip keeps the
+    // author's original text. Falls back to the raw text if there's no version
+    // number in it at all, so the badge is never blank.
+    final displayedVersion = normalizeBaseVersion(mod.gameVersionReq);
+
     final tooltip = StringBuffer(
       'Game version required: ${mod.gameVersionReq}',
     );
@@ -762,7 +769,9 @@ class _CatalogModGameVersionReq extends ConsumerWidget {
                 ),
               ),
               TextTriOS(
-                mod.gameVersionReq ?? "",
+                displayedVersion.isNotEmpty
+                    ? displayedVersion
+                    : mod.gameVersionReq ?? "",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

@@ -214,6 +214,95 @@ void main() {
     });
   });
 
+  group('gatherCatalogMod source code and license', () {
+    CatalogMod gatherWith({String? sourceCode, String? license}) {
+      final llm = ForumLlmData(mods: [
+        _makeLlmMod(
+          name: 'TestMod',
+          role: LlmModRole.main,
+          extras: ForumLlmExtras(sourceCode: sourceCode, license: license),
+        ),
+      ]);
+      return gatherCatalogMod(
+        mod: _makeMod(name: 'TestMod'),
+        forumIndex: _makeIndex(llm: llm),
+      );
+    }
+
+    test('a source code link and a license come through', () {
+      final gathered = gatherWith(
+        sourceCode: 'https://github.com/someone/mod',
+        license: 'MIT',
+      );
+
+      expect(gathered.sourceCodeUrl, 'https://github.com/someone/mod');
+      expect(gathered.licenseText, 'MIT');
+    });
+
+    test('both are null when the mod has neither', () {
+      final gathered = gatherWith();
+
+      expect(gathered.sourceCodeUrl, isNull);
+      expect(gathered.licenseText, isNull);
+    });
+
+    test('a source code link that is not a web link is dropped', () {
+      expect(gatherWith(sourceCode: 'ask me').sourceCodeUrl, isNull);
+    });
+
+    test('&nbsp; in the license becomes a space', () {
+      final gathered = gatherWith(license: 'Free&nbsp;to&nbsp;use.');
+
+      expect(gathered.licenseText, 'Free to use.');
+    });
+
+    test('a license that is only a link is offered as a link', () {
+      final gathered = gatherWith(
+        license: 'https://creativecommons.org/licenses/by-nc/4.0/',
+      );
+
+      expect(
+        gathered.licenseUrl,
+        'https://creativecommons.org/licenses/by-nc/4.0/',
+      );
+    });
+
+    test('a license with words around a link is not a link', () {
+      final gathered = gatherWith(
+        license: 'See https://example.com/license for the rules.',
+      );
+
+      expect(gathered.licenseUrl, isNull);
+    });
+
+    test('the source code attribute only shows up when there is a link', () {
+      expect(
+        gatherWith(sourceCode: 'https://github.com/a/b').attributeKeys,
+        contains('sourceCode'),
+      );
+      expect(
+        gatherWith(license: 'MIT').attributeKeys,
+        isNot(contains('sourceCode')),
+      );
+    });
+  });
+
+  group('sourceCodeHostName', () {
+    test('names the sites mods actually use', () {
+      expect(sourceCodeHostName('https://github.com/a/b'), 'GitHub');
+      expect(sourceCodeHostName('https://www.github.com/a/b'), 'GitHub');
+      expect(sourceCodeHostName('https://bitbucket.org/a/b'), 'Bitbucket');
+      expect(sourceCodeHostName('https://gitlab.com/a/b'), 'GitLab');
+    });
+
+    test('falls back to the site address for anywhere else', () {
+      expect(
+        sourceCodeHostName('https://www.assembla.com/spaces/x'),
+        'assembla.com',
+      );
+    });
+  });
+
   group('gatherCatalogMod with forumDetails', () {
     test('details fields win over index fields', () {
       final index = _makeIndex(

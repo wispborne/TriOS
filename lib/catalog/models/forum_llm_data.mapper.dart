@@ -796,6 +796,12 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
     _$saveCompatibility,
     opt: true,
   );
+  static String? _$sourceCode(ForumLlmExtras v) => v.sourceCode;
+  static const Field<ForumLlmExtras, String> _f$sourceCode = Field(
+    'sourceCode',
+    _$sourceCode,
+    opt: true,
+  );
 
   @override
   final MappableFields<ForumLlmExtras> fields = const {
@@ -805,6 +811,7 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
     #license: _f$license,
     #supportLinks: _f$supportLinks,
     #saveCompatibility: _f$saveCompatibility,
+    #sourceCode: _f$sourceCode,
   };
 
   static ForumLlmExtras _instantiate(DecodingData data) {
@@ -815,6 +822,7 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
       license: data.dec(_f$license),
       supportLinks: data.dec(_f$supportLinks),
       saveCompatibility: data.dec(_f$saveCompatibility),
+      sourceCode: data.dec(_f$sourceCode),
     );
   }
 
@@ -896,6 +904,7 @@ abstract class ForumLlmExtrasCopyWith<$R, $In extends ForumLlmExtras, $Out>
     String? license,
     List<ForumLlmSupportLink>? supportLinks,
     String? saveCompatibility,
+    String? sourceCode,
   });
   ForumLlmExtrasCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -937,6 +946,7 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
     Object? license = $none,
     Object? supportLinks = $none,
     Object? saveCompatibility = $none,
+    Object? sourceCode = $none,
   }) => $apply(
     FieldCopyWithData({
       if (version != $none) #version: version,
@@ -945,6 +955,7 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
       if (license != $none) #license: license,
       if (supportLinks != $none) #supportLinks: supportLinks,
       if (saveCompatibility != $none) #saveCompatibility: saveCompatibility,
+      if (sourceCode != $none) #sourceCode: sourceCode,
     }),
   );
   @override
@@ -958,6 +969,7 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
       #saveCompatibility,
       or: $value.saveCompatibility,
     ),
+    sourceCode: data.get(#sourceCode, or: $value.sourceCode),
   );
 
   @override

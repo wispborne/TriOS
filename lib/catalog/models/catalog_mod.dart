@@ -78,6 +78,14 @@ class CatalogMod {
   final List<ForumLlmSupportLink> supportLinks;
   final String? saveCompatibility;
 
+  /// A link to where the mod's code lives, e.g. a GitHub page.
+  final String? sourceCodeUrl;
+
+  /// The license the author wrote on the forum. Free text: anything from
+  /// "MIT" to a paragraph of house rules, so it can't be matched against a
+  /// list of license names.
+  final String? licenseText;
+
   // -- Images --
 
   /// The best available image: scraped catalog image, AI-block image, author
@@ -125,6 +133,8 @@ class CatalogMod {
     this.changelog,
     this.supportLinks = const [],
     this.saveCompatibility,
+    this.sourceCodeUrl,
+    this.licenseText,
     this.catalogImage,
     this.category,
     this.postDate,
@@ -141,6 +151,31 @@ class CatalogMod {
   });
 
   bool get isPartOfThread => partOfThreadTitle != null;
+
+  /// The license when the whole thing is just a link — a few mods point at a
+  /// Creative Commons page instead of writing terms out. Null when the
+  /// license is text, even if a link is buried in it.
+  String? get licenseUrl {
+    final text = licenseText;
+    if (text == null) return null;
+    if (text.contains(RegExp(r'\s'))) return null;
+    if (text.startsWith('http://') || text.startsWith('https://')) return text;
+    return null;
+  }
+}
+
+/// A human name for the site a source code link points at, e.g. "GitHub".
+/// Falls back to the site address for anywhere else.
+String sourceCodeHostName(String url) {
+  final fullHost = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+  final host = fullHost.startsWith('www.') ? fullHost.substring(4) : fullHost;
+  return switch (host) {
+    'github.com' => 'GitHub',
+    'bitbucket.org' => 'Bitbucket',
+    'gitlab.com' => 'GitLab',
+    '' => 'Source code',
+    _ => host,
+  };
 }
 
 String? _resolveAvatarUrl(String? p) {
@@ -173,7 +208,11 @@ ForumLlmMod? _resolveLlmMod(ModRepoEntry mod, ForumLlmData? llm) {
 /// Builds the set of Attribute chip-value keys for a mod. Pure — no provider
 /// reads. The `forumIndex` carries the WIP and Archived flags that used to
 /// require a separate provider lookup.
-List<String> _buildAttributeKeys(ModRepoEntry mod, ForumModIndex? forumIndex) {
+List<String> _buildAttributeKeys(
+  ModRepoEntry mod,
+  ForumModIndex? forumIndex, {
+  String? sourceCodeUrl,
+}) {
   final result = <String>[];
   final urls = mod.urls;
   if (urls?.containsKey(ModUrlType.DirectDownload) == true) {
@@ -189,6 +228,7 @@ List<String> _buildAttributeKeys(ModRepoEntry mod, ForumModIndex? forumIndex) {
     if (forumIndex.isWip) result.add('wip');
     if (forumIndex.isArchivedModIndex) result.add('archived');
   }
+  if (sourceCodeUrl != null) result.add('sourceCode');
   return result;
 }
 
@@ -209,6 +249,7 @@ CatalogMod gatherCatalogMod({
   final llm = forumIndex?.llm;
   final llmMod = _resolveLlmMod(mod, llm);
   final extras = llmMod?.extras;
+  final sourceCodeUrl = extras?.sourceCodeUrl;
 
   final authorsList = mod.authorsList?.isNotEmpty == true
       ? mod.getAuthorsDeduplicated().join(', ')
@@ -258,6 +299,10 @@ CatalogMod gatherCatalogMod({
     changelog: extras?.changelog,
     supportLinks: extras?.supportLinks ?? const [],
     saveCompatibility: extras?.saveCompatibility,
+    sourceCodeUrl: sourceCodeUrl,
+    // Forum posts write `&nbsp;` where they mean a space; the app shows the
+    // license as-is, so the code turns it back into one here.
+    licenseText: trimmedOrNull(extras?.license?.replaceAll('&nbsp;', ' ')),
     catalogImage: mainImage,
     category: category,
     postDate: postDate,
@@ -270,7 +315,11 @@ CatalogMod gatherCatalogMod({
         : forumIndex?.topicUrl,
     isWip: forumIndex?.isWip ?? false,
     isArchived: forumIndex?.isArchivedModIndex ?? false,
-    attributeKeys: _buildAttributeKeys(mod, forumIndex),
+    attributeKeys: _buildAttributeKeys(
+      mod,
+      forumIndex,
+      sourceCodeUrl: sourceCodeUrl,
+    ),
     installedMod: installedMod,
     downloads: llmMod?.downloads ?? const [],
   );

@@ -192,6 +192,24 @@ void main() {
       expect(ForumModIndexMapper.fromMap(entry).llm, isNull);
     });
 
+    test('sourceCode parses', () {
+      final entry = baseIndexEntry()
+        ..['llm'] = {
+          'mods': [
+            {
+              'name': 'Test Mod',
+              'role': 'main',
+              'extras': {'sourceCode': 'https://github.com/someone/mod'},
+            },
+          ],
+        };
+
+      final extras =
+          ForumModIndexMapper.fromMap(entry).llm!.mods.single.extras!;
+      expect(extras.sourceCode, 'https://github.com/someone/mod');
+      expect(extras.sourceCodeUrl, 'https://github.com/someone/mod');
+    });
+
     test('changelog with only a link parses', () {
       final entry = baseIndexEntry()
         ..['llm'] = {
@@ -211,6 +229,27 @@ void main() {
           ForumModIndexMapper.fromMap(entry).llm!.mods.single.extras!.changelog!;
       expect(changelog.entries, isNull);
       expect(changelog.link, 'https://example.com/changelog.txt');
+    });
+  });
+
+  group('ForumLlmExtras.sourceCodeUrl', () {
+    String? urlFor(String? sourceCode) =>
+        ForumLlmExtras(sourceCode: sourceCode).sourceCodeUrl;
+
+    test('is null when the mod has no source code link', () {
+      expect(urlFor(null), isNull);
+    });
+
+    test('keeps http and https links, without surrounding spaces', () {
+      expect(urlFor('  https://github.com/a/b  '), 'https://github.com/a/b');
+      expect(urlFor('http://bitbucket.org/a/b'), 'http://bitbucket.org/a/b');
+    });
+
+    test('drops anything that is not a web link', () {
+      expect(urlFor(''), isNull);
+      expect(urlFor('github.com/a/b'), isNull);
+      expect(urlFor('ask the author'), isNull);
+      expect(urlFor('javascript:alert(1)'), isNull);
     });
   });
 

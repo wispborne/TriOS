@@ -31,6 +31,8 @@ class ModSummaryConfig {
   final bool showChangelog;
   final bool showDonationLinks;
   final bool showSaveCompatibility;
+  final bool showSourceCode;
+  final bool showLicense;
 
   /// How many changelog entries to list, newest first.
   final int maxChangelogEntries;
@@ -53,6 +55,8 @@ class ModSummaryConfig {
     this.showChangelog = true,
     this.showDonationLinks = true,
     this.showSaveCompatibility = true,
+    this.showSourceCode = true,
+    this.showLicense = true,
     this.maxChangelogEntries = 3,
     this.interactive = true,
     this.imageSize = 160,
@@ -73,9 +77,9 @@ class ModSummaryConfig {
 }
 
 /// A configurable overview of a mod: image, title, author, where and when it
-/// was posted, forum stats, summary, save compatibility, recent changelog, and
-/// donation links. Used as the catalog-card hover tooltip and as the header of
-/// the mod pop-ups.
+/// was posted, forum stats, summary, save compatibility, recent changelog,
+/// source code, license, and donation links. Used as the catalog-card hover
+/// tooltip and as the header of the mod pop-ups.
 class ModSummaryWidget extends ConsumerWidget {
   final CatalogMod data;
   final ModSummaryConfig config;
@@ -114,9 +118,16 @@ class ModSummaryWidget extends ConsumerWidget {
         config.showDonationLinks &&
         config.interactive &&
         data.supportLinks.isNotEmpty;
+    final sourceCodeUrl = config.showSourceCode ? data.sourceCodeUrl : null;
+    final hasLicense = config.showLicense && data.licenseText != null;
 
     final hasContent =
-        summary != null || showSaveCompat || showChangelog || showDonation;
+        summary != null ||
+        showSaveCompat ||
+        showChangelog ||
+        showDonation ||
+        sourceCodeUrl != null ||
+        hasLicense;
 
     return Column(
       crossAxisAlignment: .start,
@@ -150,6 +161,15 @@ class ModSummaryWidget extends ConsumerWidget {
                 maxEntries: config.maxChangelogEntries,
                 interactive: config.interactive,
               )
+            : null),
+        ?(sourceCodeUrl != null
+            ? _SourceCodeSection(
+                url: sourceCodeUrl,
+                interactive: config.interactive,
+              )
+            : null),
+        ?(hasLicense
+            ? _LicenseSection(data: data, interactive: config.interactive)
             : null),
         ?(showDonation
             ? _DonationLinksSection(links: data.supportLinks)
@@ -834,6 +854,135 @@ class _DisclosureState extends State<_Disclosure> {
             padding: const .only(left: 19, bottom: 4),
             child: widget.child,
           ),
+      ],
+    );
+  }
+}
+
+/// Where the mod's code lives: a chip that opens the page, or the site name
+/// and address as plain text when nothing here can be clicked.
+class _SourceCodeSection extends StatelessWidget {
+  final String url;
+  final bool interactive;
+
+  const _SourceCodeSection({required this.url, required this.interactive});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hostName = sourceCodeHostName(url);
+
+    return Column(
+      crossAxisAlignment: .start,
+      mainAxisSize: .min,
+      spacing: 6,
+      children: [
+        const _SectionHeader(icon: Icons.code, label: 'Source code'),
+        Padding(
+          padding: const .only(left: 20),
+          child: interactive
+              ? MovingTooltipWidget.text(
+                  message: url,
+                  child: ActionChip(
+                    avatar: Icon(
+                      Icons.code,
+                      size: 16,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    label: Text(hostName),
+                    color: WidgetStatePropertyAll(
+                      theme.colorScheme.surfaceContainerLow,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => launchUrl(Uri.parse(url)),
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: .start,
+                  mainAxisSize: .min,
+                  children: [
+                    Text(hostName, style: theme.textTheme.bodySmall),
+                    Text(
+                      url,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.textTheme.labelSmall?.color?.withValues(
+                          alpha: 0.6,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The license the author wrote on the forum. Long ones are cut short, with a
+/// button to read the rest.
+class _LicenseSection extends StatelessWidget {
+  final CatalogMod data;
+  final bool interactive;
+
+  const _LicenseSection({required this.data, required this.interactive});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final license = data.licenseText!;
+    // The pop-up has room for more than a tooltip does, but not for the
+    // longest licenses, which would push the download buttons off screen.
+    final maxLength = interactive ? 300 : 200;
+    final licenseUrl = data.licenseUrl;
+
+    final buttonStyle = TextButton.styleFrom(
+      textStyle: theme.textTheme.bodySmall,
+      visualDensity: VisualDensity.compact,
+      padding: const .symmetric(horizontal: 8),
+    );
+
+    return Column(
+      crossAxisAlignment: .start,
+      mainAxisSize: .min,
+      spacing: 4,
+      children: [
+        const _SectionHeader(icon: Icons.balance, label: 'License'),
+        Padding(
+          padding: const .only(left: 20),
+          child: Column(
+            crossAxisAlignment: .start,
+            mainAxisSize: .min,
+            children: [
+              // A few mods give a link instead of writing the terms out.
+              if (interactive && licenseUrl != null)
+                MovingTooltipWidget.text(
+                  message: licenseUrl,
+                  child: TextButton.icon(
+                    onPressed: () => launchUrl(Uri.parse(licenseUrl)),
+                    icon: const Icon(Icons.open_in_new, size: 14),
+                    label: const Text('Read the license'),
+                    style: buttonStyle,
+                  ),
+                )
+              else ...[
+                Text(
+                  license.truncate(maxLength),
+                  style: theme.textTheme.bodySmall,
+                ),
+                if (interactive && license.length > maxLength)
+                  TextButton(
+                    onPressed: () => showLicenseDialog(
+                      context,
+                      modTitle: data.title,
+                      license: license,
+                    ),
+                    style: buttonStyle,
+                    child: const Text('Read full license'),
+                  ),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }

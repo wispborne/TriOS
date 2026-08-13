@@ -28,6 +28,7 @@ import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/download_target.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/catalog_search.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/mod_download/mod_download_button.dart';
@@ -359,8 +360,9 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                           CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        if (enrichedMod.views != null ||
-                                            enrichedMod.replies != null)
+                                        if (_ForumStatsFromGathered.hasAnythingToShow(
+                                          enrichedMod,
+                                        ))
                                           _ForumStatsFromGathered(
                                             gathered: enrichedMod,
                                           ),
@@ -1187,6 +1189,13 @@ class CatalogDownloadButton extends ConsumerWidget {
   }
 }
 
+/// Shows a mod's full license text. Any links in it are clickable.
+void showLicenseDialog(
+  BuildContext context, {
+  required String modTitle,
+  required String license,
+}) => showAlertDialog(context, title: 'License: $modTitle', content: license);
+
 class _ForumStatsFromGathered extends StatelessWidget {
   final CatalogMod gathered;
   static final _decimalFormat = NumberFormat.decimalPattern();
@@ -1194,6 +1203,15 @@ class _ForumStatsFromGathered extends StatelessWidget {
   static final _dateFormat = DateFormat.yMMMMd();
 
   const _ForumStatsFromGathered({required this.gathered});
+
+  /// Whether the row would have at least one thing in it. A mod with a source
+  /// code link but no forum stats still gets the row.
+  static bool hasAnythingToShow(CatalogMod mod) =>
+      mod.views != null ||
+      mod.replies != null ||
+      mod.lastPostDate != null ||
+      mod.sourceCodeUrl != null ||
+      mod.licenseText != null;
 
   @override
   Widget build(BuildContext context) {
@@ -1228,6 +1246,28 @@ class _ForumStatsFromGathered extends StatelessWidget {
       ),
     );
 
+    // An icon on its own that does something when clicked. The tap stops here
+    // so clicking it doesn't also open the mod's pop-up.
+    Widget iconAction({
+      required IconData icon,
+      required String tooltip,
+      required VoidCallback onTap,
+    }) => MovingTooltipWidget.text(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const .all(2),
+          child: Icon(icon, size: 12, color: style?.color),
+        ),
+      ),
+    );
+
+    final sourceCodeUrl = gathered.sourceCodeUrl;
+    final licenseText = gathered.licenseText;
+    final licenseUrl = gathered.licenseUrl;
+
     return FittedBox(
       fit: BoxFit.scaleDown,
       alignment: Alignment.centerLeft,
@@ -1255,9 +1295,40 @@ class _ForumStatsFromGathered extends StatelessWidget {
               segStyle: activeStyle,
               tooltip: 'Last forum post: ${_dateFormat.format(date)}',
             ),
+          if (sourceCodeUrl != null)
+            iconAction(
+              icon: Icons.code,
+              tooltip:
+                  'Source code on ${sourceCodeHostName(sourceCodeUrl)}\n'
+                  'Click to open in your browser',
+              onTap: () => sourceCodeUrl.openAsUriInBrowser(),
+            ),
+          if (licenseText != null)
+            iconAction(
+              icon: Icons.balance,
+              tooltip: licenseUrl != null
+                  ? '$licenseUrl\nClick to open in your browser'
+                  : _licenseTooltip(licenseText),
+              onTap: () => licenseUrl != null
+                  ? licenseUrl.openAsUriInBrowser()
+                  : showLicenseDialog(
+                      context,
+                      modTitle: gathered.title,
+                      license: licenseText,
+                    ),
+            ),
         ],
       ),
     );
+  }
+
+  /// The license itself, cut short when it runs long, with a nudge to click
+  /// for the rest.
+  static String _licenseTooltip(String license) {
+    final shown = license.truncate(200);
+    return license.length > 200
+        ? '$shown\n\nClick to read the full license.'
+        : shown;
   }
 
   static String _compactAge(DateTime date) {

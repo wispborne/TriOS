@@ -174,6 +174,10 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
   /// e.g. "Should be fully save compatible with 1.05". From QB's forum bundle.
   final String? saveCompatibility;
 
+  /// Where the mod's code lives, as written in the forum post — usually a
+  /// GitHub link. Use [sourceCodeUrl] to get one that's safe to open.
+  final String? sourceCode;
+
   ForumLlmExtras({
     this.version,
     this.summary,
@@ -181,7 +185,18 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
     this.license,
     this.supportLinks,
     this.saveCompatibility,
+    this.sourceCode,
   });
+
+  /// [sourceCode] as a plain http(s) link, or null when it isn't one. An AI
+  /// reading forum posts writes this field and the app hands it to the
+  /// browser, so it's checked rather than trusted.
+  String? get sourceCodeUrl {
+    final raw = sourceCode?.trim();
+    if (raw == null) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    return null;
+  }
 }
 
 /// An AI-written summary of a mod, in two lengths.

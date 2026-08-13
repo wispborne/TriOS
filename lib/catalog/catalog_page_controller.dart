@@ -28,9 +28,11 @@ const String kAttrIndex = 'index';
 const String kAttrForum = 'forum';
 const String kAttrWip = 'wip';
 const String kAttrArchived = 'archived';
+const String kAttrSourceCode = 'sourceCode';
 
 const List<String> _kAttributeOrder = [
   kAttrDownload,
+  kAttrSourceCode,
   kAttrDiscord,
   kAttrIndex,
   kAttrForum,
@@ -40,6 +42,7 @@ const List<String> _kAttributeOrder = [
 
 const Map<String, String> _kAttributeLabels = {
   kAttrDownload: 'Has Download Link',
+  kAttrSourceCode: 'Has Source Code',
   kAttrDiscord: 'Discord',
   kAttrIndex: 'Index',
   kAttrForum: 'Forum',

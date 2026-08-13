@@ -859,7 +859,7 @@ class _DisclosureState extends State<_Disclosure> {
   }
 }
 
-/// Where the mod's code lives: a chip that opens the page, or the site name
+/// Where the mod's code lives: a link that opens the page, or the site name
 /// and address as plain text when nothing here can be clicked.
 class _SourceCodeSection extends StatelessWidget {
   final String url;
@@ -883,25 +883,22 @@ class _SourceCodeSection extends StatelessWidget {
           child: interactive
               ? MovingTooltipWidget.text(
                   message: url,
-                  child: ActionChip(
-                    avatar: Icon(
-                      Icons.code,
-                      size: 16,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    label: Text(hostName),
-                    color: WidgetStatePropertyAll(
-                      theme.colorScheme.surfaceContainerLow,
-                    ),
-                    visualDensity: VisualDensity.compact,
+                  child: TextButton.icon(
                     onPressed: () => launchUrl(Uri.parse(url)),
+                    icon: const Icon(Icons.open_in_new, size: 14),
+                    label: Text(hostName),
+                    style: TextButton.styleFrom(
+                      textStyle: theme.textTheme.bodySmall,
+                      visualDensity: VisualDensity.compact,
+                      padding: const .symmetric(horizontal: 8),
+                    ),
                   ),
                 )
-              : Column(
+              : Row(
                   crossAxisAlignment: .start,
                   mainAxisSize: .min,
                   children: [
-                    Text(hostName, style: theme.textTheme.bodySmall),
+                    Text("$hostName  ", style: theme.textTheme.bodySmall),
                     Text(
                       url,
                       style: theme.textTheme.labelSmall?.copyWith(

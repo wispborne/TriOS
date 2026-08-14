@@ -19,7 +19,9 @@
   - More background effects (Settings - Theme Modifiers).
   - May now mute updates for just one version of a mod.
   - May now search by built-in hullmod.
-  - Added Lavender and BiOS themes.
+  - Added Knights of Ludd, Luddic Church, Luddic Path, [REDACTED], Player, Pirates, Independents, Sindrian Diktat, BiOS, and Lavender themes.
+  - More app icons to choose from in Settings - Theme Modifiers: Lion's Guard, Derelict, and Mercenary.
+  - You may now create your own themes.
   - Ship Viewer may now group ships by hull size, tech/manufacturer, or designation.
   - Ship Viewer now shows custom shield textures, with a huge caveat.
     - Shield textures are only set via code, so TriOS cannot detect them automatically.

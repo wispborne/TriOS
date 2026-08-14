@@ -55,6 +55,19 @@
       "surfaceContainer": "#210506",
       "onPrimary": "#FFCF8A"
     },
+    "Independents": {
+      "isDark": true,
+      "primary": "#B8BCC4",
+      "secondary": "#FFD737",
+      "surface": "#101216",
+      "surfaceContainer": "#1A1D23",
+      "onPrimary": "#16181C",
+      "iconAsset": "assets/images/independents_crest.png",
+      "appNameOverride": "IndieOS",
+      "successSeed": "#6FA88C",
+      "warningSeed": "#FFD737",
+      "infoSeed": "#8FA8C4"
+    },
     "Kemet - Frog": {
       "isDark": true,
       "primary": "#66C954",
@@ -69,6 +82,19 @@
       "surface": "#121316",
       "surfaceContainer": "#121316",
       "onPrimary": "#131418"
+    },
+    "Knights of Ludd": {
+      "isDark": true,
+      "primary": "#B4D93C",
+      "secondary": "#E03B30",
+      "surface": "#14170A",
+      "surfaceContainer": "#1D2110",
+      "onPrimary": "#171A06",
+      "iconAsset": "assets/images/knights_of_ludd_crest.png",
+      "appNameOverride": "KnightOS",
+      "successSeed": "#7FA05A",
+      "warningSeed": "#E0A03C",
+      "infoSeed": "#B4D93C"
     },
     "Launcher": {
       "isDark": true,
@@ -89,6 +115,32 @@
       "infoSeed": "#9A8CE0",
       "successSeed": "#8FBF9F"
     },
+    "Luddic Church": {
+      "isDark": true,
+      "primary": "#5FC63A",
+      "secondary": "#E4DCC4",
+      "surface": "#0B1A07",
+      "surfaceContainer": "#132611",
+      "onPrimary": "#08170A",
+      "iconAsset": "assets/images/luddic_church_crest.png",
+      "appNameOverride": "LuddOS",
+      "successSeed": "#5FC63A",
+      "warningSeed": "#E0A03C",
+      "infoSeed": "#E4DCC4"
+    },
+    "Luddic Path": {
+      "isDark": true,
+      "primary": "#B4D93C",
+      "secondary": "#E03B30",
+      "surface": "#14170A",
+      "surfaceContainer": "#1D2110",
+      "onPrimary": "#171A06",
+      "iconAsset": "assets/images/luddic_path_crest.png",
+      "appNameOverride": "PathOS",
+      "successSeed": "#7FA05A",
+      "warningSeed": "#E0A03C",
+      "infoSeed": "#B4D93C"
+    },
     "Nia": {
       "isDark": true,
       "primary": "#BE00FF",
@@ -103,6 +155,32 @@
       "surface": "#21242B",
       "surfaceContainer": "#282C34",
       "onPrimary": "#dadbe0"
+    },
+    "Pirates": {
+      "isDark": true,
+      "primary": "#E76267",
+      "secondary": "#C80000",
+      "surface": "#120808",
+      "surfaceContainer": "#1B0D0D",
+      "onPrimary": "#2A0606",
+      "iconAsset": "assets/images/pirates_crest.png",
+      "appNameOverride": "PiratOS",
+      "successSeed": "#7FA05A",
+      "warningSeed": "#E0A03C",
+      "infoSeed": "#E76267"
+    },
+    "Player": {
+      "isDark": true,
+      "primary": "#8BC3E8",
+      "secondary": "#31779C",
+      "surface": "#04141C",
+      "surfaceContainer": "#0A2029",
+      "onPrimary": "#061A26",
+      "iconAsset": "assets/images/player_crest.png",
+      "appNameOverride": "MyOS",
+      "successSeed": "#7FA05A",
+      "warningSeed": "#E0A03C",
+      "infoSeed": "#8BC3E8"
     },
     "Pride": {
       "isDark": true,
@@ -121,6 +199,19 @@
       "surface": "#21000C",
       "surfaceContainer": "#21000C",
       "onPrimary": "#FDFDFD"
+    },
+    "[REDACTED]": {
+      "isDark": true,
+      "primary": "#46FFEB",
+      "secondary": "#8FA9A6",
+      "surface": "#071412",
+      "surfaceContainer": "#0D1F1C",
+      "onPrimary": "#04211E",
+      "iconAsset": "assets/images/remnants_crest.png",
+      "appNameOverride": "[REDACTED]",
+      "successSeed": "#4FD6A0",
+      "warningSeed": "#E0A03C",
+      "infoSeed": "#46FFEB"
     },
     "Royalty": {
       "isDark": true,
@@ -143,6 +234,19 @@
       "secondary": "#18FFFF",
       "surface": "#21242B",
       "surfaceContainer": "#282C34"
+    },
+    "Sindrian Diktat": {
+      "isDark": true,
+      "primary": "#E762CE",
+      "secondary": "#C8007D",
+      "surface": "#170A12",
+      "surfaceContainer": "#22101B",
+      "onPrimary": "#2A0418",
+      "iconAsset": "assets/images/sindrian_diktat_crest.png",
+      "appNameOverride": "SindrOS",
+      "successSeed": "#7FA05A",
+      "warningSeed": "#E0A03C",
+      "infoSeed": "#E762CE"
     },
     "Society": {
       "isDark": true,

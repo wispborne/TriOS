@@ -4,10 +4,40 @@ import 'package:trios/utils/dart_mappable_utils.dart';
 part 'theme_modifiers.mapper.dart';
 
 @MappableEnum(defaultValue: AppIconOverride.defaultIcon)
-enum AppIconOverride { defaultIcon, pride, hegemony, bi }
+enum AppIconOverride {
+  defaultIcon,
+  pride,
+  hegemony,
+  bi,
+  sindrian,
+  independents,
+  pirates,
+  luddicChurch,
+  luddicPath,
+  remnants,
+  player,
+  lionsGuard,
+  knightsOfLudd,
+  derelict,
+  mercenary,
+  trios,
+}
 
 @MappableEnum(defaultValue: AppNameOverride.defaultName)
-enum AppNameOverride { defaultName, hegOS, biOS }
+enum AppNameOverride {
+  defaultName,
+  hegOS,
+  biOS,
+  sindrian,
+  independents,
+  pirates,
+  luddicChurch,
+  luddicPath,
+  remnants,
+  player,
+  knightsOfLudd,
+  trios,
+}
 
 @MappableEnum(defaultValue: LaunchButtonOverride.defaultStyle)
 enum LaunchButtonOverride { defaultStyle, pride }

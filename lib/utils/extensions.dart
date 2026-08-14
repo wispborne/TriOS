@@ -1276,6 +1276,15 @@ extension TriOSBuildContext on BuildContext {
       switch (modifiers.appNameOverride) {
         AppNameOverride.hegOS => "HegOS",
         AppNameOverride.biOS => "BiOS",
+        AppNameOverride.sindrian => "SindrOS",
+        AppNameOverride.independents => "IndieOS",
+        AppNameOverride.pirates => "PiratOS",
+        AppNameOverride.luddicChurch => "LuddOS",
+        AppNameOverride.luddicPath => "PathOS",
+        AppNameOverride.remnants => "[REDACTED]",
+        AppNameOverride.player => "MyOS",
+        AppNameOverride.knightsOfLudd => "KnightOS",
+        AppNameOverride.trios => Constants.appName,
         AppNameOverride.defaultName => appName,
       };
 }

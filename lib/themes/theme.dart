@@ -37,6 +37,10 @@ class TriOSTheme {
   final String? iconGradient;
   final String? appNameOverride;
 
+  /// True for a theme the user wrote themselves, which the theme picker groups
+  /// separately from the ones TriOS ships with.
+  final bool isUserTheme;
+
   // Semantic status color seeds (optional overrides).
   final Color? successSeed;
   final Color? warningSeed;
@@ -61,6 +65,7 @@ class TriOSTheme {
     this.iconAsset,
     this.iconGradient,
     this.appNameOverride,
+    this.isUserTheme = false,
     this.successSeed,
     this.warningSeed,
     this.infoSeed,
@@ -86,6 +91,7 @@ class TriOSTheme {
     this.iconAsset,
     this.iconGradient,
     this.appNameOverride,
+    this.isUserTheme = false,
     String? successSeed,
     String? warningSeed,
     String? infoSeed,
@@ -133,6 +139,7 @@ class TriOSTheme {
     String? iconAsset,
     String? iconGradient,
     String? appNameOverride,
+    bool? isUserTheme,
     Color? successSeed,
     Color? warningSeed,
     Color? infoSeed,
@@ -156,6 +163,7 @@ class TriOSTheme {
       iconAsset: iconAsset ?? this.iconAsset,
       iconGradient: iconGradient ?? this.iconGradient,
       appNameOverride: appNameOverride ?? this.appNameOverride,
+      isUserTheme: isUserTheme ?? this.isUserTheme,
       successSeed: successSeed ?? this.successSeed,
       warningSeed: warningSeed ?? this.warningSeed,
       infoSeed: infoSeed ?? this.infoSeed,

@@ -60,21 +60,28 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
     );
 
     // Modifier overrides take priority over theme.
+    final crest = _crestAsset(iconOverride);
+    if (crest != null) {
+      _stopController();
+      return _maybeBlur(
+        Image.asset(crest, width: widget.width, height: widget.height),
+      );
+    }
+
     switch (iconOverride) {
       case AppIconOverride.pride:
         return _buildRainbowIcon(theme);
-      case AppIconOverride.hegemony:
-        _stopController();
-        return _maybeBlur(
-          Image.asset(
-            "assets/images/hegemony_crest.png",
-            width: widget.width,
-            height: widget.height,
-          ),
-        );
       case AppIconOverride.bi:
         return _buildBiGradientIcon();
-      case AppIconOverride.defaultIcon:
+      case AppIconOverride.trios:
+        // Asked for TriOS's own icon, so the theme's crest doesn't apply.
+        _stopController();
+        return _maybeBlur(
+          _buildTelosSvg(
+            color: widget.color ?? theme.colorScheme.primary,
+          ),
+        );
+      default:
         // Fall through to existing theme-driven logic.
         break;
     }
@@ -106,6 +113,27 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
 
     return _maybeBlur(_buildAnimatedRainbow(svg));
   }
+
+  /// The faction crest an override draws, or null when the override isn't a
+  /// crest (rainbow, bi gradient, or no override at all).
+  String? _crestAsset(AppIconOverride override) => switch (override) {
+    AppIconOverride.hegemony => "assets/images/hegemony_crest.png",
+    AppIconOverride.sindrian => "assets/images/sindrian_diktat_crest.png",
+    AppIconOverride.independents => "assets/images/independents_crest.png",
+    AppIconOverride.pirates => "assets/images/pirates_crest.png",
+    AppIconOverride.luddicChurch => "assets/images/luddic_church_crest.png",
+    AppIconOverride.luddicPath => "assets/images/luddic_path_crest.png",
+    AppIconOverride.remnants => "assets/images/remnants_crest.png",
+    AppIconOverride.player => "assets/images/player_crest.png",
+    AppIconOverride.lionsGuard => "assets/images/lions_guard_crest.png",
+    AppIconOverride.knightsOfLudd => "assets/images/knights_of_ludd_crest.png",
+    AppIconOverride.derelict => "assets/images/derelict_crest.png",
+    AppIconOverride.mercenary => "assets/images/mercenary_crest.png",
+    AppIconOverride.defaultIcon ||
+    AppIconOverride.pride ||
+    AppIconOverride.bi ||
+    AppIconOverride.trios => null,
+  };
 
   Widget _buildRainbowIcon(ThemeData theme) {
     final svg = _buildTelosSvg(color: Colors.white);

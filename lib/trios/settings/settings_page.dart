@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/onboarding/onboarding_page.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/deep_link/protocol_registration.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -31,6 +31,7 @@ import '../../models/version.dart';
 import '../../themes/theme.dart';
 import '../../themes/theme_manager.dart';
 import '../../themes/theme_modifiers.dart';
+import '../../themes/user_themes.dart';
 import '../../widgets/restartable_app.dart';
 import '../../widgets/trios_dropdown_menu.dart';
 import '../../widgets/trios_expansion_tile.dart';
@@ -311,10 +312,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ref
                             .read(appSettings.notifier)
                             .update(
-                              (state) => state.copyWith(
-                            useTopToolbar: value ?? false,
-                          ),
-                        );
+                              (state) =>
+                                  state.copyWith(useTopToolbar: value ?? false),
+                            );
                       },
                       label: "Use top toolbar instead of sidebar",
                     ),
@@ -325,7 +325,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         children: [
                           MovingTooltipWidget.text(
                             message:
-                            "Makes the UI larger or smaller."
+                                "Makes the UI larger or smaller."
                                 "\nMin 25%, max 300%.",
                             child: SizedBox(
                               width: 90,
@@ -356,7 +356,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           MovingTooltipWidget.text(
                             warningLevel: TooltipWarningLevel.warning,
                             message:
-                            "Make small changes at a time."
+                                "Make small changes at a time."
                                 "\nTri-Tachyon is not responsible if you set it to 300% and it's so big you can't get to the setting to fix it.",
                             child: ElevatedButton(
                               onPressed: () {
@@ -366,8 +366,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     "Setting window scale to $newWindowScaleDouble",
                                   );
                                   ref.read(appSettings.notifier).update((
-                                      state,
-                                      ) {
+                                    state,
+                                  ) {
                                     return state.copyWith(
                                       windowScaleFactor: newWindowScaleDouble,
                                     );
@@ -1058,8 +1058,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       .read(appSettings.notifier)
                                       .update(
                                         (state) => state.copyWith(
-                                          checkIfGameIsRunning:
-                                              value ?? false,
+                                          checkIfGameIsRunning: value ?? false,
                                         ),
                                       );
                                 },
@@ -1102,29 +1101,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ],
                     ),
                     if (!Platform.isMacOS)
-                    Builder(
-                      builder: (context) {
-                        final skipDeepLinkConfirmation = ref.watch(
-                          appSettings.select((s) => s.deepLinkSkipConfirmation),
-                        );
-                        return MovingTooltipWidget.text(
-                          message:
-                          "When enabled, mods opened via a 'Open with TriOS' link install immediately, skipping the confirmation dialog.",
-                          child: CheckboxWithLabel(
-                            value: skipDeepLinkConfirmation,
-                            onChanged: (bool? value) => ref
-                                .read(appSettings.notifier)
-                                .update(
-                                  (state) => state.copyWith(
-                                deepLinkSkipConfirmation: value ?? false,
-                              ),
+                      Builder(
+                        builder: (context) {
+                          final skipDeepLinkConfirmation = ref.watch(
+                            appSettings.select(
+                              (s) => s.deepLinkSkipConfirmation,
                             ),
-                            label:
-                            "Always install mods from 'Open with TriOS' links without confirming",
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                          return MovingTooltipWidget.text(
+                            message:
+                                "When enabled, mods opened via a 'Open with TriOS' link install immediately, skipping the confirmation dialog.",
+                            child: CheckboxWithLabel(
+                              value: skipDeepLinkConfirmation,
+                              onChanged: (bool? value) => ref
+                                  .read(appSettings.notifier)
+                                  .update(
+                                    (state) => state.copyWith(
+                                      deepLinkSkipConfirmation: value ?? false,
+                                    ),
+                                  ),
+                              label:
+                                  "Always install mods from 'Open with TriOS' links without confirming",
+                            ),
+                          );
+                        },
+                      ),
                     if (!Platform.isMacOS)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
@@ -1170,7 +1171,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     MovingTooltipWidget.text(
                       message:
                           "When checked, ${Constants.appName} never shows anything AI-related:"
-                              "\n- Generated mod summaries on the Catalog page",
+                          "\n- Generated mod summaries on the Catalog page",
                       child: CheckboxWithLabel(
                         value: !ref.watch(
                           appSettings.select((s) => s.enableAiFeatures),
@@ -1388,49 +1389,80 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
     final themeState = ref.watch(AppState.themeData).value;
     final availableThemes = themeState?.availableThemes.entries ?? [];
 
-    final entries = availableThemes
-        .map((entry) {
-          final themeData = ThemeManager.convertToThemeData(entry.value);
-          return DropdownMenuEntry(
-            value: entry.value,
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all(
-                themeData.scaffoldBackgroundColor,
+    DropdownMenuEntry<TriOSTheme?> themeEntry(TriOSTheme triosTheme) {
+      final themeData = ThemeManager.convertToThemeData(triosTheme);
+      return DropdownMenuEntry(
+        value: triosTheme,
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.all(
+            themeData.scaffoldBackgroundColor,
+          ),
+        ),
+        labelWidget: Row(
+          children: [
+            SizedBox(
+              width: 40,
+              height: 20,
+              child: Container(
+                color: themeData.colorScheme.primary,
+                child: const SizedBox.shrink(),
               ),
             ),
-            labelWidget: Row(
-              children: [
-                SizedBox(
-                  width: 40,
-                  height: 20,
-                  child: Container(
-                    color: themeData.colorScheme.primary,
-                    child: const SizedBox.shrink(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: Container(
-                    color: themeData.colorScheme.secondary,
-                    child: const SizedBox.shrink(),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  entry.key,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: themeData.colorScheme.onSurface,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: Container(
+                color: themeData.colorScheme.secondary,
+                child: const SizedBox.shrink(),
+              ),
             ),
-            label: entry.key,
-          );
-        })
+            const SizedBox(width: 16),
+            Text(
+              triosTheme.displayName,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: themeData.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+        label: triosTheme.displayName,
+      );
+    }
+
+    DropdownMenuEntry<TriOSTheme?> header(String label) => DropdownMenuEntry(
+      value: null,
+      enabled: false,
+      label: label,
+      labelWidget: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+
+    final userThemes = availableThemes
+        .where((e) => e.value.isUserTheme)
+        .map((e) => themeEntry(e.value))
         .distinctBy((e) => e.value)
         .toList();
+    final builtInThemes = availableThemes
+        .where((e) => !e.value.isUserTheme)
+        .map((e) => themeEntry(e.value))
+        .distinctBy((e) => e.value)
+        .toList();
+
+    // Only worth splitting the list up when the user actually has themes of
+    // their own; otherwise it looks the way it always has.
+    final entries = userThemes.isEmpty
+        ? builtInThemes
+        : [
+            header("Your themes"),
+            ...userThemes,
+            header("Built-in"),
+            ...builtInThemes,
+          ];
 
     _cachedInitialSelection ??= ref
         .read(AppState.themeData.notifier)
@@ -1442,11 +1474,13 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
           message:
               "Change up the colors."
               "\nNote: only the default theme (StarsectorTriOSTheme) is regularly tested.",
-          child: DropdownMenu(
+          child: DropdownMenu<TriOSTheme?>(
             requestFocusOnTap: false,
             dropdownMenuEntries: entries,
-            onSelected: (TriOSTheme? theme) =>
-                ref.read(AppState.themeData.notifier).switchThemes(theme!),
+            onSelected: (TriOSTheme? theme) {
+              if (theme == null) return;
+              ref.read(AppState.themeData.notifier).switchThemes(theme);
+            },
             initialSelection: _cachedInitialSelection,
           ),
         ),
@@ -1475,13 +1509,63 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
           ),
         ),
         MovingTooltipWidget.text(
-          message: "Reload themes from themes.json",
+          message:
+              "Copy theme as JSON"
+              "\nPuts the selected theme on the clipboard, ready to paste into your own themes file.",
           child: IconButton(
-            onPressed: () {
-              ref.invalidate(AppState.themeData);
+            onPressed: () async {
+              final selected = ref
+                  .read(AppState.themeData.notifier)
+                  .currentTheme;
+              await Clipboard.setData(
+                ClipboardData(text: UserThemes.asPasteableEntry(selected)),
+              );
+              if (!context.mounted) return;
+              showSnackBar(
+                context: context,
+                type: SnackBarType.info,
+                content: Text(
+                  '"${selected.displayName}" copied. Paste it into your themes file.',
+                ),
+              );
+            },
+            icon: Icon(Icons.copy, color: theme.colorScheme.onSurface),
+          ),
+        ),
+        MovingTooltipWidget.text(
+          message:
+              "Open my themes file"
+              "\n${UserThemes.file.path}",
+          child: IconButton(
+            onPressed: () => UserThemes.file.showInExplorer(),
+            icon: Icon(Icons.folder_open, color: theme.colorScheme.onSurface),
+          ),
+        ),
+        MovingTooltipWidget.text(
+          message: "Reload themes",
+          child: IconButton(
+            onPressed: () async {
+              final result = await ref
+                  .read(AppState.themeData.notifier)
+                  .reloadThemes();
               setState(() {
                 _cachedInitialSelection = null;
               });
+              if (!context.mounted) return;
+              showSnackBar(
+                context: context,
+                type: result.problems.isEmpty
+                    ? SnackBarType.info
+                    : SnackBarType.warn,
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Loaded ${result.themes.length} of your themes."),
+                    for (final problem in result.problems) Text(problem),
+                  ],
+                ),
+              );
             },
             icon: Icon(Icons.refresh, color: theme.colorScheme.onSurface),
           ),
@@ -1502,7 +1586,7 @@ class _ThemeModifiersSection extends ConsumerWidget {
     final motesEnabled = modifiers.motesEnabled(activeThemeId);
 
     return SizedBox(
-      width: 500,
+      width: 600,
       child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: TriOSExpansionTile(
@@ -1542,7 +1626,11 @@ class _ThemeModifiersSection extends ConsumerWidget {
                               dropdownMenuEntries: const [
                                 DropdownMenuEntry(
                                   value: AppIconOverride.defaultIcon,
-                                  label: "Default",
+                                  label: "Follow theme",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.trios,
+                                  label: "TriOS",
                                 ),
                                 DropdownMenuEntry(
                                   value: AppIconOverride.pride,
@@ -1555,6 +1643,50 @@ class _ThemeModifiersSection extends ConsumerWidget {
                                 DropdownMenuEntry(
                                   value: AppIconOverride.bi,
                                   label: "BiOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.sindrian,
+                                  label: "Sindrian Diktat",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.independents,
+                                  label: "Independents",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.pirates,
+                                  label: "Pirates",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.luddicChurch,
+                                  label: "Luddic Church",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.luddicPath,
+                                  label: "Luddic Path",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.remnants,
+                                  label: "[REDACTED]",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.player,
+                                  label: "Player",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.lionsGuard,
+                                  label: "Lion's Guard",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.knightsOfLudd,
+                                  label: "Knights of Ludd",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.derelict,
+                                  label: "Derelict",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppIconOverride.mercenary,
+                                  label: "Mercenary",
                                 ),
                               ],
                             ),
@@ -1585,7 +1717,11 @@ class _ThemeModifiersSection extends ConsumerWidget {
                               dropdownMenuEntries: const [
                                 DropdownMenuEntry(
                                   value: AppNameOverride.defaultName,
-                                  label: "Default",
+                                  label: "Follow theme",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.trios,
+                                  label: "TriOS",
                                 ),
                                 DropdownMenuEntry(
                                   value: AppNameOverride.hegOS,
@@ -1594,6 +1730,38 @@ class _ThemeModifiersSection extends ConsumerWidget {
                                 DropdownMenuEntry(
                                   value: AppNameOverride.biOS,
                                   label: "BiOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.sindrian,
+                                  label: "SindrOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.independents,
+                                  label: "IndieOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.pirates,
+                                  label: "PiratOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.luddicChurch,
+                                  label: "LuddOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.luddicPath,
+                                  label: "PathOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.remnants,
+                                  label: "[REDACTED]",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.player,
+                                  label: "MyOS",
+                                ),
+                                DropdownMenuEntry(
+                                  value: AppNameOverride.knightsOfLudd,
+                                  label: "KnightOS",
                                 ),
                               ],
                             ),
@@ -1650,7 +1818,7 @@ class _ThemeModifiersSection extends ConsumerWidget {
                               ),
                             ),
                           ),
-                      label: "Animated motes",
+                      label: "Animated backgrounds",
                     ),
                   ),
                   if (motesEnabled)
@@ -1872,7 +2040,7 @@ class _GlitterColorDropdown extends ConsumerWidget {
       child: Row(
         spacing: 8,
         children: [
-          const Text("Motes color"),
+          const Text("Color"),
           TriOSDropdownMenu<String?>(
             key: ValueKey(selectedThemeKey),
             initialSelection: selectedThemeKey,

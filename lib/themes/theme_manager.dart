@@ -8,6 +8,7 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/themes/semantic_colors.dart';
 import 'package:trios/themes/theme.dart';
+import 'package:trios/themes/user_themes.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/thirdparty/dartx/map.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -36,6 +37,13 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
   late Map<String, TriOSTheme> allThemes;
   late TriOSTheme _currentTheme;
 
+  /// What went wrong the last time the user themes file was read. Shown when
+  /// the user presses Reload; only logged at startup.
+  List<String> lastUserThemeProblems = [];
+
+  /// How many themes the user's own file supplied on the last read.
+  int lastUserThemeCount = 0;
+
   @override
   Future<ThemeState> build() async {
     await _loadThemes();
@@ -43,7 +51,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     try {
       _currentTheme = allThemes.getOrElse(
         ref.watch(appSettings.select((s) => s.themeKey ?? "")),
-        () => allThemes.values.first,
+        () => _fallbackTheme,
       );
     } catch (e, st) {
       Fimber.w(
@@ -51,11 +59,30 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         ex: e,
         stacktrace: st,
       );
-      _currentTheme = allThemes.values.first;
+      _currentTheme = _fallbackTheme;
     }
 
     final themeData = convertToThemeData(_currentTheme);
     return ThemeState(themeData, allThemes, _currentTheme);
+  }
+
+  /// Used when the saved theme isn't there any more — a user theme that was
+  /// deleted, or a file that didn't come along to a new machine.
+  TriOSTheme get _fallbackTheme =>
+      allThemes["StarsectorTriOSTheme"] ?? allThemes.values.first;
+
+  /// Re-reads themes from disk and rebuilds the current one. Returns what the
+  /// user's own file produced so the caller can tell them.
+  Future<UserThemesReadResult> reloadThemes() async {
+    await _loadThemes();
+    _currentTheme = allThemes[_currentTheme.id] ?? _fallbackTheme;
+    state = AsyncData(
+      ThemeState(convertToThemeData(_currentTheme), allThemes, _currentTheme),
+    );
+    return (
+      themes: allThemes.values.where((t) => t.isUserTheme).toList(),
+      problems: lastUserThemeProblems,
+    );
   }
 
   Future<void> _loadThemes() async {
@@ -106,6 +133,18 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       Fimber.i("Loaded themes: ${allThemes.keys}");
     } catch (e, st) {
       Fimber.e("Error loading themes from assets.", ex: e, stacktrace: st);
+    }
+
+    // The user's own themes go on the end; the picker is what groups them to
+    // the top, so the saved-theme lookup above keeps working the same way.
+    final userThemes = await UserThemes.read();
+    lastUserThemeProblems = userThemes.problems;
+    lastUserThemeCount = userThemes.themes.length;
+    for (final theme in userThemes.themes) {
+      allThemes[theme.id] = theme;
+    }
+    for (final problem in userThemes.problems) {
+      Fimber.w(problem);
     }
   }
 

@@ -35,6 +35,30 @@ class AppIconOverrideMapper extends EnumMapper<AppIconOverride> {
         return AppIconOverride.hegemony;
       case r'bi':
         return AppIconOverride.bi;
+      case r'sindrian':
+        return AppIconOverride.sindrian;
+      case r'independents':
+        return AppIconOverride.independents;
+      case r'pirates':
+        return AppIconOverride.pirates;
+      case r'luddicChurch':
+        return AppIconOverride.luddicChurch;
+      case r'luddicPath':
+        return AppIconOverride.luddicPath;
+      case r'remnants':
+        return AppIconOverride.remnants;
+      case r'player':
+        return AppIconOverride.player;
+      case r'lionsGuard':
+        return AppIconOverride.lionsGuard;
+      case r'knightsOfLudd':
+        return AppIconOverride.knightsOfLudd;
+      case r'derelict':
+        return AppIconOverride.derelict;
+      case r'mercenary':
+        return AppIconOverride.mercenary;
+      case r'trios':
+        return AppIconOverride.trios;
       default:
         return AppIconOverride.values[0];
     }
@@ -51,6 +75,30 @@ class AppIconOverrideMapper extends EnumMapper<AppIconOverride> {
         return r'hegemony';
       case AppIconOverride.bi:
         return r'bi';
+      case AppIconOverride.sindrian:
+        return r'sindrian';
+      case AppIconOverride.independents:
+        return r'independents';
+      case AppIconOverride.pirates:
+        return r'pirates';
+      case AppIconOverride.luddicChurch:
+        return r'luddicChurch';
+      case AppIconOverride.luddicPath:
+        return r'luddicPath';
+      case AppIconOverride.remnants:
+        return r'remnants';
+      case AppIconOverride.player:
+        return r'player';
+      case AppIconOverride.lionsGuard:
+        return r'lionsGuard';
+      case AppIconOverride.knightsOfLudd:
+        return r'knightsOfLudd';
+      case AppIconOverride.derelict:
+        return r'derelict';
+      case AppIconOverride.mercenary:
+        return r'mercenary';
+      case AppIconOverride.trios:
+        return r'trios';
     }
   }
 }
@@ -87,6 +135,24 @@ class AppNameOverrideMapper extends EnumMapper<AppNameOverride> {
         return AppNameOverride.hegOS;
       case r'biOS':
         return AppNameOverride.biOS;
+      case r'sindrian':
+        return AppNameOverride.sindrian;
+      case r'independents':
+        return AppNameOverride.independents;
+      case r'pirates':
+        return AppNameOverride.pirates;
+      case r'luddicChurch':
+        return AppNameOverride.luddicChurch;
+      case r'luddicPath':
+        return AppNameOverride.luddicPath;
+      case r'remnants':
+        return AppNameOverride.remnants;
+      case r'player':
+        return AppNameOverride.player;
+      case r'knightsOfLudd':
+        return AppNameOverride.knightsOfLudd;
+      case r'trios':
+        return AppNameOverride.trios;
       default:
         return AppNameOverride.values[0];
     }
@@ -101,6 +167,24 @@ class AppNameOverrideMapper extends EnumMapper<AppNameOverride> {
         return r'hegOS';
       case AppNameOverride.biOS:
         return r'biOS';
+      case AppNameOverride.sindrian:
+        return r'sindrian';
+      case AppNameOverride.independents:
+        return r'independents';
+      case AppNameOverride.pirates:
+        return r'pirates';
+      case AppNameOverride.luddicChurch:
+        return r'luddicChurch';
+      case AppNameOverride.luddicPath:
+        return r'luddicPath';
+      case AppNameOverride.remnants:
+        return r'remnants';
+      case AppNameOverride.player:
+        return r'player';
+      case AppNameOverride.knightsOfLudd:
+        return r'knightsOfLudd';
+      case AppNameOverride.trios:
+        return r'trios';
     }
   }
 }

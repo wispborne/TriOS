@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_data_issues.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/constants_theme.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 /// Small warning icon shown when a mod has data issues.
 /// Hover lists the issues; click opens a dialog with details.
-class ModDataWarningIcon extends StatelessWidget {
+/// Right-click offers to turn the warnings off.
+class ModDataWarningIcon extends ConsumerWidget {
   final String modName;
   final List<ModDataIssue> issues;
 
@@ -16,24 +21,48 @@ class ModDataWarningIcon extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (issues.isEmpty) return const SizedBox.shrink();
 
-    return MovingTooltipWidget.text(
-      message: issues.map((issue) => issue.summary).join("\n"),
-      warningLevel: TooltipWarningLevel.warning,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: () => showDialog(
-            context: context,
-            builder: (context) =>
-                _ModDataIssuesDialog(modName: modName, issues: issues),
+    return ContextMenuRegion(
+      contextMenu: ContextMenu(
+        entries: [
+          MenuItem(
+            label: "Hide mod data warnings",
+            icon: Icons.visibility_off,
+            onSelected: () {
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (s) => s.copyWith(modsGridShowDataWarnings: false),
+                  );
+              showSnackBar(
+                context: context,
+                content: const Text(
+                  "Mod data warnings are hidden. Turn them back on in the Mods page menu.",
+                ),
+              );
+            },
           ),
-          child: const Icon(
-            Icons.sim_card_alert_outlined,
-            size: 16,
-            color: TriOSThemeConstants.vanillaWarningColor,
+        ],
+        padding: const EdgeInsets.all(8.0),
+      ),
+      child: MovingTooltipWidget.text(
+        message: issues.map((issue) => issue.summary).join("\n"),
+        warningLevel: TooltipWarningLevel.warning,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => showDialog(
+              context: context,
+              builder: (context) =>
+                  _ModDataIssuesDialog(modName: modName, issues: issues),
+            ),
+            child: const Icon(
+              Icons.sim_card_alert_outlined,
+              size: 16,
+              color: TriOSThemeConstants.vanillaWarningColor,
+            ),
           ),
         ),
       ),

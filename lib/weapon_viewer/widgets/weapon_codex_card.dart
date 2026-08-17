@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -118,19 +120,22 @@ class WeaponCodexCard {
     final usesAmmo = weapon.ammo != null && weapon.ammo! > 0;
     final hasReload =
         usesAmmo && weapon.ammoPerSec != null && weapon.ammoPerSec! > 0;
-    final isEnergyType = weapon.effectiveMountType?.toUpperCase() == 'ENERGY';
+    // The game says "charges" instead of "ammo" two different ways: the
+    // reload rows go by the weapon's type (beams always count as charges),
+    // the flavor notes by its damage type.
+    final baseType = weapon.weaponType?.toUpperCase();
+    final chargesInRows = isBeam || baseType == 'ENERGY';
+    final chargesInNotes =
+        weapon.damageType?.toUpperCase() == 'ENERGY' && baseType != 'MISSILE';
     // Ammo present but no reload/recharge — game's `var66`.
     final limitedAmmo = usesAmmo && !hasReload;
 
     // ── Derived stats (memoized on the Weapon model) ──
-    final isBurstBeam = weapon.isBurstBeam;
     final effectiveDps = weapon.effectiveDps;
     final sustainedDps = weapon.sustainedDps;
-    final burstBeamDamage = weapon.burstDamage;
     final fluxPerDam = weapon.fluxPerDamage;
     final fluxPerSecond = weapon.fluxPerSecond;
     final sustainedFluxPerSecond = weapon.sustainedFluxPerSecond;
-    final empDisplay = weapon.empPerActivation;
     final hasSustained = weapon.hasSustainedDps;
     final hasFluxCost = (fluxPerSecond ?? 0) > 0;
     final refireDelaySeconds = weapon.refireDelay;
@@ -139,8 +144,9 @@ class WeaponCodexCard {
     // burst rows appear) — see WeaponTooltipDisplay.
     final displayBurst = weapon.tooltipDisplay.burstSize;
     final hasBurst = weapon.tooltipDisplay.showBurstRow;
-    final showDamageMultiplier = weapon.tooltipDisplay.showDamageTimesBurst;
     final showRefireDelay = refireDelaySeconds != null;
+    final damageCell = _damageCell(weapon);
+    final empCell = _empCell(weapon);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -191,22 +197,19 @@ class WeaponCodexCard {
                     'Counts as ${weapon.weaponType!.toTitleCase()} for stat modifiers',
                     rightAlign: true,
                   ),
-                if (weapon.ops != null)
-                  tooltipRow('Ordnance points', '${weapon.ops}'),
+                // The game prints "n/a" for free and system weapons.
+                tooltipRow(
+                  'Ordnance points',
+                  (weapon.ops ?? 0) > 0 && baseType != 'SYSTEM'
+                      ? '${weapon.ops}'
+                      : 'n/a',
+                ),
                 tooltipGap,
 
                 if (showStats) ...[
                   if (weapon.range != null)
                     tooltipRow('Range', tooltipFmt(weapon.range)),
-                  if (isBurstBeam && burstBeamDamage != null)
-                    tooltipRow('Damage', tooltipFmt(burstBeamDamage))
-                  else if (!isBeam && weapon.damagePerShot != null)
-                    tooltipRow(
-                      'Damage',
-                      showDamageMultiplier
-                          ? '${tooltipFmt(weapon.damagePerShot)}x$displayBurst'
-                          : tooltipFmt(weapon.damagePerShot),
-                    ),
+                  if (damageCell != null) tooltipRow('Damage', damageCell),
                   if (!noDPS && effectiveDps != null)
                     tooltipRow(
                       hasSustained
@@ -216,11 +219,7 @@ class WeaponCodexCard {
                           ? '${tooltipFmt(effectiveDps)} (${tooltipFmt(sustainedDps)})'
                           : tooltipFmt(effectiveDps),
                     ),
-                  if (empDisplay != null && empDisplay > 0)
-                    tooltipRow(
-                      isBeam && !isBurstBeam ? 'EMP DPS' : 'EMP damage',
-                      tooltipFmt(empDisplay),
-                    ),
+                  if (empCell != null) tooltipRow(empCell.label, empCell.value),
                   tooltipGap,
                 ],
 
@@ -239,7 +238,7 @@ class WeaponCodexCard {
                     tooltipRow('Flux / shot', tooltipFmt(weapon.energyPerShot)),
                   if (fluxPerDam != null)
                     tooltipRow(
-                      weapon.emp != null && weapon.emp! > 0
+                      empCell != null
                           ? 'Flux / non-EMP damage'
                           : 'Flux / damage',
                       tooltipFmt(fluxPerDam, forceDecimal: true),
@@ -247,7 +246,7 @@ class WeaponCodexCard {
                   if (limitedAmmo) ...[
                     tooltipGap,
                     tooltipNote(
-                      'Limited ${isEnergyType ? "charges" : "ammo"}'
+                      'Limited ${chargesInNotes ? "charges" : "ammo"}'
                       ' (${tooltipFmt(weapon.ammo)})',
                       rightAlign: true,
                     ),
@@ -255,7 +254,7 @@ class WeaponCodexCard {
                 ] else if (limitedAmmo) ...[
                   tooltipNote(
                     'No flux cost to fire, limited '
-                    '${isEnergyType ? "charges" : "ammo"} (${tooltipFmt(weapon.ammo)})',
+                    '${chargesInNotes ? "charges" : "ammo"} (${tooltipFmt(weapon.ammo)})',
                     rightAlign: true,
                   ),
                 ] else ...[
@@ -286,7 +285,10 @@ class WeaponCodexCard {
               icon: SizedBox(width: 80), //_damageTypeIcon(weapon, theme),
               child: tooltipStatsGrid(theme, [
                 if (showStats) ...[
-                  tooltipRow('Damage type', _damageTypeName(weapon, isBeam)),
+                  tooltipRow(
+                    'Damage type',
+                    _damageTypeName(weapon, isSoftFlux),
+                  ),
                   if (_damageTypeDesc(weapon, isSoftFlux).isNotEmpty)
                     tooltipNote(
                       _damageTypeDesc(weapon, isSoftFlux),
@@ -296,19 +298,18 @@ class WeaponCodexCard {
 
                   // Game shows each stat independently if its value
                   // is non-null, in order: Speed, Tracking, Hitpoints,
-                  // Accuracy, Turn rate.
-                  if (weapon.speedStr != null ||
-                      (isMissile && weapon.projSpeed != null))
-                    tooltipRow(
-                      'Speed',
-                      weapon.speedStr ?? tooltipFmt(weapon.projSpeed),
-                    ),
-                  if (weapon.trackingStr != null)
-                    tooltipRow('Tracking', weapon.trackingStr!),
-                  if (hasMissileDisplay &&
-                      weapon.projHitpoints != null &&
-                      weapon.projHitpoints! > 0)
-                    tooltipRow('Hitpoints', tooltipFmt(weapon.projHitpoints)),
+                  // Accuracy, Turn rate. The words come from the CSV; only
+                  // MIRVs compute them from the missile when the CSV is
+                  // blank.
+                  if (weapon.speedStr ?? _mirvSpeedWord(weapon)
+                      case final speed?)
+                    tooltipRow('Speed', speed),
+                  if (weapon.trackingStr ?? _mirvTrackingWord(weapon)
+                      case final tracking?)
+                    tooltipRow('Tracking', tracking),
+                  if (hasMissileDisplay)
+                    if (_hitpointsCell(weapon) case final hitpoints?)
+                      tooltipRow('Hitpoints', hitpoints),
                   if (weapon.accuracyStr != null)
                     tooltipRow('Accuracy', weapon.accuracyStr!)
                   else if (!hasMissileDisplay && isBeam)
@@ -327,30 +328,29 @@ class WeaponCodexCard {
                     ),
                 ],
 
-                // Ammo / charges — missiles only.
+                // Ammo / charges — only shown for regenerating weapons.
                 if (usesAmmo && hasReload) ...[
                   tooltipGap,
                   tooltipRow(
-                    isEnergyType ? 'Max charges' : 'Max ammo',
+                    chargesInRows ? 'Max charges' : 'Max ammo',
                     tooltipFmt(weapon.ammo),
                   ),
                   if (weapon.ammoPerSec! > 0)
                     tooltipRow(
-                      isEnergyType ? 'Seconds / recharge' : 'Seconds / reload',
+                      chargesInRows ? 'Seconds / recharge' : 'Seconds / reload',
                       tooltipFmt(
                         (weapon.reloadSize ?? 1.0) / weapon.ammoPerSec!,
                       ),
                     ),
                   tooltipRow(
-                    isEnergyType ? 'Charges gained' : 'Reload size',
+                    chargesInRows ? 'Charges gained' : 'Reload size',
                     tooltipFmt(weapon.reloadSize ?? 1.0),
                   ),
                 ],
 
                 if (hasBurst || showRefireDelay) tooltipGap,
 
-                if (hasBurst)
-                  tooltipRow('Burst size', '$displayBurst'),
+                if (hasBurst) tooltipRow('Burst size', '$displayBurst'),
 
                 if (showRefireDelay)
                   tooltipRow(
@@ -464,7 +464,7 @@ Widget _damageTypeIcon(Weapon weapon, ThemeData theme) {
 
 /// Returns the game's display name for the weapon's damage type.
 /// For beam weapons, appends " (Beam)" matching the Java `var68` logic.
-String _damageTypeName(Weapon weapon, bool isBeam) {
+String _damageTypeName(Weapon weapon, bool isSoftFlux) {
   final name = switch (weapon.damageType?.toUpperCase()) {
     'KINETIC' => 'Kinetic',
     'HIGH_EXPLOSIVE' => 'High Explosive',
@@ -472,7 +472,127 @@ String _damageTypeName(Weapon weapon, bool isBeam) {
     'ENERGY' => 'Energy',
     _ => 'Other',
   };
-  return isBeam ? '$name (Beam)' : name;
+  // The game appends "(Beam)" for beams and for anything tagged
+  // damage_soft_flux — the Hydra is a missile that gets it.
+  return isSoftFlux ? '$name (Beam)' : name;
+}
+
+/// The Damage cell, or null when the row is hidden. Burst beams show one
+/// burst's damage unless they display as continuous; MIRVs show their
+/// submunitions; the `damage_special` tag overrides everything.
+String? _damageCell(Weapon weapon) {
+  if (weapon.isBeam) {
+    if (!weapon.tooltipDisplay.displayAsBurstBeam) return null;
+    final burstDamage = weapon.burstDamage;
+    if (burstDamage == null) return null;
+    return weapon.tagsAsSet.contains('damage_special')
+        ? 'Special'
+        : tooltipFmt(burstDamage);
+  }
+  if (weapon.tagsAsSet.contains('damage_special')) return 'Special';
+  if (_mirvTimes(weapon, weapon.mirvDamage) case final mirv?) return mirv;
+  if (weapon.damagePerShot == null) return null;
+  final base = tooltipFmt(weapon.damagePerShot);
+  return weapon.tooltipDisplay.showDamageTimesBurst
+      ? '${base}x${weapon.tooltipDisplay.burstSize}'
+      : base;
+}
+
+/// The EMP row, or null when it's hidden (no EMP, or a MIRV whose
+/// submunitions carry none). Continuous beams — and burst beams displaying
+/// as continuous, like the IR Autolance — are labeled "EMP DPS" and show the
+/// raw per-second value; burst beams show one burst's worth; projectiles get
+/// the same "xN" suffix as the Damage row.
+_EmpCell? _empCell(Weapon weapon) {
+  if (weapon.isBeam) {
+    if (weapon.tooltipDisplay.displayAsBurstBeam) {
+      final perBurst = weapon.empPerActivation;
+      if (perBurst == null || perBurst <= 0) return null;
+      return _EmpCell('EMP damage', tooltipFmt(perBurst));
+    }
+    final emp = weapon.emp;
+    if (emp == null || emp <= 0) return null;
+    return _EmpCell('EMP DPS', tooltipFmt(emp));
+  }
+  if (weapon.isMirv && weapon.mirvNumShots != null && weapon.mirvEmp != null) {
+    if (weapon.mirvEmp! <= 0) return null;
+    final mirv = _mirvTimes(weapon, weapon.mirvEmp);
+    return mirv == null ? null : _EmpCell('EMP damage', mirv);
+  }
+  final emp = weapon.emp;
+  if (emp == null || emp <= 0) return null;
+  final base = tooltipFmt(emp);
+  return _EmpCell(
+    'EMP damage',
+    weapon.tooltipDisplay.showDamageTimesBurst
+        ? '${base}x${weapon.tooltipDisplay.burstSize}'
+        : base,
+  );
+}
+
+class _EmpCell {
+  final String label;
+  final String value;
+
+  const _EmpCell(this.label, this.value);
+}
+
+/// A MIRV's "200x5"-style value: the submunition number crossed with the
+/// burst size and submunition count the way the game combines them. Null
+/// when this isn't a MIRV or the `.proj` data is incomplete.
+String? _mirvTimes(Weapon weapon, double? value) {
+  if (!weapon.isMirv || value == null) return null;
+  final numShots = weapon.mirvNumShots;
+  if (numShots == null) return null;
+  final burst = weapon.tooltipDisplay.burstSize;
+  final base = tooltipFmt(value);
+  if (numShots > 1 && burst > 1) return '${base}x${burst}x$numShots';
+  if (numShots <= 1 && burst <= 1) return base;
+  return '${base}x${math.max(burst, numShots)}';
+}
+
+/// The Hitpoints cell: the missile's own hitpoints, plus the submunitions'
+/// for MIRVs ("300, 500x5"). Null hides the row.
+String? _hitpointsCell(Weapon weapon) {
+  final base = weapon.projHitpoints;
+  if (base == null || base <= 0) return null;
+  final baseStr = tooltipFmt(base);
+  final sub = weapon.isMirv ? weapon.mirvHitpoints : null;
+  if (sub == null || sub <= 0) return baseStr;
+  final numShots = weapon.mirvNumShots ?? 0;
+  final subStr = tooltipFmt(sub);
+  if (numShots > 1) return '$baseStr, ${subStr}x$numShots';
+  if (weapon.tooltipDisplay.burstSize <= 1) return subStr;
+  return sub == base ? subStr : '$baseStr, $subStr';
+}
+
+/// The computed Speed word for a MIRV whose CSV `speedStr` is blank. The
+/// thresholds are the game's, against the missile's top speed (which the
+/// CSV `proj speed` column sets).
+String? _mirvSpeedWord(Weapon weapon) {
+  final speed = weapon.projSpeed;
+  if (!weapon.isMirv || speed == null) return null;
+  if (speed <= 125) return 'Very Slow';
+  if (speed <= 175) return 'Slow';
+  if (speed <= 225) return 'Medium';
+  return speed <= 275 ? 'Fast' : 'Very Fast';
+}
+
+/// The computed Tracking word for a MIRV whose CSV `trackingStr` is blank:
+/// time to reach top speed plus time to turn 180°, banded like the game.
+String? _mirvTrackingWord(Weapon weapon) {
+  if (!weapon.isMirv) return null;
+  final speed = weapon.projSpeed;
+  final acceleration = weapon.missileAcceleration;
+  final turnRate = weapon.missileMaxTurnRate;
+  if (speed == null || acceleration == null || turnRate == null) return null;
+  if (acceleration <= 0 || turnRate <= 0) return null;
+  final sluggishness = speed / acceleration + 180 / turnRate;
+  if (sluggishness <= 0) return 'None';
+  if (sluggishness <= 2) return 'Excellent';
+  if (sluggishness <= 4) return 'Good';
+  if (sluggishness <= 6) return 'Medium';
+  return sluggishness <= 8 ? 'Poor' : 'Very Poor';
 }
 
 /// Maps maxSpread to the game's accuracy display name.
@@ -506,7 +626,7 @@ String _damageTypeDesc(Weapon weapon, bool isSoftFlux) {
     'KINETIC' => '200% vs shields, 50% vs armor',
     'HIGH_EXPLOSIVE' => '200% vs armor, 50% vs shields',
     'FRAGMENTATION' => '25% vs shields and armor, 100% vs hull',
-    'ENERGY' => '100% vs shield, armor, and hull',
+    'ENERGY' => '100% vs shields, armor, and hull',
     _ => '',
   };
   if (base.isEmpty) return '';

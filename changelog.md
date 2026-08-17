@@ -44,6 +44,7 @@
   - Crash on launch on Linux if the window size was set larger than all monitors.
   - Number of barrels is now taken into account for weapon stats.
     - Fixes DPS for weapons like Solis Cannon, Defabrication Swarm, and Gatebreaker Shotgun.
+  - More weapon stat fixes (Hydra shows 'Special' for dmg, IR Autolance is now a beam, wording fixes, more).
   - A few ships/weapons didn't load because of invalid data, whereas Starsector set default values and loaded them.
     - e.g. `armaa_hazard_torso` has `DS` as its `energy/second`; this now loads.
 - Changed

@@ -60,54 +60,55 @@ final _lastMergedWeapons =
 /// quick: the scan and its cache hold every installed mod either way.
 final weaponListNotifierProvider =
     Provider.family<AsyncValue<List<Weapon>>, bool>((ref, onlyEnabledMods) {
-  final sources = ref.watch(weaponSourcesProvider);
-  final resolver = ref.watch(gameFileResolverProvider(onlyEnabledMods));
-  final mods = ref.watch(AppState.mods);
-  final variants = mods
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls
-      .where(
-        (variant) =>
-            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
+      final sources = ref.watch(weaponSourcesProvider);
+      final resolver = ref.watch(gameFileResolverProvider(onlyEnabledMods));
+      final mods = ref.watch(AppState.mods);
+      final variants = mods
+          .map((mod) => mod.findFirstEnabledOrHighestVersion)
+          .nonNulls
+          .where(
+            (variant) =>
+                !onlyEnabledMods ||
+                variant.mod(mods)?.hasEnabledVariant == true,
+          );
+      final orderedSrcs = orderedSources(variants);
+
+      final memo = _lastMergedWeapons[onlyEnabledMods];
+
+      // The raw scan stream restarts when the mod list changes, and exposes no
+      // payloads until its cache read finishes. Mapping that through would blank
+      // the page for a few seconds — keep showing the last list that built.
+      final payloads = sources.value;
+      if (payloads == null) {
+        return memo != null
+            ? AsyncValue.data(memo.weapons)
+            : const AsyncValue.loading();
+      }
+
+      final key = orderedSrcs.map((s) => s.key).join('\n');
+      if (memo != null &&
+          identical(memo.payloads, payloads) &&
+          memo.key == key &&
+          identical(memo.resolver, resolver)) {
+        return AsyncValue.data(memo.weapons);
+      }
+      // Last resort: if the merge itself throws, log it and keep showing the
+      // last list that built instead of taking the whole page down.
+      final List<Weapon> weapons;
+      try {
+        weapons = _buildWeapons(payloads, orderedSrcs, resolver);
+      } catch (e, st) {
+        Fimber.e('Building the weapons list failed.', ex: e, stacktrace: st);
+        return AsyncValue.data(memo?.weapons ?? const <Weapon>[]);
+      }
+      _lastMergedWeapons[onlyEnabledMods] = (
+        payloads: payloads,
+        key: key,
+        resolver: resolver,
+        weapons: weapons,
       );
-  final orderedSrcs = orderedSources(variants);
-
-  final memo = _lastMergedWeapons[onlyEnabledMods];
-
-  // The raw scan stream restarts when the mod list changes, and exposes no
-  // payloads until its cache read finishes. Mapping that through would blank
-  // the page for a few seconds — keep showing the last list that built.
-  final payloads = sources.value;
-  if (payloads == null) {
-    return memo != null
-        ? AsyncValue.data(memo.weapons)
-        : const AsyncValue.loading();
-  }
-
-  final key = orderedSrcs.map((s) => s.key).join('\n');
-  if (memo != null &&
-      identical(memo.payloads, payloads) &&
-      memo.key == key &&
-      identical(memo.resolver, resolver)) {
-    return AsyncValue.data(memo.weapons);
-  }
-  // Last resort: if the merge itself throws, log it and keep showing the
-  // last list that built instead of taking the whole page down.
-  final List<Weapon> weapons;
-  try {
-    weapons = _buildWeapons(payloads, orderedSrcs, resolver);
-  } catch (e, st) {
-    Fimber.e('Building the weapons list failed.', ex: e, stacktrace: st);
-    return AsyncValue.data(memo?.weapons ?? const <Weapon>[]);
-  }
-  _lastMergedWeapons[onlyEnabledMods] = (
-    payloads: payloads,
-    key: key,
-    resolver: resolver,
-    weapons: weapons,
-  );
-  return AsyncValue.data(weapons);
-});
+      return AsyncValue.data(weapons);
+    });
 
 /// Weapons keyed by id, rebuilt only when the weapons list changes. Prefer
 /// this over building a map from [weaponListNotifierProvider] per widget.
@@ -139,6 +140,9 @@ const _weaponAreaNames = <String, String>{
   'hardpointAngleOffsets': 'mount positions',
   'renderHints': 'render hints',
   'barrelMode': 'barrel mode',
+  'interruptibleBurst': 'burst',
+  'beamFireOnlyOnFullCharge': 'beam charge-up',
+  'skipIdleFrameIfZeroBurstDelay': 'burst',
   'specClass': 'spec class',
   'mountType': 'mount type',
   'mountTypeOverride': 'mount type',
@@ -177,7 +181,9 @@ List<Weapon> _buildWeapons(
   GameFileResolver resolver,
 ) {
   if (payloads.isEmpty) return const [];
-  final bySourceKey = {for (final payload in payloads) payload.sourceKey: payload};
+  final bySourceKey = {
+    for (final payload in payloads) payload.sourceKey: payload,
+  };
 
   // Projectiles from every source, in load order, so a launcher in one mod can
   // find the missile it fires even when another mod defines it.
@@ -227,17 +233,30 @@ List<Weapon> _buildWeapons(
       }
     }
 
-    // Launchers with this hint draw the missiles they hold.
+    // The missile this weapon fires. The game reads the projectile spec for
+    // stats (MIRV submunitions, engine speed words), not just for rendering.
     final hints = (data['renderHints'] as List?)?.cast<String>() ?? const [];
     final projectileId = data['projectileSpecId'] as String?;
-    if (projectileId != null &&
-        hints.any((h) => h.toUpperCase().contains('RENDER_LOADED_MISSILES'))) {
-      final missile = missileSpecs[projectileId];
-      final missileSprite = resolver.resolve(missile?['sprite'] as String?);
-      if (missileSprite != null) {
-        data['loadedMissileSprite'] = missileSprite;
-        data['loadedMissileSize'] = missile?['size'];
-        data['loadedMissileCenter'] = missile?['center'];
+    final missile = projectileId != null ? missileSpecs[projectileId] : null;
+    if (missile != null) {
+      data['missileType'] = missile['missileType'];
+      data['mirvDamage'] = missile['behaviorDamage'];
+      data['mirvEmp'] = missile['behaviorEmp'];
+      data['mirvNumShots'] = missile['behaviorNumShots'];
+      data['mirvHitpoints'] = missile['behaviorHitpoints'];
+      data['missileAcceleration'] = missile['engineAcc'];
+      data['missileMaxTurnRate'] = missile['engineTurnRate'];
+
+      // Launchers with this hint draw the missiles they hold.
+      if (hints.any(
+        (h) => h.toUpperCase().contains('RENDER_LOADED_MISSILES'),
+      )) {
+        final missileSprite = resolver.resolve(missile['sprite'] as String?);
+        if (missileSprite != null) {
+          data['loadedMissileSprite'] = missileSprite;
+          data['loadedMissileSize'] = missile['size'];
+          data['loadedMissileCenter'] = missile['center'];
+        }
       }
     }
 
@@ -294,7 +313,9 @@ const _columnsNotForExport = {'wpnfiles', 'csvfiles'};
 /// Renders the current weapon list as CSV, for the export button.
 String weaponsAsCsv(List<Weapon> weapons) {
   if (weapons.isEmpty) return '';
-  final fields = weapons.first.toMap().keys
+  final fields = weapons.first
+      .toMap()
+      .keys
       .where((key) => !_columnsNotForExport.contains(key))
       .toList();
   final rows = <List<dynamic>>[fields];
@@ -315,12 +336,16 @@ class WeaponListNotifier
   /// 4: `.wpn` files are keyed by folder + file name and are read from
   /// `data/shipsystems/wpn` too, and the mount type moved off the `type` key.
   /// 5: `barrelMode` is read from the `.wpn` (LINKED barrels multiply damage).
+  /// 6: burst flags are read from the `.wpn`, and `.proj` files contribute
+  /// `missileType`, MIRV submunition stats, and missile engine stats.
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
-  late final CachedVariantStore store =
-      CachedVariantStore(domain, Constants.viewerCacheDirPath);
+  late final CachedVariantStore store = CachedVariantStore(
+    domain,
+    Constants.viewerCacheDirPath,
+  );
 
   /// Longer interval because the downstream merge and model rebuild is
   /// expensive.
@@ -414,9 +439,9 @@ class WeaponListNotifier
 
   @override
   WeaponsCachePayload decodePayload(Uint8List bytes) {
-    final raw = CachedStreamListNotifier.normalizeForMapper(
-      msgpack.deserialize(bytes),
-    ) as Map<String, dynamic>;
+    final raw =
+        CachedStreamListNotifier.normalizeForMapper(msgpack.deserialize(bytes))
+            as Map<String, dynamic>;
 
     return WeaponsCachePayload(
       sourceKey: raw['sourceKey'] as String,
@@ -518,6 +543,12 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
       put('renderHints', _toStringList(jsonData['renderHints']));
       put('projectileSpecId', jsonData['projectileSpecId']);
       put('barrelMode', jsonData['barrelMode']);
+      put('interruptibleBurst', jsonData['interruptibleBurst']);
+      put('beamFireOnlyOnFullCharge', jsonData['beamFireOnlyOnFullCharge']);
+      put(
+        'skipIdleFrameIfZeroBurstDelay',
+        jsonData['skipIdleFrameIfZeroBurstDelay'],
+      );
       put('turretOffsets', _toDoubleList(jsonData['turretOffsets']));
       put('hardpointOffsets', _toDoubleList(jsonData['hardpointOffsets']));
       put('turretAngleOffsets', _toDoubleList(jsonData['turretAngleOffsets']));
@@ -651,9 +682,12 @@ List<String>? _toStringList(dynamic value) {
 }
 
 /// Scans [_projFolders] (recursively, to catch the `proj/` subfolder under
-/// `data/weapons`) and builds a `projectileSpecId -> {sprite, size, center}`
-/// index for missile-type projectiles defined in this folder. The sprite path
-/// is kept as written; it is matched to a real file after the full scan.
+/// `data/weapons`) and builds a `projectileSpecId -> spec fields` index for
+/// missile-type projectiles defined in this folder. Carries the render data
+/// for loaded launchers (sprite path kept as written; matched to a real file
+/// after the full scan) plus the stats the codex needs: `missileType`, the
+/// MIRV submunition numbers, and the engine stats behind the Speed/Tracking
+/// words.
 Future<Map<String, Map<String, dynamic>>> _indexMissileSpecs(
   Directory folder,
   ParseRecorder recorder,
@@ -683,16 +717,32 @@ Future<Map<String, Map<String, dynamic>>> _indexMissileSpecs(
       final id = json['id'] as String?;
       final specClass = (json['specClass'] as String?)?.toLowerCase();
       if (id == null || specClass != 'missile') continue;
-      final sprite = _spritePath(json['sprite']);
-      if (sprite == null) continue;
+      final behavior = json['behaviorSpec'];
+      final engine = json['engineSpec'];
       result[id] = {
-        'sprite': sprite,
+        'sprite': _spritePath(json['sprite']),
         'size': _toDoubleList(json['size']),
         'center': _toDoubleList(json['center']),
+        'missileType': json['missileType']?.toString(),
+        if (behavior is Map) ...{
+          'behaviorDamage': _toDoubleOrNull(behavior['damage']),
+          'behaviorEmp': _toDoubleOrNull(behavior['emp']),
+          'behaviorNumShots': _toDoubleOrNull(behavior['numShots'])?.toInt(),
+          'behaviorHitpoints': _toDoubleOrNull(behavior['hitpoints']),
+        },
+        if (engine is Map) ...{
+          'engineAcc': _toDoubleOrNull(engine['acc']),
+          'engineTurnRate': _toDoubleOrNull(engine['turnRate']),
+        },
       };
     } catch (_) {
       // Ignore unparseable .proj files; missiles are best-effort decoration.
     }
   }
   return result;
+}
+
+double? _toDoubleOrNull(dynamic value) {
+  if (value is num) return value.toDouble();
+  return num.tryParse(value?.toString() ?? '')?.toDouble();
 }

@@ -121,10 +121,26 @@ class Weapon with WeaponMappable implements WispGridItem {
   final String? projectileSpecId;
 
   /// How the barrels fire, from the `.wpn`: `ALTERNATING` (default, one
-  /// barrel per shot), `LINKED` (every barrel at once), `DUAL` (two at once),
-  /// or `ALTERNATING_BURST`. LINKED and DUAL multiply each shot's damage and
-  /// flux — see [barrelCount].
+  /// barrel per shot), `LINKED` (every barrel at once), `DUAL_LINKED` (two at
+  /// once), or `ALTERNATING_BURST`. LINKED and DUAL_LINKED multiply each
+  /// shot's damage and flux — see [barrelCount].
   final String? barrelMode;
+
+  /// `.wpn` flag: the burst can be cut short by releasing the trigger. The
+  /// game's tooltip then treats the weapon as firing single shots — no burst
+  /// size row, no `xN` damage suffix, and the refire delay is just the
+  /// chargedown (`CargoTooltipFactory`). The derived DPS is unaffected.
+  final bool? interruptibleBurst;
+
+  /// `.wpn` flag on burst beams: the beam only fires once fully charged, so
+  /// the chargeup contributes no damage. The game zeroes the chargeup term of
+  /// the burst-damage ramp (`WeaponSpreadsheetLoader`).
+  final bool? beamFireOnlyOnFullCharge;
+
+  /// `.wpn` flag on burst beams (IR Autolance): the game's tooltip displays
+  /// the weapon as a continuous beam — no per-burst Damage row, and EMP is
+  /// labeled `EMP DPS`.
+  final bool? skipIdleFrameIfZeroBurstDelay;
 
   /// Fire-point offsets, flat `[x1, y1, x2, y2, ...]` (one pair per barrel/tube).
   /// `x` is along the barrel (weapon-forward), `y` is lateral.
@@ -139,6 +155,27 @@ class Weapon with WeaponMappable implements WispGridItem {
   final String? loadedMissileSprite;
   final List<double>? loadedMissileSize;
   final List<double>? loadedMissileCenter;
+
+  // ── Fields read from the weapon's missile `.proj`, when one was found ──
+
+  /// The `.proj`'s `missileType` (`MISSILE`, `MIRV`, `ROCKET`, `BOMB`, ...).
+  /// Null for gun projectiles and when no `.proj` matched [projectileSpecId].
+  final String? missileType;
+
+  /// MIRV submunition stats from the `.proj`'s `behaviorSpec`. The game
+  /// derives a MIRV's per-shot damage as [mirvDamage] × [mirvNumShots] and
+  /// displays the submunition EMP and hitpoints (`WeaponSpreadsheetLoader`,
+  /// `CargoTooltipFactory`). Only meaningful when [isMirv].
+  final double? mirvDamage;
+  final double? mirvEmp;
+  final int? mirvNumShots;
+  final double? mirvHitpoints;
+
+  /// Missile engine stats from the `.proj`'s `engineSpec` (`acc`,
+  /// `turnRate`). With [projSpeed], these feed the game's computed
+  /// Speed/Tracking words for MIRVs whose CSV strings are blank.
+  final double? missileAcceleration;
+  final double? missileMaxTurnRate;
 
   final String? mountTypeOverride;
 
@@ -249,6 +286,9 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.renderHints,
     this.projectileSpecId,
     this.barrelMode,
+    this.interruptibleBurst,
+    this.beamFireOnlyOnFullCharge,
+    this.skipIdleFrameIfZeroBurstDelay,
     this.turretOffsets,
     this.hardpointOffsets,
     this.turretAngleOffsets,
@@ -256,6 +296,13 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.loadedMissileSprite,
     this.loadedMissileSize,
     this.loadedMissileCenter,
+    this.missileType,
+    this.mirvDamage,
+    this.mirvEmp,
+    this.mirvNumShots,
+    this.mirvHitpoints,
+    this.missileAcceleration,
+    this.missileMaxTurnRate,
     this.mountTypeOverride,
   });
 
@@ -278,10 +325,28 @@ class Weapon with WeaponMappable implements WispGridItem {
   /// uptime, not a shot count.
   late final bool isBurstBeam = isBeam && (burstSize ?? 0) > 0;
 
+  /// Whether the CSV set an `ammo` cap. The game's sustained-DPS branch
+  /// requires this on top of `ammo/sec` (`BaseWeaponSpec.usesAmmo()`).
+  bool get usesAmmo => ammo != null;
+
+  /// A missile whose `.proj` declares `"missileType":"MIRV"` (Sabot,
+  /// Hurricane, Hydra). Their damage comes from the submunitions.
+  late final bool isMirv = missileType?.trim().toUpperCase() == 'MIRV';
+
+  /// A MIRV's real per-shot damage: submunition damage × count, the way the
+  /// game derives it. Null when this isn't a MIRV or the `.proj` data is
+  /// incomplete (the game falls back to the CSV damage then too).
+  double? get mirvTotalDamage =>
+      isMirv && mirvDamage != null && mirvNumShots != null
+      ? mirvDamage! * mirvNumShots!
+      : null;
+
   /// Projectiles per trigger pull from barrel wiring alone. The game fires
   /// every barrel at once for LINKED (one barrel per [turretOffsets] pair)
-  /// and two for DUAL, and multiplies shot damage and flux to match. Beams
-  /// and the default ALTERNATING mode fire one barrel at a time.
+  /// and two for DUAL_LINKED, and multiplies shot damage and flux to match.
+  /// Beams and the default ALTERNATING mode fire one barrel at a time. (Any
+  /// other string, including plain `DUAL`, fails the game's enum parse and
+  /// crashes it at load, so no working mod carries one.)
   late final int barrelCount = () {
     if (isBeam) return 1;
     final mode = barrelMode?.trim().toUpperCase();
@@ -289,7 +354,7 @@ class Weapon with WeaponMappable implements WispGridItem {
       final barrels = (turretOffsets?.length ?? 0) ~/ 2;
       return barrels > 1 ? barrels : 1;
     }
-    if (mode == 'DUAL') return 2;
+    if (mode == 'DUAL_LINKED') return 2;
     return 1;
   }();
 

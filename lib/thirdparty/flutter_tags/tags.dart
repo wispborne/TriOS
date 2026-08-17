@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/thirdparty/flutter_tags/item_tags.dart';
 import 'package:trios/thirdparty/flutter_tags/suggestions_textfield.dart';
 

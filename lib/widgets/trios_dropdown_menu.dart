@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A themed, generic dropdown menu used across TriOS.
 /// Mirrors the compact toolbar style used in the app (dense, rounded, no filter/search).

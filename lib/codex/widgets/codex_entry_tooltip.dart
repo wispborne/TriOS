@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/faction_viewer/widgets/faction_card.dart';
 import 'package:trios/fighter_viewer/widgets/wing_codex_card.dart';

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/models/mod_variant.dart';

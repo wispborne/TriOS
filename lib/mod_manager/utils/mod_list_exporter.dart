@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_profiles/models/mod_profile.dart';

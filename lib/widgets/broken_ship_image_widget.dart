@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Placeholder shown when a *ship* sprite is missing or can't be decoded:

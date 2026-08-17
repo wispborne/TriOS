@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';

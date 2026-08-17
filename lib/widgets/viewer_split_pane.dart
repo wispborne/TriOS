@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 
 /// Shared MultiSplitView wrapper with consistent divider styling for viewer pages.

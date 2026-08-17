@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:html/dom.dart' as dom;

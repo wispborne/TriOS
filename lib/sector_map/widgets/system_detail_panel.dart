@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/sector_map/models/sector.dart';
 
 /// Side panel shown when a system is selected. Lists the system's faction

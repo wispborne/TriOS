@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Small "Skin" tag shown next to a ship's name when it came from a `.skin`

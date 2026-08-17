@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_profiles/save_reader.dart';
 import 'package:trios/sector_map/finder/widgets/finder_panel.dart';

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart' show StateProvider, StateController;
 import 'package:trios/changelogs/mod_changelogs_manager.dart';

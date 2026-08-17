@@ -6,7 +6,7 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.12.0
-  flutter: '3.44.2'
+  flutter: '3.47.0'
 
 # To automatically upgrade your package dependencies to the latest versions,
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -29,14 +29,14 @@ dependencies:
   dart_mappable: ^4.8.0
   defer_pointer: ^0.0.2
   desktop_drop: ^0.7.1
-  dropdown_button2: ^3.0.0-beta.22
+  dropdown_button2: ^3.1.0
   dynamic_library: ^0.9.0
   ffi: ^2.1.5
   file_picker: ^10.3.8
   fl_chart: ^1.1.1
   flutter_animate: ^4.5.2
   flutter_color: ^2.1.0
-  google_fonts: ^7.0.0
+  google_fonts: ^8.2.1
   material_color_utilities: ^0.13.0
   hooks_riverpod: ^3.4.2
   hashlib: ^2.3.0
@@ -49,6 +49,7 @@ dependencies:
   logger: ^2.5.0
   flutter_markdown_plus: ^1.0.7
   material_symbols_icons: ^4.2951.0
+  material_ui: ^1.0.0
   msgpack_dart: ^1.0.1
   multi_split_view: ^3.6.0
   mutex: ^3.1.0

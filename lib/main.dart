@@ -5,7 +5,7 @@ import 'dart:math' as math;
 import 'package:app_links/app_links.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -560,6 +560,14 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
           : ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       darkTheme: currentTheme.themeData,
+      // Packages we depend on (dropdown_button2, toastification, fl_chart, ...)
+      // still use the old built-in `package:flutter/material.dart`, whose
+      // Theme/ThemeData/MaterialLocalizations are different classes from
+      // material_ui's. This copies our theme across so their widgets don't fall
+      // back to Flutter's default colors. Remove once they've all moved to
+      // material_ui.
+      // ignore: deprecated_member_use
+      builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
       home: const ToastificationConfigProvider(
         config: ToastificationConfig(
           alignment: Alignment.bottomRight,

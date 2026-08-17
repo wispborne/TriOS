@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Renders an SMF forum spoiler block as a collapsible section.
 /// Starts collapsed when [initiallyCollapsed] is true (SMF's default when

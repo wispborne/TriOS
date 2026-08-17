@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/widgets/palette_generator_mixin.dart';
 import 'package:trios/trios/constants_theme.dart';
 

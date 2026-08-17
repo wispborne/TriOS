@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 
 class TriOSToolbarCheckboxButton extends StatelessWidget {

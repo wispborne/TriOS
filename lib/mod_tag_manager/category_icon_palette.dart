@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/mod_tag_manager/category.dart';
 
 /// All SVG icons from the assets/images directory.

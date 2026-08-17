@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // InputSuggestions version 0.0.1
 // currently yield inline suggestions

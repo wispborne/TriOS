@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/download_manager/download_target.dart';
 import 'package:trios/widgets/mod_download/mod_download_status.dart';

@@ -203,6 +203,14 @@ void main(List<String> args) async {
     launchDeepLink = SingleInstanceManager.extractDeepLinkFromArgs(args);
   }
 
+  if (launchDeepLink != null &&
+      !SingleInstanceManager.claimLaunchDeepLink(launchDeepLink)) {
+    // This process already handled that link; we're seeing it again because a
+    // hot restart re-ran main() and the link outlived the Dart isolate.
+    Fimber.i('Launch deep link already handled, ignoring: $launchDeepLink');
+    launchDeepLink = null;
+  }
+
   // Single-instance + crash detection via running.lock (contains the owner PID).
   // On Windows/Linux a deep-link launch that finds a live instance forwards the
   // link to it and exits; this also serializes two simultaneous cold launches.

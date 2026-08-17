@@ -53,8 +53,13 @@ class SingleInstanceManager {
     } on FileSystemException {
       // Lock exists: a live primary, a racing sibling, or a stale crash lock.
       final ownerPid = _readOwnerPidWithRetry(lockFile);
-      final ownerAlive =
-          ownerPid != null && ownerPid != pid && isProcessAlive(ownerPid);
+
+      // Our own PID: main() has re-run inside a process that already owns the
+      // lock (a Flutter hot restart). Nothing crashed and nothing was taken
+      // over, so don't report a stale lock.
+      if (ownerPid == pid) return LockAcquisition.freshStart;
+
+      final ownerAlive = ownerPid != null && isProcessAlive(ownerPid);
 
       if (ownerAlive) {
         if (deepLink != null) {
@@ -76,6 +81,32 @@ class SingleInstanceManager {
       Fimber.w('Error acquiring running.lock: $e');
       return LockAcquisition.freshStart;
     }
+  }
+
+  /// File recording the launch deep link this process has already handled.
+  static File get _handledLaunchLinkFile =>
+      File('${Constants.configDataFolderPath.path}/launch_deeplink.handled');
+
+  /// Records [uri] as the launch deep link handled by this process, and reports
+  /// whether it was new to this process.
+  ///
+  /// A Flutter hot restart re-runs `main()` without starting a new process, and
+  /// the launch link is still readable afterwards — macOS keeps it inside the
+  /// native `app_links` plugin, which outlives the Dart isolate, and
+  /// Windows/Linux keep the original command line — so the install prompt would
+  /// reappear on every hot restart. The record is keyed by process id, so
+  /// launching from the same link again later is handled normally.
+  static bool claimLaunchDeepLink(String uri) {
+    final record = '$pid\n$uri';
+    final file = _handledLaunchLinkFile;
+    try {
+      if (file.existsSync() && file.readAsStringSync() == record) return false;
+      file.writeAsStringSync(record);
+    } catch (e) {
+      // Couldn't tell; handle the link rather than silently swallowing it.
+      Fimber.w('Error recording handled launch deep link: $e');
+    }
+    return true;
   }
 
   /// Whether this process owns `running.lock` (its PID is written there). Used to

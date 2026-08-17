@@ -46,11 +46,13 @@ ShipsCachePayload _payload({
   List<Map<String, dynamic>> rows = const [],
   Map<String, Map<String, dynamic>> shipFiles = const {},
   Map<String, Map<String, dynamic>> skinFiles = const {},
+  String? csvFilePath,
 }) => ShipsCachePayload(
   sourceKey: sourceKey,
   rows: rows,
   shipFiles: shipFiles,
   skinFiles: skinFiles,
+  csvFilePath: csvFilePath,
   moduleVariants: const {},
   hullIdMap: const {},
 );
@@ -389,6 +391,111 @@ void main() {
         _byId(ships, 'lasher')?.spriteFile,
         _imageIn('mods/Art Pack', 'graphics/ships/lasher.png'),
         reason: 'the art pack has the file, so its copy is the one shown',
+      );
+    });
+
+    test('every mod that changes a hull offers its own files', () async {
+      final resprite = _variant('Resprite');
+
+      final ships = await _build(
+        payloads: [
+          _payload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {'id': 'paragon', 'name': 'Paragon', 'hitpoints': 18000},
+            ],
+            shipFiles: {
+              'paragon.ship': {
+                'hullId': 'paragon',
+                '_dataFile': 'core/data/hulls/paragon.ship',
+                'spriteName': 'graphics/ships/paragon.png',
+              },
+            },
+            csvFilePath: 'core/data/hulls/ship_data.csv',
+          ),
+          _payload(
+            sourceKey: resprite.smolId,
+            rows: [
+              {'id': 'paragon', 'name': 'Paragon', 'hitpoints': 20000},
+            ],
+            shipFiles: {
+              'paragon.ship': {
+                'hullId': 'paragon',
+                '_dataFile': 'mods/Resprite/data/hulls/paragon.ship',
+                'spriteName': 'graphics/ships/paragon_resprite.png',
+              },
+            },
+            csvFilePath: 'mods/Resprite/data/hulls/ship_data.csv',
+          ),
+        ],
+        mods: [_mod(resprite)],
+      );
+
+      final paragon = _byId(ships, 'paragon')!;
+      expect(paragon.dataFiles.map((f) => f.modName).toList(), [
+        'Resprite',
+        'Vanilla',
+      ]);
+      expect(
+        paragon.dataFiles.last.file.path,
+        'core/data/hulls/paragon.ship',
+        reason: "vanilla's own .ship is still there to open",
+      );
+      expect(paragon.csvFiles.map((f) => f.modName).toList(), [
+        'Resprite',
+        'Vanilla',
+      ]);
+    });
+
+    test('a skin lists every mod that ships a copy of it', () async {
+      final tweaker = _variant('Skin Tweaker');
+
+      final ships = await _build(
+        payloads: [
+          _payload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {'id': 'lasher', 'name': 'Lasher'},
+            ],
+            shipFiles: {
+              'lasher.ship': {
+                'hullId': 'lasher',
+                '_dataFile': 'core/data/hulls/lasher.ship',
+              },
+            },
+            skinFiles: {
+              'lasher_pirates.skin': {
+                'baseHullId': 'lasher',
+                'skinHullId': 'lasher_pirates',
+                '_dataFile': 'core/data/hulls/skins/lasher_pirates.skin',
+              },
+            },
+            csvFilePath: 'core/data/hulls/ship_data.csv',
+          ),
+          _payload(
+            sourceKey: tweaker.smolId,
+            skinFiles: {
+              'lasher_pirates.skin': {
+                'baseHullId': 'lasher',
+                'skinHullId': 'lasher_pirates',
+                '_dataFile':
+                    'mods/Skin Tweaker/data/hulls/skins/lasher_pirates.skin',
+              },
+            },
+          ),
+        ],
+        mods: [_mod(tweaker)],
+      );
+
+      final skin = _byId(ships, 'lasher_pirates')!;
+      expect(skin.dataFiles.map((f) => f.modName).toList(), [
+        'Skin Tweaker',
+        'Vanilla',
+      ]);
+      expect(
+        skin.csvFiles.map((f) => f.modName).toList(),
+        ['Vanilla'],
+        reason: "a skin has no row of its own, so it borrows the base hull's",
       );
     });
   });

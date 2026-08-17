@@ -412,6 +412,13 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'projectilespecid',
     opt: true,
   );
+  static String? _$barrelMode(Weapon v) => v.barrelMode;
+  static const Field<Weapon, String> _f$barrelMode = Field(
+    'barrelMode',
+    _$barrelMode,
+    key: r'barrelmode',
+    opt: true,
+  );
   static List<double>? _$turretOffsets(Weapon v) => v.turretOffsets;
   static const Field<Weapon, List<double>> _f$turretOffsets = Field(
     'turretOffsets',
@@ -511,6 +518,20 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'wpnfile',
     hook: FileHook(),
   );
+  static List<ModDataFile> _$wpnFiles(Weapon v) => v.wpnFiles;
+  static const Field<Weapon, List<ModDataFile>> _f$wpnFiles = Field(
+    'wpnFiles',
+    _$wpnFiles,
+    key: r'wpnfiles',
+    hook: SkipSerializationHook(),
+  );
+  static List<ModDataFile> _$csvFiles(Weapon v) => v.csvFiles;
+  static const Field<Weapon, List<ModDataFile>> _f$csvFiles = Field(
+    'csvFiles',
+    _$csvFiles,
+    key: r'csvfiles',
+    hook: SkipSerializationHook(),
+  );
   static Set<String> _$hintsAsSet(Weapon v) => v.hintsAsSet;
   static const Field<Weapon, Set<String>> _f$hintsAsSet = Field(
     'hintsAsSet',
@@ -537,6 +558,13 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     'isBurstBeam',
     _$isBurstBeam,
     key: r'isburstbeam',
+    mode: FieldMode.member,
+  );
+  static int _$barrelCount(Weapon v) => v.barrelCount;
+  static const Field<Weapon, int> _f$barrelCount = Field(
+    'barrelCount',
+    _$barrelCount,
+    key: r'barrelcount',
     mode: FieldMode.member,
   );
   static double? _$burstDamage(Weapon v) => v.burstDamage;
@@ -682,6 +710,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #glowColor: _f$glowColor,
     #renderHints: _f$renderHints,
     #projectileSpecId: _f$projectileSpecId,
+    #barrelMode: _f$barrelMode,
     #turretOffsets: _f$turretOffsets,
     #hardpointOffsets: _f$hardpointOffsets,
     #turretAngleOffsets: _f$turretAngleOffsets,
@@ -696,10 +725,13 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #fieldErrors: _f$fieldErrors,
     #csvFile: _f$csvFile,
     #wpnFile: _f$wpnFile,
+    #wpnFiles: _f$wpnFiles,
+    #csvFiles: _f$csvFiles,
     #hintsAsSet: _f$hintsAsSet,
     #tagsAsSet: _f$tagsAsSet,
     #isBeam: _f$isBeam,
     #isBurstBeam: _f$isBurstBeam,
+    #barrelCount: _f$barrelCount,
     #burstDamage: _f$burstDamage,
     #refireDelay: _f$refireDelay,
     #effectiveDps: _f$effectiveDps,
@@ -778,6 +810,7 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       glowColor: data.dec(_f$glowColor),
       renderHints: data.dec(_f$renderHints),
       projectileSpecId: data.dec(_f$projectileSpecId),
+      barrelMode: data.dec(_f$barrelMode),
       turretOffsets: data.dec(_f$turretOffsets),
       hardpointOffsets: data.dec(_f$hardpointOffsets),
       turretAngleOffsets: data.dec(_f$turretAngleOffsets),
@@ -913,6 +946,7 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     List<double>? glowColor,
     List<String>? renderHints,
     String? projectileSpecId,
+    String? barrelMode,
     List<double>? turretOffsets,
     List<double>? hardpointOffsets,
     List<double>? turretAngleOffsets,
@@ -1068,6 +1102,7 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     Object? glowColor = $none,
     Object? renderHints = $none,
     Object? projectileSpecId = $none,
+    Object? barrelMode = $none,
     Object? turretOffsets = $none,
     Object? hardpointOffsets = $none,
     Object? turretAngleOffsets = $none,
@@ -1143,6 +1178,7 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
       if (glowColor != $none) #glowColor: glowColor,
       if (renderHints != $none) #renderHints: renderHints,
       if (projectileSpecId != $none) #projectileSpecId: projectileSpecId,
+      if (barrelMode != $none) #barrelMode: barrelMode,
       if (turretOffsets != $none) #turretOffsets: turretOffsets,
       if (hardpointOffsets != $none) #hardpointOffsets: hardpointOffsets,
       if (turretAngleOffsets != $none) #turretAngleOffsets: turretAngleOffsets,
@@ -1239,6 +1275,7 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     glowColor: data.get(#glowColor, or: $value.glowColor),
     renderHints: data.get(#renderHints, or: $value.renderHints),
     projectileSpecId: data.get(#projectileSpecId, or: $value.projectileSpecId),
+    barrelMode: data.get(#barrelMode, or: $value.barrelMode),
     turretOffsets: data.get(#turretOffsets, or: $value.turretOffsets),
     hardpointOffsets: data.get(#hardpointOffsets, or: $value.hardpointOffsets),
     turretAngleOffsets: data.get(

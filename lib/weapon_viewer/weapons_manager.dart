@@ -18,6 +18,7 @@ import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/mod_data_files.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
@@ -137,6 +138,7 @@ const _weaponAreaNames = <String, String>{
   'turretAngleOffsets': 'mount positions',
   'hardpointAngleOffsets': 'mount positions',
   'renderHints': 'render hints',
+  'barrelMode': 'barrel mode',
   'specClass': 'spec class',
   'mountType': 'mount type',
   'mountTypeOverride': 'mount type',
@@ -262,7 +264,17 @@ List<Weapon> _buildWeapons(
           )
           ..fieldErrors = cleaned.errors
           ..csvFile = bySourceKey[spec.rowSource.key]?.csvFilePath?.toFile()
-          ..wpnFile = wpnFilePath?.toFile(),
+          ..wpnFile = wpnFilePath?.toFile()
+          ..csvFiles = collectModDataFiles(
+            spec.rowContributors,
+            (source) => bySourceKey[source.key]?.csvFilePath,
+          )
+          ..wpnFiles = collectModDataFiles(
+            sideFileSourcesInDisplayOrder(spec.sideFileContributors),
+            (source) =>
+                bySourceKey[source.key]?.wpnFiles[spec.sideFilePath]?['wpnFile']
+                    as String?,
+          ),
       );
     } catch (e) {
       failures.add('[${spec.rowSource.name}] "${spec.id}": $e');
@@ -274,13 +286,22 @@ List<Weapon> _buildWeapons(
   return weapons;
 }
 
+/// Fields that only carry objects around inside TriOS. dart_mappable puts
+/// every public field in `toMap`, so these are dropped by name to keep them
+/// out of the export as empty columns.
+const _columnsNotForExport = {'wpnfiles', 'csvfiles'};
+
 /// Renders the current weapon list as CSV, for the export button.
 String weaponsAsCsv(List<Weapon> weapons) {
-  final fields = weapons.isNotEmpty ? weapons.first.toMap().keys.toList() : [];
-  final rows = <List<dynamic>>[
-    fields,
-    for (final weapon in weapons) weapon.toMap().values.toList(),
-  ];
+  if (weapons.isEmpty) return '';
+  final fields = weapons.first.toMap().keys
+      .where((key) => !_columnsNotForExport.contains(key))
+      .toList();
+  final rows = <List<dynamic>>[fields];
+  for (final weapon in weapons) {
+    final map = weapon.toMap();
+    rows.add([for (final field in fields) map[field]]);
+  }
   return const ListToCsvConverter(convertNullTo: "").convert(rows);
 }
 
@@ -293,8 +314,9 @@ class WeaponListNotifier
 
   /// 4: `.wpn` files are keyed by folder + file name and are read from
   /// `data/shipsystems/wpn` too, and the mount type moved off the `type` key.
+  /// 5: `barrelMode` is read from the `.wpn` (LINKED barrels multiply damage).
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   late final CachedVariantStore store =
@@ -495,6 +517,7 @@ Future<_WeaponScanResult> _scanWeaponsFolder(
       put('glowColor', _toDoubleList(jsonData['glowColor']));
       put('renderHints', _toStringList(jsonData['renderHints']));
       put('projectileSpecId', jsonData['projectileSpecId']);
+      put('barrelMode', jsonData['barrelMode']);
       put('turretOffsets', _toDoubleList(jsonData['turretOffsets']));
       put('hardpointOffsets', _toDoubleList(jsonData['hardpointOffsets']));
       put('turretAngleOffsets', _toDoubleList(jsonData['turretAngleOffsets']));

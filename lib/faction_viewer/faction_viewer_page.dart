@@ -22,10 +22,10 @@ import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/trios/context_menu_items.dart';
-import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/mod_data_file_menu.dart';
 import 'package:trios/widgets/mode_switcher.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/smart_search/smart_search_bar.dart';
@@ -508,50 +508,42 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
     Directory? gameCoreDir,
     Widget child,
   ) {
-    final primarySource = faction.addedBy ?? faction.sources.firstOrNull;
-    final folder = primarySource?.modVariant is ModVariant
-        ? (primarySource!.modVariant as ModVariant).modFolder
-        : gameCoreDir;
-    final factionFile = folder != null
-        ? File(
-            p.join(
-              folder.path,
-              'data',
-              'world',
-              'factions',
-              '${faction.mergeKey}.faction',
-            ),
-          )
-        : null;
-
+    // Built on right-click, not on every row build: finding the files checks
+    // the disk once per mod that ships one.
     return ContextMenuRegion(
-      contextMenu: ContextMenu(
-        entries: <ContextMenuEntry>[
-          MenuItem(
-            label: 'Copy ID',
-            icon: Icons.copy,
-            onSelected: () =>
-                Clipboard.setData(ClipboardData(text: faction.id)),
-          ),
-          if (factionFile != null && factionFile.existsSync())
+      contextMenuBuilder: () {
+        final primarySource = faction.addedBy ?? faction.sources.firstOrNull;
+        // Every mod that ships a copy of this faction's file, not just the one
+        // that added the faction — mods patch each other's factions freely.
+        final factionFiles = faction.factionFiles(gameCoreDir);
+
+        return ContextMenu(
+          entries: <ContextMenuEntry>[
             MenuItem(
-              label: 'Open .faction file',
-              icon: Icons.edit_note,
-              onSelected: () => factionFile.absolute.showInExplorer(),
+              label: 'Copy ID',
+              icon: Icons.copy,
+              onSelected: () =>
+                  Clipboard.setData(ClipboardData(text: faction.id)),
             ),
-          if (factionFile != null && factionFile.existsSync())
-            buildOpenSingleFolderMenuItem(
-              factionFile.parent,
-              label: 'Open faction folder',
-            ),
-          if (primarySource?.modVariant is ModVariant)
-            buildOpenSingleFolderMenuItem(
-              (primarySource!.modVariant as ModVariant).modFolder.absolute,
-              label: 'Open Mod Folder',
-            ),
-        ],
-        padding: const EdgeInsets.all(8.0),
-      ),
+            if (factionFiles.isNotEmpty)
+              buildOpenModDataFileMenuItem(
+                factionFiles,
+                label: 'Open .faction file',
+              ),
+            if (factionFiles.isNotEmpty)
+              buildOpenSingleFolderMenuItem(
+                factionFiles.first.file.parent,
+                label: 'Open faction folder',
+              ),
+            if (primarySource?.modVariant is ModVariant)
+              buildOpenSingleFolderMenuItem(
+                (primarySource!.modVariant as ModVariant).modFolder.absolute,
+                label: 'Open Mod Folder',
+              ),
+          ],
+          padding: const EdgeInsets.all(8.0),
+        );
+      },
       child: Container(color: Colors.transparent, child: child),
     );
   }

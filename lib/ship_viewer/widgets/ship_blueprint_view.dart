@@ -875,7 +875,6 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               width: imgW,
               height: imgH,
               cacheWidth: widget.cacheWidth,
-              // Stretch to the declared ship size, matching the game.
               fit: BoxFit.fill,
               errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
             ),

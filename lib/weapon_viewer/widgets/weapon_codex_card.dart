@@ -135,12 +135,11 @@ class WeaponCodexCard {
     final hasFluxCost = (fluxPerSecond ?? 0) > 0;
     final refireDelaySeconds = weapon.refireDelay;
 
-    final hasBurst =
-        !isBeam && weapon.burstSize != null && weapon.burstSize! > 1;
-    final showDamageMultiplier =
-        hasBurst &&
-        weapon.burstSize! < 1000 &&
-        (weapon.ammo == null || weapon.ammo! > weapon.burstSize!);
+    // Display-layer burst math (burst size × linked barrels, and when the
+    // burst rows appear) — see WeaponTooltipDisplay.
+    final displayBurst = weapon.tooltipDisplay.burstSize;
+    final hasBurst = weapon.tooltipDisplay.showBurstRow;
+    final showDamageMultiplier = weapon.tooltipDisplay.showDamageTimesBurst;
     final showRefireDelay = refireDelaySeconds != null;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -205,7 +204,7 @@ class WeaponCodexCard {
                     tooltipRow(
                       'Damage',
                       showDamageMultiplier
-                          ? '${tooltipFmt(weapon.damagePerShot)}x${weapon.burstSize!.toInt()}'
+                          ? '${tooltipFmt(weapon.damagePerShot)}x$displayBurst'
                           : tooltipFmt(weapon.damagePerShot),
                     ),
                   if (!noDPS && effectiveDps != null)
@@ -351,7 +350,7 @@ class WeaponCodexCard {
                 if (hasBurst || showRefireDelay) tooltipGap,
 
                 if (hasBurst)
-                  tooltipRow('Burst size', '${weapon.burstSize!.toInt()}'),
+                  tooltipRow('Burst size', '$displayBurst'),
 
                 if (showRefireDelay)
                   tooltipRow(

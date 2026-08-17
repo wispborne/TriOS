@@ -181,29 +181,8 @@ class FactionProfileDialog extends ConsumerWidget {
     );
   }
 
-  List<FileWithLabel> _factionFiles() {
-    final files = <FileWithLabel>[];
-    for (final source in faction.sources) {
-      final folder = source.modVariant is ModVariant
-          ? (source.modVariant as ModVariant).modFolder
-          : gameCoreDir;
-      if (folder == null) continue;
-      final file = File(
-        p.join(
-          folder.path,
-          'data',
-          'world',
-          'factions',
-          '${faction.mergeKey}.faction',
-        ),
-      );
-      if (file.existsSync()) files.add((file, source.name));
-    }
-    return files;
-  }
-
   Widget _buildOverflowMenu(BuildContext context) {
-    final files = _factionFiles();
+    final files = faction.factionFiles(gameCoreDir);
     if (files.isEmpty) return const SizedBox.shrink();
 
     final showSource = files.length > 1;
@@ -214,8 +193,8 @@ class FactionProfileDialog extends ConsumerWidget {
       itemBuilder: (context) {
         final items = <PopupMenuEntry<void>>[];
         for (var i = 0; i < files.length; i++) {
-          final (file, sourceName) = files[i];
-          final suffix = showSource ? ' ($sourceName)' : '';
+          final file = files[i].file;
+          final suffix = showSource ? ' (${files[i].modName})' : '';
           items.add(
             PopupMenuItem(
               onTap: () => launchUrlString(file.path),

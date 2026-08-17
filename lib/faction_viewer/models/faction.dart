@@ -4,8 +4,10 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
+import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/utils/mod_data_files.dart';
 
 part 'faction.mapper.dart';
 
@@ -177,6 +179,52 @@ class Faction with FactionMappable implements WispGridItem {
         'Not added by any enabled mod — it may belong to a disabled mod.',
       if (modifiers.isNotEmpty) 'Modified by: $modifiers',
     ].join('\n');
+  }
+
+  /// Every source's own `.faction` file for this faction, the one whose values
+  /// win listed first.
+  ///
+  /// Mods layer their changes onto each other rather than replacing the file,
+  /// so several can exist and every one is worth opening. [sources] is in the
+  /// order the game applies them, so the last is the one that wins.
+  List<ModDataFile> factionFiles(Directory? gameCoreDir) {
+    File? fileFor(FactionSource source) {
+      final folder = source.modVariant is ModVariant
+          ? (source.modVariant as ModVariant).modFolder
+          : gameCoreDir;
+      if (folder == null) return null;
+      final file = File(
+        p.join(folder.path, 'data', 'world', 'factions', '$mergeKey.faction'),
+      );
+      return file.existsSync() ? file : null;
+    }
+
+    final winnerFirst = sources.isEmpty
+        ? const <FactionSource>[]
+        : [
+            sources.last,
+            ...sources
+                .take(sources.length - 1)
+                .where((s) => s.modVariant != null),
+            ...sources
+                .take(sources.length - 1)
+                .where((s) => s.modVariant == null),
+          ];
+
+    final files = <ModDataFile>[];
+    for (final source in winnerFirst) {
+      final file = fileFor(source);
+      if (file == null) continue;
+      files.add(
+        ModDataFile(
+          modName: source.name,
+          file: file,
+          isEffective: files.isEmpty,
+          isVanilla: source.modVariant == null,
+        ),
+      );
+    }
+    return files;
   }
 
   /// Resolves an image path (e.g. logo, crest) by searching source directories

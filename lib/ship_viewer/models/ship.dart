@@ -9,6 +9,7 @@ import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/mod_data_files.dart';
 
 part 'ship.mapper.dart';
 
@@ -169,6 +170,17 @@ class Ship with ShipMappable implements WispGridItem {
   /// The .ship or .skin file for this hull (null if not found during parsing).
   @MappableField(hook: FileHook())
   File? dataFile;
+
+  /// Every mod's own `.ship`/`.skin` file for this hull, the effective one
+  /// first. Usually just the one; a mod that rewrites another mod's hull makes
+  /// it two or more. Rebuilt each load, not serialized.
+  @MappableField(hook: SkipSerializationHook())
+  List<ModDataFile> dataFiles = const [];
+
+  /// Every `ship_data.csv` with a row for this hull, the one the game uses
+  /// first. Rebuilt each load, not serialized.
+  @MappableField(hook: SkipSerializationHook())
+  List<ModDataFile> csvFiles = const [];
 
   Ship({
     required this.id,

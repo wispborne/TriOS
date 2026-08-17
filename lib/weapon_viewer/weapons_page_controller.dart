@@ -625,6 +625,11 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
         (w) => w.burstDelay,
       ),
       SearchField.numeric(
+        'barrels',
+        'Barrels fired together per shot (LINKED and DUAL barrel modes)',
+        (w) => w.barrelCount,
+      ),
+      SearchField.numeric(
         'turnrate',
         'Projectile/beam turn rate',
         (w) => w.turnRate,

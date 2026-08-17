@@ -42,6 +42,8 @@
   - Some ship modules did not show up.
     - Happened when the mod used a json map instead of a json array of pairs like Vanilla.
   - Crash on launch on Linux if the window size was set larger than all monitors.
+  - Number of barrels is now taken into account for weapon stats.
+    - Fixes DPS for weapons like Solis Cannon, Defabrication Swarm, and Gatebreaker Shotgun.
   - A few ships/weapons didn't load because of invalid data, whereas Starsector set default values and loaded them.
     - e.g. `armaa_hazard_torso` has `DS` as its `energy/second`; this now loads.
 - Changed

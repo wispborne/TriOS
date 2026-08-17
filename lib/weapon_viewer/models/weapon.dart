@@ -1,13 +1,14 @@
 // weapon.dart
 
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/mod_data_files.dart';
+import 'package:trios/weapon_viewer/models/weapon_derived_stats.dart';
 
 part 'weapon.mapper.dart';
 
@@ -119,6 +120,12 @@ class Weapon with WeaponMappable implements WispGridItem {
   /// Projectile fired by this weapon; used to look up loaded-missile sprites.
   final String? projectileSpecId;
 
+  /// How the barrels fire, from the `.wpn`: `ALTERNATING` (default, one
+  /// barrel per shot), `LINKED` (every barrel at once), `DUAL` (two at once),
+  /// or `ALTERNATING_BURST`. LINKED and DUAL multiply each shot's damage and
+  /// flux — see [barrelCount].
+  final String? barrelMode;
+
   /// Fire-point offsets, flat `[x1, y1, x2, y2, ...]` (one pair per barrel/tube).
   /// `x` is along the barrel (weapon-forward), `y` is lateral.
   final List<double>? turretOffsets;
@@ -164,6 +171,17 @@ class Weapon with WeaponMappable implements WispGridItem {
   File? csvFile;
   @MappableField(hook: FileHook())
   File? wpnFile;
+
+  /// Every mod's own `.wpn` file for this weapon, the effective one first.
+  /// Usually just the one; a mod that rewrites another mod's weapon makes it
+  /// two or more. Rebuilt each load, not serialized.
+  @MappableField(hook: SkipSerializationHook())
+  List<ModDataFile> wpnFiles = const [];
+
+  /// Every `weapon_data.csv` with a row for this weapon, the one the game uses
+  /// first. Rebuilt each load, not serialized.
+  @MappableField(hook: SkipSerializationHook())
+  List<ModDataFile> csvFiles = const [];
 
   Weapon({
     required this.name,
@@ -230,6 +248,7 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.glowColor,
     this.renderHints,
     this.projectileSpecId,
+    this.barrelMode,
     this.turretOffsets,
     this.hardpointOffsets,
     this.turretAngleOffsets,
@@ -248,122 +267,58 @@ class Weapon with WeaponMappable implements WispGridItem {
   late final Set<String> tagsAsSet =
       tags?.split(',').map((tag) => tag.trim().toLowerCase()).toSet() ?? {};
 
-  // ── Derived weapon stats (faithful to WeaponSpreadsheetLoader) ──
+  // ── Derived weapon stats ──
+  // The math lives in weapon_derived_stats.dart, organized branch-for-branch
+  // like the game's WeaponSpreadsheetLoader (numbers) and CargoTooltipFactory
+  // (display) so it stays easy to diff against the decompiled game code.
 
   late final bool isBeam = specClass?.toLowerCase().contains('beam') == true;
 
-  late final double _beamBurstDuration = isBeam
-      ? (burstSize ?? 0).toDouble()
-      : 0.0;
+  /// A beam that fires in timed pulses; its `burst size` is seconds of
+  /// uptime, not a shot count.
+  late final bool isBurstBeam = isBeam && (burstSize ?? 0) > 0;
 
-  late final bool isBurstBeam = isBeam && _beamBurstDuration > 0;
-
-  late final int _projBurstSize = isBeam
-      ? 1
-      : (burstSize?.toInt().clamp(1, 99999) ?? 1);
-
-  late final double _cu = chargeup ?? 0.0;
-  late final double _cd = chargedown ?? 0.0;
-  late final double _bd = burstDelay ?? 0.0;
-
-  late final double _projCycleTime =
-      _cu +
-      _cd +
-      _bd * (_projBurstSize > 1 ? (_projBurstSize - 1).toDouble() : 0.0);
-
-  // 0.333 = average beam intensity during chargeup/chargedown ramps.
-  late final double _beamDamageMultiplier =
-      (_cu + _cd) * 0.333 + _beamBurstDuration;
-
-  late final double? burstDamage = isBurstBeam
-      ? (damagePerSecond ?? 0.0) * _beamDamageMultiplier
-      : null;
-
-  late final double? refireDelay = () {
-    if (isBurstBeam) return _cu + _cd + _beamBurstDuration + _bd;
-    if (!isBeam && _projCycleTime > 0) return _projCycleTime;
-    return null;
+  /// Projectiles per trigger pull from barrel wiring alone. The game fires
+  /// every barrel at once for LINKED (one barrel per [turretOffsets] pair)
+  /// and two for DUAL, and multiplies shot damage and flux to match. Beams
+  /// and the default ALTERNATING mode fire one barrel at a time.
+  late final int barrelCount = () {
+    if (isBeam) return 1;
+    final mode = barrelMode?.trim().toUpperCase();
+    if (mode == 'LINKED') {
+      final barrels = (turretOffsets?.length ?? 0) ~/ 2;
+      return barrels > 1 ? barrels : 1;
+    }
+    if (mode == 'DUAL') return 2;
+    return 1;
   }();
 
-  late final double? effectiveDps = () {
-    if (isBurstBeam) {
-      final d = burstDamage;
-      final r = refireDelay;
-      if (d != null && d > 0 && r != null && r > 0) return d / r;
-      return null;
-    }
-    if (isBeam) {
-      final v = damagePerSecond ?? 0;
-      return v > 0 ? v.toDouble() : null;
-    }
-    final dmg = damagePerShot ?? 0.0;
-    if (dmg > 0 && _projCycleTime > 0) {
-      return dmg * _projBurstSize / _projCycleTime;
-    }
-    return null;
-  }();
+  late final WeaponDerivedStats derivedStats = WeaponDerivedStats.of(this);
+  late final WeaponTooltipDisplay tooltipDisplay = WeaponTooltipDisplay.of(
+    this,
+  );
 
-  late final double? sustainedDps = () {
-    final dps = effectiveDps;
-    if (dps == null || ammoPerSec == null || ammoPerSec! <= 0) return null;
+  double? get burstDamage => derivedStats.burstDamage;
 
-    // Burst beams: sustained = burstDamage × ammoPerSec.
-    // Projectiles: sustained = damagePerShot × ammoPerSec.
-    final double? s;
-    if (isBurstBeam) {
-      s = burstDamage != null ? burstDamage! * ammoPerSec! : null;
-    } else if (!isBeam && damagePerShot != null) {
-      s = damagePerShot! * ammoPerSec!;
-    } else {
-      s = null;
-    }
-    if (s != null && (s - dps).abs() / dps >= 0.01) return s;
-    return null;
-  }();
+  double? get refireDelay => derivedStats.refireDelay;
 
-  late final double? fluxPerDamage = () {
-    if (isBurstBeam) {
-      final bd = burstDamage;
-      if (bd != null && bd > 0) {
-        return (energyPerSecond ?? 0.0) * (_cu + _beamBurstDuration) / bd;
-      }
-    } else if (isBeam) {
-      final dps = effectiveDps;
-      if (dps != null && dps > 0 && (energyPerSecond ?? 0) > 0) {
-        return energyPerSecond! / dps;
-      }
-    } else {
-      final totalDmg = (damagePerShot ?? 0.0) * _projBurstSize;
-      final totalFlux =
-          _cu * (energyPerSecond ?? 0.0) +
-          (energyPerShot ?? 0.0) * _projBurstSize;
-      if (totalFlux > 0) return totalFlux / math.max(1.0, totalDmg);
-    }
-    return null;
-  }();
+  double? get effectiveDps => derivedStats.effectiveDps;
 
-  late final double? fluxPerSecond = () {
-    final dps = effectiveDps;
-    final fpd = fluxPerDamage;
-    if (dps != null && fpd != null) return dps * fpd;
-    if (isBeam && (energyPerSecond ?? 0) > 0) {
-      return energyPerSecond!.toDouble();
-    }
-    return null;
-  }();
+  double? get sustainedDps => derivedStats.sustainedDps;
 
-  late final double? sustainedFluxPerSecond = () {
-    final sdps = sustainedDps;
-    final fpd = fluxPerDamage;
-    if (sdps != null && fpd != null) return sdps * fpd;
-    return null;
-  }();
+  double? get fluxPerDamage => derivedStats.fluxPerDamage;
 
-  late final double? empPerActivation = isBurstBeam && emp != null && emp! > 0
-      ? emp! * _beamDamageMultiplier
-      : emp;
+  double? get fluxPerSecond => derivedStats.fluxPerSecond;
 
-  late final bool hasSustainedDps = sustainedDps != null;
+  double? get sustainedFluxPerSecond => derivedStats.sustainedFluxPerSecond;
+
+  double? get empPerActivation => derivedStats.empPerActivation;
+
+  bool get hasSustainedDps => derivedStats.hasSustainedDps;
+
+  /// The burst size to show, the way the game's tooltip counts it: shots per
+  /// trigger pull across all barrels.
+  int get displayBurstSize => tooltipDisplay.burstSize;
 
   bool isHidden() {
     if (weaponType?.toLowerCase() == "decorative") return true;

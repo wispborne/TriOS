@@ -22,6 +22,7 @@ import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/utils/game_json_values.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/mod_data_files.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
@@ -176,6 +177,16 @@ List<Ship> _buildShips(
       bySourceKey[spec.rowSource.key]?.csvFilePath?.toFile(),
       failures,
       resolver,
+      csvFiles: collectModDataFiles(
+        spec.rowContributors,
+        (source) => bySourceKey[source.key]?.csvFilePath,
+      ),
+      dataFiles: collectModDataFiles(
+        sideFileSourcesInDisplayOrder(spec.sideFileContributors),
+        (source) =>
+            bySourceKey[source.key]?.shipFiles[spec.sideFilePath]?['_dataFile']
+                as String?,
+      ),
     );
     if (ship != null) ships.add(ship);
   }
@@ -188,6 +199,8 @@ List<Ship> _buildShips(
             (source: source, filesByPath: payload.skinFiles),
       ]),
       ships,
+      (path, source) =>
+          bySourceKey[source.key]?.skinFiles[path]?['_dataFile'] as String?,
       failures,
       resolver,
     ),
@@ -205,8 +218,10 @@ Ship? _buildHull(
   MergedSpec spec,
   File? csvFile,
   LogCollapser failures,
-  GameFileResolver resolver,
-) {
+  GameFileResolver resolver, {
+  required List<ModDataFile> csvFiles,
+  required List<ModDataFile> dataFiles,
+}) {
   final data = <String, dynamic>{...spec.row};
   File? dataFile;
 
@@ -243,7 +258,9 @@ Ship? _buildHull(
         areaNames: _shipAreaNames,
       )
       ..csvFile = csvFile
-      ..dataFile = dataFile;
+      ..dataFile = dataFile
+      ..csvFiles = csvFiles
+      ..dataFiles = dataFiles;
   } catch (e) {
     failures.add('[${spec.rowSource.name}] "${spec.id}": $e');
     return null;
@@ -254,9 +271,13 @@ Ship? _buildHull(
 ///
 /// Skins can layer on other skins, so this loops until a pass resolves nothing
 /// new.
+///
+/// [skinPathOf] hands back one source's own copy of the `.skin` file at a
+/// path, so the viewer can offer every mod's copy and not only the winner.
 List<Ship> _resolveSkins(
   Map<String, DeepMergeResult> mergedSkins,
   List<Ship> baseShips,
+  String? Function(String path, MergeSource source) skinPathOf,
   LogCollapser failures,
   GameFileResolver resolver,
 ) {
@@ -301,7 +322,14 @@ List<Ship> _resolveSkins(
             hasStatsRow: false,
           )
           ..csvFile = baseHull.csvFile
-          ..dataFile = dataFile?.toFile();
+          ..dataFile = dataFile?.toFile()
+          // A skin has no row of its own, so its stats come from the base
+          // hull's — and so does the spreadsheet to open.
+          ..csvFiles = baseHull.csvFiles
+          ..dataFiles = collectModDataFiles(
+            sideFileSourcesInDisplayOrder(entry.value.contributors),
+            (source) => skinPathOf(entry.key, source),
+          );
       } catch (e) {
         failures.add('skin "${entry.key}": $e');
         continue;
@@ -327,13 +355,22 @@ List<Ship> _resolveSkins(
   return resolved;
 }
 
+/// Fields that only carry objects around inside TriOS. dart_mappable puts
+/// every public field in `toMap`, so these are dropped by name to keep them
+/// out of the export as empty columns.
+const _columnsNotForExport = {'datafiles', 'csvfiles'};
+
 /// Renders the current ship list as CSV, for the export button.
 String shipsAsCsv(List<Ship> ships) {
-  final fields = ships.isNotEmpty ? ships.first.toMap().keys.toList() : [];
-  final rows = <List<dynamic>>[
-    fields,
-    for (final ship in ships) ship.toMap().values.toList(),
-  ];
+  if (ships.isEmpty) return '';
+  final fields = ships.first.toMap().keys
+      .where((key) => !_columnsNotForExport.contains(key))
+      .toList();
+  final rows = <List<dynamic>>[fields];
+  for (final ship in ships) {
+    final map = ship.toMap();
+    rows.add([for (final field in fields) map[field]]);
+  }
   return const ListToCsvConverter(convertNullTo: "").convert(rows);
 }
 

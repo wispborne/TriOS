@@ -515,6 +515,20 @@ class ShipMapper extends ClassMapperBase<Ship> {
     key: r'datafile',
     hook: FileHook(),
   );
+  static List<ModDataFile> _$dataFiles(Ship v) => v.dataFiles;
+  static const Field<Ship, List<ModDataFile>> _f$dataFiles = Field(
+    'dataFiles',
+    _$dataFiles,
+    key: r'datafiles',
+    hook: SkipSerializationHook(),
+  );
+  static List<ModDataFile> _$csvFiles(Ship v) => v.csvFiles;
+  static const Field<Ship, List<ModDataFile>> _f$csvFiles = Field(
+    'csvFiles',
+    _$csvFiles,
+    key: r'csvfiles',
+    hook: SkipSerializationHook(),
+  );
   static Map<String, String> _$shipSizesMap(Ship v) => v.shipSizesMap;
   static const Field<Ship, Map<String, String>> _f$shipSizesMap = Field(
     'shipSizesMap',
@@ -635,6 +649,8 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #modSources: _f$modSources,
     #csvFile: _f$csvFile,
     #dataFile: _f$dataFile,
+    #dataFiles: _f$dataFiles,
+    #csvFiles: _f$csvFiles,
     #shipSizesMap: _f$shipSizesMap,
     #mountableWeaponSlotCount: _f$mountableWeaponSlotCount,
     #isStation: _f$isStation,

@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:trios/viewer_cache/packed_bytes.dart';
+
 /// Per-source cache payload for the weapons viewer.
 ///
 /// The raw scanned data (CSV rows, `.wpn` files, missile specs) is only read
@@ -17,13 +19,21 @@ class WeaponsCachePayload {
 
   /// This source's `weapon_data.csv` rows, `.wpn` files and missile specs,
   /// msgpack-encoded. See `encodeWeaponsRawData` / `decodeWeaponsRawData`.
-  final Uint8List rawDataBytes;
+  ///
+  /// Held zipped, for the same reason as the ships one: there is one per
+  /// installed mod for the whole session, and on a big mod list that was over
+  /// fourteen megabytes of msgpack nobody was reading.
+  final Uint8List _rawDataZipped;
 
-  const WeaponsCachePayload({
+  /// See [_rawDataZipped]. A fresh copy each time, so read it once per merge
+  /// rather than in a loop.
+  Uint8List get rawDataBytes => unsqueeze(_rawDataZipped);
+
+  WeaponsCachePayload({
     required this.sourceKey,
-    required this.rawDataBytes,
+    required Uint8List rawDataBytes,
     this.csvFilePath,
-  });
+  }) : _rawDataZipped = squeeze(rawDataBytes);
 }
 
 /// The heavy part of a [WeaponsCachePayload], decoded for one merge.

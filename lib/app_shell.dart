@@ -1,9 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/semantics.dart' show SemanticsBinding;
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart'
-    show WebViewEnvironment, WebViewEnvironmentSettings;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scaled_app/scaled_app.dart';
 import 'package:toastification/toastification.dart';
@@ -90,37 +88,84 @@ class _AppShellState extends ConsumerState<AppShell>
         .update((state) => state.copyWith(defaultTool: _currentPage));
   }
 
+  /// Build with `--dart-define=trios.openEveryTabAtStartup=true` and TriOS
+  /// visits every tab on its own once it has started. It is here so a memory
+  /// measurement can cover every tab; a normal build never does this.
+  static const _openEveryTabAtStartup = bool.fromEnvironment(
+    'trios.openEveryTabAtStartup',
+  );
+
+  /// How many times round the tabs to go. More than one shows whether moving
+  /// between tabs keeps costing memory after everything has been built once,
+  /// which is what a leak looks like. Set with
+  /// `--dart-define=trios.tabWalkRounds=5`.
+  static const _tabWalkRounds = int.fromEnvironment(
+    'trios.tabWalkRounds',
+    defaultValue: 1,
+  );
+
+  /// Shows each tab in turn, long enough for it to load whatever it loads.
+  ///
+  /// This does not go through [_changeTab], because that would save whichever
+  /// tab it stopped on as the one to open next time.
+  Future<void> _visitEveryTab() async {
+    await Future<void>.delayed(const Duration(seconds: 3));
+    _note('before any tab was opened');
+    for (var round = 1; round <= _tabWalkRounds; round++) {
+      for (final tab in tabToolMap.values) {
+        if (!mounted) return;
+        Fimber.i('Memory measurement: round $round, opening $tab.');
+        setState(() {
+          _currentPage = tab;
+        });
+        // Three seconds. Halving it made the same build report 14 MB less,
+        // because pages had not finished loading when it moved on.
+        await Future<void>.delayed(const Duration(seconds: 3));
+        // Per tab on the first round, so the report says what each page costs
+        // rather than only what all of them cost together.
+        if (round == 1) _note(tab.name);
+      }
+      _reportWhatIsOpen(round);
+    }
+  }
+
+  /// Adds a line to the memory report saying what is in use right now.
+  void _note(String what) => _appendToReport(
+    '${ProcessInfo.currentRss.toString().padLeft(12)}  $what\n',
+  );
+
+  /// Writes what the app is holding to a file next to the settings.
+  ///
+  /// A file, because the logger does not reach the console in a profile build
+  /// and a profile build cannot be asked questions over the VM service.
+  void _reportWhatIsOpen(int round) {
+    final images = PaintingBinding.instance.imageCache;
+    final report =
+        'Round $round: every tab is open. '
+        'Memory in use: ${ProcessInfo.currentRss} bytes, '
+        'highest so far ${ProcessInfo.maxRss}.\n'
+        'Image cache: ${images.currentSize} of ${images.maximumSize} pictures, '
+        '${images.currentSizeBytes} of ${images.maximumSizeBytes} bytes, '
+        '${images.liveImageCount} still on screen.\n'
+        'Accessibility tree: '
+        "${SemanticsBinding.instance.semanticsEnabled ? 'on' : 'off'}.\n";
+    Fimber.i(report);
+    _appendToReport(report);
+  }
+
+  void _appendToReport(String line) {
+    try {
+      File(
+        '${Constants.configDataFolderPath.path}/memory-report.txt',
+      ).writeAsStringSync(line, mode: FileMode.append);
+    } catch (error) {
+      Fimber.w('Could not write the memory report.', ex: error);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-
-    // WebView check
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
-      WebViewEnvironment.getAvailableVersion().then((availableVersion) {
-        if (availableVersion != null) {
-          var userDataFolder = Constants.configDataFolderPath.path;
-          WebViewEnvironment.create(
-                settings: WebViewEnvironmentSettings(
-                  userDataFolder: userDataFolder,
-                ),
-              )
-              .then((newWebViewEnvironment) {
-                ref.read(webViewEnvironment.notifier).state =
-                    newWebViewEnvironment;
-                Fimber.i(
-                  "WebView2 environment initialized. Data folder: $userDataFolder",
-                );
-              })
-              .onError((error, stackTrace) {
-                Fimber.w(
-                  "Error creating WebView2 environment: $error",
-                  ex: error,
-                  stacktrace: stackTrace,
-                );
-              });
-        }
-      });
-    }
 
     var defaultTool = TriOSTools.dashboard;
     try {
@@ -136,6 +181,10 @@ class _AppShellState extends ConsumerState<AppShell>
       _changeTab(defaultTool);
     } catch (e) {
       Fimber.e("Error setting default tool: $e");
+    }
+
+    if (_openEveryTabAtStartup) {
+      _visitEveryTab();
     }
 
     // Check for updates on launch and show toast if available.

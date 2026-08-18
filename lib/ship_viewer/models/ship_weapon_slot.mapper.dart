@@ -29,19 +29,19 @@ class ShipWeaponSlotMapper extends ClassMapperBase<ShipWeaponSlot> {
     opt: true,
     def: 0,
   );
-  static double _$arc(ShipWeaponSlot v) => v.arc;
-  static const Field<ShipWeaponSlot, double> _f$arc = Field(
-    'arc',
-    _$arc,
-    opt: true,
-    def: 0,
-  );
   static String _$id(ShipWeaponSlot v) => v.id;
   static const Field<ShipWeaponSlot, String> _f$id = Field(
     'id',
     _$id,
     opt: true,
     def: '',
+  );
+  static double _$arc(ShipWeaponSlot v) => v.arc;
+  static const Field<ShipWeaponSlot, double> _f$arc = Field(
+    'arc',
+    _$arc,
+    opt: true,
+    def: 0,
   );
   static List<double> _$locations(ShipWeaponSlot v) => v.locations;
   static const Field<ShipWeaponSlot, List<double>> _f$locations = Field(
@@ -112,8 +112,8 @@ class ShipWeaponSlotMapper extends ClassMapperBase<ShipWeaponSlot> {
   @override
   final MappableFields<ShipWeaponSlot> fields = const {
     #angle: _f$angle,
-    #arc: _f$arc,
     #id: _f$id,
+    #arc: _f$arc,
     #locations: _f$locations,
     #position: _f$position,
     #mount: _f$mount,
@@ -129,8 +129,8 @@ class ShipWeaponSlotMapper extends ClassMapperBase<ShipWeaponSlot> {
   static ShipWeaponSlot _instantiate(DecodingData data) {
     return ShipWeaponSlot(
       angle: data.dec(_f$angle),
-      arc: data.dec(_f$arc),
       id: data.dec(_f$id),
+      arc: data.dec(_f$arc),
       locations: data.dec(_f$locations),
       position: data.dec(_f$position),
       mount: data.dec(_f$mount),
@@ -206,8 +206,8 @@ abstract class ShipWeaponSlotCopyWith<$R, $In extends ShipWeaponSlot, $Out>
   ListCopyWith<$R, double, ObjectCopyWith<$R, double, double>> get position;
   $R call({
     double? angle,
-    double? arc,
     String? id,
+    double? arc,
     List<double>? locations,
     List<double>? position,
     String? mount,
@@ -245,8 +245,8 @@ class _ShipWeaponSlotCopyWithImpl<$R, $Out>
   @override
   $R call({
     double? angle,
-    double? arc,
     String? id,
+    double? arc,
     List<double>? locations,
     List<double>? position,
     String? mount,
@@ -256,8 +256,8 @@ class _ShipWeaponSlotCopyWithImpl<$R, $Out>
   }) => $apply(
     FieldCopyWithData({
       if (angle != null) #angle: angle,
-      if (arc != null) #arc: arc,
       if (id != null) #id: id,
+      if (arc != null) #arc: arc,
       if (locations != null) #locations: locations,
       if (position != null) #position: position,
       if (mount != null) #mount: mount,
@@ -269,8 +269,8 @@ class _ShipWeaponSlotCopyWithImpl<$R, $Out>
   @override
   ShipWeaponSlot $make(CopyWithData data) => ShipWeaponSlot(
     angle: data.get(#angle, or: $value.angle),
-    arc: data.get(#arc, or: $value.arc),
     id: data.get(#id, or: $value.id),
+    arc: data.get(#arc, or: $value.arc),
     locations: data.get(#locations, or: $value.locations),
     position: data.get(#position, or: $value.position),
     mount: data.get(#mount, or: $value.mount),

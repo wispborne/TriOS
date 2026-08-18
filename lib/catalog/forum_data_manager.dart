@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -97,39 +98,71 @@ Map<int, ForumModDetails> _parseForumDetails(String rawJson) {
 /// re-read from the shared cache via [forumDataFetcher]; the heavy
 /// `jsonDecode` + mapping runs in a background isolate via [compute].
 ///
-/// The resulting map is cached for the app lifetime, keyed by `topicId`.
-final forumDetailsByTopicId = FutureProvider<Map<int, ForumModDetails>>((
-  ref,
-) async {
-  final started = DateTime.now();
-  final String rawJson;
-  try {
-    rawJson = await forumDataFetcher.fetch();
-  } catch (ex, st) {
-    Fimber.w('Failed to fetch forum data bundle for details', ex: ex, stacktrace: st);
-    return const {};
-  }
+/// The map is keyed by `topicId` and dropped a few minutes after the last
+/// forum post closes. It holds the full post text of every mod on the forum —
+/// around 16 MB of JSON — which is far too much to keep for the whole session
+/// just because the user read one post. Re-parsing takes a moment in the
+/// background, and the few-minute delay means reading several posts in a row
+/// only parses once.
+final forumDetailsByTopicId =
+    FutureProvider.autoDispose<Map<int, ForumModDetails>>((ref) async {
+      _holdBriefly(ref);
+      final started = DateTime.now();
+      final String rawJson;
+      try {
+        rawJson = await forumDataFetcher.fetch();
+      } catch (ex, st) {
+        Fimber.w(
+          'Failed to fetch forum data bundle for details',
+          ex: ex,
+          stacktrace: st,
+        );
+        return const {};
+      }
 
-  try {
-    final map = await compute(_parseForumDetails, rawJson);
-    Fimber.i(
-      'Parsed ${map.length} forum detail entries in '
-      '${DateTime.now().difference(started).inMilliseconds}ms',
-    );
-    return map;
-  } catch (ex, st) {
-    Fimber.w('Failed to parse forum data bundle details', ex: ex, stacktrace: st);
-    return const {};
-  }
-});
+      try {
+        final map = await compute(_parseForumDetails, rawJson);
+        Fimber.i(
+          'Parsed ${map.length} forum detail entries in '
+          '${DateTime.now().difference(started).inMilliseconds}ms',
+        );
+        return map;
+      } catch (ex, st) {
+        Fimber.w(
+          'Failed to parse forum data bundle details',
+          ex: ex,
+          stacktrace: st,
+        );
+        return const {};
+      }
+    });
 
 /// Thin per-topic lookup. Returns null while the details are still parsing,
 /// or when the topic is not present in the bundle.
-final forumDetailsForTopic = Provider.family<ForumModDetails?, int>((
-  ref,
-  topicId,
-) {
-  final map = ref.watch(forumDetailsByTopicId).value;
-  return map?[topicId];
-});
+///
+/// Auto-disposing, so that closing the last forum post also lets go of
+/// [forumDetailsByTopicId].
+final forumDetailsForTopic = Provider.autoDispose.family<ForumModDetails?, int>(
+  (ref, topicId) {
+    final map = ref.watch(forumDetailsByTopicId).value;
+    return map?[topicId];
+  },
+);
 
+/// Keeps a provider's value for [_detailsHoldTime] after its last listener
+/// goes away, then lets it be thrown out.
+void _holdBriefly(Ref ref) {
+  final link = ref.keepAlive();
+  Timer? dropTimer;
+  ref.onCancel(() {
+    dropTimer = Timer(_detailsHoldTime, link.close);
+  });
+  ref.onResume(() {
+    dropTimer?.cancel();
+    dropTimer = null;
+  });
+  ref.onDispose(() => dropTimer?.cancel());
+}
+
+/// How long the parsed forum posts stick around after the last one closes.
+const _detailsHoldTime = Duration(minutes: 2);

@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:trios/viewer_cache/packed_bytes.dart';
+
 import 'package:trios/ship_viewer/models/ship_variant.dart';
 
 /// Per-source cache payload for the ships viewer.
@@ -23,15 +25,25 @@ class ShipsCachePayload {
 
   /// This source's `ship_data.csv` rows, `.ship` files and `.skin` files,
   /// msgpack-encoded. See `encodeShipsRawData` / `decodeShipsRawData`.
-  final Uint8List rawDataBytes;
+  ///
+  /// Held zipped. One of these is kept per installed mod for the whole session
+  /// so that turning "only enabled mods" on or off can re-merge without going
+  /// back to disk, and on a big mod list that was over twenty megabytes of
+  /// msgpack sitting there. It is only read when the ship list is merged, and
+  /// it unzips in well under a second.
+  final Uint8List _rawDataZipped;
 
-  const ShipsCachePayload({
+  /// See [_rawDataZipped]. A fresh copy each time, so read it once per merge
+  /// rather than in a loop.
+  Uint8List get rawDataBytes => unsqueeze(_rawDataZipped);
+
+  ShipsCachePayload({
     required this.sourceKey,
     required this.moduleVariants,
     required this.hullIdMap,
-    required this.rawDataBytes,
+    required Uint8List rawDataBytes,
     this.csvFilePath,
-  });
+  }) : _rawDataZipped = squeeze(rawDataBytes);
 }
 
 /// The heavy part of a [ShipsCachePayload], decoded for one merge.

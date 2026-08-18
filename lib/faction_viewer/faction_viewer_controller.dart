@@ -1,4 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/utils/search_index.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
@@ -96,7 +97,7 @@ class FactionViewerController extends Notifier<FactionViewerState>
     for (final f in _searchFields) f.key: f,
   };
   String _searchQuery = '';
-  Map<String, List<String>> _cachedSearchIndices = {};
+  SearchIndex _cachedSearchIndices = {};
   List<Faction> _cachedSearchIndicesFactions = const [];
 
   FilterScope get scope => _scope;
@@ -277,7 +278,7 @@ class FactionViewerController extends Notifier<FactionViewerState>
     );
   }
 
-  Map<String, List<String>> _getSearchIndices(List<Faction> factions) {
+  SearchIndex _getSearchIndices(List<Faction> factions) {
     if (!identical(factions, _cachedSearchIndicesFactions)) {
       _cachedSearchIndicesFactions = factions;
       _cachedSearchIndices = {
@@ -289,7 +290,7 @@ class FactionViewerController extends Notifier<FactionViewerState>
             if (f.displayNameWithArticle != null)
               f.displayNameWithArticle!.toLowerCase(),
             f.sourceNames.toLowerCase(),
-          ],
+          ].join(searchIndexSeparator),
       };
     }
     return _cachedSearchIndices;

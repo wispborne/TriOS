@@ -737,6 +737,10 @@ class _ImagesTableState extends State<_ImagesTable> {
                   view.file,
                   fit: BoxFit.contain,
                   filterQuality: FilterQuality.none,
+                  // The preview is 150px, but the file behind it is often a
+                  // 2048x2048 background — 16 MB if decoded whole. 300 keeps
+                  // it sharp on high-DPI screens for 1/45th the memory.
+                  cacheWidth: 300,
                   errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                 ),
               ),

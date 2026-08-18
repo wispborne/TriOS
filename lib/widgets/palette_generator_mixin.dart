@@ -3,6 +3,9 @@ import 'package:palette_generator/palette_generator.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
+/// How wide the icon is decoded when picking colors out of it.
+const _paletteSampleWidth = 64;
+
 mixin PaletteGeneratorMixin<T extends StatefulWidget> on State<T> {
   PaletteGenerator? paletteGenerator;
 
@@ -28,8 +31,15 @@ mixin PaletteGeneratorMixin<T extends StatefulWidget> on State<T> {
     if (_cachedThemes.containsKey(iconPath)) {
       paletteGenerator = _cachedThemes[iconPath];
     } else if (iconPath?.isNotEmpty == true) {
-      final icon = Image.file(iconPath!.toFile());
-      paletteGenerator = await PaletteGenerator.fromImageProvider(icon.image);
+      // Decode the icon small. We only want the handful of colors in it, and
+      // a full-size decode of every mod icon stays in Flutter's image cache
+      // afterwards. 64px gives the same colors for a fraction of the memory.
+      final icon = ResizeImage(
+        FileImage(iconPath!.toFile()),
+        width: _paletteSampleWidth,
+        allowUpscaling: false,
+      );
+      paletteGenerator = await PaletteGenerator.fromImageProvider(icon);
       Fimber.v(() => "Generated palette for $iconPath");
       _cachedThemes[iconPath] = paletteGenerator;
     } else {

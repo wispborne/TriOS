@@ -15,11 +15,26 @@ import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/parse_recorder.dart';
 
-typedef GraphicsResolverBundle = ({List<GameFileSource> sources, GameFileResolver resolver});
+typedef GraphicsResolverBundle = ({
+  List<GameFileSource> sources,
+  GameFileResolver resolver,
+});
 
 /// Image file extensions worth indexing. Everything else under `graphics/`
 /// (fonts, stray text files) is skipped.
 const _imageExtensions = {'.png', '.jpg', '.jpeg'};
+
+/// The lowercased form of [path], or [path] itself when it is already
+/// lowercase.
+///
+/// Almost every Starsector graphics path is already lowercase, and there are
+/// on the order of a hundred thousand of them across a big mod list. Reusing
+/// the string the index already holds, instead of keeping a second identical
+/// copy as the lookup key, saves several megabytes for the whole session.
+String _lookupKey(String path) {
+  final lower = path.toLowerCase();
+  return lower == path ? path : lower;
+}
 
 /// The image files one source ships under its `graphics/` folder.
 class GraphicsIndexPayload {
@@ -43,7 +58,7 @@ class GraphicsIndexPayload {
   /// lowercasing every path for every mod is wasted work until something asks.
   late final GameFileSource asSource = GameFileSource(
     folderPath: folderPath,
-    imageFiles: {for (final path in imageFiles) path.toLowerCase(): path},
+    imageFiles: {for (final path in imageFiles) _lookupKey(path): path},
   );
 }
 
@@ -56,8 +71,12 @@ final graphicsIndexProvider =
 
 /// The resolver last handed out for each toggle value, kept next to the source
 /// list it was built from. See [gameFileResolverProvider].
-final _lastResolvers =
-    <bool, GraphicsResolverBundle>{};
+///
+/// A provider rather than a plain top-level map so that it belongs to the
+/// provider container. A soft restart builds a new container, and the old
+/// resolvers — which hold the path list of every image in every mod — are let
+/// go of instead of sitting alongside the new ones.
+final _lastResolvers = Provider<Map<bool, GraphicsResolverBundle>>((ref) => {});
 
 /// True when both lists hold the very same source objects in the same order.
 bool _sameSources(List<GameFileSource> a, List<GameFileSource> b) {
@@ -92,11 +111,12 @@ final gameFileResolverProvider = Provider.family<GameFileResolver, bool>((
       if (bySourceKey[source.key] case final payload?) payload.asSource,
   ];
 
-  final last = _lastResolvers[onlyEnabledMods];
+  final lastResolvers = ref.watch(_lastResolvers);
+  final last = lastResolvers[onlyEnabledMods];
   if (last != null && _sameSources(last.sources, sources)) return last.resolver;
 
   final resolver = GameFileResolver(sources);
-  _lastResolvers[onlyEnabledMods] = (sources: sources, resolver: resolver);
+  lastResolvers[onlyEnabledMods] = (sources: sources, resolver: resolver);
   return resolver;
 });
 

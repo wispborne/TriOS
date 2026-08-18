@@ -46,7 +46,7 @@ class WeaponsPageState with WeaponsPageStateMappable {
   final List<Weapon> allWeapons;
   final List<Weapon> filteredWeapons;
   final List<Weapon> weaponsBeforeGridFilter;
-  final Map<String, List<String>> weaponSearchIndices;
+  final SearchIndex weaponSearchIndices;
   final String currentSearchQuery;
   final bool isLoading;
 
@@ -337,7 +337,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
     } catch (_) {}
   }
 
-  Map<String, List<String>> _updateSearchIndices(List<Weapon> allWeapons) {
+  SearchIndex _updateSearchIndices(List<Weapon> allWeapons) {
     return updateSearchIndices(
       allWeapons,
       stateOrNull?.weaponSearchIndices ?? {},
@@ -737,7 +737,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
   List<Weapon> _applyParsedQuery(
     List<Weapon> weapons,
     String query,
-    Map<String, List<String>> weaponValuesByWeaponId,
+    SearchIndex weaponValuesByWeaponId,
   ) {
     return SearchField.applyQuery(
       weapons,

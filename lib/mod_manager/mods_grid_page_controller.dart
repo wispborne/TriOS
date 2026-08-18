@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/utils/search_index.dart';
 import 'package:stringr/stringr.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_info_json.dart';
@@ -57,12 +58,12 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
     return current.copyWith(filteredMods: filtered);
   }
 
-  Map<String, List<String>> _updateSearchIndices(List<Mod> allMods) {
+  SearchIndex _updateSearchIndices(List<Mod> allMods) {
     final currentIndices = stateOrNull?.modSearchIndices ?? {};
     final currentIds = allMods.map((m) => m.id).toSet();
     final cachedIds = currentIndices.keys.toSet();
 
-    final result = Map<String, List<String>>.from(currentIndices);
+    final result = SearchIndex.from(currentIndices);
     for (final id in cachedIds.difference(currentIds)) {
       result.remove(id);
     }
@@ -76,9 +77,9 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
 
   /// Builds a search index for a mod that includes fuzzy-matching terms
   /// (slugified name, name parts, acronym, author aliases).
-  List<String> _buildModSearchIndex(Mod mod) {
+  String _buildModSearchIndex(Mod mod) {
     final variant = mod.findFirstEnabledOrHighestVersion;
-    if (variant == null) return [];
+    if (variant == null) return '';
     final info = variant.modInfo;
     final values = <String>[];
 
@@ -118,7 +119,7 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
       }
     }
 
-    return values;
+    return values.join(searchIndexSeparator);
   }
 
   static List<Dependency> _dependenciesOf(Mod mod) =>
@@ -129,46 +130,48 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
       SearchField<Mod>(
         key: 'name',
         description: 'Mod name',
-        valueSuggestions: (mods) => mods
-            .map((m) =>
-                m.findFirstEnabledOrHighestVersion?.modInfo.name?.toLowerCase())
-            .whereType<String>()
-            .where((v) => v.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort(),
+        valueSuggestions: (mods) =>
+            mods
+                .map(
+                  (m) => m.findFirstEnabledOrHighestVersion?.modInfo.name
+                      ?.toLowerCase(),
+                )
+                .whereType<String>()
+                .where((v) => v.isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort(),
         matches: (mod, op, value) {
           if (op != DslOperator.equals) return false;
-          final name =
-              mod.findFirstEnabledOrHighestVersion?.modInfo.name?.toLowerCase();
+          final name = mod.findFirstEnabledOrHighestVersion?.modInfo.name
+              ?.toLowerCase();
           return name?.contains(value.toLowerCase()) ?? false;
         },
       ),
-      SearchField.string(
-        'id',
-        'Mod ID',
-        (m) => m.id,
-      ),
+      SearchField.string('id', 'Mod ID', (m) => m.id),
       SearchField<Mod>(
         key: 'author',
         description: 'Author name (includes aliases)',
-        valueSuggestions: (mods) => mods
-            .map((m) => m.findFirstEnabledOrHighestVersion?.modInfo.author
-                ?.toLowerCase())
-            .whereType<String>()
-            .where((v) => v.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort(),
+        valueSuggestions: (mods) =>
+            mods
+                .map(
+                  (m) => m.findFirstEnabledOrHighestVersion?.modInfo.author
+                      ?.toLowerCase(),
+                )
+                .whereType<String>()
+                .where((v) => v.isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort(),
         matches: (mod, op, value) {
           if (op != DslOperator.equals) return false;
-          final author =
-              mod.findFirstEnabledOrHighestVersion?.modInfo.author;
+          final author = mod.findFirstEnabledOrHighestVersion?.modInfo.author;
           if (author == null) return false;
           final lowerValue = value.toLowerCase();
           if (author.toLowerCase().contains(lowerValue)) return true;
-          return getModAuthorAliases(author)
-              .any((alias) => alias.toLowerCase().contains(lowerValue));
+          return getModAuthorAliases(
+            author,
+          ).any((alias) => alias.toLowerCase().contains(lowerValue));
         },
       ),
       SearchField.string(
@@ -184,15 +187,16 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
       SearchField<Mod>(
         key: 'dependency',
         description: 'Name or ID of a mod it requires',
-        valueSuggestions: (mods) => mods
-            .expand(_dependenciesOf)
-            .expand((dep) => [dep.name, dep.id])
-            .whereType<String>()
-            .map((v) => v.toLowerCase())
-            .where((v) => v.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort(),
+        valueSuggestions: (mods) =>
+            mods
+                .expand(_dependenciesOf)
+                .expand((dep) => [dep.name, dep.id])
+                .whereType<String>()
+                .map((v) => v.toLowerCase())
+                .where((v) => v.isNotEmpty)
+                .toSet()
+                .toList()
+              ..sort(),
         matches: (mod, op, value) {
           if (op != DslOperator.equals) return false;
           final lowerValue = value.toLowerCase();
@@ -220,7 +224,7 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
 class ModsGridSearchState {
   final List<Mod> allMods;
   final List<Mod> filteredMods;
-  final Map<String, List<String>> modSearchIndices;
+  final SearchIndex modSearchIndices;
   final String currentSearchQuery;
 
   const ModsGridSearchState({
@@ -233,7 +237,7 @@ class ModsGridSearchState {
   ModsGridSearchState copyWith({
     List<Mod>? allMods,
     List<Mod>? filteredMods,
-    Map<String, List<String>>? modSearchIndices,
+    SearchIndex? modSearchIndices,
     String? currentSearchQuery,
   }) {
     return ModsGridSearchState(
@@ -247,5 +251,5 @@ class ModsGridSearchState {
 
 final modsGridSearchControllerProvider =
     NotifierProvider<ModsGridSearchController, ModsGridSearchState>(() {
-  return ModsGridSearchController();
-});
+      return ModsGridSearchController();
+    });

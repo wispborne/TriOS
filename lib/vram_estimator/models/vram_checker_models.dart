@@ -37,13 +37,62 @@ int mipmapChainBytes(int width, int height) {
 @MappableEnum()
 enum ImageType { texture, background, unused }
 
+/// The start [paths] all have in common, cut back to a folder boundary.
+///
+/// Returns an empty string when they have nothing in common, which is what
+/// happens with one path or none.
+String _sharedStartOf(List<String> paths) {
+  if (paths.length < 2) return '';
+
+  var shared = paths.first;
+  for (final path in paths.skip(1)) {
+    final limit = shared.length < path.length ? shared.length : path.length;
+    var same = 0;
+    while (same < limit && shared.codeUnitAt(same) == path.codeUnitAt(same)) {
+      same++;
+    }
+    if (same == 0) return '';
+    shared = shared.substring(0, same);
+  }
+
+  // Stop at a folder boundary, so the leftover reads as a path rather than as
+  // the tail end of a folder name.
+  final lastSlash = shared.lastIndexOf(RegExp(r'[/\\]'));
+  return lastSlash < 0 ? '' : shared.substring(0, lastSlash + 1);
+}
+
+/// One shared copy of each distinct attribution list.
+///
+/// Every image a mod's `ship_data.csv` mentions carries the same
+/// `["ships: data/hulls/ship_data.csv"]`, and a big mod list has hundreds of
+/// thousands of images. The text comes from a short list — one entry per parser
+/// per source file — so one copy of each list does for all of them.
+final Map<String, List<String>> _sharedAttributions = {};
+
+/// The shared copy of an attribution list. Equal lists return the very same
+/// object.
+List<String> _shareAttribution(List<String> entries) =>
+    _sharedAttributions[entries.join('\n')] ??= List<String>.unmodifiable(
+      entries,
+    );
+
 /// A columnar data structure for image metadata. Instead of creating an object per image,
 /// this class uses parallel lists to store fields (file paths, dimensions, etc.) which reduces
 /// per-object overhead.
 class ModImageTable {
   static const double vanillaBackgroundTextSizeInBytes = 12582912.0;
 
-  final List<String> filePaths;
+  /// The start every file path in this table has in common — the mod folder,
+  /// and usually `graphics\` after it.
+  final String _sharedStart;
+
+  /// What is left of each file path once [_sharedStart] is taken off.
+  ///
+  /// A big mod list has over a hundred thousand images, and their paths are
+  /// nearly all the same run of characters. Keeping the common start once
+  /// rather than a hundred thousand times saves several megabytes of text.
+  final List<String> _pathEnds;
+
   final List<int> textureHeights;
   final List<int> textureWidths;
   final List<int> bitsInAllChannelsSums;
@@ -61,7 +110,8 @@ class ModImageTable {
   final List<int> vanillaReplacementCosts;
 
   ModImageTable._(
-    this.filePaths,
+    this._sharedStart,
+    this._pathEnds,
     this.textureHeights,
     this.textureWidths,
     this.bitsInAllChannelsSums,
@@ -114,14 +164,16 @@ class ModImageTable {
       // Optional per-row attribution (parser ids that referenced this file).
       final refByRaw = row['referencedBy'];
       if (refByRaw is List && refByRaw.isNotEmpty) {
-        refBys[i] = List<String>.unmodifiable(refByRaw.cast<String>());
+        refBys[i] = _shareAttribution(refByRaw.cast<String>().toList());
       }
 
       vanillaCosts[i] = (row['vanillaReplacementCost'] as int?) ?? 0;
     }
 
+    final sharedStart = _sharedStartOf(filePaths);
     return ModImageTable._(
-      filePaths,
+      sharedStart,
+      _endsOf(filePaths, sharedStart),
       heights,
       widths,
       bits,
@@ -132,6 +184,23 @@ class ModImageTable {
     );
   }
 
+  /// Each of [paths] with [sharedStart] taken off the front.
+  static List<String> _endsOf(List<String> paths, String sharedStart) =>
+      List<String>.generate(
+        paths.length,
+        (i) => paths[i].substring(sharedStart.length),
+        growable: false,
+      );
+
+  /// The full path of the image in row [index].
+  String pathAt(int index) => '$_sharedStart${_pathEnds[index]}';
+
+  /// Every file path in the table, put back together. Built fresh each call —
+  /// in a loop, use [pathAt].
+  List<String> get filePaths => [
+    for (var i = 0; i < length; i++) pathAt(i),
+  ];
+
   /// Converts the columnar data back into a list of maps for JSON serialization.
   ///
   /// Kept for tests and any other consumer that wants the row shape; the
@@ -139,9 +208,9 @@ class ModImageTable {
   /// field-name keys for every image.
   List<Map<String, dynamic>> toRows() {
     final rows = <Map<String, dynamic>>[];
-    for (int i = 0; i < filePaths.length; i++) {
+    for (int i = 0; i < length; i++) {
       rows.add({
-        'filePath': filePaths[i],
+        'filePath': pathAt(i),
         'textureHeight': textureHeights[i],
         'textureWidth': textureWidths[i],
         'bitsInAllChannelsSum': bitsInAllChannelsSums[i],
@@ -218,7 +287,7 @@ class ModImageTable {
       if (refBysRaw is! List) return null;
       final raw = refBysRaw[i];
       if (raw is List && raw.isNotEmpty) {
-        return List<String>.unmodifiable(raw.cast<String>());
+        return _shareAttribution(raw.cast<String>().toList());
       }
       return null;
     }, growable: false);
@@ -230,8 +299,10 @@ class ModImageTable {
       return (vanillaCostsRaw[i] as int?) ?? 0;
     }, growable: false);
 
+    final sharedStart = _sharedStartOf(filePaths);
     return ModImageTable._(
-      filePaths,
+      sharedStart,
+      _endsOf(filePaths, sharedStart),
       heights,
       widths,
       bits,
@@ -243,9 +314,9 @@ class ModImageTable {
   }
 
   List<ModImageView> toImageViews() =>
-      List.generate(filePaths.length, (i) => ModImageView(i, this));
+      List.generate(length, (i) => ModImageView(i, this));
 
-  int get length => filePaths.length;
+  int get length => _pathEnds.length;
 }
 
 /// A lightweight view into a single row of [ModImageTable]. This class provides the
@@ -256,7 +327,7 @@ class ModImageView {
 
   ModImageView(this.index, this.table);
 
-  String get filePath => table.filePaths[index];
+  String get filePath => table.pathAt(index);
 
   int get textureHeight => table.textureHeights[index];
 

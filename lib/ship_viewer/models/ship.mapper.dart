@@ -529,13 +529,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     key: r'csvfiles',
     hook: SkipSerializationHook(),
   );
-  static Map<String, String> _$shipSizesMap(Ship v) => v.shipSizesMap;
-  static const Field<Ship, Map<String, String>> _f$shipSizesMap = Field(
-    'shipSizesMap',
-    _$shipSizesMap,
-    key: r'shipsizesmap',
-    mode: FieldMode.member,
-  );
   static int _$mountableWeaponSlotCount(Ship v) => v.mountableWeaponSlotCount;
   static const Field<Ship, int> _f$mountableWeaponSlotCount = Field(
     'mountableWeaponSlotCount',
@@ -651,7 +644,6 @@ class ShipMapper extends ClassMapperBase<Ship> {
     #dataFile: _f$dataFile,
     #dataFiles: _f$dataFiles,
     #csvFiles: _f$csvFiles,
-    #shipSizesMap: _f$shipSizesMap,
     #mountableWeaponSlotCount: _f$mountableWeaponSlotCount,
     #isStation: _f$isStation,
     #hasStationSlots: _f$hasStationSlots,

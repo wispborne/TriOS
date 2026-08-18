@@ -651,12 +651,43 @@ ItemModSources buildItemModSources({
       ),
   ];
 
-  return ItemModSources(
-    hasStatsRow: hasStatsRow,
-    statsWinner: statsWinner,
-    statsIgnored: statsIgnored,
-    fileSources: fileSources,
+  return _shareItemModSources(
+    ItemModSources(
+      hasStatsRow: hasStatsRow,
+      statsWinner: statsWinner,
+      statsIgnored: statsIgnored.isEmpty ? const [] : statsIgnored,
+      fileSources: fileSources.isEmpty ? const [] : fileSources,
+    ),
   );
+}
+
+/// One shared copy of each distinct answer.
+///
+/// Nearly every ship and weapon in a mod has the same story to tell — this mod
+/// supplied it and nothing overrode it — and a big mod list has twenty-seven
+/// thousand ships and weapons between them. There are only a few hundred
+/// distinct answers, and each is only ever read when someone opens a details
+/// dialog.
+final Map<String, ItemModSources> _sharedItemModSources = {};
+
+/// The shared copy of [sources]. Equal answers return the very same object.
+ItemModSources _shareItemModSources(ItemModSources sources) {
+  final key = StringBuffer()
+    ..write(sources.hasStatsRow)
+    ..write('|')
+    ..write(sources.statsWinner)
+    ..write('|')
+    ..writeAll(sources.statsIgnored, ',');
+  for (final change in sources.fileSources) {
+    key
+      ..write('|')
+      ..write(change.sourceName)
+      ..write(change.isVanilla)
+      ..write(change.isWinner)
+      ..write(':')
+      ..writeAll(change.areas, ',');
+  }
+  return _sharedItemModSources[key.toString()] ??= sources;
 }
 
 /// Merges `weapon_data.csv` rows and `.wpn` side files, paired by id.

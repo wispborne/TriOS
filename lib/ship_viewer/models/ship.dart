@@ -7,6 +7,8 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/ship_viewer/models/ship_engine_slot.dart';
 import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
+import 'package:trios/utils/packed_numbers.dart';
+import 'package:trios/utils/shared_collections.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/mod_data_files.dart';
@@ -222,20 +224,20 @@ class Ship with ShipMappable implements WispGridItem {
     this.crLossPerSec,
     this.suppliesRec,
     this.suppliesMo,
-    this.hints,
-    this.tags,
+    List<String>? hints,
+    List<String>? tags,
     this.rarity,
     this.breakProb,
     this.minPieces,
     this.maxPieces,
     this.travelDrive,
-    this.bounds,
-    this.center,
+    List<double>? bounds,
+    List<double>? center,
     this.collisionRadius,
     this.height,
     this.width,
     this.hullSize,
-    this.shieldCenter,
+    List<double>? shieldCenter,
     this.shieldRadius,
     this.spriteName,
     this.spriteFile,
@@ -244,17 +246,26 @@ class Ship with ShipMappable implements WispGridItem {
     this.engineSlots,
     this.weaponSlots,
     this.builtInWeapons,
-    this.builtInMods,
-    this.builtInWings,
-    this.moduleAnchor,
+    List<String>? builtInMods,
+    List<String>? builtInWings,
+    List<double>? moduleAnchor,
     this.modId,
     this.modName,
     this.isSkin = false,
     this.baseHullId,
     this.color,
-  });
+  })  : hints = shareStringList(hints),
+       tags = shareStringList(tags),
+       builtInMods = shareStringList(builtInMods),
+       builtInWings = shareStringList(builtInWings),
+       bounds = packNumbersOrNull(bounds),
+       center = packNumbersOrNull(center),
+       shieldCenter = packNumbersOrNull(shieldCenter),
+       moduleAnchor = packNumbersOrNull(moduleAnchor);
 
-  final shipSizesMap = {
+  /// An instance field made one of these per ship, and there are thousands of
+  /// them all saying the same four words.
+  static const shipSizesMap = {
     "frigate": "Frigate",
     "destroyer": "Destroyer",
     "cruiser": "Cruiser",

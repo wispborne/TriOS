@@ -791,23 +791,24 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                               ),
                             ),
                             WebViewStatus.loaded =>
-                              // On Windows the WebViewEnvironment is created
-                              // async at startup; if we build InAppWebView with
-                              // a null env it binds to WebView2's default
-                              // environment (different userDataFolder) and
-                              // cookies/login state for our custom env are
-                              // missing until the user reopens the panel.
-                              // Hold off until the env is ready.
+                              // On Windows the WebViewEnvironment is made the
+                              // first time this panel opens; if we build
+                              // InAppWebView with a null env it binds to
+                              // WebView2's default environment (different
+                              // userDataFolder) and cookies/login state for our
+                              // custom env are missing until the user reopens
+                              // the panel. Hold off until the env is ready.
                               (currentPlatform == TargetPlatform.windows &&
-                                      ref.watch(webViewEnvironment) == null)
+                                      ref.watch(webViewEnvironment).value ==
+                                          null)
                                   ? const Center(
                                       child: CircularProgressIndicator(),
                                     )
                                   : InAppWebView(
                                       key: webViewKey,
-                                      webViewEnvironment: ref.watch(
-                                        webViewEnvironment,
-                                      ),
+                                      webViewEnvironment: ref
+                                          .watch(webViewEnvironment)
+                                          .value,
                                       shouldOverrideUrlLoading:
                                           (controller, navigationAction) async {
                                             if (navigationAction.request.url !=

@@ -38,7 +38,7 @@ class ShipsPageState with ShipsPageStateMappable {
   final ShipsPageStatePersisted persisted;
 
   /// Ship properties, lowercase, by ship id.
-  final Map<String, List<String>> shipSearchIndices;
+  final SearchIndex shipSearchIndices;
   final Map<String, ShipSystem> shipSystemsMap;
   final Map<String, Weapon> weaponsMap;
   final Map<String, Hullmod> hullmodsMap;
@@ -624,7 +624,7 @@ class ShipsPageController extends Notifier<ShipsPageState>
     }
   }
 
-  Map<String, List<String>> _updateSearchIndices(List<Ship> allShips) {
+  SearchIndex _updateSearchIndices(List<Ship> allShips) {
     return updateSearchIndices(
       allShips,
       stateOrNull?.shipSearchIndices ?? {},
@@ -770,7 +770,7 @@ class ShipsPageController extends Notifier<ShipsPageState>
   List<Ship> _applyParsedQuery(
     List<Ship> ships,
     String query,
-    Map<String, List<String>> shipValuesByShipId,
+    SearchIndex shipValuesByShipId,
   ) {
     return SearchField.applyQuery(
       ships,

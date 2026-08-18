@@ -7,6 +7,8 @@ import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/packed_numbers.dart';
+import 'package:trios/utils/shared_collections.dart';
 import 'package:trios/utils/mod_data_files.dart';
 import 'package:trios/weapon_viewer/models/weapon_derived_stats.dart';
 
@@ -282,20 +284,20 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.hardpointUnderSprite,
     this.turretGlowSprite,
     this.hardpointGlowSprite,
-    this.glowColor,
-    this.renderHints,
+    List<double>? glowColor,
+    List<String>? renderHints,
     this.projectileSpecId,
     this.barrelMode,
     this.interruptibleBurst,
     this.beamFireOnlyOnFullCharge,
     this.skipIdleFrameIfZeroBurstDelay,
-    this.turretOffsets,
-    this.hardpointOffsets,
-    this.turretAngleOffsets,
-    this.hardpointAngleOffsets,
+    List<double>? turretOffsets,
+    List<double>? hardpointOffsets,
+    List<double>? turretAngleOffsets,
+    List<double>? hardpointAngleOffsets,
     this.loadedMissileSprite,
-    this.loadedMissileSize,
-    this.loadedMissileCenter,
+    List<double>? loadedMissileSize,
+    List<double>? loadedMissileCenter,
     this.missileType,
     this.mirvDamage,
     this.mirvEmp,
@@ -304,7 +306,14 @@ class Weapon with WeaponMappable implements WispGridItem {
     this.missileAcceleration,
     this.missileMaxTurnRate,
     this.mountTypeOverride,
-  });
+  })  : renderHints = shareStringList(renderHints),
+        glowColor = packNumbersOrNull(glowColor),
+        turretOffsets = packNumbersOrNull(turretOffsets),
+        hardpointOffsets = packNumbersOrNull(hardpointOffsets),
+        turretAngleOffsets = packNumbersOrNull(turretAngleOffsets),
+        hardpointAngleOffsets = packNumbersOrNull(hardpointAngleOffsets),
+        loadedMissileSize = packNumbersOrNull(loadedMissileSize),
+        loadedMissileCenter = packNumbersOrNull(loadedMissileCenter);
 
   /// Returns the hints as a set of strings, with each hint trimmed and lowercased.
   late final Set<String> hintsAsSet =

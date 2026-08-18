@@ -39,7 +39,7 @@ class HullmodsPageState with HullmodsPageStateMappable {
   final List<Hullmod> allHullmods;
   final List<Hullmod> filteredHullmods;
   final List<Hullmod> hullmodsBeforeGridFilter;
-  final Map<String, List<String>> hullmodSearchIndices;
+  final SearchIndex hullmodSearchIndices;
   final String currentSearchQuery;
   final bool isLoading;
 
@@ -141,7 +141,8 @@ class HullmodsPageController extends Notifier<HullmodsPageState>
     _searchIndexItems = allHullmods;
     final hullmodValuesByHullmodId = itemsChanged
         ? _updateSearchIndices(allHullmods)
-        : stateOrNull?.hullmodSearchIndices ?? _updateSearchIndices(allHullmods);
+        : stateOrNull?.hullmodSearchIndices ??
+              _updateSearchIndices(allHullmods);
 
     var initialState =
         (stateOrNull ??
@@ -269,7 +270,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState>
     } catch (_) {}
   }
 
-  Map<String, List<String>> _updateSearchIndices(List<Hullmod> allHullmods) {
+  SearchIndex _updateSearchIndices(List<Hullmod> allHullmods) {
     return updateSearchIndices(
       allHullmods,
       stateOrNull?.hullmodSearchIndices ?? {},
@@ -400,7 +401,7 @@ class HullmodsPageController extends Notifier<HullmodsPageState>
   List<Hullmod> _applyParsedQuery(
     List<Hullmod> hullmods,
     String query,
-    Map<String, List<String>> hullmodValuesByHullmodId,
+    SearchIndex hullmodValuesByHullmodId,
   ) {
     return SearchField.applyQuery(
       hullmods,

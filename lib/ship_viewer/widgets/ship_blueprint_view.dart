@@ -744,14 +744,38 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
   /// Build positioned module sprite widgets, shifted by [dx]/[dy] so that
   /// all coordinates are non-negative within the expanded Stack.
-  List<Widget> _buildModuleSpritesOffset(double dx, double dy) {
+  ///
+  /// [hullWidth] is the parent hull's drawn width, used to work out how small
+  /// each module's sprite can be decoded.
+  List<Widget> _buildModuleSpritesOffset(
+    double dx,
+    double dy,
+    double hullWidth,
+  ) {
     final geom = _cachedModuleGeometry;
     if (geom == null) return const [];
 
     return [
       for (var i = 0; i < geom.layouts.length; i++)
-        _buildModuleSpriteWidget(i, geom.layouts[i], dx, dy),
+        _buildModuleSpriteWidget(i, geom.layouts[i], dx, dy, hullWidth),
     ];
+  }
+
+  /// How many pixels wide to decode a module sprite that is drawn
+  /// [moduleWidth] wide next to a hull drawn [hullWidth] wide.
+  ///
+  /// The hull is decoded at [ShipBlueprintView.cacheWidth]; a module drawn at
+  /// a fraction of the hull's width only needs the same fraction of the
+  /// pixels. Returns null (full resolution) when the hull isn't capped either.
+  /// Station modules are often 512x512 or larger, so decoding them at full
+  /// size for a 40px thumbnail costs megabytes each.
+  int? _moduleCacheWidth(double moduleWidth, double hullWidth) {
+    final hullCacheWidth = widget.cacheWidth;
+    if (hullCacheWidth == null || hullWidth <= 0 || moduleWidth <= 0) {
+      return null;
+    }
+    final scaled = (hullCacheWidth * moduleWidth / hullWidth).round();
+    return scaled < 1 ? 1 : scaled;
   }
 
   Widget _buildModuleSpriteWidget(
@@ -759,6 +783,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
     _ModuleSpriteLayout layout,
     double dx,
     double dy,
+    double hullWidth,
   ) {
     final isHovered = _hoveredModuleIndex == index;
 
@@ -771,6 +796,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
         File(layout.spriteFile),
         width: layout.width,
         height: layout.height,
+        cacheWidth: _moduleCacheWidth(layout.width, hullWidth),
         // Stretch to the declared module size, matching the game.
         fit: BoxFit.fill,
         errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
@@ -880,7 +906,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
             ),
           ),
-          if (_showModules) ..._buildModuleSpritesOffset(originDx, originDy),
+          if (_showModules)
+            ..._buildModuleSpritesOffset(originDx, originDy, imgW),
           ?_armamentsPositioned(
             visibleArmaments,
             originDx,
@@ -1538,7 +1565,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                     ),
                   ),
                   if (_showModules)
-                    ..._buildModuleSpritesOffset(originDx, originDy),
+                    ..._buildModuleSpritesOffset(originDx, originDy, imgW),
                   // Built-in weapon sprites, drawn over the hull and module
                   // sprites like the game does.
                   ?_armamentsPositioned(

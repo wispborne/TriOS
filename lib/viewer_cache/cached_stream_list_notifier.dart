@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/game_data_merge.dart';
+import 'package:trios/utils/interned_strings.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
@@ -545,16 +546,23 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// Recursively normalize msgpack-deserialized structures so nested maps are
   /// `Map<String, dynamic>` (dart_mappable's `fromMap` requires this top-to-
   /// bottom; msgpack returns `Map<dynamic, dynamic>` at every level).
+  ///
+  /// Short strings are shared as they come out. msgpack hands back a brand new
+  /// string for every field name and every value, so a big mod list decodes the
+  /// same few thousand words hundreds of thousands of times over. Plenty of
+  /// that text outlives the decode, on the ships and weapons themselves, so
+  /// sharing it here saves memory for the rest of the session.
   static dynamic normalizeForMapper(dynamic value) {
     if (value is Map) {
       return <String, dynamic>{
         for (final e in value.entries)
-          e.key.toString(): normalizeForMapper(e.value),
+          internShortString(e.key.toString()): normalizeForMapper(e.value),
       };
     }
     if (value is List) {
       return value.map(normalizeForMapper).toList();
     }
+    if (value is String) return internShortString(value);
     return value;
   }
 

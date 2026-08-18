@@ -17,6 +17,9 @@ const kDarkTooltipBackground = Color.from(
   alpha: 1,
 );
 
+/// Widest and tallest an image preview in a tooltip is shown and decoded.
+const _maxTooltipImageSize = 512.0;
+
 enum TooltipPosition { topLeft, topRight, bottomLeft, bottomRight }
 
 /// A render object that positions the tooltip based on mouse position.
@@ -416,12 +419,22 @@ class MovingTooltipWidget extends StatefulWidget {
             crossAxisAlignment: .start,
             mainAxisSize: .min,
             children: [
-              Image.file(file, fit: BoxFit.contain),
-              if (showPathAsLabel)
-                Text(
-                  file.nameWithExtension,
-                  style: TextStyle(fontSize: 12),
+              // Capped so hovering down a long list of icons doesn't fill
+              // the image cache with full-size decodes. Icons and logos are
+              // well under this, so they look the same as before.
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: _maxTooltipImageSize,
+                  maxHeight: _maxTooltipImageSize,
                 ),
+                child: Image.file(
+                  file,
+                  fit: BoxFit.contain,
+                  cacheWidth: _maxTooltipImageSize.toInt(),
+                ),
+              ),
+              if (showPathAsLabel)
+                Text(file.nameWithExtension, style: TextStyle(fontSize: 12)),
             ],
           ),
         ),

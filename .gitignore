@@ -241,3 +241,7 @@ TriOS-Windows.zip
 .sentry-native/
 CLAUDE.local.md
 /starsector-core/
+
+# Saved memory measurements from flutter_ram.
+.flutter_ram/
+/.flutter_ram/

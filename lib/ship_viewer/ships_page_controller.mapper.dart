@@ -85,15 +85,10 @@ class ShipsPageStateMapper extends ClassMapperBase<ShipsPageState> {
         opt: true,
         def: const ShipsPageStatePersisted(),
       );
-  static Map<String, List<String>> _$shipSearchIndices(ShipsPageState v) =>
+  static Map<String, String> _$shipSearchIndices(ShipsPageState v) =>
       v.shipSearchIndices;
-  static const Field<ShipsPageState, Map<String, List<String>>>
-  _f$shipSearchIndices = Field(
-    'shipSearchIndices',
-    _$shipSearchIndices,
-    opt: true,
-    def: const {},
-  );
+  static const Field<ShipsPageState, Map<String, String>> _f$shipSearchIndices =
+      Field('shipSearchIndices', _$shipSearchIndices, opt: true, def: const {});
   static Map<String, ShipSystem> _$shipSystemsMap(ShipsPageState v) =>
       v.shipSystemsMap;
   static const Field<ShipsPageState, Map<String, ShipSystem>>
@@ -267,12 +262,7 @@ abstract class ShipsPageStateCopyWith<$R, $In extends ShipsPageState, $Out>
     ShipsPageStatePersisted
   >
   get persisted;
-  MapCopyWith<
-    $R,
-    String,
-    List<String>,
-    ObjectCopyWith<$R, List<String>, List<String>>
-  >
+  MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>>
   get shipSearchIndices;
   MapCopyWith<
     $R,
@@ -291,7 +281,7 @@ abstract class ShipsPageStateCopyWith<$R, $In extends ShipsPageState, $Out>
   get shipsBeforeGridFilter;
   $R call({
     ShipsPageStatePersisted? persisted,
-    Map<String, List<String>>? shipSearchIndices,
+    Map<String, String>? shipSearchIndices,
     Map<String, ShipSystem>? shipSystemsMap,
     Map<String, Weapon>? weaponsMap,
     Map<String, Hullmod>? hullmodsMap,
@@ -324,12 +314,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
   >
   get persisted => $value.persisted.copyWith.$chain((v) => call(persisted: v));
   @override
-  MapCopyWith<
-    $R,
-    String,
-    List<String>,
-    ObjectCopyWith<$R, List<String>, List<String>>
-  >
+  MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>>
   get shipSearchIndices => MapCopyWith(
     $value.shipSearchIndices,
     (v, t) => ObjectCopyWith(v, $identity, t),
@@ -385,7 +370,7 @@ class _ShipsPageStateCopyWithImpl<$R, $Out>
   @override
   $R call({
     ShipsPageStatePersisted? persisted,
-    Map<String, List<String>>? shipSearchIndices,
+    Map<String, String>? shipSearchIndices,
     Map<String, ShipSystem>? shipSystemsMap,
     Map<String, Weapon>? weaponsMap,
     Map<String, Hullmod>? hullmodsMap,

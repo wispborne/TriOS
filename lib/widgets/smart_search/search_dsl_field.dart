@@ -1,3 +1,4 @@
+import 'package:trios/utils/search_index.dart';
 import 'package:trios/widgets/smart_search/search_dsl_parser.dart';
 export 'package:trios/widgets/smart_search/search_dsl_parser.dart'
     show DslOperator;
@@ -77,13 +78,14 @@ class SearchField<T> {
   ) => SearchField<T>(
     key: key,
     description: description,
-    valueSuggestions: (items) => items
-        .map((i) => accessor(i)?.toLowerCase())
-        .whereType<String>()
-        .where((v) => v.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort(),
+    valueSuggestions: (items) =>
+        items
+            .map((i) => accessor(i)?.toLowerCase())
+            .whereType<String>()
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
     matches: (item, op, value) {
       if (op != DslOperator.equals) return false;
       return accessor(item)?.toLowerCase() == value.toLowerCase();
@@ -97,18 +99,20 @@ class SearchField<T> {
   ) => SearchField<T>(
     key: key,
     description: description,
-    valueSuggestions: (items) => items
-        .expand((i) => accessor(i) ?? <String>[])
-        .map((v) => v.toLowerCase())
-        .where((v) => v.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort(),
+    valueSuggestions: (items) =>
+        items
+            .expand((i) => accessor(i) ?? <String>[])
+            .map((v) => v.toLowerCase())
+            .where((v) => v.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort(),
     matches: (item, op, value) {
       if (op != DslOperator.equals) return false;
-      return accessor(item)?.any(
-        (v) => v.toLowerCase() == value.toLowerCase(),
-      ) ?? false;
+      return accessor(
+            item,
+          )?.any((v) => v.toLowerCase() == value.toLowerCase()) ??
+          false;
     },
   );
 
@@ -119,7 +123,7 @@ class SearchField<T> {
     List<T> items,
     String query,
     Map<String, SearchField<T>> fieldsByKey,
-    Map<String, List<String>> searchIndices,
+    SearchIndex searchIndices,
     String Function(T) idOf,
   ) {
     if (query.trim().isEmpty) return items;
@@ -141,18 +145,18 @@ class SearchField<T> {
     ];
 
     return items.where((item) {
-      final values = searchIndices[idOf(item)];
+      final text = searchIndices[idOf(item)];
       for (final entry in preparedTokens) {
         final token = entry.token;
         if (token is TextToken) {
-          if (!(values?.any((v) => v.contains(entry.lowered)) ?? false)) {
+          if (!(text?.contains(entry.lowered) ?? false)) {
             return false;
           }
         } else if (token is FieldToken) {
           final field = fieldsByKey[token.key];
           final bool result;
           if (field == null) {
-            result = values?.any((v) => v.contains(entry.lowered)) ?? false;
+            result = text?.contains(entry.lowered) ?? false;
           } else {
             result = field.matches(item, token.operator, token.value);
           }

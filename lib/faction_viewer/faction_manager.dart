@@ -211,15 +211,20 @@ class FactionListNotifier
 
 /// The last merge result for each toggle value, kept beside the two inputs it
 /// was built from. Handed back again when both are unchanged.
+/// A provider rather than a plain top-level map so it belongs to the provider
+/// container: a soft restart then lets the old faction list go instead of
+/// keeping it alongside the new one.
 final _lastMergedFactions =
-    <
-      bool,
-      ({
-        List<FactionFileData> files,
-        List<MergeSource> sources,
-        List<Faction> factions,
-      })
-    >{};
+    Provider<
+      Map<
+        bool,
+        ({
+          List<FactionFileData> files,
+          List<MergeSource> sources,
+          List<Faction> factions,
+        })
+      >
+    >((ref) => {});
 
 /// Factions built by merging the raw files, in the game's load order.
 ///
@@ -243,7 +248,8 @@ final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
   // Hand each source's scanned files to `mergeFactions` in load order.
   final sources = ref.watch(orderedSourcesProvider(onlyEnabledMods));
 
-  final last = _lastMergedFactions[onlyEnabledMods];
+  final lastMerged = ref.watch(_lastMergedFactions);
+  final last = lastMerged[onlyEnabledMods];
   if (last != null &&
       identical(last.files, files) &&
       identical(last.sources, sources)) {
@@ -322,7 +328,7 @@ final mergedFactionListProvider = Provider.family<List<Faction>, bool>((
     }
   }
 
-  _lastMergedFactions[onlyEnabledMods] = (
+  lastMerged[onlyEnabledMods] = (
     files: files,
     sources: sources,
     factions: factions,

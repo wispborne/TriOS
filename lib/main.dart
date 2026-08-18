@@ -44,8 +44,35 @@ import 'app_shell.dart';
 import 'trios/app_state.dart';
 
 Object? loggingError;
-StateProvider<WebViewEnvironment?> webViewEnvironment =
-    StateProvider<WebViewEnvironment?>((ref) => null);
+
+/// The WebView2 environment the in-app browser runs in, on Windows.
+///
+/// Made the first time something asks for one, not at startup. Making it starts
+/// half a dozen Edge processes that come to about three hundred megabytes, and
+/// most people never open a web page in TriOS at all. Null on platforms that do
+/// not need one, on machines with no WebView2 installed, and for the moment it
+/// takes to start.
+final webViewEnvironment = FutureProvider<WebViewEnvironment?>((ref) async {
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.windows) return null;
+
+  try {
+    if (await WebViewEnvironment.getAvailableVersion() == null) return null;
+
+    final userDataFolder = Constants.configDataFolderPath.path;
+    final environment = await WebViewEnvironment.create(
+      settings: WebViewEnvironmentSettings(userDataFolder: userDataFolder),
+    );
+    Fimber.i("WebView2 environment started. Data folder: $userDataFolder");
+    return environment;
+  } catch (error, stackTrace) {
+    Fimber.w(
+      "Error creating WebView2 environment: $error",
+      ex: error,
+      stacktrace: stackTrace,
+    );
+    return null;
+  }
+});
 
 /// Whether the previous session crashed (running.lock was present at startup).
 bool didPreviousSessionCrash = false;
@@ -188,6 +215,14 @@ void main(List<String> args) async {
   } catch (e) {
     print("Error initializing Flutter widgets.");
   }
+
+  // Flutter's own image cache defaults to 1000 pictures / 100 MB and never
+  // gives that back. TriOS shows lots of small icons and sprites, so a
+  // smaller budget holds the same number of useful pictures; anything that
+  // falls out is re-read from disk in milliseconds.
+  PaintingBinding.instance.imageCache
+    ..maximumSizeBytes = 32 * 1024 * 1024
+    ..maximumSize = 400;
 
   // REMOVED because it was causing a bunch of instances to appear for some people when they updated.
   // Windows: If another instance is already running, bring it to the foreground instead of opening a new instance.
@@ -518,7 +553,8 @@ void _runTriOS(Settings? appSettings, {required bool withSentry}) => runApp(
       condition: withSentry,
       wrapper: (appWidget) => SentryWidget(child: appWidget),
       child: ProviderScope(
-        retry: (retryCount, error) => null, // disable automatic retry added in riverpod 3.0
+        retry: (retryCount, error) =>
+            null, // disable automatic retry added in riverpod 3.0
         observers: shouldDebugRiverpod ? [RiverpodDebugObserver()] : [],
         child: ExcludeSemantics(
           excluding:
@@ -782,7 +818,7 @@ class _DeepLinkRegistrationToast extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Enable support for "Install with TriOS" buttons on the forum?'
-                          '\nYou can always change this on the Settings page.',
+                      '\nYou can always change this on the Settings page.',
                       style: theme.textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),

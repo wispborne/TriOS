@@ -299,9 +299,9 @@ class WeaponsPageStateMapper extends ClassMapperBase<WeaponsPageState> {
     opt: true,
     def: const [],
   );
-  static Map<String, List<String>> _$weaponSearchIndices(WeaponsPageState v) =>
+  static Map<String, String> _$weaponSearchIndices(WeaponsPageState v) =>
       v.weaponSearchIndices;
-  static const Field<WeaponsPageState, Map<String, List<String>>>
+  static const Field<WeaponsPageState, Map<String, String>>
   _f$weaponSearchIndices = Field(
     'weaponSearchIndices',
     _$weaponSearchIndices,
@@ -420,19 +420,14 @@ abstract class WeaponsPageStateCopyWith<$R, $In extends WeaponsPageState, $Out>
   get filteredWeapons;
   ListCopyWith<$R, Weapon, WeaponCopyWith<$R, Weapon, Weapon>>
   get weaponsBeforeGridFilter;
-  MapCopyWith<
-    $R,
-    String,
-    List<String>,
-    ObjectCopyWith<$R, List<String>, List<String>>
-  >
+  MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>>
   get weaponSearchIndices;
   $R call({
     WeaponsPageStatePersisted? persisted,
     List<Weapon>? allWeapons,
     List<Weapon>? filteredWeapons,
     List<Weapon>? weaponsBeforeGridFilter,
-    Map<String, List<String>>? weaponSearchIndices,
+    Map<String, String>? weaponSearchIndices,
     String? currentSearchQuery,
     bool? isLoading,
   });
@@ -478,12 +473,7 @@ class _WeaponsPageStateCopyWithImpl<$R, $Out>
     (v) => call(weaponsBeforeGridFilter: v),
   );
   @override
-  MapCopyWith<
-    $R,
-    String,
-    List<String>,
-    ObjectCopyWith<$R, List<String>, List<String>>
-  >
+  MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>>
   get weaponSearchIndices => MapCopyWith(
     $value.weaponSearchIndices,
     (v, t) => ObjectCopyWith(v, $identity, t),
@@ -495,7 +485,7 @@ class _WeaponsPageStateCopyWithImpl<$R, $Out>
     List<Weapon>? allWeapons,
     List<Weapon>? filteredWeapons,
     List<Weapon>? weaponsBeforeGridFilter,
-    Map<String, List<String>>? weaponSearchIndices,
+    Map<String, String>? weaponSearchIndices,
     String? currentSearchQuery,
     bool? isLoading,
   }) => $apply(

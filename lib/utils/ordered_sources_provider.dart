@@ -4,7 +4,10 @@ import 'package:trios/utils/game_data_merge.dart';
 
 /// The last list handed out for each toggle value. See
 /// [orderedSourcesProvider].
-final _lastSources = <bool, List<MergeSource>>{};
+///
+/// A provider rather than a plain top-level map so it belongs to the provider
+/// container and is let go of when that container is thrown away.
+final _lastSources = Provider<Map<bool, List<MergeSource>>>((ref) => {});
 
 /// True when both lists name the same sources in the same order.
 ///
@@ -59,8 +62,9 @@ final orderedSourcesProvider = Provider.family<List<MergeSource>, bool>((
         ),
   );
 
-  final last = _lastSources[onlyEnabledMods];
+  final lastSources = ref.watch(_lastSources);
+  final last = lastSources[onlyEnabledMods];
   if (last != null && _sameSources(last, sources)) return last;
-  _lastSources[onlyEnabledMods] = sources;
+  lastSources[onlyEnabledMods] = sources;
   return sources;
 });

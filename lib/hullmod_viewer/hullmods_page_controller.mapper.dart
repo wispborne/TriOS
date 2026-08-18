@@ -268,10 +268,9 @@ class HullmodsPageStateMapper extends ClassMapperBase<HullmodsPageState> {
     opt: true,
     def: const [],
   );
-  static Map<String, List<String>> _$hullmodSearchIndices(
-    HullmodsPageState v,
-  ) => v.hullmodSearchIndices;
-  static const Field<HullmodsPageState, Map<String, List<String>>>
+  static Map<String, String> _$hullmodSearchIndices(HullmodsPageState v) =>
+      v.hullmodSearchIndices;
+  static const Field<HullmodsPageState, Map<String, String>>
   _f$hullmodSearchIndices = Field(
     'hullmodSearchIndices',
     _$hullmodSearchIndices,
@@ -400,19 +399,14 @@ abstract class HullmodsPageStateCopyWith<
   get filteredHullmods;
   ListCopyWith<$R, Hullmod, HullmodCopyWith<$R, Hullmod, Hullmod>>
   get hullmodsBeforeGridFilter;
-  MapCopyWith<
-    $R,
-    String,
-    List<String>,
-    ObjectCopyWith<$R, List<String>, List<String>>
-  >
+  MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>>
   get hullmodSearchIndices;
   $R call({
     HullmodsPageStatePersisted? persisted,
     List<Hullmod>? allHullmods,
     List<Hullmod>? filteredHullmods,
     List<Hullmod>? hullmodsBeforeGridFilter,
-    Map<String, List<String>>? hullmodSearchIndices,
+    Map<String, String>? hullmodSearchIndices,
     String? currentSearchQuery,
     bool? isLoading,
   });
@@ -458,12 +452,7 @@ class _HullmodsPageStateCopyWithImpl<$R, $Out>
     (v) => call(hullmodsBeforeGridFilter: v),
   );
   @override
-  MapCopyWith<
-    $R,
-    String,
-    List<String>,
-    ObjectCopyWith<$R, List<String>, List<String>>
-  >
+  MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>>
   get hullmodSearchIndices => MapCopyWith(
     $value.hullmodSearchIndices,
     (v, t) => ObjectCopyWith(v, $identity, t),
@@ -475,7 +464,7 @@ class _HullmodsPageStateCopyWithImpl<$R, $Out>
     List<Hullmod>? allHullmods,
     List<Hullmod>? filteredHullmods,
     List<Hullmod>? hullmodsBeforeGridFilter,
-    Map<String, List<String>>? hullmodSearchIndices,
+    Map<String, String>? hullmodSearchIndices,
     String? currentSearchQuery,
     bool? isLoading,
   }) => $apply(

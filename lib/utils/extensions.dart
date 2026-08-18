@@ -239,11 +239,15 @@ extension StringExt on String {
     ).map((it) => it.text).join();
   }
 
-  /// Starsector style, returns RichText where each %s substitution is highlighted.
+  /// Starsector style, returns a [Text] where each %s substitution is
+  /// highlighted.
   /// - `replacementValuesString` is a `|`-separated list.
   /// - `highlightColor` is applied to substituted segments.
   /// - Escaped percent `%%` renders as a single `%`.
-  RichText replaceSubstitutionsRich(
+  ///
+  /// This is a [Text], not a [RichText], so the words can be selected when
+  /// something above it puts the text in a `SelectionArea`.
+  Text replaceSubstitutionsRich(
     String? replacementValuesString, {
     required Color highlightColor,
     TextStyle? baseStyle,
@@ -275,8 +279,8 @@ extension StringExt on String {
       );
     }
 
-    return RichText(
-      text: TextSpan(children: spans, style: baseStyle),
+    return Text.rich(
+      TextSpan(children: spans, style: baseStyle),
       textAlign: textAlign ?? TextAlign.start,
       textDirection: textDirection,
       maxLines: maxLines,

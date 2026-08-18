@@ -56,55 +56,57 @@ Widget buildWeaponDetailsDialogBody(
 }) {
   final theme = Theme.of(context);
 
-  return ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 600),
-    child: SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildInfoPane(w, theme, context, pagerControls),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Wrap(
-                  spacing: 4,
-                  children: [
-                    buildOpenModDataFileButton(
-                      context,
-                      w.wpnFiles,
-                      label: 'Open .wpn file',
-                    ),
-                    buildOpenModDataFileButton(
-                      context,
-                      w.csvFiles,
-                      label: 'Open weapon_data.csv',
-                      notes: ModDataFileNotes.oneWins,
-                    ),
-                    if (w.allSpriteFiles.isNotEmpty)
-                      IconButton(
-                        tooltip: 'Open weapon data folder(s)',
-                        icon: const Icon(Icons.folder),
-                        onPressed: () {
-                          w.csvFile?.parent.path.openAsUriInBrowser();
-                          final wpnParent = w.wpnFile?.parent;
-                          if (wpnParent != null &&
-                              wpnParent.path != w.csvFile?.parent.path) {
-                            wpnParent.path.openAsUriInBrowser();
-                          }
-                        },
+  return SelectionArea(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 600),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildInfoPane(w, theme, context, pagerControls),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Wrap(
+                    spacing: 4,
+                    children: [
+                      buildOpenModDataFileButton(
+                        context,
+                        w.wpnFiles,
+                        label: 'Open .wpn file',
                       ),
-                  ],
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
-                ),
-              ],
-            ),
-          ],
+                      buildOpenModDataFileButton(
+                        context,
+                        w.csvFiles,
+                        label: 'Open weapon_data.csv',
+                        notes: ModDataFileNotes.oneWins,
+                      ),
+                      if (w.allSpriteFiles.isNotEmpty)
+                        IconButton(
+                          tooltip: 'Open weapon data folder(s)',
+                          icon: const Icon(Icons.folder),
+                          onPressed: () {
+                            w.csvFile?.parent.path.openAsUriInBrowser();
+                            final wpnParent = w.wpnFile?.parent;
+                            if (wpnParent != null &&
+                                wpnParent.path != w.csvFile?.parent.path) {
+                              wpnParent.path.openAsUriInBrowser();
+                            }
+                          },
+                        ),
+                    ],
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -140,13 +142,13 @@ Column _buildInfoPane(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SelectableText(
+                Text(
                   w.name ?? w.id,
                   style: theme.textTheme.titleLarge?.copyWith(
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                SelectableText(w.id, style: theme.textTheme.labelSmall),
+                Text(w.id, style: theme.textTheme.labelSmall),
               ],
             ),
           ),
@@ -198,7 +200,11 @@ Column _buildInfoPane(
             .toList(),
       ),
       const SizedBox(height: 8),
-      WeaponCodexCard.create(weapon: w, showTitle: false, useAbbreviations: false),
+      WeaponCodexCard.create(
+        weapon: w,
+        showTitle: false,
+        useAbbreviations: false,
+      ),
       Divider(color: Theme.of(context).colorScheme.outline),
       Padding(
         padding: const .only(bottom: 8),
@@ -308,8 +314,8 @@ String _fmtNum(num? n) => switch (n) {
 Widget _kv(String? k, String? v, ThemeData theme) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 2),
-    child: RichText(
-      text: TextSpan(
+    child: Text.rich(
+      TextSpan(
         style: theme.textTheme.bodySmall,
         children: [
           if (k != null) TextSpan(text: '$k: '),
@@ -331,7 +337,7 @@ Widget _chip(String label, String value) {
       color: Colors.black.withOpacity(0.05),
       borderRadius: BorderRadius.circular(16),
     ),
-    child: SelectableText.rich(
+    child: Text.rich(
       TextSpan(
         style: const TextStyle(fontSize: 11, color: Colors.white70),
         children: [
@@ -345,4 +351,3 @@ Widget _chip(String label, String value) {
     ),
   );
 }
-

@@ -57,58 +57,60 @@ Widget buildShipDetailsDialogBody(
 }) {
   final theme = Theme.of(context);
 
-  return ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 1050),
-    child: SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildShipInfoPane(
-              context,
-              s,
-              theme,
-              ref.read(shipsPageControllerProvider),
-              pagerControls,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Wrap(
-                  spacing: 4,
-                  children: [
-                    buildOpenModDataFileButton(
-                      context,
-                      s.dataFiles,
-                      label: 'Open ${s.isSkin ? '.skin' : '.ship'} file',
-                    ),
-                    buildOpenModDataFileButton(
-                      context,
-                      s.csvFiles,
-                      label: 'Open ship_data.csv',
-                      notes: ModDataFileNotes.oneWins,
-                    ),
-                    if (s.spriteFile != null)
-                      IconButton(
-                        tooltip: 'Open Folder',
-                        icon: const Icon(Icons.folder),
-                        onPressed: () => s.spriteFile!
-                            .toFile()
-                            .parent
-                            .path
-                            .openAsUriInBrowser(),
+  return SelectionArea(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1050),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildShipInfoPane(
+                context,
+                s,
+                theme,
+                ref.read(shipsPageControllerProvider),
+                pagerControls,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Wrap(
+                    spacing: 4,
+                    children: [
+                      buildOpenModDataFileButton(
+                        context,
+                        s.dataFiles,
+                        label: 'Open ${s.isSkin ? '.skin' : '.ship'} file',
                       ),
-                  ],
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
-                ),
-              ],
-            ),
-          ],
+                      buildOpenModDataFileButton(
+                        context,
+                        s.csvFiles,
+                        label: 'Open ship_data.csv',
+                        notes: ModDataFileNotes.oneWins,
+                      ),
+                      if (s.spriteFile != null)
+                        IconButton(
+                          tooltip: 'Open Folder',
+                          icon: const Icon(Icons.folder),
+                          onPressed: () => s.spriteFile!
+                              .toFile()
+                              .parent
+                              .path
+                              .openAsUriInBrowser(),
+                        ),
+                    ],
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -144,7 +146,7 @@ Widget _buildShipInfoPane(
             child: Column(
               crossAxisAlignment: .start,
               children: [
-                SelectableText(
+                Text(
                   s.hullNameForDisplay(),
                   style: theme.textTheme.titleLarge?.copyWith(
                     overflow: TextOverflow.ellipsis,
@@ -152,7 +154,7 @@ Widget _buildShipInfoPane(
                 ),
                 if (s.designation != null &&
                     s.designation != s.hullNameForDisplay())
-                  SelectableText(
+                  Text(
                     s.designation!,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.textTheme.bodySmall?.color?.withValues(
@@ -160,7 +162,7 @@ Widget _buildShipInfoPane(
                       ),
                     ),
                   ),
-                SelectableText(s.id, style: theme.textTheme.labelSmall),
+                Text(s.id, style: theme.textTheme.labelSmall),
                 if (s.isSkin && s.baseHullId != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
@@ -212,7 +214,11 @@ Widget _buildShipInfoPane(
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: ShipBlueprintView(ship: s),
+                // The blueprint pans and zooms on drag, so keep text
+                // selection out of it.
+                child: SelectionContainer.disabled(
+                  child: ShipBlueprintView(ship: s),
+                ),
               ),
             ),
           ),
@@ -269,7 +275,10 @@ Widget _buildShipInfoPane(
                   _chip('Ordnance Pts', _fmtNum(s.ordnancePoints)),
                   _chip('Fighter Bays', _fmtNum(s.fighterBays)),
                   _chip('Weapons', _fmtNum(s.mountableWeaponSlotCount)),
-                  _chip('Built-in Wpns', _fmtNum(s.builtInWeapons?.length ?? 0)),
+                  _chip(
+                    'Built-in Wpns',
+                    _fmtNum(s.builtInWeapons?.length ?? 0),
+                  ),
                   _chip('Built-in Mods', _fmtNum(s.builtInMods?.length ?? 0)),
                   _chip('Built-in Wings', _fmtNum(s.builtInWings?.length ?? 0)),
                 ],
@@ -375,8 +384,8 @@ String _fmtNum(num? n) => switch (n) {
 Widget _kv(String? k, String? v, ThemeData theme) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 2),
-    child: RichText(
-      text: TextSpan(
+    child: Text.rich(
+      TextSpan(
         style: theme.textTheme.bodySmall,
         children: [
           if (k != null) TextSpan(text: '$k: '),
@@ -398,7 +407,7 @@ Widget _chip(String label, String value) {
       color: Colors.black.withOpacity(0.05),
       borderRadius: BorderRadius.circular(16),
     ),
-    child: SelectableText.rich(
+    child: Text.rich(
       TextSpan(
         style: const TextStyle(fontSize: 11, color: Colors.white70),
         children: [

@@ -28,7 +28,7 @@ analyzer:
   plugins:
     - custom_lint
 
-  exclude: [build/**, lib/**.freezed.dart, lib/**.g.dart,lib/libarchive/libarchive_bindings.dart]
+  exclude: [build/**, lib/**.freezed.dart, lib/**.g.dart,lib/libarchive/libarchive_bindings.dart, android/**, ios/**, web/**, windows/**, macos/**, linux/**]
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
 

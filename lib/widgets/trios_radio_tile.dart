@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A customizable widget that displays a [Radio] button with
 /// an associated label, and clips the highlight/splash as needed.

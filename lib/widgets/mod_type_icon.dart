@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/svg_image_icon.dart';

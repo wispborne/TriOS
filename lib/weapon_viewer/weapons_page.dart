@@ -1,5 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -27,6 +27,7 @@ import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/mod_data_file_menu.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/smart_search/smart_search_bar.dart';
@@ -372,21 +373,16 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             icon: Icons.copy,
             onSelected: () => Clipboard.setData(ClipboardData(text: weapon.id)),
           ),
-          if (weapon.wpnFile != null)
-            MenuItem(
+          if (weapon.wpnFiles.isNotEmpty)
+            buildOpenModDataFileMenuItem(
+              weapon.wpnFiles,
               label: 'Open .wpn file',
-              icon: Icons.edit_note,
-              onSelected: () {
-                weapon.wpnFile!.absolute.showInExplorer();
-              },
             ),
-          if (weapon.csvFile != null)
-            MenuItem(
+          if (weapon.csvFiles.isNotEmpty)
+            buildOpenModDataFileMenuItem(
+              weapon.csvFiles,
               label: 'Open weapon_data.csv',
-              icon: Icons.edit_note,
-              onSelected: () {
-                weapon.csvFile!.absolute.showInExplorer();
-              },
+              notes: ModDataFileNotes.oneWins,
             ),
           if (weaponSpritePath != null && weapon.csvFile != null)
             buildOpenSingleFolderMenuItem(

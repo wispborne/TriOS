@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/mod_tag_manager/category.dart';
 import 'package:trios/mod_tag_manager/category_icon_palette.dart';
 import 'package:trios/mod_tag_manager/material_icons_all.dart';

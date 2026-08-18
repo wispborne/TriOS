@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/filter_engine/filter_scope.dart';

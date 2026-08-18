@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/widgets/hoverable_widget.dart';
 
 class HoverableRow extends StatefulWidget {

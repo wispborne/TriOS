@@ -22,6 +22,7 @@ import 'package:trios/utils/game_file_resolver.dart';
 import 'package:trios/utils/game_json_values.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/mod_data_files.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
@@ -38,7 +39,9 @@ final moduleVariantsProvider = StateProvider<Map<String, ShipVariant>>(
 
 /// Lightweight map of ALL variant IDs to their hull IDs.
 /// Used to resolve module variant ID → hull ID lookups.
-final variantHullIdMapProvider = StateProvider<Map<String, String>>((ref) => {});
+final variantHullIdMapProvider = StateProvider<Map<String, String>>(
+  (ref) => {},
+);
 
 /// The raw scan: one entry per source, holding that source's `ship_data.csv`
 /// rows, `.ship` files and `.skin` files, unmerged. Read
@@ -69,8 +72,10 @@ final _lastMergedShips =
 ///
 /// Merging here rather than during the scan means flipping the toggle is
 /// quick: the scan and its cache hold every installed mod either way.
-final shipListNotifierProvider =
-    Provider.family<AsyncValue<List<Ship>>, bool>((ref, onlyEnabledMods) {
+final shipListNotifierProvider = Provider.family<AsyncValue<List<Ship>>, bool>((
+  ref,
+  onlyEnabledMods,
+) {
   final sources = ref.watch(shipSourcesProvider);
   final resolver = ref.watch(gameFileResolverProvider(onlyEnabledMods));
   final mods = ref.watch(AppState.mods);
@@ -160,9 +165,9 @@ Uint8List encodeShipsRawData(ShipsRawData raw) {
 /// Decodes [ShipsCachePayload.rawDataBytes]. Called once per source per
 /// merge; don't keep the result.
 ShipsRawData decodeShipsRawData(Uint8List bytes) {
-  final raw = CachedStreamListNotifier.normalizeForMapper(
-    msgpack.deserialize(bytes),
-  ) as Map<String, dynamic>;
+  final raw =
+      CachedStreamListNotifier.normalizeForMapper(msgpack.deserialize(bytes))
+          as Map<String, dynamic>;
 
   Map<String, Map<String, dynamic>> filesFrom(String key) => {
     for (final e in (raw[key] as Map).entries)
@@ -182,7 +187,9 @@ List<Ship> _buildShips(
   GameFileResolver resolver,
 ) {
   if (payloads.isEmpty) return const [];
-  final bySourceKey = {for (final payload in payloads) payload.sourceKey: payload};
+  final bySourceKey = {
+    for (final payload in payloads) payload.sourceKey: payload,
+  };
 
   // The heavy raw data stays msgpack-encoded on the payloads. Decode it for
   // this merge only; it all becomes garbage when this function returns.
@@ -212,6 +219,17 @@ List<Ship> _buildShips(
       bySourceKey[spec.rowSource.key]?.csvFilePath?.toFile(),
       failures,
       resolver,
+      csvFiles: collectModDataFiles(
+        spec.rowContributors,
+        (source) => bySourceKey[source.key]?.csvFilePath,
+      ),
+      dataFiles: collectModDataFiles(
+        sideFileSourcesInDisplayOrder(spec.sideFileContributors),
+        (source) =>
+            rawBySourceKey[source.key]?.shipFiles[spec
+                    .sideFilePath]?['_dataFile']
+                as String?,
+      ),
     );
     if (ship != null) ships.add(ship);
   }
@@ -224,6 +242,8 @@ List<Ship> _buildShips(
             (source: source, filesByPath: raw.skinFiles),
       ]),
       ships,
+      (path, source) =>
+          rawBySourceKey[source.key]?.skinFiles[path]?['_dataFile'] as String?,
       failures,
       resolver,
     ),
@@ -241,8 +261,10 @@ Ship? _buildHull(
   MergedSpec spec,
   File? csvFile,
   LogCollapser failures,
-  GameFileResolver resolver,
-) {
+  GameFileResolver resolver, {
+  required List<ModDataFile> csvFiles,
+  required List<ModDataFile> dataFiles,
+}) {
   final data = <String, dynamic>{...spec.row};
   File? dataFile;
 
@@ -268,8 +290,8 @@ Ship? _buildHull(
     data['spriteFile'] = resolver.resolve(data['spriteName'] as String?);
 
     return ShipMapper.fromMap({
-      for (final e in data.entries) e.key.toLowerCase(): e.value,
-    })
+        for (final e in data.entries) e.key.toLowerCase(): e.value,
+      })
       ..modVariant = spec.rowSource.variant
       ..spriteModVariant = spec.sideFileSource?.variant
       ..modSources = buildItemModSources(
@@ -279,7 +301,9 @@ Ship? _buildHull(
         areaNames: _shipAreaNames,
       )
       ..csvFile = csvFile
-      ..dataFile = dataFile;
+      ..dataFile = dataFile
+      ..csvFiles = csvFiles
+      ..dataFiles = dataFiles;
   } catch (e) {
     failures.add('[${spec.rowSource.name}] "${spec.id}": $e');
     return null;
@@ -290,9 +314,13 @@ Ship? _buildHull(
 ///
 /// Skins can layer on other skins, so this loops until a pass resolves nothing
 /// new.
+///
+/// [skinPathOf] hands back one source's own copy of the `.skin` file at a
+/// path, so the viewer can offer every mod's copy and not only the winner.
 List<Ship> _resolveSkins(
   Map<String, DeepMergeResult> mergedSkins,
   List<Ship> baseShips,
+  String? Function(String path, MergeSource source) skinPathOf,
   LogCollapser failures,
   GameFileResolver resolver,
 ) {
@@ -323,21 +351,29 @@ List<Ship> _resolveSkins(
 
       final Ship ship;
       try {
-        ship = _resolveSkin(
-          skin,
-          baseHull,
-          resolver.resolve(skin.spriteName),
-          entry.value.winningSource?.variant,
-        )
-          ..modSources = buildItemModSources(
-            rowContributors: const [],
-            sideFileContributors: entry.value.contributors,
-            sideFileChangedKeys: entry.value.topLevelKeysBySource(),
-            areaNames: _shipAreaNames,
-            hasStatsRow: false,
-          )
-          ..csvFile = baseHull.csvFile
-          ..dataFile = dataFile?.toFile();
+        ship =
+            _resolveSkin(
+                skin,
+                baseHull,
+                resolver.resolve(skin.spriteName),
+                entry.value.winningSource?.variant,
+              )
+              ..modSources = buildItemModSources(
+                rowContributors: const [],
+                sideFileContributors: entry.value.contributors,
+                sideFileChangedKeys: entry.value.topLevelKeysBySource(),
+                areaNames: _shipAreaNames,
+                hasStatsRow: false,
+              )
+              ..csvFile = baseHull.csvFile
+              ..dataFile = dataFile?.toFile()
+              // A skin has no row of its own, so its stats come from the base
+              // hull's — and so does the spreadsheet to open.
+              ..csvFiles = baseHull.csvFiles
+              ..dataFiles = collectModDataFiles(
+                sideFileSourcesInDisplayOrder(entry.value.contributors),
+                (source) => skinPathOf(entry.key, source),
+              );
       } catch (e) {
         failures.add('skin "${entry.key}": $e');
         continue;
@@ -363,13 +399,24 @@ List<Ship> _resolveSkins(
   return resolved;
 }
 
+/// Fields that only carry objects around inside TriOS. dart_mappable puts
+/// every public field in `toMap`, so these are dropped by name to keep them
+/// out of the export as empty columns.
+const _columnsNotForExport = {'datafiles', 'csvfiles'};
+
 /// Renders the current ship list as CSV, for the export button.
 String shipsAsCsv(List<Ship> ships) {
-  final fields = ships.isNotEmpty ? ships.first.toMap().keys.toList() : [];
-  final rows = <List<dynamic>>[
-    fields,
-    for (final ship in ships) ship.toMap().values.toList(),
-  ];
+  if (ships.isEmpty) return '';
+  final fields = ships.first
+      .toMap()
+      .keys
+      .where((key) => !_columnsNotForExport.contains(key))
+      .toList();
+  final rows = <List<dynamic>>[fields];
+  for (final ship in ships) {
+    final map = ship.toMap();
+    rows.add([for (final field in fields) map[field]]);
+  }
   return const ListToCsvConverter(convertNullTo: "").convert(rows);
 }
 
@@ -391,8 +438,10 @@ class ShipListNotifier
   int get schemaVersion => 5;
 
   @override
-  late final CachedVariantStore store =
-      CachedVariantStore(domain, Constants.viewerCacheDirPath);
+  late final CachedVariantStore store = CachedVariantStore(
+    domain,
+    Constants.viewerCacheDirPath,
+  );
 
   /// Longer interval because the downstream merge and model rebuild is
   /// expensive.
@@ -709,7 +758,9 @@ Future<_ShipScanResult> _scanShipsFolder(
         map.removeWhere((_, value) => value == null);
         shipFiles[p.basename(shipFile.path)] = map;
       } catch (e) {
-        errors.add('[$modName] Failed to parse .ship file ${shipFile.path}: $e');
+        errors.add(
+          '[$modName] Failed to parse .ship file ${shipFile.path}: $e',
+        );
       }
     }
   }
@@ -731,10 +782,13 @@ Future<_ShipScanResult> _scanShipsFolder(
         map['_dataFile'] = skinFile.path;
         map.removeWhere((_, value) => value == null);
         skinFiles[p
-            .relative(skinFile.path, from: skinsDir.path)
-            .replaceAll('\\', '/')] = map;
+                .relative(skinFile.path, from: skinsDir.path)
+                .replaceAll('\\', '/')] =
+            map;
       } catch (e) {
-        errors.add('[$modName] Failed to parse .skin file ${skinFile.path}: $e');
+        errors.add(
+          '[$modName] Failed to parse .skin file ${skinFile.path}: $e',
+        );
       }
     }
   }
@@ -830,7 +884,9 @@ Ship _resolveSkin(
     builtInMods.removeWhere(skin.removeBuiltInMods!.contains);
   }
   if (skin.builtInMods != null) {
-    builtInMods.addAll(skin.builtInMods!.where((m) => !builtInMods.contains(m)));
+    builtInMods.addAll(
+      skin.builtInMods!.where((m) => !builtInMods.contains(m)),
+    );
   }
 
   // Built-in weapons: remove then add
@@ -838,7 +894,9 @@ Ship _resolveSkin(
     baseHull.builtInWeapons ?? {},
   );
   if (skin.removeBuiltInWeapons != null) {
-    builtInWeapons.removeWhere((k, _) => skin.removeBuiltInWeapons!.contains(k));
+    builtInWeapons.removeWhere(
+      (k, _) => skin.removeBuiltInWeapons!.contains(k),
+    );
   }
   if (skin.builtInWeapons != null) {
     builtInWeapons.addAll(skin.builtInWeapons!);
@@ -922,74 +980,79 @@ Ship _resolveSkin(
   }
 
   return Ship(
-    id: skin.skinHullId,
-    isSkin: true,
-    baseHullId: skin.baseHullId,
-    name: skin.hullName ?? baseHull.name,
-    designation: skin.hullDesignation ?? baseHull.designation,
-    techManufacturer:
-        skin.manufacturer ?? skin.tech ?? baseHull.techManufacturer,
-    systemId: skin.systemId ?? baseHull.systemId,
-    fleetPts: _resolveFleetPts(baseHull.fleetPts, skin.fleetPoints, skin.fpMod),
-    hitpoints: baseHull.hitpoints,
-    armorRating: baseHull.armorRating,
-    maxFlux: baseHull.maxFlux,
-    fluxDissipation: baseHull.fluxDissipation,
-    ordnancePoints: skin.ordnancePoints?.toDouble() ?? baseHull.ordnancePoints,
-    fighterBays: skin.fighterBays?.toDouble() ?? baseHull.fighterBays,
-    maxSpeed: baseHull.maxSpeed,
-    acceleration: baseHull.acceleration,
-    deceleration: baseHull.deceleration,
-    maxTurnRate: baseHull.maxTurnRate,
-    turnAcceleration: baseHull.turnAcceleration,
-    mass: baseHull.mass,
-    shieldType: baseHull.shieldType,
-    defenseId: baseHull.defenseId,
-    shieldArc: baseHull.shieldArc,
-    shieldUpkeep: baseHull.shieldUpkeep,
-    shieldEfficiency: baseHull.shieldEfficiency,
-    phaseCost: baseHull.phaseCost,
-    phaseUpkeep: baseHull.phaseUpkeep,
-    minCrew: baseHull.minCrew,
-    maxCrew: baseHull.maxCrew,
-    cargo: baseHull.cargo,
-    fuel: baseHull.fuel,
-    fuelPerLY: baseHull.fuelPerLY,
-    range: baseHull.range,
-    maxBurn: baseHull.maxBurn,
-    baseValue: baseValue,
-    crPercentPerDay: baseHull.crPercentPerDay,
-    crToDeploy: baseHull.crToDeploy,
-    peakCrSec: baseHull.peakCrSec,
-    crLossPerSec: baseHull.crLossPerSec,
-    suppliesRec: skin.suppliesToRecover?.toDouble() ?? baseHull.suppliesRec,
-    suppliesMo: baseHull.suppliesMo,
-    hints: hints,
-    tags: tags,
-    rarity: baseHull.rarity,
-    breakProb: baseHull.breakProb,
-    minPieces: baseHull.minPieces,
-    maxPieces: baseHull.maxPieces,
-    travelDrive: baseHull.travelDrive,
-    bounds: baseHull.bounds,
-    center: baseHull.center,
-    collisionRadius: baseHull.collisionRadius,
-    height: baseHull.height,
-    width: baseHull.width,
-    hullSize: baseHull.hullSize,
-    shieldCenter: baseHull.shieldCenter,
-    shieldRadius: baseHull.shieldRadius,
-    spriteName: skin.spriteName ?? baseHull.spriteName,
-    spriteFile: spriteFile ?? baseHull.spriteFile,
-    style: baseHull.style,
-    viewOffset: baseHull.viewOffset,
-    engineSlots: engineSlots,
-    weaponSlots: weaponSlots,
-    builtInWeapons: builtInWeapons,
-    builtInMods: builtInMods,
-    builtInWings: skin.builtInWings ?? baseHull.builtInWings,
-    moduleAnchor: baseHull.moduleAnchor,
-  )
+      id: skin.skinHullId,
+      isSkin: true,
+      baseHullId: skin.baseHullId,
+      name: skin.hullName ?? baseHull.name,
+      designation: skin.hullDesignation ?? baseHull.designation,
+      techManufacturer:
+          skin.manufacturer ?? skin.tech ?? baseHull.techManufacturer,
+      systemId: skin.systemId ?? baseHull.systemId,
+      fleetPts: _resolveFleetPts(
+        baseHull.fleetPts,
+        skin.fleetPoints,
+        skin.fpMod,
+      ),
+      hitpoints: baseHull.hitpoints,
+      armorRating: baseHull.armorRating,
+      maxFlux: baseHull.maxFlux,
+      fluxDissipation: baseHull.fluxDissipation,
+      ordnancePoints:
+          skin.ordnancePoints?.toDouble() ?? baseHull.ordnancePoints,
+      fighterBays: skin.fighterBays?.toDouble() ?? baseHull.fighterBays,
+      maxSpeed: baseHull.maxSpeed,
+      acceleration: baseHull.acceleration,
+      deceleration: baseHull.deceleration,
+      maxTurnRate: baseHull.maxTurnRate,
+      turnAcceleration: baseHull.turnAcceleration,
+      mass: baseHull.mass,
+      shieldType: baseHull.shieldType,
+      defenseId: baseHull.defenseId,
+      shieldArc: baseHull.shieldArc,
+      shieldUpkeep: baseHull.shieldUpkeep,
+      shieldEfficiency: baseHull.shieldEfficiency,
+      phaseCost: baseHull.phaseCost,
+      phaseUpkeep: baseHull.phaseUpkeep,
+      minCrew: baseHull.minCrew,
+      maxCrew: baseHull.maxCrew,
+      cargo: baseHull.cargo,
+      fuel: baseHull.fuel,
+      fuelPerLY: baseHull.fuelPerLY,
+      range: baseHull.range,
+      maxBurn: baseHull.maxBurn,
+      baseValue: baseValue,
+      crPercentPerDay: baseHull.crPercentPerDay,
+      crToDeploy: baseHull.crToDeploy,
+      peakCrSec: baseHull.peakCrSec,
+      crLossPerSec: baseHull.crLossPerSec,
+      suppliesRec: skin.suppliesToRecover?.toDouble() ?? baseHull.suppliesRec,
+      suppliesMo: baseHull.suppliesMo,
+      hints: hints,
+      tags: tags,
+      rarity: baseHull.rarity,
+      breakProb: baseHull.breakProb,
+      minPieces: baseHull.minPieces,
+      maxPieces: baseHull.maxPieces,
+      travelDrive: baseHull.travelDrive,
+      bounds: baseHull.bounds,
+      center: baseHull.center,
+      collisionRadius: baseHull.collisionRadius,
+      height: baseHull.height,
+      width: baseHull.width,
+      hullSize: baseHull.hullSize,
+      shieldCenter: baseHull.shieldCenter,
+      shieldRadius: baseHull.shieldRadius,
+      spriteName: skin.spriteName ?? baseHull.spriteName,
+      spriteFile: spriteFile ?? baseHull.spriteFile,
+      style: baseHull.style,
+      viewOffset: baseHull.viewOffset,
+      engineSlots: engineSlots,
+      weaponSlots: weaponSlots,
+      builtInWeapons: builtInWeapons,
+      builtInMods: builtInMods,
+      builtInWings: skin.builtInWings ?? baseHull.builtInWings,
+      moduleAnchor: baseHull.moduleAnchor,
+    )
     ..modVariant = modVariant ?? baseHull.modVariant
     ..spriteModVariant = modVariant ?? baseHull.spriteModVariant;
 }

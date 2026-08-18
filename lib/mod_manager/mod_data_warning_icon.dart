@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/mod_data_issues.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
@@ -33,9 +33,7 @@ class ModDataWarningIcon extends ConsumerWidget {
             onSelected: () {
               ref
                   .read(appSettings.notifier)
-                  .update(
-                    (s) => s.copyWith(modsGridShowDataWarnings: false),
-                  );
+                  .update((s) => s.copyWith(modsGridShowDataWarnings: false));
               showSnackBar(
                 context: context,
                 content: const Text(

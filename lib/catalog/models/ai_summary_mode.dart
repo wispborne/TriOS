@@ -1,5 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 part 'ai_summary_mode.mapper.dart';
 

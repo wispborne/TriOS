@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/mod_manager/utils/mod_list_exporter.dart';
 import 'package:trios/mod_profiles/models/mod_profile.dart';

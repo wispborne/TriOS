@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/thirdparty/faded_scrollable/faded_scrollable.dart';
 
 import '../core/utils/shortcuts/menu_shortcuts.dart';

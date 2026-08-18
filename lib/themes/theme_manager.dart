@@ -1,9 +1,9 @@
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/themes/semantic_colors.dart';
@@ -274,7 +274,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     // Choose font here
     final textTheme = swatch.fontFamily != null
         ? themeBase.textTheme.apply(fontFamily: swatch.fontFamily)
-        : GoogleFonts.robotoTextTheme(themeBase.textTheme);
+        : themeBase.textTheme; //TODO GoogleFonts.robotoTextTheme(themeBase.textTheme);
 
     final onSurfaceVariant = swatch.surface == null
         ? swatch.onSurface

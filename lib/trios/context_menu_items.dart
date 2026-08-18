@@ -4,7 +4,7 @@ import 'package:trios/widgets/snackbar.dart';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:trios/dashboard/changelogs.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';

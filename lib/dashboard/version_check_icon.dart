@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/themes/theme_manager.dart';

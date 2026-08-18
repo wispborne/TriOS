@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
@@ -876,7 +876,6 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               width: imgW,
               height: imgH,
               cacheWidth: widget.cacheWidth,
-              // Stretch to the declared ship size, matching the game.
               fit: BoxFit.fill,
               errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
             ),

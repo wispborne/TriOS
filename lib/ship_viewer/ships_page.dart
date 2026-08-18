@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -26,6 +26,7 @@ import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/mod_data_file_menu.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/smart_search/smart_search_bar.dart';
@@ -372,21 +373,16 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
             icon: Icons.copy,
             onSelected: () => Clipboard.setData(ClipboardData(text: ship.id)),
           ),
-          if (ship.dataFile != null)
-            MenuItem(
+          if (ship.dataFiles.isNotEmpty)
+            buildOpenModDataFileMenuItem(
+              ship.dataFiles,
               label: 'Open ${ship.isSkin ? '.skin' : '.ship'} file',
-              icon: Icons.edit_note,
-              onSelected: () {
-                ship.dataFile!.absolute.showInExplorer();
-              },
             ),
-          if (ship.csvFile != null)
-            MenuItem(
+          if (ship.csvFiles.isNotEmpty)
+            buildOpenModDataFileMenuItem(
+              ship.csvFiles,
               label: 'Open ship_data.csv',
-              icon: Icons.edit_note,
-              onSelected: () {
-                ship.csvFile!.absolute.showInExplorer();
-              },
+              notes: ModDataFileNotes.oneWins,
             ),
           if (ship.spriteFile != null)
             buildOpenSingleFolderMenuItem(ship.spriteFile!.toFile().parent),

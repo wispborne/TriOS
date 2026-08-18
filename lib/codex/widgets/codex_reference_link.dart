@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/codex/codex_links.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 

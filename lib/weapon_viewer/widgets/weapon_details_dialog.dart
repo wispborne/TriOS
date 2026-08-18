@@ -1,11 +1,12 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
 import 'package:trios/widgets/dialog_pager.dart';
 import 'package:trios/widgets/merge_mod_sources_view.dart';
+import 'package:trios/widgets/mod_data_file_menu.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
 
@@ -70,16 +71,16 @@ Widget buildWeaponDetailsDialogBody(
                 Wrap(
                   spacing: 4,
                   children: [
-                    if (w.wpnFile != null)
-                      IconButton(
-                        tooltip: 'Open .wpn file',
-                        icon: const Icon(Icons.edit_note),
-                        onPressed: () => w.wpnFile!.absolute.showInExplorer(),
-                      ),
-                    IconButton(
-                      tooltip: 'Open weapon_data.csv',
-                      icon: const Icon(Icons.edit_note),
-                      onPressed: () => w.csvFile?.absolute.showInExplorer(),
+                    buildOpenModDataFileButton(
+                      context,
+                      w.wpnFiles,
+                      label: 'Open .wpn file',
+                    ),
+                    buildOpenModDataFileButton(
+                      context,
+                      w.csvFiles,
+                      label: 'Open weapon_data.csv',
+                      notes: ModDataFileNotes.oneWins,
                     ),
                     if (w.allSpriteFiles.isNotEmpty)
                       IconButton(

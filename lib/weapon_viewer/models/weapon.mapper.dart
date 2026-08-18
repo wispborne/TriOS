@@ -412,6 +412,36 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'projectilespecid',
     opt: true,
   );
+  static String? _$barrelMode(Weapon v) => v.barrelMode;
+  static const Field<Weapon, String> _f$barrelMode = Field(
+    'barrelMode',
+    _$barrelMode,
+    key: r'barrelmode',
+    opt: true,
+  );
+  static bool? _$interruptibleBurst(Weapon v) => v.interruptibleBurst;
+  static const Field<Weapon, bool> _f$interruptibleBurst = Field(
+    'interruptibleBurst',
+    _$interruptibleBurst,
+    key: r'interruptibleburst',
+    opt: true,
+  );
+  static bool? _$beamFireOnlyOnFullCharge(Weapon v) =>
+      v.beamFireOnlyOnFullCharge;
+  static const Field<Weapon, bool> _f$beamFireOnlyOnFullCharge = Field(
+    'beamFireOnlyOnFullCharge',
+    _$beamFireOnlyOnFullCharge,
+    key: r'beamfireonlyonfullcharge',
+    opt: true,
+  );
+  static bool? _$skipIdleFrameIfZeroBurstDelay(Weapon v) =>
+      v.skipIdleFrameIfZeroBurstDelay;
+  static const Field<Weapon, bool> _f$skipIdleFrameIfZeroBurstDelay = Field(
+    'skipIdleFrameIfZeroBurstDelay',
+    _$skipIdleFrameIfZeroBurstDelay,
+    key: r'skipidleframeifzeroburstdelay',
+    opt: true,
+  );
   static List<double>? _$turretOffsets(Weapon v) => v.turretOffsets;
   static const Field<Weapon, List<double>> _f$turretOffsets = Field(
     'turretOffsets',
@@ -460,6 +490,55 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     'loadedMissileCenter',
     _$loadedMissileCenter,
     key: r'loadedmissilecenter',
+    opt: true,
+  );
+  static String? _$missileType(Weapon v) => v.missileType;
+  static const Field<Weapon, String> _f$missileType = Field(
+    'missileType',
+    _$missileType,
+    key: r'missiletype',
+    opt: true,
+  );
+  static double? _$mirvDamage(Weapon v) => v.mirvDamage;
+  static const Field<Weapon, double> _f$mirvDamage = Field(
+    'mirvDamage',
+    _$mirvDamage,
+    key: r'mirvdamage',
+    opt: true,
+  );
+  static double? _$mirvEmp(Weapon v) => v.mirvEmp;
+  static const Field<Weapon, double> _f$mirvEmp = Field(
+    'mirvEmp',
+    _$mirvEmp,
+    key: r'mirvemp',
+    opt: true,
+  );
+  static int? _$mirvNumShots(Weapon v) => v.mirvNumShots;
+  static const Field<Weapon, int> _f$mirvNumShots = Field(
+    'mirvNumShots',
+    _$mirvNumShots,
+    key: r'mirvnumshots',
+    opt: true,
+  );
+  static double? _$mirvHitpoints(Weapon v) => v.mirvHitpoints;
+  static const Field<Weapon, double> _f$mirvHitpoints = Field(
+    'mirvHitpoints',
+    _$mirvHitpoints,
+    key: r'mirvhitpoints',
+    opt: true,
+  );
+  static double? _$missileAcceleration(Weapon v) => v.missileAcceleration;
+  static const Field<Weapon, double> _f$missileAcceleration = Field(
+    'missileAcceleration',
+    _$missileAcceleration,
+    key: r'missileacceleration',
+    opt: true,
+  );
+  static double? _$missileMaxTurnRate(Weapon v) => v.missileMaxTurnRate;
+  static const Field<Weapon, double> _f$missileMaxTurnRate = Field(
+    'missileMaxTurnRate',
+    _$missileMaxTurnRate,
+    key: r'missilemaxturnrate',
     opt: true,
   );
   static String? _$mountTypeOverride(Weapon v) => v.mountTypeOverride;
@@ -511,6 +590,20 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'wpnfile',
     hook: FileHook(),
   );
+  static List<ModDataFile> _$wpnFiles(Weapon v) => v.wpnFiles;
+  static const Field<Weapon, List<ModDataFile>> _f$wpnFiles = Field(
+    'wpnFiles',
+    _$wpnFiles,
+    key: r'wpnfiles',
+    hook: SkipSerializationHook(),
+  );
+  static List<ModDataFile> _$csvFiles(Weapon v) => v.csvFiles;
+  static const Field<Weapon, List<ModDataFile>> _f$csvFiles = Field(
+    'csvFiles',
+    _$csvFiles,
+    key: r'csvfiles',
+    hook: SkipSerializationHook(),
+  );
   static Set<String> _$hintsAsSet(Weapon v) => v.hintsAsSet;
   static const Field<Weapon, Set<String>> _f$hintsAsSet = Field(
     'hintsAsSet',
@@ -539,67 +632,32 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     key: r'isburstbeam',
     mode: FieldMode.member,
   );
-  static double? _$burstDamage(Weapon v) => v.burstDamage;
-  static const Field<Weapon, double> _f$burstDamage = Field(
-    'burstDamage',
-    _$burstDamage,
-    key: r'burstdamage',
+  static bool _$isMirv(Weapon v) => v.isMirv;
+  static const Field<Weapon, bool> _f$isMirv = Field(
+    'isMirv',
+    _$isMirv,
+    key: r'ismirv',
     mode: FieldMode.member,
   );
-  static double? _$refireDelay(Weapon v) => v.refireDelay;
-  static const Field<Weapon, double> _f$refireDelay = Field(
-    'refireDelay',
-    _$refireDelay,
-    key: r'refiredelay',
+  static int _$barrelCount(Weapon v) => v.barrelCount;
+  static const Field<Weapon, int> _f$barrelCount = Field(
+    'barrelCount',
+    _$barrelCount,
+    key: r'barrelcount',
     mode: FieldMode.member,
   );
-  static double? _$effectiveDps(Weapon v) => v.effectiveDps;
-  static const Field<Weapon, double> _f$effectiveDps = Field(
-    'effectiveDps',
-    _$effectiveDps,
-    key: r'effectivedps',
+  static WeaponDerivedStats _$derivedStats(Weapon v) => v.derivedStats;
+  static const Field<Weapon, WeaponDerivedStats> _f$derivedStats = Field(
+    'derivedStats',
+    _$derivedStats,
+    key: r'derivedstats',
     mode: FieldMode.member,
   );
-  static double? _$sustainedDps(Weapon v) => v.sustainedDps;
-  static const Field<Weapon, double> _f$sustainedDps = Field(
-    'sustainedDps',
-    _$sustainedDps,
-    key: r'sustaineddps',
-    mode: FieldMode.member,
-  );
-  static double? _$fluxPerDamage(Weapon v) => v.fluxPerDamage;
-  static const Field<Weapon, double> _f$fluxPerDamage = Field(
-    'fluxPerDamage',
-    _$fluxPerDamage,
-    key: r'fluxperdamage',
-    mode: FieldMode.member,
-  );
-  static double? _$fluxPerSecond(Weapon v) => v.fluxPerSecond;
-  static const Field<Weapon, double> _f$fluxPerSecond = Field(
-    'fluxPerSecond',
-    _$fluxPerSecond,
-    key: r'fluxpersecond',
-    mode: FieldMode.member,
-  );
-  static double? _$sustainedFluxPerSecond(Weapon v) => v.sustainedFluxPerSecond;
-  static const Field<Weapon, double> _f$sustainedFluxPerSecond = Field(
-    'sustainedFluxPerSecond',
-    _$sustainedFluxPerSecond,
-    key: r'sustainedfluxpersecond',
-    mode: FieldMode.member,
-  );
-  static double? _$empPerActivation(Weapon v) => v.empPerActivation;
-  static const Field<Weapon, double> _f$empPerActivation = Field(
-    'empPerActivation',
-    _$empPerActivation,
-    key: r'empperactivation',
-    mode: FieldMode.member,
-  );
-  static bool _$hasSustainedDps(Weapon v) => v.hasSustainedDps;
-  static const Field<Weapon, bool> _f$hasSustainedDps = Field(
-    'hasSustainedDps',
-    _$hasSustainedDps,
-    key: r'hassustaineddps',
+  static WeaponTooltipDisplay _$tooltipDisplay(Weapon v) => v.tooltipDisplay;
+  static const Field<Weapon, WeaponTooltipDisplay> _f$tooltipDisplay = Field(
+    'tooltipDisplay',
+    _$tooltipDisplay,
+    key: r'tooltipdisplay',
     mode: FieldMode.member,
   );
   static List<String> _$spriteLayers(Weapon v) => v.spriteLayers;
@@ -682,6 +740,10 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #glowColor: _f$glowColor,
     #renderHints: _f$renderHints,
     #projectileSpecId: _f$projectileSpecId,
+    #barrelMode: _f$barrelMode,
+    #interruptibleBurst: _f$interruptibleBurst,
+    #beamFireOnlyOnFullCharge: _f$beamFireOnlyOnFullCharge,
+    #skipIdleFrameIfZeroBurstDelay: _f$skipIdleFrameIfZeroBurstDelay,
     #turretOffsets: _f$turretOffsets,
     #hardpointOffsets: _f$hardpointOffsets,
     #turretAngleOffsets: _f$turretAngleOffsets,
@@ -689,6 +751,13 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #loadedMissileSprite: _f$loadedMissileSprite,
     #loadedMissileSize: _f$loadedMissileSize,
     #loadedMissileCenter: _f$loadedMissileCenter,
+    #missileType: _f$missileType,
+    #mirvDamage: _f$mirvDamage,
+    #mirvEmp: _f$mirvEmp,
+    #mirvNumShots: _f$mirvNumShots,
+    #mirvHitpoints: _f$mirvHitpoints,
+    #missileAcceleration: _f$missileAcceleration,
+    #missileMaxTurnRate: _f$missileMaxTurnRate,
     #mountTypeOverride: _f$mountTypeOverride,
     #modVariant: _f$modVariant,
     #spriteModVariant: _f$spriteModVariant,
@@ -696,19 +765,16 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
     #fieldErrors: _f$fieldErrors,
     #csvFile: _f$csvFile,
     #wpnFile: _f$wpnFile,
+    #wpnFiles: _f$wpnFiles,
+    #csvFiles: _f$csvFiles,
     #hintsAsSet: _f$hintsAsSet,
     #tagsAsSet: _f$tagsAsSet,
     #isBeam: _f$isBeam,
     #isBurstBeam: _f$isBurstBeam,
-    #burstDamage: _f$burstDamage,
-    #refireDelay: _f$refireDelay,
-    #effectiveDps: _f$effectiveDps,
-    #sustainedDps: _f$sustainedDps,
-    #fluxPerDamage: _f$fluxPerDamage,
-    #fluxPerSecond: _f$fluxPerSecond,
-    #sustainedFluxPerSecond: _f$sustainedFluxPerSecond,
-    #empPerActivation: _f$empPerActivation,
-    #hasSustainedDps: _f$hasSustainedDps,
+    #isMirv: _f$isMirv,
+    #barrelCount: _f$barrelCount,
+    #derivedStats: _f$derivedStats,
+    #tooltipDisplay: _f$tooltipDisplay,
     #spriteLayers: _f$spriteLayers,
     #allSpriteFiles: _f$allSpriteFiles,
   };
@@ -778,6 +844,10 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       glowColor: data.dec(_f$glowColor),
       renderHints: data.dec(_f$renderHints),
       projectileSpecId: data.dec(_f$projectileSpecId),
+      barrelMode: data.dec(_f$barrelMode),
+      interruptibleBurst: data.dec(_f$interruptibleBurst),
+      beamFireOnlyOnFullCharge: data.dec(_f$beamFireOnlyOnFullCharge),
+      skipIdleFrameIfZeroBurstDelay: data.dec(_f$skipIdleFrameIfZeroBurstDelay),
       turretOffsets: data.dec(_f$turretOffsets),
       hardpointOffsets: data.dec(_f$hardpointOffsets),
       turretAngleOffsets: data.dec(_f$turretAngleOffsets),
@@ -785,6 +855,13 @@ class WeaponMapper extends ClassMapperBase<Weapon> {
       loadedMissileSprite: data.dec(_f$loadedMissileSprite),
       loadedMissileSize: data.dec(_f$loadedMissileSize),
       loadedMissileCenter: data.dec(_f$loadedMissileCenter),
+      missileType: data.dec(_f$missileType),
+      mirvDamage: data.dec(_f$mirvDamage),
+      mirvEmp: data.dec(_f$mirvEmp),
+      mirvNumShots: data.dec(_f$mirvNumShots),
+      mirvHitpoints: data.dec(_f$mirvHitpoints),
+      missileAcceleration: data.dec(_f$missileAcceleration),
+      missileMaxTurnRate: data.dec(_f$missileMaxTurnRate),
       mountTypeOverride: data.dec(_f$mountTypeOverride),
     );
   }
@@ -913,6 +990,10 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     List<double>? glowColor,
     List<String>? renderHints,
     String? projectileSpecId,
+    String? barrelMode,
+    bool? interruptibleBurst,
+    bool? beamFireOnlyOnFullCharge,
+    bool? skipIdleFrameIfZeroBurstDelay,
     List<double>? turretOffsets,
     List<double>? hardpointOffsets,
     List<double>? turretAngleOffsets,
@@ -920,6 +1001,13 @@ abstract class WeaponCopyWith<$R, $In extends Weapon, $Out>
     String? loadedMissileSprite,
     List<double>? loadedMissileSize,
     List<double>? loadedMissileCenter,
+    String? missileType,
+    double? mirvDamage,
+    double? mirvEmp,
+    int? mirvNumShots,
+    double? mirvHitpoints,
+    double? missileAcceleration,
+    double? missileMaxTurnRate,
     String? mountTypeOverride,
   });
   WeaponCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
@@ -1068,6 +1156,10 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     Object? glowColor = $none,
     Object? renderHints = $none,
     Object? projectileSpecId = $none,
+    Object? barrelMode = $none,
+    Object? interruptibleBurst = $none,
+    Object? beamFireOnlyOnFullCharge = $none,
+    Object? skipIdleFrameIfZeroBurstDelay = $none,
     Object? turretOffsets = $none,
     Object? hardpointOffsets = $none,
     Object? turretAngleOffsets = $none,
@@ -1075,6 +1167,13 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     Object? loadedMissileSprite = $none,
     Object? loadedMissileSize = $none,
     Object? loadedMissileCenter = $none,
+    Object? missileType = $none,
+    Object? mirvDamage = $none,
+    Object? mirvEmp = $none,
+    Object? mirvNumShots = $none,
+    Object? mirvHitpoints = $none,
+    Object? missileAcceleration = $none,
+    Object? missileMaxTurnRate = $none,
     Object? mountTypeOverride = $none,
   }) => $apply(
     FieldCopyWithData({
@@ -1143,6 +1242,12 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
       if (glowColor != $none) #glowColor: glowColor,
       if (renderHints != $none) #renderHints: renderHints,
       if (projectileSpecId != $none) #projectileSpecId: projectileSpecId,
+      if (barrelMode != $none) #barrelMode: barrelMode,
+      if (interruptibleBurst != $none) #interruptibleBurst: interruptibleBurst,
+      if (beamFireOnlyOnFullCharge != $none)
+        #beamFireOnlyOnFullCharge: beamFireOnlyOnFullCharge,
+      if (skipIdleFrameIfZeroBurstDelay != $none)
+        #skipIdleFrameIfZeroBurstDelay: skipIdleFrameIfZeroBurstDelay,
       if (turretOffsets != $none) #turretOffsets: turretOffsets,
       if (hardpointOffsets != $none) #hardpointOffsets: hardpointOffsets,
       if (turretAngleOffsets != $none) #turretAngleOffsets: turretAngleOffsets,
@@ -1153,6 +1258,14 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
       if (loadedMissileSize != $none) #loadedMissileSize: loadedMissileSize,
       if (loadedMissileCenter != $none)
         #loadedMissileCenter: loadedMissileCenter,
+      if (missileType != $none) #missileType: missileType,
+      if (mirvDamage != $none) #mirvDamage: mirvDamage,
+      if (mirvEmp != $none) #mirvEmp: mirvEmp,
+      if (mirvNumShots != $none) #mirvNumShots: mirvNumShots,
+      if (mirvHitpoints != $none) #mirvHitpoints: mirvHitpoints,
+      if (missileAcceleration != $none)
+        #missileAcceleration: missileAcceleration,
+      if (missileMaxTurnRate != $none) #missileMaxTurnRate: missileMaxTurnRate,
       if (mountTypeOverride != $none) #mountTypeOverride: mountTypeOverride,
     }),
   );
@@ -1239,6 +1352,19 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     glowColor: data.get(#glowColor, or: $value.glowColor),
     renderHints: data.get(#renderHints, or: $value.renderHints),
     projectileSpecId: data.get(#projectileSpecId, or: $value.projectileSpecId),
+    barrelMode: data.get(#barrelMode, or: $value.barrelMode),
+    interruptibleBurst: data.get(
+      #interruptibleBurst,
+      or: $value.interruptibleBurst,
+    ),
+    beamFireOnlyOnFullCharge: data.get(
+      #beamFireOnlyOnFullCharge,
+      or: $value.beamFireOnlyOnFullCharge,
+    ),
+    skipIdleFrameIfZeroBurstDelay: data.get(
+      #skipIdleFrameIfZeroBurstDelay,
+      or: $value.skipIdleFrameIfZeroBurstDelay,
+    ),
     turretOffsets: data.get(#turretOffsets, or: $value.turretOffsets),
     hardpointOffsets: data.get(#hardpointOffsets, or: $value.hardpointOffsets),
     turretAngleOffsets: data.get(
@@ -1260,6 +1386,19 @@ class _WeaponCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Weapon, $Out>
     loadedMissileCenter: data.get(
       #loadedMissileCenter,
       or: $value.loadedMissileCenter,
+    ),
+    missileType: data.get(#missileType, or: $value.missileType),
+    mirvDamage: data.get(#mirvDamage, or: $value.mirvDamage),
+    mirvEmp: data.get(#mirvEmp, or: $value.mirvEmp),
+    mirvNumShots: data.get(#mirvNumShots, or: $value.mirvNumShots),
+    mirvHitpoints: data.get(#mirvHitpoints, or: $value.mirvHitpoints),
+    missileAcceleration: data.get(
+      #missileAcceleration,
+      or: $value.missileAcceleration,
+    ),
+    missileMaxTurnRate: data.get(
+      #missileMaxTurnRate,
+      or: $value.missileMaxTurnRate,
     ),
     mountTypeOverride: data.get(
       #mountTypeOverride,

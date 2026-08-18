@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
@@ -7,6 +7,7 @@ import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/dialog_pager.dart';
 import 'package:trios/widgets/merge_mod_sources_view.dart';
+import 'package:trios/widgets/mod_data_file_menu.dart';
 
 /// Shows the full ship details dialog — the same dialog opened by clicking a
 /// row in the Ships viewer. Extracted here so the Codex can open it too.
@@ -77,16 +78,16 @@ Widget buildShipDetailsDialogBody(
                 Wrap(
                   spacing: 4,
                   children: [
-                    if (s.dataFile != null)
-                      IconButton(
-                        tooltip: 'Open ${s.isSkin ? '.skin' : '.ship'} file',
-                        icon: const Icon(Icons.edit_note),
-                        onPressed: () => s.dataFile!.absolute.showInExplorer(),
-                      ),
-                    IconButton(
-                      tooltip: 'Open ship_data.csv',
-                      icon: const Icon(Icons.edit_note),
-                      onPressed: () => s.csvFile?.absolute.showInExplorer(),
+                    buildOpenModDataFileButton(
+                      context,
+                      s.dataFiles,
+                      label: 'Open ${s.isSkin ? '.skin' : '.ship'} file',
+                    ),
+                    buildOpenModDataFileButton(
+                      context,
+                      s.csvFiles,
+                      label: 'Open ship_data.csv',
+                      notes: ModDataFileNotes.oneWins,
                     ),
                     if (s.spriteFile != null)
                       IconButton(

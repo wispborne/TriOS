@@ -1,5 +1,9 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:flutter/material.dart';
+// dropdown_button2 still uses Flutter's built-in Material library, and it
+// insists on a Material ancestor of that same library — material_ui's Material
+// doesn't count. See the wrapper in _buildDropdownSubButton.
+import 'package:flutter/material.dart' as legacy_material;
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toastification/toastification.dart';
@@ -403,21 +407,24 @@ class _ModVersionSelectionDropdownState
           color: bgColor,
           border: Border(left: BorderSide(color: borderColor, width: 1)),
         ),
-        child: DropdownButton2<ModVariant?>(
-          items: items,
-          valueListenable: ValueNotifier(enabledVariant),
-          customButton: Center(
-            child: Padding(
-              padding: const .only(right: 2),
-              child: Icon(Icons.arrow_drop_down, color: textColor, size: 24),
+        child: legacy_material.Material(
+          type: legacy_material.MaterialType.transparency,
+          child: DropdownButton2<ModVariant?>(
+            items: items,
+            valueListenable: ValueNotifier(enabledVariant),
+            customButton: Center(
+              child: Padding(
+                padding: const .only(right: 2),
+                child: Icon(Icons.arrow_drop_down, color: textColor, size: 24),
+              ),
             ),
+            iconStyleData: const IconStyleData(iconSize: 0),
+            underline: Container(),
+            dropdownStyleData: const DropdownStyleData(width: 120),
+            onChanged: (ModVariant? variant) async {
+              await switchToVariant(variant);
+            },
           ),
-          iconStyleData: const IconStyleData(iconSize: 0),
-          underline: Container(),
-          dropdownStyleData: const DropdownStyleData(width: 120),
-          onChanged: (ModVariant? variant) async {
-            await switchToVariant(variant);
-          },
         ),
       ),
     );

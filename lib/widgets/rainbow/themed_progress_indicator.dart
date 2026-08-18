@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/rainbow_accent_bar.dart';

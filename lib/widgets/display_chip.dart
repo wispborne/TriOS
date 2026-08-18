@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A non-interactive chip that displays an avatar and a label,
 /// styled to look like [ActionChip].

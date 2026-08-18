@@ -1,5 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:uuid/uuid.dart';

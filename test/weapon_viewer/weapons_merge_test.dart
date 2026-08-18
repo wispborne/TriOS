@@ -38,16 +38,21 @@ ModVariant _variant(String name) => ModVariant(
   gameCoreFolder: Directory('core'),
 );
 
-Mod _mod(ModVariant variant, {bool enabled = true}) =>
-    Mod(id: variant.modInfo.id, isEnabledInGame: enabled, modVariants: [variant]);
+Mod _mod(ModVariant variant, {bool enabled = true}) => Mod(
+  id: variant.modInfo.id,
+  isEnabledInGame: enabled,
+  modVariants: [variant],
+);
 
 WeaponsCachePayload _payload({
   required String sourceKey,
   List<Map<String, dynamic>> rows = const [],
   Map<String, Map<String, dynamic>> wpnFiles = const {},
   Map<String, Map<String, dynamic>> missileSpecs = const {},
+  String? csvFilePath,
 }) => WeaponsCachePayload(
   sourceKey: sourceKey,
+  csvFilePath: csvFilePath,
   rawDataBytes: encodeWeaponsRawData(
     WeaponsRawData(rows: rows, wpnFiles: wpnFiles, missileSpecs: missileSpecs),
   ),
@@ -84,9 +89,7 @@ Future<List<Weapon>> _build({
   );
 
   await awaitFirstValue(container, weaponSourcesProvider);
-  return container
-          .read(weaponListNotifierProvider(onlyEnabledMods))
-          .value ??
+  return container.read(weaponListNotifierProvider(onlyEnabledMods)).value ??
       const [];
 }
 
@@ -125,7 +128,11 @@ void main() {
       );
 
       final mg = weapons.single;
-      expect(mg.damagePerShot, 99, reason: 'the mod wins the stats, not vanilla');
+      expect(
+        mg.damagePerShot,
+        99,
+        reason: 'the mod wins the stats, not vanilla',
+      );
       expect(
         mg.turretSprite,
         _imageIn('core', 'graphics/weapons/lightmg.png'),
@@ -148,7 +155,11 @@ void main() {
           _payload(
             sourceKey: parent.smolId,
             rows: [
-              {'id': 'homing_laser', 'name': 'Homing Laser', 'damage/shot': 250},
+              {
+                'id': 'homing_laser',
+                'name': 'Homing Laser',
+                'damage/shot': 250,
+              },
             ],
             wpnFiles: {
               'homing_laser.wpn': {
@@ -161,7 +172,11 @@ void main() {
           _payload(
             sourceKey: addon.smolId,
             rows: [
-              {'id': 'homing_laser', 'name': 'Homing Laser', 'damage/shot': 300},
+              {
+                'id': 'homing_laser',
+                'name': 'Homing Laser',
+                'damage/shot': 300,
+              },
             ],
             wpnFiles: const {},
           ),
@@ -180,9 +195,15 @@ void main() {
       expect(laser.damagePerShot, 300);
       expect(
         laser.turretSprite,
-        _imageIn('mods/Blackrock Drive Yards', 'graphics/brdy/homing_laser.png'),
+        _imageIn(
+          'mods/Blackrock Drive Yards',
+          'graphics/brdy/homing_laser.png',
+        ),
       );
-      expect(laser.modVariant?.modInfo.name, 'Blackrock 0.97 Unofficial Add-on');
+      expect(
+        laser.modVariant?.modInfo.name,
+        'Blackrock 0.97 Unofficial Add-on',
+      );
       expect(laser.spriteModVariant?.modInfo.name, 'Blackrock Drive Yards');
     });
 
@@ -229,6 +250,59 @@ void main() {
       );
       expect(laser.specClass, 'beam');
       expect(laser.spriteModVariant?.modInfo.name, 'Z-tweak');
+    });
+
+    test('barrelMode rides along from the .wpn into the stats', () async {
+      // The Solis Cannon case: a LINKED twin-barrel weapon fires both barrels
+      // per shot, so its DPS doubles. A mod rebalancing only the CSV row must
+      // not lose the vanilla .wpn's barrel wiring.
+      final rebalance = _variant('Rebalance');
+
+      final weapons = await _build(
+        payloads: [
+          _payload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {
+                'id': 'twin',
+                'name': 'Twin Cannon',
+                'damage/shot': 100,
+                'chargedown': 1,
+              },
+            ],
+            wpnFiles: {
+              'twin.wpn': {
+                'id': 'twin',
+                'specClass': 'projectile',
+                'barrelMode': 'LINKED',
+                'turretOffsets': [10.0, 2.0, 10.0, -2.0],
+              },
+            },
+          ),
+          _payload(
+            sourceKey: rebalance.smolId,
+            rows: [
+              {
+                'id': 'twin',
+                'name': 'Twin Cannon',
+                'damage/shot': 150,
+                'chargedown': 1,
+              },
+            ],
+            wpnFiles: const {},
+          ),
+        ],
+        mods: [_mod(rebalance)],
+      );
+
+      final twin = weapons.single;
+      expect(twin.barrelMode, 'LINKED');
+      expect(twin.damagePerShot, 150, reason: 'the rebalanced row wins');
+      expect(
+        twin.effectiveDps,
+        closeTo(300, 0.001),
+        reason: 'both barrels count: 150x2 damage per 1s cycle',
+      );
     });
 
     test('the mount type and the damage type stay apart', () async {
@@ -285,23 +359,26 @@ void main() {
       expect(weapons.single.weaponType, 'BALLISTIC');
     });
 
-    test('a row with no .wpn anywhere still appears, without a sprite', () async {
-      final weapons = await _build(
-        payloads: [
-          _payload(
-            sourceKey: kVanillaSourceKey,
-            rows: [
-              {'id': 'orphan', 'name': 'Orphan'},
-            ],
-            wpnFiles: const {},
-          ),
-        ],
-        mods: const [],
-      );
+    test(
+      'a row with no .wpn anywhere still appears, without a sprite',
+      () async {
+        final weapons = await _build(
+          payloads: [
+            _payload(
+              sourceKey: kVanillaSourceKey,
+              rows: [
+                {'id': 'orphan', 'name': 'Orphan'},
+              ],
+              wpnFiles: const {},
+            ),
+          ],
+          mods: const [],
+        );
 
-      expect(weapons.single.id, 'orphan');
-      expect(weapons.single.turretSprite, isNull);
-    });
+        expect(weapons.single.id, 'orphan');
+        expect(weapons.single.turretSprite, isNull);
+      },
+    );
 
     test(
       'the Autopulse case: a mod wins the .wpn but only vanilla has the image',
@@ -397,6 +474,102 @@ void main() {
         weapons.single.loadedMissileSprite,
         _imageIn('mods/B-missiles', 'graphics/missiles/shared.png'),
       );
+    });
+
+    test('every mod that changes a weapon offers its own files', () async {
+      final threats = _variant('Emergent Threats');
+
+      final weapons = await _build(
+        payloads: [
+          _payload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {
+                'id': 'autopulse',
+                'name': 'Autopulse Laser',
+                'damage/shot': 100,
+              },
+            ],
+            wpnFiles: {
+              'weapons/autopulse.wpn': {
+                'id': 'autopulse',
+                'wpnFile': 'core/data/weapons/autopulse.wpn',
+                'turretSprite': 'graphics/weapons/autopulse.png',
+              },
+            },
+            csvFilePath: 'core/data/weapons/weapon_data.csv',
+          ),
+          _payload(
+            sourceKey: threats.smolId,
+            rows: [
+              {
+                'id': 'autopulse',
+                'name': 'Autopulse Laser',
+                'damage/shot': 120,
+              },
+            ],
+            wpnFiles: {
+              'weapons/autopulse.wpn': {
+                'id': 'autopulse',
+                'wpnFile': 'mods/Emergent Threats/data/weapons/autopulse.wpn',
+                'turretGlowSprite': 'graphics/weapons/autopulse_glow.png',
+              },
+            },
+            csvFilePath: 'mods/Emergent Threats/data/weapons/weapon_data.csv',
+          ),
+        ],
+        mods: [_mod(threats)],
+        imageSources: [
+          _source('mods/Emergent Threats', const []),
+          _source('core', const ['graphics/weapons/autopulse.png']),
+        ],
+      );
+
+      final autopulse = weapons.single;
+      expect(autopulse.wpnFiles.map((f) => f.modName).toList(), [
+        'Emergent Threats',
+        'Vanilla',
+      ], reason: 'the mod applies last, so its .wpn wins the shared values');
+      expect(autopulse.wpnFiles.first.isEffective, isTrue);
+      expect(
+        autopulse.wpnFiles.last.file.path,
+        'core/data/weapons/autopulse.wpn',
+        reason: "vanilla's own file is still offered, not the mod's",
+      );
+      expect(autopulse.csvFiles.map((f) => f.modName).toList(), [
+        'Emergent Threats',
+        'Vanilla',
+      ], reason: 'the mod row wins, but vanilla still has a row to look at');
+      expect(
+        autopulse.csvFiles.first.file.path,
+        'mods/Emergent Threats/data/weapons/weapon_data.csv',
+      );
+    });
+
+    test('a weapon only one mod touches lists just that one file', () async {
+      final weapons = await _build(
+        payloads: [
+          _payload(
+            sourceKey: kVanillaSourceKey,
+            rows: [
+              {'id': 'lightmg', 'name': 'Light MG'},
+            ],
+            wpnFiles: {
+              'weapons/lightmg.wpn': {
+                'id': 'lightmg',
+                'wpnFile': 'core/data/weapons/lightmg.wpn',
+              },
+            },
+            csvFilePath: 'core/data/weapons/weapon_data.csv',
+          ),
+        ],
+        mods: const [],
+        imageSources: [_source('core', const [])],
+      );
+
+      expect(weapons.single.wpnFiles.length, 1);
+      expect(weapons.single.csvFiles.length, 1);
+      expect(weapons.single.wpnFiles.single.isVanilla, isTrue);
     });
   });
 }

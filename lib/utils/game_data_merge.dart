@@ -606,6 +606,22 @@ List<String> mapAreaNames(Set<String> rawKeys, Map<String, String> friendly) {
   return out;
 }
 
+/// Side-file contributors in the order the UI shows them: the source whose
+/// values take effect first, then the other mods, then the game core.
+///
+/// [contributors] comes in application order (game core first, last applied
+/// wins), so the winner is the last entry.
+List<MergeSource> sideFileSourcesInDisplayOrder(List<MergeSource> contributors) {
+  if (contributors.isEmpty) return const [];
+  final winner = contributors.last;
+  final rest = contributors.where((s) => !identical(s, winner));
+  return [
+    winner,
+    ...rest.where((s) => !s.isVanilla),
+    ...rest.where((s) => s.isVanilla),
+  ];
+}
+
 /// Builds the display-ready mod-source attribution for one merged item.
 ///
 /// [areaNames] maps raw side-file keys to friendly names (domain-specific,
@@ -622,29 +638,18 @@ ItemModSources buildItemModSources({
       : kVanillaSourceName;
   final statsIgnored = rowContributors.skip(1).map((s) => s.name).toList();
 
-  final fileSources = <ModSourceChange>[];
-  if (sideFileContributors.isNotEmpty) {
-    // The last source applied wins the shared values.
-    final winner = sideFileContributors.last;
-    ModSourceChange toChange(MergeSource s) => ModSourceChange(
-      sourceName: s.name,
-      isVanilla: s.isVanilla,
-      isWinner: identical(s, winner),
-      areas: s.isVanilla
-          ? const []
-          : mapAreaNames(sideFileChangedKeys[s.name] ?? const {}, areaNames),
-    );
-
-    fileSources.add(toChange(winner));
-    final rest = sideFileContributors.where((s) => !identical(s, winner));
-    // Other mods first, the game core (the base) last.
-    for (final s in rest.where((s) => !s.isVanilla)) {
-      fileSources.add(toChange(s));
-    }
-    for (final s in rest.where((s) => s.isVanilla)) {
-      fileSources.add(toChange(s));
-    }
-  }
+  final ordered = sideFileSourcesInDisplayOrder(sideFileContributors);
+  final fileSources = [
+    for (final s in ordered)
+      ModSourceChange(
+        sourceName: s.name,
+        isVanilla: s.isVanilla,
+        isWinner: identical(s, ordered.first),
+        areas: s.isVanilla
+            ? const []
+            : mapAreaNames(sideFileChangedKeys[s.name] ?? const {}, areaNames),
+      ),
+  ];
 
   return ItemModSources(
     hasStatsRow: hasStatsRow,

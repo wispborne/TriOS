@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// How a style draws its contrail. Parsed from the `mode` key; the game
 /// defaults to particles when the key is absent.

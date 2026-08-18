@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../widgets/context_menu_state.dart';
 import '../../widgets/menu_entry_widget.dart';

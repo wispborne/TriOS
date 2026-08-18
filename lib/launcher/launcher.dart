@@ -4,7 +4,7 @@ import 'package:trios/trios/constants_theme.dart';
 
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/themes/theme_modifiers.dart';
 
 /// Immutable per-frame inputs the host hands each effect at paint time.

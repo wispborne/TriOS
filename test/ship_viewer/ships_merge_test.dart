@@ -38,16 +38,21 @@ ModVariant _variant(String name) => ModVariant(
   gameCoreFolder: Directory('core'),
 );
 
-Mod _mod(ModVariant variant, {bool enabled = true}) =>
-    Mod(id: variant.modInfo.id, isEnabledInGame: enabled, modVariants: [variant]);
+Mod _mod(ModVariant variant, {bool enabled = true}) => Mod(
+  id: variant.modInfo.id,
+  isEnabledInGame: enabled,
+  modVariants: [variant],
+);
 
 ShipsCachePayload _payload({
   required String sourceKey,
   List<Map<String, dynamic>> rows = const [],
   Map<String, Map<String, dynamic>> shipFiles = const {},
   Map<String, Map<String, dynamic>> skinFiles = const {},
+  String? csvFilePath,
 }) => ShipsCachePayload(
   sourceKey: sourceKey,
+  csvFilePath: csvFilePath,
   moduleVariants: const {},
   hullIdMap: const {},
   rawDataBytes: encodeShipsRawData(
@@ -93,49 +98,51 @@ Ship? _byId(List<Ship> ships, String id) =>
 
 void main() {
   group('shipListNotifierProvider', () {
-    test('two mods listing the same built-in hullmod only show it once', () async {
-      final resprite = _variant('Resprite');
-      final ships = await _build(
-        payloads: [
-          _payload(
-            sourceKey: kVanillaSourceKey,
-            rows: [
-              {'id': 'paragon', 'name': 'Paragon', 'hitpoints': 18000},
-            ],
-            shipFiles: {
-              'paragon.ship': {
-                'hullId': 'paragon',
-                'spriteName': 'graphics/ships/paragon.png',
-                'builtInMods': ['advancedshieldstabilizer'],
-                'builtInWings': ['talon_wing', 'talon_wing'],
+    test(
+      'two mods listing the same built-in hullmod only show it once',
+      () async {
+        final resprite = _variant('Resprite');
+        final ships = await _build(
+          payloads: [
+            _payload(
+              sourceKey: kVanillaSourceKey,
+              rows: [
+                {'id': 'paragon', 'name': 'Paragon', 'hitpoints': 18000},
+              ],
+              shipFiles: {
+                'paragon.ship': {
+                  'hullId': 'paragon',
+                  'spriteName': 'graphics/ships/paragon.png',
+                  'builtInMods': ['advancedshieldstabilizer'],
+                  'builtInWings': ['talon_wing', 'talon_wing'],
+                },
               },
-            },
-          ),
-          _payload(
-            sourceKey: resprite.smolId,
-            shipFiles: {
-              'paragon.ship': {
-                'hullId': 'paragon',
-                'spriteName': 'graphics/ships/paragon_resprite.png',
-                'builtInMods': ['advancedshieldstabilizer', 'targetingunit'],
+            ),
+            _payload(
+              sourceKey: resprite.smolId,
+              shipFiles: {
+                'paragon.ship': {
+                  'hullId': 'paragon',
+                  'spriteName': 'graphics/ships/paragon_resprite.png',
+                  'builtInMods': ['advancedshieldstabilizer', 'targetingunit'],
+                },
               },
-            },
-          ),
-        ],
-        mods: [_mod(resprite)],
-      );
+            ),
+          ],
+          mods: [_mod(resprite)],
+        );
 
-      final paragon = _byId(ships, 'paragon')!;
-      expect(paragon.builtInMods, [
-        'advancedshieldstabilizer',
-        'targetingunit',
-      ]);
-      expect(
-        paragon.builtInWings,
-        ['talon_wing', 'talon_wing'],
-        reason: 'a repeated wing is a second bay, so it is left alone',
-      );
-    });
+        final paragon = _byId(ships, 'paragon')!;
+        expect(paragon.builtInMods, [
+          'advancedshieldstabilizer',
+          'targetingunit',
+        ]);
+        expect(paragon.builtInWings, [
+          'talon_wing',
+          'talon_wing',
+        ], reason: 'a repeated wing is a second bay, so it is left alone');
+      },
+    );
 
     test('a disabled mod does not override a vanilla ship when the toggle is '
         'on', () async {
@@ -186,29 +193,32 @@ void main() {
       expect(onslaught.modVariant, isNull, reason: 'vanilla supplies the row');
     });
 
-    test('a ship only a disabled mod adds disappears when the toggle is on', () async {
-      final adder = _variant('Adder');
-      final ships = await _build(
-        payloads: [
-          _payload(
-            sourceKey: adder.smolId,
-            rows: [
-              {'id': 'newship', 'name': 'New Ship', 'hitpoints': 500},
-            ],
-            shipFiles: {
-              'newship.ship': {
-                'hullId': 'newship',
-                'spriteName': 'graphics/ships/newship.png',
+    test(
+      'a ship only a disabled mod adds disappears when the toggle is on',
+      () async {
+        final adder = _variant('Adder');
+        final ships = await _build(
+          payloads: [
+            _payload(
+              sourceKey: adder.smolId,
+              rows: [
+                {'id': 'newship', 'name': 'New Ship', 'hitpoints': 500},
+              ],
+              shipFiles: {
+                'newship.ship': {
+                  'hullId': 'newship',
+                  'spriteName': 'graphics/ships/newship.png',
+                },
               },
-            },
-          ),
-        ],
-        mods: [_mod(adder, enabled: false)],
-        onlyEnabledMods: true,
-      );
+            ),
+          ],
+          mods: [_mod(adder, enabled: false)],
+          onlyEnabledMods: true,
+        );
 
-      expect(_byId(ships, 'newship'), isNull);
-    });
+        expect(_byId(ships, 'newship'), isNull);
+      },
+    );
 
     test('a mod\'s rebalanced row beats vanilla\'s', () async {
       final rebalance = _variant('Rebalance');
@@ -265,7 +275,11 @@ void main() {
       );
 
       final bar = _byId(ships, 'bar');
-      expect(bar, isNotNull, reason: 'the game drops this row; a viewer shows it');
+      expect(
+        bar,
+        isNotNull,
+        reason: 'the game drops this row; a viewer shows it',
+      );
       expect(bar!.hitpoints, 1000);
       expect(bar.spriteFile, isNull);
     });
@@ -301,9 +315,7 @@ void main() {
         ],
         mods: [_mod(skinner)],
         imageSources: [
-          _source('mods/Z-skinner', const [
-            'graphics/ships/lasher_pirate.png',
-          ]),
+          _source('mods/Z-skinner', const ['graphics/ships/lasher_pirate.png']),
           _source('core', const ['graphics/ships/lasher.png']),
         ],
       );
@@ -320,76 +332,188 @@ void main() {
       expect(skin.modVariant?.modInfo.name, 'Z-skinner');
     });
 
-    test('a skin of a skin resolves whatever order the files arrive in', () async {
-      final skinner = _variant('Skinner');
+    test(
+      'a skin of a skin resolves whatever order the files arrive in',
+      () async {
+        final skinner = _variant('Skinner');
+
+        final ships = await _build(
+          payloads: [
+            _payload(
+              sourceKey: kVanillaSourceKey,
+              rows: [
+                {'id': 'lasher', 'name': 'Lasher', 'hitpoints': 3000},
+              ],
+              shipFiles: {
+                'lasher.ship': {'hullId': 'lasher'},
+              },
+            ),
+            _payload(
+              sourceKey: skinner.smolId,
+              skinFiles: {
+                // Listed before the skin it depends on.
+                'z_second.skin': {
+                  'baseHullId': 'lasher_pirate',
+                  'skinHullId': 'lasher_pirate_elite',
+                  'hullName': 'Elite Pirate Lasher',
+                },
+                'a_first.skin': {
+                  'baseHullId': 'lasher',
+                  'skinHullId': 'lasher_pirate',
+                  'hullName': 'Pirate Lasher',
+                },
+              },
+            ),
+          ],
+          mods: [_mod(skinner)],
+        );
+
+        expect(_byId(ships, 'lasher_pirate'), isNotNull);
+        expect(
+          _byId(ships, 'lasher_pirate_elite')?.name,
+          'Elite Pirate Lasher',
+        );
+      },
+    );
+
+    test(
+      'a mod that ships only art wins the image for a vanilla ship',
+      () async {
+        // No rows, no .ship files — just a replacement picture. It has no ships
+        // payload at all, only an entry in the image index.
+        final artPack = _variant('Art Pack');
+
+        final ships = await _build(
+          payloads: [
+            _payload(
+              sourceKey: kVanillaSourceKey,
+              rows: [
+                {'id': 'lasher', 'name': 'Lasher', 'hitpoints': 3000},
+              ],
+              shipFiles: {
+                'lasher.ship': {
+                  'hullId': 'lasher',
+                  'spriteName': 'graphics/ships/lasher.png',
+                },
+              },
+            ),
+          ],
+          mods: [_mod(artPack)],
+          imageSources: [
+            _source('mods/Art Pack', const ['graphics/ships/lasher.png']),
+            _source('core', const ['graphics/ships/lasher.png']),
+          ],
+        );
+
+        expect(
+          _byId(ships, 'lasher')?.spriteFile,
+          _imageIn('mods/Art Pack', 'graphics/ships/lasher.png'),
+          reason: 'the art pack has the file, so its copy is the one shown',
+        );
+      },
+    );
+
+    test('every mod that changes a hull offers its own files', () async {
+      final resprite = _variant('Resprite');
 
       final ships = await _build(
         payloads: [
           _payload(
             sourceKey: kVanillaSourceKey,
             rows: [
-              {'id': 'lasher', 'name': 'Lasher', 'hitpoints': 3000},
+              {'id': 'paragon', 'name': 'Paragon', 'hitpoints': 18000},
             ],
             shipFiles: {
-              'lasher.ship': {'hullId': 'lasher'},
+              'paragon.ship': {
+                'hullId': 'paragon',
+                '_dataFile': 'core/data/hulls/paragon.ship',
+                'spriteName': 'graphics/ships/paragon.png',
+              },
             },
+            csvFilePath: 'core/data/hulls/ship_data.csv',
           ),
           _payload(
-            sourceKey: skinner.smolId,
-            skinFiles: {
-              // Listed before the skin it depends on.
-              'z_second.skin': {
-                'baseHullId': 'lasher_pirate',
-                'skinHullId': 'lasher_pirate_elite',
-                'hullName': 'Elite Pirate Lasher',
-              },
-              'a_first.skin': {
-                'baseHullId': 'lasher',
-                'skinHullId': 'lasher_pirate',
-                'hullName': 'Pirate Lasher',
+            sourceKey: resprite.smolId,
+            rows: [
+              {'id': 'paragon', 'name': 'Paragon', 'hitpoints': 20000},
+            ],
+            shipFiles: {
+              'paragon.ship': {
+                'hullId': 'paragon',
+                '_dataFile': 'mods/Resprite/data/hulls/paragon.ship',
+                'spriteName': 'graphics/ships/paragon_resprite.png',
               },
             },
+            csvFilePath: 'mods/Resprite/data/hulls/ship_data.csv',
           ),
         ],
-        mods: [_mod(skinner)],
+        mods: [_mod(resprite)],
       );
 
-      expect(_byId(ships, 'lasher_pirate'), isNotNull);
-      expect(_byId(ships, 'lasher_pirate_elite')?.name, 'Elite Pirate Lasher');
+      final paragon = _byId(ships, 'paragon')!;
+      expect(paragon.dataFiles.map((f) => f.modName).toList(), [
+        'Resprite',
+        'Vanilla',
+      ]);
+      expect(
+        paragon.dataFiles.last.file.path,
+        'core/data/hulls/paragon.ship',
+        reason: "vanilla's own .ship is still there to open",
+      );
+      expect(paragon.csvFiles.map((f) => f.modName).toList(), [
+        'Resprite',
+        'Vanilla',
+      ]);
     });
 
-    test('a mod that ships only art wins the image for a vanilla ship', () async {
-      // No rows, no .ship files — just a replacement picture. It has no ships
-      // payload at all, only an entry in the image index.
-      final artPack = _variant('Art Pack');
+    test('a skin lists every mod that ships a copy of it', () async {
+      final tweaker = _variant('Skin Tweaker');
 
       final ships = await _build(
         payloads: [
           _payload(
             sourceKey: kVanillaSourceKey,
             rows: [
-              {'id': 'lasher', 'name': 'Lasher', 'hitpoints': 3000},
+              {'id': 'lasher', 'name': 'Lasher'},
             ],
             shipFiles: {
               'lasher.ship': {
                 'hullId': 'lasher',
-                'spriteName': 'graphics/ships/lasher.png',
+                '_dataFile': 'core/data/hulls/lasher.ship',
+              },
+            },
+            skinFiles: {
+              'lasher_pirates.skin': {
+                'baseHullId': 'lasher',
+                'skinHullId': 'lasher_pirates',
+                '_dataFile': 'core/data/hulls/skins/lasher_pirates.skin',
+              },
+            },
+            csvFilePath: 'core/data/hulls/ship_data.csv',
+          ),
+          _payload(
+            sourceKey: tweaker.smolId,
+            skinFiles: {
+              'lasher_pirates.skin': {
+                'baseHullId': 'lasher',
+                'skinHullId': 'lasher_pirates',
+                '_dataFile':
+                    'mods/Skin Tweaker/data/hulls/skins/lasher_pirates.skin',
               },
             },
           ),
         ],
-        mods: [_mod(artPack)],
-        imageSources: [
-          _source('mods/Art Pack', const ['graphics/ships/lasher.png']),
-          _source('core', const ['graphics/ships/lasher.png']),
-        ],
+        mods: [_mod(tweaker)],
       );
 
-      expect(
-        _byId(ships, 'lasher')?.spriteFile,
-        _imageIn('mods/Art Pack', 'graphics/ships/lasher.png'),
-        reason: 'the art pack has the file, so its copy is the one shown',
-      );
+      final skin = _byId(ships, 'lasher_pirates')!;
+      expect(skin.dataFiles.map((f) => f.modName).toList(), [
+        'Skin Tweaker',
+        'Vanilla',
+      ]);
+      expect(skin.csvFiles.map((f) => f.modName).toList(), [
+        'Vanilla',
+      ], reason: "a skin has no row of its own, so it borrows the base hull's");
     });
   });
 }

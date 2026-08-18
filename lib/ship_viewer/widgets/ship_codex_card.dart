@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/codex/widgets/codex_reference_link.dart';
@@ -593,15 +593,24 @@ Widget _statsSection({
   );
 }
 
-/// Ship silhouette sprite constrained to 150×200, or null if unavailable.
+/// Ship silhouette sprite in a 150×200 space, or null if unavailable.
 /// Always renders the composite blueprint so decorative weapons show.
+///
+/// The space is always the same size, whatever the ship. Big hulls are shrunk
+/// to fit it; small ones — fighters, drones — are centered at their own size
+/// with empty space around them rather than being blown up to fill it, which
+/// is what the ship dialog and the row icon do and what keeps them sharp.
 Widget? _shipSprite(Ship ship) {
   if (ship.spriteFile == null) return null;
 
   return SizedBox(
     width: 150,
     height: 200,
-    child: ShipBlueprintView.minimal(ship: ship, cacheWidth: 150),
+    child: ShipBlueprintView.minimal(
+      ship: ship,
+      cacheWidth: 150,
+      fit: BoxFit.scaleDown,
+    ),
   );
 }
 

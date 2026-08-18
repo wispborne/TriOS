@@ -193,10 +193,22 @@ List<Ship> _buildShips(
 
   // The heavy raw data stays msgpack-encoded on the payloads. Decode it for
   // this merge only; it all becomes garbage when this function returns.
-  final rawBySourceKey = {
-    for (final payload in payloads)
-      payload.sourceKey: decodeShipsRawData(payload.rawDataBytes),
-  };
+  // A source whose blob won't decode is left out rather than taking the whole
+  // ships list with it; its mod is read again on the next scan.
+  final rawBySourceKey = <String, ShipsRawData>{};
+  for (final payload in payloads) {
+    try {
+      rawBySourceKey[payload.sourceKey] = decodeShipsRawData(
+        payload.rawDataBytes,
+      );
+    } catch (e, st) {
+      Fimber.w(
+        'Skipping ships from ${payload.sourceKey}: raw data would not decode.',
+        ex: e,
+        stacktrace: st,
+      );
+    }
+  }
 
   final specs = mergeShips(
     rows: [
@@ -614,12 +626,17 @@ class ShipListNotifier
         e.key.toString(): e.value.toString(),
     };
 
+    final rawDataBytes = raw['rawData'] as Uint8List;
+    if (!CachedStreamListNotifier.startsWithMsgpackMap(rawDataBytes)) {
+      throw const FormatException('rawData is not a msgpack map');
+    }
+
     return ShipsCachePayload(
       sourceKey: raw['sourceKey'] as String,
       csvFilePath: raw['csvFilePath'] as String?,
       moduleVariants: moduleVariants,
       hullIdMap: hullIdMap,
-      rawDataBytes: raw['rawData'] as Uint8List,
+      rawDataBytes: rawDataBytes,
     );
   }
 

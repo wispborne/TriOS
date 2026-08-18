@@ -216,10 +216,22 @@ List<Weapon> _buildWeapons(
 
   // The heavy raw data stays msgpack-encoded on the payloads. Decode it for
   // this merge only; it all becomes garbage when this function returns.
-  final rawBySourceKey = {
-    for (final payload in payloads)
-      payload.sourceKey: decodeWeaponsRawData(payload.rawDataBytes),
-  };
+  // A source whose blob won't decode is left out rather than taking the whole
+  // weapons list with it; its mod is read again on the next scan.
+  final rawBySourceKey = <String, WeaponsRawData>{};
+  for (final payload in payloads) {
+    try {
+      rawBySourceKey[payload.sourceKey] = decodeWeaponsRawData(
+        payload.rawDataBytes,
+      );
+    } catch (e, st) {
+      Fimber.w(
+        'Skipping weapons from ${payload.sourceKey}: raw data would not decode.',
+        ex: e,
+        stacktrace: st,
+      );
+    }
+  }
 
   // Projectiles from every source, in load order, so a launcher in one mod can
   // find the missile it fires even when another mod defines it.
@@ -480,10 +492,15 @@ class WeaponListNotifier
     // would expand the raw-data blob into a per-byte list of ints.
     final raw = msgpack.deserialize(bytes) as Map;
 
+    final rawDataBytes = raw['rawData'] as Uint8List;
+    if (!CachedStreamListNotifier.startsWithMsgpackMap(rawDataBytes)) {
+      throw const FormatException('rawData is not a msgpack map');
+    }
+
     return WeaponsCachePayload(
       sourceKey: raw['sourceKey'] as String,
       csvFilePath: raw['csvFilePath'] as String?,
-      rawDataBytes: raw['rawData'] as Uint8List,
+      rawDataBytes: rawDataBytes,
     );
   }
 }

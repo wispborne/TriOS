@@ -32,6 +32,14 @@ class CachedVariantStore {
 
   Future<void> _writeChain = Future.value();
 
+  /// Numbers each store made in this run, so two stores for the same domain
+  /// never write to the same temp file. Pressing refresh replaces the
+  /// notifier, and with it this store, while the old one's queued writes are
+  /// still running — see [_doWrite]. Counting from zero each run means the
+  /// temp files get reused rather than piling up.
+  static int _nextStoreId = 0;
+  final int _storeId = _nextStoreId++;
+
   static const String _vanillaKey = '_vanilla';
   static const String _fileExt = '.mp';
 
@@ -201,7 +209,12 @@ class CachedVariantStore {
         await dir.create(recursive: true);
       }
       final file = _fileFor(key);
-      final tmp = File('${file.path}.tmp');
+      // The temp file name includes this store's number. Two stores can be
+      // alive at once and write the same key: they used to share one temp
+      // path, so one write's bytes landed in the middle of the other's, and
+      // the renamed cache file was a mix of the two. It still parsed far
+      // enough to hand back garbage instead of failing outright.
+      final tmp = File('${file.path}.$_storeId.tmp');
       final bytes = envelope.encode();
       await tmp.writeAsBytes(bytes, flush: true);
       await tmp.rename(file.path);

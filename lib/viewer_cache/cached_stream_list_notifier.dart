@@ -558,6 +558,18 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
     return value;
   }
 
+  /// Whether [bytes] starts the way a msgpack map does. Domains that keep a
+  /// nested msgpack blob inside their payload (ships, weapons) check this
+  /// before storing the blob, so a cache file that decoded far enough to
+  /// return the wrong slice of bytes is caught here and read again from the
+  /// mod folder, instead of blowing up later during the merge.
+  static bool startsWithMsgpackMap(Uint8List bytes) {
+    if (bytes.isEmpty) return false;
+    final first = bytes[0];
+    // fixmap, map16, map32.
+    return (first & 0xF0) == 0x80 || first == 0xde || first == 0xdf;
+  }
+
   Uint8List? _tryEncode(P payload) {
     try {
       return encodePayload(payload);

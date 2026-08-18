@@ -8,6 +8,10 @@ class ModeSwitcher<T> extends StatelessWidget {
   final bool hideSelectedIcon;
   final bool isCompact;
 
+  /// Show each mode as its icon alone, with the mode's name as a tooltip. The
+  /// names in [modes] are still needed for those tooltips.
+  final bool iconsOnly;
+
   const ModeSwitcher({
     super.key,
     required this.selected,
@@ -16,6 +20,7 @@ class ModeSwitcher<T> extends StatelessWidget {
     required this.onChanged,
     this.hideSelectedIcon = true,
     this.isCompact = true,
+    this.iconsOnly = false,
   });
 
   @override
@@ -33,12 +38,17 @@ class ModeSwitcher<T> extends StatelessWidget {
         return ButtonSegment<T>(
           value: entry.key,
           icon: modeIcons?[entry.key],
-          label: Text(
-            entry.value,
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
+          tooltip: iconsOnly ? entry.value : null,
+          label: iconsOnly
+              ? null
+              : Text(
+                  entry.value,
+                  style: TextStyle(
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
         );
       }).toList(),
       style: ButtonStyle(

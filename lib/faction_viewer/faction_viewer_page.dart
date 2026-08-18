@@ -203,6 +203,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
     return ModeSwitcher<FactionViewMode>(
       selected: state.viewMode,
       onChanged: controller.setViewMode,
+      iconsOnly: true,
       modes: const {
         FactionViewMode.gallery: 'Cards',
         FactionViewMode.grid: 'Grid',

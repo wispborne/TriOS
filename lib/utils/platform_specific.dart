@@ -128,7 +128,8 @@ void _moveToTrashMacOS(String path, bool deleteIfFailed) {
     );
 
     if (deleteIfFailed) {
-      File(path).deleteSync();
+      // recursive: true so this also works when the path is a folder.
+      File(path).deleteSync(recursive: true);
       Fimber.i("Deleted file: $path");
     }
   }
@@ -147,7 +148,8 @@ void _moveToTrashLinux(String path, bool deleteIfFailed) {
     Fimber.w('Failed to move file to Trash: ${result.stderr}');
 
     if (deleteIfFailed) {
-      File(path).deleteSync();
+      // recursive: true so this also works when the path is a folder.
+      File(path).deleteSync(recursive: true);
       Fimber.i("Deleted file: $path");
     }
   }

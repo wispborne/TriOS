@@ -49,6 +49,7 @@
   - More weapon stat fixes (Hydra shows 'Special' for dmg, IR Autolance is now a beam, wording fixes, more).
   - A few ships/weapons didn't load because of invalid data, whereas Starsector set default values and loaded them.
     - e.g. `armaa_hazard_torso` has `DS` as its `energy/second`; this now loads.
+  - Linux/MacOS: deleting a mod folder didn't work.
 - Changed
   - Greatly sped up the check for new/updated files on program launch.
   - Changed the json parser to a rewrite of the actual Starsector json parser.

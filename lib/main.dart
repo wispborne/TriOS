@@ -140,6 +140,40 @@ Future<void> _ensureWindowIsVisible() async {
   );
 }
 
+/// Resizes the window by one pixel and back, so the app redraws at the right
+/// size.
+///
+/// On Windows the app sometimes keeps drawing at the size the window had before
+/// startup resized it. The picture ends up in the wrong place inside the window,
+/// squashed or with a black gap. The app's own idea of the window size is right
+/// the whole time, so there is no wrong number here to correct — it's the
+/// drawing surface underneath that's stale, and nothing in Dart can see or set
+/// it. An actual resize is the only thing that rebuilds it, which is why
+/// dragging the window edge clears the problem. This does the same thing once,
+/// automatically. The real bug is in Flutter's Windows code; this works around
+/// it.
+Future<void> _nudgeWindowToRedraw() async {
+  if (!Platform.isWindows) return;
+
+  try {
+    // Wait until a frame has actually been drawn, so the resize doesn't land in
+    // the same startup gap that causes the problem.
+    await WidgetsBinding.instance.endOfFrame;
+
+    // A maximized window is sized by Windows, and setting bounds would only
+    // un-maximize it.
+    if (await windowManager.isMaximized()) return;
+
+    final bounds = await windowManager.getBounds();
+    await windowManager.setBounds(
+      Rect.fromLTWH(bounds.left, bounds.top, bounds.width, bounds.height + 1),
+    );
+    await windowManager.setBounds(bounds);
+  } catch (e) {
+    Fimber.w("Couldn't nudge the window into redrawing.", ex: e);
+  }
+}
+
 final shouldDebugRiverpod = false;
 
 void main(List<String> args) async {
@@ -403,6 +437,7 @@ void main(List<String> args) async {
         if (settings?.isMaximized ?? false) {
           windowManager.maximize();
         }
+        await _nudgeWindowToRedraw();
       },
     );
   } catch (e) {

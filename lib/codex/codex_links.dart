@@ -34,11 +34,7 @@ final codexLinksProvider = Provider<Map<CodexKey, List<CodexKey>>>((ref) {
   // Same toggle the index uses, so the codex only ever merges one ship list.
   final ships =
       ref
-          .watch(
-            shipListNotifierProvider(
-              ref.watch(appSettings.select((s) => s.codexEnabledModsOnly)),
-            ),
-          )
+          .watch(shipListNotifierProvider(ref.watch(onlyEnabledModsProvider)))
           .value ??
       const [];
   final wings = ref.watch(wingListNotifierProvider).value ?? const [];
@@ -98,7 +94,8 @@ final codexLinksProvider = Provider<Map<CodexKey, List<CodexKey>>>((ref) {
     // Built-in weapons, but skip those in decorative or system slots — the
     // in-game codex leaves them off (e.g. the Invictus's lidar dishes).
     final slotTypeById = <String, String>{
-      for (final slot in ship.weaponSlots ?? const []) slot.id: slot.typeUppercase,
+      for (final slot in ship.weaponSlots ?? const [])
+        slot.id: slot.typeUppercase,
     };
     for (final entry
         in (ship.builtInWeapons ?? const <String, String>{}).entries) {
@@ -173,10 +170,10 @@ final codexLinksProvider = Provider<Map<CodexKey, List<CodexKey>>>((ref) {
     (CodexEntryType.wing, 'terminator_wing'),
     (CodexEntryType.shipSystem, 'drone_strike'),
   );
-  addBoth(
-    (CodexEntryType.weapon, 'vortex_launcher'),
-    keyForHull('shrouded_vortex'),
-  );
+  addBoth((
+    CodexEntryType.weapon,
+    'vortex_launcher',
+  ), keyForHull('shrouded_vortex'));
 
   // Freeze to deterministic lists (final display sort happens once names are
   // resolved; this just gives a stable order for anything that reads keys).
@@ -184,7 +181,9 @@ final codexLinksProvider = Provider<Map<CodexKey, List<CodexKey>>>((ref) {
     for (final entry in links.entries)
       entry.key: (entry.value.toList()
         ..sort((a, b) {
-          final byCat = codexCategoryRank(a.$1).compareTo(codexCategoryRank(b.$1));
+          final byCat = codexCategoryRank(
+            a.$1,
+          ).compareTo(codexCategoryRank(b.$1));
           return byCat != 0 ? byCat : a.$2.compareTo(b.$2);
         })),
   };
@@ -206,7 +205,9 @@ List<CodexEntry> resolveCodexLinks(
     if (target != null) resolved.add(target);
   }
   resolved.sort((a, b) {
-    final byCat = codexCategoryRank(a.type).compareTo(codexCategoryRank(b.type));
+    final byCat = codexCategoryRank(
+      a.type,
+    ).compareTo(codexCategoryRank(b.type));
     if (byCat != 0) return byCat;
     return a.sortName.toLowerCase().compareTo(b.sortName.toLowerCase());
   });

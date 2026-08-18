@@ -36,6 +36,15 @@ final effectiveCatalogAiSummaryModeProvider = Provider<AiSummaryMode>((ref) {
   return ref.watch(appSettings.select((s) => s.catalogAiSummaryMode));
 });
 
+/// The one "only enabled mods" switch, shared by every page that shows
+/// merged game data.
+///
+/// Watch this rather than reading the setting directly, so that flipping it on
+/// one page updates the others.
+final onlyEnabledModsProvider = Provider<bool>(
+  (ref) => ref.watch(appSettings.select((s) => s.onlyEnabledMods)),
+);
+
 /// Manages loading, storing, and updating the app's [Settings] while keeping the UI reactive.
 /// It uses a debounced write strategy to minimize frequent disk writes.
 class AppSettingNotifier extends Notifier<Settings> {
@@ -284,9 +293,7 @@ Settings _dropStalePersistedFilterGroups(Settings settings) {
     }
   }
   if (dropped > 0) {
-    Fimber.i(
-      "Dropped $dropped pre-v2 persisted filter group entries on load.",
-    );
+    Fimber.i("Dropped $dropped pre-v2 persisted filter group entries on load.");
   }
   if (dropped == 0) return settings;
   return settings.copyWith(persistedFilterGroups: kept);

@@ -950,6 +950,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: true,
   );
+  static bool _$onlyEnabledMods(Settings v) => v.onlyEnabledMods;
+  static const Field<Settings, bool> _f$onlyEnabledMods = Field(
+    'onlyEnabledMods',
+    _$onlyEnabledMods,
+    opt: true,
+    def: false,
+  );
   static bool _$catalogBrowserPanelOpen(Settings v) =>
       v.catalogBrowserPanelOpen;
   static const Field<Settings, bool> _f$catalogBrowserPanelOpen = Field(
@@ -1297,6 +1304,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         _f$enableAccessibilitySemanticsOnLinux,
     #hasHiddenForumDarkModeTip: _f$hasHiddenForumDarkModeTip,
     #enableAiFeatures: _f$enableAiFeatures,
+    #onlyEnabledMods: _f$onlyEnabledMods,
     #catalogBrowserPanelOpen: _f$catalogBrowserPanelOpen,
     #catalogBrowserPanelWidth: _f$catalogBrowserPanelWidth,
     #catalogCardClickAction: _f$catalogCardClickAction,
@@ -1420,6 +1428,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       ),
       hasHiddenForumDarkModeTip: data.dec(_f$hasHiddenForumDarkModeTip),
       enableAiFeatures: data.dec(_f$enableAiFeatures),
+      onlyEnabledMods: data.dec(_f$onlyEnabledMods),
       catalogBrowserPanelOpen: data.dec(_f$catalogBrowserPanelOpen),
       catalogBrowserPanelWidth: data.dec(_f$catalogBrowserPanelWidth),
       catalogCardClickAction: data.dec(_f$catalogCardClickAction),
@@ -1682,6 +1691,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? enableAccessibilitySemanticsOnLinux,
     bool? hasHiddenForumDarkModeTip,
     bool? enableAiFeatures,
+    bool? onlyEnabledMods,
     bool? catalogBrowserPanelOpen,
     double? catalogBrowserPanelWidth,
     CatalogCardClickAction? catalogCardClickAction,
@@ -1985,6 +1995,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? enableAccessibilitySemanticsOnLinux,
     Object? hasHiddenForumDarkModeTip = $none,
     bool? enableAiFeatures,
+    bool? onlyEnabledMods,
     bool? catalogBrowserPanelOpen,
     Object? catalogBrowserPanelWidth = $none,
     CatalogCardClickAction? catalogCardClickAction,
@@ -2122,6 +2133,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (hasHiddenForumDarkModeTip != $none)
         #hasHiddenForumDarkModeTip: hasHiddenForumDarkModeTip,
       if (enableAiFeatures != null) #enableAiFeatures: enableAiFeatures,
+      if (onlyEnabledMods != null) #onlyEnabledMods: onlyEnabledMods,
       if (catalogBrowserPanelOpen != null)
         #catalogBrowserPanelOpen: catalogBrowserPanelOpen,
       if (catalogBrowserPanelWidth != $none)
@@ -2379,6 +2391,7 @@ class _SettingsCopyWithImpl<$R, $Out>
       or: $value.hasHiddenForumDarkModeTip,
     ),
     enableAiFeatures: data.get(#enableAiFeatures, or: $value.enableAiFeatures),
+    onlyEnabledMods: data.get(#onlyEnabledMods, or: $value.onlyEnabledMods),
     catalogBrowserPanelOpen: data.get(
       #catalogBrowserPanelOpen,
       or: $value.catalogBrowserPanelOpen,

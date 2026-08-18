@@ -112,20 +112,14 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
   // Ships, weapons and factions are merged from mod files, so "only enabled
   // mods" has to be applied while merging rather than by dropping entries
   // afterwards — otherwise a disabled mod still overrides stats and sprites.
-  final enabledModsOnly = ref.watch(
-    appSettings.select((s) => s.codexEnabledModsOnly),
-  );
+  final enabledModsOnly = ref.watch(onlyEnabledModsProvider);
   final ships =
-      ref.watch(shipListNotifierProvider(enabledModsOnly)).value ??
-      const [];
+      ref.watch(shipListNotifierProvider(enabledModsOnly)).value ?? const [];
   final weapons =
-      ref.watch(weaponListNotifierProvider(enabledModsOnly)).value ??
-      const [];
-  final hullmods =
-      ref.watch(hullmodListNotifierProvider).value ?? const [];
+      ref.watch(weaponListNotifierProvider(enabledModsOnly)).value ?? const [];
+  final hullmods = ref.watch(hullmodListNotifierProvider).value ?? const [];
   final factions = ref.watch(mergedFactionListProvider(enabledModsOnly));
-  final systems =
-      ref.watch(shipSystemListNotifierProvider).value ?? const [];
+  final systems = ref.watch(shipSystemListNotifierProvider).value ?? const [];
   final wings = ref.watch(wingListNotifierProvider).value ?? const [];
   // Watch the descriptions map once and look up directly — one family watch
   // per ship system is far too slow (each watch walks the element ancestors).
@@ -166,9 +160,7 @@ final codexCategoryLoadingProvider = Provider.family<bool, CodexEntryType>((
 ) {
   // Same toggle the index itself uses, so this doesn't merge a second list
   // just to read a loading flag.
-  final enabledModsOnly = ref.watch(
-    appSettings.select((s) => s.codexEnabledModsOnly),
-  );
+  final enabledModsOnly = ref.watch(onlyEnabledModsProvider);
   return switch (type) {
     CodexEntryType.ship =>
       ref.watch(shipListNotifierProvider(enabledModsOnly)).isLoading,
@@ -191,11 +183,7 @@ final _codexModuleShipIdsProvider = Provider<Set<String>>((ref) {
   // Same toggle the index uses, so the codex only ever merges one ship list.
   final ships =
       ref
-          .watch(
-            shipListNotifierProvider(
-              ref.watch(appSettings.select((s) => s.codexEnabledModsOnly)),
-            ),
-          )
+          .watch(shipListNotifierProvider(ref.watch(onlyEnabledModsProvider)))
           .value ??
       const [];
   final moduleVariants = ref.watch(moduleVariantsProvider);
@@ -236,9 +224,7 @@ final _codexFilteredIndexProvider =
       // When "only enabled mods" is on, keep vanilla plus entries from a mod
       // that is currently enabled. Off by default, so this collapses to a
       // no-op filter.
-      final onlyEnabledMods = ref.watch(
-        appSettings.select((s) => s.codexEnabledModsOnly),
-      );
+      final onlyEnabledMods = ref.watch(onlyEnabledModsProvider);
       final enabledModIds = onlyEnabledMods
           ? ref
                 .watch(AppState.mods)

@@ -880,7 +880,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
       weaponsMap: _weaponsMap,
       hullmodsMap: _hullmodsMap,
       gameCoreDir: _gameCoreDir,
-      onlyEnabledMods: ref.read(appSettings).codexEnabledModsOnly,
+      onlyEnabledMods: ref.read(onlyEnabledModsProvider),
       child: row,
     );
   }
@@ -1165,15 +1165,11 @@ class _CodexPageState extends ConsumerState<CodexPage>
               alignment: Alignment.centerLeft,
               child: CheckboxWithLabel(
                 label: 'Only enabled mods',
-                value: ref.watch(
-                  appSettings.select((s) => s.codexEnabledModsOnly),
-                ),
+                value: ref.watch(appSettings.select((s) => s.onlyEnabledMods)),
                 labelStyle: theme.textTheme.labelMedium,
                 onChanged: (v) => ref
                     .read(appSettings.notifier)
-                    .update(
-                      (s) => s.copyWith(codexEnabledModsOnly: v ?? false),
-                    ),
+                    .update((s) => s.copyWith(onlyEnabledMods: v ?? false)),
               ),
             ),
             Align(

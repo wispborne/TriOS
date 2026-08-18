@@ -188,10 +188,6 @@ class FactionViewerStatePersistedMapper
     opt: true,
     def: 'combatMedium',
   );
-  static bool _$onlyEnabledMods(FactionViewerStatePersisted v) =>
-      v.onlyEnabledMods;
-  static const Field<FactionViewerStatePersisted, bool> _f$onlyEnabledMods =
-      Field('onlyEnabledMods', _$onlyEnabledMods, opt: true, def: false);
 
   @override
   final MappableFields<FactionViewerStatePersisted> fields = const {
@@ -201,7 +197,6 @@ class FactionViewerStatePersistedMapper
     #gallerySortAscending: _f$gallerySortAscending,
     #spawnFactionKey: _f$spawnFactionKey,
     #spawnRole: _f$spawnRole,
-    #onlyEnabledMods: _f$onlyEnabledMods,
   };
 
   static FactionViewerStatePersisted _instantiate(DecodingData data) {
@@ -212,7 +207,6 @@ class FactionViewerStatePersistedMapper
       gallerySortAscending: data.dec(_f$gallerySortAscending),
       spawnFactionKey: data.dec(_f$spawnFactionKey),
       spawnRole: data.dec(_f$spawnRole),
-      onlyEnabledMods: data.dec(_f$onlyEnabledMods),
     );
   }
 
@@ -297,7 +291,6 @@ abstract class FactionViewerStatePersistedCopyWith<
     bool? gallerySortAscending,
     String? spawnFactionKey,
     String? spawnRole,
-    bool? onlyEnabledMods,
   });
   FactionViewerStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -329,7 +322,6 @@ class _FactionViewerStatePersistedCopyWithImpl<$R, $Out>
     bool? gallerySortAscending,
     Object? spawnFactionKey = $none,
     String? spawnRole,
-    bool? onlyEnabledMods,
   }) => $apply(
     FieldCopyWithData({
       if (viewMode != null) #viewMode: viewMode,
@@ -339,7 +331,6 @@ class _FactionViewerStatePersistedCopyWithImpl<$R, $Out>
         #gallerySortAscending: gallerySortAscending,
       if (spawnFactionKey != $none) #spawnFactionKey: spawnFactionKey,
       if (spawnRole != null) #spawnRole: spawnRole,
-      if (onlyEnabledMods != null) #onlyEnabledMods: onlyEnabledMods,
     }),
   );
   @override
@@ -357,7 +348,6 @@ class _FactionViewerStatePersistedCopyWithImpl<$R, $Out>
         ),
         spawnFactionKey: data.get(#spawnFactionKey, or: $value.spawnFactionKey),
         spawnRole: data.get(#spawnRole, or: $value.spawnRole),
-        onlyEnabledMods: data.get(#onlyEnabledMods, or: $value.onlyEnabledMods),
       );
 
   @override
@@ -416,6 +406,13 @@ class FactionViewerStateMapper extends ClassMapperBase<FactionViewerState> {
     opt: true,
     def: false,
   );
+  static bool _$onlyEnabledMods(FactionViewerState v) => v.onlyEnabledMods;
+  static const Field<FactionViewerState, bool> _f$onlyEnabledMods = Field(
+    'onlyEnabledMods',
+    _$onlyEnabledMods,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<FactionViewerState> fields = const {
@@ -424,6 +421,7 @@ class FactionViewerStateMapper extends ClassMapperBase<FactionViewerState> {
     #filteredFactions: _f$filteredFactions,
     #searchQuery: _f$searchQuery,
     #isLoading: _f$isLoading,
+    #onlyEnabledMods: _f$onlyEnabledMods,
   };
 
   static FactionViewerState _instantiate(DecodingData data) {
@@ -433,6 +431,7 @@ class FactionViewerStateMapper extends ClassMapperBase<FactionViewerState> {
       filteredFactions: data.dec(_f$filteredFactions),
       searchQuery: data.dec(_f$searchQuery),
       isLoading: data.dec(_f$isLoading),
+      onlyEnabledMods: data.dec(_f$onlyEnabledMods),
     );
   }
 
@@ -523,6 +522,7 @@ abstract class FactionViewerStateCopyWith<
     List<Faction>? filteredFactions,
     String? searchQuery,
     bool? isLoading,
+    bool? onlyEnabledMods,
   });
   FactionViewerStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -565,6 +565,7 @@ class _FactionViewerStateCopyWithImpl<$R, $Out>
     List<Faction>? filteredFactions,
     String? searchQuery,
     bool? isLoading,
+    bool? onlyEnabledMods,
   }) => $apply(
     FieldCopyWithData({
       if (persisted != null) #persisted: persisted,
@@ -572,6 +573,7 @@ class _FactionViewerStateCopyWithImpl<$R, $Out>
       if (filteredFactions != null) #filteredFactions: filteredFactions,
       if (searchQuery != null) #searchQuery: searchQuery,
       if (isLoading != null) #isLoading: isLoading,
+      if (onlyEnabledMods != null) #onlyEnabledMods: onlyEnabledMods,
     }),
   );
   @override
@@ -581,6 +583,7 @@ class _FactionViewerStateCopyWithImpl<$R, $Out>
     filteredFactions: data.get(#filteredFactions, or: $value.filteredFactions),
     searchQuery: data.get(#searchQuery, or: $value.searchQuery),
     isLoading: data.get(#isLoading, or: $value.isLoading),
+    onlyEnabledMods: data.get(#onlyEnabledMods, or: $value.onlyEnabledMods),
   );
 
   @override

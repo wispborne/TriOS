@@ -2034,8 +2034,15 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
   /// Resolves a built-in weapon ID to its display name, falling back to the
   /// raw ID if the weapons list hasn't loaded yet.
+  ///
+  /// Asks for the same weapon list as the rest of the app. It used to ask for
+  /// the every-mod list outright, which is the same list while "only enabled
+  /// mods" is off, but merges a second copy of every weapon in every installed
+  /// mod the first time someone hovers a built-in slot while it is on.
   String _builtInWeaponName(String weaponId) {
-    final weapons = ref.read(weaponListNotifierProvider(false)).value;
+    final weapons = ref
+        .read(weaponListNotifierProvider(ref.read(onlyEnabledModsProvider)))
+        .value;
     if (weapons != null) {
       final weapon = weapons.firstWhereOrNull((w) => w.id == weaponId);
       if (weapon?.name != null) return weapon!.name!;

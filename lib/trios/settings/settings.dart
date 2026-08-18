@@ -160,6 +160,14 @@ class Settings with SettingsMappable {
   /// the previous behavior.
   final bool enableAiFeatures;
 
+  /// Leave data from mods that aren't enabled out of the ship, weapon,
+  /// faction and codex lists, everywhere in the app.
+  ///
+  /// One switch rather than one per page: the lists are merged per setting
+  /// value, so two pages disagreeing meant merging and keeping every ship and
+  /// weapon twice.
+  final bool onlyEnabledMods;
+
   // Catalog page — collapsible browser panel and card-click action
   final bool catalogBrowserPanelOpen;
   final double? catalogBrowserPanelWidth;
@@ -232,6 +240,10 @@ class Settings with SettingsMappable {
   final bool vramEstimatorEnabledModsOnly;
 
   /// When true, the Codex only shows data from enabled mods (plus vanilla).
+  @Deprecated(
+    'Replaced by the app-wide onlyEnabledMods. Kept so old settings '
+    'files still load.',
+  )
   final bool codexEnabledModsOnly;
 
   Settings({
@@ -327,6 +339,7 @@ class Settings with SettingsMappable {
     this.enableAccessibilitySemanticsOnLinux = false,
     this.hasHiddenForumDarkModeTip,
     this.enableAiFeatures = true,
+    this.onlyEnabledMods = false,
     this.catalogBrowserPanelOpen = false,
     this.catalogBrowserPanelWidth,
     this.catalogCardClickAction = CatalogCardClickAction.forumDialog,

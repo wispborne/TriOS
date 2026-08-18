@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
@@ -89,11 +88,6 @@ final weaponsPageControllerProvider =
       () => WeaponsPageController(),
     );
 
-/// Bumped whenever "Only Enabled Mods" flips. The filter field itself stays
-/// the source of truth; the controller watches this so it rebuilds and re-reads
-/// the weapon list, which is merged differently depending on the toggle.
-final _onlyEnabledModsChanged = StateProvider<int>((ref) => 0);
-
 class WeaponsPageController extends Notifier<WeaponsPageState>
     with NotifyOnNewState {
   static final _scope = const FilterScope(kWeaponsPageId);
@@ -102,10 +96,6 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
   late final List<SearchField<Weapon>> _searchFields;
   late final Map<String, SearchField<Weapon>> _fieldsByKey;
   List<Weapon>? _searchIndexItems;
-
-  /// The "Only Enabled Mods" value the current weapon list was merged with, so
-  /// [_emitAfterFilterMutation] can tell when a re-merge is needed.
-  bool? _mergedWithShowEnabled;
 
   final vanillaName = 'Vanilla';
 
@@ -128,7 +118,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
   EnumField<Weapon, WeaponSpoilerLevel> get _spoilerField =>
       _general.fieldById('spoiler') as EnumField<Weapon, WeaponSpoilerLevel>;
 
-  bool get showEnabled => _showEnabledField.value;
+  bool get showEnabled => ref.read(appSettings).onlyEnabledMods;
 
   bool get showHidden => _showHiddenField.value;
 
@@ -147,9 +137,10 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
     final saved = ref.read(appSettings).weaponsPageState;
 
     ref.watch(descriptionsNotifierProvider);
-    ref.watch(_onlyEnabledModsChanged);
-    _mergedWithShowEnabled = showEnabled;
-    final weaponsAsync = ref.watch(weaponListNotifierProvider(showEnabled));
+    // One app-wide switch, so flipping it anywhere rebuilds this page too.
+    final onlyEnabledMods = ref.watch(onlyEnabledModsProvider);
+    _showEnabledField.value = onlyEnabledMods;
+    final weaponsAsync = ref.watch(weaponListNotifierProvider(onlyEnabledMods));
     final mods = ref.watch(AppState.mods);
     final isLoadingWeapons = ref.watch(isLoadingWeaponsList);
 
@@ -202,7 +193,9 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
           BoolField<Weapon>(
             id: 'showEnabled',
             label: 'Only Enabled Mods',
-            tooltip: 'Only show weapons from enabled mods.',
+            tooltip:
+                'Only show weapons from enabled mods.'
+                '\nShared with the ships, factions and codex pages.',
             predicate: (weapon) {
               final mods = ref.read(AppState.mods);
               return weapon.modVariant == null ||
@@ -480,6 +473,14 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
   }
 
   void onGroupChanged(String groupId) {
+    // "Only Enabled Mods" in the panel writes the shared setting, which is
+    // what every page reads. The rebuild that follows syncs the field back.
+    if (_showEnabledField.value != showEnabled) {
+      ref
+          .read(appSettings.notifier)
+          .update((s) => s.copyWith(onlyEnabledMods: _showEnabledField.value));
+      return;
+    }
     _filters.maybePersist(groupId, ref.read(filterGroupPersistenceProvider));
     _emitAfterFilterMutation();
   }
@@ -489,17 +490,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
     _emitAfterFilterMutation();
   }
 
-  /// Call this last. When the toggle changed it marks this controller as
-  /// needing a rebuild, and `ref` can't be used again until that rebuild runs.
   void _emitAfterFilterMutation() {
-    // "Only Enabled Mods" can be flipped from the toolbar button or the
-    // filters panel, so check the field itself rather than trusting one path.
-    if (_mergedWithShowEnabled != showEnabled) {
-      // Rebuilds this controller, which re-reads the weapon list with disabled
-      // mods left in or out of the merge.
-      ref.read(_onlyEnabledModsChanged.notifier).state++;
-      return;
-    }
     final mods = ref.read(AppState.mods);
     state = _processAllFilters(state, mods);
   }

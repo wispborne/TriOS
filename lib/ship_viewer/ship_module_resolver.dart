@@ -1,4 +1,5 @@
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_variant.dart';
@@ -11,18 +12,21 @@ class ResolvedModule {
   final ShipWeaponSlot parentSlot;
   final Ship moduleShip;
 
-  const ResolvedModule({
-    required this.parentSlot,
-    required this.moduleShip,
-  });
+  const ResolvedModule({required this.parentSlot, required this.moduleShip});
 }
 
 /// Riverpod provider that resolves station modules for a ship by ID.
-final resolvedModulesProvider =
-    Provider.family<List<ResolvedModule>, String>((ref, shipId) {
+final resolvedModulesProvider = Provider.family<List<ResolvedModule>, String>((
+  ref,
+  shipId,
+) {
   // Every mod, enabled or not: this only looks up module hulls by id for ids
   // the parent ship already names, so a narrower list would just lose modules.
-  final allShips = ref.watch(shipListNotifierProvider(false)).value ?? [];
+  final allShips =
+      ref
+          .watch(shipListNotifierProvider(ref.watch(onlyEnabledModsProvider)))
+          .value ??
+      [];
   final moduleVariants = ref.watch(moduleVariantsProvider);
   final variantHullIdMap = ref.watch(variantHullIdMapProvider);
 
@@ -74,8 +78,9 @@ List<ResolvedModule> resolveModulesWithIndex(
 ) {
   if (!parentShip.hasStationSlots) return const [];
 
-  final stationSlots =
-      parentShip.weaponSlots!.where((s) => s.isStationModule).toList();
+  final stationSlots = parentShip.weaponSlots!
+      .where((s) => s.isStationModule)
+      .toList();
 
   // Find a variant whose hullId matches this ship and that defines modules.
   // Take the first one found (any variant for this hull will do since we

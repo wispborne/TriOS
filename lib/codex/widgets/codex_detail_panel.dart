@@ -123,9 +123,7 @@ class CodexDetailPanel extends ConsumerWidget {
         child: FactionCard(
           faction: faction,
           gameCoreDir: ref.watch(AppState.gameCoreFolder).value,
-          onlyEnabledMods: ref.watch(
-            appSettings.select((s) => s.codexEnabledModsOnly),
-          ),
+          onlyEnabledMods: ref.watch(onlyEnabledModsProvider),
           onTap: () {},
         ),
       ),
@@ -197,7 +195,7 @@ class CodexDetailPanel extends ConsumerWidget {
         return () => _showPagedDetailsDialog(context, ref, entry);
       case FactionCodexEntry(:final faction):
         final gameCoreDir = ref.read(AppState.gameCoreFolder).value;
-        final onlyEnabledMods = ref.read(appSettings).codexEnabledModsOnly;
+        final onlyEnabledMods = ref.read(onlyEnabledModsProvider);
         return () => showDialog(
           context: context,
           builder: (_) => FactionProfileDialog(

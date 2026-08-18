@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
 import 'package:trios/faction_viewer/spawn_weights/ship_roles_manager.dart';
@@ -169,17 +170,15 @@ final factionSpawnSummariesProvider =
 
 /// Every role for one faction. Used by the detail view and the dialog.
 final factionSpawnWeightsProvider =
-    Provider.family<
-      FactionSpawnWeights,
-      SpawnWeightParams
-    >((ref, key) {
+    Provider.family<FactionSpawnWeights, SpawnWeightParams>((ref, key) {
       final mergeKey = key.mergeKey;
       final factions = ref.watch(
         mergedFactionListProvider(key.onlyEnabledMods),
       );
       final faction = factions.firstWhere(
         (f) => f.mergeKey == mergeKey,
-        orElse: () => Faction(mergeKey: mergeKey, id: mergeKey, displayName: ''),
+        orElse: () =>
+            Faction(mergeKey: mergeKey, id: mergeKey, displayName: ''),
       );
       final context = ref.watch(
         _spawnWeightContextProvider(key.onlyEnabledMods),
@@ -221,13 +220,17 @@ final spawnWeightsReadyProvider = Provider.family<bool, bool>(
 /// look up names, sizes, and sprites for ids the (already filtered) faction
 /// data asks about. Null until the ship list has loaded.
 final shipsByHullIdProvider = Provider<Map<String, Ship>?>((ref) {
-  final ships = ref.watch(shipListNotifierProvider(false)).value;
+  final ships = ref
+      .watch(shipListNotifierProvider(ref.watch(onlyEnabledModsProvider)))
+      .value;
   if (ships == null) return null;
   return {for (final ship in ships) ship.id: ship};
 });
 
-final _spawnWeightContextProvider =
-    Provider.family<SpawnWeightContext?, bool>((ref, onlyEnabledMods) {
+final _spawnWeightContextProvider = Provider.family<SpawnWeightContext?, bool>((
+  ref,
+  onlyEnabledMods,
+) {
   final defaults = ref.watch(mergedShipRolesProvider(onlyEnabledMods)).value;
   final shipsByHullId = ref.watch(shipsByHullIdProvider);
   final variantHullIds = ref.watch(variantHullIdMapProvider);
@@ -285,6 +288,14 @@ class RoleWeightResult {
   const RoleWeightResult({required this.entries, required this.skippedEntries});
 }
 
+/// Everything the pipeline needs to know about one faction, worked out once.
+///
+/// None of this depends on the role, but the pipeline runs eleven times per
+/// faction just to fill in the summaries. Building these eight collections
+/// inside that loop meant a faction that knows five hundred ships built the
+/// same five-hundred-entry sets eleven times over and threw them away each
+/// time. Across every faction in a big mod list that came to something like a
+/// hundred megabytes of rubbish, which the heap grew to hold and then kept.
 /// The game's pipeline for one role, in order:
 ///   1. take the role's entry list (the faction's own, or the shared default),
 ///   2. drop hulls the faction doesn't know,

@@ -42,10 +42,6 @@ class FactionViewerStatePersisted with FactionViewerStatePersistedMappable {
   /// Role shown in the spawn-weights view.
   final String spawnRole;
 
-  /// Leave data from mods that aren't enabled out of everything on the page,
-  /// spawn weights included.
-  final bool onlyEnabledMods;
-
   const FactionViewerStatePersisted({
     this.viewMode = FactionViewMode.gallery,
     this.showFilters = false,
@@ -53,7 +49,6 @@ class FactionViewerStatePersisted with FactionViewerStatePersistedMappable {
     this.gallerySortAscending = false,
     this.spawnFactionKey,
     this.spawnRole = 'combatMedium',
-    this.onlyEnabledMods = false,
   });
 }
 
@@ -71,7 +66,10 @@ class FactionViewerState with FactionViewerStateMappable {
   bool get gallerySortAscending => persisted.gallerySortAscending;
   String? get spawnFactionKey => persisted.spawnFactionKey;
   String get spawnRole => persisted.spawnRole;
-  bool get onlyEnabledMods => persisted.onlyEnabledMods;
+
+  /// The app-wide "only enabled mods" switch, copied in when this state is
+  /// built. Not the old per-page setting, which is no longer read.
+  final bool onlyEnabledMods;
 
   const FactionViewerState({
     this.persisted = const FactionViewerStatePersisted(),
@@ -79,6 +77,7 @@ class FactionViewerState with FactionViewerStateMappable {
     this.filteredFactions = const [],
     this.searchQuery = '',
     this.isLoading = false,
+    this.onlyEnabledMods = false,
   });
 }
 
@@ -109,9 +108,9 @@ class FactionViewerController extends Notifier<FactionViewerState>
 
   @override
   FactionViewerState build() {
-    final persisted = ref.watch(
-      appSettings.select((s) => s.factionViewerState),
-    ) ?? const FactionViewerStatePersisted();
+    final persisted =
+        ref.watch(appSettings.select((s) => s.factionViewerState)) ??
+        const FactionViewerStatePersisted();
 
     if (stateOrNull == null) {
       _filters = _buildFilters();
@@ -119,9 +118,8 @@ class FactionViewerController extends Notifier<FactionViewerState>
     }
 
     final isLoading = ref.watch(isLoadingFactionsList);
-    final allFactions = ref.watch(
-      mergedFactionListProvider(persisted.onlyEnabledMods),
-    );
+    final onlyEnabledMods = ref.watch(onlyEnabledModsProvider);
+    final allFactions = ref.watch(mergedFactionListProvider(onlyEnabledMods));
 
     var filtered = _filters.applyChipFilters(allFactions);
     filtered = _filters.applyNonChipFilters(filtered);
@@ -137,6 +135,7 @@ class FactionViewerController extends Notifier<FactionViewerState>
       filteredFactions: filtered,
       searchQuery: _searchQuery,
       isLoading: isLoading,
+      onlyEnabledMods: onlyEnabledMods,
     );
   }
 
@@ -151,7 +150,8 @@ class FactionViewerController extends Notifier<FactionViewerState>
             BoolField<Faction>(
               id: 'hideHidden',
               label: 'Hide hidden factions',
-              tooltip: 'Hide factions with showInIntelTab: false (Remnants, Omega, etc.)',
+              tooltip:
+                  'Hide factions with showInIntelTab: false (Remnants, Omega, etc.)',
               predicate: (f) => f.showInIntelTab,
               initialValue: true,
             ),
@@ -190,13 +190,13 @@ class FactionViewerController extends Notifier<FactionViewerState>
   }
 
   void toggleShowFilters() {
-    _updatePersisted(
-      state.persisted.copyWith(showFilters: !state.showFilters),
-    );
+    _updatePersisted(state.persisted.copyWith(showFilters: !state.showFilters));
   }
 
   void setOnlyEnabledMods(bool value) {
-    _updatePersisted(state.persisted.copyWith(onlyEnabledMods: value));
+    ref
+        .read(appSettings.notifier)
+        .update((s) => s.copyWith(onlyEnabledMods: value));
   }
 
   void setViewMode(FactionViewMode mode) {
@@ -295,7 +295,10 @@ class FactionViewerController extends Notifier<FactionViewerState>
     return _cachedSearchIndices;
   }
 
-  static Comparable _gallerySortValue(Faction f, FactionGallerySortField field) {
+  static Comparable _gallerySortValue(
+    Faction f,
+    FactionGallerySortField field,
+  ) {
     return switch (field) {
       FactionGallerySortField.name => f.displayName.toLowerCase(),
       FactionGallerySortField.ships => f.knownShipIds.length,
@@ -312,11 +315,12 @@ class FactionViewerController extends Notifier<FactionViewerState>
     FactionGallerySortField field,
     bool ascending,
   ) {
-    final sorted = [...factions]..sort((a, b) {
-      final va = _gallerySortValue(a, field);
-      final vb = _gallerySortValue(b, field);
-      return ascending ? va.compareTo(vb) : vb.compareTo(va);
-    });
+    final sorted = [...factions]
+      ..sort((a, b) {
+        final va = _gallerySortValue(a, field);
+        final vb = _gallerySortValue(b, field);
+        return ascending ? va.compareTo(vb) : vb.compareTo(va);
+      });
     return sorted;
   }
 
@@ -339,7 +343,10 @@ class FactionViewerController extends Notifier<FactionViewerState>
         key: 'source',
         description: 'Source mod or vanilla',
         valueSuggestions: (factions) =>
-            factions.expand((f) => f.sources.map((s) => s.name)).toSet().toList()
+            factions
+                .expand((f) => f.sources.map((s) => s.name))
+                .toSet()
+                .toList()
               ..sort(),
         matches: (f, op, value) {
           if (op != DslOperator.equals) return false;

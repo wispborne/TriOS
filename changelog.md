@@ -28,6 +28,14 @@
     - Mods must include a `data/config/trios.json` for the shield textures to show up in TriOS.
     - 16 mods have support out of the box (since I already happened to have them installed and could search).
   - Ship, weapon, and hullmod viewers now have Previous/Next buttons. Arrow keys work too.
+  - Catalog: mod cards now show where the source code lives and what license the mod uses.
+    - Click the code icon to open the mod's GitHub, GitLab, or Bitbucket page; click the scales icon to read the license.
+    - The hover card and the mod pop-up have matching "Source code" and "License" sections.
+    - New "Has Source Code" chip in the Attributes filter.
+  - Mods page now shows a warning icon next to mods whose data has a problem, starting with mods whose `.version` file and `mod_info.json` don't agree on the version.
+    - Hover the icon to see the problem, click it for details.
+    - Right-click the icon, or use the Mods page menu, to turn the icons off.
+  - Tooltip on the "Clear All" filter button explaining default and spoiler filters.
 - Fixed
   - Table columns may now be as wide as the window itself.
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.
@@ -50,6 +58,8 @@
   - A few ships/weapons didn't load because of invalid data, whereas Starsector set default values and loaded them.
     - e.g. `armaa_hazard_torso` has `DS` as its `energy/second`; this now loads.
   - Linux/MacOS: deleting a mod folder didn't work.
+  - The screen reader checkbox sometimes lost its value. The app restarted itself to apply the setting and could reload settings from disk before the change was saved. It now applies right away, with no restart.
+  - Chipper: a log that can't be read now shows an error instead of loading forever.
 - Changed
   - Greatly sped up the check for new/updated files on program launch.
   - Changed the json parser to a rewrite of the actual Starsector json parser.
@@ -66,6 +76,20 @@
   - Tweaked button colors on the Mods page so enabled mod buttons are less bright and don't look as bad with themes.
     - You can revert this via an option in the menu on the Mods page.
   - Improved log parser highlighting logic.
+  - TriOS uses a lot less RAM.
+    - Ship and weapon sprites now share one 64 MB cache and the least recently used ones are dropped. Before, every sprite you ever looked at stayed in memory; scrolling the weapons grid cost about 80 MB for the rest of the session.
+    - Ship and weapon scan data is kept packed in memory and only unpacked while rebuilding the lists, saving about 70 MB with a large mod list.
+      - The ships and weapons caches changed format, so the first launch after updating re-scans every mod once.
+    - Chipper no longer keeps a copy of the whole log in memory for the whole session, which cost about 36 MB for an 18 MB log.
+    - Screen reader support is now off by default on every platform, with a checkbox in Settings to turn it on. Before, Windows and macOS always built accessibility data when any program asked the OS for it, costing around 50 MB. Linux users who already turned it on keep their choice.
+    - Fixed a couple of memory leaks.
+  - Catalog cards now show the required game version the same way the Game Version filter groups it, so "0.98a-RC5" and "0.98a" both read as "0.98". Hover the badge to see what the mod author actually wrote.
+  - Catalog: the mod pop-up shows the source code as a link instead of a chip.
+  - Mods page menu: "High Contrast Enable Button" is now "Mod Buttons: High Contrast".
+  - Settings - Theme Modifiers: "Default" is now "Follow theme" and "Animated motes" is now "Animated backgrounds".
+  - The mod data warning about mismatched versions now reads "This mod's Version Checker says X but its mod_info.json says Y", so it's clear which mod it means.
+  - When a catalog mod turns up in more than one place, its AI summary credits Discord instead of "the mod catalog", since that's where the description it was written from came from.
+  - The BiOS theme's secondary color is a lighter blue.
 
 # 1.6.1
 - Added

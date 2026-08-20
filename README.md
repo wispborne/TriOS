@@ -30,10 +30,9 @@ All-in-one Starsector launcher, mod manager, and toolkit.
 3. Linux: Install `libcurl4-openssl-dev`.
 4. Download the TriOS source code, navigate to it, and run
     ```
-    flutter build windows --no-tree-shake-icons
+    flutter build windows
     ```
     (substitute `macos` or `linux` depending on your platform).
-    `--no-tree-shake-icons` is needed because the category icon picker offers every Material icon and looks them up by code point at run time, so the build cannot work out which ones to keep. Without it the build fails with "Avoid non-constant invocations of IconData".
    1. On Linux, you may need to install missing libs, such as `libcurl4-openssl-dev` (for building Sentry). 
    2. Also, don't use the Snap version of Flutter, install it manually so it uses system libs.
 5. The output should tell you where it placed the compiled program.

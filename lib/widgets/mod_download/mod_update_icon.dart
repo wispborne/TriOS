@@ -50,7 +50,7 @@ class ModUpdateIcon extends ConsumerWidget {
     required this.isEnabled,
     this.showChangelogInTooltip = false,
     this.spinnerSize = 22,
-    this.spinnerPadding = const EdgeInsets.only(left: 4, right: 10),
+    this.spinnerPadding = const .only(left: 4, right: 10),
     this.tooltipPosition = TooltipPosition.bottomRight,
   });
 
@@ -75,13 +75,9 @@ class ModUpdateIcon extends ConsumerWidget {
             message: downloadStatus.message!,
             child: Padding(
               padding: spinnerPadding,
-              child: SizedBox(
-                width: spinnerSize,
-                height: spinnerSize,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  value: downloadStatus.progress,
-                ),
+              child: ModDownloadSpinner(
+                size: spinnerSize,
+                progress: downloadStatus.progress,
               ),
             ),
           );
@@ -123,7 +119,7 @@ class ModUpdateIcon extends ConsumerWidget {
               },
               onSecondaryTap: showDetails,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                padding: const .symmetric(horizontal: 5.0),
                 child: VersionCheckIcon.fromComparison(
                   comparison: comparison,
                   modId: mod.id,

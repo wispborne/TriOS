@@ -70,14 +70,10 @@ class ModDownloadButton extends ConsumerWidget {
       target: target,
       builder: (context, status) {
         final effectiveIcon = status.isBusy
-            ? SizedBox(
-                width: spinnerSize,
-                height: spinnerSize,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  value: status.progress,
-                  color: spinnerColor,
-                ),
+            ? ModDownloadSpinner(
+                size: spinnerSize,
+                progress: status.progress,
+                color: spinnerColor,
               )
             : icon;
         final onTap = status.isBusy ? null : press;

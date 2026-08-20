@@ -274,7 +274,7 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     // Choose font here
     final textTheme = swatch.fontFamily != null
         ? themeBase.textTheme.apply(fontFamily: swatch.fontFamily)
-        : themeBase.textTheme; //TODO GoogleFonts.robotoTextTheme(themeBase.textTheme);
+        : GoogleFonts.robotoTextTheme(themeBase.textTheme);
 
     final onSurfaceVariant = swatch.surface == null
         ? swatch.onSurface

@@ -43,7 +43,7 @@ class ModDataWarningIcon extends ConsumerWidget {
             },
           ),
         ],
-        padding: const EdgeInsets.all(8.0),
+        padding: const .all(8.0),
       ),
       child: MovingTooltipWidget.text(
         message: issues.map((issue) => issue.summary).join("\n"),

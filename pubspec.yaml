@@ -36,7 +36,10 @@ dependencies:
   fl_chart: ^1.1.1
   flutter_animate: ^4.5.2
   flutter_color: ^2.1.0
-  google_fonts: ^8.2.1
+  google_fonts:
+    git: # Only until Google updates their package to be compatible with their new flutter_material package.
+      url: 'https://github.com/Segatti/flutter_packages'
+      path: 'packages/google_fonts'
   material_color_utilities: ^0.13.0
   hooks_riverpod: ^3.4.2
   hashlib: ^2.3.0
@@ -48,7 +51,7 @@ dependencies:
   flutter_linkify: ^6.0.0
   logger: ^2.5.0
   flutter_markdown_plus: ^1.0.7
-  material_symbols_icons: ^4.2951.0
+  material_symbols_icons: ^4.2960.0
   material_ui: ^1.0.0
   msgpack_dart: ^1.0.1
   multi_split_view: ^3.6.0

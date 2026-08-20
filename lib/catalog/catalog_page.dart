@@ -327,19 +327,12 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                         children: [
                           if (catalogState.showFilters)
                             Padding(
-                              padding: const EdgeInsets.only(
-                                top: 4,
-                                bottom: 8,
-                                right: 8,
-                              ),
+                              padding: const .only(top: 4, bottom: 8, right: 8),
                               child: CatalogFiltersPanel(items: allMods),
                             )
                           else
                             Padding(
-                              padding: const EdgeInsets.only(
-                                top: 4,
-                                right: 16,
-                              ),
+                              padding: const .only(top: 4, right: 16),
                               child: CollapsedFilterButton(
                                 onTap: catalogController.toggleShowFilters,
                                 activeFilterCount:

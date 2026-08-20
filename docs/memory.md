@@ -21,13 +21,18 @@ nothing imports it any more — the change that used it went too.
 
 Two things to know about building since the upgrade:
 
-- `flutter build windows` needs `--no-tree-shake-icons`, and always did — the
-  release workflow has passed it all along. The category icon picker offers all
-  2,146 Material icons and builds each `IconData` from a stored code point, so
-  the build cannot work out which glyphs to keep. Without the flag it fails with
-  "Avoid non-constant invocations of IconData". `flutter run` does not
-  tree-shake, so it neither needs the flag nor accepts it. The README said plain
-  `flutter build windows`; that is fixed.
+- `flutter build windows` used to need `--no-tree-shake-icons`. It no longer
+  does. The category icon picker offers all 2,146 Material icons, and it used to
+  build each `IconData` from a stored code point at run time, so the build could
+  not work out which glyphs to keep and failed with "Avoid non-constant
+  invocations of IconData". The generated list in
+  `lib/mod_tag_manager/material_icons_all.dart` now holds `const IconData`
+  values instead of plain numbers, and a saved icon is looked up in that list by
+  code point. Turning the flag off shrank the bundled assets from 51 MB to
+  17 MB: the three Material Symbols fonts drop from 34.5 MB to 12 KB (the app
+  uses two of those icons, both on the debug-only Codex page), and
+  MaterialIcons-Regular drops from 1.6 MB to 277 KB while still keeping all
+  2,146 picker glyphs.
 - `ModeSwitcher.iconsOnly` was reconstructed to make the tree compile. It drops
   the text label and shows the mode name as a tooltip. Nobody has checked that
   against what it originally did.

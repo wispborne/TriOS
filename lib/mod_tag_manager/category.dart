@@ -1,10 +1,19 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:trios/mod_tag_manager/material_icons_all.dart';
 import 'package:trios/utils/dart_mappable_utils.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:uuid/uuid.dart';
 
 part 'category.mapper.dart';
+
+/// Looks up a saved Material icon by its code point.
+IconData materialIconForCodePoint(int codePoint) =>
+    _materialIconsByCodePoint[codePoint] ?? Icons.help_outline;
+
+final Map<int, IconData> _materialIconsByCodePoint = {
+  for (final icon in allMaterialIcons.values) icon.codePoint: icon,
+};
 
 @MappableClass(discriminatorKey: 'type')
 sealed class CategoryIcon with CategoryIconMappable {
@@ -12,7 +21,7 @@ sealed class CategoryIcon with CategoryIconMappable {
 
   Widget toWidget({double? size, Color? color}) => switch (this) {
     MaterialCategoryIcon(:final codePoint) => Icon(
-      IconData(codePoint, fontFamily: 'MaterialIcons'),
+      materialIconForCodePoint(codePoint),
       size: size,
       color: color,
     ),
@@ -31,8 +40,6 @@ class MaterialCategoryIcon extends CategoryIcon
   final int codePoint;
 
   const MaterialCategoryIcon(this.codePoint);
-
-  IconData get iconData => IconData(codePoint);
 
   @override
   bool operator ==(Object other) =>

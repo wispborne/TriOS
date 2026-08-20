@@ -188,9 +188,9 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   ///
   /// [orderedSourcesProvider] draws that line — it hands back the very same
   /// list when the sources haven't changed, so watching it here skips those
-  /// rebuilds. Watching `AppState.mods` instead re-read and re-parsed every file
-  /// on every toggle, and the restart re-decoded the cache into new objects, so
-  /// every merge downstream saw "new" data and rebuilt its whole list too.
+  /// rebuilds. Don't watch `AppState.mods` instead: it changes on every
+  /// enable/disable, which would re-read every file and rebuild every merge
+  /// downstream on each toggle.
   ///
   /// Nothing here waits, on purpose. `build()` uses `ref` again after this
   /// returns, and Riverpod doesn't allow that once a dependency has changed — so

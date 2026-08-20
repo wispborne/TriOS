@@ -31,6 +31,8 @@ class ModDataFileNotes {
 String _label(ModDataFile file, ModDataFileNotes notes) =>
     '${file.modName} (${file.isEffective ? notes.effective : notes.other})';
 
+void _open(ModDataFile file) => file.file.absolute.showInExplorer();
+
 /// A context-menu entry that opens a data file, or a submenu listing every
 /// mod's copy when more than one mod ships the file.
 ///
@@ -42,26 +44,24 @@ ContextMenuEntry buildOpenModDataFileMenuItem(
   ModDataFileNotes notes = ModDataFileNotes.merged,
   IconData icon = Icons.edit_note,
 }) {
-  void open(ModDataFile file) => file.file.absolute.showInExplorer();
-
   if (files.length == 1) {
     return MenuItem(
       label: label,
       icon: icon,
-      onSelected: () => open(files.first),
+      onSelected: () => _open(files.first),
     );
   }
 
   return MenuItem.submenu(
     label: '$label (${files.length})',
     icon: icon,
-    onSelected: () => open(files.first),
+    onSelected: () => _open(files.first),
     items: [
       for (final file in files)
         MenuItem(
           label: _label(file, notes),
           icon: file.isEffective ? Icons.check : null,
-          onSelected: () => open(file),
+          onSelected: () => _open(file),
         ),
     ],
   );
@@ -81,12 +81,10 @@ Widget buildOpenModDataFileButton(
 }) {
   if (files.isEmpty) return const SizedBox.shrink();
 
-  void open(ModDataFile file) => file.file.absolute.showInExplorer();
-
   if (files.length == 1) {
     return MovingTooltipWidget.text(
       message: label,
-      child: IconButton(icon: Icon(icon), onPressed: () => open(files.first)),
+      child: IconButton(icon: Icon(icon), onPressed: () => _open(files.first)),
     );
   }
 
@@ -94,7 +92,7 @@ Widget buildOpenModDataFileButton(
     message: '$label (stats affected by ${files.length} files)',
     child: PopupMenuButton<ModDataFile>(
       icon: Icon(icon),
-      onSelected: open,
+      onSelected: _open,
       itemBuilder: (context) => [
         for (final file in files)
           PopupMenuItem(value: file, child: Text(_label(file, notes))),

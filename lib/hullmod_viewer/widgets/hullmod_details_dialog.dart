@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
 import 'package:trios/widgets/dialog_pager.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Shows the full hullmod details dialog — the same dialog opened by clicking a
 /// row in the Hullmods viewer. Extracted here so the Codex can open it too.
@@ -52,7 +53,7 @@ Widget buildHullmodDetailsDialogBody(
       constraints: const BoxConstraints(maxWidth: 600),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const .all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -60,10 +61,12 @@ Widget buildHullmodDetailsDialogBody(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   pagerControls,
-                  IconButton(
-                    tooltip: 'Close',
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
+                  MovingTooltipWidget.text(
+                    message: 'Close',
+                    child: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
                   ),
                 ],
               ),

@@ -44,8 +44,8 @@ class _CategoryIconPickerDialogState
   String _query = '';
 
   List<SvgCategoryIcon> _filteredSvgIcons = categorySvgIcons;
-  List<MaterialIconEntry> _filteredMaterialIcons =
-      allMaterialIcons;
+  List<MapEntry<String, IconData>> _filteredMaterialIcons =
+      _allMaterialIconsList;
 
   @override
   void dispose() {
@@ -60,17 +60,20 @@ class _CategoryIconPickerDialogState
       _query = q;
       if (q.isEmpty) {
         _filteredSvgIcons = categorySvgIcons;
-        _filteredMaterialIcons = allMaterialIcons;
+        _filteredMaterialIcons = _allMaterialIconsList;
       } else {
         _filteredSvgIcons = categorySvgIcons
             .where((icon) => (_svgDisplayNames[icon.assetPath] ?? '').contains(q))
             .toList();
-        _filteredMaterialIcons = allMaterialIcons
-            .where((icon) => icon.name.replaceAll('_', ' ').contains(q))
+        _filteredMaterialIcons = _allMaterialIconsList
+            .where((icon) => icon.key.replaceAll('_', ' ').contains(q))
             .toList();
       }
     });
   }
+
+  static final List<MapEntry<String, IconData>> _allMaterialIconsList =
+      allMaterialIcons.entries.toList();
 
   /// Precomputed display names for SVG icons, keyed by asset path.
   static final Map<String, String> _svgDisplayNames = {
@@ -184,13 +187,13 @@ class _CategoryIconPickerDialogState
                               final entry =
                                   _filteredMaterialIcons[index];
                               final icon = MaterialCategoryIcon(
-                                entry.codePoint,
+                                entry.value.codePoint,
                               );
                               return _buildCategoryIconTile(
                                 context,
                                 icon,
                                 iconColor,
-                                tooltip: entry.name
+                                tooltip: entry.key
                                     .replaceAll('_', ' '),
                               );
                             },

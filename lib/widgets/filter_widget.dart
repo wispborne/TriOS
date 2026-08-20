@@ -317,7 +317,7 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
       child: TextButton(
         onPressed: _toggleLogicMode,
         style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const .symmetric(horizontal: 4),
           minimumSize: const Size(0, 28),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: isAll
@@ -384,7 +384,7 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
                   // the right.
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(
+                      padding: const .only(
                         left: 8,
                         right: 4,
                         top: 2,
@@ -660,7 +660,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
   /// Search box plus the "Advanced" checkbox, shown above the filter groups.
   Widget _buildSearchRow(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const .only(bottom: 8),
       child: Row(
         spacing: 8,
         children: [
@@ -675,7 +675,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
                   decoration: InputDecoration(
                     isDense: true,
                     hintText: 'Filter filters',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    contentPadding: const .symmetric(horizontal: 8),
                     prefixIcon: const Icon(Icons.search, size: 16),
                     prefixIconConstraints: const BoxConstraints(
                       minWidth: 32,
@@ -731,7 +731,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
         thumbVisibility: true,
         controller: _controller,
         child: Padding(
-          padding: const EdgeInsets.only(left: 8, right: 16, top: 8, bottom: 8),
+          padding: const .only(left: 8, right: 16, top: 8, bottom: 8),
           child: SizedBox(
             width: widget.width,
             child: Column(
@@ -747,7 +747,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
                           TriOSThemeConstants.cornerRadius,
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(8),
+                          padding: const .all(8),
                           child: Row(
                             spacing: 8,
                             children: [
@@ -851,7 +851,7 @@ Future<void> showFilterPanelDialog(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 640, maxHeight: 800),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const .symmetric(vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -1432,8 +1432,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                   );
             },
             child: MovingTooltipWidget.text(
-              message:
-                  "It doesn't mean you're old.",
+              message: "It doesn't mean you're old.",
               child: const Text("Mod Buttons: High Contrast"),
             ),
           ),
@@ -1445,7 +1444,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
               final current = ref.read(appSettings).modsGridShowDataWarnings;
               ref
                   .read(appSettings.notifier)
-                  .update((s) => s.copyWith(modsGridShowDataWarnings: !current));
+                  .update(
+                    (s) => s.copyWith(modsGridShowDataWarnings: !current),
+                  );
             },
             child: MovingTooltipWidget.text(
               message:
@@ -2125,7 +2126,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                             changelogUrl: changelogUrl,
                             isEnabled: !isGameRunning,
                             spinnerSize: 24,
-                            spinnerPadding: const EdgeInsets.only(left: 2),
+                            spinnerPadding: const .only(left: 2),
                           ),
                   ],
                   // ),

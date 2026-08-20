@@ -189,7 +189,10 @@ class HullmodsPageController extends Notifier<HullmodsPageState>
             id: 'showHidden',
             label: 'Show Hidden Hullmods',
             tooltip: 'Show hidden hullmods (built-in, internal).',
-            predicate: (_) => true, // manual application (inverted default).
+            // [_applyEnabledAndHidden].
+            predicate: (_) => true,
+            defaultValue: true,
+            initialValue: false,
           ),
           EnumField<Hullmod, HullmodSpoilerLevel>(
             id: 'spoiler',

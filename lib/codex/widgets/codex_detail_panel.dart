@@ -237,7 +237,7 @@ class CodexDetailPanel extends ConsumerWidget {
       context: context,
       builder: (_) => Dialog(
         clipBehavior: Clip.antiAlias,
-        insetPadding: const EdgeInsets.all(16),
+        insetPadding: const .all(16),
         child: DialogPager<CodexEntry>(
           items: items,
           startIndex: startIndex < 0 ? 0 : startIndex,

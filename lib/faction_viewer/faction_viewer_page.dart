@@ -96,8 +96,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
               appSettings.select((s) => s.factionSearchHistory),
             ),
             initialValue: controllerState.searchQuery,
-            hintText:
-                controllerState.viewMode == FactionViewMode.spawnWeights
+            hintText: controllerState.viewMode == FactionViewMode.spawnWeights
                 ? 'Search ships...'
                 : 'Search factions...',
             onChanged: (query) => ref
@@ -467,8 +466,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
         // Factions with no warships sort below the ones that have them.
         getSortValue: (f) => summaries[f.mergeKey]?.vanillaShare ?? -1,
         itemCellBuilder: (item, _) {
-          final summary =
-              summaries[item.mergeKey] ?? FactionSpawnSummary.empty;
+          final summary = summaries[item.mergeKey] ?? FactionSpawnSummary.empty;
           final share = summary.vanillaShare;
           return MovingTooltipWidget.text(
             message: vanillaShareTooltip(summary),
@@ -492,8 +490,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
         itemCellBuilder: (item, _) => MovingTooltipWidget.text(
           message: item.attributionTooltip,
           child: TextTriOS(
-            item.addedBy?.name ??
-                (item.sources.isEmpty ? '' : 'Patch only'),
+            item.addedBy?.name ?? (item.sources.isEmpty ? '' : 'Patch only'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -542,7 +539,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
                 label: 'Open Mod Folder',
               ),
           ],
-          padding: const EdgeInsets.all(8.0),
+          padding: const .all(8.0),
         );
       },
       child: Container(color: Colors.transparent, child: child),
@@ -602,8 +599,7 @@ class SourceFactionGridGroup extends WispGridGroup<Faction> {
 
   @override
   String getGroupName(Faction item, {Comparable? groupSortValue}) =>
-      item.addedBy?.name ??
-      (item.sources.isEmpty ? 'Unknown' : 'Patch only');
+      item.addedBy?.name ?? (item.sources.isEmpty ? 'Unknown' : 'Patch only');
 
   @override
   Comparable getGroupSortValue(Faction item) =>

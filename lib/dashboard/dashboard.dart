@@ -38,10 +38,15 @@ class _DashboardState extends ConsumerState<Dashboard>
     super.build(context);
 
     // For startup performance, wait to load until after mods have loaded.
+    // Loading sets the log provider's state, so it has to wait until this
+    // build is finished.
     if (!_logLoadTriggered && ref.watch(AppState.mods).isNotEmpty) {
       if (ref.read(ChipperState.logRawContents).value == null) {
         _logLoadTriggered = true;
-        ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ref.read(ChipperState.logRawContents.notifier).loadDefaultLog();
+        });
       }
     }
 

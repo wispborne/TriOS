@@ -101,10 +101,10 @@ class _RangeFilterWidgetState<T> extends State<RangeFilterWidget<T>> {
         );
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      margin: const .symmetric(horizontal: 4, vertical: 1),
       color: theme.colorScheme.surfaceContainer,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const .symmetric(horizontal: 4, vertical: 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -115,12 +115,7 @@ class _RangeFilterWidgetState<T> extends State<RangeFilterWidget<T>> {
                 // room the range text and buttons don't need.
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(
-                      left: 8,
-                      right: 4,
-                      top: 2,
-                      bottom: 2,
-                    ),
+                    padding: const .only(left: 8, right: 4, top: 2, bottom: 2),
                     child: TextTriOS(
                       group.name,
                       style: theme.textTheme.titleSmall?.copyWith(
@@ -172,10 +167,7 @@ class _RangeFilterWidgetState<T> extends State<RangeFilterWidget<T>> {
               child: RangeSlider(
                 // Without this the slider is as tall as its invisible touch
                 // area (48), which is more than twice the handle.
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 2,
-                ),
+                padding: const .symmetric(horizontal: 4, vertical: 2),
                 min: 0,
                 max: (group.stops.length - 1).toDouble(),
                 values: positions,

@@ -8,6 +8,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/dialog_pager.dart';
 import 'package:trios/widgets/merge_mod_sources_view.dart';
 import 'package:trios/widgets/mod_data_file_menu.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 /// Shows the full ship details dialog — the same dialog opened by clicking a
 /// row in the Ships viewer. Extracted here so the Codex can open it too.
@@ -62,7 +63,7 @@ Widget buildShipDetailsDialogBody(
       constraints: const BoxConstraints(maxWidth: 1050),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const .all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -91,14 +92,16 @@ Widget buildShipDetailsDialogBody(
                         notes: ModDataFileNotes.oneWins,
                       ),
                       if (s.spriteFile != null)
-                        IconButton(
-                          tooltip: 'Open Folder',
-                          icon: const Icon(Icons.folder),
-                          onPressed: () => s.spriteFile!
-                              .toFile()
-                              .parent
-                              .path
-                              .openAsUriInBrowser(),
+                        MovingTooltipWidget.text(
+                          message: 'Open Folder',
+                          child: IconButton(
+                            icon: const Icon(Icons.folder),
+                            onPressed: () => s.spriteFile!
+                                .toFile()
+                                .parent
+                                .path
+                                .openAsUriInBrowser(),
+                          ),
                         ),
                     ],
                   ),

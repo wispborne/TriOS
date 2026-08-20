@@ -66,7 +66,7 @@ jobs:
       - name: Build Windows
         run: |
           echo "Building Windows app..."
-          flutter build windows --no-tree-shake-icons
+          flutter build windows
           echo "Build complete."
 
       - name: Prepare TriOS Directory
@@ -121,7 +121,7 @@ jobs:
       - name: Build macOS (Intel)
         run: |
           echo "Building macOS Intel app..."
-          flutter build macos --no-tree-shake-icons
+          flutter build macos
           echo "Build complete. Listing contents of the output directory:"
           ls -l ${{ env.macos_build_output_path }}
 
@@ -168,7 +168,7 @@ jobs:
       - name: Build macOS (Apple Silicon)
         run: |
           echo "Building macOS Apple Silicon app..."
-          flutter build macos --no-tree-shake-icons
+          flutter build macos
           echo "Build complete. Listing contents of the output directory:"
           ls -l ${{ env.macos_build_output_path }}
 
@@ -225,7 +225,7 @@ jobs:
           
           find -L . -type f -name "CMakeLists.txt" -exec sed -i 's/-Wno-deprecated-literal-operator//g' {} + 2>/dev/null || true
           
-          flutter build linux --no-tree-shake-icons
+          flutter build linux
           echo "Build complete. Listing contents of the output directory:"
           ls -l ${{ env.linux_build_output_path }}
 

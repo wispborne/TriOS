@@ -738,7 +738,7 @@ class _ChangelogSection extends StatelessWidget {
               style: TextButton.styleFrom(
                 textStyle: theme.textTheme.bodySmall,
                 visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const .symmetric(horizontal: 8),
               ),
             ),
           )

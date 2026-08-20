@@ -61,7 +61,7 @@ Widget buildWeaponDetailsDialogBody(
       constraints: const BoxConstraints(maxWidth: 600),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const .all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -84,17 +84,19 @@ Widget buildWeaponDetailsDialogBody(
                         notes: ModDataFileNotes.oneWins,
                       ),
                       if (w.allSpriteFiles.isNotEmpty)
-                        IconButton(
-                          tooltip: 'Open weapon data folder(s)',
-                          icon: const Icon(Icons.folder),
-                          onPressed: () {
-                            w.csvFile?.parent.path.openAsUriInBrowser();
-                            final wpnParent = w.wpnFile?.parent;
-                            if (wpnParent != null &&
-                                wpnParent.path != w.csvFile?.parent.path) {
-                              wpnParent.path.openAsUriInBrowser();
-                            }
-                          },
+                        MovingTooltipWidget.text(
+                          message: 'Open weapon data folder(s)',
+                          child: IconButton(
+                            icon: const Icon(Icons.folder),
+                            onPressed: () {
+                              w.csvFile?.parent.path.openAsUriInBrowser();
+                              final wpnParent = w.wpnFile?.parent;
+                              if (wpnParent != null &&
+                                  wpnParent.path != w.csvFile?.parent.path) {
+                                wpnParent.path.openAsUriInBrowser();
+                              }
+                            },
+                          ),
                         ),
                     ],
                   ),

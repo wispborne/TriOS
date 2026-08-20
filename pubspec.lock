@@ -632,11 +632,12 @@ packages:
   google_fonts:
     dependency: "direct main"
     description:
-      name: google_fonts
-      sha256: e3cb3ee6b47fd2472c23de6da5744796a4da195137759ddb3fbcc9467b7b3c7d
-      url: "https://pub.dev"
-    source: hosted
-    version: "8.2.1"
+      path: "packages/google_fonts"
+      ref: HEAD
+      resolved-ref: d7c157b8a85f53eb58f707b4cb680f3947d8a5bd
+      url: "https://github.com/Segatti/flutter_packages"
+    source: git
+    version: "8.2.2"
   graphs:
     dependency: transitive
     description:
@@ -882,10 +883,10 @@ packages:
     dependency: "direct main"
     description:
       name: material_symbols_icons
-      sha256: "49c532dd0b74544e9d8d93ec0f821d52ec532e7c9263c889ebe71b1be4f34ba7"
+      sha256: bd513edc2bc9b034108d5518c48cf5cebbb67d0653728cc452368cb27ca80bb0
       url: "https://pub.dev"
     source: hosted
-    version: "4.2951.0"
+    version: "4.2960.0"
   material_ui:
     dependency: "direct main"
     description:

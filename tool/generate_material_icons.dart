@@ -1,5 +1,10 @@
 /// Parses Flutter SDK's icons.dart and generates a const map of all base
-/// Material icon names to their codePoints.
+/// Material icon names to their `IconData`.
+///
+/// The icons must be written out as `const IconData`. Flutter only keeps the
+/// icon glyphs it can see written out in the code, and building an IconData
+/// from a number at runtime switches that off for the whole app, which adds
+/// tens of megabytes of icon fonts to the build.
 ///
 /// Usage: dart run tool/generate_material_icons.dart
 ///
@@ -58,16 +63,24 @@ void main() async {
     ..writeln('//')
     ..writeln('// Source: Flutter ${await _flutterVersion()} icons.dart')
     ..writeln('// Total base icons: ${entries.length}')
+    ..writeln('//')
+    ..writeln('// Every icon here is a `const IconData`. It has to be const: Flutter only')
+    ..writeln('// keeps the icon glyphs it can see written out in the code, and building an')
+    ..writeln('// IconData from a number at runtime switches that off for the whole app,')
+    ..writeln('// which adds tens of megabytes of icon fonts to the build.')
     ..writeln()
+    ..writeln("import 'package:material_ui/material_ui.dart';")
     ..writeln()
-    ..writeln('/// Every base Material icon (no _sharp/_rounded/_outlined variants).')
-    ..writeln('const List<({String name, int codePoint})> allMaterialIcons = [');
+    ..writeln('/// Every base Material icon (no _sharp/_rounded/_outlined variants), by name.')
+    ..writeln('const Map<String, IconData> allMaterialIcons = {');
 
   for (final entry in entries.entries) {
-    buffer.writeln("  (name: '${entry.key}', codePoint: ${entry.value}),");
+    buffer.writeln(
+      "  '${entry.key}': IconData(${entry.value}, fontFamily: 'MaterialIcons'),",
+    );
   }
 
-  buffer.writeln('];');
+  buffer.writeln('};');
 
   final outFile = File('lib/mod_tag_manager/material_icons_all.dart');
   outFile.writeAsStringSync(buffer.toString());

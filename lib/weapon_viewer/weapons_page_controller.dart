@@ -206,12 +206,9 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
             id: 'showHidden',
             label: 'Show Hidden Weapons',
             tooltip: 'Show hidden weapons (built-in, internal).',
-            // When showHidden=true, include all → predicate always true.
-            // When false, exclude hidden → matches only non-hidden.
-            // We implement this with an inverted semantic: the field becomes
-            // "inactive" at its default (false), so when false it filters to
-            // non-hidden. When true it's active but passes everything.
             predicate: (_) => true,
+            defaultValue: true,
+            initialValue: false,
           ),
           EnumField<Weapon, WeaponSpoilerLevel>(
             id: 'spoiler',
@@ -370,9 +367,6 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
     );
   }
 
-  /// Composite fields don't map cleanly to "show X unless flag" semantics for
-  /// showHidden (the *inactive* state is the one that filters). Apply these
-  /// rules directly here instead of via the composite's AND.
   List<Weapon> _applyEnabledAndHidden(List<Weapon> weapons) {
     if (showEnabled) {
       final mods = ref.read(AppState.mods);

@@ -1142,7 +1142,7 @@ class CatalogDownloadButton extends ConsumerWidget {
               foregroundColor: foregroundColor,
               disabledBackgroundColor: backgroundColor,
               disabledForegroundColor: foregroundColor,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const .symmetric(horizontal: 8),
               visualDensity: VisualDensity.compact,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),

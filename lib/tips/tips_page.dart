@@ -72,7 +72,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
                   ),
                 ],
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const .symmetric(horizontal: 8),
                   child: Row(
                     children: [
                       const Icon(Icons.filter_list),
@@ -256,7 +256,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
                     shrinkWrap: true,
                     horizontalSpacing: 8,
                     verticalSpacing: 8,
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const .only(bottom: 8),
                     itemBuilder: (context, tip, index) => TipCardView(
                       tip: tip,
                       isSelected: state.selectedTips.contains(tip),
@@ -279,7 +279,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
     }
 
     return Padding(
-      padding: const EdgeInsets.only(left: 8, right: 8),
+      padding: const .only(left: 8, right: 8),
       child: Scrollbar(
         controller: _scrollController,
         thumbVisibility: true,
@@ -289,7 +289,7 @@ class _TipsPageState extends ConsumerState<TipsPage>
           minItemWidth: 350,
           horizontalSpacing: 8,
           verticalSpacing: 8,
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const .only(bottom: 8),
           itemBuilder: (context, tip, index) => TipCardView(
             tip: tip,
             isSelected: state.selectedTips.contains(tip),

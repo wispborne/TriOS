@@ -178,22 +178,28 @@ class ModListBasicEntry extends ConsumerStatefulWidget {
     );
   }
 
-  /// Starts a version-checker update and has [target]'s icon spin straight
-  /// away, rather than waiting for the download to register.
+  /// Starts a version-checker update.
+  ///
+  /// When there's a file to fetch, [target]'s icon starts spinning straight
+  /// away rather than waiting for the download to register. When the mod only
+  /// gave a forum or Nexus page, this opens the browser and leaves the icon
+  /// alone — nothing is downloading, so nothing should look like it is.
   static void startUpdateDownload(
     WidgetRef ref,
     DownloadTarget target,
     VersionCheckerInfo remoteVersion,
     ModInfo modInfo,
   ) {
-    ref.read(pendingDownloadClicks.notifier).markClicked(target);
-    ref
+    final startedDownload = ref
         .read(downloadManager.notifier)
         .downloadUpdateViaBrowser(
           remoteVersion,
           activateVariantOnComplete: false,
           modInfo: modInfo,
         );
+    if (startedDownload) {
+      ref.read(pendingDownloadClicks.notifier).markClicked(target);
+    }
   }
 }
 

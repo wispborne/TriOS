@@ -84,11 +84,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           _downloads.add(download);
           state = AsyncValue.data(_downloads);
 
-          // Let the user know a background download started, unless they're
-          // already looking at the Activity Panel.
-          if (!ref.read(appSettings.select((s) => s.isActivityPanelOpen))) {
-            ref.read(activityStartedPopupProvider.notifier).notifyStarted();
-          }
+          _notifyActivityStarted();
 
           // Just for debugging.
           value.status.addListener(() async {
@@ -138,18 +134,20 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     _downloads.add(download);
     state = AsyncValue.data(_downloads);
 
-    // Let the user know a background install started, unless they're already
-    // looking at the Activity Panel.
-    if (!ref.read(appSettings.select((s) => s.isActivityPanelOpen))) {
-      ref.read(activityStartedPopupProvider.notifier).notifyStarted();
-    }
+    _notifyActivityStarted();
     return download;
   }
 
+  /// Let the user know a background download or install started, unless
+  /// they're already looking at the Activity Panel.
+  void _notifyActivityStarted() {
+    if (!ref.read(appSettings.select((s) => s.isActivityPanelOpen))) {
+      ref.read(activityStartedPopupProvider.notifier).notifyStarted();
+    }
+  }
+
   bool isDownloadInProgress(String url) {
-    return _downloads.any(
-      (d) => d.task.request.url == url && d.isInProgress,
-    );
+    return _downloads.any((d) => d.task.request.url == url && d.isInProgress);
   }
 
   void cancelDownload(Download download) {
@@ -172,7 +170,14 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
     download.installComplete.value = true;
   }
 
-  void downloadUpdateViaBrowser(
+  /// Fetches [remoteVersion] if the mod gave a direct download link, and opens
+  /// its forum or Nexus page in the browser if it didn't.
+  ///
+  /// Returns true when there's a download to watch — either one this call
+  /// started or one already running for the same file. Returns false when all
+  /// this did was open a web page, so callers don't show download progress for
+  /// something that isn't downloading.
+  bool downloadUpdateViaBrowser(
     VersionCheckerInfo remoteVersion, {
     required bool activateVariantOnComplete,
     ModInfo? modInfo,
@@ -191,6 +196,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
           sourceHint: null,
         );
       }
+      return true;
     } else if (remoteVersion.modThreadId != null) {
       launchUrl(
         Uri.parse("${Constants.forumModPageUrl}${remoteVersion.modThreadId}"),
@@ -200,6 +206,7 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
         Uri.parse("${Constants.nexusModsPageUrl}${remoteVersion.modNexusId}"),
       );
     }
+    return false;
   }
 
   void downloadAndInstallMod(
@@ -386,9 +393,7 @@ extension DownloadVariantResolution on Download {
               .read(AppState.modVariants)
               .value
               .orEmpty()
-              .firstWhereOrNull(
-                (v) => v.smolId == modDownload.modInfo.smolId,
-              );
+              .firstWhereOrNull((v) => v.smolId == modDownload.modInfo.smolId);
     }
     return installedVariant.value;
   }
@@ -406,9 +411,7 @@ extension DownloadVariantResolution on Download {
               .watch(AppState.modVariants)
               .value
               .orEmpty()
-              .firstWhereOrNull(
-                (v) => v.smolId == modDownload.modInfo.smolId,
-              );
+              .firstWhereOrNull((v) => v.smolId == modDownload.modInfo.smolId);
     }
     return installedVariant.value;
   }

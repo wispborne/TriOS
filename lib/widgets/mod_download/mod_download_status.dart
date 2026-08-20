@@ -42,6 +42,34 @@ class ModDownloadStatus {
   };
 }
 
+/// The small progress circle the download widgets show while busy.
+class ModDownloadSpinner extends StatelessWidget {
+  final double size;
+
+  /// How far along, from 0 to 1, or null to just turn.
+  final double? progress;
+
+  final Color? color;
+
+  const ModDownloadSpinner({
+    super.key,
+    required this.size,
+    required this.progress,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: size,
+    height: size,
+    child: CircularProgressIndicator(
+      strokeWidth: 2,
+      value: progress,
+      color: color,
+    ),
+  );
+}
+
 /// Watches the download (if any) for [target] and rebuilds [builder] as it
 /// moves along.
 ///

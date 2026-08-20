@@ -632,12 +632,11 @@ packages:
   google_fonts:
     dependency: "direct main"
     description:
-      path: "packages/google_fonts"
-      ref: HEAD
-      resolved-ref: d7c157b8a85f53eb58f707b4cb680f3947d8a5bd
-      url: "https://github.com/Segatti/flutter_packages"
-    source: git
-    version: "8.2.2"
+      name: google_fonts
+      sha256: e3cb3ee6b47fd2472c23de6da5744796a4da195137759ddb3fbcc9467b7b3c7d
+      url: "https://pub.dev"
+    source: hosted
+    version: "8.2.1"
   graphs:
     dependency: transitive
     description:

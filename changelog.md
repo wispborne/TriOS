@@ -77,19 +77,9 @@
     - You can revert this via an option in the menu on the Mods page.
   - Improved log parser highlighting logic.
   - TriOS uses a lot less RAM.
-    - Ship and weapon sprites now share one 64 MB cache and the least recently used ones are dropped. Before, every sprite you ever looked at stayed in memory; scrolling the weapons grid cost about 80 MB for the rest of the session.
-    - Ship and weapon scan data is kept packed in memory and only unpacked while rebuilding the lists, saving about 70 MB with a large mod list.
-      - The ships and weapons caches changed format, so the first launch after updating re-scans every mod once.
-    - Chipper no longer keeps a copy of the whole log in memory for the whole session, which cost about 36 MB for an 18 MB log.
-    - Screen reader support is now off by default on every platform, with a checkbox in Settings to turn it on. Before, Windows and macOS always built accessibility data when any program asked the OS for it, costing around 50 MB. Linux users who already turned it on keep their choice.
-    - Fixed a couple of memory leaks.
-  - Catalog cards now show the required game version the same way the Game Version filter groups it, so "0.98a-RC5" and "0.98a" both read as "0.98". Hover the badge to see what the mod author actually wrote.
-  - Catalog: the mod pop-up shows the source code as a link instead of a chip.
-  - Mods page menu: "High Contrast Enable Button" is now "Mod Buttons: High Contrast".
-  - Settings - Theme Modifiers: "Default" is now "Follow theme" and "Animated motes" is now "Animated backgrounds".
-  - The mod data warning about mismatched versions now reads "This mod's Version Checker says X but its mod_info.json says Y", so it's clear which mod it means.
-  - When a catalog mod turns up in more than one place, its AI summary credits Discord instead of "the mod catalog", since that's where the description it was written from came from.
-  - The BiOS theme's secondary color is a lighter blue.
+    - Ship and weapon sprites now share one 64 MB cache.
+    - Ship and weapon scan data is now compressed in memory.
+    - Chipper no longer keeps a copy of the whole log in memory for the whole session.
 
 # 1.6.1
 - Added

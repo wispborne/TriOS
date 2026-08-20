@@ -12,6 +12,7 @@ All-in-one Starsector launcher, mod manager, and toolkit. Flutter desktop app â€
 - Check with the user first if you're not Opus 4.6 and offer to switch using `/model claude-opus-4-6[1m]`.
 - Use the `idea` connector when available.
 - Avoid Powershell when possible. Allow the user to verify changes manually; don't run the app yourself.
+- Do not update changelog.md without express permission.
 
 ## Common Commands
 

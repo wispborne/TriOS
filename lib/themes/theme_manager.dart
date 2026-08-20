@@ -270,11 +270,37 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     );
   }
 
+  /// Roboto applied to every slot of [base].
+  ///
+  /// google_fonts has its own `robotoTextTheme`, but it builds a [TextTheme]
+  /// from `package:flutter/material.dart`, which is a different class to the
+  /// one `material_ui` uses. Individual [TextStyle]s are the same class in
+  /// both, so we build the theme here instead.
+  static TextTheme _robotoTextTheme(TextTheme base) {
+    return TextTheme(
+      displayLarge: GoogleFonts.roboto(textStyle: base.displayLarge),
+      displayMedium: GoogleFonts.roboto(textStyle: base.displayMedium),
+      displaySmall: GoogleFonts.roboto(textStyle: base.displaySmall),
+      headlineLarge: GoogleFonts.roboto(textStyle: base.headlineLarge),
+      headlineMedium: GoogleFonts.roboto(textStyle: base.headlineMedium),
+      headlineSmall: GoogleFonts.roboto(textStyle: base.headlineSmall),
+      titleLarge: GoogleFonts.roboto(textStyle: base.titleLarge),
+      titleMedium: GoogleFonts.roboto(textStyle: base.titleMedium),
+      titleSmall: GoogleFonts.roboto(textStyle: base.titleSmall),
+      bodyLarge: GoogleFonts.roboto(textStyle: base.bodyLarge),
+      bodyMedium: GoogleFonts.roboto(textStyle: base.bodyMedium),
+      bodySmall: GoogleFonts.roboto(textStyle: base.bodySmall),
+      labelLarge: GoogleFonts.roboto(textStyle: base.labelLarge),
+      labelMedium: GoogleFonts.roboto(textStyle: base.labelMedium),
+      labelSmall: GoogleFonts.roboto(textStyle: base.labelSmall),
+    );
+  }
+
   static ThemeData _customizeTheme(ThemeData themeBase, TriOSTheme swatch) {
     // Choose font here
     final textTheme = swatch.fontFamily != null
         ? themeBase.textTheme.apply(fontFamily: swatch.fontFamily)
-        : GoogleFonts.robotoTextTheme(themeBase.textTheme);
+        : _robotoTextTheme(themeBase.textTheme);
 
     final onSurfaceVariant = swatch.surface == null
         ? swatch.onSurface

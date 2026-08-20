@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:async_task/async_task.dart';
+import 'package:path/path.dart' as p;
 import 'package:trios/utils/extensions.dart';
 
 import '../models/mod_variant.dart';
@@ -23,9 +24,17 @@ import 'vram_scan_task.dart';
 typedef VramScanEntry = ({VramScanTask task, VramCheckerMod modInfo});
 typedef VramScanResult = ({Map<String, int> assets, int total});
 
-/// Recursively enumerates all image files in [coreDir], reads their headers,
-/// and returns a map of normalized relative path to computed bytesUsed, plus
-/// the sum of all values.
+/// The only folders under the game's core directory that hold game art.
+///
+/// The scan is limited to these because on Linux the core directory *is* the
+/// game folder, so walking all of it would count every installed mod, every
+/// screenshot and every save as vanilla art. On Windows and macOS the core
+/// directory holds no art outside these two anyway.
+const _vanillaAssetFolderNames = ['graphics', 'data'];
+
+/// Enumerates the image files in [coreDir]'s graphics and data folders, reads
+/// their headers, and returns a map of normalized relative path to computed
+/// bytesUsed, plus the sum of all values.
 Future<VramScanResult> scanVanillaAssets(
   Directory coreDir,
   ReadImageHeaders imageReader, {
@@ -35,31 +44,36 @@ Future<VramScanResult> scanVanillaAssets(
   int total = 0;
   final coreDirNorm = coreDir.absolute;
 
-  await for (final entity in coreDirNorm.list(recursive: true)) {
-    if (entity is! File) continue;
-    final lower = entity.path.toLowerCase();
-    if (!lower.endsWith('.png') &&
-        !lower.endsWith('.jpg') &&
-        !lower.endsWith('.jpeg') &&
-        !lower.endsWith('.gif') &&
-        !lower.endsWith('.webp')) {
-      continue;
-    }
-    try {
-      final header = await imageReader.readImageDeterminingBest(entity.path);
-      if (header == null) continue;
-      final w = nextPowerOfTwo(header.width);
-      final h = nextPowerOfTwo(header.height);
-      final hasMipmaps = w <= 1024 && h <= 1024;
-      final bytes = hasMipmaps ? mipmapChainBytes(w, h) : w * h * 4;
+  for (final folderName in _vanillaAssetFolderNames) {
+    final folder = Directory(p.join(coreDirNorm.path, folderName));
+    if (!folder.existsSync()) continue;
 
-      final relPath = PathNormalizer.normalize(
-        entity.relativePath(coreDirNorm),
-      );
-      assets[relPath] = bytes;
-      total += bytes;
-    } catch (_) {
-      // Skip unreadable files.
+    await for (final entity in folder.list(recursive: true)) {
+      if (entity is! File) continue;
+      final lower = entity.path.toLowerCase();
+      if (!lower.endsWith('.png') &&
+          !lower.endsWith('.jpg') &&
+          !lower.endsWith('.jpeg') &&
+          !lower.endsWith('.gif') &&
+          !lower.endsWith('.webp')) {
+        continue;
+      }
+      try {
+        final header = await imageReader.readImageDeterminingBest(entity.path);
+        if (header == null) continue;
+        final w = nextPowerOfTwo(header.width);
+        final h = nextPowerOfTwo(header.height);
+        final hasMipmaps = w <= 1024 && h <= 1024;
+        final bytes = hasMipmaps ? mipmapChainBytes(w, h) : w * h * 4;
+
+        final relPath = PathNormalizer.normalize(
+          entity.relativePath(coreDirNorm),
+        );
+        assets[relPath] = bytes;
+        total += bytes;
+      } catch (_) {
+        // Skip unreadable files.
+      }
     }
   }
 
@@ -496,8 +510,12 @@ class VramChecker {
         ReadImageHeaders(),
         debugOut: debugOut,
       );
-      _vanillaAssets = result.assets;
-      _vanillaTotal = result.total;
+      // No art found means the core folder is wrong or unreadable. Leave the
+      // total unset so the hardcoded estimate is shown instead of zero.
+      if (result.assets.isNotEmpty) {
+        _vanillaAssets = result.assets;
+        _vanillaTotal = result.total;
+      }
     }
 
     // Isolate spawn cost dominates for tiny lists; fall back to the

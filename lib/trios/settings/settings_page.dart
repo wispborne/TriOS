@@ -24,6 +24,7 @@ import 'package:trios/widgets/settings_group.dart';
 import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/text_with_icon.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -219,6 +220,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   name: "Interface",
                   children: [
                     const _ThemeDropdownRow(),
+                    const SizedBox(height: 8),
+                    const _FontDropdownRow(),
                     const SizedBox(height: 8),
                     const _ThemeModifiersSection(),
                     const SizedBox(height: 16),
@@ -1571,6 +1574,74 @@ class _ThemeDropdownRowState extends ConsumerState<_ThemeDropdownRow> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// How a font's name is drawn in the font picker, so each choice shows what
+/// it looks like.
+TextStyle _fontPreviewStyle(AppFont font) => switch (font) {
+  AppFont.system => const TextStyle(),
+  AppFont.roboto => GoogleFonts.roboto(),
+  AppFont.inter => GoogleFonts.inter(),
+  AppFont.openSans => GoogleFonts.openSans(),
+  AppFont.comicSans => TextStyle(
+    fontFamily: 'Comic Sans MS',
+    fontFamilyFallback: [GoogleFonts.comicNeue().fontFamily!],
+  ),
+};
+
+class _FontDropdownRow extends ConsumerWidget {
+  const _FontDropdownRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(
+      appSettings.select((s) => s.themeModifiers.font),
+    );
+
+    return MovingTooltipWidget.text(
+      message:
+          "The font all of TriOS's text is drawn in."
+          "\nSystem uses whatever font your operating system provides.",
+      child: Row(
+        spacing: 8,
+        children: [
+          const Text("Font"),
+          TriOSDropdownMenu<AppFont>(
+            key: ValueKey(selected),
+            initialSelection: selected,
+            onSelected: (value) {
+              if (value == null) return;
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (state) => state.copyWith(
+                      themeModifiers: state.themeModifiers.copyWith(
+                        font: value,
+                      ),
+                    ),
+                  );
+            },
+            dropdownMenuEntries: [
+              for (final font in AppFont.values)
+                DropdownMenuEntry(
+                  value: font,
+                  label: font.label,
+                  labelWidget: font == AppFont.comicSans
+                      ? MovingTooltipWidget.text(
+                          message: 'ಠ_ಠ',
+                          child: Text(font.label),
+                        )
+                      : null,
+                  style: ButtonStyle(
+                    textStyle: WidgetStateProperty.all(_fontPreviewStyle(font)),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

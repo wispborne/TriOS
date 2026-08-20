@@ -14,13 +14,14 @@
   - Ship Viewer now shows an in-game background behind ships (changeable).
   - Ship Viewer now has tooltips for modules.
   - Ship and Weapons viewers now have any/all filter options (using Advanced checkbox).
-  - Ship and Weapons viewers now show more filters, including ranges (e.g. 12 - 60 DP).
+  - Ship and Weapons viewers now show more filters, including ranges (e.g. `12` - `60 DP`).
   - 'Last Updated' column on the Mods page.
-  - More background effects (Settings - Theme Modifiers).
   - May now mute updates for just one version of a mod.
   - May now search by built-in hullmod.
+  - More background effects (`Settings - Theme Modifiers`).
   - Added Knights of Ludd, Luddic Church, Luddic Path, [REDACTED], Player, Pirates, Independents, Sindrian Diktat, BiOS, and Lavender themes.
-  - More app icons to choose from in Settings - Theme Modifiers: Lion's Guard, Derelict, and Mercenary.
+  - More app icons to choose from in `Settings - Interface - Theme Modifiers`: Lion's Guard, Derelict, and Mercenary.
+  - More fonts to choose from in `Settings - Interface`.
   - You may now create your own themes.
   - Ship Viewer may now group ships by hull size, tech/manufacturer, or designation.
   - Ship Viewer now shows custom shield textures, with a huge caveat.
@@ -31,7 +32,7 @@
   - Catalog: mod cards now show where the source code lives and what license the mod uses.
     - Click the code icon to open the mod's GitHub, GitLab, or Bitbucket page; click the scales icon to read the license.
     - The hover card and the mod pop-up have matching "Source code" and "License" sections.
-    - New "Has Source Code" chip in the Attributes filter.
+    - New `Has Source Code` chip in the Attributes filter.
   - Mods page now shows a warning icon next to mods whose data has a problem, starting with mods whose `.version` file and `mod_info.json` don't agree on the version.
     - Hover the icon to see the problem, click it for details.
     - Right-click the icon, or use the Mods page menu, to turn the icons off.
@@ -41,45 +42,46 @@
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.
   - Ships/weapons/etc with stats should now reflect any mods' changes to those stats.
   - Deep links now correctly check for already-installed mods on app cold starts.
-  - Catalog: mods now show as "Installed" even when the mod's real name differs from the name in the catalog (e.g. "Ashpad" installs as "Aashpad").
+  - Catalog: mods now show as `Installed` even when the mod's real name differs from the name in the catalog (e.g. "Ashpad" installs as "Aashpad").
   - Large Google Drive files now download correctly instead of failing with "archive not supported".
   - Faction viewer pips are now ordered to match vanilla.
   - Tech/Manufacturer grouping on the Ships page no longer treats different capitalizations as separate groups.
   - Lowtech station was off-center.
   - Large ships/stations are now properly centered and zoomed on load.
   - Ship/station modules now show up immediately.
-  - Faction Viewer: "Only Enabled Mods" now actually only shows data from enabled mods.
+  - Faction Viewer: `Only Enabled Mods` now actually only shows data from enabled mods.
   - Some ship modules did not show up.
     - Happened when the mod used a json map instead of a json array of pairs like Vanilla.
   - Crash on launch on Linux if the window size was set larger than all monitors.
   - Number of barrels is now taken into account for weapon stats.
     - Fixes DPS for weapons like Solis Cannon, Defabrication Swarm, and Gatebreaker Shotgun.
-  - More weapon stat fixes (Hydra shows 'Special' for dmg, IR Autolance is now a beam, wording fixes, more).
+  - More weapon stat fixes (Hydra shows `Special` for dmg, IR Autolance is now a beam, wording fixes, more).
   - A few ships/weapons didn't load because of invalid data, whereas Starsector set default values and loaded them.
     - e.g. `armaa_hazard_torso` has `DS` as its `energy/second`; this now loads.
   - Linux/MacOS: deleting a mod folder didn't work.
   - The screen reader checkbox sometimes lost its value. The app restarted itself to apply the setting and could reload settings from disk before the change was saved. It now applies right away, with no restart.
   - Chipper: a log that can't be read now shows an error instead of loading forever.
+  - Linux: VRAM Estimator no longer includes mods/saves as Vanilla VRAM (Linux's game folder structure is different than Win/Mac).
 - Changed
+  - New app logo by Vexlia.
   - Greatly sped up the check for new/updated files on program launch.
   - Changed the json parser to a rewrite of the actual Starsector json parser.
     - It's 5.4x faster on average, too; previously, TriOS would use a real json parser (fast), then use a yaml parser as a fallback for "Starsector json" (slow).
-  - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
-  - About page now has an AI disclosure section.
-  - Ship blueprint view options are now persisted.
-  - New app logo by Vexlia.
-  - TriOS cache backups are now 7zipped to save space.
-  - Mod search now searches for their dependencies also.
-  - Under-the-hood upgrade from Riverpod (state management) 2 to 3.
-    - This should improve performance by not running any logic on pages that are not visible.
-    - But it's also a large change, so please report any bugs I may not have found!
-  - Tweaked button colors on the Mods page so enabled mod buttons are less bright and don't look as bad with themes.
-    - You can revert this via an option in the menu on the Mods page.
-  - Improved log parser highlighting logic.
-  - TriOS uses a lot less RAM.
+  - TriOS now uses less RAM.
     - Ship and weapon sprites now share one 64 MB cache.
     - Ship and weapon scan data is now compressed in memory.
     - Chipper no longer keeps a copy of the whole log in memory for the whole session.
+  - Under-the-hood upgrade from Riverpod (state management) 2 to 3.
+    - This should improve performance by not running any logic on pages that are not visible.
+    - But it's also a large change, so please report any bugs I may not have found!
+  - Added slight delay before showing ship/weapon/etc tooltips to prevent lag if you quickly mouse over a bunch of items.
+  - About page now has an AI disclosure section.
+  - Ship blueprint view options are now persisted.
+  - TriOS cache backups are now 7zipped to save space.
+  - Mod search now searches for their dependencies also.
+  - Tweaked button colors on the Mods page so enabled mod buttons are less bright and don't look as bad with themes.
+    - You can revert this via an option in the menu on the Mods page.
+  - Improved log parser highlighting logic.
 
 # 1.6.1
 - Added

@@ -196,6 +196,64 @@ extension AppNameOverrideMapperExtension on AppNameOverride {
   }
 }
 
+class AppFontMapper extends EnumMapper<AppFont> {
+  AppFontMapper._();
+
+  static AppFontMapper? _instance;
+  static AppFontMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = AppFontMapper._());
+    }
+    return _instance!;
+  }
+
+  static AppFont fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  AppFont decode(dynamic value) {
+    switch (value) {
+      case r'system':
+        return AppFont.system;
+      case r'roboto':
+        return AppFont.roboto;
+      case r'inter':
+        return AppFont.inter;
+      case r'openSans':
+        return AppFont.openSans;
+      case r'comicSans':
+        return AppFont.comicSans;
+      default:
+        return AppFont.values[1];
+    }
+  }
+
+  @override
+  dynamic encode(AppFont self) {
+    switch (self) {
+      case AppFont.system:
+        return r'system';
+      case AppFont.roboto:
+        return r'roboto';
+      case AppFont.inter:
+        return r'inter';
+      case AppFont.openSans:
+        return r'openSans';
+      case AppFont.comicSans:
+        return r'comicSans';
+    }
+  }
+}
+
+extension AppFontMapperExtension on AppFont {
+  String toValue() {
+    AppFontMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<AppFont>(this) as String;
+  }
+}
+
 class LaunchButtonOverrideMapper extends EnumMapper<LaunchButtonOverride> {
   LaunchButtonOverrideMapper._();
 
@@ -379,6 +437,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
       LaunchButtonOverrideMapper.ensureInitialized();
       GlitterLocationMapper.ensureInitialized();
       BackgroundStyleMapper.ensureInitialized();
+      AppFontMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -444,6 +503,13 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
         opt: true,
         def: BackgroundStyle.motes,
       );
+  static AppFont _$font(ThemeModifiers v) => v.font;
+  static const Field<ThemeModifiers, AppFont> _f$font = Field(
+    'font',
+    _$font,
+    opt: true,
+    def: AppFont.roboto,
+  );
 
   @override
   final MappableFields<ThemeModifiers> fields = const {
@@ -454,6 +520,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
     #glitterLocations: _f$glitterLocations,
     #glitterThemeKey: _f$glitterThemeKey,
     #backgroundStyle: _f$backgroundStyle,
+    #font: _f$font,
   };
 
   static ThemeModifiers _instantiate(DecodingData data) {
@@ -465,6 +532,7 @@ class ThemeModifiersMapper extends ClassMapperBase<ThemeModifiers> {
       glitterLocations: data.dec(_f$glitterLocations),
       glitterThemeKey: data.dec(_f$glitterThemeKey),
       backgroundStyle: data.dec(_f$backgroundStyle),
+      font: data.dec(_f$font),
     );
   }
 
@@ -544,6 +612,7 @@ abstract class ThemeModifiersCopyWith<$R, $In extends ThemeModifiers, $Out>
     List<GlitterLocation>? glitterLocations,
     String? glitterThemeKey,
     BackgroundStyle? backgroundStyle,
+    AppFont? font,
   });
   ThemeModifiersCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -578,6 +647,7 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
     List<GlitterLocation>? glitterLocations,
     Object? glitterThemeKey = $none,
     BackgroundStyle? backgroundStyle,
+    AppFont? font,
   }) => $apply(
     FieldCopyWithData({
       if (appIconOverride != null) #appIconOverride: appIconOverride,
@@ -588,6 +658,7 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
       if (glitterLocations != null) #glitterLocations: glitterLocations,
       if (glitterThemeKey != $none) #glitterThemeKey: glitterThemeKey,
       if (backgroundStyle != null) #backgroundStyle: backgroundStyle,
+      if (font != null) #font: font,
     }),
   );
   @override
@@ -602,6 +673,7 @@ class _ThemeModifiersCopyWithImpl<$R, $Out>
     glitterLocations: data.get(#glitterLocations, or: $value.glitterLocations),
     glitterThemeKey: data.get(#glitterThemeKey, or: $value.glitterThemeKey),
     backgroundStyle: data.get(#backgroundStyle, or: $value.backgroundStyle),
+    font: data.get(#font, or: $value.font),
   );
 
   @override

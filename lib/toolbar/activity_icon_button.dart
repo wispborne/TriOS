@@ -286,6 +286,11 @@ class _ActivityPopupState extends ConsumerState<_ActivityPopup>
     final downloads = activityStarts > 0
         ? inProgressDownloads(ref.watch(downloadManager).value ?? [])
         : const <Download>[];
+    // Archives dragged in or picked from disk have no download of their own,
+    // so their progress comes from the batch installer instead.
+    final batchEntries = activityStarts > 0
+        ? activeBatchEntries(ref.watch(batchInstallationProvider))
+        : const <BatchEntry>[];
     // Local archives skip the download step, so only say "Downloading" when
     // something is actually still coming down the wire.
     final isDownloading = downloads.any(
@@ -305,7 +310,9 @@ class _ActivityPopupState extends ConsumerState<_ActivityPopup>
       }
     });
 
-    if (entries.isEmpty && downloads.isEmpty) return const SizedBox.shrink();
+    if (entries.isEmpty && downloads.isEmpty && batchEntries.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     final mods = ref.watch(AppState.mods);
     final enableable = <Mod>[];
@@ -408,6 +415,7 @@ class _ActivityPopupState extends ConsumerState<_ActivityPopup>
                       ],
                     ),
                   ),
+                  for (final e in batchEntries) BatchEntryTile(entry: e),
                   for (final d in downloads)
                     InProgressActivityTile(
                       download: d,

@@ -39,6 +39,25 @@ enum AppNameOverride {
   trios,
 }
 
+/// Which font the whole app is drawn in.
+@MappableEnum(defaultValue: AppFont.roboto)
+enum AppFont {
+  /// Whatever Flutter picks for the operating system.
+  system,
+  roboto,
+  inter,
+  openSans,
+  comicSans;
+
+  String get label => switch (this) {
+    AppFont.system => 'System',
+    AppFont.roboto => 'Roboto',
+    AppFont.inter => 'Inter',
+    AppFont.openSans => 'Open Sans',
+    AppFont.comicSans => 'Comic Sans',
+  };
+}
+
 @MappableEnum(defaultValue: LaunchButtonOverride.defaultStyle)
 enum LaunchButtonOverride { defaultStyle, pride }
 
@@ -99,6 +118,9 @@ class ThemeModifiers with ThemeModifiersMappable {
   /// Which animated background style plays when the background is enabled.
   final BackgroundStyle backgroundStyle;
 
+  /// The font the app's text is drawn in.
+  final AppFont font;
+
   const ThemeModifiers({
     this.appIconOverride = AppIconOverride.defaultIcon,
     this.appNameOverride = AppNameOverride.defaultName,
@@ -107,6 +129,7 @@ class ThemeModifiers with ThemeModifiersMappable {
     this.glitterLocations = GlitterLocation.values,
     this.glitterThemeKey,
     this.backgroundStyle = BackgroundStyle.motes,
+    this.font = AppFont.roboto,
   });
 
   /// Whether motes should render given the [activeThemeId]. Honors an explicit

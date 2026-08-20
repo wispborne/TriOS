@@ -62,6 +62,14 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
   }) async {
     if (sources.isEmpty) return;
 
+    // Downloads announce themselves when they start. A local archive or folder
+    // has no download, so tell the user here — otherwise nothing appears until
+    // the install has already finished.
+    if (download == null &&
+        !ref.read(appSettings.select((s) => s.isActivityPanelOpen))) {
+      ref.read(activityStartedPopupProvider.notifier).notifyStarted();
+    }
+
     // A batch is already running — merge into it instead of replacing it,
     // which would orphan the in-flight batch and hide its UI.
     final existing = state;

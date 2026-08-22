@@ -176,9 +176,10 @@ class ForumPostHeader extends StatelessWidget {
   }
 }
 
-/// The Downloads section: one row per mod in the topic. The topic's main mod
-/// (and the unnamed scraped fallback) render first; add-ons and separate mods
-/// follow under an "Also in this thread" heading.
+/// The Downloads section: one row per mod in the topic. The mod the dialog is
+/// about comes first — [buildDownloadGroups] has already put it there — and
+/// every other mod in the thread follows under an "Also in this thread"
+/// heading.
 class _DownloadSection extends StatelessWidget {
   final List<DownloadGroup> groups;
   final String fallbackModName;
@@ -198,29 +199,24 @@ class _DownloadSection extends StatelessWidget {
       fontStyle: .italic,
     );
 
-    final mainGroups = groups
-        .where((g) => g.modName == null || g.role == LlmModRole.main)
-        .toList();
-    final otherGroups = groups
-        .where((g) => g.modName != null && g.role != LlmModRole.main)
-        .toList();
-    // A lone main download is the mod the dialog is already named after, so
-    // its name on the button would just be said twice. Everything under "Also
-    // in this thread" is a different mod, so those always say which.
-    final showMainNames = mainGroups.length > 1;
+    final leadGroup = groups.first;
+    final otherGroups = groups.skip(1).toList();
+    // The lead row is the mod the dialog is already named after, so its name on
+    // the button would just be said twice. When we couldn't tell which mod that
+    // is, the row says which mod it downloads rather than staying silent.
+    final showLeadName = !leadGroup.isDialogMod;
 
     return Column(
       crossAxisAlignment: .start,
       spacing: 6,
       children: [
         Text('Downloads', style: headingStyle),
-        for (final group in mainGroups)
-          _DownloadRow(
-            group: group,
-            showGroupName: showMainNames,
-            fallbackModName: fallbackModName,
-            onDownload: onDownload,
-          ),
+        _DownloadRow(
+          group: leadGroup,
+          showGroupName: showLeadName,
+          fallbackModName: fallbackModName,
+          onDownload: onDownload,
+        ),
         if (otherGroups.isNotEmpty) ...[
           const SizedBox(height: 2),
           Text('Also in this thread', style: headingStyle),
@@ -251,18 +247,25 @@ class _DownloadRow extends StatelessWidget {
     required this.showGroupName,
   });
 
-  static String? _roleLabel(LlmModRole role) => switch (role) {
-    LlmModRole.addon => 'add-on',
-    LlmModRole.separate => 'separate mod',
-    _ => null,
-  };
+  /// The pill beside a row's name. "required" wins over the role: someone
+  /// reading an add-on's dialog needs to know the base mod is not optional.
+  static String? _roleLabel(DownloadGroup group) {
+    if (group.requiredByDialogMod) return 'required';
+    return switch (group.role) {
+      LlmModRole.addon => 'add-on',
+      LlmModRole.separate => 'separate mod',
+      _ => null,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // The download and the mod record use the source's own wording; only the
+    // text on the row is cleaned up.
     final button = _DownloadSplitButton(
       candidates: group.candidates,
-      modName: group.modName ?? fallbackModName,
+      modName: group.rawModName ?? group.modName ?? fallbackModName,
       onDownload: onDownload,
     );
 
@@ -271,7 +274,7 @@ class _DownloadRow extends StatelessWidget {
       return Align(alignment: Alignment.centerLeft, child: button);
     }
 
-    final roleLabel = _roleLabel(group.role);
+    final roleLabel = _roleLabel(group);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -331,8 +334,9 @@ class _RoleTag extends StatelessWidget {
   }
 }
 
-/// The line under the main mod's row: "Install incl. dependencies" when a
-/// TriOS deep link handles them, otherwise "Also needs: A ✓, B".
+/// The line under the row of the mod the dialog is about: "Install incl.
+/// dependencies" when a TriOS deep link handles them, otherwise
+/// "Also needs: A ✓, B".
 class _DependencyLine extends StatelessWidget {
   final DownloadGroup group;
 

@@ -11,6 +11,7 @@ import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/downloader.dart';
@@ -132,11 +133,15 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
   /// The per-mod download rows the topic offers. Prefers the LLM-structured
   /// links (trios installs, real labels, confidence); falls back to the links
   /// scraped from the post HTML when the topic has no LLM data.
-  List<DownloadGroup> _downloadGroups() {
+  ///
+  /// [dialogMod] is the thread mod this dialog is about, which for an add-on's
+  /// card is not the thread's main mod. It leads the rows.
+  List<DownloadGroup> _downloadGroups(ForumLlmMod? dialogMod) {
     final controller = ref.read(catalogPageControllerProvider.notifier);
     return buildDownloadGroups(
       index: widget.index,
       scrapedLinks: widget.details.links,
+      dialogMod: dialogMod,
       isInstalled: (name) => controller.statusForModName(name) != null,
     );
   }
@@ -237,7 +242,7 @@ class _ForumPostDialogState extends ConsumerState<_ForumPostDialog> {
                       },
                       isFullScreen: _isFullScreen,
                       onClose: () => Navigator.of(context).pop(),
-                      downloadGroups: _downloadGroups(),
+                      downloadGroups: _downloadGroups(gathered.llmMod),
                       onDownload: (candidate, modName) =>
                           executeDownloadCandidate(
                             context,

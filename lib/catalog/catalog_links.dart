@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
+import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/catalog_manager.dart';
+import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_records/mod_record.dart';
@@ -196,11 +198,10 @@ final catalogLinksProvider = Provider<CatalogLinks>((ref) {
 /// already have its own catalog entry becomes a made-up card, marked with the
 /// thread title so the card can show `part of <thread>`.
 ///
-/// A thread's "main" mod isn't special-cased: the catalog entry that
-/// points at the thread often has a different name (e.g. it's a different mod in
-/// the same thread), so relying on the name match below is what keeps the real
-/// main mod from being both listed and made up — and stops a main mod with no
-/// catalog entry of its own from going missing.
+/// A thread is only ever reached through a real catalog entry, so one of its
+/// mods is that entry under another name. [_isTheCatalogEntry] finds it and
+/// skips it — otherwise the mod gets a second card that says "part of" its own
+/// thread and offers to install a mod the catalog already lists as installed.
 ///
 /// Drops duplicate made-up names across threads (first thread wins), so a mod
 /// that appears in several threads isn't listed twice.
@@ -225,17 +226,24 @@ List<ModRepoEntry> withSynthesizedAddonEntries(
     final llm = index?.llm;
     if (index == null || llm == null || llm.mods.length < 2) continue;
 
+    final mainMods = llm.mods
+        .where((llmMod) => llmMod.role == LlmModRole.main)
+        .toList();
+
     for (final llmMod in llm.mods) {
       final key = llmMod.name.toLowerCase().trim();
       if (key.isEmpty) continue;
       if (existingNames.contains(key)) continue;
+      if (_isTheCatalogEntry(llmMod, mod, mainMods)) continue;
       if (!synthesizedNames.add(key)) continue;
 
       synthesized.add(
         ModRepoEntry(
           name: llmMod.name,
-          summary: llmMod.extras?.summary?.sentence,
-          description: llmMod.extras?.summary?.paragraph,
+          // No summary or description: the only text a thread mod has is the
+          // AI one, and putting it here would credit it to the mod index and
+          // show it even with AI features switched off. It reaches the card
+          // through CatalogMod.aiSentence instead, labelled and gated.
           // Prefer the thread's game version; fall back to the parent mod's
           // so add-ons stay visible under the default Game Version filter
           // even when the thread itself lists no version.
@@ -250,6 +258,26 @@ List<ModRepoEntry> withSynthesizedAddonEntries(
 
   if (synthesized.isEmpty) return realMods;
   return [...realMods, ...synthesized];
+}
+
+/// True when [llmMod] is the thread mod that [entry] already stands for.
+///
+/// Two ways to tell. The names may agree once the version decoration is off
+/// them ("Big Pilum Energy 1.0.d" and "Big Pilum Energy"). Or the thread has a
+/// single main mod, which is what a catalog entry pointing at that thread
+/// means — the names often look nothing alike, e.g. the entry "Red" against
+/// "[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod".
+///
+/// A thread that lists several mods as main is a bundle, like "Hartley's
+/// Miscellaneous Mods", and those really are separate mods. Only the one whose
+/// name agrees is dropped there.
+bool _isTheCatalogEntry(
+  ForumLlmMod llmMod,
+  ModRepoEntry entry,
+  List<ForumLlmMod> mainMods,
+) {
+  if (modNamesMatch(llmMod.name, entry.name)) return true;
+  return llmMod.role == LlmModRole.main && mainMods.length == 1;
 }
 
 /// Look up a catalog entry's installed mod straight from a [Mod]. Pass the

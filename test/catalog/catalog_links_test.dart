@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/catalog/catalog_links.dart';
+import 'package:trios/catalog/models/forum_llm_data.dart';
+import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
@@ -53,6 +55,33 @@ ModRepoEntry _entry(
     partOfThreadTitle: partOfThreadTitle,
   );
 }
+
+ForumLlmMod _threadMod(String name, {LlmModRole role = LlmModRole.main}) =>
+    ForumLlmMod(
+      name: name,
+      role: role,
+      extras: ForumLlmExtras(
+        summary: ForumLlmSummary(sentence: 'AI wrote this about $name.'),
+      ),
+    );
+
+Map<int, ForumModIndex> _thread(int topicId, String title, List<ForumLlmMod> mods) => {
+  topicId: ForumModIndex(
+    topicId: topicId,
+    title: title,
+    inModIndex: true,
+    isArchivedModIndex: false,
+    author: 'Someone',
+    replies: 0,
+    views: 0,
+    topicUrl: 'https://example.com/topic',
+    isWip: false,
+    llm: ForumLlmData(mods: mods),
+  ),
+};
+
+String _forum(int topicId) =>
+    'https://fractalsoftworks.com/forum/index.php?topic=$topicId.0';
 
 ModRecords _recordsLinking(String catalogName, String modId) => ModRecords(
   records: {
@@ -208,6 +237,66 @@ void main() {
 
     test('lowercases and trims like catalogEntryKey', () {
       expect(catalogEntryKey('  Ashpad  '), 'ashpad');
+    });
+  });
+
+  group('withSynthesizedAddonEntries', () {
+    test('a thread with one main mod does not get a second card', () {
+      final entries = withSynthesizedAddonEntries(
+        [_entry('Red', forumUrl: _forum(9035))],
+        _thread(9035, 'Red thread', [
+          _threadMod('[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod'),
+          _threadMod('Ocutek Pirates Addon', role: LlmModRole.addon),
+        ]),
+      );
+
+      expect(entries.map((e) => e.name), ['Red', 'Ocutek Pirates Addon']);
+    });
+
+    test('a bundle thread keeps every main mod but the catalog entry', () {
+      final entries = withSynthesizedAddonEntries(
+        [_entry('Big Pilum Energy 1.0.d', forumUrl: _forum(34161))],
+        _thread(34161, "Hartley's Miscellaneous Mods", [
+          _threadMod('Useful.Tithes'),
+          _threadMod('Big Pilum Energy'),
+          _threadMod('Lost.Sector'),
+        ]),
+      );
+
+      expect(entries.map((e) => e.name), [
+        'Big Pilum Energy 1.0.d',
+        'Useful.Tithes',
+        'Lost.Sector',
+      ]);
+    });
+
+    test('a made-up entry carries no author text of its own', () {
+      final entries = withSynthesizedAddonEntries(
+        [_entry('Red', forumUrl: _forum(9035))],
+        _thread(9035, 'Red thread', [
+          _threadMod('[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod'),
+          _threadMod('Ocutek Pirates Addon', role: LlmModRole.addon),
+        ]),
+      );
+
+      final addon = entries.firstWhere((e) => e.name == 'Ocutek Pirates Addon');
+      expect(addon.summary, isNull);
+      expect(addon.description, isNull);
+      expect(addon.partOfThreadTitle, 'Red thread');
+    });
+
+    test('no made-up card says it is part of its own thread', () {
+      final entries = withSynthesizedAddonEntries(
+        [_entry('Anything', forumUrl: _forum(500))],
+        _thread(500, 'The Thread Title', [
+          _threadMod('The Thread Title'),
+          _threadMod('An Addon', role: LlmModRole.addon),
+        ]),
+      );
+
+      for (final entry in entries) {
+        expect(entry.name, isNot(entry.partOfThreadTitle));
+      }
     });
   });
 }

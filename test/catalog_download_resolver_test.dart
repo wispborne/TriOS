@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
+import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/utils/extensions.dart';
 
 ModRepoEntry mod({String? directDownload, String? forum}) => ModRepoEntry(
   name: 'Test Mod',
@@ -57,6 +59,41 @@ VersionCheckerInfo remote(String? directDownloadUrl, {String? version}) =>
 
 ForumLlmMod llmMod(List<ForumLlmDownload> downloads) =>
     ForumLlmMod(name: 'Test Mod', role: LlmModRole.main, downloads: downloads);
+
+/// A thread mod with one download link, so [buildDownloadGroups] keeps it.
+ForumLlmMod threadMod(
+  String name, {
+  LlmModRole role = LlmModRole.main,
+  List<String>? requires,
+}) => ForumLlmMod(
+  name: name,
+  role: role,
+  requires: requires,
+  downloads: [dl('https://example.com/${name.alphanumericLower()}.zip')],
+);
+
+ForumModIndex index(List<ForumLlmMod> mods) => ForumModIndex(
+  topicId: 9035,
+  title: 'Test Thread',
+  inModIndex: true,
+  isArchivedModIndex: false,
+  author: 'Someone',
+  replies: 0,
+  views: 0,
+  topicUrl: 'https://example.com/topic',
+  isWip: false,
+  llm: ForumLlmData(mods: mods),
+);
+
+List<DownloadGroup> groupsFor(
+  List<ForumLlmMod> mods, {
+  ForumLlmMod? dialogMod,
+  Set<String> installed = const {},
+}) => buildDownloadGroups(
+  index: index(mods),
+  dialogMod: dialogMod,
+  isInstalled: installed.contains,
+);
 
 void main() {
   group('resolveDownloadCandidates', () {
@@ -268,6 +305,149 @@ void main() {
       );
 
       expect(candidates.single.kind, DownloadCandidateKind.catalogDirect);
+    });
+  });
+
+  group('cleanModDisplayName', () {
+    final cases = {
+      '[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod':
+          'Red - the Oculian Armada',
+      'Scy V1.66rc3 (2023/03/19)': 'Scy',
+      '[0.98a-RC5] Machina Void Shipyards v. 0.70a': 'Machina Void Shipyards',
+      'Sardaukar [0.6.1a]': 'Sardaukar',
+      'GraphicsLib 1.0.4': 'GraphicsLib',
+      'LazyLib 2.2 (Updated)': 'LazyLib',
+      '[0.8.1a] Degenerate Portrait Pack v1.1': 'Degenerate Portrait Pack',
+      // Nothing to strip: an ampersand and a plain name both survive whole.
+      '[0.98a] Azur Lane Vanilla Portrait Replacer & Extra Portraits':
+          'Azur Lane Vanilla Portrait Replacer & Extra Portraits',
+      'Nexerelin': 'Nexerelin',
+      'Red': 'Red',
+    };
+
+    cases.forEach((raw, expected) {
+      test('"$raw" -> "$expected"', () {
+        expect(cleanModDisplayName(raw), expected);
+      });
+    });
+
+    test('a name that is only decoration keeps its raw text', () {
+      expect(cleanModDisplayName('[0.98a]'), '[0.98a]');
+    });
+  });
+
+  group('modNamesMatch', () {
+    test('matches once the decoration is gone', () {
+      expect(modNamesMatch('GraphicsLib 1.0.4', 'GraphicsLib'), isTrue);
+      expect(modNamesMatch('Sardaukar [0.6.1a]', 'sardaukar'), isTrue);
+    });
+
+    test('falls back to letters and numbers only', () {
+      expect(modNamesMatch('Nexerelin', 'Nex-erelin!'), isTrue);
+    });
+
+    test('different mods do not match', () {
+      expect(modNamesMatch('LazyLib', 'GraphicsLib'), isFalse);
+    });
+  });
+
+  group('buildDownloadGroups', () {
+    final armada = threadMod('Red - the Oculian Armada');
+    final addon = threadMod(
+      'Ocutek Pirates Addon',
+      role: LlmModRole.addon,
+      requires: ['Red - the Oculian Armada'],
+    );
+
+    test('the add-on leads its own dialog, the main mod follows', () {
+      final groups = groupsFor([armada, addon], dialogMod: addon);
+
+      expect(groups.first.modName, 'Ocutek Pirates Addon');
+      expect(groups.first.isDialogMod, isTrue);
+      expect(groups[1].modName, 'Red - the Oculian Armada');
+      expect(groups[1].isDialogMod, isFalse);
+      expect(groups[1].requiredByDialogMod, isTrue);
+    });
+
+    test('the main mod leads its own dialog', () {
+      final groups = groupsFor([armada, addon], dialogMod: armada);
+
+      expect(groups.first.isDialogMod, isTrue);
+      expect(groups.first.modName, 'Red - the Oculian Armada');
+      expect(groups[1].modName, 'Ocutek Pirates Addon');
+      expect(groups[1].requiredByDialogMod, isFalse);
+    });
+
+    test('with no match the main mod leads and is not flagged as the dialog mod', () {
+      final groups = groupsFor([addon, armada]);
+
+      expect(groups.first.modName, 'Red - the Oculian Armada');
+      expect(groups.first.isDialogMod, isFalse);
+    });
+
+    test('a required mod sorts above the rest of the thread', () {
+      final other = threadMod('Some Portrait Pack', role: LlmModRole.separate);
+      final groups = groupsFor([armada, other, addon], dialogMod: addon);
+
+      expect(groups.map((g) => g.modName), [
+        'Ocutek Pirates Addon',
+        'Red - the Oculian Armada',
+        'Some Portrait Pack',
+      ]);
+    });
+
+    test('dependencies are built for the dialog mod, not just the main mod', () {
+      final needy = threadMod(
+        'Ocutek Pirates Addon',
+        role: LlmModRole.addon,
+        requires: ['GraphicsLib 1.0.4'],
+      );
+      final groups = groupsFor([armada, needy], dialogMod: needy);
+
+      expect(groups.first.dependencies.single.name, 'GraphicsLib');
+      expect(groups[1].dependencies, isEmpty);
+    });
+
+    test('a dependency with its own row is not also listed under the button', () {
+      final groups = groupsFor([armada, addon], dialogMod: addon);
+
+      expect(groups.first.dependencies, isEmpty);
+    });
+
+    test('the installed check is asked with the cleaned name', () {
+      final needy = threadMod(
+        'Ocutek Pirates Addon',
+        role: LlmModRole.addon,
+        requires: ['GraphicsLib 1.0.4'],
+      );
+      final groups = groupsFor(
+        [needy],
+        dialogMod: needy,
+        installed: {'GraphicsLib'},
+      );
+
+      expect(groups.first.dependencies.single.installed, isTrue);
+    });
+
+    test('rows keep the raw name for downloads and records', () {
+      final raw = threadMod('[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod');
+      final groups = groupsFor([raw], dialogMod: raw);
+
+      expect(groups.single.modName, 'Red - the Oculian Armada');
+      expect(
+        groups.single.rawModName,
+        '[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod',
+      );
+    });
+
+    test('a mod the thread only mentions gets no row', () {
+      final mentioned = ForumLlmMod(
+        name: 'Mentioned Only',
+        role: LlmModRole.separate,
+      );
+      final groups = groupsFor([armada, mentioned], dialogMod: armada);
+
+      expect(groups.map((g) => g.modName), ['Red - the Oculian Armada']);
     });
   });
 }

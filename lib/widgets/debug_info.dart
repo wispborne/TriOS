@@ -19,6 +19,12 @@ class DebugInfo extends ConsumerWidget {
         (ref.watch(AppState.versionCheckResults).value)
             ?.versionCheckResultsBySmolId ??
         {};
+    final modsMetadata = ref.watch(AppState.modsMetadata).value;
+    // The mod-level metadata carries a copy of every variant's metadata. Drop
+    // it, so the shared part doesn't repeat inside each version's card.
+    final modMetadata = modsMetadata
+        ?.getMergedModMetadata(mod.id)
+        ?.copyWith(variantsMetadata: {});
 
     return SelectionArea(
       child: Column(
@@ -115,6 +121,34 @@ class DebugInfo extends ConsumerWidget {
                             vcResultsCache[variant.smolId]?.toString() ??
                                 "(none)",
                             style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Mod Metadata",
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          SimpleDataRow(
+                            label: "Whole mod: ",
+                            value: modMetadata?.toString() ?? "(none)",
+                          ),
+                          SimpleDataRow(
+                            label: "This version: ",
+                            value:
+                                modsMetadata
+                                    ?.getMergedModVariantMetadata(
+                                      mod.id,
+                                      variant.smolId,
+                                    )
+                                    ?.toString() ??
+                                "(none)",
                           ),
                         ],
                       ),

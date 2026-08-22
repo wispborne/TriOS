@@ -307,13 +307,21 @@ class ModVariantMetadata with ModVariantMetadataMappable {
   /// Timestamp of when the mod variant was first seen by TriOS.
   final int firstSeen;
 
-  ModVariantMetadata({required this.firstSeen});
+  /// The web address this exact version was downloaded from, if TriOS
+  /// downloaded it. Written once the archive is unpacked and the version is
+  /// known, so it always belongs to the version it's stored under.
+  final String? downloadedFrom;
+
+  ModVariantMetadata({required this.firstSeen, this.downloadedFrom});
 
   static ModVariantMetadata empty() =>
       ModVariantMetadata(firstSeen: DateTime.now().millisecondsSinceEpoch);
 
   /// Merges all fields from this (user) and [base], with user data overriding what it explicitly sets.
   ModVariantMetadata backfillWith(ModVariantMetadata base) {
-    return ModVariantMetadata(firstSeen: firstSeen);
+    return ModVariantMetadata(
+      firstSeen: firstSeen,
+      downloadedFrom: downloadedFrom ?? base.downloadedFrom,
+    );
   }
 }

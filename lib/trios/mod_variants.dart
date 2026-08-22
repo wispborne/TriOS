@@ -7,6 +7,7 @@ import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/mod_list_cache.dart';
 import 'package:trios/utils/debouncer.dart';
 import 'package:trios/utils/extensions.dart';
 
@@ -23,6 +24,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
   );
   bool shouldAutomaticallyReloadOnFilesChanged = true;
   bool _isReloadingInternal = false;
+  final _modListCache = ModListCache();
 
   /// True once the mods folder has actually been read.
   ///
@@ -159,6 +161,20 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         return;
       }
 
+      // Reading the mods folder means opening every mod's files one at a time,
+      // which takes long enough to see. Show the mods found last launch first
+      // so the page isn't empty while that runs; the scan below replaces them.
+      //
+      // `hasScannedModsFolder` deliberately stays false here. The ship and
+      // weapon viewers wait on it before they start parsing, and they should
+      // wait for the real scan instead of doing all that work twice.
+      if (onlyFolders == null && !hasScannedModsFolder) {
+        final lastKnownVariants = await _modListCache.read(modsPath);
+        if (lastKnownVariants != null && lastKnownVariants.isNotEmpty) {
+          state = AsyncValue.data(lastKnownVariants);
+        }
+      }
+
       // Only existing folders can be rescanned. Folders that are gone
       // (deleted or renamed) still get their old entries removed from state
       // below — otherwise a deleted mod would linger until a full rescan.
@@ -199,6 +215,7 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         hasScannedModsFolder = true;
         state = AsyncValue.data(variants);
         ModVariant.iconCache.clear();
+        unawaited(_modListCache.write(variants, modsPath));
       } else {
         // Remove any variants whose modFolder was reloaded, then add updated ones.
         // Use `onlyFolders` (not `folders`) so variants of deleted folders are
@@ -216,6 +233,12 @@ class ModVariantsNotifier extends AsyncNotifier<List<ModVariant>> {
         ModVariant.iconCache.removeWhere(
           (key, value) => variants.any((variant) => variant.modInfo.id == key),
         );
+        // Only save once the full list is known. Before the first full scan
+        // `newVariants` is just the handful of folders that changed, and
+        // saving that would lose every other mod.
+        if (hasScannedModsFolder) {
+          unawaited(_modListCache.write(newVariants, modsPath));
+        }
       }
     } finally {
       _isReloadingInternal = false;

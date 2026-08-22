@@ -137,10 +137,23 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
     super.dispose();
   }
 
+  /// The sprite paths [_build] draws, as one string, so the cell can tell
+  /// when it has been handed something different to draw.
+  static String _spriteKey(Weapon weapon) => [
+    ...weapon.spriteLayers,
+    weapon.loadedMissileSprite,
+    weapon.glowSprite,
+  ].join('|');
+
   @override
   void didUpdateWidget(WeaponImageCell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.weapon.id != widget.weapon.id) {
+    // The paths are compared as well as the id: weapons are built before the
+    // graphics index has finished scanning, so their sprite paths start out
+    // empty and are filled in on a later pass. The same weapon then arrives
+    // with sprites it didn't have a moment ago.
+    if (oldWidget.weapon.id != widget.weapon.id ||
+        _spriteKey(oldWidget.weapon) != _spriteKey(widget.weapon)) {
       // Drop the old weapon's layers right away, or a recycled row keeps
       // painting them until the async rebuild finishes (and forever, if the
       // new weapon has no sprite at all).

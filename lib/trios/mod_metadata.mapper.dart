@@ -426,14 +426,24 @@ class ModVariantMetadataMapper extends ClassMapperBase<ModVariantMetadata> {
     'firstSeen',
     _$firstSeen,
   );
+  static String? _$downloadedFrom(ModVariantMetadata v) => v.downloadedFrom;
+  static const Field<ModVariantMetadata, String> _f$downloadedFrom = Field(
+    'downloadedFrom',
+    _$downloadedFrom,
+    opt: true,
+  );
 
   @override
   final MappableFields<ModVariantMetadata> fields = const {
     #firstSeen: _f$firstSeen,
+    #downloadedFrom: _f$downloadedFrom,
   };
 
   static ModVariantMetadata _instantiate(DecodingData data) {
-    return ModVariantMetadata(firstSeen: data.dec(_f$firstSeen));
+    return ModVariantMetadata(
+      firstSeen: data.dec(_f$firstSeen),
+      downloadedFrom: data.dec(_f$downloadedFrom),
+    );
   }
 
   @override
@@ -507,7 +517,7 @@ abstract class ModVariantMetadataCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({int? firstSeen});
+  $R call({int? firstSeen, String? downloadedFrom});
   ModVariantMetadataCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -522,11 +532,17 @@ class _ModVariantMetadataCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ModVariantMetadata> $mapper =
       ModVariantMetadataMapper.ensureInitialized();
   @override
-  $R call({int? firstSeen}) =>
-      $apply(FieldCopyWithData({if (firstSeen != null) #firstSeen: firstSeen}));
+  $R call({int? firstSeen, Object? downloadedFrom = $none}) => $apply(
+    FieldCopyWithData({
+      if (firstSeen != null) #firstSeen: firstSeen,
+      if (downloadedFrom != $none) #downloadedFrom: downloadedFrom,
+    }),
+  );
   @override
-  ModVariantMetadata $make(CopyWithData data) =>
-      ModVariantMetadata(firstSeen: data.get(#firstSeen, or: $value.firstSeen));
+  ModVariantMetadata $make(CopyWithData data) => ModVariantMetadata(
+    firstSeen: data.get(#firstSeen, or: $value.firstSeen),
+    downloadedFrom: data.get(#downloadedFrom, or: $value.downloadedFrom),
+  );
 
   @override
   ModVariantMetadataCopyWith<$R2, ModVariantMetadata, $Out2> $chain<$R2, $Out2>(

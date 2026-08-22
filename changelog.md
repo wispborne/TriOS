@@ -37,6 +37,7 @@
     - Hover the icon to see the problem, click it for details.
     - Right-click the icon, or use the Mods page menu, to turn the icons off.
   - Tooltip on the "Clear All" filter button explaining default and spoiler filters.
+  - Now remembers the url you used to download a mod through TriOS, allowing you to redownload/reinstall mods.
 - Fixed
   - Table columns may now be as wide as the window itself.
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.
@@ -67,6 +68,7 @@
   - Greatly sped up the check for new/updated files on program launch.
   - Changed the json parser to a rewrite of the actual Starsector json parser.
     - It's 5.4x faster on average, too; previously, TriOS would use a real json parser (fast), then use a yaml parser as a fallback for "Starsector json" (slow).
+  - Now caching mod list for faster startup.
   - TriOS now uses less RAM.
     - Ship and weapon sprites now share one 64 MB cache.
     - Ship and weapon scan data is now compressed in memory.

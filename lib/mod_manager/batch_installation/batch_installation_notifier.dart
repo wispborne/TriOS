@@ -720,6 +720,19 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
             }
             return base.copyWith(modId: modId, sources: updatedSources);
           });
+
+          // Also save the link on the exact version it installed. The archive
+          // is unpacked by now, so modInfo.smolId is the version that actually
+          // landed on disk - not whatever was installed before.
+          if (downloadUrl != null && downloadUrl.isNotEmpty) {
+            ref
+                .read(AppState.modsMetadata.notifier)
+                .updateModVariantBaseMetadata(
+                  modId,
+                  modInfo.smolId,
+                  (old) => old.copyWith(downloadedFrom: downloadUrl),
+                );
+          }
         }
       }
     } catch (e) {

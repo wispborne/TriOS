@@ -1278,7 +1278,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         EnabledStateModGridGroup().key;
     final currentSecondaryKey =
         gridState.groupingSetting?.secondaryGroupedByKey;
-    final candidates = groups.where((g) => g.key != currentPrimaryKey).toList();
+    // The "no grouping" entry is itself a group named "None", so leave it out
+    // here — the menu already has its own "None" to clear the second level.
+    final candidates = groups
+        .where((g) => g.key != currentPrimaryKey && g.isGroupVisible)
+        .toList();
 
     // Hide the selector entirely when "Then By" would be meaningless.
     if (groups.length <= 1 || candidates.isEmpty) {

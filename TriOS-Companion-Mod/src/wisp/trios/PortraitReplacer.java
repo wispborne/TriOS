@@ -2,7 +2,6 @@ package wisp.trios;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.graphics.SpriteAPI;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -10,9 +9,10 @@ import org.json.JSONObject;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import java.io.IOException;
 import java.nio.FloatBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -20,6 +20,9 @@ import java.util.Optional;
  * <p>
  * This class reads a configuration file at data/config/trios_image_replacements.json
  * and performs texture replacements based on the configuration.
+ * <p>
+ * Problems are counted up and reported in a few lines at the end instead of one line per
+ * image, so a long list of replacements doesn't fill the log.
  */
 public class PortraitReplacer {
     private static final String CONFIG_PATH = "data/config/trios_image_replacements.json";
@@ -30,12 +33,10 @@ public class PortraitReplacer {
     private static final int GL_RGBA = GL11.GL_RGBA;
     private static final int GL_FLOAT = GL11.GL_FLOAT;
 
-    private static boolean alreadyRan = false;
+    /** How many image names to list in a summary line before saying "and N more". */
+    private static final int MAX_NAMES_IN_LOG = 5;
 
-    static {
-        log.setLevel(Level.DEBUG);
-        log.info("PortraitReplacer initialized");
-    }
+    private static boolean alreadyRan = false;
 
     private record TextureReplacement(String originalTexture, String replacementTexture) {
 
@@ -62,6 +63,33 @@ public class PortraitReplacer {
         }
     }
 
+    /** What happened to a single image. */
+    private enum ReplacementResult {
+        REPLACED,
+        NOT_ON_GRAPHICS_CARD,
+        DIFFERENT_SIZE
+    }
+
+    /** Running count of what happened, so the log gets a summary instead of a line per image. */
+    private static final class Tally {
+        int replaced;
+        int differentSize;
+        int notOnGraphicsCard;
+        int otherErrors;
+        final List<String> imagesNotFound = new ArrayList<>();
+        Exception firstError;
+        String firstErrorImage;
+
+        void recordError(String image, Exception error) {
+            otherErrors++;
+
+            if (firstError == null) {
+                firstError = error;
+                firstErrorImage = image;
+            }
+        }
+    }
+
     /**
      * Performs texture replacements based on the configuration file at `data/config/trios_image_replacements.json`
      */
@@ -72,8 +100,6 @@ public class PortraitReplacer {
         }
         alreadyRan = true;
 
-        log.info("Starting texture replacement process");
-
         try {
             // Load and parse the configuration file
             Optional<JSONArray> configOpt = loadConfigFile();
@@ -83,31 +109,64 @@ public class PortraitReplacer {
             }
 
             JSONArray config = configOpt.get();
-            log.info("Successfully loaded configuration with " + config.length() + " entries");
+
+            if (config.length() == 0) {
+                return;
+            }
 
             // Process each replacement entry
-            Map<String, Integer> stats = new HashMap<>();
-            stats.put("success", 0);
-            stats.put("failure", 0);
+            Tally tally = new Tally();
 
             for (int i = 0; i < config.length(); i++) {
                 try {
                     JSONObject entry = config.getJSONObject(i);
-                    processReplacementEntry(entry, stats);
+                    processReplacementEntry(entry, tally);
                 } catch (JSONException e) {
-                    log.warn("Error processing replacement entry at index " + i, e);
-                    stats.compute("failure", (k, v) -> v + 1);
+                    tally.recordError("entry " + i + " of " + CONFIG_PATH, e);
                 }
             }
 
-            // Log summary statistics
-            log.info("Texture replacement complete. Summary: " +
-                    stats.get("success") + " successful, " +
-                    stats.get("failure") + " failed");
+            logSummary(tally, config.length());
 
         } catch (Exception e) {
             log.warn("Unexpected error during texture replacement", e);
         }
+    }
+
+    /**
+     * Writes one line saying how many images were replaced, plus one line for each kind of problem
+     * that came up.
+     */
+    private static void logSummary(Tally tally, int total) {
+        log.info("Image replacement finished: " + tally.replaced + " of " + total + " replaced.");
+
+        if (!tally.imagesNotFound.isEmpty()) {
+            log.warn(tally.imagesNotFound.size() + " image(s) skipped, the game could not find them"
+                    + " (the mod they come from is probably not enabled): "
+                    + namesForLog(tally.imagesNotFound));
+        }
+
+        if (tally.differentSize > 0) {
+            log.warn(tally.differentSize + " image(s) skipped, the replacement is a different size than the original.");
+        }
+
+        if (tally.notOnGraphicsCard > 0) {
+            log.warn(tally.notOnGraphicsCard + " image(s) skipped, they were not loaded on the graphics card yet.");
+        }
+
+        if (tally.otherErrors > 0) {
+            log.warn(tally.otherErrors + " image(s) failed to be replaced. First failure was "
+                    + tally.firstErrorImage, tally.firstError);
+        }
+    }
+
+    private static String namesForLog(List<String> names) {
+        if (names.size() <= MAX_NAMES_IN_LOG) {
+            return String.join(", ", names);
+        }
+
+        return String.join(", ", names.subList(0, MAX_NAMES_IN_LOG))
+                + ", and " + (names.size() - MAX_NAMES_IN_LOG) + " more";
     }
 
     /**
@@ -145,74 +204,64 @@ public class PortraitReplacer {
     }
 
     /**
-     * Creates a sample configuration file
-     */
-//    private static void createSampleConfigFile() {
-//        log.info("Creating sample configuration file");
-//
-//        try {
-//            // Create a sample JSON configuration
-//            JSONObject sampleConfig = new JSONObject();
-//            JSONArray replacements = new JSONArray();
-//
-//            // Add sample replacement entries
-//            JSONObject replacement1 = new JSONObject();
-//            replacement1.put("original", "graphics/portraits/portrait_mercenary01.png");
-//            replacement1.put("replacement", "graphics/portraits/portrait_mercenary01.png");
-//            replacements.put(replacement1);
-//
-//            sampleConfig.put("replacements", replacements);
-//
-//            // Save the sample configuration using the game's settings API
-//            Global.getSettings().writeTextFileToCommon(CONFIG_PATH, sampleConfig.toString(2));
-//            log.info("Sample configuration file created successfully");
-//        } catch (Exception e) {
-//            log.warn();("Failed to create sample configuration file", e);
-//        }
-//    }
-
-    /**
      * Processes a single replacement entry
      *
      * @param entry The JSONObject containing the replacement configuration
-     * @param stats A map to track success/failure statistics
+     * @param tally Counts of what happened, added to as each entry is processed
      */
-    private static void processReplacementEntry(JSONObject entry, Map<String, Integer> stats) {
-        TextureReplacement.fromJson(entry).ifPresentOrElse(
-                replacement -> {
-                    log.info("Processing replacement: " + replacement.originalTexture + " -> " + replacement.replacementTexture);
+    private static void processReplacementEntry(JSONObject entry, Tally tally) {
+        Optional<TextureReplacement> parsed = TextureReplacement.fromJson(entry);
 
-                    try {
-                        // Load the sprites
-                        Global.getSettings().loadTexture(replacement.originalTexture); // Original texture should already be loaded, but just in case
-                        SpriteAPI originalSprite = Global.getSettings().getSprite(replacement.originalTexture);
-                        Global.getSettings().loadTexture(replacement.replacementTexture);
-                        SpriteAPI replacementSprite = Global.getSettings().getSprite(replacement.replacementTexture);
+        if (parsed.isEmpty()) {
+            tally.otherErrors++;
+            return;
+        }
 
-                        // Validate sprites
-                        if (originalSprite == null) {
-                            log.warn("Original texture not found: " + replacement.originalTexture);
-                            stats.compute("failure", (k, v) -> v + 1);
-                            return;
-                        }
+        TextureReplacement replacement = parsed.get();
+        log.debug("Processing replacement: " + replacement.originalTexture + " -> " + replacement.replacementTexture);
 
-                        if (replacementSprite == null) {
-                            log.warn("Replacement texture not found: " + replacement.replacementTexture);
-                            stats.compute("failure", (k, v) -> v + 1);
-                            return;
-                        }
+        // Original texture should already be loaded, but load it just in case.
+        if (!loadTexture(replacement.originalTexture, tally)) return;
+        if (!loadTexture(replacement.replacementTexture, tally)) return;
 
-                        // Perform the replacement
-                        replaceTexture(originalSprite, replacementSprite);
-                        log.info("Successfully replaced texture: " + replacement.originalTexture);
-                        stats.compute("success", (k, v) -> v + 1);
-                    } catch (Exception e) {
-                        log.warn("Error replacing texture: " + replacement.originalTexture);
-                        stats.compute("failure", (k, v) -> v + 1);
-                    }
-                },
-                () -> stats.compute("failure", (k, v) -> v + 1)
-        );
+        try {
+            SpriteAPI originalSprite = Global.getSettings().getSprite(replacement.originalTexture);
+            SpriteAPI replacementSprite = Global.getSettings().getSprite(replacement.replacementTexture);
+
+            if (originalSprite == null) {
+                tally.imagesNotFound.add(replacement.originalTexture);
+                return;
+            }
+
+            if (replacementSprite == null) {
+                tally.imagesNotFound.add(replacement.replacementTexture);
+                return;
+            }
+
+            switch (replaceTexture(originalSprite, replacementSprite)) {
+                case REPLACED -> tally.replaced++;
+                case DIFFERENT_SIZE -> tally.differentSize++;
+                case NOT_ON_GRAPHICS_CARD -> tally.notOnGraphicsCard++;
+            }
+        } catch (Exception e) {
+            tally.recordError(replacement.originalTexture, e);
+        }
+    }
+
+    /**
+     * Asks the game to load an image. A missing file is counted rather than logged, so a list of
+     * images from a mod that is not enabled does not produce one warning per image.
+     *
+     * @return true if the image is loaded and can be used
+     */
+    private static boolean loadTexture(String path, Tally tally) {
+        try {
+            Global.getSettings().loadTexture(path);
+            return true;
+        } catch (IOException e) {
+            tally.imagesNotFound.add(path);
+            return false;
+        }
     }
 
     /**
@@ -221,7 +270,7 @@ public class PortraitReplacer {
      * @param target The sprite whose texture will be replaced
      * @param source The sprite whose texture will be used as replacement
      */
-    private static void replaceTexture(SpriteAPI target, SpriteAPI source) {
+    private static ReplacementResult replaceTexture(SpriteAPI target, SpriteAPI source) {
         // Query actual GPU-side dimensions after binding. SpriteAPI.getTextureWidth()/getTextureHeight()
         // can return 1 during onApplicationLoad before texture metadata is populated, but the real
         // GPU texture is larger — sizing the buffer from those values causes glGetTexImage to write
@@ -238,33 +287,29 @@ public class PortraitReplacer {
                 + ", target GL " + dstW + "x" + dstH);
 
         if (srcW <= 1 || srcH <= 1 || dstW <= 1 || dstH <= 1) {
-            log.warn("Texture not loaded on GPU (source " + srcW + "x" + srcH
+            log.debug("Texture not loaded on GPU (source " + srcW + "x" + srcH
                     + ", target " + dstW + "x" + dstH + "), skipping replacement");
-            return;
+            return ReplacementResult.NOT_ON_GRAPHICS_CARD;
         }
 
         if (srcW != dstW || srcH != dstH) {
-            log.warn("Texture size mismatch between source (" + srcW + "x" + srcH
+            log.debug("Texture size mismatch between source (" + srcW + "x" + srcH
                     + ") and target (" + dstW + "x" + dstH + "), skipping replacement");
-            return;
+            return ReplacementResult.DIFFERENT_SIZE;
         }
 
-        try {
-            int bufferSize = srcW * srcH * 4;
-            FloatBuffer buffer = BufferUtils.createFloatBuffer(bufferSize);
+        int bufferSize = srcW * srcH * 4;
+        FloatBuffer buffer = BufferUtils.createFloatBuffer(bufferSize);
 
-            source.bindTexture();
-            GL11.glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer);
+        source.bindTexture();
+        GL11.glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer);
 
-            target.bindTexture();
-            GL11.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                    srcW, srcH,
-                    0, GL_RGBA, GL_FLOAT, buffer);
+        target.bindTexture();
+        GL11.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                srcW, srcH,
+                0, GL_RGBA, GL_FLOAT, buffer);
 
-            log.debug("Texture replacement completed successfully");
-        } catch (Exception e) {
-            log.warn("OpenGL error during texture replacement", e);
-            throw e;
-        }
+        log.debug("Texture replacement completed successfully");
+        return ReplacementResult.REPLACED;
     }
 }

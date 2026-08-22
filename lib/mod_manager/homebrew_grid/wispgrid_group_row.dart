@@ -383,8 +383,10 @@ class _WispGridRowState<T extends WispGridItem>
     final currentStyle = groupingSetting?.headerStyle ?? GroupHeaderStyle.small;
     final currentPrimaryKey = groupingSetting?.currentGroupedByKey;
     final currentSecondaryKey = groupingSetting?.secondaryGroupedByKey;
+    // The "no grouping" entry is itself a group named "None", so leave it out
+    // here — the menu already has its own "None" to clear the second level.
     final thenByCandidates = widget.groups
-        .where((g) => g.key != currentPrimaryKey)
+        .where((g) => g.key != currentPrimaryKey && g.isGroupVisible)
         .toList();
     final showThenBy = widget.groups.length > 1 && thenByCandidates.isNotEmpty;
 

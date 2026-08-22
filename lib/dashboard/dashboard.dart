@@ -7,6 +7,7 @@ import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/relative_timestamp.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -188,11 +189,15 @@ class _DashboardState extends ConsumerState<Dashboard>
                                       ),
                                       child: TextButton.icon(
                                         onPressed: () {
-                                          ref
+                                          final path = ref
                                               .read(ChipperState.logRawContents)
                                               .value
-                                              ?.filepath
-                                              ?.openAsUriInBrowser();
+                                              ?.filepath;
+                                          if (path != null) {
+                                            launchUrlString(
+                                              File(path).absolute.normalize.path,
+                                            );
+                                          }
                                         },
                                         icon: Icon(
                                           Icons.launch_rounded,

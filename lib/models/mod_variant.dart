@@ -36,16 +36,17 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
     required this.modFolder,
     required this.hasNonBrickedModInfo,
     required this.gameCoreFolder,
-  }) {
-    // Calculate the icon path now so it's cached.
-    iconCache[modInfo.id] = _calculateIconPath(gameCoreFolder);
-  }
+  });
 
   String get smolId => createSmolId(modInfo.id, modInfo.version);
 
   /// In-memory cache, won't be updated if the mod's icon changes until restart.
   /// Better than re-reading the files every time, though.
   /// Key is the mod id (not smolId).
+  ///
+  /// Filled in on demand by [iconFilePath]. Finding a mod's icon means checking
+  /// six filenames and possibly reading LunaLib's config, so it's only worth
+  /// doing for mods whose icon is actually drawn.
   static Map<String, String?> iconCache = {};
 
   String? get iconFilePath => iconCache.putIfAbsent(

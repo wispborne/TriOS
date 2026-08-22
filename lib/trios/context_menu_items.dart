@@ -345,7 +345,32 @@ MenuItem buildMenuItemDebugging(
       .sortedDescending()
       .firstWhereOrNull((v) => v.versionCheckerInfo?.hasDirectDownload == true);
 
-  var redownloadEnabled = latestVersionWithDirectDownload != null;
+  // The link a mod advertises in its version file is the first choice. If no
+  // version of this mod advertises one, fall back to the link TriOS saved when
+  // it downloaded the mod.
+  final modsMetadata = ref.read(AppState.modsMetadata).value;
+  String? savedDownloadUrl(ModVariant variant) {
+    final saved = modsMetadata
+        ?.getMergedModVariantMetadata(mod.id, variant.smolId)
+        ?.downloadedFrom;
+    return (saved == null || saved.isEmpty) ? null : saved;
+  }
+
+  final latestVersionWithSavedDownload = latestVersionWithDirectDownload != null
+      ? null
+      : mod.modVariants.sortedDescending().firstWhereOrNull(
+          (v) => savedDownloadUrl(v) != null,
+        );
+
+  final redownloadVariant =
+      latestVersionWithDirectDownload ?? latestVersionWithSavedDownload;
+  final redownloadUrl =
+      latestVersionWithDirectDownload?.versionCheckerInfo?.directDownloadURL ??
+      (latestVersionWithSavedDownload == null
+          ? null
+          : savedDownloadUrl(latestVersionWithSavedDownload));
+
+  var redownloadEnabled = redownloadUrl != null;
   return MenuItem.submenu(
     label: "Troubleshoot...",
     icon: Icons.bug_report,
@@ -372,16 +397,14 @@ MenuItem buildMenuItemDebugging(
               : "Redownload unavailable",
           icon: redownloadEnabled ? Icons.downloading : null,
           onSelected: () {
-            if (redownloadEnabled) {
+            if (redownloadUrl != null && redownloadVariant != null) {
               ref
                   .read(downloadManager.notifier)
                   .downloadAndInstallMod(
-                    latestVersionWithDirectDownload.modInfo.nameOrId,
-                    latestVersionWithDirectDownload
-                        .versionCheckerInfo!
-                        .directDownloadURL!,
+                    redownloadVariant.modInfo.nameOrId,
+                    redownloadUrl,
                     activateVariantOnComplete: false,
-                    modInfo: latestVersionWithDirectDownload.modInfo,
+                    modInfo: redownloadVariant.modInfo,
                     sourceHint: null,
                   );
             } else {

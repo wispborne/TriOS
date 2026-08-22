@@ -699,18 +699,29 @@ class _ShipImageCellState extends State<ShipImageCell> {
     _check();
   }
 
+  @override
+  void didUpdateWidget(ShipImageCell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A row can be handed a different sprite path after it's already on
+    // screen. Ships are built before the graphics index has finished
+    // scanning, so their sprite paths start out empty and are filled in on a
+    // later pass. Without this check the row keeps the "no image" icon until
+    // it scrolls off screen and back.
+    if (oldWidget.imagePath != widget.imagePath) _check();
+  }
+
   void _check() async {
     final path = widget.imagePath;
-    if (path == null || path.isEmpty) return;
-
-    if (_cache[path] == true) {
-      _extantPath = path;
-    } else {
-      final exists = await File(path).exists();
-      _cache[path] = exists;
-      if (exists) _extantPath = path;
+    if (path == null || path.isEmpty) {
+      _extantPath = null;
+      return;
     }
-    if (mounted) setState(() {});
+
+    final exists = _cache[path] ?? await File(path).exists();
+    _cache[path] = exists;
+    // The path may have changed again while we were looking at the disk.
+    if (!mounted || widget.imagePath != path) return;
+    setState(() => _extantPath = exists ? path : null);
   }
 
   @override

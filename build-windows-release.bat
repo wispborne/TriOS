@@ -1,0 +1,1 @@
+fvm flutter build windows

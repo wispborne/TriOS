@@ -16,6 +16,7 @@ import 'package:trios/catalog/models/mod_image_source.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/summary_resolver.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
+import 'package:trios/dashboard/version_check_icon.dart';
 import 'package:trios/dashboard/version_check_text_readout.dart';
 import 'package:trios/mod_manager/mod_info_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
@@ -24,6 +25,7 @@ import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/download_target.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -69,11 +71,77 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   VersionCheckerInfo? get _remoteVersion =>
       widget.versionCheckComparison?.remoteVersionCheck?.remoteVersion;
 
-  Color _statusBarColor(ThemeData theme) {
+  /// Whether the user has muted the update this card would otherwise show,
+  /// either by muting the mod outright or by muting this one version.
+  bool get _isUpdateMuted {
+    final installedMod = _catalogMod.installedMod;
+    if (installedMod == null) return false;
+    final metadata = ref
+        .watch(AppState.modsMetadata)
+        .value
+        ?.getMergedModMetadata(installedMod.id);
+    return metadata?.isUpdateHidden(
+          widget.versionCheckComparison?.remoteVersionString,
+        ) ==
+        true;
+  }
+
+  /// The bell that marks a card whose updates are muted, or null when they
+  /// aren't. Right-clicking it offers the same two things the Mods page's
+  /// version-check cell does, so unmuting works the same way in both places.
+  Widget? _buildMutedUpdatesBell(ThemeData theme) {
+    final installedMod = _catalogMod.installedMod;
+    if (installedMod == null) return null;
+
+    final bell = buildMutedUpdatesIcon(
+      ref,
+      modId: installedMod.id,
+      remoteVersion: widget.versionCheckComparison?.remoteVersionString,
+      theme: theme,
+    );
+    if (bell == null) return null;
+
+    final areUpdatesMuted =
+        ref
+            .watch(AppState.modsMetadata)
+            .value
+            ?.getMergedModMetadata(installedMod.id)
+            ?.areUpdatesMuted ==
+        true;
+
+    return ContextMenuRegion(
+      contextMenu: ContextMenu(
+        entries: [
+          // Checks are off while a mod is fully muted, so there's nothing to
+          // recheck until it's unmuted.
+          if (!areUpdatesMuted)
+            MenuItem(
+              label: 'Recheck',
+              icon: Icons.refresh,
+              onSelected: () {
+                ref
+                    .read(AppState.versionCheckResults.notifier)
+                    .refresh(
+                      skipCache: true,
+                      specificVariantsToCheck: [
+                        installedMod.findFirstEnabledOrHighestVersion!,
+                      ],
+                    );
+              },
+            ),
+          buildMenuItemToggleMuteUpdates(installedMod, ref),
+        ],
+        padding: const EdgeInsets.all(8.0),
+      ),
+      child: bell,
+    );
+  }
+
+  Color _statusBarColor(ThemeData theme, {required bool isUpdateMuted}) {
     final mod = _catalogMod.installedMod;
     if (mod == null) return Colors.transparent;
 
-    if (widget.versionCheckComparison?.hasUpdate == true) {
+    if (widget.versionCheckComparison?.hasUpdate == true && !isUpdateMuted) {
       return theme.colorScheme.primary;
     }
     if (mod.isEnabledInGame) {
@@ -92,6 +160,8 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     );
 
     final theme = Theme.of(context);
+    final isUpdateMuted = _isUpdateMuted;
+    final mutedUpdatesBell = _buildMutedUpdatesBell(theme);
     return Builder(
       builder: (context) {
         final websiteUrl = mod.getBestWebsiteUrl();
@@ -204,6 +274,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                     leading: const Icon(Icons.visibility, size: 16),
                     onSelected: () => _setModEnabled(true),
                   ),
+                buildMenuItemToggleMuteUpdates(_catalogMod.installedMod!, ref),
                 const MenuDivider(),
               ],
               if (_linkEntries(context).isNotEmpty) ...[
@@ -353,8 +424,14 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                     // Only the footer sits at the button's
                                     // height, so just it clears the corner;
                                     // the name/author/description above use
-                                    // the card's full width.
-                                    padding: const EdgeInsets.only(right: 80.0),
+                                    // the card's full width. The muted bell
+                                    // sits left of the button and widens what
+                                    // has to be cleared.
+                                    padding: EdgeInsets.only(
+                                      right: mutedUpdatesBell == null
+                                          ? 80.0
+                                          : 108.0,
+                                    ),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -394,7 +471,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                               : 'Installed, disabled',
                           child: Container(
                             width: 4,
-                            color: _statusBarColor(theme),
+                            color: _statusBarColor(
+                              theme,
+                              isUpdateMuted: isUpdateMuted,
+                            ),
                           ),
                         ),
                       ),
@@ -403,12 +483,21 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                     Positioned(
                       right: 12,
                       bottom: 12,
-                      child: CatalogDownloadButton(
-                        mod: mod,
-                        installedMod: _catalogMod.installedMod,
-                        versionCheckComparison: widget.versionCheckComparison,
-                        linkLoader: widget.linkLoader,
-                        llmMainMod: _catalogMod.llmMod,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 8,
+                        children: [
+                          ?mutedUpdatesBell,
+                          CatalogDownloadButton(
+                            mod: mod,
+                            installedMod: _catalogMod.installedMod,
+                            versionCheckComparison:
+                                widget.versionCheckComparison,
+                            linkLoader: widget.linkLoader,
+                            llmMainMod: _catalogMod.llmMod,
+                            isUpdateMuted: isUpdateMuted,
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -923,6 +1012,10 @@ class CatalogDownloadButton extends ConsumerWidget {
   final void Function(String) linkLoader;
   final ForumLlmMod? llmMainMod;
 
+  /// The user asked not to hear about this update, so the button shows the
+  /// plain "Installed" marker instead of offering the update.
+  final bool isUpdateMuted;
+
   const CatalogDownloadButton({
     super.key,
     required this.mod,
@@ -930,13 +1023,15 @@ class CatalogDownloadButton extends ConsumerWidget {
     required this.versionCheckComparison,
     required this.linkLoader,
     this.llmMainMod,
+    this.isUpdateMuted = false,
   });
 
   _CatalogDownloadState _resolveState({
     required bool hasOneClick,
     required bool hasBrowserLink,
   }) {
-    final hasUpdate = versionCheckComparison?.hasUpdate == true;
+    final hasUpdate =
+        versionCheckComparison?.hasUpdate == true && !isUpdateMuted;
 
     if (installedMod != null && hasUpdate) {
       return hasOneClick

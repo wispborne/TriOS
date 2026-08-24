@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 /// Sealed taxonomy of filter groups used by viewer pages.
 ///
 /// All subtypes live in this library so Dart's sealed-class exhaustiveness
@@ -394,6 +396,12 @@ class BoolField<T> extends FilterField<T> {
   /// to hide the badge. Opt-in — most fields leave this null.
   final int Function()? badgeCount;
 
+  /// Optional extra widget drawn after the label and the count badge. Built at
+  /// render time, so it can show a live figure, and may return null to show
+  /// nothing this time round. Use it for something the main count deliberately
+  /// leaves out. Opt-in — most fields leave this null.
+  final Widget? Function(BuildContext context)? labelSuffix;
+
   bool value;
 
   BoolField({
@@ -404,6 +412,7 @@ class BoolField<T> extends FilterField<T> {
     bool? initialValue,
     this.tooltip,
     this.badgeCount,
+    this.labelSuffix,
   }) : value = initialValue ?? defaultValue;
 
   @override

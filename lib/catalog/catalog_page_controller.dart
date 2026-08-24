@@ -1,3 +1,4 @@
+import 'package:material_ui/material_ui.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/notify_on_new_state.dart';
@@ -10,12 +11,14 @@ import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/mod_metadata.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/mod_search.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 
 part 'catalog_page_controller.mapper.dart';
 
@@ -82,6 +85,28 @@ class CatalogPageState with CatalogPageStateMappable {
   });
 }
 
+/// Whether the Catalog should present [mod] as having an update.
+///
+/// True when there's a newer version and the user hasn't muted it — either by
+/// muting the mod outright or by muting this one version. Muted mods are left
+/// out of both the "Has Update" filter and the count on its badge, the same
+/// way the Mods page leaves them out of its Updates section.
+bool hasUpdateToShowInCatalog(
+  Mod mod,
+  VersionCheckerState? versionCheckState,
+  ModsMetadata? modsMetadata,
+) {
+  final comparison = mod.updateCheck(versionCheckState);
+  if (comparison?.hasUpdate != true) return false;
+
+  final isMuted =
+      modsMetadata
+          ?.getMergedModMetadata(mod.id)
+          ?.isUpdateHidden(comparison?.remoteVersionString) ==
+      true;
+  return !isMuted;
+}
+
 class CatalogEntryStatus {
   final Mod mod;
   final VersionCheckComparison? versionCheck;
@@ -97,6 +122,7 @@ class CatalogPageController extends Notifier<CatalogPageState>
 
   CatalogLinks _links = CatalogLinks(const []);
   VersionCheckerState? _versionCheckState;
+  ModsMetadata? _modsMetadata;
   Map<String, Set<String>> _versionGroupOptions = const {};
   bool _hasSeededVersionDefault = false;
 
@@ -107,10 +133,26 @@ class CatalogPageController extends Notifier<CatalogPageState>
   int get activeFilterCount => _filters.activeCount;
 
   int get updatesCount => _links.all
-      .where((l) => l.mod.updateCheck(_versionCheckState)?.hasUpdate == true)
+      .where((l) => _hasUpdateToShow(l.mod))
       .map((l) => l.mod.id)
       .toSet()
       .length;
+
+  /// How many installed mods have an update the user has muted. Shown beside
+  /// the "Has Update" count so a muted mod isn't simply missing with no
+  /// explanation, the same as the Dashboard's updates header.
+  int get mutedUpdatesCount => _links.all
+      .where(
+        (l) =>
+            l.mod.updateCheck(_versionCheckState)?.hasUpdate == true &&
+            !_hasUpdateToShow(l.mod),
+      )
+      .map((l) => l.mod.id)
+      .toSet()
+      .length;
+
+  bool _hasUpdateToShow(Mod mod) =>
+      hasUpdateToShowInCatalog(mod, _versionCheckState, _modsMetadata);
 
   CatalogEntryStatus? statusForModName(String modName) {
     final link = _links.linkForName(modName);
@@ -130,6 +172,9 @@ class CatalogPageController extends Notifier<CatalogPageState>
     _versionCheckState = ref
         .watch(AppState.versionCheckResults)
         .value;
+    // Watched so the update count and the "Has Update" filter recompute as
+    // soon as a mute is toggled.
+    _modsMetadata = ref.watch(AppState.modsMetadata).value;
     _versionGroupOptions = extractVersionGroups(allMods);
 
     if (stateOrNull == null) {
@@ -199,9 +244,14 @@ class CatalogPageController extends Notifier<CatalogPageState>
             id: 'hasUpdate',
             label: 'Has Update',
             badgeCount: () => updatesCount,
-            predicate: (mod) =>
-                statusForModName(mod.entry.name)?.versionCheck?.hasUpdate ==
-                true,
+            labelSuffix: (context) {
+              final muted = mutedUpdatesCount;
+              return muted > 0 ? _MutedUpdatesCount(count: muted) : null;
+            },
+            predicate: (mod) {
+              final installedMod = mod.installedMod;
+              return installedMod != null && _hasUpdateToShow(installedMod);
+            },
           ),
         ],
       ),
@@ -344,3 +394,33 @@ final catalogPageControllerProvider =
     NotifierProvider<CatalogPageController, CatalogPageState>(
       CatalogPageController.new,
     );
+
+/// "+ 3 🔕" shown after the "Has Update" count, saying how many mods with an
+/// update were left out because the user muted them. Draws nothing when none
+/// are muted. Worded and shaped like the Dashboard's updates header.
+class _MutedUpdatesCount extends StatelessWidget {
+  final int count;
+
+  const _MutedUpdatesCount({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return MovingTooltipWidget.text(
+      message: "$count muted update${count == 1 ? '' : 's'}",
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 2,
+        children: [
+          Text("+ $count", style: theme.textTheme.labelMedium),
+          Icon(
+            Icons.notifications_off,
+            size: 14,
+            color: theme.iconTheme.color,
+          ),
+        ],
+      ),
+    );
+  }
+}

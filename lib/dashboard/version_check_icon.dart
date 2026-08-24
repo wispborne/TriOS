@@ -47,35 +47,17 @@ class VersionCheckIcon extends ConsumerWidget {
       -1 => theme.colorScheme.secondary,
       _ => theme.disabledColor.withOpacity(0.5),
     };
-    final metadata = ref
-        .watch(AppState.modsMetadata)
-        .value
-        ?.getMergedModMetadata(modId);
     final remoteVersion = remoteVersionCheck?.remoteVersion?.modVersion
         ?.toString();
-    final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
-    // Only this one version is muted, rather than the mod being silenced.
-    final isVersionMuted =
-        !areUpdatesMuted &&
-        metadata != null &&
-        metadata.isUpdateHidden(remoteVersion);
+    final mutedIcon = buildMutedUpdatesIcon(
+      ref,
+      modId: modId,
+      remoteVersion: remoteVersion,
+      theme: theme,
+    );
 
-    return (areUpdatesMuted || isVersionMuted)
-        ? MovingTooltipWidget.text(
-            message: isVersionMuted
-                ? "Update $remoteVersion is muted. You'll be notified for the next version."
-                : "Updates muted",
-            child: Padding(
-              padding: const .only(right: 6),
-              child: Icon(
-                isVersionMuted
-                    ? Icons.notifications_paused
-                    : Icons.notifications_off,
-                size: 20.0,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-          )
+    return mutedIcon != null
+        ? Padding(padding: const .only(right: 6), child: mutedIcon)
         : Row(
             children: [
               if (localVersionCheck?.modVersion != null &&
@@ -163,4 +145,40 @@ class VersionCheckIcon extends ConsumerWidget {
             ],
           );
   }
+}
+
+/// The bell shown in place of the usual update icons when the user has muted a
+/// mod's updates. Returns null when nothing is muted, so callers can drop it
+/// into a layout without checking first.
+///
+/// Pass [remoteVersion] as it's displayed, e.g. "1.5.0", so a single-version
+/// mute can be matched against it.
+Widget? buildMutedUpdatesIcon(
+  WidgetRef ref, {
+  required String modId,
+  required String? remoteVersion,
+  required ThemeData theme,
+}) {
+  final metadata = ref
+      .watch(AppState.modsMetadata)
+      .value
+      ?.getMergedModMetadata(modId);
+  if (metadata == null) return null;
+
+  final areUpdatesMuted = metadata.areUpdatesMuted;
+  // Only this one version is muted, rather than the mod being silenced.
+  final isVersionMuted =
+      !areUpdatesMuted && metadata.isUpdateHidden(remoteVersion);
+  if (!areUpdatesMuted && !isVersionMuted) return null;
+
+  return MovingTooltipWidget.text(
+    message: isVersionMuted
+        ? "Update $remoteVersion is muted. You'll be notified for the next version."
+        : "Updates muted",
+    child: Icon(
+      isVersionMuted ? Icons.notifications_paused : Icons.notifications_off,
+      size: 20.0,
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+    ),
+  );
 }

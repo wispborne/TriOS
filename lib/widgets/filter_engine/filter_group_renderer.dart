@@ -215,13 +215,15 @@ class _CompositeCard<T> extends StatelessWidget {
     final theme = Theme.of(context);
     if (field is BoolField<T>) {
       final count = field.badgeCount?.call() ?? 0;
+      final suffix = field.labelSuffix?.call(context);
       final tile = CheckboxListTile(
-        title: count > 0
+        title: count > 0 || suffix != null
             ? Row(
+                spacing: 6,
                 children: [
                   Flexible(child: Text(field.label)),
-                  const SizedBox(width: 6),
-                  _CountBadge(count: count),
+                  if (count > 0) _CountBadge(count: count),
+                  ?suffix,
                 ],
               )
             : Text(field.label),

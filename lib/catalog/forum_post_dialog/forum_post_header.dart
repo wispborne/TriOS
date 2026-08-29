@@ -204,7 +204,11 @@ class _DownloadSection extends StatelessWidget {
     // The lead row is the mod the dialog is already named after, so its name on
     // the button would just be said twice. When we couldn't tell which mod that
     // is, the row says which mod it downloads rather than staying silent.
-    final showLeadName = !leadGroup.isDialogMod;
+    //
+    // A row with a tag on it keeps its name either way: "add-on" on its own
+    // doesn't say an add-on to what.
+    final showLeadName =
+        !leadGroup.isDialogMod || _DownloadRow._roleLabel(leadGroup) != null;
 
     return Column(
       crossAxisAlignment: .start,

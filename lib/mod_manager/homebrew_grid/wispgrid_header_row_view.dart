@@ -402,13 +402,6 @@ ContextMenu buildWispGridHeaderContextMenu({
           false);
   return ContextMenu(
     entries: [
-      MenuItem(
-        label: 'Reset grid layout',
-        icon: Icons.settings_backup_restore,
-        onSelected: () {
-          updateGridState((WispGridState state) => null);
-        },
-      ),
       if (clickedColumn != null)
         MenuItem(
           label: isClickedColumnFrozen
@@ -497,6 +490,14 @@ ContextMenu buildWispGridHeaderContextMenu({
             ),
           ],
         ),
+      MenuDivider(),
+      MenuItem(
+        label: 'Reset grid layout',
+        icon: Icons.settings_backup_restore,
+        onSelected: () {
+          updateGridState((WispGridState state) => null);
+        },
+      ),
       MenuDivider(),
       MenuHeader(text: "Hide/Show Columns", disableUppercase: true),
       MenuItem(
@@ -591,7 +592,6 @@ class DraggableHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     var sortedVisibleColumns = gridState.sortedVisibleColumns(columns);
-    final isFirst = sortedVisibleColumns.firstOrNull?.key == header;
     final isLast = sortedVisibleColumns.lastOrNull?.key == header;
 
     Widget draggableChild({required bool isHovered}) {
@@ -601,32 +601,16 @@ class DraggableHeader extends ConsumerWidget {
         children: [
           child,
           if (isHovered) Container(color: Colors.black.withOpacity(0.5)),
-          if (isFirst)
-            MovingTooltipWidget.text(
-              message: 'Reset grid layout',
-              child: Opacity(
-                opacity: showDragHandle ? 1 : 0,
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  style: ElevatedButton.styleFrom(shape: const CircleBorder()),
-                  onPressed: () {
-                    updateGridState((WispGridState state) => null);
-                  },
-                  icon: const Icon(Icons.settings_backup_restore),
-                ),
-              ),
-            )
-          else
-            Positioned(
-              right: isLast ? 12 : 4,
-              child: Opacity(
-                opacity: showDragHandle ? 1 : 0,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.grab,
-                  child: const Icon(Icons.drag_indicator, size: 16),
-                ),
+          Positioned(
+            right: isLast ? 12 : 4,
+            child: Opacity(
+              opacity: showDragHandle ? 1 : 0,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.grab,
+                child: const Icon(Icons.drag_indicator, size: 16),
               ),
             ),
+          ),
         ],
       );
     }

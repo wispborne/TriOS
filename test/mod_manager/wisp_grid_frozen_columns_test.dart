@@ -1,6 +1,9 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_header_row_view.dart';
 
 class _FakeItem implements WispGridItem {
   @override
@@ -30,9 +33,10 @@ void main() {
   ];
 
   test('nothing is frozen by default, so the order is unchanged', () {
-    final order = _stateWith(
-      {},
-    ).sortedVisibleColumns(columns).map((e) => e.key).toList();
+    final order = _stateWith({})
+        .sortedVisibleColumns(columns)
+        .map((e) => e.key)
+        .toList();
 
     expect(order, ['name', 'author', 'version', 'range']);
   });
@@ -137,5 +141,77 @@ void main() {
     expect(oldSaved.isFrozen, isFalse);
     expect(oldSaved.position, 3);
     expect(oldSaved.width, 120.0);
+  });
+
+  testWidgets('clicking the first frozen header sorts instead of resetting', (
+    tester,
+  ) async {
+    final sortableColumns = [
+      WispGridColumn<_FakeItem>(
+        key: 'name',
+        name: 'name',
+        isSortable: true,
+        getSortValue: (item) => item.key,
+        csvValue: null,
+        defaultState: const WispGridColumnState(position: 0, width: 100),
+      ),
+      WispGridColumn<_FakeItem>(
+        key: 'author',
+        name: 'author',
+        isSortable: true,
+        getSortValue: (item) => item.key,
+        csvValue: null,
+        defaultState: const WispGridColumnState(position: 1, width: 100),
+      ),
+    ];
+    var currentState = _stateWith({
+      'author': const WispGridColumnState(
+        position: 1,
+        width: 100,
+        isFrozen: true,
+      ),
+    });
+    var resetCount = 0;
+
+    void updateGridState(WispGridState? Function(WispGridState) update) {
+      final nextState = update(currentState);
+      if (nextState == null) {
+        resetCount++;
+      } else {
+        currentState = nextState;
+      }
+    }
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 100,
+              height: 30,
+              child: DraggableHeader(
+                header: 'author',
+                showDragHandle: true,
+                gridState: currentState,
+                updateGridState: updateGridState,
+                columns: sortableColumns,
+                child: SortableHeader(
+                  columnSortField: 'author',
+                  gridState: currentState,
+                  updateGridState: (update) => updateGridState(update),
+                  child: const Text('author'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('author'));
+    await tester.pump();
+
+    expect(resetCount, 0);
+    expect(currentState.sortedColumnKey, 'author');
   });
 }

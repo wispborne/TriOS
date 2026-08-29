@@ -33,3 +33,19 @@ _Avoid_: Ignored mod, silenced mod, hidden mod
 **Muted update**:
 One version of one mod that the user has told TriOS to stop mentioning. Version checks keep running, and the mod speaks up again by itself as soon as it advertises a different version. For skipping one broken release, as opposed to going quiet on the mod. Not the same as a muted mod.
 _Avoid_: Skipped version, ignored update, dismissed update
+
+## Mod sources
+
+**Mod source**:
+A record of where TriOS learned about a mod — the version checker, the catalog, a forum thread, or a download. Collected automatically as TriOS encounters the mod.
+_Avoid_: Mod origin, mod link, mod record (that's the container holding all of a mod's sources)
+
+**Source override**:
+A value the user typed in to replace what a mod source collected automatically. Wins over the automatic value, field by field, and survives automatic re-collection.
+_Avoid_: Manual link, user link, custom source
+
+## Grids
+
+**Frozen column**:
+A column the user has told a grid to keep in view while the other columns scroll sideways. Frozen columns always sit leftmost, keeping their order relative to each other. Named after Excel's "freeze panes".
+_Avoid_: Pinned column (pinning is the grids' word for rows held at the top), sticky column, locked column

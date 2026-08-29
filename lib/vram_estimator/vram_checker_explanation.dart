@@ -90,11 +90,11 @@ class _VramCheckerExplanationDialogState
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            '• Folder scan — counts every image in the mod folder (minus a few filename markers). Matches the tool\'s original behavior. May over-count when mods ship unused assets.',
+                            '• Folder scan: counts every image in the mod folder (minus a few filename markers). Matches the tool\'s original behavior. May over-count when mods ship unused assets.',
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            '• Referenced only — parses .ship, .wpn, .proj, ship_data.csv, weapon_data.csv, .faction, portraits.csv, settings.json, the GraphicsLib CSV, .jar string literals, and loose .java sources to identify only images that are actually referenced. Images found on disk but not referenced are shown separately as "Unreferenced" (advisory — they may be dev leftovers or may be loaded via dynamic paths).',
+                            '• Referenced only: parses .ship, .wpn, .proj, ship_data.csv, weapon_data.csv, .faction, portraits.csv, settings.json, the GraphicsLib CSV, .jar string literals, and loose .java sources to identify only images that are actually referenced. Images found on disk but not referenced are shown separately as "Unreferenced" (they may be dev leftovers or loaded via dynamic paths).',
                           ),
                           const SizedBox(height: 8),
                           const Text(
@@ -107,20 +107,20 @@ class _VramCheckerExplanationDialogState
                             '• Obfuscated or packed jars may defeat string extraction.',
                           ),
                           const Text(
-                            '• GraphicsLib normal/material/surface maps are kept whenever their CSV entry exists, regardless of whether their base sprite is referenced — matches how GraphicsLib loads maps in practice.',
+                            '• GraphicsLib normal/material/surface maps are kept whenever their CSV entry exists, regardless of whether their base sprite is referenced. This matches how GraphicsLib loads maps in practice.',
                           ),
                           const SizedBox(height: 8),
                           const Text(
                             'Debug panel toggles (visible only in Referenced mode):',
                           ),
                           const Text(
-                            '• Per-source chips — turn individual reference parsers on/off to bisect false positives.',
+                            '• Per-source chips: turn individual reference parsers on/off to bisect false positives.',
                           ),
                           const Text(
-                            '• Suppress unreferenced — hide the unreferenced bucket entirely for a clean comparison against folder-scan totals.',
+                            '• Suppress unreferenced: hide the unreferenced bucket entirely for a clean comparison against folder-scan totals.',
                           ),
                           const Text(
-                            '• Track attribution — record which parser(s) flagged each file, surfaced in the per-file detail view.',
+                            '• Track attribution: record which parser(s) flagged each file, surfaced in the per-file detail view.',
                           ),
                           const SizedBox(height: 8),
                           Text(

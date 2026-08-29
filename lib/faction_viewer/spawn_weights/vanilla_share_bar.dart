@@ -205,7 +205,7 @@ class VanillaShareBar extends ConsumerWidget {
           label: 'Still reading mods',
           share: share,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-          tooltip: "Still reading the mods — this part isn't sorted yet.",
+          tooltip: "Still reading mods. This part isn't sorted yet.",
         ),
       );
     }

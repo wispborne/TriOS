@@ -205,7 +205,7 @@ class _ModBytesLabel extends StatelessWidget {
         if (hasUnref)
           MovingTooltipWidget.text(
             message:
-                'Advisory — images on disk that no parsed reference points to. '
+                'Advisory: images on disk that no parsed reference points to. '
                 'May be dev leftovers, or loaded via dynamic paths the parsers '
                 "can't detect.",
             child: Text(
@@ -272,7 +272,7 @@ class _RowRescanButtonState extends State<_RowRescanButton>
         ? 'Rescanning this mod…'
         : widget.canRescan
         ? 'Rescan this mod'
-        : 'Scan in progress — rescan unavailable';
+        : 'Scan in progress, rescan unavailable';
     return MovingTooltipWidget.text(
       message: tooltip,
       child: IconButton(

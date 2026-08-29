@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
@@ -708,8 +708,7 @@ class _FiltersPanelState extends State<FiltersPanel> {
             MovingTooltipWidget.text(
               message:
                   'Advanced filters: adds an "any" / "all" choice to each '
-                  'group, for asking that items have every value you pick '
-                  'rather than just one of them.',
+                  'group.',
               child: CheckboxWithLabel(
                 label: 'Advanced',
                 labelStyle: theme.textTheme.labelLarge,
@@ -809,9 +808,8 @@ class _FiltersPanelState extends State<FiltersPanel> {
                     searchTerm: _searchTerm,
                     isAdvanced: widget.isAdvanced,
                     child: ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(
-                        context,
-                      ).copyWith(scrollbars: false),
+                      behavior: ScrollConfiguration.of(context)
+                          .copyWith(scrollbars: false),
                       child: SingleChildScrollView(
                         controller: _controller,
                         child: Column(

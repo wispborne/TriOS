@@ -376,7 +376,7 @@ class _RescanButtonState extends State<_RescanButton>
         ? 'Rescanning this mod…'
         : widget.enabled
         ? 'Rescan this mod'
-        : 'Scan in progress — rescan unavailable';
+        : 'Scan in progress, rescan unavailable';
     return MovingTooltipWidget.text(
       message: tooltip,
       child: IconButton(

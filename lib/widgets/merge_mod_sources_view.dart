@@ -117,7 +117,7 @@ String _statsTooltip(ItemModSources sources) =>
     'Overridden (no effect): ${sources.statsIgnored.join(', ')}';
 
 String _fileTooltip(ItemModSources sources, String fileLabel) {
-  final buffer = StringBuffer('$fileLabel — what each mod changes');
+  final buffer = StringBuffer('$fileLabel: what each mod changes');
   for (final s in sources.fileSources) {
     buffer.write('\n\n${s.sourceName}');
     if (s.isWinner) {

@@ -162,7 +162,7 @@ class _ScanProgressPanelState extends ConsumerState<ScanProgressPanel> {
           )
         else
           Text(
-            'Preparing scan — collecting mod folders…',
+            'Preparing scan, collecting mod folders…',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontStyle: FontStyle.italic,

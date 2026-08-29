@@ -80,7 +80,7 @@ class ReferenceScanDebugPanel extends ConsumerWidget {
                   const SizedBox(height: 16),
                   MovingTooltipWidget.text(
                     message:
-                        'Hide unreferenced bucket — compare directly to '
+                        'Hide the unreferenced bucket to compare directly to '
                         'folder-scan totals.',
                     child: SwitchListTile(
                       title: const Text('Suppress unreferenced bucket'),

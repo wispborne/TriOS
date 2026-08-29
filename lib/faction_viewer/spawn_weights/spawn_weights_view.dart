@@ -243,7 +243,7 @@ class SpawnWeightsView extends ConsumerWidget {
         children: [
           Icon(Icons.info_outline, size: 14, color: color),
           Text(
-            'These numbers are close, but not exact — hover for why.'
+            'These numbers are close but not exact. Hover for details.'
             '${skipped > 0 ? ' $skipped entries were left out because their '
                       'ship is not installed.' : ''}',
             style: theme.textTheme.labelSmall?.copyWith(
@@ -368,7 +368,7 @@ class _SpawnWeightTable extends ConsumerWidget {
         children: [
           Icon(Icons.star, size: 14, color: theme.colorScheme.tertiary),
           Text(
-            'Priority ship — the faction favors these, so they spawn more '
+            'Priority ship. The faction favors these, so they spawn more '
             'than their weight alone suggests.',
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,

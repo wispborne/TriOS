@@ -464,7 +464,7 @@ class FactionProfileDialog extends ConsumerWidget {
         Text(
           adder != null
               ? 'Added by: ${adder.name}'
-              : 'Not added by any enabled mod — it may belong to a disabled mod.',
+              : 'Not added by any enabled mod. It may belong to a disabled mod.',
           style: theme.textTheme.bodySmall,
         ),
         if (modifiers.isNotEmpty)

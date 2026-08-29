@@ -176,7 +176,7 @@ class Faction with FactionMappable implements WispGridItem {
       if (adder != null)
         'Added by: ${adder.name}'
       else
-        'Not added by any enabled mod — it may belong to a disabled mod.',
+        'Not added by any enabled mod. It may belong to a disabled mod.',
       if (modifiers.isNotEmpty) 'Modified by: $modifiers',
     ].join('\n');
   }

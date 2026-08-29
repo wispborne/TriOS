@@ -112,7 +112,7 @@ data/factions/elsewhere.faction
       );
       expect(
         factionWith(const [patcher]).attributionTooltip,
-        'Not added by any enabled mod — it may belong to a disabled mod.\n'
+        'Not added by any enabled mod. It may belong to a disabled mod.\n'
         'Modified by: Patcher',
       );
       expect(factionWith(const []).attributionTooltip, '');

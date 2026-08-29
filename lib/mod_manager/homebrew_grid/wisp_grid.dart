@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_frozen_overlay.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group_row.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_header_row_view.dart';
@@ -207,6 +208,19 @@ extension WispGridColumnsExtension on WispGridState {
           .takeWhile((element) => element.key != columnKey)
           .map((e) => e.value.width + WispGrid.gridRowSpacing)
           .sum;
+
+  /// How much of the grid's left edge the frozen columns take up: everything
+  /// from x = 0 up to where the first unfrozen column starts. Zero when
+  /// nothing is frozen.
+  double frozenBlockWidth(List<WispGridColumn> columns) {
+    final frozen = frozenVisibleColumns(columns);
+    if (frozen.isEmpty) return 0;
+    // The grid indents its first column by two spacings, and each column is
+    // followed by one more.
+    return WispGrid.gridRowSpacing * 2 +
+        frozen.map((e) => e.value.width).sum +
+        frozen.length * WispGrid.gridRowSpacing;
+  }
 }
 
 class _WispGridState<T extends WispGridItem>
@@ -256,7 +270,8 @@ class _WispGridState<T extends WispGridItem>
       (grp) => grp.key == groupingSetting?.currentGroupedByKey,
     );
     final secondaryKey = groupingSetting?.secondaryGroupedByKey;
-    final secondaryCandidate = (primaryGrouping == null ||
+    final secondaryCandidate =
+        (primaryGrouping == null ||
             secondaryKey == null ||
             secondaryKey == primaryGrouping.key)
         ? null
@@ -320,7 +335,8 @@ class _WispGridState<T extends WispGridItem>
     // Primary-level grouping.
     final Map<Comparable?, List<T>> primaryGrouped = {};
     for (final item in sortedItems) {
-      final sortValues = primaryGrouping?.getAllGroupSortValues(item) ??
+      final sortValues =
+          primaryGrouping?.getAllGroupSortValues(item) ??
           [primaryGrouping?.getGroupSortValue(item)];
       for (final sv in sortValues) {
         (primaryGrouped[sv] ??= []).add(item);
@@ -329,9 +345,9 @@ class _WispGridState<T extends WispGridItem>
     final primaryEntries = (groupingSetting?.isSortDescending ?? false)
         ? primaryGrouped.entries.sortedByDescending((e) => e.key).toList()
         : primaryGrouped.entries
-            .sortedByDescending((e) => e.key)
-            .reversed
-            .toList();
+              .sortedByDescending((e) => e.key)
+              .reversed
+              .toList();
 
     final renderedGroups = <_RenderedGroup<T>>[];
 
@@ -438,6 +454,7 @@ class _WispGridState<T extends WispGridItem>
                 gridState: gridState,
                 columns: widget.columns,
                 rowBuilder: widget.rowBuilder,
+                horizontalScrollController: _gridScrollControllerHorizontal,
                 onTapped: () {
                   widget.onRowSelected?.call(item);
                 },
@@ -475,8 +492,9 @@ class _WispGridState<T extends WispGridItem>
           groups: widget.groups,
           gridState: gridState,
           updateGridState: widget.updateGridState,
-          groupSortValue:
-              group.sortValue is Comparable ? group.sortValue : null,
+          groupSortValue: group.sortValue is Comparable
+              ? group.sortValue
+              : null,
         );
         if (primaryGroupingLocal.supportsDragAndDrop) {
           primaryHeader = _DragTargetGroupHeader<T>(
@@ -502,8 +520,10 @@ class _WispGridState<T extends WispGridItem>
         bool isSecondaryCollapsed = false;
 
         if (hasSecondaryHeader) {
-          final secondaryCollapseKey =
-              _CollapseKey(group.sortValue, sub.sortValue);
+          final secondaryCollapseKey = _CollapseKey(
+            group.sortValue,
+            sub.sortValue,
+          );
           isSecondaryCollapsed = collapseStates[secondaryCollapseKey] == true;
 
           Widget secondaryHeader = WispGridGroupRowView<T>(
@@ -520,8 +540,7 @@ class _WispGridState<T extends WispGridItem>
             groups: widget.groups,
             gridState: gridState,
             updateGridState: widget.updateGridState,
-            groupSortValue:
-                sub.sortValue is Comparable ? sub.sortValue : null,
+            groupSortValue: sub.sortValue is Comparable ? sub.sortValue : null,
             headerStyleOverride: GroupHeaderStyle.small,
           );
           if (sub.grouping!.supportsDragAndDrop) {
@@ -543,6 +562,7 @@ class _WispGridState<T extends WispGridItem>
             gridState: gridState,
             columns: widget.columns,
             rowBuilder: widget.rowBuilder,
+            horizontalScrollController: _gridScrollControllerHorizontal,
             onTapped: () {
               if (HardwareKeyboard.instance.isShiftPressed) {
                 _onRowCheck(
@@ -574,16 +594,15 @@ class _WispGridState<T extends WispGridItem>
           );
 
           if (isRowDragEnabled) {
-            final draggedKeys = _checkedItemIds.contains(item.key) &&
-                    _checkedItemIds.length > 1
+            final draggedKeys =
+                _checkedItemIds.contains(item.key) && _checkedItemIds.length > 1
                 ? _checkedItemIds.toList()
                 : [item.key];
 
             final baseRowWidget = rowWidget;
             rowWidget = DragTarget<_WispGridDragData>(
               onWillAcceptWithDetails: (details) =>
-                  details.data.dragDataType ==
-                      rowDragGrouping!.dragDataType &&
+                  details.data.dragDataType == rowDragGrouping!.dragDataType &&
                   !details.data.itemKeys.contains(item.key),
               onAcceptWithDetails: (details) {
                 _dragTargetGroupName.value = null;
@@ -641,8 +660,9 @@ class _WispGridState<T extends WispGridItem>
       }
     }
 
-    final visibleColumnsForWidth =
-        gridState.sortedVisibleColumns(widget.columns);
+    final visibleColumnsForWidth = gridState.sortedVisibleColumns(
+      widget.columns,
+    );
     // Width must satisfy two layouts that share this SizedBox:
     //   Row body (WispGridRowView): 2 wrapping boxes + N columns +
     //     (N+1) inter-child gaps = sum(w) + (N+3)*spacing
@@ -652,9 +672,8 @@ class _WispGridState<T extends WispGridItem>
     // The header is the larger of the two; under-allocating squeezes the
     // header columns, and onMultiSplitViewChanged persists the squeezed
     // widths back to state — a feedback loop that shrinks columns to zero.
-    final totalRowWidth = visibleColumnsForWidth
-            .map((e) => e.value.width)
-            .sum +
+    final totalRowWidth =
+        visibleColumnsForWidth.map((e) => e.value.width).sum +
         (visibleColumnsForWidth.length + 4) * WispGrid.gridRowSpacing;
 
     // If the columns don't fill the window, stretch the grid to the window
@@ -696,10 +715,7 @@ class _WispGridState<T extends WispGridItem>
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               controller: _gridScrollControllerHorizontal,
-              child: SizedBox(
-                width: gridWidth,
-                child: content,
-              ),
+              child: SizedBox(width: gridWidth, child: content),
             ),
           );
         } else {
@@ -707,10 +723,7 @@ class _WispGridState<T extends WispGridItem>
           content = SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             controller: _gridScrollControllerHorizontal,
-            child: SizedBox(
-              width: gridWidth,
-              child: content,
-            ),
+            child: SizedBox(width: gridWidth, child: content),
           );
         }
 
@@ -742,6 +755,8 @@ class _WispGridState<T extends WispGridItem>
     List<Widget> displayedMods,
     double gridWidth,
   ) {
+    final frozenWidth = gridState.frozenBlockWidth(columns);
+
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
       child: Builder(
@@ -754,13 +769,31 @@ class _WispGridState<T extends WispGridItem>
 
             // Handle group-row widgets vs normal row widgets
             if (_isGroupHeader(item)) {
-              return Row(
+              final groupRow = Row(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 0),
                     child: SizedBox(width: gridWidth, child: item),
                   ),
                   const Spacer(),
+                ],
+              );
+
+              if (frozenWidth <= 0) return groupRow;
+
+              // A group header spans the whole row, so the frozen copy is the
+              // same header laid out at full width and clipped to the frozen
+              // block — enough to keep the group's name readable.
+              return Stack(
+                fit: StackFit.passthrough,
+                children: [
+                  groupRow,
+                  WispGridFrozenOverlay(
+                    horizontalScrollController: _gridScrollControllerHorizontal,
+                    width: frozenWidth,
+                    contentWidth: gridWidth,
+                    child: item,
+                  ),
                 ],
               );
             }
@@ -785,14 +818,34 @@ class _WispGridState<T extends WispGridItem>
                   maxHeight: 30,
                   child: Container(
                     color: Theme.of(context).colorScheme.surface,
-                    child: WispGridHeaderRowView(
-                      gridState: gridState,
-                      groups: widget.groups,
-                      updateGridState: widget.updateGridState,
-                      columns: columns,
-                      defaultGridSort: widget.defaultSortField,
-                      perColumnContextMenuEntries:
-                          widget.perColumnContextMenuEntries,
+                    child: Stack(
+                      fit: StackFit.passthrough,
+                      children: [
+                        WispGridHeaderRowView(
+                          gridState: gridState,
+                          groups: widget.groups,
+                          updateGridState: widget.updateGridState,
+                          columns: columns,
+                          defaultGridSort: widget.defaultSortField,
+                          perColumnContextMenuEntries:
+                              widget.perColumnContextMenuEntries,
+                        ),
+                        if (frozenWidth > 0)
+                          WispGridFrozenOverlay(
+                            horizontalScrollController:
+                                _gridScrollControllerHorizontal,
+                            width: frozenWidth,
+                            child: WispGridFrozenHeaderRowView(
+                              gridState: gridState,
+                              groups: widget.groups,
+                              updateGridState: widget.updateGridState,
+                              columns: columns,
+                              defaultGridSort: widget.defaultSortField,
+                              perColumnContextMenuEntries:
+                                  widget.perColumnContextMenuEntries,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -827,10 +880,10 @@ class _WispGridState<T extends WispGridItem>
   }
 
   double _headerHeightFor(Widget w) => switch (_headerStyleFor(w)) {
-        GroupHeaderStyle.small => 28.0,
-        GroupHeaderStyle.medium => 32.0,
-        GroupHeaderStyle.large => 44.0,
-      };
+    GroupHeaderStyle.small => 28.0,
+    GroupHeaderStyle.medium => 32.0,
+    GroupHeaderStyle.large => 44.0,
+  };
 
   Widget _buildItemSliver(
     List<Widget> displayedMods,
@@ -1013,7 +1066,8 @@ extension WispGridCsvExport<T extends WispGridItem> on _WispGridState<T> {
       } else if (group.grouping != null && group.grouping!.isGroupVisible) {
         final firstItem = group.allItems.firstOrNull;
         if (firstItem != null) {
-          primaryName = group.grouping!.getGroupName(
+          primaryName =
+              group.grouping!.getGroupName(
                 firstItem,
                 groupSortValue: group.sortValue,
               ) ??
@@ -1034,10 +1088,10 @@ extension WispGridCsvExport<T extends WispGridItem> on _WispGridState<T> {
           final subName = firstItem == null
               ? sub.grouping!.displayName
               : (sub.grouping!.getGroupName(
-                    firstItem,
-                    groupSortValue: sub.sortValue,
-                  ) ??
-                  sub.grouping!.displayName);
+                      firstItem,
+                      groupSortValue: sub.sortValue,
+                    ) ??
+                    sub.grouping!.displayName);
           csvRows.add(["## Subgroup: $subName"]);
         }
         appendItems(sub.items);

@@ -68,10 +68,15 @@ class WispGridColumnState with WispGridColumnStateMappable {
   final double width;
   final bool isVisible;
 
+  /// Frozen columns are held at the left edge of the grid while the rest of
+  /// the columns scroll sideways.
+  final bool isFrozen;
+
   const WispGridColumnState({
     required this.position,
     required this.width,
     this.isVisible = true,
+    this.isFrozen = false,
   });
 }
 
@@ -107,6 +112,7 @@ class WispGridState with WispGridStateMappable {
         position: userState?.position ?? base.position,
         width: userState?.width ?? base.width,
         isVisible: userState?.isVisible ?? base.isVisible,
+        isFrozen: userState?.isFrozen ?? base.isFrozen,
       );
 
       return MapEntry(spec.key, finalState);
@@ -118,22 +124,37 @@ class WispGridState with WispGridStateMappable {
   }
 
   /// Returns only the visible columns (i.e., `isVisible == true`)
-  /// in sorted order. If a stale persisted state hides every column, falls
-  /// back to the `name`/`id` column (or the first sorted column) so the
-  /// header — the only entry point to the column-visibility menu — is
-  /// always reachable.
+  /// in sorted order, with the frozen columns moved to the front. Frozen
+  /// columns keep their order relative to each other, and so do the rest, so
+  /// unfreezing a column puts it back where it was.
+  ///
+  /// If a stale persisted state hides every column, falls back to the
+  /// `name`/`id` column (or the first sorted column) so the header — the only
+  /// entry point to the column-visibility menu — is always reachable.
   List<MapEntry<String, WispGridColumnState>> sortedVisibleColumns(
     List<WispGridColumn> columnSpecs,
   ) {
     final all = sortedColumns(columnSpecs);
     final visible = all.where((entry) => entry.value.isVisible).toList();
-    if (visible.isNotEmpty || all.isEmpty) return visible;
-    final fallback = all.firstWhere(
-      (e) => e.key == 'name' || e.key == 'id',
-      orElse: () => all.first,
-    );
-    return [MapEntry(fallback.key, fallback.value.copyWith(isVisible: true))];
+    if (visible.isEmpty && all.isNotEmpty) {
+      final fallback = all.firstWhere(
+        (e) => e.key == 'name' || e.key == 'id',
+        orElse: () => all.first,
+      );
+      return [MapEntry(fallback.key, fallback.value.copyWith(isVisible: true))];
+    }
+    return [
+      ...visible.where((entry) => entry.value.isFrozen),
+      ...visible.where((entry) => !entry.value.isFrozen),
+    ];
   }
+
+  /// The visible columns that are held at the grid's left edge.
+  List<MapEntry<String, WispGridColumnState>> frozenVisibleColumns(
+    List<WispGridColumn> columnSpecs,
+  ) => sortedVisibleColumns(
+    columnSpecs,
+  ).where((entry) => entry.value.isFrozen).toList();
 
   // WispGridState empty() =>
   //     const WispGridState(groupingSetting: null, columnsState: {});

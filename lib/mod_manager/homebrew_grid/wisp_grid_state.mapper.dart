@@ -782,12 +782,20 @@ class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
     opt: true,
     def: true,
   );
+  static bool _$isFrozen(WispGridColumnState v) => v.isFrozen;
+  static const Field<WispGridColumnState, bool> _f$isFrozen = Field(
+    'isFrozen',
+    _$isFrozen,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<WispGridColumnState> fields = const {
     #position: _f$position,
     #width: _f$width,
     #isVisible: _f$isVisible,
+    #isFrozen: _f$isFrozen,
   };
 
   static WispGridColumnState _instantiate(DecodingData data) {
@@ -795,6 +803,7 @@ class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
       position: data.dec(_f$position),
       width: data.dec(_f$width),
       isVisible: data.dec(_f$isVisible),
+      isFrozen: data.dec(_f$isFrozen),
     );
   }
 
@@ -868,7 +877,7 @@ abstract class WispGridColumnStateCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({int? position, double? width, bool? isVisible});
+  $R call({int? position, double? width, bool? isVisible, bool? isFrozen});
   WispGridColumnStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -883,18 +892,21 @@ class _WispGridColumnStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<WispGridColumnState> $mapper =
       WispGridColumnStateMapper.ensureInitialized();
   @override
-  $R call({int? position, double? width, bool? isVisible}) => $apply(
-    FieldCopyWithData({
-      if (position != null) #position: position,
-      if (width != null) #width: width,
-      if (isVisible != null) #isVisible: isVisible,
-    }),
-  );
+  $R call({int? position, double? width, bool? isVisible, bool? isFrozen}) =>
+      $apply(
+        FieldCopyWithData({
+          if (position != null) #position: position,
+          if (width != null) #width: width,
+          if (isVisible != null) #isVisible: isVisible,
+          if (isFrozen != null) #isFrozen: isFrozen,
+        }),
+      );
   @override
   WispGridColumnState $make(CopyWithData data) => WispGridColumnState(
     position: data.get(#position, or: $value.position),
     width: data.get(#width, or: $value.width),
     isVisible: data.get(#isVisible, or: $value.isVisible),
+    isFrozen: data.get(#isFrozen, or: $value.isFrozen),
   );
 
   @override

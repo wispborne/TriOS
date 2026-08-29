@@ -38,6 +38,7 @@
     - Right-click the icon, or use the Mods page menu, to turn the icons off.
   - Tooltip on the "Clear All" filter button explaining default and spoiler filters.
   - Now remembers the url you used to download a mod through TriOS, allowing you to redownload/reinstall mods.
+  - Freeze columns in grids (e.g. to "pin" the ship name when scrolling).
 - Fixed
   - Table columns may now be as wide as the window itself.
   - A ship no longer lists the same built-in hullmod twice when two mods both name it.

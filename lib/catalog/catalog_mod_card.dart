@@ -35,6 +35,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/mod_download/mod_download_button.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/safe_resize_image.dart';
 import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/stroke_text.dart';
 import 'package:trios/widgets/text_trios.dart';
@@ -922,23 +923,25 @@ class ModImage extends StatelessWidget {
     );
   }
 
-  Widget _buildImage(ModImageSource source, {BoxFit? fit, int? cacheWidth}) =>
-      switch (source) {
-        WebModImage(:final url) =>
-            Image.network(
-              url,
-              fit: fit,
-              cacheWidth: cacheWidth,
-              errorBuilder: (_, _, _) => _defaultImage(),
-            ),
-        FileModImage(:final file) =>
-            Image.file(
-              file,
-              fit: fit,
-              cacheWidth: cacheWidth,
-              errorBuilder: (_, _, _) => _defaultImage(),
-            ),
-      };
+  Widget _buildImage(ModImageSource source, {BoxFit? fit, int? cacheWidth}) {
+    final ImageProvider<Object> imageProvider = switch (source) {
+      WebModImage(:final url) => NetworkImage(url),
+      FileModImage(:final file) => FileImage(file),
+    };
+    final resizedProvider = cacheWidth == null
+        ? imageProvider
+        : SafeResizeImage(
+            imageProvider,
+            maxWidth: cacheWidth,
+            maxHeight: cacheWidth,
+          );
+
+    return Image(
+      image: resizedProvider,
+      fit: fit,
+      errorBuilder: (_, _, _) => _defaultImage(),
+    );
+  }
 
   Widget _defaultImage() {
     return Container(

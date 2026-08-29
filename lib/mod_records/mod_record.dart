@@ -138,6 +138,9 @@ class ModRecord with ModRecordMappable {
   late final String? nexusModsId =
       versionChecker?.nexusModsId ?? catalog?.nexusModsId;
 
+  /// Where this mod was last downloaded from, if known.
+  late final String? downloadedFrom = downloadHistory?.lastDownloadedFrom;
+
   // --- Static helpers ---
 
   /// Builds the key for a catalog-only mod record, e.g. "Ashpad" -> "catalog:ashpad".

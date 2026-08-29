@@ -108,6 +108,12 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
     _$nexusModsId,
     mode: FieldMode.member,
   );
+  static String? _$downloadedFrom(ModRecord v) => v.downloadedFrom;
+  static const Field<ModRecord, String> _f$downloadedFrom = Field(
+    'downloadedFrom',
+    _$downloadedFrom,
+    mode: FieldMode.member,
+  );
 
   @override
   final MappableFields<ModRecord> fields = const {
@@ -126,6 +132,7 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
     #allAuthors: _f$allAuthors,
     #forumThreadId: _f$forumThreadId,
     #nexusModsId: _f$nexusModsId,
+    #downloadedFrom: _f$downloadedFrom,
   };
 
   static ModRecord _instantiate(DecodingData data) {

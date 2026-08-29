@@ -132,6 +132,19 @@ MenuItem<dynamic> buildMenuItemCopyInstallLink(
   );
 }
 
+/// Opens the dialog that shows, and lets the user edit, where a mod came from.
+MenuItem buildMenuItemModSources(Mod mod, BuildContext context) {
+  return MenuItem(
+    label: "Mod Sources...",
+    icon: Icons.source,
+    onSelected: () => showModRecordSourcesDialog(
+      context,
+      mod.id,
+      mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? mod.id,
+    ),
+  );
+}
+
 MenuItem buildMenuItemOpenFolder(Mod mod) {
   if (mod.modVariants.length == 1) {
     return buildOpenSingleFolderMenuItem(
@@ -380,15 +393,6 @@ MenuItem buildMenuItemDebugging(
         label: "Show Raw Info",
         icon: Icons.info_outline,
         onSelected: () => showDebugViewDialog(context, mod),
-      ),
-      MenuItem(
-        label: "Mod Sources",
-        icon: Icons.source,
-        onSelected: () => showModRecordSourcesDialog(
-          context,
-          mod.id,
-          mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ?? mod.id,
-        ),
       ),
       if (!isGameRunning)
         MenuItem(

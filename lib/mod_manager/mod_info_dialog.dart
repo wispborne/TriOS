@@ -7,6 +7,8 @@ import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_records/mod_record.dart';
+import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -105,6 +107,18 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
   }
 
   ModVariant? get _variant => widget.mod?.findFirstEnabledOrHighestVersion;
+
+  /// The saved record for this mod: links found automatically, plus any the
+  /// user typed into the Mod Sources dialog.
+  ModRecord? get _modRecord {
+    final records = ref.watch(modRecordsStore).value?.records;
+    if (records == null) return null;
+    final modId = widget.mod?.id;
+    if (modId != null) return records[modId];
+    final catalogName = widget.catalogMod?.name;
+    if (catalogName != null) return records[ModRecord.syntheticKey(catalogName)];
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,44 +251,42 @@ class _ModInfoDialogState extends ConsumerState<ModInfoDialog>
   // ───────────────────── LINK BUTTONS ─────────────────────
 
   Widget? _buildLinkButtons(ThemeData theme) {
-    final links = <LabeledIconLink>[];
-
-    // From version checker
+    // Addresses come from the mod's saved record, which already merges what
+    // TriOS found automatically with anything the user typed into the Mod
+    // Sources dialog. The raw version checker and catalog data are the
+    // fallback for a mod that has no record yet.
+    final record = _modRecord;
     final vcInfo = _variant?.versionCheckerInfo;
-    if (vcInfo?.modThreadId.isNotNullOrEmpty() ?? false) {
-      links.add((
-        "Forum",
-        Icons.forum,
-        "${Constants.forumModPageUrl}${vcInfo!.modThreadId}",
-      ));
-    }
-    if (vcInfo?.modNexusId.isNotNullOrEmpty() ?? false) {
-      links.add((
-        "NexusMods",
-        Icons.store,
-        "${Constants.nexusModsPageUrl}${vcInfo!.modNexusId}",
-      ));
-    }
-    if (vcInfo?.changelogURL.isNotNullOrEmpty() ?? false) {
-      links.add(("Changelog", Icons.history, vcInfo!.changelogURL!));
-    }
-    if (vcInfo?.directDownloadURL.isNotNullOrEmpty() ?? false) {
-      links.add(("Download", Icons.download, vcInfo!.directDownloadURL!));
-    }
-
-    // From catalog
     final urls = widget.catalogMod?.getUrls() ?? {};
-    if (links.every((l) => l.$1 != "Forum") &&
-        urls.containsKey(ModUrlType.Forum)) {
-      links.add(("Forum", Icons.forum, urls[ModUrlType.Forum]!));
-    }
-    if (links.every((l) => l.$1 != "NexusMods") &&
-        urls.containsKey(ModUrlType.NexusMods)) {
-      links.add(("NexusMods", Icons.store, urls[ModUrlType.NexusMods]!));
-    }
-    if (urls.containsKey(ModUrlType.Discord)) {
-      links.add(("Discord", Icons.discord, urls[ModUrlType.Discord]!));
-    }
+
+    final forumThreadId = record?.forumThreadId ?? vcInfo?.modThreadId;
+    final forumUrl = forumThreadId.isNotNullOrEmpty()
+        ? "${Constants.forumModPageUrl}$forumThreadId"
+        : record?.catalog?.forumUrl ?? urls[ModUrlType.Forum];
+
+    final nexusModsId = record?.nexusModsId ?? vcInfo?.modNexusId;
+    final nexusUrl = nexusModsId.isNotNullOrEmpty()
+        ? "${Constants.nexusModsPageUrl}$nexusModsId"
+        : record?.catalog?.nexusUrl ?? urls[ModUrlType.NexusMods];
+
+    final changelogUrl =
+        record?.versionChecker?.changelogUrl ?? vcInfo?.changelogURL;
+    final downloadUrl =
+        record?.versionChecker?.directDownloadUrl ?? vcInfo?.directDownloadURL;
+    final discordUrl = record?.catalog?.discordUrl ?? urls[ModUrlType.Discord];
+    final downloadedFrom = record?.downloadedFrom;
+
+    final links = <LabeledIconLink>[
+      if (forumUrl.isNotNullOrEmpty()) ("Forum", Icons.forum, forumUrl!),
+      if (nexusUrl.isNotNullOrEmpty()) ("NexusMods", Icons.store, nexusUrl!),
+      if (changelogUrl.isNotNullOrEmpty())
+        ("Changelog", Icons.history, changelogUrl!),
+      if (downloadUrl.isNotNullOrEmpty())
+        ("Download", Icons.download, downloadUrl!),
+      if (discordUrl.isNotNullOrEmpty()) ("Discord", Icons.discord, discordUrl!),
+      if (downloadedFrom.isNotNullOrEmpty())
+        ("Downloaded from", Icons.link, downloadedFrom!),
+    ];
 
     if (links.isEmpty) return null;
 

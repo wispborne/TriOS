@@ -57,6 +57,9 @@ class _ModRecordSourcesDialogState
   final _catForumThreadId = TextEditingController();
   final _catNexusModsId = TextEditingController();
 
+  // Download History editable controller
+  final _dlDownloadedFrom = TextEditingController();
+
   void _initControllersIfNeeded(ModRecord record) {
     if (_controllersInitialized) return;
     _controllersInitialized = true;
@@ -79,6 +82,8 @@ class _ModRecordSourcesDialogState
     _catDownloadPageUrl.text = cat?.downloadPageUrl ?? '';
     _catForumThreadId.text = cat?.forumThreadId ?? '';
     _catNexusModsId.text = cat?.nexusModsId ?? '';
+
+    _dlDownloadedFrom.text = record.downloadHistory?.lastDownloadedFrom ?? '';
   }
 
   @override
@@ -95,6 +100,7 @@ class _ModRecordSourcesDialogState
     _catDownloadPageUrl.dispose();
     _catForumThreadId.dispose();
     _catNexusModsId.dispose();
+    _dlDownloadedFrom.dispose();
     super.dispose();
   }
 
@@ -157,6 +163,22 @@ class _ModRecordSourcesDialogState
       updatedOverrides['catalog'] = catOverride;
     } else {
       updatedOverrides.remove('catalog');
+    }
+
+    // Build a DownloadHistorySource override for the address the user typed.
+    // The timestamp is never edited, so it's left out of the override.
+    final autoDl =
+        currentRecord.sources['downloadHistory'] as DownloadHistorySource?;
+    final dlOverride = DownloadHistorySource(
+      lastDownloadedFrom: _diffField(
+        _dlDownloadedFrom,
+        autoDl?.lastDownloadedFrom,
+      ),
+    );
+    if (_hasAnyField(dlOverride)) {
+      updatedOverrides['downloadHistory'] = dlOverride;
+    } else {
+      updatedOverrides.remove('downloadHistory');
     }
 
     ref
@@ -373,7 +395,7 @@ class _ModRecordSourcesDialogState
             children: [
               if (source == null)
                 Text(
-                  "(no version checker data — fill in fields to create)",
+                  "(no version checker data)",
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               InlineEditText(
@@ -428,7 +450,7 @@ class _ModRecordSourcesDialogState
             children: [
               if (source == null)
                 Text(
-                  "(not found in catalog — fill in fields to create)",
+                  "(not found in catalog)",
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               if (source?.name != null)
@@ -490,36 +512,35 @@ class _ModRecordSourcesDialogState
     return TriOSExpansionTile(
       title: Text("Download History"),
       leading: const Icon(Icons.download, size: 20),
-      initiallyExpanded: source != null,
+      initiallyExpanded: true,
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 4,
-            children: source == null
-                ? [
-                    Text(
-                      "(no downloads recorded)",
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ]
-                : [
-                    SimpleDataRow(
-                      label: "Downloaded From: ",
-                      value: source.lastDownloadedFrom ?? "(unknown)",
-                    ),
-                    if (source.lastDownloadedAt != null)
-                      SimpleDataRow(
-                        label: "Downloaded At: ",
-                        value: dateFmt.format(source.lastDownloadedAt!),
-                      ),
-                    if (source.lastSeen != null)
-                      SimpleDataRow(
-                        label: "Last Seen: ",
-                        value: dateFmt.format(source.lastSeen!),
-                      ),
-                  ],
+            spacing: 8,
+            children: [
+              if (source == null)
+                Text(
+                  "(no downloads recorded)",
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              InlineEditText(
+                label: "Downloaded From: ",
+                controller: _dlDownloadedFrom,
+                onChanged: _markDirty,
+              ),
+              if (source?.lastDownloadedAt != null)
+                SimpleDataRow(
+                  label: "Downloaded At: ",
+                  value: dateFmt.format(source!.lastDownloadedAt!),
+                ),
+              if (source?.lastSeen != null)
+                SimpleDataRow(
+                  label: "Last Seen: ",
+                  value: dateFmt.format(source!.lastSeen!),
+                ),
+            ],
           ),
         ),
       ],

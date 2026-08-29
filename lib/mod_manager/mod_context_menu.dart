@@ -62,6 +62,7 @@ ContextMenu buildModContextMenu(
         buildMenuItemCheckVram(mod, ref),
       buildMenuItemToggleMuteUpdates(mod, ref),
       buildMenuItemViewInViewer(mod, ref),
+      buildMenuItemModSources(mod, context),
       // MenuHeader(text: "Debugging", disableUppercase: true),
       buildMenuItemDebugging(context, mod, ref, isGameRunning),
     ],

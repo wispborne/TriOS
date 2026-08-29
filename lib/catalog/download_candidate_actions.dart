@@ -131,11 +131,15 @@ class DownloadCandidateMenuItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final subtitle = downloadCandidateSubtitle(candidate);
+    // A menu item runs its onPressed after the menu has closed, by which time
+    // this widget is gone and its `ref` throws. Grab what the click needs now,
+    // while the item is still on screen.
+    final pendingClicks = ref.read(pendingDownloadClicks.notifier);
     return MenuItemButton(
       leadingIcon: downloadCandidateIconWidget(candidate),
       onPressed: () {
         if (candidate.isOneClick) {
-          ref.read(pendingDownloadClicks.notifier).markClicked(target);
+          pendingClicks.markClicked(target);
         }
         onSelected();
       },

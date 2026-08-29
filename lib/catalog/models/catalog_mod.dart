@@ -88,7 +88,7 @@ class CatalogMod {
 
   // -- Images --
 
-  /// The best available image: scraped catalog image, AI-block image, author
+  /// The best available image: AI-block image, scraped catalog image, author
   /// avatar, or the installed mod's icon on disk.
   final ModImageSource? catalogImage;
 
@@ -274,9 +274,11 @@ CatalogMod gatherCatalogMod({
   // Category: details first, then index.
   final category = forumDetails?.category ?? forumIndex?.category;
 
+  // The AI's pick comes first: it chose an image out of the forum post, while
+  // the index just takes whatever image it scraped first.
   final mainImage =
-      ModImageSource.web(mod.images?.values.firstOrNull?.url) ??
       ModImageSource.web(llmMod?.imageUrl) ??
+      ModImageSource.web(mod.images?.values.firstOrNull?.url) ??
       ModImageSource.web(avatarPathResolved) ??
       ModImageSource.file(
         installedMod?.findFirstEnabledOrHighestVersion?.iconFilePath,

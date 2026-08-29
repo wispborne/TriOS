@@ -81,8 +81,8 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
         .value
         ?.getMergedModMetadata(installedMod.id);
     return metadata?.isUpdateHidden(
-          widget.versionCheckComparison?.remoteVersionString,
-        ) ==
+      widget.versionCheckComparison?.remoteVersionString,
+    ) ==
         true;
   }
 
@@ -107,7 +107,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
             .value
             ?.getMergedModMetadata(installedMod.id)
             ?.areUpdatesMuted ==
-        true;
+            true;
 
     return ContextMenuRegion(
       contextMenu: ContextMenu(
@@ -122,11 +122,11 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                 ref
                     .read(AppState.versionCheckResults.notifier)
                     .refresh(
-                      skipCache: true,
-                      specificVariantsToCheck: [
-                        installedMod.findFirstEnabledOrHighestVersion!,
-                      ],
-                    );
+                  skipCache: true,
+                  specificVariantsToCheck: [
+                    installedMod.findFirstEnabledOrHighestVersion!,
+                  ],
+                );
               },
             ),
           buildMenuItemToggleMuteUpdates(installedMod, ref),
@@ -176,19 +176,19 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
             : null;
         final enrichedMod = hasForumDetails
             ? gatherCatalogMod(
-                mod: _entry,
-                forumIndex: forumIndex,
-                forumDetails: forumDetails,
-                installedMod: _catalogMod.installedMod,
-              )
+          mod: _entry,
+          forumIndex: forumIndex,
+          forumDetails: forumDetails,
+          installedMod: _catalogMod.installedMod,
+        )
             : _catalogMod;
         final hasDetailsToShow =
             hasForumDetails ||
-            enrichedMod.topicUrl != null ||
-            (mod.description?.isNotEmpty ?? false) ||
-            (mod.summary?.isNotEmpty ?? false) ||
-            (mod.images?.isNotEmpty ?? false) ||
-            downloadCandidates.isNotEmpty;
+                enrichedMod.topicUrl != null ||
+                (mod.description?.isNotEmpty ?? false) ||
+                (mod.summary?.isNotEmpty ?? false) ||
+                (mod.images?.isNotEmpty ?? false) ||
+                downloadCandidates.isNotEmpty;
 
         return ContextMenuRegion(
           contextMenu: ContextMenu(
@@ -197,12 +197,13 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                 MenuItem(
                   label: 'View Mod Details...',
                   icon: Icons.info_outline,
-                  onSelected: () => showModInfoDialog(
-                    context,
-                    mod: _catalogMod.installedMod,
-                    catalogMod: mod,
-                    versionCheckComparison: widget.versionCheckComparison,
-                  ),
+                  onSelected: () =>
+                      showModInfoDialog(
+                        context,
+                        mod: _catalogMod.installedMod,
+                        catalogMod: mod,
+                        versionCheckComparison: widget.versionCheckComparison,
+                      ),
                 ),
               if (downloadCandidates.isNotEmpty) ...[
                 const MenuHeader(text: 'Downloads'),
@@ -215,14 +216,15 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                       message: candidate.url,
                       child: downloadCandidateIconWidget(candidate),
                     ),
-                    onSelected: () => executeDownloadCandidate(
-                      context,
-                      ref,
-                      candidate,
-                      modName: mod.name,
-                      sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
-                      linkLoader: widget.linkLoader,
-                    ),
+                    onSelected: () =>
+                        executeDownloadCandidate(
+                          context,
+                          ref,
+                          candidate,
+                          modName: mod.name,
+                          sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
+                          linkLoader: widget.linkLoader,
+                        ),
                   ),
                 MenuItem(
                   label: 'Copy download link',
@@ -233,7 +235,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                   onSelected: () {
                     final url =
                         (primaryCandidate(downloadCandidates) ??
-                                downloadCandidates.first)
+                            downloadCandidates.first)
                             .url;
                     Clipboard.setData(ClipboardData(text: url));
                     showSnackBar(
@@ -290,14 +292,17 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
             ],
           ),
           child: MovingTooltipWidget.framed(
+            // The whole card is the hover target, so show the summary only
+            // once the mouse has settled on one card.
+            showDelay: const Duration(milliseconds: 400),
             tooltipWidget: hasDetailsToShow
                 ? ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 500),
-                    child: ModSummaryWidget(
-                      data: enrichedMod,
-                      config: ModSummaryConfig.tooltip,
-                    ),
-                  )
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: ModSummaryWidget(
+                data: enrichedMod,
+                config: ModSummaryConfig.tooltip,
+              ),
+            )
                 : null,
             child: Card(
               margin: const EdgeInsets.all(0),
@@ -310,10 +315,11 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
               ),
               child: ConditionalWrap(
                 condition: hasDetailsToShow,
-                wrapper: (child) => InkWell(
-                  onTap: () => _openDetailsDialog(context, forumDetails),
-                  child: child,
-                ),
+                wrapper: (child) =>
+                    InkWell(
+                      onTap: () => _openDetailsDialog(context, forumDetails),
+                      child: child,
+                    ),
                 child: Stack(
                   children: [
                     Container(
@@ -370,18 +376,18 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                       enrichedMod.authors,
                                       style: theme.textTheme.labelSmall
                                           ?.copyWith(
-                                            fontSize: 10,
-                                            fontStyle: FontStyle.italic,
-                                          ),
+                                        fontSize: 10,
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                       maxLines: 1,
                                       overflow: .ellipsis,
                                     ),
                                   if (enrichedMod.isPartOfThread)
                                     MovingTooltipWidget.text(
                                       message:
-                                          'Part of the "${enrichedMod.partOfThreadTitle}" '
-                                          'forum thread.\nClick the card to see '
-                                          'the whole thread.',
+                                      'Part of the "${enrichedMod
+                                          .partOfThreadTitle}" '
+                                          'forum thread.',
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         spacing: 3,
@@ -397,12 +403,13 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                           ),
                                           Flexible(
                                             child: Text(
-                                              'part of ${enrichedMod.partOfThreadTitle}',
+                                              'part of ${enrichedMod
+                                                  .partOfThreadTitle}',
                                               style: theme.textTheme.labelSmall
                                                   ?.copyWith(
-                                                    fontSize: 10,
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
+                                                fontSize: 10,
+                                                fontStyle: FontStyle.italic,
+                                              ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -434,10 +441,11 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        if (_ForumStatsFromGathered.hasAnythingToShow(
+                                        if (_ForumStatsFromGathered
+                                            .hasAnythingToShow(
                                           enrichedMod,
                                         ))
                                           _ForumStatsFromGathered(
@@ -492,7 +500,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                             mod: mod,
                             installedMod: _catalogMod.installedMod,
                             versionCheckComparison:
-                                widget.versionCheckComparison,
+                            widget.versionCheckComparison,
                             linkLoader: widget.linkLoader,
                             llmMainMod: _catalogMod.llmMod,
                             isUpdateMuted: isUpdateMuted,
@@ -510,11 +518,9 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     );
   }
 
-  Widget buildDescription(
-    ThemeData theme,
-    BuildContext context,
-    ModRepoEntry mod,
-  ) {
+  Widget buildDescription(ThemeData theme,
+      BuildContext context,
+      ModRepoEntry mod,) {
     final aiSummaryMode = ref.watch(effectiveCatalogAiSummaryModeProvider);
     final resolved = resolveSummaryText(
       _catalogMod,
@@ -747,11 +753,9 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     );
   }
 
-  void _showDescriptionDialog(
-    BuildContext context,
-    String modName,
-    String description,
-  ) {
+  void _showDescriptionDialog(BuildContext context,
+      String modName,
+      String description,) {
     showDialog(
       context: context,
       builder: (context) {
@@ -787,7 +791,9 @@ class _CatalogModGameVersionReq extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final installedVersion = ref.watch(AppState.starsectorVersion).value;
+    final installedVersion = ref
+        .watch(AppState.starsectorVersion)
+        .value;
     // true  = made for the installed game version (positive standout)
     // false = made for a different/older game version (warning)
     // null  = installed or required version unknown (neutral)
@@ -918,18 +924,20 @@ class ModImage extends StatelessWidget {
 
   Widget _buildImage(ModImageSource source, {BoxFit? fit, int? cacheWidth}) =>
       switch (source) {
-        WebModImage(:final url) => Image.network(
-          url,
-          fit: fit,
-          cacheWidth: cacheWidth,
-          errorBuilder: (_, _, _) => _defaultImage(),
-        ),
-        FileModImage(:final file) => Image.file(
-          file,
-          fit: fit,
-          cacheWidth: cacheWidth,
-          errorBuilder: (_, _, _) => _defaultImage(),
-        ),
+        WebModImage(:final url) =>
+            Image.network(
+              url,
+              fit: fit,
+              cacheWidth: cacheWidth,
+              errorBuilder: (_, _, _) => _defaultImage(),
+            ),
+        FileModImage(:final file) =>
+            Image.file(
+              file,
+              fit: fit,
+              cacheWidth: cacheWidth,
+              errorBuilder: (_, _, _) => _defaultImage(),
+            ),
       };
 
   Widget _defaultImage() {
@@ -970,7 +978,10 @@ class Tags extends StatelessWidget {
     ];
 
     if (tags.isEmpty) return const SizedBox.shrink();
-    final labelStyle = Theme.of(context).textTheme.labelSmall;
+    final labelStyle = Theme
+        .of(context)
+        .textTheme
+        .labelSmall;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1078,11 +1089,11 @@ class CatalogDownloadButton extends ConsumerWidget {
     final VoidCallback? onPressed;
     final hasUpdate =
         state == _CatalogDownloadState.updateDirectDownload ||
-        state == _CatalogDownloadState.updateWebsite;
+            state == _CatalogDownloadState.updateWebsite;
     // Installed states render as an inert status marker, not a button.
     final isInstalledStatus =
         state == _CatalogDownloadState.installedEnabled ||
-        state == _CatalogDownloadState.installedDisabled;
+            state == _CatalogDownloadState.installedDisabled;
 
     // What this button's downloads are called, so it can spot its own download
     // no matter where it was started from.
@@ -1169,7 +1180,7 @@ class CatalogDownloadButton extends ConsumerWidget {
 
     final isDownloadAction =
         state == _CatalogDownloadState.updateDirectDownload ||
-        state == _CatalogDownloadState.notInstalledDirectDownload;
+            state == _CatalogDownloadState.notInstalledDirectDownload;
     final showTriosBrandIcon = isTrios && isDownloadAction;
     final useChooser = isDownloadAction && showChooser;
 
@@ -1206,18 +1217,18 @@ class CatalogDownloadButton extends ConsumerWidget {
     // The update states show the full version-check readout on hover instead
     // of a line of text.
     final Widget? richTooltip =
-        hasUpdate && installedMod != null && versionCheckComparison != null
+    hasUpdate && installedMod != null && versionCheckComparison != null
         ? SizedBox(
-            width: 400,
-            child: VersionCheckTextReadout(
-              versionCheckComparison!.comparisonInt,
-              versionCheckComparison!.variant.versionCheckerInfo,
-              versionCheckComparison!.remoteVersionCheck,
-              installedMod!,
-              true,
-              false,
-            ),
-          )
+      width: 400,
+      child: VersionCheckTextReadout(
+        versionCheckComparison!.comparisonInt,
+        versionCheckComparison!.variant.versionCheckerInfo,
+        versionCheckComparison!.remoteVersionCheck,
+        installedMod!,
+        true,
+        false,
+      ),
+    )
         : null;
     final tooltipText = useChooser
         ? 'Several downloads available.\nClick to choose'
@@ -1268,23 +1279,26 @@ class CatalogDownloadButton extends ConsumerWidget {
             DownloadCandidateMenuItem(
               candidate: candidate,
               target: target,
-              onSelected: () => executeDownloadCandidate(
-                context,
-                ref,
-                candidate,
-                modName: mod.name,
-                sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
-                linkLoader: linkLoader,
-                hasOwnBusyIndicator: true,
-              ),
+              onSelected: () =>
+                  executeDownloadCandidate(
+                    context,
+                    ref,
+                    candidate,
+                    modName: mod.name,
+                    sourceHint: DownloadSourceHint.fromModRepoEntry(mod),
+                    linkLoader: linkLoader,
+                    hasOwnBusyIndicator: true,
+                  ),
             ),
         ],
         // Clicking only opens the menu, so it isn't a download click; the menu
         // item that starts one marks it instead.
-        builder: (context, controller, _) => buildButton(
-          () => controller.isOpen ? controller.close() : controller.open(),
-          marksPending: false,
-        ),
+        builder: (context, controller, _) =>
+            buildButton(
+                  () =>
+              controller.isOpen ? controller.close() : controller.open(),
+              marksPending: false,
+            ),
       );
     }
 
@@ -1294,8 +1308,7 @@ class CatalogDownloadButton extends ConsumerWidget {
 }
 
 /// Shows a mod's full license text. Any links in it are clickable.
-void showLicenseDialog(
-  BuildContext context, {
+void showLicenseDialog(BuildContext context, {
   required String modTitle,
   required String license,
 }) => showAlertDialog(context, title: 'License: $modTitle', content: license);
@@ -1312,10 +1325,10 @@ class _ForumStatsFromGathered extends StatelessWidget {
   /// code link but no forum stats still gets the row.
   static bool hasAnythingToShow(CatalogMod mod) =>
       mod.views != null ||
-      mod.replies != null ||
-      mod.lastPostDate != null ||
-      mod.sourceCodeUrl != null ||
-      mod.licenseText != null;
+          mod.replies != null ||
+          mod.lastPostDate != null ||
+          mod.sourceCodeUrl != null ||
+          mod.licenseText != null;
 
   @override
   Widget build(BuildContext context) {
@@ -1328,7 +1341,10 @@ class _ForumStatsFromGathered extends StatelessWidget {
 
     final date = gathered.lastPostDate;
     final isStale =
-        date != null && DateTime.now().difference(date).inDays > 365;
+        date != null && DateTime
+            .now()
+            .difference(date)
+            .inDays > 365;
     final activeStyle = style?.copyWith(
       color: style.color?.withValues(alpha: isStale ? 0.35 : 0.6),
     );
@@ -1338,17 +1354,18 @@ class _ForumStatsFromGathered extends StatelessWidget {
       required String text,
       required String tooltip,
       TextStyle? segStyle,
-    }) => MovingTooltipWidget.text(
-      message: tooltip,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 4,
-        children: [
-          Icon(icon, size: 12, color: (segStyle ?? style)?.color),
-          Text(text, style: segStyle ?? style),
-        ],
-      ),
-    );
+    }) =>
+        MovingTooltipWidget.text(
+          message: tooltip,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 4,
+            children: [
+              Icon(icon, size: 12, color: (segStyle ?? style)?.color),
+              Text(text, style: segStyle ?? style),
+            ],
+          ),
+        );
 
     // An icon on its own that does something when clicked. The tap stops here
     // so clicking it doesn't also open the mod's pop-up.
@@ -1356,17 +1373,18 @@ class _ForumStatsFromGathered extends StatelessWidget {
       required IconData icon,
       required String tooltip,
       required VoidCallback onTap,
-    }) => MovingTooltipWidget.text(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
-        child: Padding(
-          padding: const .all(2),
-          child: Icon(icon, size: 12, color: style?.color),
-        ),
-      ),
-    );
+    }) =>
+        MovingTooltipWidget.text(
+          message: tooltip,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const .all(2),
+              child: Icon(icon, size: 12, color: style?.color),
+            ),
+          ),
+        );
 
     final sourceCodeUrl = gathered.sourceCodeUrl;
     final licenseText = gathered.licenseText;
@@ -1390,7 +1408,7 @@ class _ForumStatsFromGathered extends StatelessWidget {
               icon: Icons.forum,
               text: _compactFormat.format(gathered.replies),
               tooltip:
-                  '${_decimalFormat.format(gathered.replies)} forum replies',
+              '${_decimalFormat.format(gathered.replies)} forum replies',
             ),
           if (date != null)
             segment(
@@ -1403,7 +1421,7 @@ class _ForumStatsFromGathered extends StatelessWidget {
             iconAction(
               icon: Icons.code,
               tooltip:
-                  'Source code on ${sourceCodeHostName(sourceCodeUrl)}\n'
+              'Source code on ${sourceCodeHostName(sourceCodeUrl)}\n'
                   'Click to open in your browser',
               onTap: () => sourceCodeUrl.openAsUriInBrowser(),
             ),
@@ -1413,13 +1431,14 @@ class _ForumStatsFromGathered extends StatelessWidget {
               tooltip: licenseUrl != null
                   ? '$licenseUrl\nClick to open in your browser'
                   : _licenseTooltip(licenseText),
-              onTap: () => licenseUrl != null
+              onTap: () =>
+              licenseUrl != null
                   ? licenseUrl.openAsUriInBrowser()
                   : showLicenseDialog(
-                      context,
-                      modTitle: gathered.title,
-                      license: licenseText,
-                    ),
+                context,
+                modTitle: gathered.title,
+                license: licenseText,
+              ),
             ),
         ],
       ),

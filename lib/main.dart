@@ -34,6 +34,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/vram_estimator/vram_estimator_page.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/trios/toasts/widgets/april_fools_2026_toast.dart';
 import 'package:trios/trios/toasts/widgets/post_update_toast.dart';
 import 'package:trios/widgets/restartable_app.dart';
@@ -646,7 +647,9 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
       // back to Flutter's default colors. Remove once they've all moved to
       // material_ui.
       // ignore: deprecated_member_use
-      builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
+      builder: (context, child) => HideTooltipsWhileScrolling(
+        child: MaterialUiCompatibilityBridge(child: child!),
+      ),
       home: const ToastificationConfigProvider(
         config: ToastificationConfig(
           alignment: Alignment.bottomRight,

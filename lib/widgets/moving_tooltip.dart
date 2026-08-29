@@ -206,6 +206,95 @@ class _TooltipLayout extends SingleChildRenderObjectWidget {
 
 enum TooltipWarningLevel { none, warning, error }
 
+/// Keeps tooltips hidden while a list is scrolling.
+///
+/// Scrolling slides cards under a mouse that hasn't moved, and Flutter reports
+/// that the same way it reports the mouse moving onto a card. Without this,
+/// every card that passes under the cursor pops its tooltip open over the list.
+class _ScrollingHidesTooltips {
+  /// How long after the last scroll before tooltips are allowed again. A mouse
+  /// wheel sends a start, an update and an end for every single click, so the
+  /// end of a scroll can't be used - only a gap with no scrolling at all.
+  static const _quietPeriod = Duration(milliseconds: 200);
+
+  /// Tooltips that are on screen right now, so scrolling can close them.
+  static final Set<_MovingTooltipWidgetState> _showing = {};
+
+  /// Tooltips the mouse is currently inside. Used to bring the tooltip back
+  /// once scrolling stops, so the mouse doesn't have to be moved to wake it.
+  static final Set<_MovingTooltipWidgetState> _hovered = {};
+
+  static Timer? _quietTimer;
+
+  /// True while a list is scrolling, and for [_quietPeriod] afterwards.
+  static bool isScrolling = false;
+
+  static void noteScrolled() {
+    isScrolling = true;
+    _quietTimer?.cancel();
+    _quietTimer = Timer(_quietPeriod, _onScrollingStopped);
+
+    for (final tooltip in _showing.toList()) {
+      tooltip._hideTooltip();
+    }
+  }
+
+  static void _onScrollingStopped() {
+    _quietTimer = null;
+    isScrolling = false;
+
+    // Whatever the mouse is sitting on now gets its tooltip, after the usual
+    // hover delay. Only the innermost one, since a tooltip inside another
+    // tooltip's area hides the outer one anyway.
+    _MovingTooltipWidgetState? innermost;
+    for (final tooltip in _hovered) {
+      if (innermost == null || tooltip._depth > innermost._depth) {
+        innermost = tooltip;
+      }
+    }
+
+    final mousePosition = innermost?._latestGlobalMousePosition;
+    if (mousePosition != null) {
+      innermost!._scheduleShowTooltip(mousePosition);
+    }
+  }
+
+  /// Clears the shared state so one test can't affect the next.
+  @visibleForTesting
+  static void reset() {
+    _quietTimer?.cancel();
+    _quietTimer = null;
+    isScrolling = false;
+    _showing.clear();
+    _hovered.clear();
+  }
+}
+
+/// Hides tooltips while anything inside [child] is scrolling.
+///
+/// TriOS wraps the whole app in one of these, so every list gets this
+/// behaviour. See [_ScrollingHidesTooltips] for why it's needed.
+class HideTooltipsWhileScrolling extends StatelessWidget {
+  final Widget child;
+
+  const HideTooltipsWhileScrolling({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (_) {
+        _ScrollingHidesTooltips.noteScrolled();
+        return false;
+      },
+      child: child,
+    );
+  }
+}
+
+/// Clears the shared scroll state used to hide tooltips. Call between tests.
+@visibleForTesting
+void resetTooltipScrollStateForTest() => _ScrollingHidesTooltips.reset();
+
 class MovingTooltipWidget extends StatefulWidget {
   final Widget child;
   final Widget? tooltipWidget;
@@ -310,6 +399,7 @@ class MovingTooltipWidget extends StatefulWidget {
     double windowEdgePadding = 10.0,
     Size offset = const Size(5, 5),
     TooltipPosition position = TooltipPosition.bottomRight,
+    Duration? showDelay,
   }) {
     if (tooltipWidget == null && tooltipWidgetBuilder == null) return child;
     return Builder(
@@ -335,6 +425,7 @@ class MovingTooltipWidget extends StatefulWidget {
           windowEdgePadding: windowEdgePadding,
           offset: offset,
           position: position,
+          showDelay: showDelay,
           child: child,
         );
       },
@@ -474,10 +565,14 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (event) {
+        _ScrollingHidesTooltips._hovered.add(this);
         if (!_blockTooltip) _scheduleShowTooltip(event.position);
       },
       onHover: (event) => _updateTooltipPosition(event.position),
-      onExit: (_) => _hideTooltip(),
+      onExit: (_) {
+        _ScrollingHidesTooltips._hovered.remove(this);
+        _hideTooltip();
+      },
       child: widget.child,
     );
   }
@@ -486,7 +581,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
   /// If a delayed show is already pending, only the mouse position updates.
   void _scheduleShowTooltip(Offset globalPosition) {
     _latestGlobalMousePosition = globalPosition;
-    if (_blockTooltip) return;
+    if (_blockTooltip || _ScrollingHidesTooltips.isScrolling) return;
 
     final delay = _showDelay;
     if (delay == Duration.zero) {
@@ -495,13 +590,15 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     }
     if (_showDelayTimer?.isActive ?? false) return;
     _showDelayTimer = Timer(delay, () {
-      if (mounted && !_blockTooltip) _showTooltip();
+      if (mounted && !_blockTooltip && !_ScrollingHidesTooltips.isScrolling) {
+        _showTooltip();
+      }
     });
   }
 
   void _showTooltip() {
     _hideTooltip();
-    if (_blockTooltip) return;
+    if (_blockTooltip || _ScrollingHidesTooltips.isScrolling) return;
 
     _parentState?._setTooltipBlock(true); // Disable parent tooltip
 
@@ -523,6 +620,7 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
     );
 
     Overlay.of(context).insert(_overlayEntry!);
+    _ScrollingHidesTooltips._showing.add(this);
   }
 
   void _updateTooltipPosition(Offset globalPosition) {
@@ -545,12 +643,14 @@ class _MovingTooltipWidgetState extends State<MovingTooltipWidget> {
       _overlayEntry!.remove();
       _overlayEntry = null;
       _builtTooltip = null;
+      _ScrollingHidesTooltips._showing.remove(this);
     }
     _parentState?._setTooltipBlock(false); // Re-enable parent's tooltip
   }
 
   @override
   void dispose() {
+    _ScrollingHidesTooltips._hovered.remove(this);
     _hideTooltip();
     super.dispose();
   }

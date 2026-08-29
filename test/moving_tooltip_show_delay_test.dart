@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 void main() {
+  setUp(resetTooltipScrollStateForTest);
+  tearDown(resetTooltipScrollStateForTest);
+
   Widget wrap(Widget child) => MaterialApp(
     home: Scaffold(body: Center(child: child)),
   );
@@ -98,5 +101,109 @@ void main() {
 
     await hoverOver(tester, find.byType(SizedBox));
     expect(find.text('tooltip content'), findsOneWidget);
+  });
+
+  group('scrolling hides tooltips', () {
+    /// A tooltip on a card inside a scrollable list, all wrapped the way the
+    /// app wraps itself.
+    Widget scrollingList() => MaterialApp(
+      home: Scaffold(
+        body: HideTooltipsWhileScrolling(
+          child: ListView(
+            children: [
+              MovingTooltipWidget(
+                tooltipWidget: const Text('tooltip content'),
+                child: const SizedBox(
+                  key: ValueKey('card'),
+                  width: 100,
+                  height: 100,
+                ),
+              ),
+              const SizedBox(height: 2000),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('scrolling closes a tooltip that is already up', (
+      tester,
+    ) async {
+      await tester.pumpWidget(scrollingList());
+
+      await hoverOver(tester, find.byKey(const ValueKey('card')));
+      expect(find.text('tooltip content'), findsOneWidget);
+
+      await tester.drag(find.byType(ListView), const Offset(0, -50));
+      await tester.pump();
+      expect(find.text('tooltip content'), findsNothing);
+
+      // Let the quiet period expire so no timer is left running.
+      await tester.pump(const Duration(seconds: 1));
+    });
+
+    testWidgets('the mouse landing on a card during a scroll shows nothing', (
+      tester,
+    ) async {
+      await tester.pumpWidget(scrollingList());
+
+      await tester.drag(find.byType(ListView), const Offset(0, -50));
+      await tester.pump();
+
+      await hoverOver(tester, find.byKey(const ValueKey('card')));
+      expect(find.text('tooltip content'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 1));
+    });
+
+    testWidgets('the tooltip comes back on its own once scrolling stops', (
+      tester,
+    ) async {
+      await tester.pumpWidget(scrollingList());
+
+      await tester.drag(find.byType(ListView), const Offset(0, -50));
+      await tester.pump();
+
+      await hoverOver(tester, find.byKey(const ValueKey('card')));
+      expect(find.text('tooltip content'), findsNothing);
+
+      // No mouse movement here - waiting out the quiet period is enough.
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(find.text('tooltip content'), findsOneWidget);
+    });
+
+    testWidgets('a tooltip closed by scrolling reopens under the mouse', (
+      tester,
+    ) async {
+      await tester.pumpWidget(scrollingList());
+
+      await hoverOver(tester, find.byKey(const ValueKey('card')));
+      expect(find.text('tooltip content'), findsOneWidget);
+
+      await tester.drag(find.byType(ListView), const Offset(0, -10));
+      await tester.pump();
+      expect(find.text('tooltip content'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(find.text('tooltip content'), findsOneWidget);
+    });
+
+    testWidgets('nothing reopens when the mouse left the card', (tester) async {
+      await tester.pumpWidget(scrollingList());
+
+      final gesture = await hoverOver(
+        tester,
+        find.byKey(const ValueKey('card')),
+      );
+      await gesture.moveTo(const Offset(2000, 2000));
+      await tester.pump();
+
+      await tester.drag(find.byType(ListView), const Offset(0, -10));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(find.text('tooltip content'), findsNothing);
+    });
   });
 }

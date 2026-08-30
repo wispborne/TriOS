@@ -1356,7 +1356,7 @@ class _DeepLinkRegistrationButtonState
     return MovingTooltipWidget.text(
       message:
           "Registers or unregisters ${Constants.appName} as the handler for 'Install with ${Constants.appName}' links,"
-          "\nwhich lets you install mods with one click from web pages and forums.",
+          "\nwhich lets you install mods with one click from websites.",
       child: ElevatedButton.icon(
         icon: _isWorking
             ? const SizedBox(

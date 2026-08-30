@@ -372,12 +372,12 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
           const SizedBox(height: 16),
           Text(
             "${Constants.appName} can handle 'Install with TriOS' links, "
-            "allowing you to install mods with a single click from web pages and forums.",
+            "allowing you to install mods with a single click from websites.",
             style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 8),
           const Text(
-            "You will always be asked to confirm before any mod is downloaded.",
+            "You will be asked to confirm before any mod is downloaded.",
             style: TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 16),

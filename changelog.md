@@ -1,3 +1,9 @@
+# 1.7.1
+- Added
+- Fixed
+- Changed
+  - Default ship background is now space4 (darker).
+
 # 1.7.0
 - Added
   - Catalog: 

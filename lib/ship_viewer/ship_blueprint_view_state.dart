@@ -11,7 +11,7 @@ part 'ship_blueprint_view_state.mapper.dart';
 /// The picture file names are written out here rather than found by scanning,
 /// so a future game version could add ones we don't list, or drop ones we do.
 /// A name the game doesn't have simply isn't offered.
-@MappableEnum(defaultValue: ShipBlueprintBackground.background2)
+@MappableEnum(defaultValue: ShipBlueprintBackground.background4)
 enum ShipBlueprintBackground {
   transparent,
   black,
@@ -121,6 +121,6 @@ class ShipBlueprintViewState with ShipBlueprintViewStateMappable {
     this.showShield = true,
     this.animateShields = true,
     this.animateEngines = true,
-    this.background = ShipBlueprintBackground.background2,
+    this.background = ShipBlueprintBackground.background4,
   });
 }

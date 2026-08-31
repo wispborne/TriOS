@@ -63,7 +63,7 @@ class ShipBlueprintBackgroundMapper
       case r'hyperspaceCool':
         return ShipBlueprintBackground.hyperspaceCool;
       default:
-        return ShipBlueprintBackground.values[8];
+        return ShipBlueprintBackground.values[10];
     }
   }
 
@@ -209,7 +209,7 @@ class ShipBlueprintViewStateMapper
     'background',
     _$background,
     opt: true,
-    def: ShipBlueprintBackground.background2,
+    def: ShipBlueprintBackground.background4,
   );
 
   @override

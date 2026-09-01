@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/widgets/snackbar.dart';
 
@@ -124,6 +125,12 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
     final isActiveProfile =
         activeProfileId != null && profile?.id == activeProfileId;
     final isGameRunning = ref.watch(AppState.isGameRunning).value == true;
+    final trackedStatus = ref.watch(trackedProfileStatusProvider);
+    final isTrackedProfile =
+        !isSaveGame &&
+        profile != null &&
+        trackedStatus.profile?.id == profile.id;
+    final isModified = isTrackedProfile && trackedStatus.isModified;
 
     // Recompute whenever the installed mods list changes
     ref.listen<List<Mod>>(AppState.mods, (_, __) {
@@ -318,7 +325,8 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                 ),
                               ],
                             ),
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text('${enabledModVariants.length} mods'),
                               // bullet
@@ -335,6 +343,24 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                       "(date missing)",
                                 ),
                               ),
+                              if (isModified) ...[
+                                Text(
+                                  "  •  ",
+                                  style: theme.textTheme.labelSmall,
+                                ),
+                                MovingTooltipWidget.text(
+                                  message:
+                                      "Your enabled mods no longer match this profile."
+                                      "\nSave changes to update it, or revert to go back to it.",
+                                  child: Text(
+                                    "Modified",
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: theme.colorScheme.secondary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ],
@@ -345,10 +371,10 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                   TriOSExpansionTile(
                     tilePadding: EdgeInsets.symmetric(horizontal: cardPadding),
                     initiallyExpanded: widget.isInitiallyExpanded,
-                    title: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    title: Wrap(
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Spacer(),
                         if (!isSaveGame)
                           MovingTooltipWidget.text(
                             message: 'Duplicate profile',
@@ -452,25 +478,34 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                         const SizedBox(width: 8),
                         if (!isSaveGame)
                           Disable(
-                            isEnabled: !isGameRunning,
-                            child: MovingTooltipWidget.text(
-                              message: isGameRunning ? "Game is running" : "",
-                              child: OutlinedButton(
-                                onPressed: isActiveProfile
-                                    ? null
-                                    : () {
-                                        ref
-                                            .read(modProfilesProvider.notifier)
-                                            .showActivateDialog(
-                                              profile!,
-                                              context,
-                                            );
-                                      },
-                                child: Text(
-                                  isActiveProfile ? 'Enabled' : 'Enable',
-                                ),
-                              ),
-                            ),
+                            isEnabled: !trackedStatus.isLoading,
+                            child: isTrackedProfile
+                                ? _buildTrackedProfileActions(
+                                    profile,
+                                    isModified: isModified,
+                                    isGameRunning: isGameRunning,
+                                  )
+                                : Disable(
+                                    isEnabled: !isGameRunning,
+                                    child: MovingTooltipWidget.text(
+                                      message: isGameRunning
+                                          ? "Game is running"
+                                          : "Activate this profile's mods.",
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          ref
+                                              .read(
+                                                modProfilesProvider.notifier,
+                                              )
+                                              .showActivateDialog(
+                                                profile!,
+                                                context,
+                                              );
+                                        },
+                                        child: const Text('Activate'),
+                                      ),
+                                    ),
+                                  ),
                           ),
                         if (isSaveGame)
                           MovingTooltipWidget.text(
@@ -595,6 +630,75 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Buttons for the profile TriOS is currently tracking.
+  ///
+  /// Save changes and Stop using profile only touch saved TriOS data, so they
+  /// stay available while the game is running. Revert changes enabled mods, so
+  /// it doesn't.
+  Widget _buildTrackedProfileActions(
+    ModProfile profile, {
+    required bool isModified,
+    required bool isGameRunning,
+  }) {
+    final notifier = ref.read(modProfilesProvider.notifier);
+
+    Widget compactIconButton({
+      required IconData icon,
+      required String tooltip,
+      required VoidCallback onPressed,
+    }) => MovingTooltipWidget.text(
+      message: tooltip,
+      child: IconButton(
+        icon: Icon(icon),
+        iconSize: 20,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+        padding: const EdgeInsets.all(4),
+        onPressed: onPressed,
+      ),
+    );
+
+    return Wrap(
+      spacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (isModified) ...[
+          Disable(
+            isEnabled: !isGameRunning,
+            child: compactIconButton(
+              icon: Icons.undo,
+              tooltip: isGameRunning
+                  ? "Game is running"
+                  : "Restore the mods and versions saved in this profile."
+                        " Anything unavailable will be skipped.",
+              onPressed: () {
+                notifier.showRevertDialog(profile, context);
+              },
+            ),
+          ),
+          MovingTooltipWidget.text(
+            message: "Save your enabled mods to this profile.",
+            child: OutlinedButton(
+              onPressed: () {
+                notifier.saveCurrentModListToProfile(profile.id);
+              },
+              child: const Text('Save'),
+            ),
+          ),
+        ],
+        MovingTooltipWidget.text(
+          message: "Deactivate this profile. Your enabled mods won’t change.",
+          child: OutlinedButton(
+            onPressed: () {
+              notifier.showStopUsingProfileDialog(context);
+            },
+            child: const Text('Deactivate'),
+          ),
+        ),
+      ],
     );
   }
 

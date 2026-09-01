@@ -2,7 +2,7 @@
 
 ### Requirement: Profiles change only through explicit saving
 TriOS SHALL keep a saved mod profile unchanged when the enabled loadout changes.
-Only an explicit Save changes, Save and stop, or Save and switch action SHALL
+Only an explicit Save changes, Save and deactivate, or Save and activate action SHALL
 replace the profile's members.
 
 #### Scenario: User toggles a mod
@@ -63,19 +63,19 @@ TriOS SHALL clear profile tracking without changing the enabled loadout.
 
 #### Scenario: Current loadout is Modified
 - **WHEN** the user stops using a profile with a Modified loadout
-- **THEN** TriOS SHALL offer Save and stop, Stop without saving, and Cancel
+- **THEN** TriOS SHALL offer Save and deactivate, Deactivate without saving, and Cancel
 
 ### Requirement: Single profile-switch confirmation
 When switching away from a Modified loadout, TriOS SHALL show one confirmation
 containing the target profile's changes and warnings together with Save and
-switch, Switch without saving, and Cancel.
+switch, Activate without saving, and Cancel.
 
-#### Scenario: User chooses Save and switch
-- **WHEN** the user confirms Save and switch
+#### Scenario: User chooses Save and activate
+- **WHEN** the user confirms Save and activate
 - **THEN** TriOS SHALL save the old profile and then apply the target profile
 
 #### Scenario: Saving fails
-- **WHEN** saving the old profile fails during Save and switch
+- **WHEN** saving the old profile fails during Save and activate
 - **THEN** TriOS SHALL leave the old profile tracked and SHALL not apply the target profile
 
 #### Scenario: User cancels

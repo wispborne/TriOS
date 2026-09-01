@@ -1068,6 +1068,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     );
   }
 
+  /// Marks the "Stop using profile" entry in the profile picker menu.
+  static const _stopUsingProfileMenuValue = "trios.stopUsingProfile";
+
   Widget buildProfileSelector(bool isGameRunning) {
     return Builder(
       builder: (context) {
@@ -1075,57 +1078,88 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
         final activeProfileId = ref.watch(
           appSettings.select((s) => s.activeModProfileId),
         );
-        final activeProfile = ref
-            .read(modProfilesProvider.notifier)
-            .getCurrentModProfile();
+        final trackedStatus = ref.watch(trackedProfileStatusProvider);
+        final trackedProfile = trackedStatus.profile;
+        final theme = Theme.of(context);
+
+        final subtitle = trackedStatus.isLoading
+            ? "Loading…"
+            : trackedProfile == null
+            ? "(none)"
+            : trackedStatus.isModified
+            ? "${trackedProfile.name.truncate(14)} (Modified)"
+            : trackedProfile.name.truncate(20);
 
         return SizedBox(
           height: 36,
           child: MovingTooltipWidget.text(
-            message:
-                "Swap between mod loadouts. Manage them in the Profiles tab.",
-            child: PopupMenuButton(
-              onSelected: (profile) {
-                if (profile is ModProfile) {
-                  ref
-                      .read(modProfilesProvider.notifier)
-                      .showActivateDialog(profile, context);
-                }
-              },
-              tooltip: "",
-              borderRadius: BorderRadius.circular(
-                TriOSThemeConstants.cornerRadius,
-              ),
-              initialValue: activeProfile,
-              itemBuilder: (BuildContext context) =>
-                  profiles?.modProfiles
-                      .map(
-                        (p) => PopupMenuItem(
-                          value: p,
-                          child: Text(
-                            "${p.name} (${p.enabledModVariants.length} mods)",
-                            style: const TextStyle(fontSize: 13),
-                          ),
+            message: trackedStatus.isModified
+                ? "Your enabled mods no longer match '${trackedProfile!.name}'."
+                      "\nSave or revert on the Profiles tab."
+                : "Swap between mod loadouts. Manage them in the Profiles tab.",
+            child: Disable(
+              isEnabled: !trackedStatus.isLoading,
+              child: PopupMenuButton<Object>(
+                onSelected: (selected) {
+                  if (selected == _stopUsingProfileMenuValue) {
+                    ref
+                        .read(modProfilesProvider.notifier)
+                        .showStopUsingProfileDialog(context);
+                  } else if (selected is ModProfile) {
+                    ref
+                        .read(modProfilesProvider.notifier)
+                        .showActivateDialog(selected, context);
+                  }
+                },
+                tooltip: "",
+                borderRadius: BorderRadius.circular(
+                  TriOSThemeConstants.cornerRadius,
+                ),
+                initialValue: trackedProfile,
+                itemBuilder: (BuildContext context) {
+                  final items = <PopupMenuEntry<Object>>[
+                    for (final p
+                        in profiles?.modProfiles ?? const <ModProfile>[])
+                      PopupMenuItem<Object>(
+                        value: p,
+                        enabled: !isGameRunning && p.id != trackedProfile?.id,
+                        child: Text(
+                          "${p.name} (${p.enabledModVariants.length} mods)",
+                          style: const TextStyle(fontSize: 13),
                         ),
-                      )
-                      .toList() ??
-                  [],
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Mod Profile",
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                    Text(
-                      activeProfile?.name.truncate(20) ?? "(none)",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.labelSmall?.copyWith(fontSize: 8),
-                    ),
-                  ],
+                      ),
+                  ];
+                  if (trackedProfile != null) {
+                    items.add(const PopupMenuDivider());
+                    items.add(
+                      PopupMenuItem<Object>(
+                        value: _stopUsingProfileMenuValue,
+                        child: Text(
+                          "Deactivate '${trackedProfile.name.truncate(20)}'",
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    );
+                  }
+                  return items;
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Mod Profile", style: theme.textTheme.labelMedium),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontSize: 8,
+                          color: trackedStatus.isModified
+                              ? theme.colorScheme.secondary
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

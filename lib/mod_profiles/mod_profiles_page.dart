@@ -89,8 +89,12 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                   title: const Text("Mod Profiles"),
                                   content: const Text(
                                     "Mod profiles are a way to quickly switch between different mods, including specific versions."
-                                    "\nWhen one is enabled, any mods you change will update the profile as well."
-                                    "\n"
+                                    "\n\nA profile only changes when you save it. If you enable or disable mods while one is active, "
+                                    "it shows as Modified and the saved profile is left alone."
+                                    "\n\nOn the active profile, you can:"
+                                    "\n  •  Save, to store your enabled mods in it."
+                                    "\n  •  Revert, to enable exactly the mods it saved."
+                                    "\n  •  Deactivate, which leaves your enabled mods alone."
                                     "\n\nYou can also generate profiles from your saves.",
                                   ),
                                   actions: [

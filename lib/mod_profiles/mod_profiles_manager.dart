@@ -20,7 +20,6 @@ import 'package:trios/widgets/text_with_icon.dart';
 
 import '../models/mod_variant.dart';
 import '../utils/generic_settings_notifier.dart';
-import '../widgets/svg_image_icon.dart';
 import 'models/mod_profile.dart';
 
 final modProfilesProvider =
@@ -30,6 +29,88 @@ final modProfilesProvider =
 
 // isChangingProfile state
 bool isChangingModProfileProvider = false;
+
+/// The profile TriOS last applied, whether the enabled mods still match it, and
+/// whether we know either of those things yet.
+class TrackedProfileStatus {
+  /// True until both the mods folder and the enabled-mods file have loaded.
+  /// No profile action should be offered while this is true.
+  final bool isLoading;
+
+  /// The tracked profile, or null if none is tracked or the stored id is gone.
+  final ModProfile? profile;
+
+  /// True when the enabled mods differ from what the tracked profile saved.
+  final bool isModified;
+
+  const TrackedProfileStatus({
+    required this.isLoading,
+    required this.profile,
+    required this.isModified,
+  });
+
+  const TrackedProfileStatus.loading()
+    : isLoading = true,
+      profile = null,
+      isModified = false;
+
+  const TrackedProfileStatus.notTracked()
+    : isLoading = false,
+      profile = null,
+      isModified = false;
+
+  bool get isTracking => profile != null;
+
+  /// True when there are changes that Save changes would write to the profile.
+  bool get hasUnsavedChanges => profile != null && isModified;
+}
+
+/// Works out the tracked profile and its Modified state from already-read
+/// inputs.
+///
+/// Kept separate from the provider so [ModProfileManagerNotifier] can use it
+/// too. The notifier can't read [trackedProfileStatusProvider], because that
+/// provider watches the notifier.
+TrackedProfileStatus computeTrackedProfileStatus({
+  required bool modsHaveLoaded,
+  required bool enabledModsFileIsReady,
+  required ModProfiles? profiles,
+  required String? trackedProfileId,
+  required List<ModVariant> enabledModVariants,
+}) {
+  if (!modsHaveLoaded || !enabledModsFileIsReady || profiles == null) {
+    return const TrackedProfileStatus.loading();
+  }
+
+  final profile = profiles.modProfiles.firstWhereOrNull(
+    (profile) => profile.id == trackedProfileId,
+  );
+  // An id that doesn't name a loaded profile means nothing is tracked.
+  if (profile == null) return const TrackedProfileStatus.notTracked();
+
+  return TrackedProfileStatus(
+    isLoading: false,
+    profile: profile,
+    isModified: !ModProfileManagerNotifier.doesLoadoutMatchProfile(
+      profile,
+      enabledModVariants,
+    ),
+  );
+}
+
+/// Single source of truth for the profile picker, the profile cards, and the
+/// confirmation dialogs.
+final trackedProfileStatusProvider = Provider<TrackedProfileStatus>((ref) {
+  return computeTrackedProfileStatus(
+    modsHaveLoaded: ref.watch(AppState.modsHaveLoaded),
+    enabledModsFileIsReady: ref.watch(AppState.enabledModsFile).hasValue,
+    profiles: ref.watch(modProfilesProvider).value,
+    trackedProfileId: ref.watch(
+      appSettings.select((s) => s.activeModProfileId),
+    ),
+    enabledModVariants: ref.watch(AppState.enabledModVariants),
+  );
+});
 
 /// Stores [ModProfile]s, provides methods to manage them, observable state.
 class ModProfilesSettingsManager
@@ -51,8 +132,6 @@ class ModProfilesSettingsManager
 
 class ModProfileManagerNotifier
     extends GenericSettingsAsyncNotifier<ModProfiles> {
-  bool _pauseAutomaticProfileUpdates = false;
-
   @override
   ModProfiles createDefaultState() => const ModProfiles(modProfiles: []);
 
@@ -65,11 +144,8 @@ class ModProfileManagerNotifier
     // Look for pre-1.0 double/triple encoded json files and migrate them to proper json
     initialState = await migrateFromV1(settingsFile, initialState);
 
-    // Set up the listener to watch enabled mod variants
-    ref.listen<List<ModVariant>>(AppState.enabledModVariants, (previous, next) {
-      updateFromModList();
-    });
-
+    // Profiles are only written by an explicit save. Changing which mods are
+    // enabled never rewrites the tracked profile.
     return initialState;
   }
 
@@ -111,33 +187,40 @@ class ModProfileManagerNotifier
     return ModProfilesSettingsManager();
   }
 
-  ModProfile? getCurrentModProfile() {
-    final currentProfileId = ref.watch(
-      appSettings.select((s) => s.activeModProfileId),
-    );
-    return state.value?.modProfiles.firstWhereOrNull(
-      (profile) => profile.id == currentProfileId,
-    );
-  }
-
-  void updateFromModList() {
-    if (_pauseAutomaticProfileUpdates) return;
-
-    final mods = ref.read(AppState.enabledModVariants);
-    final enabledModVariants = mods.sortedByName
-        .map((variant) => ShallowModVariant.fromModVariant(variant))
-        .toList();
-
-    Fimber.d("Updating mod profile with ${enabledModVariants.length} mods");
-
-    final currentProfile = getCurrentModProfile();
-    if (currentProfile != null) {
-      final updatedProfile = currentProfile.copyWith(
-        enabledModVariants: enabledModVariants,
-        dateModified: DateTime.now(),
+  /// The tracked profile and its Modified state, right now.
+  ///
+  /// Same answer as [trackedProfileStatusProvider], which the notifier can't
+  /// read because that provider watches this notifier.
+  TrackedProfileStatus readTrackedProfileStatus() =>
+      computeTrackedProfileStatus(
+        modsHaveLoaded: ref.read(AppState.modsHaveLoaded),
+        enabledModsFileIsReady: ref.read(AppState.enabledModsFile).hasValue,
+        profiles: state.value,
+        trackedProfileId: ref.read(appSettings).activeModProfileId,
+        enabledModVariants: ref.read(AppState.enabledModVariants),
       );
-      updateModProfile(updatedProfile);
-    }
+
+  /// Whether the currently enabled mods are exactly what [profile] saved.
+  ///
+  /// Compares mod ids and exact variant ids. List order, mod names, and saved
+  /// display versions are ignored.
+  static bool doesLoadoutMatchProfile(
+    ModProfile profile,
+    List<ModVariant> enabledModVariants,
+  ) {
+    final profileVariantIdsByModId = {
+      for (final member in profile.enabledModVariants)
+        member.modId: member.smolVariantId,
+    };
+    final enabledVariantIdsByModId = {
+      for (final variant in enabledModVariants)
+        variant.modInfo.id: variant.smolId,
+    };
+
+    return const MapEquality<String, String>().equals(
+      profileVariantIdsByModId,
+      enabledVariantIdsByModId,
+    );
   }
 
   void cloneModProfile(ModProfile profile) {
@@ -169,7 +252,7 @@ class ModProfileManagerNotifier
     );
   }
 
-  void updateModProfile(ModProfile updatedProfile) {
+  Future<void> updateModProfile(ModProfile updatedProfile) async {
     final startingState = state.value ?? const ModProfiles(modProfiles: []);
 
     final newModProfiles = startingState.modProfiles
@@ -179,7 +262,9 @@ class ModProfileManagerNotifier
         )
         .toList();
 
-    updateState((oldState) => oldState.copyWith(modProfiles: newModProfiles));
+    await updateState(
+      (oldState) => oldState.copyWith(modProfiles: newModProfiles),
+    );
   }
 
   void removeModProfile(String modProfileId) {
@@ -363,7 +448,14 @@ class ModProfileManagerNotifier
     return toVariantAlternate;
   }
 
-  Future<void> activateModProfile(String modProfileId) async {
+  /// Enables exactly the mods saved in [modProfileId] and tracks that profile.
+  ///
+  /// Pass [allowReapply] to run even when the profile is already tracked. That
+  /// is what Revert to profile does.
+  Future<void> activateModProfile(
+    String modProfileId, {
+    bool allowReapply = false,
+  }) async {
     Fimber.i("Activating mod profile $modProfileId.");
     final modVariantsNotifier = ref.read(AppState.modVariants.notifier);
     final modManagerNotifier = ref.read(modManager.notifier);
@@ -379,8 +471,8 @@ class ModProfileManagerNotifier
       final activeProfileId = ref.read(
         appSettings.select((s) => s.activeModProfileId),
       );
-      if (activeProfileId == modProfileId) {
-        Fimber.i("Profile $modProfileId is already active.");
+      if (activeProfileId == modProfileId && !allowReapply) {
+        Fimber.i("Profile $modProfileId is already tracked.");
         return;
       }
 
@@ -394,9 +486,6 @@ class ModProfileManagerNotifier
         currentlyEnabledModVariants,
       );
 
-      // Pause automatic profile updates while swapping
-      Fimber.i("Pausing profile updates while swapping.");
-      _pauseAutomaticProfileUpdates = true;
       modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = false;
       isChangingModProfileProvider = true;
 
@@ -443,36 +532,146 @@ class ModProfileManagerNotifier
       );
     } finally {
       // Fimber.i("here4.");
-      _pauseAutomaticProfileUpdates = false;
       modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = true;
       isChangingModProfileProvider = false;
       // Reload all just in case.
       await modVariantsNotifier.reloadModVariants();
-      Fimber.i("Resuming profile updates.");
     }
   }
 
-  Future<void> saveCurrentModListToProfile(String profileId) async {
-    final currentProfile = getCurrentModProfile();
-    if (currentProfile == null) {
-      Fimber.w("No current profile to save to.");
-      return;
+  /// Replaces [profileId]'s saved mods with whatever is enabled right now.
+  ///
+  /// Returns false if the profile is gone or the write failed, so callers that
+  /// do something afterwards (like switching profiles) can stop.
+  Future<bool> saveCurrentModListToProfile(String profileId) async {
+    final profile = state.value?.modProfiles.firstWhereOrNull(
+      (profile) => profile.id == profileId,
+    );
+    if (profile == null) {
+      Fimber.w("No profile $profileId to save to.");
+      return false;
     }
+
     final currentMods = ref.read(AppState.enabledModVariants);
     final currentShallows = currentMods.sortedByName
         .map((variant) => ShallowModVariant.fromModVariant(variant))
         .toList();
-    final newProfile = currentProfile.copyWith(
+    final newProfile = profile.copyWith(
       enabledModVariants: currentShallows,
       dateModified: DateTime.now(),
     );
-    updateModProfile(newProfile);
+
+    try {
+      await updateModProfile(newProfile);
+      Fimber.i(
+        "Saved ${currentShallows.length} enabled mods to profile $profileId.",
+      );
+      return true;
+    } catch (e, stack) {
+      Fimber.e(
+        "Failed to save current mods to profile $profileId.",
+        ex: e,
+        stacktrace: stack,
+      );
+      return false;
+    }
   }
 
+  /// Stops tracking a profile. Never changes which mods are enabled.
+  Future<void> stopUsingProfile() async {
+    Fimber.i("No longer tracking a mod profile.");
+    await ref
+        .read(appSettings.notifier)
+        .update((s) => s.copyWith(activeModProfileId: null));
+  }
+
+  /// Asks whether to switch to [profile], then switches.
+  ///
+  /// Selecting the profile that is already tracked does nothing. Revert to
+  /// profile is the way to reapply it.
   void showActivateDialog(ModProfile profile, BuildContext context) {
+    final status = readTrackedProfileStatus();
+    if (status.isLoading) return;
+    if (status.profile?.id == profile.id) {
+      Fimber.i("Profile ${profile.id} is already tracked; nothing to do.");
+      return;
+    }
+    _showProfileChangeDialog(profile, context, isRevert: false);
+  }
+
+  /// Asks whether to reapply the tracked [profile], then reapplies it.
+  void showRevertDialog(ModProfile profile, BuildContext context) {
+    if (readTrackedProfileStatus().isLoading) return;
+    _showProfileChangeDialog(profile, context, isRevert: true);
+  }
+
+  /// Stops tracking a profile, first asking what to do with unsaved changes.
+  void showStopUsingProfileDialog(BuildContext context) {
+    final status = readTrackedProfileStatus();
+    if (status.isLoading || !status.isTracking) return;
+
+    final trackedProfile = status.profile!;
+    if (!status.isModified) {
+      stopUsingProfile();
+      return;
+    }
+
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Deactivate '${trackedProfile.name}'?"),
+        content: Text(
+          "Your enabled mods no longer match '${trackedProfile.name}'."
+          "\n\nEither way, the mods you have enabled stay exactly as they are."
+          " Only the saved profile is affected.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              stopUsingProfile();
+            },
+            child: const Text('Deactivate without saving'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final saved = await saveCurrentModListToProfile(
+                trackedProfile.id,
+              );
+              if (!saved) {
+                Fimber.w(
+                  "Could not save '${trackedProfile.name}', so it is still tracked.",
+                );
+                return;
+              }
+              await stopUsingProfile();
+            },
+            child: const Text('Save and deactivate'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProfileChangeDialog(
+    ModProfile profile,
+    BuildContext context, {
+    required bool isRevert,
+  }) {
     if (!context.mounted) {
       return;
     }
+
+    final status = readTrackedProfileStatus();
+    // Only a switch away from an edited profile needs the save/discard choice.
+    final profileWithUnsavedChanges = isRevert ? null : status.profile;
+    final hasUnsavedChanges = !isRevert && status.hasUnsavedChanges;
 
     final allMods = ref.read(AppState.mods);
     final modVariants = ref.read(AppState.modVariants).value ?? [];
@@ -514,15 +713,37 @@ class ModProfileManagerNotifier
             missingMods.isNotEmpty || missingVariants.isNotEmpty;
         final theme = Theme.of(context);
         final iconColor = theme.iconTheme.color?.withOpacity(0.8);
+        final unsavedChangesNotice = hasUnsavedChanges
+            ? Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  "Your enabled mods no longer match"
+                  " '${profileWithUnsavedChanges!.name}'."
+                  " Choose whether to save them to it before activating"
+                  " '${profile.name}'.",
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+            : const SizedBox.shrink();
+
         return AlertDialog(
-          title: Text("Activate '${profile.name}'?"),
+          title: Text(
+            isRevert
+                ? "Revert to '${profile.name}'?"
+                : "Activate '${profile.name}'?",
+          ),
           content: changes.isEmpty
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    unsavedChangesNotice,
                     Text(
-                      "The new profile will be activated and is identical to your current profile.",
+                      isRevert
+                          ? "Your enabled mods already match this profile."
+                          : "This profile has the same mods you already have enabled.",
                     ),
                   ],
                 )
@@ -530,6 +751,7 @@ class ModProfileManagerNotifier
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      unsavedChangesNotice,
                       Text(
                         "Mods Being Enabled, Disabled, or Changing Version",
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -592,32 +814,44 @@ class ModProfileManagerNotifier
               },
               child: const Text('Cancel'),
             ),
+            if (hasUnsavedChanges)
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  activateModProfile(profile.id);
+                },
+                child: const Text('Activate without saving'),
+              ),
             TextButton.icon(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
-                ref
-                    .read(modProfilesProvider.notifier)
-                    .activateModProfile(profile.id);
+                if (hasUnsavedChanges) {
+                  final saved = await saveCurrentModListToProfile(
+                    profileWithUnsavedChanges!.id,
+                  );
+                  if (!saved) {
+                    // Don't switch away from a profile we couldn't save.
+                    Fimber.w(
+                      "Could not save '${profileWithUnsavedChanges.name}', so the switch was cancelled.",
+                    );
+                    return;
+                  }
+                }
+                await activateModProfile(profile.id, allowReapply: isRevert);
               },
               icon: hasMissingModsOrVariants ? const Icon(Icons.warning) : null,
               label: Text(
-                hasMissingModsOrVariants
-                    ? 'Activate (ignore missing mods)'
-                    : 'Activate',
+                isRevert
+                    ? (hasMissingModsOrVariants
+                          ? 'Revert (ignore missing mods)'
+                          : 'Revert')
+                    : hasUnsavedChanges
+                    ? 'Save and activate'
+                    : (hasMissingModsOrVariants
+                          ? 'Activate (ignore missing mods)'
+                          : 'Activate'),
               ),
             ),
-            if (hasMissingModsOrVariants)
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-
-                  ref.read(modProfilesProvider.notifier)
-                    ..cloneModProfile(profile)
-                    ..activateModProfile(profile.id);
-                },
-                icon: const SvgImageIcon("assets/images/icon-clone.svg"),
-                label: const Text('Back up Profile & Activate'),
-              ),
           ],
         );
       },
@@ -828,7 +1062,8 @@ class ModProfileManagerNotifier
                 .where((vari) => vari.toVariantAlternate == null)
                 .isNotEmpty)
           Text(
-            "Missing mods will be discarded from your profile after activating.",
+            "Missing mods can't be enabled, so they stay off. They are still"
+            " saved in the profile.",
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),

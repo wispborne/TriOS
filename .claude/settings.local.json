@@ -220,7 +220,9 @@
       "Bash(glaive)",
       "Bash(warden\" | head -20)",
       "Bash(git log *)",
-      "PowerShell(flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1)"
+      "PowerShell(flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1)",
+      "Bash(node \"C:\\\\Users\\\\whitm\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\bundled-skills\\\\2.1.247\\\\046bd452784ecc8244b6bf1c048977b0\\\\design\\\\seed-canvas.mjs\" --template \"C:\\\\Users\\\\whitm\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\bundled-skills\\\\2.1.247\\\\046bd452784ecc8244b6bf1c048977b0\\\\design\\\\payload.template.html\" --out trios-modpacks-mockup.html --title \"TriOS Modpacks\" --artboard Main.dc.html --artboard Editor.dc.html --artboard ImportPreview.dc.html --artboard InstallConfirm.dc.html --canvas canvas.json)",
+      "Bash(node \"C:\\\\Users\\\\whitm\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\bundled-skills\\\\2.1.247\\\\046bd452784ecc8244b6bf1c048977b0\\\\design\\\\seed-canvas.mjs\" --check trios-modpacks-mockup.html)"
     ]
   }
 }

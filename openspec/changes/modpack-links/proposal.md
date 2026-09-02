@@ -16,15 +16,16 @@ cannot publish membership changes to people who already saved the list.
 
 Add a Modpacks library and editor to TriOS. A modpack is a versioned,
 shareable definition of mods and their download sources. It may label the
-intended Starsector version and include a creator note for each member. People
-can create a pack from installed mods, add and remove members with drag-and-
+intended Starsector version and include a creator note and optional status for
+each item. People can create a pack from installed mods, add and remove items with drag-and-
 drop or checkboxes, save unfinished drafts, and share finished packs with one
 link.
 
 Opening a link or dropping a modpack file shows a preview. The person chooses
 whether to add it to the library or install from it. Installation remains
-selective and does not enable mods. The library calculates which members are
-installed and checks versioned online definitions for updates.
+selective, runs in the background, and enables mods only when the person asks.
+The library calculates which items are installed and checks versioned online
+definitions for updates.
 
 The complete pack remains compressed inside every link. TriLink stays a
 static launcher with no pack database. An optional update URL lets a creator
@@ -32,14 +33,15 @@ host newer integer versions of the definition elsewhere.
 
 ## In scope
 
-- A persistent Modpacks library with search, useful filters, installed-member
-  counts, source problems, and passive update notices.
+- A persistent Modpacks library with search, useful filters, installed-item
+  counts, source problems, drafts, and in-page installation progress.
 - A two-pane editor with drag-and-drop and checkbox-based bulk actions.
 - Creation from an empty pack, selected installed mods, or a mod profile.
-- Stable pack IDs and required positive integer versions managed by TriOS.
-- Member source selection, dependency checks, catalog recovery hints, shared
-  member notes, a display-only Starsector-version label, and per-pack drafts
-  containing unresolved members.
+- Compact stable pack IDs and required positive integer versions managed by
+  TriOS.
+- Item source selection, dependency checks, catalog recovery hints, shared item
+  notes and statuses, a display-only Starsector-version label, and per-pack
+  drafts containing unresolved items.
 - Link and file import, preview, add-without-installing, selective install,
   partial failure recovery, and optional enabling during or after installation.
 - Online update checks, version comparisons, definition comparisons, and
@@ -59,8 +61,8 @@ the enabled loadout changes.
 
 - Creating a profile from a modpack. The exact-variant behavior needs a later
   design.
-- Adding a brand-new member that is not installed locally. Existing remote
-  members remain editable when their mods are absent.
+- Adding a brand-new item that is not installed locally. Existing remote items
+  remain editable when their mods are absent.
 - A hosted pack registry, short codes, accounts, or proof of authorship.
 - Automatic uninstalling or disabling when a pack changes.
 - Automatic field-by-field merges, revision history, or rollback UI.

@@ -40,14 +40,16 @@ The payload is produced in four steps:
 4. Prefix it with `1.`, the payload format number.
 
 Decoding reverses those steps. TriOS refuses unknown format numbers and tells
-the person to update TriOS. The format number describes the encoding and
-schema, not the pack's own integer version.
+the person to update TriOS. This transport number describes the compressed
+encoding. It is separate from the shared definition's `formatVersion` and the
+pack's own integer `version`.
 
 ## Shared definition
 
 ```json
 {
-  "id": "35e06ef0-bd72-4c4c-a175-40cfed42383d",
+  "formatVersion": 1,
+  "id": "N3qGd6c8R2mVx1ZaYkW0_A",
   "name": "Wisp's QoL Pack",
   "version": 3,
   "author": "Wisp",
@@ -55,11 +57,12 @@ schema, not the pack's own integer version.
   "gameVersion": "0.98a-RC8",
   "homepageUrl": "https://fractalsoftworks.com/forum/index.php?topic=12345.0",
   "updateUrl": "https://example.com/wisps-qol-pack.trios-modpack",
-  "mods": [
+  "items": [
     {
       "id": "mod_id",
       "name": "Mod Name",
       "version": "1.4.0",
+      "status": "Recommended",
       "note": "Enable the optional LunaLib integration after installing.",
       "url": "https://example.com/Mod.version",
       "sourceType": "versionFile",
@@ -75,34 +78,45 @@ schema, not the pack's own integer version.
 
 Pack requirements:
 
-- `id`: UUID retained by every later version of the same pack.
+- `formatVersion`: shared-definition format, currently `1`.
+- `id`: 16 random bytes encoded as exactly 22 unpadded base64url characters,
+  retained by every later version of the same pack.
 - `name`: non-empty display name.
-- `version`: positive integer managed by TriOS.
-- `mods`: ordered member list with no duplicate mod IDs.
+- `version`: positive JavaScript-safe integer managed by TriOS.
+- `items`: non-empty ordered item list with no duplicate case-sensitive mod IDs.
 
 Optional pack fields are `author`, `description`, `gameVersion`, `homepageUrl`,
 and `updateUrl`. `gameVersion` is a display label only. It never changes how
-TriOS checks compatibility or installs members.
+TriOS checks compatibility or installs items.
 
-Member requirements:
+Item requirements:
 
 - `id`: the mod's `mod_info.json` ID.
 - `url`: HTTP or HTTPS Version Checker or fixed-download address.
 - `sourceType`: `versionFile` or `directDownload`.
 
-Optional member fields are the display `name`, observed mod `version`, a plain-
-text creator `note` of at most 2,000 characters, and the catalog recovery
-clues. Member order is retained for presentation but has no installation
+Optional item fields are the display `name`, observed mod `version`, a plain-
+text creator `note` of at most 2,000 characters, an informational `status`, and
+the catalog recovery clues. Status has no default. Required, Recommended, and
+Optional are standard labels, and a creator may use a custom single-line label
+up to 40 characters. Status never controls installation or validation. Item
+order is retained for presentation but has no installation
 meaning. Older readers preserve unknown optional fields when comparing,
 editing, and exporting a definition. The typed models retain raw unknown keys
 alongside known fields instead of letting serialization discard them.
+
+Unknown optional fields in format 1 are ignored safely and preserved. An
+unknown `formatVersion` blocks editing, installation, and resharing and asks the
+person to update TriOS. Encoding uses fixed known-field order, sorted unknown
+object keys, and preserved item order.
 
 ## Integer versions
 
 New packs and copies begin at version 1. TriOS increments the integer once when
 Save changes commits a meaningful definition change. Editing a draft does not
-increment it by itself. Saving a changed member order, note, Starsector-version
-label, source, member list, or other shared field does. A no-op save does not.
+increment it by itself. Saving a changed item order, status, note,
+Starsector-version label, source, item list, or other shared field does. A no-op
+save does not. Copy link, Export, and Publish do not change the version.
 
 Versions only move forward. Publishing older contents as a rollback requires
 a new, higher integer.
@@ -114,8 +128,8 @@ When an update URL is reachable:
 - Equal version and different contents: show the comparison and offer Replace
   existing, Add as a copy, or Cancel.
 - Lower online version: keep the newer saved or embedded definition.
-- Different pack ID: compare and ask whether to replace, add separately, or
-  cancel.
+- Different pack ID: treat the hosted definition as a broken update and allow
+  adding it only as a separate pack.
 
 The online definition never silently replaces a different pack ID.
 
@@ -132,10 +146,13 @@ Later update checks report an unavailable or invalid hosted definition without
 making the embedded or saved pack unusable.
 
 Accepting an update replaces the saved definition as a whole. TriOS does not
-merge selected fields. The comparison groups changed member sources separately.
+merge selected fields. The comparison groups pack information plus added,
+removed, and changed items and calls out source, status, note, and recorded
+version changes.
 Changing the update address requires explicit confirmation before the whole
-update is accepted. Added members remain uninstalled until chosen. Removed
-members remain on disk and keep their current enabled state.
+update is accepted. Added items remain uninstalled until chosen. Removed items
+remain on disk and keep their current enabled state. A draft must be committed,
+copied, or discarded before accepting an update.
 
 TriOS exports the current readable definition for the creator to upload. It
 does not upload to arbitrary hosts itself.
@@ -149,35 +166,56 @@ Dropping or opening one shows a preview with Add to library and Install.
 Receipt alone never saves or installs it.
 
 Incomplete drafts are local TriOS data, not valid shareable files. Each pack ID
-has its own persisted draft, including new packs that receive an ID as soon as
-editing begins. A draft can be saved with unresolved members, but export and
-sharing remain blocked.
+has its own autosaved draft, including new packs that receive an ID as soon as
+editing begins. A draft can be empty or contain unresolved items, but commit,
+export, and sharing remain blocked until it is valid.
 
 ## Receiving and installing
 
-TriOS shows the embedded definition immediately and starts checking its update
-address. A higher online version is identified clearly when the check finishes.
-Conflicts and ID changes require a choice. A failed check leaves the embedded
+TriOS shows the embedded definition immediately without contacting its update
+address. It checks only after the person asks, adds or accepts the pack, or
+starts installation. The embedded definition remains selected while a check
+runs, and a late result cannot change an add or installation already in
+progress. Conflicts require a choice. A failed check leaves the embedded
 definition available with a warning.
 
 Installation confirmation cannot be disabled for packs. Missing, installable
-members are selected by default. People may install only part of the pack.
-Successful members remain installed when another fails.
+items are selected by default. People may install only part of the pack,
+including skipping an item labelled Required. Successful items remain installed
+when another fails.
 
-Pack installation uses the normal download and batch-installation services.
-Its confirmation includes an unchecked Enable installed members after
-installation option. When selected, TriOS enables every member installed after
-the batch, including members that were already present, even when another
-download failed. The same confirmed action remains available later.
+Pack installation uses the normal download and batch-installation services and
+runs outside the dialog. Closing the dialog leaves it running and keeps TriOS
+usable. Progress remains on the Modpacks page. More than one pack may install at
+once, but the same pack cannot start twice.
 
-Before Copy share link, Export, or Publish update, TriOS checks every member
+Stop lets active work finish safely but starts nothing new. It keeps completed
+installs, skips automatic enabling, and discards the in-memory attempt after it
+settles. Jobs do not survive restart; choosing Install again builds a fresh plan
+from the saved pack and current mods.
+
+All pack installations share a fair limit of two downloads and the configured
+one-through-six extraction/install limit. An archive must contain its declared
+mod ID. TriOS installs only selected declared IDs, ignores and reports extras,
+and fails an item whose ID is absent or wrong.
+
+Confirmation includes an unchecked Enable installed items after installation
+option. When selected, TriOS enables every pack item installed after the batch,
+including items that were already present, even when another download failed.
+The same confirmed action remains available later.
+
+Before Copy share link, Export, or Publish update, TriOS checks every item
 source. Version Checker files must parse and resolve to a usable download.
 Direct-download sources must begin returning a downloadable file, but TriOS
 does not download the complete archive just to validate it. Any failure blocks
 the sharing action without blocking local draft saving. A successful check is
-reused for 60 minutes when the member's URL and source type have not changed.
+reused for 60 minutes when the item's URL and source type have not changed.
 Changing either value invalidates the saved result. Failed checks are retried
 on the next sharing attempt.
+
+Source-check progress appears in a new section on the pack page, not a dialog.
+It lists each result, allows cancellation and repair, and finishes the requested
+Copy or Export automatically when all sources pass.
 
 When a source fails, TriOS tries saved catalog clues and exact catalog names.
 Likely fuzzy matches are shown for manual selection and are never installed
@@ -190,12 +228,12 @@ TriOS refuses to create or accept a link longer than 30,000 characters. Windows
 and Edge fail near 32,000 characters when launching the registered scheme, so
 the smaller limit leaves a safety margin. Decoding also stops and rejects the
 payload if the definition expands beyond 4 MiB or contains more than 5,000
-members. When an outgoing link is too long, the message suggests shortening
-the pack description or member notes, removing members, or exporting a
+items. When an outgoing link is too long, the message suggests shortening
+the pack description or item notes, removing items, or exporting a
 `.trios-modpack` file instead.
 
-A realistic 400-member definition compresses to about 7,000 characters. A
-typical pack can hold well over a thousand members.
+A realistic 400-item definition compresses to about 7,000 characters. A
+typical pack can hold well over a thousand items.
 
 Windows may rewrite `install?` as `install/?` while launching TriOS. The scheme
 parser accepts both forms.
@@ -212,8 +250,8 @@ TriOS:
 TriLink:
 
 - Decodes and previews the embedded definition in the browser, including its
-  Starsector-version label and member notes.
+  Starsector-version label, item statuses, and item notes.
 - Launches TriOS with the same payload.
 - Does not store packs or fetch update addresses.
-- Resolves fallback member links only when the person expands that section,
+- Resolves fallback item links only when the person expands that section,
   avoiding hundreds of requests on a large pack preview.

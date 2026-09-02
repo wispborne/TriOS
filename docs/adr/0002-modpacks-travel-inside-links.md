@@ -23,5 +23,5 @@ keeps the link independent of that host.
   payloads.
 - Pack identity supports duplicate and update handling but does not prove
   authorship across computers.
-- TriOS calculates local member coverage instead of tracking a pack-level
+- TriOS calculates local item coverage instead of tracking a pack-level
   installation record.

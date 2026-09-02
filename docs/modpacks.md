@@ -7,15 +7,15 @@ single link**.
 
 Modpacks are **created entirely within TriOS**. Start with an empty pack, mods
 selected in the Mod Manager, or a mod profile. The editor shows installed mods
-and pack members side by side. Drag mods between the lists, or use checkboxes
+and pack items side by side. Drag mods between the lists, or use checkboxes
 to add and remove several at once.
 
 Give the pack a name and optionally add an author, description, homepage,
-Starsector version, and update address. Each member may also have a note from
-the pack creator. TriOS finds download sources automatically and identifies any
-members that still need attention. Unfinished packs can be saved as drafts,
-but **every shared member needs a mod ID and a source that TriOS successfully
-validates**.
+Starsector version, and update address. Each item may also have a note and an
+informational status such as Required, Recommended, Optional, or a custom
+label. TriOS finds download sources automatically and identifies any items that
+still need attention. Unfinished work is autosaved as a draft, but **every
+shared item needs a mod ID and a source that TriOS successfully validates**.
 
 Version Checker sources track a mod's current release. Fixed downloads keep
 using the supplied file until the pack creator publishes a newer pack version.
@@ -28,27 +28,33 @@ before it launches TriOS. Dropping a modpack file anywhere in TriOS opens the
 same kind of preview.
 
 TriOS always asks whether to **add the pack to your library or install from
-it**. Installing also saves the pack. You can choose which missing members to
-install and may ask TriOS to enable installed members after installation. One
+it**. Installing also saves the pack. You can choose which missing items to
+install and may ask TriOS to enable installed items after installation. One
 failed download does not undo the others. When a source no longer works, TriOS
 looks for a safe alternative in the Catalog when possible.
 
+Installation continues in the background if you close its dialog. Progress
+stays visible on the Modpacks page, and you can keep using TriOS. Stop prevents
+new work from starting while allowing the current download or install to finish
+safely. Starting Install again later recalculates what is still missing.
+
 Installing a pack **does not enable its mods by default**. You can opt into
-enabling installed members during confirmation, enable them yourself, or use
-the separate Enable installed members action later. Enabling uses the normal
+enabling installed items during confirmation, enable them yourself, or use
+the separate Enable installed items action later. Enabling uses the normal
 mod-manager behavior, including its dependency checks.
 
 ## Keep packs up to date
 
-The Modpacks library shows how many members are installed, which are missing,
+The Modpacks library shows how many items are installed, which are missing,
 and whether the creator has published a newer pack version. Updates show a
-comparison before replacing the saved definition. Newly added members are
-installed only when you choose them, and removed members are never
+comparison before replacing the saved definition. Newly added items are
+installed only when you choose them, and removed items are never
 automatically disabled or uninstalled.
 
 Creators can give a pack an update address and publish later versions without
-changing the original share link. TriOS begins checking that address as soon as
-it opens the pack and keeps the embedded definition usable if the check fails.
+changing the original share link. TriOS checks saved packs in the background.
+For a new link or file, it waits until you ask, add the pack, or start an
+installation before contacting the update address.
 
 ## Limits
 

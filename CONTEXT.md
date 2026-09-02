@@ -68,20 +68,32 @@ _Avoid_: Modified profile, dirty profile
 A named, versioned definition of mods and their download sources that can be saved, shared, and installed through TriOS.
 _Avoid_: Mod list, collection, bundle
 
-**Modpack member**:
-One mod named by a modpack, identified by its mod ID and a Version Checker or fixed-download source.
-_Avoid_: Entry, dependency
+**Modpack item**:
+One mod named by a modpack, identified by its mod ID and a Version Checker or fixed-download address that must yield that ID. Any installed variant with that ID satisfies membership; exact versions and complete dependency closure are not promised.
+_Avoid_: Member, entry, dependency, locked mod
 
-**Modpack member note**:
-Optional instructions or context written by the modpack creator for one member. The note travels with the modpack.
+**Modpack item download source**:
+The public HTTP or HTTPS address used to obtain a modpack item. It must yield the item's mod ID but does not promise an exact version or file.
+_Avoid_: Member source, mod source
+
+**Modpack item note**:
+Optional instructions or context written by the modpack creator for one item. The note travels with the modpack.
 _Avoid_: Personal note, local annotation
+
+**Modpack item status**:
+A creator-set, optional label describing how important an item is to the modpack. It has no default. The standard labels are Required, Recommended, and Optional; creators may use a custom single-line label up to 40 characters. The label is informational only and never changes installation, dependency, or validation behavior.
+_Avoid_: Install rule, dependency type, pack status
 
 **Modpacks library**:
 The modpack definitions saved in TriOS. It does not record a pack-level installed or created status.
 _Avoid_: Installed packs, pack history
 
+**Modpack library entry**:
+A modpack saved in the local Modpacks library together with facts that belong only to that saved copy. Current item coverage is calculated rather than part of the entry.
+_Avoid_: Installed modpack, modpack status
+
 **Modpack draft**:
-An unfinished local modpack definition. It may be saved with unresolved members but cannot be shared until every member is valid.
+An autosaved local working copy of a modpack definition, kept separately from its saved library entry. It may contain unresolved items but cannot be committed or shared until every item is valid.
 _Avoid_: Broken pack, unpublished pack
 
 **Modpack version**:
@@ -89,12 +101,16 @@ A positive integer that TriOS increases whenever a saved modpack definition chan
 _Avoid_: Mod version, payload version, format version
 
 **Modpack update URL**:
-An optional address containing the current online definition of a modpack.
+An optional address containing the current online definition of the same modpack ID. A definition with another ID is a separate pack, not an update.
 _Avoid_: Homepage, source URL
 
 **Starsector version**:
 An optional label saying which version of Starsector a modpack was made for. It informs people but never controls installation or compatibility behavior.
 _Avoid_: Required game version, compatibility rule
+
+**Modpack installation**:
+A background attempt to install selected items from one saved modpack. It can outlive its dialog; stopping it keeps finished work, and a later attempt recalculates what remains.
+_Avoid_: Installation dialog, installed modpack
 
 ## Grids
 

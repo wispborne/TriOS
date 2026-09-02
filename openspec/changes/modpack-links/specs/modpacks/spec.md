@@ -1,162 +1,273 @@
 ## ADDED Requirements
 
 ### Requirement: Shared modpack definition
-TriOS SHALL represent a shared modpack as a stable UUID, positive integer
-version, non-empty name, ordered unique mod members, and optional shared
-metadata. Shared metadata SHALL include author, description, homepage, update
-address, and a display-only Starsector-version label. Each member SHALL include
-a mod ID, HTTP or HTTPS source, and explicit source type, and MAY include a
-plain-text creator note of at most 2,000 characters.
+TriOS SHALL represent a shared modpack with format version 1, an opaque
+case-sensitive pack ID made from 16 random bytes as exactly 22 unpadded
+base64url characters, a positive JavaScript-safe integer version, a non-empty
+name, ordered unique items, and optional shared metadata. A committed
+definition SHALL contain at least one item.
+
+Each item SHALL use a case-sensitive mod ID and an explicit Version Checker or
+fixed-download HTTP or HTTPS source. It MAY include name and version display
+snapshots, a creator note of at most 2,000 characters, catalog recovery clues,
+and an optional single-line status of at most 40 characters.
+
+#### Scenario: Item status is absent
+- **WHEN** an item has no status
+- **THEN** TriOS SHALL display no status and SHALL NOT assign a default
+
+#### Scenario: Standard or custom item status is present
+- **WHEN** an item uses Required, Recommended, Optional, or a valid custom status
+- **THEN** TriOS SHALL preserve and display it without changing selection, installation, dependency, validation, or enabling behavior
+
+#### Scenario: Recorded item version differs
+- **WHEN** an installed mod version differs from the item's recorded version
+- **THEN** TriOS SHALL still treat the item as installed and SHALL display the installed version followed by the recorded modpack version in parentheses
 
 #### Scenario: Starsector-version label is present
 - **WHEN** a definition contains a Starsector-version label
-- **THEN** TriOS SHALL display it in the library, preview, and installation review without using it to accept, reject, select, or install any member
+- **THEN** TriOS SHALL display it without using it to accept, reject, select, or install any item
 
-#### Scenario: New pack is created
-- **WHEN** TriOS knows the current Starsector installation's version
-- **THEN** TriOS SHALL prefill the new pack's editable Starsector-version label with that value
+#### Scenario: Unknown optional field is read
+- **WHEN** TriOS reads a known format containing an unknown optional field
+- **THEN** it SHALL preserve that field through comparison, editing, link generation, and file export
 
-#### Scenario: Member note is present
-- **WHEN** a definition contains a member note
-- **THEN** TriOS SHALL preserve and display the note in editing, preview, installation review, and library details
-
-#### Scenario: Newer optional field is read
-- **WHEN** TriOS reads a definition containing an unknown optional field
-- **THEN** TriOS SHALL preserve that field through comparison, editing, link generation, and file export
+#### Scenario: Unknown definition format is read
+- **WHEN** TriOS reads an unsupported format version
+- **THEN** it SHALL ask the person to update TriOS and SHALL NOT edit, install, or reshare the definition
 
 ### Requirement: Modpack identity and versioning
-TriOS SHALL allocate a UUID when a new pack first enters the editor. New packs
-and copies SHALL start at version 1. Saving changed shared content SHALL
-increment the version once. Editing a draft or saving unchanged content SHALL
-not increment it.
+TriOS SHALL allocate a pack ID when a new draft is created. New packs and
+copies SHALL start at version 1. Saving changed shared content SHALL increment
+the version once. Draft autosaves, no-op saves, Copy link, Export, and Publish
+SHALL NOT increment it.
 
-#### Scenario: Reordered members are saved
-- **WHEN** the user changes member order and saves the pack
-- **THEN** TriOS SHALL increment the pack version once
-
-#### Scenario: Only draft state changes
-- **WHEN** the user edits a draft without committing it to the library
-- **THEN** TriOS SHALL leave the committed pack version unchanged
+#### Scenario: Shared content changes
+- **WHEN** the person saves changed metadata, items, item order, statuses, notes, sources, or preserved unknown fields
+- **THEN** TriOS SHALL increment the saved pack version once
 
 #### Scenario: Existing pack is copied
-- **WHEN** the user chooses Add as a copy or Save as a new modpack
-- **THEN** TriOS SHALL assign a new UUID and set the copy's version to 1
+- **WHEN** the person chooses Duplicate, Add as a copy, or Save as a new modpack
+- **THEN** TriOS SHALL assign a new pack ID and set the copy's version to 1
 
-### Requirement: Independent persisted drafts
-TriOS SHALL persist one draft per pack ID and SHALL allow more than one
-unfinished new pack to exist.
+### Requirement: Drafts remain separate from saved packs
+TriOS SHALL autosave one draft per pack ID. A draft MAY be empty or invalid and
+SHALL remain separate from the last committed definition. The library SHALL
+show draft-only packs and saved packs with unsaved changes.
 
-#### Scenario: User switches between editors
-- **WHEN** the user edits pack A, opens pack B, and later returns to pack A
-- **THEN** TriOS SHALL restore pack A's draft without replacing pack B's draft
+#### Scenario: Person leaves an editor
+- **WHEN** the person edits a pack and uses Back without saving
+- **THEN** TriOS SHALL keep the draft without prompting and SHALL keep normal library actions on the committed definition
 
-#### Scenario: Incoming definition matches a changed draft
-- **WHEN** an incoming definition has the same ID as a different local draft
-- **THEN** TriOS SHALL offer Discard draft and replace, Add incoming as a copy, and Cancel
+#### Scenario: Person discards a saved pack's draft
+- **WHEN** the person chooses Discard changes
+- **THEN** TriOS SHALL restore the committed definition
 
-### Requirement: Shareable source validation
-TriOS SHALL validate every member source before Copy share link, Export, or
-Publish update completes. A Version Checker source SHALL parse and resolve to a
-usable download. A direct-download source SHALL begin returning a downloadable
-file without requiring the complete archive to be downloaded. Local draft
-saving SHALL remain available when validation fails. Within the current app
-session, TriOS SHALL reuse a successful validation for 60 minutes while its
-exact URL and source type remain unchanged.
+#### Scenario: Person discards a draft-only pack
+- **WHEN** the person chooses Discard changes for a pack that has never been committed
+- **THEN** TriOS SHALL remove that draft
 
-#### Scenario: Every member validates
-- **WHEN** all member sources validate
-- **THEN** TriOS SHALL allow the requested sharing action
+#### Scenario: Draft is invalid
+- **WHEN** a draft is empty or has invalid fields or sources
+- **THEN** TriOS SHALL keep autosaving it locally while disabling commit and sharing actions
 
-#### Scenario: One member fails validation
-- **WHEN** any member source fails validation
-- **THEN** TriOS SHALL identify the failed member and block the sharing action
+### Requirement: Modpack storage
+One modpack store SHALL own saved definitions, drafts, local update data,
+last-export data, and per-item install failures in one modpacks.json file.
+Only that store SHALL assign IDs or versions and commit, copy, replace, or
+delete packs. Installed coverage and current installation state SHALL be
+calculated rather than saved.
 
-#### Scenario: Recently validated source is unchanged
-- **WHEN** a member's URL and source type passed validation within the last 60 minutes
-- **THEN** TriOS SHALL reuse that result instead of issuing another network request
+#### Scenario: Modpack storage is corrupt
+- **WHEN** TriOS cannot read modpacks.json
+- **THEN** it SHALL preserve the backup and offer to restore it or start with an empty library instead of silently replacing the file
 
-#### Scenario: Validated source changes
-- **WHEN** a member's URL or source type changes after successful validation
-- **THEN** TriOS SHALL discard the saved result and validate the changed source before sharing
+### Requirement: Deterministic link and file transport
+TriOS SHALL encode shared definitions as UTF-8 JSON with fixed known-field
+ordering, sorted unknown object keys, and preserved item order. Links SHALL use
+zlib deflate, unpadded base64url, and a separate 1. transport prefix. Files
+SHALL use readable JSON or Hjson and the .trios-modpack extension.
 
-#### Scenario: Update address is not hosted yet
-- **WHEN** every member source validates but the configured update address does not resolve
-- **THEN** TriOS SHALL allow sharing and export so the creator can upload the first definition there
+TriOS SHALL reject links longer than 30,000 characters, expanded definitions
+over 4 MiB, definitions over 5,000 items, excessive nesting or string lengths,
+mixed single-mod and modpack links, and malformed numeric versions.
 
-### Requirement: Link and file transport
-TriOS SHALL share the complete definition as versioned zlib-compressed JSON in
-the registered-scheme payload. It SHALL read `.trios-modpack` files as JSON or
-Hjson and SHALL write pretty-printed JSON using a filename slugged from the pack
-name.
+#### Scenario: Equal definitions are encoded
+- **WHEN** two parsed definitions contain the same known and preserved unknown data
+- **THEN** TriOS SHALL produce the same canonical payload while retaining manual item order
 
 #### Scenario: Link is too large
-- **WHEN** an outgoing or incoming link exceeds 30,000 characters
-- **THEN** TriOS SHALL reject it with a size error that does not blame only the member count and, for outgoing links, suggests shortening descriptions or notes, removing members, or exporting a `.trios-modpack` file
+- **WHEN** an outgoing link exceeds 30,000 characters
+- **THEN** TriOS SHALL suggest shortening descriptions or notes, removing items, or exporting a .trios-modpack file
 
-#### Scenario: Expanded payload is too large
-- **WHEN** payload decoding would exceed 4 MiB or 5,000 members
-- **THEN** TriOS SHALL stop decoding and reject the payload
+### Requirement: Incoming definitions are untrusted
+Links, dropped files, and operating-system file opens SHALL use one incoming
+handler and one codec. TriOS SHALL show the embedded definition without saving,
+installing, or contacting its update URL. It MAY check that URL only after the
+person asks, adds or accepts the pack, or starts installation.
 
-#### Scenario: File is opened while installation is unavailable
-- **WHEN** a `.trios-modpack` file is dropped or opened while the game is running or the mods folder is not writable
-- **THEN** TriOS SHALL still allow preview and Add to library while keeping installation actions unavailable
+TriOS SHALL block loopback, private, and link-local network targets for update
+and item addresses, recheck every redirect target, and enforce response-size
+and timeout limits.
 
-### Requirement: Incoming preview and update check
-TriOS SHALL show an incoming embedded definition without saving or installing
-it and SHALL immediately begin checking its update address. A failed check
-SHALL leave the embedded definition available.
+#### Scenario: Incoming update check finishes late
+- **WHEN** an add or installation has already started from the embedded definition
+- **THEN** a later online result SHALL NOT replace the definition used by that action
 
-#### Scenario: Update check is running
-- **WHEN** the embedded preview is visible and its update check has not finished
-- **THEN** TriOS SHALL show that it is checking for updates without blocking the preview
+#### Scenario: Incoming definition conflicts with saved work
+- **WHEN** an incoming definition shares an ID with a different saved definition or draft
+- **THEN** TriOS SHALL show a comparison and require an explicit replace, copy, discard-draft, or cancel choice as appropriate
 
-#### Scenario: Higher online version is found
-- **WHEN** the update address returns the same pack ID with a higher version
-- **THEN** TriOS SHALL update the preview and identify both version numbers
+#### Scenario: Incoming definition is identical
+- **WHEN** its ID and exact definition match saved data
+- **THEN** TriOS SHALL open the existing saved pack or draft instead of making a duplicate
 
-#### Scenario: Same version has different contents
-- **WHEN** the update address returns the same ID and version with different contents
-- **THEN** TriOS SHALL show a comparison and offer Replace existing, Add as a copy, and Cancel
+### Requirement: Online updates are complete definitions
+TriOS SHALL compare saved packs with their update URLs in the background and on
+manual refresh. It SHALL persist the complete last successful online
+definition and timestamp and retain them after a failed check. Accepting an
+update SHALL replace the definition as a whole and SHALL NOT merge fields.
 
-#### Scenario: Update address changes
-- **WHEN** an online update changes its own update address
-- **THEN** TriOS SHALL call out the address change and require explicit confirmation before accepting the complete update
+#### Scenario: Update uses another pack ID
+- **WHEN** an update URL returns a definition with another ID
+- **THEN** TriOS SHALL treat it as a broken update, refuse replacement, and MAY offer to add it as a separate pack
 
-### Requirement: Modpacks library
-TriOS SHALL save accepted packs in a Modpacks library and calculate installed,
-missing, source-problem, failure, and update state from the saved definition and
-current app state. It SHALL not persist a pack-level installed or created flag.
+#### Scenario: Saved pack has a draft
+- **WHEN** an update is available while unsaved changes exist
+- **THEN** TriOS SHALL require the person to commit, copy, or discard the draft before accepting the update
 
-#### Scenario: Library entry is deleted
-- **WHEN** the user confirms deletion of a library entry
-- **THEN** TriOS SHALL remove that pack and its draft without disabling or uninstalling mods
+#### Scenario: Saved update is reviewed
+- **WHEN** the person chooses Review update
+- **THEN** TriOS SHALL show a dialog over the full pack page with pack information changes and Added, Removed, and Changed item groups
 
-#### Scenario: Identical definition arrives
-- **WHEN** an incoming definition exactly matches a saved definition with the same ID
-- **THEN** TriOS SHALL reuse the existing library entry
+### Requirement: Item sources are validated before sharing
+TriOS SHALL validate every item source before Copy link, Export, or Publish
+finishes. It SHALL show the checks in a new section on the pack page, allow
+cancellation, show failures and repair actions, and finish the requested action
+automatically when all checks pass. Successful checks MAY be reused for 60
+minutes while the exact address and source type remain unchanged.
 
-### Requirement: Selective installation and enabling
-TriOS SHALL always show installation confirmation for a modpack. Missing,
-installable members SHALL be selected by default. The dialog SHALL include an
-unchecked Enable installed members after installation option. A separate
-confirmed Enable installed members library action SHALL remain available.
+#### Scenario: Draft source preference changes
+- **WHEN** the creator changes an item's source in a draft
+- **THEN** TriOS SHALL NOT change the mod's preferred share source until the draft is committed
 
-#### Scenario: Installation option is not selected
-- **WHEN** installation completes without the enable option selected
-- **THEN** TriOS SHALL not enable members automatically
+#### Scenario: Catalog recovery succeeds
+- **WHEN** installation succeeds through an explicitly chosen catalog recovery
+- **THEN** TriOS SHALL update the normal mod record immediately without editing or versioning the pack
 
-#### Scenario: Installation option is selected
-- **WHEN** installation completes with the enable option selected
-- **THEN** TriOS SHALL use normal mod-manager behavior to enable every pack member that is then installed
+### Requirement: Modpacks library follows modern page patterns
+TriOS SHALL provide a first-class Modpacks page using the same keep-alive page,
+Riverpod controller, current and persisted page state, toolbar, smart search,
+filter, and adaptive-card patterns as modern TriOS viewer pages. It SHALL NOT
+add a navigation update counter in this change.
 
-#### Scenario: One selected download fails
-- **WHEN** some selected members install and another fails
-- **THEN** TriOS SHALL keep successful installations and, if requested, enable the pack members that are installed
+Cards SHALL mix saved and draft-only packs and show name, author, pack and game
+versions, installed/total count, and applicable Draft, Unsaved changes, Update
+available, Failed, and Installing labels. Hover details SHALL include the
+description, homepage, update URL, and installed/missing counts, but not source
+problems, failed installs, last-check time, or item-status counts.
 
-### Requirement: Profile-safe modpack enabling
-Modpack enabling SHALL be exposed only after profiles use explicit saving.
-Modpack code SHALL never write profile membership.
+#### Scenario: Draft-only card is opened
+- **WHEN** the person clicks a draft-only card
+- **THEN** TriOS SHALL open its editor directly
+
+#### Scenario: Saved card is opened
+- **WHEN** the person clicks a saved card
+- **THEN** TriOS SHALL open its full pack page
+
+#### Scenario: Installation is running
+- **WHEN** a pack has a current installation
+- **THEN** its card SHALL move ahead of normal sorting and show progress and Stop
+
+#### Scenario: Library has no packs
+- **WHEN** the library is empty
+- **THEN** TriOS SHALL show New modpack and Import modpack actions
+
+#### Scenario: Search or filters hide every pack
+- **WHEN** no cards match the current search and filters
+- **THEN** TriOS SHALL offer Clear search and Clear filters
+
+### Requirement: Full pack page
+The full page SHALL place Back, Edit, Copy link, Export, Install, and overflow
+at the top in that order. Delete and Duplicate SHALL be in overflow. All pack
+information SHALL appear in one compact read-only block.
+
+The item grid SHALL default to icon, name, author, status, installed state,
+combined installed/recorded version, and dependency warnings. It SHALL support
+other normal mod columns, read-only sorting with manual pack order as the
+default, multiple expanded items, and Expand all and Collapse all.
+
+### Requirement: Modpack editor
+The editor SHALL always keep the person's mods on the left and pack items on
+the right, regardless of window size. Pack fields SHALL appear above the lists
+as Settings-style text fields when editable and compact read-only values when
+collapsed. New and invalid packs SHALL start expanded; valid saved packs SHALL
+start collapsed.
+
+The left grid SHALL show one row per mod ID, preferring the active variant and
+then the highest installed version, and SHALL support the normal Mod Manager
+columns with independent defaults. The right grid SHALL use manual ordering
+only, support drag handles, controlled checkbox selection, Add/Remove selected,
+bulk Set status, multiple expanded items, and separate search for each side.
+
+#### Scenario: Custom status is entered
+- **WHEN** the creator enters a single-line custom status of 40 characters or fewer
+- **THEN** TriOS SHALL trim it, reject blank or control-character values, recognize standard labels case-insensitively, and preserve custom capitalization
+
+### Requirement: Dependencies remain advisory
+TriOS SHALL show required dependencies missing from the pack and MAY offer to
+add them after explicit confirmation. It SHALL recompute warnings before
+installation. Cycles, conflicts, missing dependencies, and removing a depended-
+on item SHALL NOT invalidate the pack or force an item into installation.
+TriOS SHALL NOT automatically add a fuzzy or catalog match.
+
+### Requirement: Selective background installation
+Installing SHALL first save, replace, or copy the pack into the library.
+Preparation SHALL produce a selectable plan; the installer SHALL accept only a
+saved library entry and the confirmed selection.
+
+The confirmation dialog SHALL show a checkable table in pack order with icon,
+name, status, source, note indicator, installed state, version, and dependency
+warnings. Missing installable items SHALL be selected by default. Installed
+items SHALL remain visible and unselected. Every item, including one labelled
+Required, MAY be unchecked.
+
+After starting, the dialog SHALL show live progress with Close and Stop.
+Closing SHALL leave installation running, keep TriOS usable, and show the same
+progress on the Modpacks page. More than one pack MAY install at once, but the
+same pack SHALL NOT start twice.
+
+#### Scenario: Person stops an installation
+- **WHEN** the person chooses Stop
+- **THEN** active operations SHALL finish safely, no new operations SHALL start, completed installs SHALL remain, automatic enabling SHALL not run, and a later Install action SHALL create a fresh attempt
+
+#### Scenario: TriOS restarts during or after a partial installation
+- **WHEN** the person later chooses Install for that saved pack
+- **THEN** TriOS SHALL build a new plan from the saved definition and current mod list rather than restore an old job
+
+### Requirement: Shared installation limits
+All modpack installations SHALL share a fair global scheduler limited to two
+downloads and the configured one-through-six concurrent extraction/install
+operations. Existing download and archive-install behavior SHALL be reused.
+
+An archive SHALL contain the declared mod ID. TriOS SHALL install only selected
+declared IDs, ignore and report extra mods, and fail an item whose ID is absent
+or wrong. Per-item failures SHALL be keyed by item ID and source fingerprint,
+cleared by success or source change, and SHALL NOT include stopped or unstarted
+items.
+
+### Requirement: Optional enabling is profile-safe
+The installation dialog SHALL offer an unchecked Enable installed items after
+installation option. If selected, TriOS SHALL use normal Mod Manager behavior
+and dependency confirmation to enable every pack item that is installed after
+the attempt, including preinstalled and newly installed items. Stop SHALL skip
+this action. Modpack code SHALL never modify saved profile membership.
 
 #### Scenario: A profile is tracked
-- **WHEN** a modpack action changes the enabled loadout
+- **WHEN** a modpack action changes the current enabled loadout
 - **THEN** the current loadout SHALL become Modified and the tracked profile SHALL remain unchanged
+
+### Requirement: TriLink uses the same format
+TriOS SHALL own the modpack format description and golden examples. TriLink
+SHALL use copied golden examples to decode and display the embedded pack
+without a hosted pack database and without fetching its update URL.

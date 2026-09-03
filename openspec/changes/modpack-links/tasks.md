@@ -1,6 +1,16 @@
 # Implementation plan
 
-## 1 - Shared models and codec
+Tasks are grouped into phases. Each phase ends with something that can be run
+and checked. Task numbers keep their original section numbers, so a task keeps
+its number even though the phases reorder and split the sections.
+
+## Phase 1 - Format and storage
+
+No UI. Everything later reads and writes these models, and unknown-field
+preservation has to be built in from the start rather than retrofitted.
+Checked by tests.
+
+### 1 - Shared models and codec
 
 - [ ] 1.1 Add ModpackDefinition, ModpackItem, source, catalog-clue, draft, and
       library-entry models under lib/modpacks/.
@@ -25,7 +35,7 @@
 - [ ] 1.10 Add golden examples owned by TriOS and copy them into TriLink tests.
 - [ ] 1.11 Run dart_mappable code generation after model changes.
 
-## 2 - Library and drafts
+### 2 - Library and drafts
 
 - [ ] 2.1 Add one ModpackStore backed by GenericAsyncSettingsManager and its
       Riverpod notifier. Persist all modpack data in one modpacks.json file.
@@ -52,7 +62,32 @@
       committed. Keep successful catalog recovery's normal immediate ModRecord
       update.
 
-## 3 - Modpacks library and full page
+## Phase 2 - Shared grid and field work
+
+Changes the Mod Manager, so it lands on its own where a regression there is
+easy to spot. Nothing modpack-specific is built on it yet.
+
+### 4 - Shared grid and field work
+
+- [ ] 4.1 Extract the Mod Manager's reusable mod-column builders so the Mod
+      Manager and modpack editor can use the full normal column set with
+      different visible defaults and independent saved state.
+- [ ] 4.2 Keep page-specific row context, dependency actions, and sidebars out
+      of the shared column builder.
+- [ ] 4.3 Extend WispGrid with reusable externally controlled checkbox
+      selection and cross-grid drag data. Keep modpack behavior out of WispGrid.
+- [ ] 4.4 Use WispGrid variable-height outer rows for expanded item details.
+- [ ] 4.5 Add a shared compact Settings-style labelled text field with external
+      error text, length limits, and multiline support.
+- [ ] 4.6 Use MovingTooltipWidget.text instead of Flutter tooltip properties,
+      the 8-dip spacing grid, and Row/Column spacing where appropriate.
+
+## Phase 3 - Modpacks library page
+
+The card library and its toolbar, reachable from navigation. Saved packs can be
+listed, searched, sorted, filtered, and deleted.
+
+### 3 - Modpacks library
 
 - [ ] 3.1 Add Modpacks as a first-class main navigation tool, lazy-loaded by
       AppShell. Do not group it with the game-data viewers.
@@ -81,6 +116,16 @@
       locked filters, and search history. Do not persist the current search,
       open pack, editor, or expanded rows.
 - [ ] 3.12 Do not add a navigation update counter.
+- [ ] 3.21 Show New modpack and Import modpack for an empty library. Show Clear
+      search and Clear filters when the current view has no matches.
+
+## Phase 4 - Full pack page
+
+The read-only view of one saved pack and its items. Installation progress on
+this page arrives with Phase 8.
+
+### 3 - Full pack page
+
 - [ ] 3.13 Make View and Edit replace the Modpacks page content. Back returns to
       the card library.
 - [ ] 3.14 Put Back, Edit, Copy link, Export, Install, and overflow at the top
@@ -94,28 +139,13 @@
 - [ ] 3.18 Default the read-only grid to manual pack order but allow sorting.
       Support multiple expanded rows plus Expand all and Collapse all for
       visible rows.
-- [ ] 3.19 Show installation progress above the item grid, replace Install with
-      Stop while running, and show per-item progress or results in the grid.
-- [ ] 3.20 Keep the existing Activity Panel behavior unchanged.
-- [ ] 3.21 Show New modpack and Import modpack for an empty library. Show Clear
-      search and Clear filters when the current view has no matches.
 
-## 4 - Shared grid and field work
+## Phase 5 - Editor
 
-- [ ] 4.1 Extract the Mod Manager's reusable mod-column builders so the Mod
-      Manager and modpack editor can use the full normal column set with
-      different visible defaults and independent saved state.
-- [ ] 4.2 Keep page-specific row context, dependency actions, and sidebars out
-      of the shared column builder.
-- [ ] 4.3 Extend WispGrid with reusable externally controlled checkbox
-      selection and cross-grid drag data. Keep modpack behavior out of WispGrid.
-- [ ] 4.4 Use WispGrid variable-height outer rows for expanded item details.
-- [ ] 4.5 Add a shared compact Settings-style labelled text field with external
-      error text, length limits, and multiline support.
-- [ ] 4.6 Use MovingTooltipWidget.text instead of Flutter tooltip properties,
-      the 8-dip spacing grid, and Row/Column spacing where appropriate.
+Packs can be created, edited, autosaved as drafts, and saved locally. No
+sharing and no installing yet.
 
-## 5 - Editor
+### 5 - Editor
 
 - [ ] 5.1 Use one editor for empty creation, Mod Manager selection, profile
       conversion, draft editing, and saved-pack editing.
@@ -148,39 +178,20 @@
 - [ ] 5.15 Allow dependency cycles, conflicts, missing dependencies, and removal
       of depended-on items without invalidating the pack.
 
-## 6 - Incoming packs and online updates
+### 9 - Profiles
 
-- [ ] 6.1 Route links, dropped files, and operating-system file opens through
-      one incoming handler before ordinary mod-archive guards.
-- [ ] 6.2 Show incoming packs in a dialog using the compact pack information
-      block and full-page item table. Offer Add to library, Install, Check for
-      update, and Cancel.
-- [ ] 6.3 Do not save, install, or contact an incoming update URL on receipt.
-      Check only after an explicit request, add/accept, or install action.
-- [ ] 6.4 Keep the embedded definition selected while a check runs. Do not let a
-      late result change an add or installation already in progress.
-- [ ] 6.5 For identical incoming definitions, open the existing saved pack or
-      draft. For conflicts, use explicit Replace, Add as copy, discard-draft,
-      or Cancel choices without overwriting draft work.
-- [ ] 6.6 Block loopback, private, and link-local addresses for update and item
-      requests. Revalidate redirects and enforce size and time limits.
-- [ ] 6.7 Check saved update URLs in the background with the existing cooldown
-      style and provide manual refresh. Do not open passive dialogs or toasts.
-- [ ] 6.8 Treat another ID from an update URL as a broken update. Do not replace
-      the saved pack; offer the returned definition only as a separate pack.
-- [ ] 6.9 Block update acceptance while a draft exists until the person commits
-      it, saves it as a copy, or discards it.
-- [ ] 6.10 Review saved updates in a dialog over the full page. Reuse it for
-      incoming conflicts.
-- [ ] 6.11 Group the comparison into Pack information, Added items, Removed
-      items, and Changed items. Call out status, source, note, and recorded
-      version changes in one list, striking old values and placing new values
-      beside them where useful.
-- [ ] 6.12 Accept an update as one complete definition. Do not merge fields.
-      Confirm an update-URL change explicitly, and offer normal missing-item
-      installation afterward.
+- [ ] 9.1 Make Create modpack the prominent sharing action on profile cards and
+      keep legacy copy/import/export in overflow.
+- [ ] 9.2 Preserve legacy shared-profile compatibility.
 
-## 7 - Sharing and source validation
+## Phase 6 - Sharing out
+
+A finished pack can be turned into a link or a file. TriLink already decodes an
+earlier draft of the format locally, so its member field names and pack-ID rule
+still need to match this format. The live site is deployed separately, after
+local testing.
+
+### 7 - Sharing and source validation
 
 - [ ] 7.1 Validate every item source before Copy link, Export, or Publish
       completes. Allow local draft saving without validation.
@@ -198,7 +209,42 @@
 - [ ] 7.8 Keep publishing as an export for the creator to upload. Do not add
       arbitrary-host upload support.
 
-## 8 - Background installation
+### 9 - TriLink
+
+- [ ] 9.3 Update TriLink in its own repository to decode the shared format,
+      display the embedded pack and item data, and launch TriOS without a pack
+      database or automatic update fetch.
+- [ ] 9.4 Keep TriOS and TriLink golden examples byte-for-byte aligned.
+
+## Phase 7 - Receiving incoming packs
+
+A link or file from someone else previews and can be added to the library.
+Installing from it arrives in Phase 8.
+
+### 6 - Incoming packs
+
+- [ ] 6.1 Route links, dropped files, and operating-system file opens through
+      one incoming handler before ordinary mod-archive guards.
+- [ ] 6.2 Show incoming packs in a dialog using the compact pack information
+      block and full-page item table. Offer Add to library, Install, Check for
+      update, and Cancel.
+- [ ] 6.3 Do not save, install, or contact an incoming update URL on receipt.
+      Check only after an explicit request, add/accept, or install action.
+- [ ] 6.4 Keep the embedded definition selected while a check runs. Do not let a
+      late result change an add or installation already in progress.
+- [ ] 6.5 For identical incoming definitions, open the existing saved pack or
+      draft. For conflicts, use explicit Replace, Add as copy, discard-draft,
+      or Cancel choices without overwriting draft work.
+- [ ] 6.6 Block loopback, private, and link-local addresses for update and item
+      requests. Revalidate redirects and enforce size and time limits.
+
+## Phase 8 - Background installation
+
+The riskiest phase, because it changes shared download and install code. Land
+8.9 and 8.10 first and confirm the existing single-mod and batch install paths
+still work before building anything modpack-specific on them.
+
+### 8 - Background installation
 
 - [ ] 8.1 Add preparation that accepts a ModpackLibraryEntry and returns a
       selectable install plan. Add installation that accepts that plan and the
@@ -243,17 +289,41 @@
       rewrite a saved profile; rely on explicit-profile-saving for Modified
       loadout behavior.
 
-## 9 - Profiles and TriLink
+### 3 - Installation progress on the full pack page
 
-- [ ] 9.1 Make Create modpack the prominent sharing action on profile cards and
-      keep legacy copy/import/export in overflow.
-- [ ] 9.2 Preserve legacy shared-profile compatibility.
-- [ ] 9.3 Update TriLink in its own repository to decode the shared format,
-      display the embedded pack and item data, and launch TriOS without a pack
-      database or automatic update fetch.
-- [ ] 9.4 Keep TriOS and TriLink golden examples byte-for-byte aligned.
+- [ ] 3.19 Show installation progress above the item grid, replace Install with
+      Stop while running, and show per-item progress or results in the grid.
+- [ ] 3.20 Keep the existing Activity Panel behavior unchanged.
 
-## 10 - Tests and documentation
+## Phase 9 - Online updates
+
+Saved packs with an update URL can find, compare, and accept a newer hosted
+definition.
+
+### 6 - Online updates
+
+- [ ] 6.7 Check saved update URLs in the background with the existing cooldown
+      style and provide manual refresh. Do not open passive dialogs or toasts.
+- [ ] 6.8 Treat another ID from an update URL as a broken update. Do not replace
+      the saved pack; offer the returned definition only as a separate pack.
+- [ ] 6.9 Block update acceptance while a draft exists until the person commits
+      it, saves it as a copy, or discards it.
+- [ ] 6.10 Review saved updates in a dialog over the full page. Reuse it for
+      incoming conflicts.
+- [ ] 6.11 Group the comparison into Pack information, Added items, Removed
+      items, and Changed items. Call out status, source, note, and recorded
+      version changes in one list, striking old values and placing new values
+      beside them where useful.
+- [ ] 6.12 Accept an update as one complete definition. Do not merge fields.
+      Confirm an update-URL change explicitly, and offer normal missing-item
+      installation afterward.
+
+## Phase 10 - Tests and documentation
+
+Each phase carries its own tests as it lands. This phase is the full sweep
+before release.
+
+### 10 - Tests and documentation
 
 - [ ] 10.1 Test codec round trips, fixed ordering, unknown-field preservation,
       unknown formats, limits, malformed input, and golden examples.

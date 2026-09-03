@@ -25,27 +25,27 @@ your mod. The game never reads it. It's applied over TriOS's list, so it wins.
 	"shields": {
 		"byHullmod": {
 			"kol_shields": {
-				"textureInner": "graphics/kol/fx/kol_shield_fx.png",
+				"textureInner": "graphics/kol/fx/kol_shield_fx.png"
 			},
 			"zea_dawn_shield_style": {
-				"textureInner": "graphics/zea/fx/zea_shield_dawn.png",
+				"textureInner": "graphics/zea/fx/zea_shield_dawn.png"
 			},
 			"zea_dusk_shield_style": {
-				"textureInner": "graphics/zea/fx/zea_shield_dusk.png",
+				"textureInner": "graphics/zea/fx/zea_shield_dusk.png"
 			},
 			"zea_edf_shield_style": {
-				"textureInner": "graphics/zea/fx/zea_shield_elysia.png",
-			},
+				"textureInner": "graphics/zea/fx/zea_shield_elysia.png"
+			}
 		},
 		"byHull": {
 			"zea_edf_kiyohime": {
-				"textureInner": "graphics/zea/fx/zea_shield_elysia_2.png",
+				"textureInner": "graphics/zea/fx/zea_shield_elysia_2.png"
 			},
 			"zea_edf_ryujin": {
-				"textureInner": "graphics/zea/fx/zea_shield_elysia_2.png",
-			},
-		},
-	},
+				"textureInner": "graphics/zea/fx/zea_shield_elysia_2.png"
+			}
+		}
+	}
 }
 ```
 

@@ -1,0 +1,40 @@
+{
+  "formatVersion": 1,
+  "id": "N3qGd6c8R2mVx1ZaYkW0_A",
+  "name": "Wisp's QoL Pack",
+  "version": 3,
+  "author": "Wisp",
+  "description": "The mods I always install.",
+  "gameVersion": "0.98a-RC8",
+  "homepageUrl": "https://fractalsoftworks.com/forum/index.php?topic=12345.0",
+  "updateUrl": "https://example.com/wisps-qol-pack.trios-modpack",
+  "items": [
+    {
+      "id": "lw_lazylib",
+      "name": "LazyLib",
+      "version": "2.9",
+      "status": "Required",
+      "url": "https://example.com/LazyLib.version",
+      "sourceType": "versionFile",
+      "catalog": {
+        "name": "LazyLib",
+        "forumTopicId": "5444"
+      }
+    },
+    {
+      "id": "MagicLib",
+      "name": "MagicLib",
+      "version": "1.4.6",
+      "status": "Recommended",
+      "note": "Enable the optional LunaLib integration after installing.",
+      "url": "https://example.com/MagicLib-1.4.6.zip",
+      "sourceType": "directDownload"
+    },
+    {
+      "id": "prv",
+      "status": "Not for first-timers",
+      "url": "https://example.com/prv.version",
+      "sourceType": "versionFile"
+    }
+  ]
+}

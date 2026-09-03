@@ -12,53 +12,53 @@ Checked by tests.
 
 ### 1 - Shared models and codec
 
-- [ ] 1.1 Add ModpackDefinition, ModpackItem, source, catalog-clue, draft, and
+- [x] 1.1 Add ModpackDefinition, ModpackItem, source, catalog-clue, draft, and
       library-entry models under lib/modpacks/.
-- [ ] 1.2 Use the shared field name items and the UI word mods. Do not introduce
+- [x] 1.2 Use the shared field name items and the UI word mods. Do not introduce
       member terminology.
-- [ ] 1.3 Generate pack IDs from 16 random bytes as exactly 22 unpadded
+- [x] 1.3 Generate pack IDs from 16 random bytes as exactly 22 unpadded
       base64url characters. Treat pack and mod IDs as case-sensitive.
-- [ ] 1.4 Add definition format version 1 separately from the compressed-link
+- [x] 1.4 Add definition format version 1 separately from the compressed-link
       transport prefix.
-- [ ] 1.5 Store item status directly as an optional string. Accept Required,
+- [x] 1.5 Store item status directly as an optional string. Accept Required,
       Recommended, Optional, and trimmed custom single-line values up to 40
       characters. Do not assign a default or attach behavior to the value.
-- [ ] 1.6 Preserve unknown optional object fields through decode, comparison,
+- [x] 1.6 Preserve unknown optional object fields through decode, comparison,
       editing, and encoding. Sort unknown object keys while retaining item
       order and a fixed known-field output order.
-- [ ] 1.7 Reject unsupported definition formats with an Update TriOS message
+- [x] 1.7 Reject unsupported definition formats with an Update TriOS message
       and disable editing, installing, and resharing.
-- [ ] 1.8 Enforce UTF-8, JavaScript-safe integer versions, bounded strings and
+- [x] 1.8 Enforce UTF-8, JavaScript-safe integer versions, bounded strings and
       nesting, a 4 MiB expanded limit, 5,000 items, and a 30,000-character link
       limit.
-- [ ] 1.9 Keep one codec for links, readable files, and hosted definitions.
+- [x] 1.9 Keep one codec for links, readable files, and hosted definitions.
 - [ ] 1.10 Add golden examples owned by TriOS and copy them into TriLink tests.
-- [ ] 1.11 Run dart_mappable code generation after model changes.
+- [x] 1.11 Run dart_mappable code generation after model changes.
 
 ### 2 - Library and drafts
 
-- [ ] 2.1 Add one ModpackStore backed by GenericAsyncSettingsManager and its
+- [x] 2.1 Add one ModpackStore backed by GenericAsyncSettingsManager and its
       Riverpod notifier. Persist all modpack data in one modpacks.json file.
-- [ ] 2.2 Make the store the only code that assigns IDs and versions or commits,
+- [x] 2.2 Make the store the only code that assigns IDs and versions or commits,
       copies, replaces, and deletes packs.
-- [ ] 2.3 Persist committed definitions and autosaved drafts separately. Allow
+- [x] 2.3 Persist committed definitions and autosaved drafts separately. Allow
       empty and invalid drafts, several draft-only packs, and one draft per ID.
-- [ ] 2.4 Start the first commit at version 1. Increment once when shared
+- [x] 2.4 Start the first commit at version 1. Increment once when shared
       content changes, including item order. Do not increment for draft
       autosaves, no-op saves, Copy link, Export, or Publish.
-- [ ] 2.5 Make Discard restore the committed definition or remove a draft-only
+- [x] 2.5 Make Discard restore the committed definition or remove a draft-only
       pack.
-- [ ] 2.6 Persist the full last successful online definition and timestamp,
+- [x] 2.6 Persist the full last successful online definition and timestamp,
       quiet update errors, last export location, and per-item failures keyed by
       item ID and source fingerprint.
-- [ ] 2.7 Clear a failure after successful installation or a source change. Do
+- [x] 2.7 Clear a failure after successful installation or a source change. Do
       not record stopped or unstarted items as failures.
-- [ ] 2.8 Calculate installed coverage, missing items, source problems, update
+- [x] 2.8 Calculate installed coverage, missing items, source problems, update
       availability, and current installation state. Do not persist a pack
       status model.
-- [ ] 2.9 On corrupt storage, retain the backup and offer Restore backup or
+- [x] 2.9 On corrupt storage, retain the backup and offer Restore backup or
       Start empty. Do not silently replace the file.
-- [ ] 2.10 Write the chosen item source to ModRecord only when a draft is
+- [x] 2.10 Write the chosen item source to ModRecord only when a draft is
       committed. Keep successful catalog recovery's normal immediate ModRecord
       update.
 

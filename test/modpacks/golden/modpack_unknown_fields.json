@@ -1,0 +1,24 @@
+{
+  "formatVersion": 1,
+  "id": "N3qGd6c8R2mVx1ZaYkW0_A",
+  "name": "Pack from a newer TriOS",
+  "version": 7,
+  "items": [
+    {
+      "id": "example_mod",
+      "url": "https://example.com/Example.version",
+      "sourceType": "versionFile",
+      "futureItemFlag": true,
+      "futureItemDetails": {
+        "zebra": 1,
+        "alpha": ["a", "b"]
+      },
+      "catalog": {
+        "name": "Example",
+        "futureCatalogClue": "kept"
+      }
+    }
+  ],
+  "futurePackList": [1, 2, 3],
+  "futurePackField": "kept as-is"
+}

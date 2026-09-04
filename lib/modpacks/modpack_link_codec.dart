@@ -181,3 +181,35 @@ String _linkNameSlug(String name) {
       .replaceAll(RegExp(r'\s+'), '-');
   return slug.isEmpty ? 'Modpack' : slug;
 }
+
+/// Extracts a payload from a TriLink, mod URL, or bare payload.
+/// Accepts Windows' `install/?` URL variant.
+String? extractModpackLinkPayload(String text) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return null;
+
+  if (trimmed.startsWith('$modpackPayloadFormat.')) return trimmed;
+
+  final uri = Uri.tryParse(trimmed);
+  if (uri == null) return null;
+
+  final fromQuery = uri.queryParameters[modpackLinkParameter];
+  if (fromQuery != null && fromQuery.isNotEmpty) return fromQuery;
+
+  if (uri.fragment.isEmpty) return null;
+  final fromFragment = Uri.splitQueryString(uri.fragment)[modpackLinkParameter];
+  if (fromFragment != null && fromFragment.isNotEmpty) return fromFragment;
+  return null;
+}
+
+/// Decodes a modpack link.
+ModpackDefinition decodeModpackLink(String text) {
+  final payload = extractModpackLinkPayload(text);
+  if (payload == null) {
+    throw const ModpackFormatException(
+      ModpackFormatError.missingPayload,
+      'That is not a modpack link.',
+    );
+  }
+  return decodeModpackPayload(payload);
+}

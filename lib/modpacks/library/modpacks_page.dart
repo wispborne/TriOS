@@ -2,16 +2,19 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:trios/modpacks/library/modpack_card.dart';
 import 'package:trios/modpacks/library/modpack_card_data.dart';
 import 'package:trios/modpacks/library/modpacks_page_controller.dart';
+import 'package:trios/modpacks/modpack_link_codec.dart';
 import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
+import 'package:trios/widgets/labeled_text_field.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/smart_search/smart_search_bar.dart';
@@ -85,9 +88,9 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
             _toolbarButton(
               icon: Icon(
                 Icons.add,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
-              label: 'New modpack',
+              label: 'Create',
               onPressed: () => controller.createNewPack(),
             ),
             const SizedBox(width: 8),
@@ -97,7 +100,7 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
                 'assets/images/icon-import-horiz.svg',
                 width: 20,
                 height: 20,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               label: 'Import',
               onPressed: _importFile,
@@ -374,16 +377,17 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
   }
 
   Future<void> _importFile() async {
-    final picked = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['trios-modpack', 'json', 'hjson'],
-      dialogTitle: 'Import modpack',
+    final choice = await showDialog<_ImportChoice>(
+      context: context,
+      builder: (context) => const _ImportModpackDialog(),
     );
-    final path = picked?.files.firstOrNull?.path;
-    if (path == null) return;
+    if (choice == null || !mounted) return;
 
     final controller = ref.read(modpacksPageControllerProvider.notifier);
-    final result = await controller.importFile(File(path));
+    final result = switch (choice) {
+      _ImportFromLink(:final text) => await controller.importLink(text),
+      _ImportFromFile(:final file) => await controller.importFile(file),
+    };
     if (!mounted) return;
 
     switch (result.outcome) {
@@ -405,18 +409,132 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
           type: SnackBarType.warn,
           content: const Text(
             'Your library already has a different version of this modpack. '
-            'Delete it first to import this file.',
+            'Delete it first to import this one.',
           ),
         );
       case ModpackImportOutcome.unreadable:
         showSnackBar(
           context: context,
           type: SnackBarType.error,
-          content: Text(
-            'Could not read that file as a modpack: ${result.error}',
-          ),
+          content: Text('Could not read that as a modpack: ${result.error}'),
         );
     }
+  }
+}
+
+sealed class _ImportChoice {
+  const _ImportChoice();
+}
+
+class _ImportFromLink extends _ImportChoice {
+  final String text;
+
+  const _ImportFromLink(this.text);
+}
+
+class _ImportFromFile extends _ImportChoice {
+  final File file;
+
+  const _ImportFromFile(this.file);
+}
+
+class _ImportModpackDialog extends StatefulWidget {
+  const _ImportModpackDialog();
+
+  @override
+  State<_ImportModpackDialog> createState() => _ImportModpackDialogState();
+}
+
+class _ImportModpackDialogState extends State<_ImportModpackDialog> {
+  final _textController = TextEditingController();
+  bool _hasLink = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fillFromClipboard();
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fillFromClipboard() async {
+    final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+    if (!mounted || text == null) return;
+    if (extractModpackLinkPayload(text) == null) return;
+    if (_textController.text.isNotEmpty) return;
+    _textController.text = text.trim();
+    _onChanged(_textController.text);
+  }
+
+  void _onChanged(String text) {
+    setState(() {
+      _hasLink = extractModpackLinkPayload(text) != null;
+      _error = text.trim().isEmpty || _hasLink
+          ? null
+          : 'That is not a modpack link.';
+    });
+  }
+
+  Future<void> _chooseFile() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['trios-modpack', 'json', 'hjson'],
+      dialogTitle: 'Import modpack',
+    );
+    final path = picked?.files.firstOrNull?.path;
+    if (path == null || !mounted) return;
+    Navigator.of(context).pop(_ImportFromFile(File(path)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Import modpack'),
+      content: SizedBox(
+        width: 480,
+        child: Column(
+          mainAxisSize: .min,
+          crossAxisAlignment: .start,
+          spacing: 16,
+          children: [
+            const Text('Paste a modpack link or choose a .trios-modpack file.'),
+            LabeledTextField(
+              controller: _textController,
+              label: 'Modpack link',
+              hint: '$trilinkOpenPageUrl#...',
+              errorText: _error,
+              maxLines: 3,
+              autofocus: true,
+              onChanged: _onChanged,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        OutlinedButton.icon(
+          onPressed: _chooseFile,
+          icon: const Icon(Icons.folder_open),
+          label: const Text('Choose file'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _hasLink
+              ? () =>
+                    Navigator.of(context)
+                        .pop(_ImportFromLink(_textController.text))
+              : null,
+          child: const Text('Import'),
+        ),
+      ],
+    );
   }
 }
 
@@ -442,15 +560,6 @@ class _EmptyLibrary extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
             Text('No modpacks yet', style: theme.textTheme.titleMedium),
-            Text(
-              'A modpack is a list of mods and where to download them. '
-              'Build one from your installed mods, then share it as a link '
-              'or a file.',
-              textAlign: .center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
             Row(
               mainAxisSize: .min,
               spacing: 8,
@@ -458,7 +567,7 @@ class _EmptyLibrary extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: onNew,
                   icon: const Icon(Icons.add),
-                  label: const Text('New modpack'),
+                  label: const Text('Create'),
                 ),
                 OutlinedButton.icon(
                   onPressed: onImport,
@@ -466,9 +575,8 @@ class _EmptyLibrary extends StatelessWidget {
                     'assets/images/icon-import-horiz.svg',
                     width: 20,
                     height: 20,
-                    color: theme.colorScheme.primary,
                   ),
-                  label: const Text('Import modpack'),
+                  label: const Text('Import'),
                 ),
               ],
             ),

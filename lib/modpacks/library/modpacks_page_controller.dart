@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/modpacks/library/modpack_card_data.dart';
 import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/modpacks/modpack_install_progress.dart';
+import 'package:trios/modpacks/modpack_link_codec.dart';
 import 'package:trios/modpacks/modpack_store.dart';
+import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_library_entry.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -218,6 +220,11 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
             ),
           ],
         ),
+        ChipFilterGroup<ModpackCardData>(
+          id: 'gameVersion',
+          name: 'Game version',
+          valueGetter: (card) => card.gameVersion ?? 'Not set',
+        ),
       ],
     );
   }
@@ -318,10 +325,21 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
     await ref.read(modpackStoreProvider.notifier).duplicatePack(packId);
   }
 
-  Future<ModpackImportResult> importFile(File file) async {
+  Future<ModpackImportResult> importFile(File file) => _import(
+    () async =>
+        decodeModpackDefinition((await file.readAsString()).parseJsonToMap()),
+    source: 'file ${file.path}',
+  );
+
+  Future<ModpackImportResult> importLink(String text) =>
+      _import(() async => decodeModpackLink(text), source: 'link');
+
+  Future<ModpackImportResult> _import(
+    Future<ModpackDefinition> Function() decode, {
+    required String source,
+  }) async {
     try {
-      final text = await file.readAsString();
-      final definition = decodeModpackDefinition(text.parseJsonToMap());
+      final definition = await decode();
       final data = ref.read(modpackStoreProvider).value ?? const ModpacksData();
 
       final existing = data.packs[definition.id];
@@ -358,7 +376,7 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
       );
     } catch (e, stacktrace) {
       Fimber.w(
-        "Could not import modpack file ${file.path}",
+        "Could not import modpack $source",
         ex: e,
         stacktrace: stacktrace,
       );

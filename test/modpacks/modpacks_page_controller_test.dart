@@ -10,6 +10,7 @@ import 'package:trios/modpacks/library/modpack_card_data.dart';
 import 'package:trios/modpacks/library/modpacks_page_controller.dart';
 import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/modpacks/modpack_install_progress.dart';
+import 'package:trios/modpacks/modpack_link_codec.dart';
 import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_draft.dart';
@@ -226,9 +227,9 @@ void main() {
 
   group('filters', () {
     BoolField<ModpackCardData> field(String id) {
-      final group =
-          harness.controller.filterGroups.single
-              as CompositeFilterGroup<ModpackCardData>;
+      final group = harness.controller.filterGroups.firstWhere(
+        (g) => g.id == 'state',
+      ) as CompositeFilterGroup<ModpackCardData>;
       return group.fields.singleWhere((f) => f.id == id)
           as BoolField<ModpackCardData>;
     }
@@ -255,6 +256,22 @@ void main() {
       harness.controller.onGroupChanged('state');
 
       expect(visibleNames(), ['Another pack']);
+    });
+
+    test('Game version narrows to packs with that label', () async {
+      await saveTwoPacks();
+      await harness.store.createDraft(name: 'Unfinished');
+
+      final group = harness.controller.filterGroups.firstWhere(
+        (g) => g.id == 'gameVersion',
+      ) as ChipFilterGroup<ModpackCardData>;
+      group.filterStates['0.98a-RC8'] = true;
+      harness.controller.onGroupChanged('gameVersion');
+      expect(visibleNames(), ['Wisp\x27s pack']);
+
+      group.setSelections({'Not set': true});
+      harness.controller.onGroupChanged('gameVersion');
+      expect(visibleNames(), ['Another pack', 'Unfinished']);
     });
 
     test('showing the filter panel is remembered in settings', () async {
@@ -469,5 +486,25 @@ void main() {
     );
 
     expect(state().allCards.single.needsSources, isTrue);
+  });
+
+  group('importing a link', () {
+    test('a share link adds the pack', () async {
+      final link = buildModpackShareLink(
+        _definition(id: _wispId, name: 'From a link'),
+      );
+
+      final result = await harness.controller.importLink(link);
+
+      expect(result.outcome, ModpackImportOutcome.added);
+      expect(visibleNames(), ['From a link']);
+    });
+
+    test('text that is not a link is reported, not thrown', () async {
+      final result = await harness.controller.importLink('not a link');
+
+      expect(result.outcome, ModpackImportOutcome.unreadable);
+      expect(state().allCards, isEmpty);
+    });
   });
 }

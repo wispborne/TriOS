@@ -6,8 +6,8 @@ import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/modpacks/modpack_id.dart';
 
-/// The shared definitions TriOS and TriLink both have to agree on. TriLink
-/// keeps copies of these files in its own tests.
+/// The shared definitions TriOS and TriLink must both agree on. TriLink keeps
+/// copies of these files in its own tests.
 const _goldenFolder = 'test/modpacks/golden';
 
 Map<String, Object?> _golden(String name) =>

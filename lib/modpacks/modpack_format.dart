@@ -77,8 +77,8 @@ class ModpackFormatException implements Exception {
 
   const ModpackFormatException(this.error, this.message);
 
-  /// True when the person should be asked to update TriOS rather than shown a
-  /// broken-data message.
+  /// True when the fix is to update TriOS rather than treat the data as
+  /// broken.
   bool get needsNewerTriOS =>
       error == ModpackFormatError.unsupportedDefinitionFormat ||
       error == ModpackFormatError.unsupportedTransportFormat;
@@ -126,17 +126,16 @@ bool _hasBannedControlCharacters(String value) {
 
 final RegExp _packIdPattern = RegExp(r'^[A-Za-z0-9_-]{22}$');
 
-/// Whether [value] can be a pack ID.
 bool isValidModpackId(String value) => _packIdPattern.hasMatch(value);
 
 Never _fail(ModpackFormatError error, String message) =>
     throw ModpackFormatException(error, message);
 
-/// Reads a shared definition from already-parsed JSON.
+/// Decodes a shared definition from parsed JSON.
 ///
-/// Throws [ModpackFormatException] for anything TriOS will not edit, install,
-/// or share. Unknown optional fields are kept so a newer TriOS's data survives
-/// a round trip through this one.
+/// Throws [ModpackFormatException] for anything TriOS won't edit, install, or
+/// share. Unknown fields are kept so data from a newer TriOS survives a round
+/// trip through this one.
 ModpackDefinition decodeModpackDefinition(Object? raw) {
   if (raw is! Map) {
     _fail(
@@ -461,8 +460,8 @@ bool isSafeModpackUrl(String value) {
   return true;
 }
 
-/// Keeps the fields this version of TriOS does not know about, checking that
-/// they are plain JSON and not nested unreasonably deeply.
+/// Keeps fields this TriOS doesn't know about, checking they're plain JSON
+/// and not nested too deep.
 Map<String, dynamic> _collectUnknownFields(
   Map<String, Object?> map,
   List<String> knownKeys,
@@ -512,10 +511,8 @@ Object? _checkedJsonValue(Object? value, int depth, String path) {
 }
 
 /// Builds the definition as a map with fixed field order: known fields in
-/// their documented order, then preserved unknown fields sorted by name.
-///
-/// Two definitions holding the same data always produce the same map, so this
-/// is also what comparison and link generation use.
+/// documented order, then unknown fields sorted by name. Same data always
+/// produces the same map, so comparison and link generation use it too.
 Map<String, Object?> canonicalModpackMap(ModpackDefinition definition) {
   final map = <String, Object?>{
     'formatVersion': definition.formatVersion,
@@ -595,8 +592,8 @@ bool modpackDefinitionsAreIdentical(ModpackDefinition a, ModpackDefinition b) =>
     encodeModpackDefinitionJson(a) == encodeModpackDefinitionJson(b);
 
 /// Whether two definitions hold the same shared content, ignoring pack ID and
-/// version. Saving a pack whose content matches the saved copy is not an edit,
-/// so it does not increase the version.
+/// version. A save whose content matches the stored copy isn't an edit, so it
+/// doesn't bump the version.
 bool modpackSharedContentMatches(ModpackDefinition a, ModpackDefinition b) =>
     encodeModpackDefinitionJson(a.copyWith(id: b.id, version: b.version)) ==
     encodeModpackDefinitionJson(b);

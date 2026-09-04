@@ -14,11 +14,11 @@ enum ModpackItemSourceType {
   directDownload,
 }
 
-/// The standard item statuses TriOS offers. A creator may type any other
-/// single-line label instead.
+/// The standard item statuses. Creators may type any other single-line
+/// label.
 ///
-/// A status is informational. It never changes selection, installation,
-/// dependency, validation, or enabling behavior.
+/// A status is informational only: it never affects selection, installation,
+/// dependencies, or enabling.
 abstract final class ModpackItemStatuses {
   static const String required = 'Required';
   static const String recommended = 'Recommended';
@@ -26,9 +26,9 @@ abstract final class ModpackItemStatuses {
 
   static const List<String> standard = [required, recommended, optional];
 
-  /// Trims [value] and returns the standard spelling when it matches one of
-  /// the standard labels ignoring case. Custom labels keep their own
-  /// capitalization. Blank input becomes null, meaning no status.
+  /// Trims [value], matching standard labels case-insensitively and returning
+  /// their standard spelling. Custom labels keep their capitalization. Blank
+  /// input becomes null.
   static String? normalize(String? value) {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
@@ -38,28 +38,22 @@ abstract final class ModpackItemStatuses {
     return trimmed;
   }
 
-  /// Whether [value] is one of the standard labels, ignoring case.
   static bool isStandard(String value) {
     final trimmed = value.trim().toLowerCase();
     return standard.any((label) => label.toLowerCase() == trimmed);
   }
 }
 
-/// Clues for finding a modpack item in the Catalog when its own source stops
+/// Clues for finding a modpack item in the Catalog if its source stops
 /// working. TriOS fills these in when it knows them.
 @MappableClass()
 class ModpackCatalogClues with ModpackCatalogCluesMappable {
-  /// The catalog entry's name.
   final String? name;
-
-  /// The mod's forum topic ID.
   final String? forumTopicId;
-
-  /// The mod's Nexus Mods ID.
   final String? nexusModsId;
 
-  /// Fields a newer TriOS wrote that this version does not know about. Kept
-  /// so sharing a pack again does not strip them.
+  /// Fields a newer TriOS wrote that this version doesn't know about. Kept so
+  /// sharing the pack again doesn't strip them.
   final Map<String, dynamic> unknownFields;
 
   const ModpackCatalogClues({
@@ -76,39 +70,27 @@ class ModpackCatalogClues with ModpackCatalogCluesMappable {
       unknownFields.isEmpty;
 }
 
-/// One mod named by a modpack, with the address TriOS uses to get it.
+/// One mod named by a modpack.
 ///
 /// Any installed variant with this [modId] satisfies the item. The recorded
-/// [version] is a display snapshot and does not pin the download.
+/// name and version are display snapshots and don't pin the download.
 @MappableClass()
 class ModpackItem with ModpackItemMappable {
   /// The mod's `mod_info.json` ID. Case-sensitive.
   @MappableField(key: 'id')
   final String modId;
 
-  /// The HTTP or HTTPS address TriOS downloads from.
   final String url;
-
-  /// Whether [url] is a Version Checker file or a fixed download.
   final ModpackItemSourceType sourceType;
-
-  /// The mod's display name when the pack was made. Optional snapshot.
   final String? name;
-
-  /// The mod version seen when the pack was made. Optional snapshot. It does
-  /// not pin installation to that release.
   final String? version;
-
-  /// The creator's optional label, such as Required or Recommended.
   final String? status;
-
-  /// The creator's optional plain-text note for this item.
   final String? note;
 
   /// Optional clues for Catalog recovery.
   final ModpackCatalogClues? catalog;
 
-  /// Fields a newer TriOS wrote that this version does not know about.
+  /// Fields a newer TriOS wrote that this version doesn't know about.
   final Map<String, dynamic> unknownFields;
 
   const ModpackItem({
@@ -123,22 +105,21 @@ class ModpackItem with ModpackItemMappable {
     this.unknownFields = const {},
   });
 
-  /// The name to show, falling back to the mod ID when the pack has no name.
   String get displayName => name?.trim().isNotEmpty == true ? name! : modId;
 }
 
-/// The complete shared data of a modpack. This is what links, `.trios-modpack`
-/// files, and update addresses contain.
+/// The complete shared data of a modpack: what links, `.trios-modpack` files,
+/// and update addresses contain.
 @MappableClass()
 class ModpackDefinition with ModpackDefinitionMappable {
-  /// The shape of this definition. Separate from the pack's own [version] and
-  /// from the transport prefix on a compressed link.
+  /// The shape of this definition. Separate from the pack's [version] and from
+  /// the transport prefix on a link.
   static const int currentFormatVersion = 1;
 
   final int formatVersion;
 
-  /// Opaque, case-sensitive pack identity: 16 random bytes written as 22
-  /// unpadded base64url characters. Later versions of the same pack keep it.
+  /// Opaque, case-sensitive pack identity: 16 random bytes as 22 unpadded
+  /// base64url characters. Later versions of the same pack keep it.
   final String id;
 
   final String name;
@@ -149,8 +130,8 @@ class ModpackDefinition with ModpackDefinitionMappable {
   final String? author;
   final String? description;
 
-  /// The Starsector version this pack was made for. A label only. It never
-  /// changes what TriOS accepts, selects, or installs.
+  /// The Starsector version this pack targets. A label only; it never changes
+  /// what TriOS installs.
   final String? gameVersion;
 
   final String? homepageUrl;
@@ -161,7 +142,7 @@ class ModpackDefinition with ModpackDefinitionMappable {
   /// The pack's items, in the creator's order. Order is for display only.
   final List<ModpackItem> items;
 
-  /// Fields a newer TriOS wrote that this version does not know about.
+  /// Fields a newer TriOS wrote that this version doesn't know about.
   final Map<String, dynamic> unknownFields;
 
   const ModpackDefinition({
@@ -178,13 +159,10 @@ class ModpackDefinition with ModpackDefinitionMappable {
     this.unknownFields = const {},
   });
 
-  /// Whether TriOS understands this definition's shape well enough to edit,
-  /// install, or share it.
   bool get isSupportedFormat => formatVersion == currentFormatVersion;
 
   ModpackItem? itemForModId(String modId) =>
       items.where((item) => item.modId == modId).firstOrNull;
 
-  /// Every mod ID in the pack, in item order.
   List<String> get modIds => items.map((item) => item.modId).toList();
 }

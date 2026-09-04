@@ -4,11 +4,9 @@ import 'package:trios/modpacks/models/modpack_draft.dart';
 
 part 'modpack_library_entry.mapper.dart';
 
-/// One item that failed to install, kept until it installs or its source
-/// changes.
-///
-/// [sourceFingerprint] is the address and source type the attempt used, so
-/// changing the source clears the failure instead of carrying it over.
+/// One item that failed to install. Kept until it installs or its source
+/// changes: [sourceFingerprint] records the address and source type used, so
+/// changing the source clears the failure.
 @MappableClass()
 class ModpackItemFailure with ModpackItemFailureMappable {
   final String modId;
@@ -26,20 +24,14 @@ class ModpackItemFailure with ModpackItemFailureMappable {
 
 /// What the last look at a pack's update address found.
 ///
-/// The complete online definition is kept, not just its version, so a
-/// comparison can be shown without fetching again. A failed check is quiet:
-/// it keeps the last success and records the error for update details.
+/// The full online definition is kept, not just its version, so a comparison
+/// can be shown without refetching. A failed check keeps the last success and
+/// records the error.
 @MappableClass()
 class ModpackUpdateCheck with ModpackUpdateCheckMappable {
-  /// The last definition successfully read from the update address.
   final ModpackDefinition? onlineDefinition;
-
-  /// When that definition was read.
   final DateTime? succeededAt;
-
-  /// Why the most recent check failed, if it did.
   final String? error;
-
   final DateTime? failedAt;
 
   const ModpackUpdateCheck({
@@ -49,7 +41,6 @@ class ModpackUpdateCheck with ModpackUpdateCheckMappable {
     this.failedAt,
   });
 
-  /// When TriOS last tried, whether or not it worked.
   DateTime? get lastAttemptedAt {
     if (succeededAt == null) return failedAt;
     if (failedAt == null) return succeededAt;
@@ -57,21 +48,18 @@ class ModpackUpdateCheck with ModpackUpdateCheckMappable {
   }
 }
 
-/// One modpack saved in the library, plus the facts that belong only to this
-/// computer's copy.
+/// One modpack saved in the library, plus facts that belong only to this
+/// machine.
 ///
-/// Local-only fields never go into a share link or an exported file. Installed
-/// coverage is calculated from the current mod list instead of being stored.
+/// Local-only fields never go into share links or exported files. Installed
+/// coverage is computed from the current mod list instead.
 @MappableClass()
 class ModpackLibraryEntry with ModpackLibraryEntryMappable {
   final ModpackDefinition definition;
-
-  /// When this definition was committed to the library.
   final DateTime? savedAt;
-
   final ModpackUpdateCheck? updateCheck;
 
-  /// Where the pack was last exported, so Export can offer the same place.
+  /// Where the pack was last exported, so Export can suggest the same place.
   final String? lastExportPath;
 
   /// Failed installs, keyed by mod ID.
@@ -87,7 +75,7 @@ class ModpackLibraryEntry with ModpackLibraryEntryMappable {
 
   String get id => definition.id;
 
-  /// The online definition's version when it is higher than the saved one.
+  /// The online version, when it's higher than the saved one.
   int? get onlineVersionAvailable {
     final online = updateCheck?.onlineDefinition;
     if (online == null) return null;
@@ -98,9 +86,9 @@ class ModpackLibraryEntry with ModpackLibraryEntryMappable {
 
 /// Everything the modpack store keeps on disk.
 ///
-/// Saved packs and drafts are separate maps, both keyed by pack ID, so a pack
-/// can have one without the other: a draft-only pack has never been saved, and
-/// a saved pack without a draft has no unsaved changes.
+/// Packs and drafts are separate maps keyed by pack ID, so a pack can have one
+/// without the other: a draft-only pack was never saved, and a saved pack
+/// without a draft has no unsaved changes.
 @MappableClass()
 class ModpacksData with ModpacksDataMappable {
   final Map<String, ModpackLibraryEntry> packs;
@@ -108,14 +96,13 @@ class ModpacksData with ModpacksDataMappable {
 
   const ModpacksData({this.packs = const {}, this.drafts = const {}});
 
-  /// Every pack ID with a saved pack, a draft, or both.
   Set<String> get allPackIds => {...packs.keys, ...drafts.keys};
 
   ModpackLibraryEntry? entry(String packId) => packs[packId];
 
   ModpackDraft? draft(String packId) => drafts[packId];
 
-  /// Whether this pack has a draft that differs from what was saved. A
-  /// draft-only pack counts as unsaved.
+  /// Whether the pack has unsaved changes. A draft-only pack counts as
+  /// unsaved.
   bool hasUnsavedChanges(String packId) => drafts.containsKey(packId);
 }

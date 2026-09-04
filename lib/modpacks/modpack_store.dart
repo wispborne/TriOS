@@ -21,15 +21,15 @@ final modpackStoreProvider = AsyncNotifierProvider<ModpackStore, ModpacksData>(
   ModpackStore.new,
 );
 
-/// An unreadable `modpacks.json`, and what can be done about it.
+/// An unreadable `modpacks.json` and what can be done about it.
 ///
 /// TriOS keeps a copy of the unreadable file and leaves any existing backup
-/// alone, so nothing is lost while the person decides.
+/// alone, so nothing is lost.
 class ModpackStorageProblem {
   /// Where the unreadable file was copied to.
   final File keptCopy;
 
-  /// The backup that Restore backup would read, when there is one.
+  /// The backup Restore backup would read.
   final File? backup;
 
   final String message;
@@ -45,9 +45,8 @@ class ModpackStorageProblem {
 
 /// Reads and writes `modpacks.json`.
 ///
-/// Unlike other settings files, an unreadable modpacks file is not replaced.
-/// The person is asked first, because a wiped library cannot be rebuilt from
-/// anywhere else.
+/// Unlike other settings files, an unreadable modpacks file is not replaced:
+/// the user is asked first, because a wiped library can't be rebuilt anywhere.
 class ModpacksSettingsManager
     extends GenericAsyncSettingsManager<ModpacksData> {
   ModpacksSettingsManager({this.storageFolder});
@@ -55,7 +54,7 @@ class ModpacksSettingsManager
   /// Where `modpacks.json` goes. Only tests set this.
   final Directory? storageFolder;
 
-  /// Set when the file could not be read. Cleared by a successful read, a
+  /// Set when the file couldn't be read; cleared by a successful read, a
   /// restore, or starting empty.
   ModpackStorageProblem? storageProblem;
 
@@ -113,7 +112,6 @@ class ModpacksSettingsManager
     }
   }
 
-  /// Copies the unreadable file aside and finds the backup, if there is one.
   Future<ModpackStorageProblem> _keepUnreadableFile(Object error) async {
     final stamp = DateTime.now().millisecondsSinceEpoch;
     final keptCopy = File('${settingsFile.path}.unreadable-$stamp');
@@ -138,8 +136,8 @@ class ModpacksSettingsManager
     );
   }
 
-  /// Never turns an unreadable file into the backup. Doing that would throw
-  /// away the last good copy.
+  /// Never backs up an unreadable file; that would throw away the last good
+  /// copy.
   @override
   Future<void> createBackup() async {
     if (storageProblem != null) {
@@ -150,15 +148,14 @@ class ModpacksSettingsManager
     try {
       await super.createBackup();
     } catch (e, stacktrace) {
-      // Nobody waits for a backup, so an error here has nowhere to go. A
-      // missed backup is not worth interrupting the library load.
+      // Backups run in the background; a missed one isn't worth
+      // interrupting the library load.
       Fimber.w("Could not back up $fileName", ex: e, stacktrace: stacktrace);
     }
   }
 
-  /// Reads the saved backup, unpacking it first when it is compressed.
-  ///
-  /// Returns null when there is no readable backup.
+  /// Reads the saved backup, unpacking it when compressed. Returns null when
+  /// there's no readable backup.
   Future<ModpacksData?> readBackup({SevenZip? sevenZip}) async {
     final plainBackup = getBackupFile();
     if (await plainBackup.exists()) {
@@ -208,10 +205,8 @@ class ModpacksSettingsManager
   }
 }
 
-/// Owns every saved modpack and draft.
-///
-/// This is the only code that hands out pack IDs and versions, or commits,
-/// copies, replaces, and deletes packs. Everything else reads from it.
+/// Owns every saved modpack and draft. The only code that allocates pack IDs
+/// and versions, or commits, copies, replaces, and deletes packs.
 class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
   ModpackStore({this.storageFolder});
 
@@ -228,16 +223,16 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
   ModpacksSettingsManager get _manager =>
       settingsManager as ModpacksSettingsManager;
 
-  /// Set when `modpacks.json` could not be read, so the page can offer
-  /// Restore backup or Start empty.
+  /// Set when `modpacks.json` couldn't be read, so the UI can offer Restore
+  /// backup or Start empty.
   ModpackStorageProblem? get storageProblem => _manager.storageProblem;
 
   ModpacksData get _data => state.value ?? createDefaultState();
 
   // --- Drafts ---------------------------------------------------------------
 
-  /// Starts a new pack. The ID is allocated now, so an unfinished new pack
-  /// still has an identity and its own autosaved draft.
+  /// Starts a new pack. The ID is allocated now, so an unfinished pack has a
+  /// stable identity and its own autosaved draft.
   Future<ModpackDraft> createDraft({
     String name = '',
     String? gameVersion,
@@ -256,8 +251,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     return draft;
   }
 
-  /// The draft for [packId], making one from the saved definition when the
-  /// person has not edited this pack yet.
+  /// The draft for [packId], creating one from the saved definition if the
+  /// pack hasn't been edited yet.
   Future<ModpackDraft?> openDraft(String packId) async {
     final existing = _data.drafts[packId];
     if (existing != null) return existing;
@@ -275,8 +270,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     return draft;
   }
 
-  /// Autosaves editor changes. This never changes a pack's version, and a
-  /// draft may be empty or invalid.
+  /// Autosaves editor changes. Never changes the pack's version; the draft
+  /// may be empty or invalid.
   Future<void> saveDraft(ModpackDraft draft) async {
     final stamped = draft.copyWith(updatedAt: DateTime.now());
     await _write(
@@ -284,8 +279,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     );
   }
 
-  /// Throws away unsaved changes. A pack that was never saved disappears with
-  /// its draft.
+  /// Throws away unsaved changes. A never-saved pack disappears with its
+  /// draft.
   Future<void> discardDraft(String packId) async {
     await _write((data) {
       final drafts = Map<String, ModpackDraft>.of(data.drafts)..remove(packId);
@@ -297,12 +292,12 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
 
   /// Saves a draft into the library.
   ///
-  /// The version goes up once when the shared content changed. A first save
-  /// starts at 1, and a save that changes nothing leaves the version alone.
+  /// The version bumps by one when the shared content changed; a first save
+  /// starts at 1, and a no-op save leaves it alone.
   ///
-  /// Throws [StateError] when there is no draft for [packId] or the draft is
-  /// not finished. Callers check [ModpackDraft.isCommittable] first and keep
-  /// Save disabled until it is true.
+  /// Throws [StateError] when there's no draft for [packId] or it isn't
+  /// finished. Callers should check [ModpackDraft.isCommittable] first and
+  /// keep Save disabled.
   Future<ModpackLibraryEntry> commitDraft(String packId) async {
     final draft = _data.drafts[packId];
     if (draft == null) {
@@ -336,8 +331,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     return entry;
   }
 
-  /// Saves a draft as a brand-new pack: a new ID, version 1, and no update
-  /// address, because the old address belongs to the original pack.
+  /// Saves a draft as a brand-new pack: new ID, version 1, and no update
+  /// address, since the old one belongs to the original pack.
   Future<ModpackLibraryEntry> commitDraftAsNewPack(String packId) async {
     final draft = _data.drafts[packId];
     if (draft == null) {
@@ -375,8 +370,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     return entry;
   }
 
-  /// Saves an incoming definition as a separate pack, so an existing pack with
-  /// the same ID is left alone.
+  /// Saves an incoming definition as a separate pack, leaving any existing
+  /// pack with the same ID alone.
   Future<ModpackLibraryEntry> saveIncomingDefinitionAsCopy(
     ModpackDefinition definition,
   ) async {
@@ -410,8 +405,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
 
   // --- Local-only facts -----------------------------------------------------
 
-  /// Records a successful look at a pack's update address, keeping the whole
-  /// online definition so a comparison can be shown without fetching again.
+  /// Records a successful update check, keeping the full online definition
+  /// for comparison.
   Future<void> recordUpdateCheckSuccess(
     String packId,
     ModpackDefinition onlineDefinition,
@@ -445,9 +440,6 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
       _updateEntry(packId, (entry) => entry.copyWith(lastExportPath: path));
 
   /// Records one item that failed to install.
-  ///
-  /// [sourceFingerprint] is the address and source type the attempt used, so
-  /// the failure clears itself when the source changes.
   Future<void> recordItemFailure({
     required String packId,
     required String modId,
@@ -477,8 +469,7 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     ),
   );
 
-  /// Drops failures whose source no longer matches the saved item, so a
-  /// changed address starts clean.
+  /// Drops failures whose source no longer matches the saved item.
   Future<void> clearFailuresForChangedSources(String packId) =>
       _updateEntry(packId, (entry) {
         final kept = <String, ModpackItemFailure>{};
@@ -494,10 +485,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
 
   // --- Unreadable storage ---------------------------------------------------
 
-  /// Loads the backup over the current library.
-  ///
-  /// Returns false when there is no readable backup, leaving everything as it
-  /// is.
+  /// Loads the backup over the current library. Returns false when there's no
+  /// readable backup.
   Future<bool> restoreBackup() async {
     final restored = await _manager.readBackup();
     if (restored == null) return false;
@@ -507,8 +496,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     return true;
   }
 
-  /// Accepts an empty library and writes it, replacing the unreadable file.
-  /// The kept copy of that file stays on disk.
+  /// Replaces the unreadable file with an empty library. The kept copy of the
+  /// old file stays on disk.
   Future<void> startEmptyLibrary() async {
     _manager.storageProblem = null;
     await updateState((_) => createDefaultState(), skipChangeCheck: true);
@@ -516,8 +505,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
 
   // --- Internals ------------------------------------------------------------
 
-  /// Writes each item's chosen source to the mod's record. This happens on
-  /// save only: editing a draft never changes records TriOS keeps for a mod.
+  /// Writes each item's chosen source to the mod's record. Happens on save
+  /// only; editing a draft never touches mod records.
   ///
   /// Tests override this to keep the mod records store out of the way.
   @protected
@@ -556,8 +545,6 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     }
   }
 
-  /// The version a save should write: one higher when the shared content
-  /// changed, the same when nothing did.
   int _nextVersion(ModpackDraft draft, ModpackDefinition saved) {
     final candidate = draft.toDefinition(version: saved.version);
     if (modpackSharedContentMatches(candidate, saved)) return saved.version;
@@ -600,6 +587,6 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
 }
 
 /// Identifies the source one install attempt used, so a changed address
-/// clears the old failure instead of keeping it.
+/// clears the old failure.
 String modpackItemSourceFingerprint(ModpackItem item) =>
     '${item.sourceType.name}|${item.url}';

@@ -11,8 +11,8 @@ import 'package:trios/modpacks/modpack_store.dart';
 
 import '../riverpod_test_helpers.dart';
 
-/// A store that keeps its file in a temporary folder and does not touch the
-/// mod records store, which would need the app's real config folder.
+/// A store with its file in a temp folder that doesn't touch the mod records
+/// store.
 class _TestModpackStore extends ModpackStore {
   _TestModpackStore(Directory folder) : super(storageFolder: folder);
 
@@ -82,8 +82,8 @@ void main() {
   });
 
   tearDown(() async {
-    // Let any debounced write finish before the folder disappears, so a late
-    // write does not fail inside the next test.
+    // Let any debounced write finish before the folder disappears, so it
+    // can't fail inside the next test.
     try {
       await store.settingsManager.waitForPendingWrites();
     } catch (_) {}

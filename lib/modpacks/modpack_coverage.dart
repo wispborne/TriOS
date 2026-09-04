@@ -2,9 +2,9 @@ import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_draft.dart';
 import 'package:trios/modpacks/models/modpack_library_entry.dart';
 
-/// What TriOS works out about one pack by comparing it with the current mod
-/// list. None of this is saved: it is recalculated whenever it is shown, so it
-/// can never disagree with what is installed.
+/// What TriOS works out about one pack against the current mod list.
+/// Nothing here is saved; it's recomputed on demand so it can't disagree with
+/// what's installed.
 class ModpackCoverage {
   /// How many items have a matching installed mod.
   final int installedCount;
@@ -47,11 +47,9 @@ class ModpackCoverage {
 
 /// Works out one pack's coverage.
 ///
-/// [installedModIds] is every mod ID installed right now. Any installed
-/// variant satisfies an item: neither the enabled state nor the exact version
-/// matters. A [draft] is used in place of the saved definition when the pack
-/// has never been saved, and its unfinished items are reported as source
-/// problems.
+/// Any installed variant satisfies an item; enabled state and exact version
+/// don't matter. A [draft] stands in for the saved definition when the pack
+/// was never saved, and its unfinished items count as source problems.
 ModpackCoverage calculateModpackCoverage({
   ModpackDefinition? definition,
   ModpackDraft? draft,

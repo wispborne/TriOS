@@ -59,7 +59,7 @@ void main() {
     });
 
     test('compress well enough for a large pack', () {
-      // The design promises well over a thousand mods in one link.
+      // A link should hold well over a thousand mods.
       final link = buildModpackShareLink(_packWithItems(1000));
       expect(link.length, lessThan(ModpackLimits.maxLinkCharacters));
     });
@@ -111,7 +111,7 @@ void main() {
     });
 
     test('refuse a payload that expands past the limit', () {
-      // A little compressed data that becomes a great deal of JSON.
+      // Small compressed data that inflates to a lot of JSON.
       final bomb = ZLibCodec(level: 9).encode(
         utf8.encode(
           '{"padding":"${'a' * (ModpackLimits.maxExpandedBytes + 1024)}"}',

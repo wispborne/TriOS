@@ -33,7 +33,7 @@ class ModpackDraftIssue with ModpackDraftIssueMappable {
   const ModpackDraftIssue(this.problem, {this.itemIndex});
 }
 
-/// One item while it is still being edited. Any field may be missing, so a
+/// One item while it's still being edited. Any field may be missing; a
 /// half-finished item can still be autosaved.
 @MappableClass()
 class ModpackDraftItem with ModpackDraftItemMappable {
@@ -70,29 +70,27 @@ class ModpackDraftItem with ModpackDraftItemMappable {
       catalog = item.catalog,
       unknownFields = item.unknownFields;
 
-  /// The name to show while editing, falling back to the mod ID.
   String get displayName {
     final trimmedName = name?.trim();
     if (trimmedName != null && trimmedName.isNotEmpty) return trimmedName;
     return modId?.trim() ?? '';
   }
 
-  /// Whether this item has everything a shared pack needs.
   bool get isComplete =>
       (modId?.trim().isNotEmpty ?? false) &&
       sourceType != null &&
       (url != null && isSafeModpackUrl(url!));
 }
 
-/// An autosaved working copy of one modpack.
+/// An autosaved working copy of a modpack.
 ///
-/// A draft may be empty or invalid. It is kept separately from the pack's
-/// saved definition, so leaving the editor never changes what the library
-/// holds. Only the modpack store creates and commits drafts.
+/// A draft may be empty or invalid. It's kept apart from the saved definition,
+/// so leaving the editor never changes the library. Only the modpack store
+/// creates and commits drafts.
 @MappableClass()
 class ModpackDraft with ModpackDraftMappable {
   /// The pack ID this draft belongs to. Allocated when the draft is created,
-  /// so a pack that has never been saved still has a stable identity.
+  /// so a never-saved pack still has a stable identity.
   final String id;
 
   final String name;
@@ -121,8 +119,6 @@ class ModpackDraft with ModpackDraftMappable {
     this.updatedAt,
   });
 
-  /// Starts a draft from a saved definition, so editing a saved pack begins
-  /// with exactly what was saved.
   ModpackDraft.fromDefinition(ModpackDefinition definition, {this.updatedAt})
     : id = definition.id,
       name = definition.name,
@@ -134,7 +130,7 @@ class ModpackDraft with ModpackDraftMappable {
       items = definition.items.map(ModpackDraftItem.fromItem).toList(),
       unknownFields = definition.unknownFields;
 
-  /// Everything wrong with this draft right now, in reading order.
+  /// Everything wrong with this draft, in reading order.
   List<ModpackDraftIssue> get issues {
     final found = <ModpackDraftIssue>[];
 
@@ -230,10 +226,9 @@ class ModpackDraft with ModpackDraftMappable {
     return found;
   }
 
-  /// Whether the store can commit this draft to the library.
   bool get isCommittable => issues.isEmpty;
 
-  /// Whether the person has typed anything worth keeping.
+  /// Whether the draft has anything in it yet.
   bool get isEmpty =>
       name.trim().isEmpty &&
       items.isEmpty &&
@@ -242,16 +237,13 @@ class ModpackDraft with ModpackDraftMappable {
       (homepageUrl?.trim().isEmpty ?? true) &&
       (updateUrl?.trim().isEmpty ?? true);
 
-  /// The items that still need work before the pack can be shared.
   List<int> get incompleteItemIndices => [
     for (var index = 0; index < items.length; index++)
       if (!items[index].isComplete) index,
   ];
 
-  /// Builds the shared definition this draft describes, at [version].
-  ///
-  /// Throws [StateError] when the draft is not committable. Callers should
-  /// check [isCommittable] first; the store always does.
+  /// Builds the shared definition this draft describes, at [version]. Throws
+  /// [StateError] when the draft isn't committable.
   ModpackDefinition toDefinition({required int version}) {
     if (!isCommittable) {
       throw StateError(

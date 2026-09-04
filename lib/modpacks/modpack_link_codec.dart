@@ -5,8 +5,8 @@ import 'dart:typed_data';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/modpack_format.dart';
 
-/// The transport number in front of a compressed payload. It describes the
-/// compression and encoding, not the definition's own `formatVersion`.
+/// The transport number prefixed to a compressed payload. It describes
+/// compression and encoding, not the definition's `formatVersion`.
 const String modpackPayloadFormat = '1';
 
 /// The query and fragment parameter name carrying a whole modpack.
@@ -15,10 +15,8 @@ const String modpackLinkParameter = 'modpack';
 /// Where TriLink lives.
 const String trilinkOpenPageUrl = 'https://trilink.wispborne.com/open.html';
 
-/// Compresses a definition into a link payload: `1.<base64url>`.
-///
-/// The steps are canonical JSON, zlib deflate, unpadded base64url, then the
-/// transport prefix.
+/// Compresses a definition into a `1.<base64url>` link payload: canonical
+/// JSON, zlib deflate, unpadded base64url, transport prefix.
 String encodeModpackPayload(ModpackDefinition definition) {
   final json = encodeModpackDefinitionJson(definition);
   final deflated = ZLibCodec(level: 9).encode(utf8.encode(json));
@@ -26,11 +24,8 @@ String encodeModpackPayload(ModpackDefinition definition) {
   return '$modpackPayloadFormat.$encoded';
 }
 
-/// Reads a definition back out of a link payload.
-///
-/// Throws [ModpackFormatException] for an unknown transport number, malformed
-/// base64, data that will not decompress, or a payload that expands past
-/// [ModpackLimits.maxExpandedBytes].
+/// Reads a definition back out of a link payload. Throws
+/// [ModpackFormatException] for anything that isn't a valid TriOS payload.
 ModpackDefinition decodeModpackPayload(String payload) {
   final trimmed = payload.trim();
   if (trimmed.isEmpty) {
@@ -95,7 +90,7 @@ ModpackDefinition decodeModpackPayload(String payload) {
 }
 
 /// Inflates [deflated], stopping as soon as the output passes the expanded
-/// limit so an oversized payload cannot use up memory first.
+/// limit so an oversized payload can't use up memory first.
 List<int> _inflateWithLimit(List<int> deflated) {
   final sink = _LimitedByteSink(ModpackLimits.maxExpandedBytes);
   final inflater = ZLibCodec().decoder.startChunkedConversion(sink);
@@ -116,7 +111,6 @@ List<int> _inflateWithLimit(List<int> deflated) {
   return sink.bytes;
 }
 
-/// Collects decompressed bytes and gives up once they pass [maxBytes].
 class _LimitedByteSink extends ByteConversionSink {
   _LimitedByteSink(this.maxBytes);
 
@@ -147,12 +141,12 @@ class _ExpandedTooLargeError extends Error {}
 
 /// Builds the browser link someone shares.
 ///
-/// The pack lives in the fragment, which browsers do not send to the web
-/// server, so a long link never reaches GitHub Pages. The `name` and `version`
-/// fields are readable decoration; TriLink and TriOS trust only the payload.
+/// The pack lives in the fragment, which browsers don't send to the server, so
+/// a long link never reaches GitHub Pages. The `name` and `version` fields are
+/// decoration; only the payload is trusted.
 ///
 /// Throws [ModpackFormatException] with [ModpackFormatError.linkTooLarge] when
-/// the finished link would pass [ModpackLimits.maxLinkCharacters].
+/// the link would pass [ModpackLimits.maxLinkCharacters].
 String buildModpackShareLink(
   ModpackDefinition definition, {
   String openPageUrl = trilinkOpenPageUrl,

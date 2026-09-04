@@ -31,9 +31,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T>
       state = AsyncValue.loading();
       Fimber.i("Building settings notifier: $runtimeType");
       try {
-        final loadedState = await settingsManager.read(
-          createDefaultState(),
-        );
+        final loadedState = await settingsManager.read(createDefaultState());
         state = AsyncData(loadedState);
         _isInitialized = true;
         // Create a backup on initial load (max of once every 30 mins), just in case something catastrophic happens during runtime and wipes the main one.
@@ -46,7 +44,10 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T>
         } catch (e, stackTrace) {
           Fimber.w("Error creating backup", ex: e, stacktrace: stackTrace);
         }
-        return loadedState;
+        // A write may have happened while the backup check ran. Returning
+        // the loaded value would throw it away, because Riverpod stores
+        // whatever build returns.
+        return state.value ?? loadedState;
       } catch (e, stackTrace) {
         state = AsyncError(e, stackTrace);
         Fimber.w(

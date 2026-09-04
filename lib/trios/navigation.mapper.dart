@@ -57,6 +57,8 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return TriOSTools.sectorMap;
       case r'codex':
         return TriOSTools.codex;
+      case r'modpacks':
+        return TriOSTools.modpacks;
       default:
         return TriOSTools.values[0];
     }
@@ -95,6 +97,8 @@ class TriOSToolsMapper extends EnumMapper<TriOSTools> {
         return r'sectorMap';
       case TriOSTools.codex:
         return r'codex';
+      case TriOSTools.modpacks:
+        return r'modpacks';
     }
   }
 }

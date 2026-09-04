@@ -13,6 +13,7 @@ import 'package:trios/faction_viewer/faction_viewer_page.dart';
 import 'package:trios/hullmod_viewer/hullmods_page.dart';
 import 'package:trios/mod_manager/mods_grid_page.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
+import 'package:trios/modpacks/library/modpacks_page.dart';
 import 'package:trios/portraits/portraits_page.dart';
 import 'package:trios/sector_map/sector_map_page.dart';
 import 'package:trios/ship_viewer/ships_page.dart';
@@ -74,6 +75,7 @@ class _AppShellState extends ConsumerState<AppShell>
     12: TriOSTools.tips,
     13: TriOSTools.sectorMap,
     14: TriOSTools.codex,
+    15: TriOSTools.modpacks,
   };
 
   late final toolToIndexMap = tabToolMap.map((k, v) => MapEntry(v, k));
@@ -304,6 +306,7 @@ class _AppShellState extends ConsumerState<AppShell>
       const TipsPage(),
       const SectorMapPage(),
       const CodexPage(),
+      const ModpacksPage(),
     ];
 
     final useTopToolbar = ref.watch(

@@ -8,13 +8,14 @@ part 'navigation.mapper.dart';
 /// The default order of reorderable nav items, used on fresh installs and
 /// after "Reset to default order". Matches the existing sidebar layout.
 ///
-/// Only the 11 entries below — plus the single divider — are reorderable.
+/// Only the entries below, plus the single divider, are reorderable.
 /// Settings, action buttons, launcher, rules.csv, and the layout toggle are
 /// pinned and are NOT included here.
 const List<NavOrderEntry> defaultNavOrder = [
   NavToolEntry(TriOSTools.dashboard),
   NavToolEntry(TriOSTools.modManager),
   NavToolEntry(TriOSTools.modProfiles),
+  NavToolEntry(TriOSTools.modpacks),
   NavToolEntry(TriOSTools.catalog),
   NavToolEntry(TriOSTools.chipper),
   NavDividerEntry(),
@@ -35,6 +36,7 @@ const Set<TriOSTools> reorderableTools = {
   TriOSTools.dashboard,
   TriOSTools.modManager,
   TriOSTools.modProfiles,
+  TriOSTools.modpacks,
   TriOSTools.catalog,
   TriOSTools.chipper,
   TriOSTools.codex,
@@ -73,6 +75,7 @@ enum TriOSTools {
   tips,
   sectorMap,
   codex,
+  modpacks,
 }
 
 enum NavGroup { core, viewers, bottom }
@@ -82,6 +85,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.dashboard => 'Dash',
     TriOSTools.modManager => 'Mods',
     TriOSTools.modProfiles => 'Profiles',
+    TriOSTools.modpacks => 'Modpacks',
     TriOSTools.catalog => 'Catalog',
     TriOSTools.chipper => 'Logs',
     TriOSTools.vramEstimator => 'VRAM Estimator',
@@ -100,6 +104,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.dashboard => 'Dashboard',
     TriOSTools.modManager => 'Mod Manager',
     TriOSTools.modProfiles => 'Mod Profiles',
+    TriOSTools.modpacks => 'Modpacks',
     TriOSTools.catalog => 'Mod Catalog',
     TriOSTools.chipper => 'Log Viewer',
     TriOSTools.vramEstimator => 'VRAM Estimator',
@@ -129,6 +134,7 @@ extension TriOSToolsUI on TriOSTools {
       color: color,
     ),
     TriOSTools.catalog => Icon(Icons.cloud_download, size: size, color: color),
+    TriOSTools.modpacks => Icon(Icons.inventory_2, size: size, color: color),
     TriOSTools.chipper => ImageIcon(
       AssetImage("assets/images/chipper/icon.png"),
       size: size - 2,
@@ -169,6 +175,7 @@ extension TriOSToolsUI on TriOSTools {
     TriOSTools.dashboard ||
     TriOSTools.modManager ||
     TriOSTools.modProfiles ||
+    TriOSTools.modpacks ||
     TriOSTools.catalog ||
     TriOSTools.chipper => NavGroup.core,
     TriOSTools.vramEstimator ||

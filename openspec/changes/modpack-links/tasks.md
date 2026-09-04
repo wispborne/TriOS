@@ -89,34 +89,34 @@ listed, searched, sorted, filtered, and deleted.
 
 ### 3 - Modpacks library
 
-- [ ] 3.1 Add Modpacks as a first-class main navigation tool, lazy-loaded by
+- [x] 3.1 Add Modpacks as a first-class main navigation tool, lazy-loaded by
       AppShell. Do not group it with the game-data viewers.
-- [ ] 3.2 Build ModpacksPage as a keep-alive ConsumerStatefulWidget with a
+- [x] 3.2 Build ModpacksPage as a keep-alive ConsumerStatefulWidget with a
       Notifier controller plus separate current and persisted page state.
-- [ ] 3.3 Reuse ViewerToolbar, SmartSearchBar, the shared filter engine,
+- [x] 3.3 Reuse ViewerToolbar, SmartSearchBar, the shared filter engine,
       CollapsedFilterButton, FiltersPanel, and WispAdaptiveGridView.
-- [ ] 3.4 Use the current TriOS dark theme and existing theme values. Do not add
+- [x] 3.4 Use the current TriOS dark theme and existing theme values. Do not add
       a separate Modpacks color scheme.
-- [ ] 3.5 Build non-persisted ModpackCardData from library data, drafts,
+- [x] 3.5 Build non-persisted ModpackCardData from library data, drafts,
       installed mods, updates, failures, and in-memory installation state.
-- [ ] 3.6 Mix draft-only and saved cards. Show name, author, pack version, game
+- [x] 3.6 Mix draft-only and saved cards. Show name, author, pack version, game
       version, installed/total count, and applicable Draft, Unsaved changes,
       Update available, Failed, and Installing labels.
-- [ ] 3.7 Put description, homepage, update URL, and installed/missing counts in
+- [x] 3.7 Put description, homepage, update URL, and installed/missing counts in
       the card hover details. Exclude source problems, failed-install details,
       last-check time, and item-status counts.
-- [ ] 3.8 Open saved cards on the full page and draft-only cards in the editor.
+- [x] 3.8 Open saved cards on the full page and draft-only cards in the editor.
       Put secondary actions in overflow except live progress and Stop.
-- [ ] 3.9 Add toolbar count, update refresh, New, Import, sorting, smart search,
+- [x] 3.9 Add toolbar count, update refresh, New, Import, sorting, smart search,
       and filters for Draft, Unsaved changes, Installing, Update available,
       Missing mods, and Needs sources.
-- [ ] 3.10 Default to name ascending and offer Author, Pack version, Game
+- [x] 3.10 Default to name ascending and offer Author, Pack version, Game
       version, and Installed count. Temporarily put running installations first.
-- [ ] 3.11 Match viewer-page persistence for sort, display, filter visibility,
+- [x] 3.11 Match viewer-page persistence for sort, display, filter visibility,
       locked filters, and search history. Do not persist the current search,
       open pack, editor, or expanded rows.
-- [ ] 3.12 Do not add a navigation update counter.
-- [ ] 3.21 Show New modpack and Import modpack for an empty library. Show Clear
+- [x] 3.12 Do not add a navigation update counter.
+- [x] 3.21 Show New modpack and Import modpack for an empty library. Show Clear
       search and Clear filters when the current view has no matches.
 
 ## Phase 4 - Full pack page

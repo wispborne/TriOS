@@ -8,6 +8,7 @@ import 'package:trios/catalog/models/catalog_card_click_action.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/models/launch_settings.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
+import 'package:trios/modpacks/library/modpacks_page_controller.dart';
 import 'package:trios/ship_viewer/ship_blueprint_view_state.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/portraits/portraits_page_controller.dart';
@@ -115,6 +116,8 @@ class Settings with SettingsMappable {
   final WispGridState factionsGridState;
   @MappableField(hook: SafeDecodeHook())
   final TipsPageStatePersisted? tipsPageState;
+  @MappableField(hook: SafeDecodeHook())
+  final ModpacksPageStatePersisted? modpacksPageState;
 
   /// Per-filter-group persisted selections, keyed by
   /// `"{pageId}::{filterGroupId}"`.
@@ -227,6 +230,7 @@ class Settings with SettingsMappable {
   final List<String> hullmodsSearchHistory;
   final List<String> modsSearchHistory;
   final List<String> factionSearchHistory;
+  final List<String> modpacksSearchHistory;
 
   /// Unknown ids fall back to folder-scan.
   final VramSelectorId vramEstimatorSelectorId;
@@ -306,6 +310,7 @@ class Settings with SettingsMappable {
       columnsState: {},
     ),
     this.tipsPageState,
+    this.modpacksPageState,
     this.persistedFilterGroups = const {},
     this.customGameExePath,
     this.useCustomGameExePath = false,
@@ -371,6 +376,7 @@ class Settings with SettingsMappable {
     this.hullmodsSearchHistory = const [],
     this.modsSearchHistory = const [],
     this.factionSearchHistory = const [],
+    this.modpacksSearchHistory = const [],
     this.vramEstimatorSelectorId = VramSelectorId.referenced,
     this.referencedAssetsSelectorConfig =
         ReferencedAssetsSelectorConfig.allEnabled,

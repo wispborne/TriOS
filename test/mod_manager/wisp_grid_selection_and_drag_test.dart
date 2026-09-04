@@ -61,7 +61,7 @@ void main() {
       await ctrlTap(tester, 'beta');
       await ctrlTap(tester, 'gamma');
 
-      // The caller kept passing an empty set, so each click starts from empty.
+      // The caller still supplies an empty selection after each click.
       expect(reported, [
         {'beta'},
         {'gamma'},

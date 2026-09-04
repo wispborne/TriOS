@@ -31,10 +31,7 @@ class PinnedGroupInfo {
   const PinnedGroupInfo({required this.name, this.icon, this.color});
 }
 
-/// Data carried while rows are dragged, within a grid or between two grids.
-///
-/// [dragDataType] says what the rows are, so a target only accepts drags it
-/// understands.
+/// Data for a row drag operation.
 class WispGridDragPayload {
   final List<String> itemKeys;
   final String dragDataType;
@@ -141,24 +138,22 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   /// group header.
   final List<ContextMenuEntry> pinnedGroupContextMenuEntries;
 
-  /// Checked rows supplied by the caller. When null, the grid keeps its own.
+  /// Caller-managed selection. If null, the grid manages it internally.
   final Set<String>? checkedItemKeys;
 
-  /// Called with the new set whenever checked rows change. Required for
-  /// [checkedItemKeys] to update.
+  /// Called when the selection changes.
   final void Function(Set<String> checkedItemKeys)? onCheckedItemsChanged;
 
-  /// Lets rows be dragged out of this grid carrying this type. A target
-  /// accepting the same type receives them.
+  /// Type of rows dragged from this grid.
   final String? rowDragType;
 
-  /// Drag types this grid accepts from anywhere, including other grids.
+  /// Row types this grid accepts.
   final Set<String> acceptedRowDragTypes;
 
-  /// Called when accepted rows are dropped anywhere on this grid.
+  /// Called when accepted rows are dropped on the grid.
   final void Function(WispGridDragPayload payload)? onRowsDropped;
 
-  /// Text shown on the dragged rows.
+  /// Label shown while rows are dragged.
   final String Function(List<String> itemKeys)? rowDragLabel;
 
   const WispGrid({
@@ -982,8 +977,7 @@ class _WispGridState<T extends WispGridItem>
     return sortResult;
   }
 
-  /// Wraps a row so it can be dragged elsewhere, carrying every checked row
-  /// when the dragged one is part of the selection.
+  /// Drags the selection when it includes this row.
   Widget _buildDraggableRow(T item, Widget rowWidget) {
     final draggedKeys =
         _checkedItemIds.contains(item.key) && _checkedItemIds.length > 1
@@ -1009,7 +1003,6 @@ class _WispGridState<T extends WispGridItem>
     );
   }
 
-  /// Wraps the grid so rows dropped anywhere on it are accepted.
   Widget _buildDropTarget(Widget content) {
     return DragTarget<WispGridDragPayload>(
       onWillAcceptWithDetails: (details) =>

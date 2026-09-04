@@ -46,12 +46,7 @@ import 'package:trios/mod_manager/mods_grid_page.dart'
     show FavoriteButton, vramColumnHovered;
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 
-/// The mod columns shared by the Mod Manager grid and the modpack editor's
-/// installed-mod list. Both get the same column set; each page chooses which
-/// are visible by default and stores its own column state.
-///
-/// Page-specific behaviour — context menus, dependency buttons, sidebars —
-/// stays with the page.
+/// Builds columns shared by the Mod Manager and modpack editor.
 class ModGridColumns {
   ModGridColumns({
     required this.ref,
@@ -73,11 +68,9 @@ class ModGridColumns {
   final AsyncValue<VramEstimatorManagerState> vramEstState;
   final Map<String, int> loadOrderNumberLookupByModId;
 
-  /// The rows currently checked, for cells that act on a whole selection.
   final Set<String> Function() checkedModIds;
 
-  /// Replaces a column's default position, width, or visibility. Keyed by
-  /// [ModGridHeader] name.
+  /// Per-column state overrides, keyed by [ModGridHeader] name.
   final Map<String, WispGridColumnState> stateOverrides;
 
   static Set<String> _noCheckedMods() => const {};
@@ -464,12 +457,6 @@ class ModGridColumns {
     ModGridHeader header,
     HeaderBuilderModifiers modifiers,
   ) {
-    // final state =
-    //     ref
-    //         .watch(appSettings.select((s) => s.modsGridState))
-    //         .columnsState[header.name] ??
-    //     WispGridColumnState(position: 0, width: 100);
-
     final sortField = switch (header) {
       ModGridHeader.favorites => null,
       ModGridHeader.changeVariantButton => null,
@@ -565,8 +552,8 @@ class ModGridColumns {
         final graphicsLibConfig = ref.watch(graphicsLibConfigProvider);
         if (bestVersion == null) return const SizedBox();
 
-        // Fills the row height. Not an Expanded: the cell's parent is no
-        // longer a Column.
+        // Fill the row height without Expanded; the parent is no longer a
+        // Column.
         return SizedBox(
           height: double.infinity,
           child: Builder(
@@ -747,7 +734,6 @@ class ModGridColumns {
         final versionCheckResultsNew = ref
             .watch(AppState.versionCheckResults)
             .value;
-        //
         final versionCheckComparison = mod.updateCheck(versionCheckResultsNew);
         final localVersionCheck =
             versionCheckComparison?.variant.versionCheckerInfo;
@@ -760,7 +746,7 @@ class ModGridColumns {
             );
         final areUpdatesMuted = metadata != null && metadata.areUpdatesMuted;
         final remoteVersion = versionCheckComparison?.remoteVersionString;
-        // Only this one version is muted, rather than the mod being silenced.
+        // A hidden version does not mute all update notifications.
         final isVersionMuted =
             !areUpdatesMuted &&
             metadata != null &&
@@ -903,7 +889,6 @@ class ModGridColumns {
                             spinnerPadding: const .only(left: 2),
                           ),
                   ],
-                  // ),
                 ),
               );
       },
@@ -1002,7 +987,6 @@ class ModGridColumns {
                     ),
                   ),
                 ],
-                // ),
               );
       },
     );
@@ -1072,7 +1056,6 @@ class ModGridColumns {
               );
 
         return MovingTooltipWidget.framed(
-          // position: TooltipPosition.topLeft,
           padding: const EdgeInsets.all(0),
           tooltipWidgetBuilder: (context) => SizedBox(
             width: 400,

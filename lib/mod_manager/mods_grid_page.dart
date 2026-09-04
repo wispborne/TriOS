@@ -453,8 +453,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                         },
                                       ),
                                 child: Container(
-                                  // This container is so that the context menu gets hit detection.
-                                  // Without it, right-clicking empty space doesn't show the context menu.
+                                  // Receive right-clicks on empty space.
                                   color: Colors.transparent,
                                   child: Column(
                                     children: [

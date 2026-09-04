@@ -1,23 +1,18 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
-/// A compact outlined text field with a label, matching the Settings page.
-///
-/// [errorText] comes from the caller so validation stays with whatever owns
-/// the value.
+/// Compact outlined text field with a label.
 class LabeledTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String? hint;
 
-  /// Shown under the field. Non-null marks the field as having a problem.
+  /// Validation message shown below the field.
   final String? errorText;
 
-  /// Tooltip on the field, for anything the label can't say.
   final String? tooltip;
 
-  /// Caps typed length. The counter is hidden; the cap is a guard, not a
-  /// progress bar.
+  /// Maximum input length. The counter is hidden.
   final int? maxLength;
 
   final int minLines;

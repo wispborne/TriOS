@@ -8,7 +8,7 @@ part 'navigation.mapper.dart';
 /// The default order of reorderable nav items, used on fresh installs and
 /// after "Reset to default order". Matches the existing sidebar layout.
 ///
-/// Only the entries below, plus the single divider, are reorderable.
+/// Only these entries and the divider are reorderable.
 /// Settings, action buttons, launcher, rules.csv, and the layout toggle are
 /// pinned and are NOT included here.
 const List<NavOrderEntry> defaultNavOrder = [

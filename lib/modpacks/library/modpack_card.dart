@@ -6,17 +6,12 @@ import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/text_trios.dart';
 
-/// One pack in the library grid.
-///
-/// Clicking the card opens it. Everything else is in the overflow menu,
-/// except that a running installation shows its progress and a Stop button
-/// on the card itself.
 class ModpackCard extends StatelessWidget {
   final ModpackCardData card;
   final VoidCallback onOpen;
   final VoidCallback onEdit;
 
-  /// Null for a pack that was never saved; there's nothing to copy yet.
+  /// Null for unsaved drafts.
   final VoidCallback? onDuplicate;
   final VoidCallback onDelete;
   final VoidCallback? onStopInstallation;
@@ -112,7 +107,6 @@ class ModpackCard extends StatelessWidget {
     );
   }
 
-  /// "by Author · v3 · Starsector 0.98a-RC8", leaving out whatever's blank.
   String _subtitle() {
     final parts = [
       if (card.author != null) 'by ${card.author}',

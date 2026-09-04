@@ -129,7 +129,7 @@ void main() {
 
       final card = buildModpackCardData(data, installedModIds: {}).single;
 
-      // Library actions work on the saved pack, so the card shows its name.
+      // Cards represent saved definitions, not their drafts.
       expect(card.name, 'Wisp\'s pack');
       expect(card.isDraftOnly, isFalse);
       expect(card.hasUnsavedChanges, isTrue);

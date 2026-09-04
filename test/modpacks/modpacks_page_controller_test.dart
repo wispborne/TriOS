@@ -21,7 +21,6 @@ import 'package:trios/widgets/filter_engine/filter_engine.dart';
 
 import '../riverpod_test_helpers.dart';
 
-/// A store with its file in a temp folder that leaves mod records alone.
 class _TestModpackStore extends ModpackStore {
   _TestModpackStore(Directory folder) : super(storageFolder: folder);
 
@@ -29,8 +28,6 @@ class _TestModpackStore extends ModpackStore {
   Future<void> writeItemSourcesToRecords(ModpackDefinition definition) async {}
 }
 
-/// Stands in for the real settings notifier so nothing touches the settings
-/// file on disk.
 class _FakeSettings extends AppSettingNotifier {
   _FakeSettings(this.initial);
 
@@ -90,14 +87,12 @@ void main() {
   late Harness harness;
 
   setUpAll(() {
-    // The settings notifier resolves its file on construction, so point it at
-    // a throwaway folder rather than the user's real config.
+    // Keep settings writes out of the user's config directory.
     Constants.configDataFolderPath = Directory.systemTemp.createTempSync(
       'trios_modpacks_page_test',
     );
   });
 
-  /// Builds a controller over an empty library, with [mods] installed.
   Future<Harness> open({
     List<Mod> mods = const [],
     Settings? settings,
@@ -112,15 +107,14 @@ void main() {
         runningModpackInstallationsProvider.overrideWithValue(installations),
       ],
     );
-    // Hold the controller open so it keeps up with the store.
+    // Keep the controller subscribed to store updates.
     container.listen(
       modpacksPageControllerProvider,
       (_, _) {},
       fireImmediately: true,
     );
     await awaitFirstValue(container, modpackStoreProvider);
-    // The store sets its state before its build finishes. Wait for the
-    // build too, or its return value overwrites the first write in a test.
+    // Wait for the store build before writing in a test.
     await container.read(modpackStoreProvider.future);
     return (
       container: container,
@@ -135,8 +129,6 @@ void main() {
   List<String> visibleNames() =>
       state().visibleCards.map((card) => card.name).toList();
 
-  /// Saves two packs: Wisp's pack, fully installed, and another with a
-  /// missing mod.
   Future<void> saveTwoPacks() async {
     await harness.store.saveIncomingDefinition(
       _definition(

@@ -44,9 +44,7 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T>
         } catch (e, stackTrace) {
           Fimber.w("Error creating backup", ex: e, stacktrace: stackTrace);
         }
-        // A write may have happened while the backup check ran. Returning
-        // the loaded value would throw it away, because Riverpod stores
-        // whatever build returns.
+        // Preserve writes that complete during the backup check.
         return state.value ?? loadedState;
       } catch (e, stackTrace) {
         state = AsyncError(e, stackTrace);

@@ -22,8 +22,6 @@ import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 
-/// The Modpacks tool: a card library of saved packs and drafts. Opening a
-/// pack replaces the library with its full page or editor until Back.
 class ModpacksPage extends ConsumerStatefulWidget {
   const ModpacksPage({super.key});
 
@@ -209,10 +207,8 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
     );
   }
 
-  /// Shown when `modpacks.json` couldn't be read. The library stays empty
-  /// until the person picks Restore backup or Start empty.
   Widget _buildStorageProblemBanner() {
-    // Watching the store means the banner appears once loading finishes.
+    // Rebuild when loading finishes.
     ref.watch(modpackStoreProvider);
     final store = ref.read(modpackStoreProvider.notifier);
     final problem = store.storageProblem;
@@ -424,7 +420,6 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
   }
 }
 
-/// The library before any pack exists.
 class _EmptyLibrary extends StatelessWidget {
   final VoidCallback onNew;
   final VoidCallback onImport;
@@ -484,7 +479,6 @@ class _EmptyLibrary extends StatelessWidget {
   }
 }
 
-/// Shown when search or filters hide every card.
 class _NoMatches extends StatelessWidget {
   final VoidCallback? onClearSearch;
   final VoidCallback? onClearFilters;
@@ -524,8 +518,7 @@ class _NoMatches extends StatelessWidget {
   }
 }
 
-/// Stands in for the full pack page (phase 4) and the editor (phase 5).
-/// Only Back works here.
+/// Temporary placeholder for unimplemented pack views.
 class _OpenPackPlaceholder extends StatelessWidget {
   final ModpackCardData? card;
   final bool isEditing;

@@ -5,7 +5,6 @@ import 'package:trios/modpacks/models/modpack_library_entry.dart';
 
 part 'modpack_card_data.mapper.dart';
 
-/// The labels a library card can carry. A card shows every one that applies.
 enum ModpackCardLabel {
   draft('Draft'),
   unsavedChanges('Unsaved changes'),
@@ -18,8 +17,7 @@ enum ModpackCardLabel {
   const ModpackCardLabel(this.text);
 }
 
-/// Everything one library card shows. Built fresh from the library, the
-/// current mod list, and any running installation; never saved.
+/// Display data for a modpack library card.
 @MappableClass()
 class ModpackCardData with ModpackCardDataMappable {
   final String packId;
@@ -30,26 +28,22 @@ class ModpackCardData with ModpackCardDataMappable {
   final String? homepageUrl;
   final String? updateUrl;
 
-  /// The saved version. Null for a pack that has never been saved.
+  /// Null for unsaved drafts.
   final int? packVersion;
 
   final int installedCount;
   final int totalCount;
   final int missingCount;
 
-  /// The pack has a draft but no saved definition.
   final bool isDraftOnly;
 
-  /// The pack is saved and also has a draft with changes.
   final bool hasUnsavedChanges;
 
-  /// The online version, when it's newer than the saved one.
+  /// Newer version reported by the update check.
   final int? onlineVersionAvailable;
 
-  /// At least one item failed to install last time.
   final bool hasFailures;
 
-  /// At least one item has no usable source yet. Only a draft can.
   final bool needsSources;
 
   final ModpackInstallProgress? installProgress;
@@ -78,10 +72,10 @@ class ModpackCardData with ModpackCardDataMappable {
 
   bool get updateAvailable => onlineVersionAvailable != null;
 
-  /// Whether every item has an installed mod. An empty pack is not.
+  /// Empty packs are not considered installed.
   bool get isFullyInstalled => totalCount > 0 && missingCount == 0;
 
-  /// A draft-only pack is unsaved by definition, so it shows Draft alone.
+  /// Draft-only packs show Draft instead of Unsaved changes.
   List<ModpackCardLabel> get labels => [
     if (isDraftOnly) ModpackCardLabel.draft,
     if (!isDraftOnly && hasUnsavedChanges) ModpackCardLabel.unsavedChanges,
@@ -91,12 +85,6 @@ class ModpackCardData with ModpackCardDataMappable {
   ];
 }
 
-/// Builds one card per pack in [data]: every saved pack, plus every draft
-/// that has never been saved.
-///
-/// A saved pack with a draft is described by its saved definition, because
-/// the library's actions work on that. The draft only adds the Unsaved
-/// changes label and any items that still need sources.
 List<ModpackCardData> buildModpackCardData(
   ModpacksData data, {
   required Set<String> installedModIds,

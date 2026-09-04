@@ -34,8 +34,6 @@ enum ModpackSortField {
   const ModpackSortField(this.label);
 }
 
-/// The parts of the Modpacks page remembered between sessions. The current
-/// search, the open pack, and the editor are not.
 @MappableClass()
 class ModpacksPageStatePersisted with ModpacksPageStatePersistedMappable {
   final ModpackSortField sortField;
@@ -53,22 +51,16 @@ class ModpacksPageStatePersisted with ModpacksPageStatePersistedMappable {
 class ModpacksPageState with ModpacksPageStateMappable {
   final ModpacksPageStatePersisted persisted;
 
-  /// One card per pack in the library, in no particular order.
   final List<ModpackCardData> allCards;
 
-  /// The cards left after filters and search, in display order.
   final List<ModpackCardData> visibleCards;
 
   final String searchQuery;
 
-  /// True until the library has been read from disk.
   final bool isLoading;
 
-  /// The pack whose full page or editor is open. Null while the card
-  /// library is showing.
   final String? openPackId;
 
-  /// Whether [openPackId] is open in the editor rather than the full page.
   final bool isEditing;
 
   ModpackSortField get sortField => persisted.sortField;
@@ -88,29 +80,24 @@ class ModpacksPageState with ModpacksPageStateMappable {
   });
 }
 
-/// What happened when a `.trios-modpack` file was imported.
+/// Result of importing a `.trios-modpack` file.
 enum ModpackImportOutcome {
-  /// The pack was new and is now in the library.
   added,
 
-  /// The library already had this exact pack.
+  /// An identical pack is already in the library.
   alreadyInLibrary,
 
-  /// The library has a pack or draft with this ID but different contents.
-  /// Nothing was changed.
+  /// A saved pack or draft has the same ID but different contents.
   conflictsWithLibrary,
 
-  /// The file could not be read as a modpack.
   unreadable,
 }
 
 class ModpackImportResult {
   final ModpackImportOutcome outcome;
 
-  /// The pack the file describes, when it could be read.
   final String? packId;
 
-  /// Why the file could not be read, for [ModpackImportOutcome.unreadable].
   final String? error;
 
   const ModpackImportResult(this.outcome, {this.packId, this.error});
@@ -166,7 +153,7 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
       installations: installations,
     );
 
-    // A pack that was deleted while open sends the page back to the library.
+    // Close a pack that was deleted.
     final previous = stateOrNull;
     final openPackId = previous?.openPackId;
     final stillOpen =
@@ -235,14 +222,11 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
     );
   }
 
-  // --- Search -----------------------------------------------------------
-
   void updateSearchQuery(String query) {
     _searchQuery = query;
     _refilter();
   }
 
-  /// Adds the current search to the page's history.
   void submitSearchQuery() {
     final query = _searchQuery.trim();
     if (query.isEmpty) return;
@@ -256,8 +240,6 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
   }
 
   void clearSearch() => updateSearchQuery('');
-
-  // --- Filters and sorting ----------------------------------------------
 
   void toggleShowFilters() {
     _updatePersisted(state.persisted.copyWith(showFilters: !state.showFilters));
@@ -283,8 +265,6 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
     _refilter();
   }
 
-  /// Rebuilds every card from the library and the current mod list. The
-  /// online update check (phase 9) will run from here as well.
   void refresh() {
     final data = ref.read(modpackStoreProvider).value ?? const ModpacksData();
     final cards = buildModpackCardData(
@@ -298,10 +278,7 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
     );
   }
 
-  // --- Opening packs ------------------------------------------------------
-
-  /// A saved pack opens on its full page; a pack that was never saved has
-  /// nothing to view, so it opens in the editor.
+  /// Opens unsaved drafts in the editor.
   void openCard(ModpackCardData card) {
     if (card.isDraftOnly) {
       editPack(card.packId);
@@ -318,15 +295,11 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
     state = state.copyWith(openPackId: packId, isEditing: true);
   }
 
-  /// Back to the card library. Any draft stays as it is.
   void closePack() {
     state = state.copyWith(openPackId: null, isEditing: false);
   }
 
-  // --- Library actions ---------------------------------------------------
-
-  /// Starts a new pack and opens it in the editor. The draft exists from
-  /// this moment, so nothing typed into it is lost.
+  /// Creates a draft and opens the editor.
   Future<String> createNewPack() async {
     final gameVersion = ref.read(appSettings).lastStarsectorVersion;
     final draft = await ref
@@ -336,20 +309,15 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
     return draft.id;
   }
 
-  /// Removes the pack and its draft. No mods are disabled or uninstalled.
+  /// Deletes the saved pack and draft without changing installed mods.
   Future<void> deletePack(String packId) async {
     await ref.read(modpackStoreProvider.notifier).deletePack(packId);
   }
 
-  /// Copies a saved pack. The copy gets its own ID and starts at version 1.
   Future<void> duplicatePack(String packId) async {
     await ref.read(modpackStoreProvider.notifier).duplicatePack(packId);
   }
 
-  /// Reads a `.trios-modpack` file and adds it to the library when it's new.
-  ///
-  /// A pack the library already has is left alone. Choosing between the two
-  /// versions belongs to the incoming-pack dialog (phase 7).
   Future<ModpackImportResult> importFile(File file) async {
     try {
       final text = await file.readAsString();
@@ -401,8 +369,6 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
     }
   }
 
-  // --- Internals ----------------------------------------------------------
-
   void _refilter() {
     state = state.copyWith(
       visibleCards: _visibleCards(state.allCards, state.persisted),
@@ -453,9 +419,7 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
     return _searchIndex;
   }
 
-  /// Sorts cards by [field]. A pack being installed always comes first so
-  /// its progress stays in view; the rest are ordered by [field], with
-  /// blanks last and ties broken by name.
+  /// Sorts cards by [field], keeping installations first.
   static List<ModpackCardData> sortCards(
     List<ModpackCardData> cards,
     ModpackSortField field,

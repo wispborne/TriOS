@@ -31,12 +31,18 @@ class PinnedGroupInfo {
   const PinnedGroupInfo({required this.name, this.icon, this.color});
 }
 
-/// Data carried during a drag-and-drop operation between groups.
-class _WispGridDragData {
+/// Data carried while rows are dragged, within a grid or between two grids.
+///
+/// [dragDataType] says what the rows are, so a target only accepts drags it
+/// understands.
+class WispGridDragPayload {
   final List<String> itemKeys;
   final String dragDataType;
 
-  _WispGridDragData({required this.itemKeys, required this.dragDataType});
+  const WispGridDragPayload({
+    required this.itemKeys,
+    required this.dragDataType,
+  });
 }
 
 /// Key for tracking collapse state across primary + secondary group levels.
@@ -135,6 +141,26 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   /// group header.
   final List<ContextMenuEntry> pinnedGroupContextMenuEntries;
 
+  /// Checked rows supplied by the caller. When null, the grid keeps its own.
+  final Set<String>? checkedItemKeys;
+
+  /// Called with the new set whenever checked rows change. Required for
+  /// [checkedItemKeys] to update.
+  final void Function(Set<String> checkedItemKeys)? onCheckedItemsChanged;
+
+  /// Lets rows be dragged out of this grid carrying this type. A target
+  /// accepting the same type receives them.
+  final String? rowDragType;
+
+  /// Drag types this grid accepts from anywhere, including other grids.
+  final Set<String> acceptedRowDragTypes;
+
+  /// Called when accepted rows are dropped anywhere on this grid.
+  final void Function(WispGridDragPayload payload)? onRowsDropped;
+
+  /// Text shown on the dragged rows.
+  final String Function(List<String> itemKeys)? rowDragLabel;
+
   const WispGrid({
     super.key,
     required this.items,
@@ -157,6 +183,12 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     this.pinnedItems = const [],
     this.pinnedGroupInfo,
     this.pinnedGroupContextMenuEntries = const [],
+    this.checkedItemKeys,
+    this.onCheckedItemsChanged,
+    this.rowDragType,
+    this.acceptedRowDragTypes = const {},
+    this.onRowsDropped,
+    this.rowDragLabel,
   });
 
   static Widget defaultRowBuilder({
@@ -228,7 +260,23 @@ class _WispGridState<T extends WispGridItem>
   final ScrollController _gridScrollControllerVertical = ScrollController();
   final ScrollController _gridScrollControllerHorizontal = ScrollController();
   final Map<_CollapseKey, bool> collapseStates = {};
-  final Set<String> _checkedItemIds = {};
+  final Set<String> _ownCheckedItemIds = {};
+
+  Set<String> get _checkedItemIds =>
+      widget.checkedItemKeys ?? _ownCheckedItemIds;
+
+  void _setCheckedItemIds(Set<String> next) {
+    if (widget.checkedItemKeys != null) {
+      widget.onCheckedItemsChanged?.call(next);
+      return;
+    }
+    setState(() {
+      _ownCheckedItemIds
+        ..clear()
+        ..addAll(next);
+    });
+    widget.onCheckedItemsChanged?.call(next);
+  }
 
   List<WispGridColumn<T>> get columns => widget.columns;
 
@@ -600,7 +648,7 @@ class _WispGridState<T extends WispGridItem>
                 : [item.key];
 
             final baseRowWidget = rowWidget;
-            rowWidget = DragTarget<_WispGridDragData>(
+            rowWidget = DragTarget<WispGridDragPayload>(
               onWillAcceptWithDetails: (details) =>
                   details.data.dragDataType == rowDragGrouping!.dragDataType &&
                   !details.data.itemKeys.contains(item.key),
@@ -627,9 +675,9 @@ class _WispGridState<T extends WispGridItem>
                 _dragTargetGroupName.value = null;
               },
               builder: (context, candidateData, rejectedData) {
-                return LongPressDraggable<_WispGridDragData>(
+                return LongPressDraggable<WispGridDragPayload>(
                   delay: const Duration(milliseconds: 200),
-                  data: _WispGridDragData(
+                  data: WispGridDragPayload(
                     itemKeys: draggedKeys,
                     dragDataType: rowDragGrouping!.dragDataType,
                   ),
@@ -653,6 +701,8 @@ class _WispGridState<T extends WispGridItem>
                 );
               },
             );
+          } else if (widget.rowDragType != null) {
+            rowWidget = _buildDraggableRow(item, rowWidget);
           }
 
           displayedMods.add(rowWidget);
@@ -744,6 +794,11 @@ class _WispGridState<T extends WispGridItem>
                 notification.metrics.axis == Axis.vertical,
             child: content,
           );
+        }
+
+        if (widget.onRowsDropped != null &&
+            widget.acceptedRowDragTypes.isNotEmpty) {
+          content = _buildDropTarget(content);
         }
 
         return content;
@@ -927,6 +982,43 @@ class _WispGridState<T extends WispGridItem>
     return sortResult;
   }
 
+  /// Wraps a row so it can be dragged elsewhere, carrying every checked row
+  /// when the dragged one is part of the selection.
+  Widget _buildDraggableRow(T item, Widget rowWidget) {
+    final draggedKeys =
+        _checkedItemIds.contains(item.key) && _checkedItemIds.length > 1
+        ? _checkedItemIds.toList()
+        : [item.key];
+    final label =
+        widget.rowDragLabel?.call(draggedKeys) ??
+        (draggedKeys.length == 1 ? '1 mod' : '${draggedKeys.length} mods');
+
+    return Draggable<WispGridDragPayload>(
+      data: WispGridDragPayload(
+        itemKeys: draggedKeys,
+        dragDataType: widget.rowDragType!,
+      ),
+      dragAnchorStrategy: (draggable, context, position) =>
+          const Offset(16, 16),
+      feedback: _DragFeedbackBadge(
+        label: label,
+        hoverGroupName: _dragTargetGroupName,
+      ),
+      childWhenDragging: Opacity(opacity: 0.4, child: rowWidget),
+      child: rowWidget,
+    );
+  }
+
+  /// Wraps the grid so rows dropped anywhere on it are accepted.
+  Widget _buildDropTarget(Widget content) {
+    return DragTarget<WispGridDragPayload>(
+      onWillAcceptWithDetails: (details) =>
+          widget.acceptedRowDragTypes.contains(details.data.dragDataType),
+      onAcceptWithDetails: (details) => widget.onRowsDropped!(details.data),
+      builder: (context, candidateData, rejectedData) => content,
+    );
+  }
+
   /// Handles multi-check logic for shift/control-clicking a row.
   /// Updates the set of checked mod IDs and the last checked mod ID.
   /// - `modId` The unique identifier of the row that was clicked.
@@ -938,44 +1030,37 @@ class _WispGridState<T extends WispGridItem>
     required bool ctrlPressed,
   }) {
     final orderedModIds = _lastDisplayedItems.map((mod) => mod.key).toList();
+    final next = _checkedItemIds.toSet();
 
-    setState(() {
-      if (!shiftPressed && !ctrlPressed) {
-        _checkedItemIds.clear();
-        _lastCheckedItemId = modId;
+    if (!shiftPressed && !ctrlPressed) {
+      _lastCheckedItemId = modId;
+      _setCheckedItemIds({});
+      return;
+    }
+
+    if (shiftPressed && _lastCheckedItemId != null) {
+      final lastIndex = orderedModIds.indexOf(_lastCheckedItemId!);
+      final currentIndex = orderedModIds.indexOf(modId);
+      _lastCheckedItemId = modId;
+
+      if (lastIndex == -1 || currentIndex == -1) {
+        _setCheckedItemIds({modId});
         return;
       }
 
-      if (shiftPressed && _lastCheckedItemId != null) {
-        final lastIndex = orderedModIds.indexOf(_lastCheckedItemId!);
-        final currentIndex = orderedModIds.indexOf(modId);
+      final start = lastIndex < currentIndex ? lastIndex : currentIndex;
+      final end = lastIndex < currentIndex ? currentIndex : lastIndex;
+      final selectedRange = orderedModIds.sublist(start, end + 1);
 
-        if (lastIndex == -1 || currentIndex == -1) {
-          _checkedItemIds
-            ..clear()
-            ..add(modId);
-          _lastCheckedItemId = modId;
-          return;
-        }
-
-        final start = lastIndex < currentIndex ? lastIndex : currentIndex;
-        final end = lastIndex < currentIndex ? currentIndex : lastIndex;
-        final selectedRange = orderedModIds.sublist(start, end + 1);
-        final allSelected = selectedRange.every(_checkedItemIds.contains);
-
-        allSelected
-            ? _checkedItemIds.removeAll(selectedRange)
-            : _checkedItemIds.addAll(selectedRange);
-
-        _lastCheckedItemId = modId;
-      } else if (ctrlPressed) {
-        _checkedItemIds.contains(modId)
-            ? _checkedItemIds.remove(modId)
-            : _checkedItemIds.add(modId);
-
-        _lastCheckedItemId = modId;
-      }
-    });
+      selectedRange.every(next.contains)
+          ? next.removeAll(selectedRange)
+          : next.addAll(selectedRange);
+      _setCheckedItemIds(next);
+    } else if (ctrlPressed) {
+      _lastCheckedItemId = modId;
+      next.contains(modId) ? next.remove(modId) : next.add(modId);
+      _setCheckedItemIds(next);
+    }
   }
 
   Comparable? _getSortValueForItem(
@@ -1157,7 +1242,7 @@ class _DragTargetGroupHeader<T extends WispGridItem> extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return DragTarget<_WispGridDragData>(
+    return DragTarget<WispGridDragPayload>(
       onWillAcceptWithDetails: (details) {
         return details.data.dragDataType == grouping.dragDataType;
       },

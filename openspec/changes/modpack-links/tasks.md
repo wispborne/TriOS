@@ -69,17 +69,17 @@ easy to spot. Nothing modpack-specific is built on it yet.
 
 ### 4 - Shared grid and field work
 
-- [ ] 4.1 Extract the Mod Manager's reusable mod-column builders so the Mod
+- [x] 4.1 Extract the Mod Manager's reusable mod-column builders so the Mod
       Manager and modpack editor can use the full normal column set with
       different visible defaults and independent saved state.
-- [ ] 4.2 Keep page-specific row context, dependency actions, and sidebars out
+- [x] 4.2 Keep page-specific row context, dependency actions, and sidebars out
       of the shared column builder.
-- [ ] 4.3 Extend WispGrid with reusable externally controlled checkbox
+- [x] 4.3 Extend WispGrid with reusable externally controlled checkbox
       selection and cross-grid drag data. Keep modpack behavior out of WispGrid.
-- [ ] 4.4 Use WispGrid variable-height outer rows for expanded item details.
-- [ ] 4.5 Add a shared compact Settings-style labelled text field with external
+- [x] 4.4 Use WispGrid variable-height outer rows for expanded item details.
+- [x] 4.5 Add a shared compact Settings-style labelled text field with external
       error text, length limits, and multiline support.
-- [ ] 4.6 Use MovingTooltipWidget.text instead of Flutter tooltip properties,
+- [x] 4.6 Use MovingTooltipWidget.text instead of Flutter tooltip properties,
       the 8-dip spacing grid, and Row/Column spacing where appropriate.
 
 ## Phase 3 - Modpacks library page

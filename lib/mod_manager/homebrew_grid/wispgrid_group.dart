@@ -258,8 +258,7 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
       name == 'Uncategorized' ? uncategorizedSortValue : name.toLowerCase();
 
   @override
-  Comparable getGroupSortValue(Mod mod) =>
-      _sortValueForName(getGroupName(mod));
+  Comparable getGroupSortValue(Mod mod) => _sortValueForName(getGroupName(mod));
 
   @override
   List<Comparable?> getAllGroupSortValues(Mod item) {
@@ -270,9 +269,7 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
     final categories = notifier.getCategoriesForMod(item.id);
     if (categories.length <= 1) return [getGroupSortValue(item)];
 
-    return categories
-        .map((cat) => _sortValueForName(cat.name))
-        .toList();
+    return categories.map((cat) => _sortValueForName(cat.name)).toList();
   }
 
   /// Resolves a category from a group sort value (lowercase name).
@@ -622,112 +619,108 @@ OverlayWidgetData? _vramSummaryOverlayWidget(
   );
 
   final overlayBody = Padding(
-      padding: EdgeInsets.only(right: 8, left: 0),
-      child: MovingTooltipWidget.framed(
-        tooltipWidget: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // bold
+    padding: EdgeInsets.only(right: 8, left: 0),
+    child: MovingTooltipWidget.framed(
+      tooltipWidget: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // bold
+          Text(
+            "Estimated VRAM use by ${groupName.trim().split("\n").firstOrNull}\n",
+            style: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          if (graphicsLibConfig != null)
             Text(
-              "Estimated VRAM use by ${groupName.trim().split("\n").firstOrNull}\n",
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+              "GraphicsLib settings",
+              style: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            if (graphicsLibConfig != null)
-              Text(
-                "GraphicsLib settings",
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            if (graphicsLibConfig != null)
-              Text(
-                "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}"
-                "\nGenerate Normal maps: ${graphicsLibConfig.autoGenNormals ? "on" : "off"}"
-                "\nPreload all: ${graphicsLibConfig.preloadAllMaps ? "on" : "off"}",
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-            if (graphicsLibConfig != null &&
-                graphicsLibConfig.areAnyEffectsEnabled)
-              Text(
-                "\nNormal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
-                "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
-                "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
+          if (graphicsLibConfig != null)
             Text(
-              "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
-              "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${isGraphicsLibPreloadingAll ? "${vramFromGraphicsLib.length} images" : "roughly"})" : ""}"
-              "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
-              "\n---"
-              "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
+              "Enabled: ${graphicsLibConfig.areAnyEffectsEnabled ? "yes" : "no"}"
+              "\nGenerate Normal maps: ${graphicsLibConfig.autoGenNormals ? "on" : "off"}"
+              "\nPreload all: ${graphicsLibConfig.preloadAllMaps ? "on" : "off"}",
               style: Theme.of(context).textTheme.labelLarge,
+            ),
+          if (graphicsLibConfig != null &&
+              graphicsLibConfig.areAnyEffectsEnabled)
+            Text(
+              "\nNormal maps: ${graphicsLibConfig.areGfxLibNormalMapsEnabled ? "on" : "off"}"
+              "\nMaterial maps: ${graphicsLibConfig.areGfxLibMaterialMapsEnabled ? "on" : "off"}"
+              "\nSurface maps: ${graphicsLibConfig.areGfxLibSurfaceMapsEnabled ? "on" : "off"}",
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          Text(
+            "\n${vramModsNoGraphicsLib.bytesAsReadableMB()} added by mods (${allEstimates.map((e) => e.images.length).sum} images)"
+            "${vramFromGraphicsLib.sum() > 0 ? "\n${vramFromGraphicsLib.sum().bytesAsReadableMB()} added by your GraphicsLib settings (${isGraphicsLibPreloadingAll ? "${vramFromGraphicsLib.length} images" : "roughly"})" : ""}"
+            "${vramFromVanilla != null ? "\n${vramFromVanilla.bytesAsReadableMB()} added by vanilla" : ""}"
+            "\n---"
+            "\n${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()} total",
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+        ],
+      ),
+      child: ContextMenuRegion(
+        contextMenu: ContextMenu(
+          entries: [
+            MenuItem(
+              label: '(Re)estimate VRAM Usage',
+              icon: Icons.memory,
+              onSelected: () {
+                ref
+                    .read(AppState.vramEstimatorProvider.notifier)
+                    .startEstimating(variantsToCheck: variantsInGroup);
+              },
             ),
           ],
         ),
-        child: ContextMenuRegion(
-          contextMenu: ContextMenu(
-            entries: [
-              MenuItem(
-                label: '(Re)estimate VRAM Usage',
-                icon: Icons.memory,
-                onSelected: () {
-                  ref
-                      .read(AppState.vramEstimatorProvider.notifier)
-                      .startEstimating(variantsToCheck: variantsInGroup);
-                },
-              ),
-            ],
-          ),
-          child: Center(
-            child: Opacity(
-              opacity: WispGrid.lightTextOpacity,
-              child: Row(
-                crossAxisAlignment: .center,
-                children: [
-                  Text(
-                    "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
-                    style: Theme.of(context).textTheme.labelMedium,
+        child: Center(
+          child: Opacity(
+            opacity: WispGrid.lightTextOpacity,
+            child: Row(
+              crossAxisAlignment: .center,
+              children: [
+                Text(
+                  "∑ ${(vramModsNoGraphicsLib + vramFromGraphicsLib.sum() + (vramFromVanilla ?? 0.0)).bytesAsReadableMB()}",
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                if (allEstimatesIncludingMissing.contains(null))
+                  Builder(
+                    builder: (context) {
+                      final variantsToCheck = variantsInGroup
+                          .where((e) => vramMap[e.smolId] == null)
+                          .toList();
+                      return MovingTooltipWidget.text(
+                        message:
+                            "Estimate VRAM usage for ${variantsToCheck.length} unscanned mods",
+                        child: IconButton(
+                          icon: const Icon(Icons.memory),
+                          iconSize: 20,
+                          onPressed: () {
+                            ref
+                                .read(AppState.vramEstimatorProvider.notifier)
+                                .startEstimating(
+                                  variantsToCheck: variantsToCheck,
+                                );
+                          },
+                        ),
+                      );
+                    },
                   ),
-                  if (allEstimatesIncludingMissing.contains(null))
-                    Builder(
-                      builder: (context) {
-                        final variantsToCheck = variantsInGroup
-                            .where((e) => vramMap[e.smolId] == null)
-                            .toList();
-                        return MovingTooltipWidget.text(
-                          message:
-                              "Estimate VRAM usage for ${variantsToCheck.length} unscanned mods",
-                          child: IconButton(
-                            icon: const Icon(Icons.memory),
-                            iconSize: 20,
-                            onPressed: () {
-                              ref
-                                  .read(AppState.vramEstimatorProvider.notifier)
-                                  .startEstimating(
-                                    variantsToCheck: variantsToCheck,
-                                  );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
       ),
-    );
+    ),
+  );
 
   final child = isSecondaryHeader
       ? MouseRegion(
-          onEnter: (_) =>
-              ref.read(vramColumnHovered.notifier).state = true,
-          onExit: (_) =>
-              ref.read(vramColumnHovered.notifier).state = false,
+          onEnter: (_) => ref.read(vramColumnHovered.notifier).state = true,
+          onExit: (_) => ref.read(vramColumnHovered.notifier).state = false,
           child: Consumer(
             builder: (context, ref, _) => ref.watch(vramColumnHovered)
                 ? overlayBody
@@ -738,7 +731,8 @@ OverlayWidgetData? _vramSummaryOverlayWidget(
 
   return OverlayWidgetData(
     // Subtract padding added to group that isn't present on the mod row
-    left: cellWidthBeforeVramColumn -
+    left:
+        cellWidthBeforeVramColumn -
         6 +
         WispGrid.gridRowSpacing +
         horizontalPaddingOffset,

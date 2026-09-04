@@ -152,9 +152,10 @@ class WispGridState with WispGridStateMappable {
   /// The visible columns that are held at the grid's left edge.
   List<MapEntry<String, WispGridColumnState>> frozenVisibleColumns(
     List<WispGridColumn> columnSpecs,
-  ) => sortedVisibleColumns(
-    columnSpecs,
-  ).where((entry) => entry.value.isFrozen).toList();
+  ) =>
+      sortedVisibleColumns(columnSpecs)
+          .where((entry) => entry.value.isFrozen)
+          .toList();
 
   // WispGridState empty() =>
   //     const WispGridState(groupingSetting: null, columnsState: {});
@@ -176,11 +177,7 @@ class GroupingSetting with GroupingSettingMappable {
 }
 
 @MappableEnum(defaultValue: GroupHeaderStyle.medium)
-enum GroupHeaderStyle {
-  small,
-  medium,
-  large,
-}
+enum GroupHeaderStyle { small, medium, large }
 
 ///////// Things specific to the Mods tab
 @MappableEnum(defaultValue: ModGridHeader.name)
@@ -203,13 +200,7 @@ enum ModGridHeader {
 }
 
 @MappableEnum()
-enum ModGridGroupEnum {
-  enabledState,
-  author,
-  category,
-  modType,
-  gameVersion,
-}
+enum ModGridGroupEnum { enabledState, author, category, modType, gameVersion }
 
 @MappableEnum(defaultValue: ModGridSortField.name)
 enum ModGridSortField {

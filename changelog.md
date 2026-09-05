@@ -1,6 +1,12 @@
 # 1.7.1
 - Added
+  - Ship blueprints may now be copied to the clipboard or saved as PNG files.
+  - Added a guide for mod authors to configure custom shield textures through `data/config/trios.json`.
+  - Added built-in custom shield textures for Project MISTRAL and Orbital Manipulation & Maintenance.
 - Fixed
+  - Catalog entries for add-on mods no longer get confused with their parent mod when they share a forum thread.
+  - Radar background animation didn't move.
+  - Refreshing the Ship Viewer now reloads changed sprites, graphics, engine and shield styles, and `trios.json` settings.
 - Changed
   - Default ship background is now space4 (darker).
 

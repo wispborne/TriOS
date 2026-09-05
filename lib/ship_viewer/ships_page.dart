@@ -11,6 +11,7 @@ import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
+import 'package:trios/ship_viewer/ship_viewer_refresh.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/ship_viewer/widgets/ship_details_dialog.dart';
@@ -156,11 +157,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
       total: total,
       visible: visible,
       isLoading: controllerState.isLoading,
-      onRefresh: () {
-        // Refresh means "look at every file again", so skip no mods this time.
-        ref.read(shipSourcesProvider.notifier).requestFullParse();
-        ref.invalidate(shipSourcesProvider);
-      },
+      onRefresh: ref.read(refreshShipViewerProvider),
       searchBox: SmartSearchBar(
         fields: controller.searchFieldsMeta,
         recentHistory: ref.watch(

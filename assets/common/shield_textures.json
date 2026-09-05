@@ -60,6 +60,9 @@
 
 			# Appro-Light Council
 			"AL_elementmod": {"textureInner": "graphics/fx/AL_chain_shield.png"},
+
+			# Project MISTRAL
+			"mistral_shield_style": {"textureInner": "graphics/fx/mistral_shields.png"},
 		},
 		"byHull": {
 			# Knights of Ludd: ElysianShieldStyle uses a second texture on ships
@@ -98,6 +101,31 @@
 			"elipsion7s": {"textureInner": "graphics/fx/seven_shields64.png"},                # 115
 			"Saltare7s": {"textureInner": "graphics/fx/seven_shields64.png"},                 # 61.5
 			"Vespa7s": {"textureInner": "graphics/fx/seven_shields64.png"},                   # 53
+
+			# Orbital Manipulation & Maintenance: FreitagCorporation_ShieldEffect_wpn
+			# is a built-in weapon whose every-frame script sets the texture on the
+			# first frame and never changes it. It picks from the hull's shieldRadius
+			# (256 and 128 are its cutoffs), so these are listed per hull. Each
+			# comment is that hull's shieldRadius.
+			"omm_nathantia": {"textureInner": "graphics/fx/FreitagCorporation_shields128.png"},      # 203
+			"omm_macrocheira": {"textureInner": "graphics/fx/FreitagCorporation_shields128.png"},    # 152.5
+			"omm_octocorallia": {"textureInner": "graphics/fx/FreitagCorporation_shields128.png"},   # 144
+			"omm_euphausia": {"textureInner": "graphics/fx/FreitagCorporation_shields128.png"},      # 138
+			"omm_ecrevisse": {"textureInner": "graphics/fx/FreitagCorporation_shields128.png"},      # 133
+			"omm_limnopilos": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},      # 92.5
+			"omm_sandhopper": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},      # 73
+			"omm_largepod": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},        # 69.5
+			"omm_nanodrone": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},       # 66
+			"FreitagCorporation_ShieldDrone": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"}, # 66
+			"omm_crevette": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},        # 52.5
+			"omm_ballisticpod": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},    # 42.5
+			"omm_compositepod": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},    # 42.5
+			"omm_medmissilepod": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},   # 42.5
+			"omm_synergypod": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},      # 42.5
+			"omm_weaponpod": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},       # 42.5
+			"omm_smallpod": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},        # 38
+			"omm_missilepod": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},      # 37
+			"omm_pddrone": {"textureInner": "graphics/fx/FreitagCorporation_shields64.png"},         # 33.5
 		},
 	},
 }

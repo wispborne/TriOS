@@ -43,3 +43,9 @@ Whenever you change a model class (anything using code gen), you'll need to run 
 ```
 dart run build_runner watch --delete-conflicting-outputs
 ```
+
+## For mod authors
+
+Mods can provide TriOS-specific settings in `data/config/trios.json`. See the
+[TriOS settings for mods](docs/mod-authors/trios-json.md) guide for the file
+format and the supported shield texture settings.

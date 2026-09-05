@@ -1,12 +1,15 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:super_clipboard/super_clipboard.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
@@ -25,6 +28,7 @@ import 'package:trios/ship_viewer/utils/sprite_utils.dart';
 import 'package:trios/utils/decoded_image_cache.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
+import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/game_file_resolver.dart';
@@ -35,10 +39,14 @@ import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/widgets/broken_ship_image_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/popup_style_menu_anchor.dart';
+import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/tooltip_frame.dart';
 
-typedef BlueprintBackgroundOption = ({ShipBlueprintBackground option, String? file});
+typedef BlueprintBackgroundOption = ({
+  ShipBlueprintBackground option,
+  String? file,
+});
 
 /// Displays a ship sprite at 1:1 scale with weapon slot markers and firing
 /// arcs overlaid. Scrollable if the sprite exceeds the available space.
@@ -274,6 +282,10 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// Size of everything drawn in the viewer — hull, modules, built-in weapon
   /// sprites, and the arc padding around them — in ship-space units.
   Size? _contentSize;
+
+  /// Marks the blueprint content (ship plus overlays, no background or
+  /// toolbar) so it can be rendered to an image for copy and save.
+  final _captureKey = GlobalKey();
 
   /// The [_contentSize] the view was last centered for. Module and weapon
   /// sprites decode after the first frame and grow the content, so we
@@ -1498,187 +1510,192 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
         final content = Padding(
           padding: EdgeInsets.all(pad),
-          child: MouseRegion(
-            hitTestBehavior: HitTestBehavior.translucent,
-            onHover:
-                widget.interactive &&
-                    _showModules &&
-                    _cachedModuleGeometry != null
-                ? (event) {
-                    final cGeom = _cachedModuleGeometry!;
-                    // Adjust hit-test position for the origin offset.
-                    final pos =
-                        event.localPosition - Offset(originDx, originDy);
-                    for (var i = cGeom.polygons.length - 1; i >= 0; i--) {
-                      final poly = cGeom.polygons[i];
-                      final hit = poly.isNotEmpty
-                          ? polygonContainsPoint(poly, pos)
-                          : i < cGeom.rects.length &&
-                                cGeom.rects[i].contains(pos);
-                      if (hit) {
-                        if (_hoveredModuleIndex != i) {
-                          setState(() => _hoveredModuleIndex = i);
+          child: RepaintBoundary(
+            key: _captureKey,
+            child: MouseRegion(
+              hitTestBehavior: HitTestBehavior.translucent,
+              onHover:
+                  widget.interactive &&
+                      _showModules &&
+                      _cachedModuleGeometry != null
+                  ? (event) {
+                      final cGeom = _cachedModuleGeometry!;
+                      // Adjust hit-test position for the origin offset.
+                      final pos =
+                          event.localPosition - Offset(originDx, originDy);
+                      for (var i = cGeom.polygons.length - 1; i >= 0; i--) {
+                        final poly = cGeom.polygons[i];
+                        final hit = poly.isNotEmpty
+                            ? polygonContainsPoint(poly, pos)
+                            : i < cGeom.rects.length &&
+                                  cGeom.rects[i].contains(pos);
+                        if (hit) {
+                          if (_hoveredModuleIndex != i) {
+                            setState(() => _hoveredModuleIndex = i);
+                          }
+                          return;
                         }
-                        return;
+                      }
+                      if (_hoveredModuleIndex != null) {
+                        setState(() => _hoveredModuleIndex = null);
                       }
                     }
-                    if (_hoveredModuleIndex != null) {
-                      setState(() => _hoveredModuleIndex = null);
-                    }
-                  }
-                : null,
-            onExit: (_) {
-              if (_hoveredModuleIndex != null) {
-                setState(() => _hoveredModuleIndex = null);
-              }
-            },
-            child: SizedBox(
-              width: totalW,
-              height: totalH,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Particle contrails go under the hull sprite, like the
-                  // game.
-                  ?_engineGlowPositioned(
-                    originDx,
-                    originDy,
-                    imgW,
-                    imgH,
-                    underHull: true,
-                  ),
-                  // Parent ship sprite, offset so modules with negative
-                  // coordinates still fit within the Stack.
-                  Positioned(
-                    left: originDx,
-                    top: originDy,
-                    width: imgW,
-                    height: imgH,
-                    child: Image.file(
-                      File(spriteFile),
-                      width: imgW,
-                      height: imgH,
-                      cacheWidth: widget.cacheWidth,
-                      // Stretch to the declared ship size, matching the game.
-                      fit: BoxFit.fill,
-                      errorBuilder: (_, _, _) => const BrokenShipImageWidget(),
+                  : null,
+              onExit: (_) {
+                if (_hoveredModuleIndex != null) {
+                  setState(() => _hoveredModuleIndex = null);
+                }
+              },
+              child: SizedBox(
+                width: totalW,
+                height: totalH,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Particle contrails go under the hull sprite, like the
+                    // game.
+                    ?_engineGlowPositioned(
+                      originDx,
+                      originDy,
+                      imgW,
+                      imgH,
+                      underHull: true,
                     ),
-                  ),
-                  if (_showModules)
-                    ..._buildModuleSpritesOffset(originDx, originDy, imgW),
-                  // Built-in weapon sprites, drawn over the hull and module
-                  // sprites like the game does.
-                  ?_armamentsPositioned(
-                    visibleArmaments,
-                    originDx,
-                    originDy,
-                    imgW,
-                    imgH,
-                  ),
-                  // Hover tooltip for the module under the cursor. Driven by the
-                  // same detection as the highlight above, so the two always
-                  // agree on which module is targeted.
-                  ?_buildHoveredModuleTooltip(originDx, originDy),
-                  ?_engineGlowPositioned(
-                    originDx,
-                    originDy,
-                    imgW,
-                    imgH,
-                    underHull: false,
-                  ),
-                  // Shields sit over the ship like in the game, but under the
-                  // blueprint's own mount/bounds markers so they stay readable.
-                  ..._shieldsPositioned(originDx, originDy, imgW, imgH),
-                  if (_showBounds)
+                    // Parent ship sprite, offset so modules with negative
+                    // coordinates still fit within the Stack.
                     Positioned(
                       left: originDx,
                       top: originDy,
                       width: imgW,
                       height: imgH,
-                      // IgnorePointer: see the engine glow overlay above.
-                      child: IgnorePointer(
-                        child: CustomPaint(
-                          size: Size(imgW, imgH),
-                          painter: _BoundsPainter(
-                            parentBoundsPolygon:
-                                ship.bounds != null &&
-                                    ship.bounds!.length >= 6 &&
-                                    hasCenter
-                                ? parseBoundsToPolygon(
-                                    ship.bounds!,
-                                    center[0],
-                                    imgH - center[1],
-                                  )
-                                : null,
-                            moduleBoundsPolygons: _showModules
-                                ? (_cachedModuleGeometry?.polygons ?? const [])
-                                : const [],
+                      child: Image.file(
+                        File(spriteFile),
+                        width: imgW,
+                        height: imgH,
+                        cacheWidth: widget.cacheWidth,
+                        // Stretch to the declared ship size, matching the game.
+                        fit: BoxFit.fill,
+                        errorBuilder: (_, _, _) =>
+                            const BrokenShipImageWidget(),
+                      ),
+                    ),
+                    if (_showModules)
+                      ..._buildModuleSpritesOffset(originDx, originDy, imgW),
+                    // Built-in weapon sprites, drawn over the hull and module
+                    // sprites like the game does.
+                    ?_armamentsPositioned(
+                      visibleArmaments,
+                      originDx,
+                      originDy,
+                      imgW,
+                      imgH,
+                    ),
+                    // Hover tooltip for the module under the cursor. Driven by the
+                    // same detection as the highlight above, so the two always
+                    // agree on which module is targeted.
+                    ?_buildHoveredModuleTooltip(originDx, originDy),
+                    ?_engineGlowPositioned(
+                      originDx,
+                      originDy,
+                      imgW,
+                      imgH,
+                      underHull: false,
+                    ),
+                    // Shields sit over the ship like in the game, but under the
+                    // blueprint's own mount/bounds markers so they stay readable.
+                    ..._shieldsPositioned(originDx, originDy, imgW, imgH),
+                    if (_showBounds)
+                      Positioned(
+                        left: originDx,
+                        top: originDy,
+                        width: imgW,
+                        height: imgH,
+                        // IgnorePointer: see the engine glow overlay above.
+                        child: IgnorePointer(
+                          child: CustomPaint(
+                            size: Size(imgW, imgH),
+                            painter: _BoundsPainter(
+                              parentBoundsPolygon:
+                                  ship.bounds != null &&
+                                      ship.bounds!.length >= 6 &&
+                                      hasCenter
+                                  ? parseBoundsToPolygon(
+                                      ship.bounds!,
+                                      center[0],
+                                      imgH - center[1],
+                                    )
+                                  : null,
+                              moduleBoundsPolygons: _showModules
+                                  ? (_cachedModuleGeometry?.polygons ??
+                                        const [])
+                                  : const [],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  if ((_showMounts || _showArcs) &&
-                      (effectiveSlots.isNotEmpty ||
-                          (_showModules &&
-                              (_cachedModuleGeometry
-                                      ?.transformedSlots
-                                      .isNotEmpty ??
-                                  false))))
-                    Positioned(
-                      left: originDx,
-                      top: originDy,
-                      width: imgW,
-                      height: imgH,
-                      // IgnorePointer: see the engine glow overlay above.
-                      child: IgnorePointer(
-                        child: CustomPaint(
-                          size: Size(imgW, imgH),
-                          painter: _WeaponSlotPainter(
-                            slots: effectiveSlots,
-                            moduleSlots: _showModules
-                                ? (_cachedModuleGeometry?.transformedSlots ??
-                                      const [])
-                                : const [],
-                            imgH: imgH,
-                            center: center!,
-                            hoveredIndex: _hoveredIndex,
-                            hoveredModuleSlotIndex: _hoveredModuleSlotIndex,
-                            colorForType: _colorForType,
-                            radiusForSize: _radiusForSize,
-                            showMounts: _showMounts,
-                            showArcs: _showArcs,
+                    if ((_showMounts || _showArcs) &&
+                        (effectiveSlots.isNotEmpty ||
+                            (_showModules &&
+                                (_cachedModuleGeometry
+                                        ?.transformedSlots
+                                        .isNotEmpty ??
+                                    false))))
+                      Positioned(
+                        left: originDx,
+                        top: originDy,
+                        width: imgW,
+                        height: imgH,
+                        // IgnorePointer: see the engine glow overlay above.
+                        child: IgnorePointer(
+                          child: CustomPaint(
+                            size: Size(imgW, imgH),
+                            painter: _WeaponSlotPainter(
+                              slots: effectiveSlots,
+                              moduleSlots: _showModules
+                                  ? (_cachedModuleGeometry?.transformedSlots ??
+                                        const [])
+                                  : const [],
+                              imgH: imgH,
+                              center: center!,
+                              hoveredIndex: _hoveredIndex,
+                              hoveredModuleSlotIndex: _hoveredModuleSlotIndex,
+                              colorForType: _colorForType,
+                              radiusForSize: _radiusForSize,
+                              showMounts: _showMounts,
+                              showArcs: _showArcs,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  if (_showMounts)
-                    for (var i = 0; i < effectiveSlots.length; i++)
-                      if (effectiveSlots[i].locations.length >= 2)
-                        _buildSlotHitAreaOffset(
+                    if (_showMounts)
+                      for (var i = 0; i < effectiveSlots.length; i++)
+                        if (effectiveSlots[i].locations.length >= 2)
+                          _buildSlotHitAreaOffset(
+                            i,
+                            effectiveSlots[i],
+                            imgH,
+                            context,
+                            modules,
+                            originDx,
+                            originDy,
+                          ),
+                    if (_showMounts &&
+                        _showModules &&
+                        _cachedModuleGeometry != null)
+                      for (
+                        var i = 0;
+                        i < _cachedModuleGeometry!.transformedSlots.length;
+                        i++
+                      )
+                        _buildModuleSlotHitAreaOffset(
                           i,
-                          effectiveSlots[i],
-                          imgH,
+                          _cachedModuleGeometry!.transformedSlots[i],
                           context,
-                          modules,
                           originDx,
                           originDy,
                         ),
-                  if (_showMounts &&
-                      _showModules &&
-                      _cachedModuleGeometry != null)
-                    for (
-                      var i = 0;
-                      i < _cachedModuleGeometry!.transformedSlots.length;
-                      i++
-                    )
-                      _buildModuleSlotHitAreaOffset(
-                        i,
-                        _cachedModuleGeometry!.transformedSlots[i],
-                        context,
-                        originDx,
-                        originDy,
-                      ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -1695,13 +1712,30 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
           },
           child: ClipRRect(
             borderRadius: _backgroundCornerRadius,
-            child: InteractiveViewer(
-              transformationController: _controller,
-              constrained: false,
-              minScale: _minScale,
-              maxScale: _maxScale,
-              boundaryMargin: EdgeInsets.all(double.infinity),
-              child: content,
+            child: ContextMenuRegion(
+              contextMenu: ContextMenu(
+                entries: <ContextMenuEntry>[
+                  MenuItem(
+                    label: 'Copy image',
+                    icon: Icons.copy,
+                    onSelected: _copyBlueprintToClipboard,
+                  ),
+                  MenuItem(
+                    label: 'Save image as...',
+                    icon: Icons.save_alt,
+                    onSelected: _saveBlueprintToFile,
+                  ),
+                ],
+                padding: const EdgeInsets.all(8.0),
+              ),
+              child: InteractiveViewer(
+                transformationController: _controller,
+                constrained: false,
+                minScale: _minScale,
+                maxScale: _maxScale,
+                boundaryMargin: EdgeInsets.all(double.infinity),
+                child: content,
+              ),
             ),
           ),
         );
@@ -1821,6 +1855,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                             _persistBlueprintState();
                           },
                           icon: Icons.local_fire_department,
+                          flipIcon: true,
                           isActive: _showEngineGlow,
                           tooltip: 'Show engine glow',
                         ),
@@ -1831,9 +1866,15 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                             _updateShieldClock();
                             _persistBlueprintState();
                           },
-                          icon: Icons.shield_outlined,
+                          customIcon: const _ShieldArcIcon(),
                           isActive: _showShield,
                           tooltip: 'Show shields',
+                        ),
+                      if (widget.interactive)
+                        _compactIconButton(
+                          onPressed: _copyBlueprintToClipboard,
+                          icon: Icons.copy,
+                          tooltip: 'Copy image',
                         ),
                       Flexible(
                         child: TextTriOS(
@@ -1867,21 +1908,29 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
   Widget _compactIconButton({
     required VoidCallback onPressed,
-    required IconData icon,
+    IconData? icon,
+    Widget? customIcon,
     required String tooltip,
     bool isActive = true,
+    bool flipIcon = false,
   }) {
+    assert(icon != null || customIcon != null);
+    final iconWidget = customIcon ?? Icon(icon!, size: 16);
+    final displayedIcon = flipIcon
+        ? Transform.rotate(angle: pi, child: iconWidget)
+        : iconWidget;
+
     return isActive
         ? IconButton.filledTonal(
             onPressed: onPressed,
-            icon: Icon(icon, size: 16),
+            icon: displayedIcon,
             iconSize: 16,
             style: _compactButtonStyle,
             tooltip: tooltip,
           )
         : IconButton.outlined(
             onPressed: onPressed,
-            icon: Icon(icon, size: 16),
+            icon: displayedIcon,
             iconSize: 16,
             style: _compactButtonStyle,
             tooltip: tooltip,
@@ -1900,8 +1949,7 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
 
     // Every background choice, paired with the picture file behind it. A
     // picture this install doesn't have is left off the list entirely.
-    final backgroundChoices =
-        <BlueprintBackgroundOption>[];
+    final backgroundChoices = <BlueprintBackgroundOption>[];
     for (final option in ShipBlueprintBackground.values) {
       final file = fileResolver?.resolve(option.imagePath);
       if (option.imagePath != null && file == null) continue;
@@ -1982,8 +2030,174 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
           ],
           child: Text('Background: ${_background.label}'),
         ),
+        MenuItemButton(
+          leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+            const Icon(Icons.save_alt, size: 24),
+          ),
+          onPressed: _saveBlueprintToFile,
+          child: const Text('Save image...'),
+        ),
       ],
     );
+  }
+
+  /// How far past the ship's own box the capture reaches, in sprite pixels.
+  /// Engine glow and contrails spill past the sprite by an amount that
+  /// depends on the engine style and hull speed, so this errs generous and
+  /// the empty margin is cut off afterward.
+  static const _captureMargin = 512.0;
+
+  /// Renders the blueprint (ship plus whichever layers are on, at the
+  /// sprite's real pixel size, transparent background) to PNG bytes.
+  /// The current zoom and pan don't affect the result. Anything drawn past
+  /// the ship's box, like engine glow, is kept; empty edges are cut off.
+  ///
+  /// Two passes: the first renders a wide margin around the ship and finds
+  /// where the drawn pixels end; the second renders just that area as PNG.
+  Future<Uint8List?> _renderBlueprintPng() async {
+    final boundary =
+        _captureKey.currentContext?.findRenderObject()
+            as RenderRepaintBoundary?;
+    // The boundary's own toImage only covers its box, which cuts off engine
+    // glow. Its layer can render any rect, so go through that instead.
+    // ignore: invalid_use_of_protected_member
+    final layer = boundary?.layer as OffsetLayer?;
+    if (boundary == null || layer == null) return null;
+    final shipBox = Offset.zero & boundary.size;
+    final wide = shipBox.inflate(_captureMargin);
+
+    final probe = await layer.toImage(wide);
+    final Rect used;
+    try {
+      final raw = await probe.toByteData(format: ui.ImageByteFormat.rawRgba);
+      if (raw == null) return null;
+      final drawn = _drawnBounds(
+        raw.buffer.asUint8List(),
+        probe.width,
+        probe.height,
+      );
+      used = drawn.isEmpty
+          ? shipBox
+          : drawn.shift(wide.topLeft).expandToInclude(shipBox);
+    } finally {
+      probe.dispose();
+    }
+
+    final image = await layer.toImage(used);
+    try {
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      return data?.buffer.asUint8List();
+    } finally {
+      image.dispose();
+    }
+  }
+
+  /// The smallest rect holding every pixel with any alpha, in pixel
+  /// coordinates of an RGBA buffer. Empty when nothing is drawn.
+  static Rect _drawnBounds(Uint8List rgba, int width, int height) {
+    var left = width, top = height, right = -1, bottom = -1;
+    for (var y = 0; y < height; y++) {
+      final row = y * width * 4;
+      for (var x = 0; x < width; x++) {
+        if (rgba[row + x * 4 + 3] == 0) continue;
+        if (x < left) left = x;
+        if (x > right) right = x;
+        if (y < top) top = y;
+        bottom = y;
+      }
+    }
+    if (right < 0) return Rect.zero;
+    return Rect.fromLTRB(
+      left.toDouble(),
+      top.toDouble(),
+      right + 1.0,
+      bottom + 1.0,
+    );
+  }
+
+  Future<void> _copyBlueprintToClipboard() async {
+    final clipboard = SystemClipboard.instance;
+    if (clipboard == null) {
+      showSnackBar(
+        context: context,
+        type: SnackBarType.warn,
+        content: const Text(
+          'Copying images is not supported on this platform.',
+        ),
+      );
+      return;
+    }
+
+    try {
+      final bytes = await _renderBlueprintPng();
+      if (bytes == null) return;
+      final item = DataWriterItem()..add(Formats.png(bytes));
+      await clipboard.write([item]);
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        type: SnackBarType.info,
+        content: const Text('Copied blueprint to clipboard.'),
+      );
+    } catch (e, st) {
+      Fimber.e('Failed to copy blueprint image: $e', ex: e, stacktrace: st);
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        type: SnackBarType.error,
+        content: Text('Failed to copy blueprint: $e'),
+      );
+    }
+  }
+
+  Future<void> _saveBlueprintToFile() async {
+    String? chosen;
+    try {
+      chosen = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save blueprint image',
+        fileName: '${widget.ship.id}-blueprint.png',
+        type: FileType.custom,
+        allowedExtensions: ['png'],
+        lockParentWindow: true,
+      );
+    } catch (e, st) {
+      Fimber.e(
+        'Failed to open save-file dialog for blueprint image: $e',
+        ex: e,
+        stacktrace: st,
+      );
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        type: SnackBarType.error,
+        content: const Text('Could not open save dialog.'),
+      );
+      return;
+    }
+    if (chosen == null || !mounted) return;
+    if (!chosen.toLowerCase().endsWith('.png')) {
+      chosen = '$chosen.png';
+    }
+
+    try {
+      final bytes = await _renderBlueprintPng();
+      if (bytes == null) return;
+      await File(chosen).writeAsBytes(bytes);
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        type: SnackBarType.info,
+        content: Text('Saved blueprint to $chosen'),
+      );
+    } catch (e, st) {
+      Fimber.e('Failed to save blueprint image: $e', ex: e, stacktrace: st);
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        type: SnackBarType.error,
+        content: Text('Failed to save blueprint: $e'),
+      );
+    }
   }
 
   /// The background list is long, so its rows sit tighter than the menu's
@@ -2874,6 +3088,45 @@ class _ArmamentPainter extends CustomPainter {
   bool shouldRepaint(_ArmamentPainter oldDelegate) =>
       !identical(oldDelegate.armaments, armaments) ||
       oldDelegate.loadedImageCount != loadedImageCount;
+}
+
+/// A front-facing ship shield: just the protective arc, rather than a
+/// hand-held shield silhouette.
+class _ShieldArcIcon extends StatelessWidget {
+  const _ShieldArcIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size.square(16),
+      painter: _ShieldArcIconPainter(
+        IconTheme.of(context).color ?? Colors.white,
+      ),
+    );
+  }
+}
+
+class _ShieldArcIconPainter extends CustomPainter {
+  final Color color;
+
+  const _ShieldArcIconPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.75
+      ..strokeCap = StrokeCap.round;
+    final bounds = Rect.fromLTWH(2, 2, size.width - 4, size.height - 4);
+
+    // Sweep over the top half so the arc reads like a raised ship shield.
+    canvas.drawArc(bounds, pi, pi, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(_ShieldArcIconPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 /// Draws each engine slot's flame and the round bloom at its nozzle, the same

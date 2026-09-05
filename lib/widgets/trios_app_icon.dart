@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:trios/themes/theme_modifiers.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/trios/app_lifecycle_provider.dart';
@@ -77,7 +76,7 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
         // Asked for TriOS's own icon, so the theme's crest doesn't apply.
         _stopController();
         return _maybeBlur(
-          _buildTelosSvg(
+          _buildTelosCrest(
             color: widget.color ?? theme.colorScheme.primary,
           ),
         );
@@ -100,7 +99,7 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
 
     final isRainbow = theme.rainbowAccent && widget.color == null;
 
-    final svg = _buildTelosSvg(
+    final svg = _buildTelosCrest(
       color:
           widget.color ??
           (isRainbow ? Colors.white : theme.colorScheme.primary),
@@ -136,7 +135,7 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
   };
 
   Widget _buildRainbowIcon(ThemeData theme) {
-    final svg = _buildTelosSvg(color: Colors.white);
+    final svg = _buildTelosCrest(color: Colors.white);
     return _maybeBlur(_buildAnimatedRainbow(svg));
   }
 
@@ -156,22 +155,15 @@ class _TriOSAppIconState extends ConsumerState<TriOSAppIcon>
           end: Alignment.bottomCenter,
         ).createShader(bounds),
         blendMode: BlendMode.srcIn,
-        child: _buildTelosSvg(color: Colors.white),
+        child: _buildTelosCrest(color: Colors.white),
       ),
     );
   }
 
-  Widget _buildTelosSvg({required Color color}) {
+  Widget _buildTelosCrest({required Color color}) {
     return Image.asset(
       "assets/images/telos_faction_crest.png",
-      // colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
       color: color,
-      width: widget.width,
-      height: widget.height,
-    );
-    return SvgPicture.asset(
-      "assets/images/telos_faction_crest.svg",
-      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
       width: widget.width,
       height: widget.height,
     );

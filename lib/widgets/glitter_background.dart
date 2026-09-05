@@ -19,7 +19,11 @@ import 'package:trios/widgets/background_effects/rain_effect.dart';
 import 'package:trios/widgets/background_effects/starfield_effect.dart';
 import 'package:trios/widgets/rainbow_accent_bar.dart';
 
-typedef ResolvedColors = ({List<Color> colors, double opacityScale, bool isRainbow});
+typedef ResolvedColors = ({
+  List<Color> colors,
+  double opacityScale,
+  bool isRainbow,
+});
 
 /// Hosts one animated background [BackgroundEffect] (chosen by the user) behind
 /// [child]. Owns the shared scaffolding — motion easing tied to app focus,
@@ -225,10 +229,7 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
   /// Colors come from [themeKey]'s theme, or the active theme when null. The
   /// Pride theme uses the rainbow palette instead of its swatch, and renders
   /// less transparent (a higher [opacityScale]).
-  ResolvedColors _resolveColors(
-    BuildContext context,
-    String? themeKey,
-  ) {
+  ResolvedColors _resolveColors(BuildContext context, String? themeKey) {
     final themeState = ref.watch(AppState.themeData).value;
     final theme = themeKey != null
         ? themeState?.availableThemes[themeKey]
@@ -271,14 +272,6 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
     _setMotion(lifecycle == AppLifecycleState.resumed);
 
     final resolved = _resolveColors(context, modifiers.glitterThemeKey);
-    final paintContext = BackgroundPaintContext(
-      colors: resolved.colors,
-      opacityScale: resolved.opacityScale,
-      isRainbow: resolved.isRainbow,
-      elapsedSeconds: _animationSeconds,
-      coverage: widget.coverage,
-      pulseRate: widget.pulseRate,
-    );
 
     // Clip only the effect layer to the bounds, not the child. The child may
     // legitimately overflow (e.g. a blurred icon glow), and clipping it here
@@ -294,6 +287,14 @@ class _GlitterBackgroundState extends ConsumerState<GlitterBackground>
                 return AnimatedBuilder(
                   animation: _controller,
                   builder: (context, _) {
+                    final paintContext = BackgroundPaintContext(
+                      colors: resolved.colors,
+                      opacityScale: resolved.opacityScale,
+                      isRainbow: resolved.isRainbow,
+                      elapsedSeconds: _animationSeconds,
+                      coverage: widget.coverage,
+                      pulseRate: widget.pulseRate,
+                    );
                     return CustomPaint(
                       painter: _BackgroundPainter(
                         effect: effect,

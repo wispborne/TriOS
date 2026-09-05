@@ -61,6 +61,12 @@ final _sharedCache = DecodedImageCache(
 /// decoded.
 Future<ui.Image?> loadDecodedImage(String path) => _sharedCache.load(path);
 
+/// Drops every remembered decoded image so changed files are read again.
+///
+/// Existing widgets can keep drawing images they already hold. The image
+/// objects are released once nothing uses them.
+void clearDecodedImageCache() => _sharedCache.clear();
+
 /// Decoded bytes currently held by the shared cache, for debug display.
 int get decodedImageCacheBytes => _sharedCache.totalBytes;
 
@@ -110,8 +116,8 @@ class DecodedImageCache {
     _entries[path] = pending;
     pending.then(
       (image) {
-        // Skip if this entry was already evicted while decoding.
-        if (image == null || !_entries.containsKey(path)) return;
+        // Skip if this entry was cleared, evicted, or replaced while decoding.
+        if (image == null || !identical(_entries[path], pending)) return;
         _bytesByPath[path] = image.width * image.height * 4;
         _totalBytes += _bytesByPath[path]!;
         _evictOverBudget();
@@ -121,6 +127,14 @@ class DecodedImageCache {
       },
     );
     return pending;
+  }
+
+  /// Forgets every cached path without disposing images that may still be in
+  /// use by a widget or painter.
+  void clear() {
+    _entries.clear();
+    _bytesByPath.clear();
+    _totalBytes = 0;
   }
 
   void _evictOverBudget() {

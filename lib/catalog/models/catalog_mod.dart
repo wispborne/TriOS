@@ -196,9 +196,9 @@ String? _resolveAvatarUrl(String? p) {
 ForumLlmMod? _resolveLlmMod(ModRepoEntry mod, ForumLlmData? llm) {
   if (llm == null) return null;
   if (mod.isPartOfThread) {
-    final key = mod.name.toLowerCase().trim();
+    final key = catalogAddonEntryMatchKey(mod.name);
     return llm.mods.firstWhereOrNull(
-          (m) => m.name.toLowerCase().trim() == key,
+          (m) => catalogAddonEntryMatchKey(m.name) == key,
         ) ??
         llm.mainMod;
   }

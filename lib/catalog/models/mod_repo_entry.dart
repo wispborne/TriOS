@@ -51,10 +51,10 @@ class ModRepoEntry with ModRepoEntryMappable {
   final DateTime? dateTimeCreated;
   final DateTime? dateTimeEdited;
 
-  /// Set only on synthesized entries: a mod that lives inside another mod's
-  /// forum thread (e.g. an add-on) gets its own card, marked "part of <this
-  /// thread title>". Null for real catalog entries. Built at runtime, so it's
-  /// absent from the catalog data and never round-trips through it.
+  /// Set at runtime when a mod lives inside another mod's forum thread. This
+  /// includes made-up child entries and real catalog entries enriched with
+  /// their parent thread. The card is marked `part of <this thread title>`.
+  /// It is absent from the catalog data and never round-trips through it.
   final String? partOfThreadTitle;
 
   ModRepoEntry({
@@ -73,8 +73,7 @@ class ModRepoEntry with ModRepoEntryMappable {
     this.partOfThreadTitle,
   });
 
-  /// True when this is a synthesized entry for a mod bundled in another mod's
-  /// forum thread.
+  /// True when this mod is bundled in another mod's forum thread.
   bool get isPartOfThread => partOfThreadTitle != null;
 
   List<String> getAuthors() => authorsList ?? [];

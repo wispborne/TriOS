@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
+import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_record_source.dart';
@@ -159,6 +160,66 @@ void main() {
     });
 
     test(
+      'version text does not let a child mod match the parent catalog entry',
+      () {
+        const forumUrl =
+            'https://fractalsoftworks.com/forum/index.php?topic=13236.0';
+        final brightonEntry = _entry('Brighton Federation 0.0.4a');
+        final hmiEntry = _entry(
+          'Hazard Mining Incorporated',
+          forumUrl: forumUrl,
+        );
+
+        final links = CatalogLinks(
+          matchCatalogToInstalled(
+            entries: [brightonEntry, hmiEntry],
+            installedMods: [
+              _mod(
+                'HMI_brighton',
+                name: 'Brighton Federation',
+                threadId: '13236',
+              ),
+            ],
+            records: _recordsLinking(
+              'Hazard Mining Incorporated',
+              'HMI_brighton',
+            ),
+          ),
+        );
+
+        expect(
+          links.linkForName('Brighton Federation 0.0.4a')?.mod.id,
+          'HMI_brighton',
+        );
+        expect(links.linkForName('Hazard Mining Incorporated'), isNull);
+      },
+    );
+
+    test('a child listed after its parent keeps the shared-thread match', () {
+      const forumUrl =
+          'https://fractalsoftworks.com/forum/index.php?topic=13236.0';
+      final hmiEntry = _entry('Hazard Mining Incorporated', forumUrl: forumUrl);
+      final supervillainsEntry = _entry(
+        'HMI Supervillains 0.0.5c',
+        forumUrl: forumUrl,
+        partOfThreadTitle: 'Hazard Mining Incorporated',
+      );
+
+      final links = CatalogLinks(
+        matchCatalogToInstalled(
+          entries: [hmiEntry, supervillainsEntry],
+          installedMods: [
+            _mod('HMI_SV', name: 'HMI Supervillains', threadId: '13236'),
+          ],
+          records: _recordsLinking('Hazard Mining Incorporated', 'HMI_SV'),
+        ),
+      );
+
+      expect(links.linkForName('HMI Supervillains 0.0.5c')?.mod.id, 'HMI_SV');
+      expect(links.linkForName('Hazard Mining Incorporated'), isNull);
+    });
+
+    test(
       'an add-on sharing the parent thread id does not steal the parent match',
       () {
         const forumUrl =
@@ -283,6 +344,41 @@ void main() {
       expect(addon.summary, isNull);
       expect(addon.description, isNull);
       expect(addon.partOfThreadTitle, 'Red thread');
+    });
+
+    test('a child with a real catalog entry does not get a second card', () {
+      final forum = _thread(13236, 'Hazard Mining Incorporated', [
+        _threadMod('Hazard Mining Incorporated'),
+        _threadMod('The Brighton Federation', role: LlmModRole.separate),
+      ]);
+      final entries = withSynthesizedAddonEntries(
+        [
+          _entry('Hazard Mining Incorporated', forumUrl: _forum(13236)),
+          _entry('Brighton Federation 0.0.4a'),
+        ],
+        forum,
+      );
+
+      expect(entries.map((entry) => entry.name), [
+        'Hazard Mining Incorporated',
+        'Brighton Federation 0.0.4a',
+      ]);
+
+      final brighton = entries.singleWhere(
+        (entry) => entry.name == 'Brighton Federation 0.0.4a',
+      );
+      expect(brighton.urls?[ModUrlType.Forum], _forum(13236));
+      expect(brighton.partOfThreadTitle, 'Hazard Mining Incorporated');
+
+      final gathered = gatherCatalogMod(
+        mod: brighton,
+        forumIndex: forum[13236],
+      );
+      expect(gathered.llmMod?.name, 'The Brighton Federation');
+      expect(
+        gathered.aiSentence,
+        'AI wrote this about The Brighton Federation.',
+      );
     });
 
     test('no made-up card says it is part of its own thread', () {

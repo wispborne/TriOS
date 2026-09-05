@@ -78,8 +78,9 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     // puts saved install-time links first. Keyed by mod id so every variant of
     // a mod sees the same entry, and refreshed from current catalog data each
     // pass so linked records stay up to date as the catalog changes.
+    final matchingEntries = withSynthesizedAddonEntries(catalog, forumIndex);
     final links = matchCatalogToInstalled(
-      entries: catalog,
+      entries: matchingEntries,
       installedMods: ref.read(AppState.mods),
       records: current,
     );

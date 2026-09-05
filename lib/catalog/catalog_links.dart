@@ -27,6 +27,9 @@ import 'package:trios/utils/extensions.dart';
 /// its lowercase-and-trim step is the same idea as this.
 String catalogEntryKey(String name) => name.toLowerCase().trim();
 
+String _catalogNameMatchKey(String name) =>
+    cleanModDisplayName(name).alphanumericLower();
+
 /// Which clue produced a match. Recording it costs nothing and helps with
 /// debugging and any future screen that wants to show how sure a match is.
 enum CatalogLinkSignal { persistedRecord, threadId, nexusId, exactName, fuzzyName }
@@ -48,9 +51,11 @@ class CatalogLink {
 ///
 /// Clues in order (first that hits wins): a saved install-time record link, the
 /// version-checker forum thread id, the NexusMods id, an exact name, then a
-/// close-enough (letters-and-numbers-only) name. The saved link comes first so
-/// an install made through the Catalog stays linked even when the mod's own
-/// `mod_info` name differs from the catalog name (the Ashpad/Aashpad case).
+/// close-enough name with version text removed. The saved link normally comes
+/// first so an install made through the Catalog stays linked even when the
+/// mod's own `mod_info` name differs from the catalog name (the Ashpad/Aashpad
+/// case). A match to another entry's own name wins over a shared forum thread
+/// or an old saved link made from that thread.
 List<CatalogLink> matchCatalogToInstalled({
   required List<ModRepoEntry> entries,
   required List<Mod> installedMods,
@@ -68,9 +73,9 @@ List<CatalogLink> matchCatalogToInstalled({
     final name = variant?.modInfo.name;
     if (name != null && name.trim().isNotEmpty) {
       byName.putIfAbsent(catalogEntryKey(name), () => mod);
-      byFuzzy.putIfAbsent(name.alphanumericLower(), () => mod);
+      byFuzzy.putIfAbsent(_catalogNameMatchKey(name), () => mod);
     }
-    byFuzzy.putIfAbsent(mod.id.alphanumericLower(), () => mod);
+    byFuzzy.putIfAbsent(_catalogNameMatchKey(mod.id), () => mod);
     final vci = variant?.versionCheckerInfo;
     final threadId = vci?.modThreadId;
     if (threadId != null) byThreadId.putIfAbsent(threadId, () => mod);
@@ -91,6 +96,27 @@ List<CatalogLink> matchCatalogToInstalled({
     }
   }
 
+  // A forum thread can contain a parent mod and several separate child mods.
+  // Reserve an installed mod for any catalog entry that matches its own name.
+  // This stops the shared thread id, or an old bad saved link made from that
+  // thread id, from assigning the child to the parent entry instead.
+  final nameMatchedEntryKeysByModId = <String, Set<String>>{};
+  for (final entry in entries) {
+    final entryKey = catalogEntryKey(entry.name);
+    if (entryKey.isEmpty) continue;
+    final nameMatchedMod =
+        byName[entryKey] ?? byFuzzy[_catalogNameMatchKey(entry.name)];
+    if (nameMatchedMod == null) continue;
+    nameMatchedEntryKeysByModId
+        .putIfAbsent(nameMatchedMod.id, () => <String>{})
+        .add(entryKey);
+  }
+
+  bool hasNameMatchToAnotherEntry(Mod mod, String entryKey) {
+    final matchingKeys = nameMatchedEntryKeysByModId[mod.id];
+    return matchingKeys != null && matchingKeys.any((key) => key != entryKey);
+  }
+
   final links = <CatalogLink>[];
   for (final entry in entries) {
     final key = catalogEntryKey(entry.name);
@@ -101,8 +127,12 @@ List<CatalogLink> matchCatalogToInstalled({
 
     final persistedId = persistedModIdByKey[key];
     if (persistedId != null) {
-      mod = byModId[persistedId];
-      signal = CatalogLinkSignal.persistedRecord;
+      final persistedMod = byModId[persistedId];
+      if (persistedMod != null &&
+          !hasNameMatchToAnotherEntry(persistedMod, key)) {
+        mod = persistedMod;
+        signal = CatalogLinkSignal.persistedRecord;
+      }
     }
 
     // An add-on entry shares the parent thread's forum URL, so matching it by
@@ -111,16 +141,22 @@ List<CatalogLink> matchCatalogToInstalled({
     if (mod == null && !entry.isPartOfThread) {
       final threadId = extractForumThreadId(entry.urls?[ModUrlType.Forum]);
       if (threadId != null && byThreadId.containsKey(threadId)) {
-        mod = byThreadId[threadId];
-        signal = CatalogLinkSignal.threadId;
+        final threadMod = byThreadId[threadId]!;
+        if (!hasNameMatchToAnotherEntry(threadMod, key)) {
+          mod = threadMod;
+          signal = CatalogLinkSignal.threadId;
+        }
       }
     }
 
     if (mod == null && !entry.isPartOfThread) {
       final nexusId = extractNexusModId(entry.urls?[ModUrlType.NexusMods]);
       if (nexusId != null && byNexusId.containsKey(nexusId)) {
-        mod = byNexusId[nexusId];
-        signal = CatalogLinkSignal.nexusId;
+        final nexusMod = byNexusId[nexusId]!;
+        if (!hasNameMatchToAnotherEntry(nexusMod, key)) {
+          mod = nexusMod;
+          signal = CatalogLinkSignal.nexusId;
+        }
       }
     }
 
@@ -130,7 +166,7 @@ List<CatalogLink> matchCatalogToInstalled({
     }
 
     if (mod == null) {
-      final fuzzy = entry.name.alphanumericLower();
+      final fuzzy = _catalogNameMatchKey(entry.name);
       if (byFuzzy.containsKey(fuzzy)) {
         mod = byFuzzy[fuzzy];
         signal = CatalogLinkSignal.fuzzyName;
@@ -196,7 +232,8 @@ final catalogLinksProvider = Provider<CatalogLinks>((ref) {
 /// Adds made-up cards for mods that only live inside another mod's forum
 /// thread. For each thread that lists more than one mod, every mod that doesn't
 /// already have its own catalog entry becomes a made-up card, marked with the
-/// thread title so the card can show `part of <thread>`.
+/// thread title so the card can show `part of <thread>`. A child that already
+/// has a real catalog entry keeps that entry and gains the same thread data.
 ///
 /// A thread is only ever reached through a real catalog entry, so one of its
 /// mods is that entry under another name. [_isTheCatalogEntry] finds it and
@@ -211,12 +248,19 @@ List<ModRepoEntry> withSynthesizedAddonEntries(
 ) {
   if (realMods.isEmpty || forumLookup.isEmpty) return realMods;
 
-  final existingNames = {
-    for (final mod in realMods)
-      if (mod.name.trim().isNotEmpty) mod.name.toLowerCase().trim(),
-  };
+  final entries = realMods.toList();
+  final existingEntryIndexByKey = <String, int>{};
+  for (var i = 0; i < entries.length; i++) {
+    final name = entries[i].name;
+    if (name.trim().isEmpty) continue;
+    existingEntryIndexByKey.putIfAbsent(
+      catalogAddonEntryMatchKey(name),
+      () => i,
+    );
+  }
   final synthesizedNames = <String>{};
   final synthesized = <ModRepoEntry>[];
+  var enrichedExistingEntry = false;
 
   for (final mod in realMods) {
     final forumUrl = mod.urls?[ModUrlType.Forum];
@@ -233,7 +277,21 @@ List<ModRepoEntry> withSynthesizedAddonEntries(
     for (final llmMod in llm.mods) {
       final key = llmMod.name.toLowerCase().trim();
       if (key.isEmpty) continue;
-      if (existingNames.contains(key)) continue;
+      final existingIndex =
+          existingEntryIndexByKey[catalogAddonEntryMatchKey(llmMod.name)];
+      if (existingIndex != null) {
+        final existing = entries[existingIndex];
+        final urls = Map<ModUrlType, String>.of(existing.urls ?? const {});
+        if (forumUrl != null) {
+          urls.putIfAbsent(ModUrlType.Forum, () => forumUrl);
+        }
+        entries[existingIndex] = existing.copyWith(
+          urls: urls,
+          partOfThreadTitle: existing.partOfThreadTitle ?? index.title,
+        );
+        enrichedExistingEntry = true;
+        continue;
+      }
       if (_isTheCatalogEntry(llmMod, mod, mainMods)) continue;
       if (!synthesizedNames.add(key)) continue;
 
@@ -256,8 +314,18 @@ List<ModRepoEntry> withSynthesizedAddonEntries(
     }
   }
 
-  if (synthesized.isEmpty) return realMods;
-  return [...realMods, ...synthesized];
+  if (!enrichedExistingEntry && synthesized.isEmpty) return realMods;
+  return [...entries, ...synthesized];
+}
+
+/// Name key used only to avoid making a second card for a real catalog entry.
+/// Forum text may add a leading "The", while catalog names may add a version.
+String catalogAddonEntryMatchKey(String name) {
+  var cleaned = cleanModDisplayName(name).trim();
+  if (cleaned.toLowerCase().startsWith('the ')) {
+    cleaned = cleaned.substring(4).trim();
+  }
+  return cleaned.alphanumericLower();
 }
 
 /// True when [llmMod] is the thread mod that [entry] already stands for.

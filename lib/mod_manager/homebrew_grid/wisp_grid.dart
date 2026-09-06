@@ -21,6 +21,12 @@ abstract class WispGridItem {
   String get key;
 }
 
+/// Builds an optional fixed leading cell for each grid row.
+typedef WispGridLeadingItemBuilder<T extends WispGridItem> = Widget Function(
+  T item,
+  RowBuilderModifiers modifiers,
+);
+
 /// Describes the pinned group shown at the top of the grid, regardless of
 /// the active grouping.
 class PinnedGroupInfo {
@@ -111,6 +117,8 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     required Widget child,
   })
   rowBuilder;
+  final WispGridLeadingItemBuilder<T>? leadingItemBuilder;
+  final double leadingItemWidth;
   final WispGridGroup<T>? defaultGrouping;
   final String? defaultSortField;
   final void Function(WispGridController<T> controller)? onLoaded;
@@ -163,6 +171,8 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     this.onRowSelected,
     this.groups = const [],
     this.rowBuilder = defaultRowBuilder,
+    this.leadingItemBuilder,
+    this.leadingItemWidth = 0,
     this.preSortComparator,
     this.selectedItem,
     this.defaultGrouping,
@@ -239,12 +249,18 @@ extension WispGridColumnsExtension on WispGridState {
   /// How much of the grid's left edge the frozen columns take up: everything
   /// from x = 0 up to where the first unfrozen column starts. Zero when
   /// nothing is frozen.
-  double frozenBlockWidth(List<WispGridColumn> columns) {
+  double frozenBlockWidth(
+    List<WispGridColumn> columns, {
+    double leadingItemWidth = 0,
+  }) {
     final frozen = frozenVisibleColumns(columns);
     if (frozen.isEmpty) return 0;
     // The grid indents its first column by two spacings, and each column is
     // followed by one more.
     return WispGrid.gridRowSpacing * 2 +
+        (leadingItemWidth > 0
+            ? leadingItemWidth + WispGrid.gridRowSpacing
+            : 0) +
         frozen.map((e) => e.value.width).sum +
         frozen.length * WispGrid.gridRowSpacing;
   }
@@ -497,6 +513,8 @@ class _WispGridState<T extends WispGridItem>
                 gridState: gridState,
                 columns: widget.columns,
                 rowBuilder: widget.rowBuilder,
+                leadingItemBuilder: widget.leadingItemBuilder,
+                leadingItemWidth: widget.leadingItemWidth,
                 horizontalScrollController: _gridScrollControllerHorizontal,
                 onTapped: () {
                   widget.onRowSelected?.call(item);
@@ -605,6 +623,8 @@ class _WispGridState<T extends WispGridItem>
             gridState: gridState,
             columns: widget.columns,
             rowBuilder: widget.rowBuilder,
+            leadingItemBuilder: widget.leadingItemBuilder,
+            leadingItemWidth: widget.leadingItemWidth,
             horizontalScrollController: _gridScrollControllerHorizontal,
             onTapped: () {
               if (HardwareKeyboard.instance.isShiftPressed) {
@@ -709,7 +729,8 @@ class _WispGridState<T extends WispGridItem>
       widget.columns,
     );
     // Width must satisfy two layouts that share this SizedBox:
-    //   Row body (WispGridRowView): 2 wrapping boxes + N columns +
+    //   Row body (WispGridRowView): 2 wrapping boxes + optional leading cell
+    //     + N columns +
     //     (N+1) inter-child gaps = sum(w) + (N+3)*spacing
     //   Header (WispGridHeaderRowView): horizontal padding of 2*spacing on
     //     each side + N dividers between (N+1) MultiSplitView areas
@@ -719,7 +740,10 @@ class _WispGridState<T extends WispGridItem>
     // widths back to state — a feedback loop that shrinks columns to zero.
     final totalRowWidth =
         visibleColumnsForWidth.map((e) => e.value.width).sum +
-        (visibleColumnsForWidth.length + 4) * WispGrid.gridRowSpacing;
+        (visibleColumnsForWidth.length + 4) * WispGrid.gridRowSpacing +
+        (widget.leadingItemWidth > 0
+            ? widget.leadingItemWidth + WispGrid.gridRowSpacing
+            : 0);
 
     // If the columns don't fill the window, stretch the grid to the window
     // anyway. The header's last area is empty filler; giving it the leftover
@@ -805,7 +829,10 @@ class _WispGridState<T extends WispGridItem>
     List<Widget> displayedMods,
     double gridWidth,
   ) {
-    final frozenWidth = gridState.frozenBlockWidth(columns);
+    final frozenWidth = gridState.frozenBlockWidth(
+      columns,
+      leadingItemWidth: widget.leadingItemWidth,
+    );
 
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -877,6 +904,7 @@ class _WispGridState<T extends WispGridItem>
                           updateGridState: widget.updateGridState,
                           columns: columns,
                           defaultGridSort: widget.defaultSortField,
+                          leadingItemWidth: widget.leadingItemWidth,
                           perColumnContextMenuEntries:
                               widget.perColumnContextMenuEntries,
                         ),
@@ -891,6 +919,7 @@ class _WispGridState<T extends WispGridItem>
                               updateGridState: widget.updateGridState,
                               columns: columns,
                               defaultGridSort: widget.defaultSortField,
+                              leadingItemWidth: widget.leadingItemWidth,
                               perColumnContextMenuEntries:
                                   widget.perColumnContextMenuEntries,
                             ),

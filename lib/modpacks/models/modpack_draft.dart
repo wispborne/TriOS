@@ -1,8 +1,15 @@
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/modpack_format.dart';
 
 part 'modpack_draft.mapper.dart';
+
+class _CachedDraftVersion {
+  final Version? value;
+
+  const _CachedDraftVersion(this.value);
+}
 
 /// What is wrong with one part of a draft.
 @MappableEnum()
@@ -58,6 +65,14 @@ class ModpackDraftItem with ModpackDraftItemMappable {
     this.catalog,
     this.unknownFields = const {},
   });
+
+  static final _parsedVersionCache = Expando<_CachedDraftVersion>();
+
+  /// Cached parsed form of the editable [version] string.
+  Version? get parsedVersion =>
+      (_parsedVersionCache[this] ??= _CachedDraftVersion(
+        ModpackItem.parseVersion(version),
+      )).value;
 
   ModpackDraftItem.fromItem(ModpackItem item)
     : modId = item.modId,

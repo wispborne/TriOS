@@ -126,17 +126,17 @@ this page arrives with Phase 8.
 
 ### 3 - Full pack page
 
-- [ ] 3.13 Make View and Edit replace the Modpacks page content. Back returns to
+- [x] 3.13 Make View and Edit replace the Modpacks page content. Back returns to
       the card library.
-- [ ] 3.14 Put Back, Edit, Copy link, Export, Install, and overflow at the top
+- [x] 3.14 Put Back, Edit, Copy link, Export, Install, and overflow at the top
       of the full page in that order. Put Delete and Duplicate in overflow.
-- [ ] 3.15 Show all pack information in one compact read-only block.
-- [ ] 3.16 Build the full-page item grid with icon, name, author, status,
+- [x] 3.15 Show all pack information in one compact read-only block.
+- [x] 3.16 Build the full-page item grid with icon, name, author, status,
       installed state, combined version, and dependency warnings visible by
       default. Offer other normal mod columns hidden by default.
-- [ ] 3.17 Show one version when installed and recorded versions match. Show
+- [x] 3.17 Show one version when installed and recorded versions match. Show
       installed version followed by (modpack: recorded version) when they differ.
-- [ ] 3.18 Default the read-only grid to manual pack order but allow sorting.
+- [x] 3.18 Default the read-only grid to manual pack order but allow sorting.
       Support multiple expanded rows plus Expand all and Collapse all for
       visible rows.
 

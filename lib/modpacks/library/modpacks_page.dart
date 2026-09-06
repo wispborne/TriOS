@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:trios/modpacks/full_page/modpack_full_page.dart';
 import 'package:trios/modpacks/library/modpack_card.dart';
 import 'package:trios/modpacks/library/modpack_card_data.dart';
 import 'package:trios/modpacks/library/modpacks_page_controller.dart';
@@ -55,11 +56,31 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
 
     final openPackId = state.openPackId;
     if (openPackId != null) {
-      return _OpenPackPlaceholder(
-        card: state.allCards.firstWhereOrNull((c) => c.packId == openPackId),
-        isEditing: state.isEditing,
-        onBack: controller.closePack,
+      final card = state.allCards.firstWhereOrNull(
+        (card) => card.packId == openPackId,
       );
+      if (!state.isEditing) {
+        final entry = ref.watch(modpackStoreProvider).value?.packs[openPackId];
+        if (entry == null || card == null) {
+          return const Center(child: ThemedCircularProgressIndicator());
+        }
+        return ModpackFullPage(
+          key: ValueKey(openPackId),
+          entry: entry,
+          onBack: controller.closePack,
+          onEdit: () => controller.editPack(openPackId),
+          onDuplicate: () async {
+            await controller.duplicatePack(openPackId);
+            if (!context.mounted) return;
+            showSnackBar(
+              context: context,
+              content: const Text('A copy was added to your library.'),
+            );
+          },
+          onDelete: () => _confirmDelete(card, controller),
+        );
+      }
+      return _OpenPackPlaceholder(card: card, onBack: controller.closePack);
     }
 
     return Column(
@@ -626,17 +647,12 @@ class _NoMatches extends StatelessWidget {
   }
 }
 
-/// Temporary placeholder for unimplemented pack views.
+/// Temporary placeholder until the editor arrives in phase 5.
 class _OpenPackPlaceholder extends StatelessWidget {
   final ModpackCardData? card;
-  final bool isEditing;
   final VoidCallback onBack;
 
-  const _OpenPackPlaceholder({
-    required this.card,
-    required this.isEditing,
-    required this.onBack,
-  });
+  const _OpenPackPlaceholder({required this.card, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -662,9 +678,7 @@ class _OpenPackPlaceholder extends StatelessWidget {
         Expanded(
           child: Center(
             child: Text(
-              isEditing
-                  ? 'The modpack editor is not built yet.'
-                  : 'The full modpack page is not built yet.',
+              'The modpack editor is not built yet.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

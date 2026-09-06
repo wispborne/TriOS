@@ -34,6 +34,7 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
   final String? defaultGridSort;
+  final double leadingItemWidth;
 
   /// Per-column additional context menu entries, keyed by column key.
   final Map<String, List<ContextMenuEntry>> perColumnContextMenuEntries;
@@ -45,6 +46,7 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
     required this.columns,
     required this.groups,
     this.defaultGridSort,
+    this.leadingItemWidth = 0,
     this.perColumnContextMenuEntries = const {},
   });
 
@@ -165,8 +167,13 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: WispGrid.gridRowSpacing * 2,
+                  padding: EdgeInsets.only(
+                    left:
+                        WispGrid.gridRowSpacing * 2 +
+                        (widget.leadingItemWidth > 0
+                            ? widget.leadingItemWidth + WispGrid.gridRowSpacing
+                            : 0),
+                    right: WispGrid.gridRowSpacing * 2,
                   ),
                   // idk why multiplying by 2 works
                   child: MultiSplitView(
@@ -303,6 +310,7 @@ class WispGridFrozenHeaderRowView extends StatelessWidget {
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
   final String? defaultGridSort;
+  final double leadingItemWidth;
   final Map<String, List<ContextMenuEntry>> perColumnContextMenuEntries;
 
   const WispGridFrozenHeaderRowView({
@@ -312,6 +320,7 @@ class WispGridFrozenHeaderRowView extends StatelessWidget {
     required this.columns,
     required this.groups,
     this.defaultGridSort,
+    this.leadingItemWidth = 0,
     this.perColumnContextMenuEntries = const {},
   });
 
@@ -327,7 +336,13 @@ class WispGridFrozenHeaderRowView extends StatelessWidget {
           return Padding(
             // Matches the scrolling header's left padding, so the frozen
             // headers land on the same pixels as the ones underneath.
-            padding: const EdgeInsets.only(left: WispGrid.gridRowSpacing * 2),
+            padding: EdgeInsets.only(
+              left:
+                  WispGrid.gridRowSpacing * 2 +
+                  (leadingItemWidth > 0
+                      ? leadingItemWidth + WispGrid.gridRowSpacing
+                      : 0),
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: WispGrid.gridRowSpacing,

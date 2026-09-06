@@ -1,7 +1,14 @@
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/models/version.dart';
 
 part 'modpack_definition.mapper.dart';
+
+class _CachedModpackVersion {
+  final Version? value;
+
+  const _CachedModpackVersion(this.value);
+}
 
 /// How TriOS obtains one modpack item.
 @MappableEnum()
@@ -104,6 +111,19 @@ class ModpackItem with ModpackItemMappable {
     this.catalog,
     this.unknownFields = const {},
   });
+
+  static final _parsedVersionCache = Expando<_CachedModpackVersion>();
+
+  /// Cached parsed form of the serialized [version] string.
+  Version? get parsedVersion =>
+      (_parsedVersionCache[this] ??= _CachedModpackVersion(
+        parseVersion(version),
+      )).value;
+
+  static Version? parseVersion(String? value) {
+    final trimmed = value?.trim();
+    return trimmed == null || trimmed.isEmpty ? null : Version.parse(trimmed);
+  }
 
   String get displayName => name?.trim().isNotEmpty == true ? name! : modId;
 }

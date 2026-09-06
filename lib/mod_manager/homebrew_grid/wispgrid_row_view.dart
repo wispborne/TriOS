@@ -19,6 +19,8 @@ class WispGridRowView<T extends WispGridItem> extends ConsumerStatefulWidget {
     required Widget child,
   })
   rowBuilder;
+  final WispGridLeadingItemBuilder<T>? leadingItemBuilder;
+  final double leadingItemWidth;
   final WispGridState gridState;
 
   /// The grid's horizontal scroll controller, used to hold the frozen columns
@@ -33,6 +35,8 @@ class WispGridRowView<T extends WispGridItem> extends ConsumerStatefulWidget {
     required this.isRowChecked,
     required this.columns,
     required this.rowBuilder,
+    this.leadingItemBuilder,
+    this.leadingItemWidth = 0,
     required this.gridState,
     this.horizontalScrollController,
   });
@@ -98,13 +102,15 @@ class _WispGridRowViewState<T extends WispGridItem>
   }) {
     final item = widget.item;
 
+    final modifiers = RowBuilderModifiers(
+      isHovering: isHovering,
+      isRowChecked: widget.isRowChecked,
+      columns: widget.columns,
+    );
+
     return widget.rowBuilder(
       item: item,
-      modifiers: RowBuilderModifiers(
-        isHovering: isHovering,
-        isRowChecked: widget.isRowChecked,
-        columns: widget.columns,
-      ),
+      modifiers: modifiers,
       child: Column(
         children: [
           Padding(
@@ -114,6 +120,15 @@ class _WispGridRowViewState<T extends WispGridItem>
               spacing: WispGrid.gridRowSpacing,
               children: [
                 SizedBox(width: WispGrid.gridRowSpacing),
+                if (widget.leadingItemBuilder != null)
+                  SizedBox(
+                    height: _standardRowHeight,
+                    width: widget.leadingItemWidth,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: widget.leadingItemBuilder!(item, modifiers),
+                    ),
+                  ),
                 ...columnsToShow.map((columnSetting) {
                   return Builder(
                     builder: (context) {

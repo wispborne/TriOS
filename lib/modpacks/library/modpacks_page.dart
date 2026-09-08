@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:trios/modpacks/full_page/modpack_full_page.dart';
 import 'package:trios/modpacks/editor/modpack_editor.dart';
+import 'package:trios/modpacks/incoming/incoming_modpack_handler.dart';
 import 'package:trios/modpacks/library/modpack_card.dart';
 import 'package:trios/modpacks/library/modpack_card_data.dart';
 import 'package:trios/modpacks/library/modpacks_page_controller.dart';
@@ -403,66 +404,18 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
     if (confirmed == true) await controller.deletePack(card.packId);
   }
 
+  /// The dialog returns link text or a file URI; both are inputs the incoming
+  /// handler already knows how to read.
   Future<void> _importFile() async {
-    final choice = await showDialog<_ImportChoice>(
+    final input = await showDialog<String>(
       context: context,
       builder: (context) => const _ImportModpackDialog(),
     );
-    if (choice == null || !mounted) return;
-
-    final controller = ref.read(modpacksPageControllerProvider.notifier);
-    final result = switch (choice) {
-      _ImportFromLink(:final text) => await controller.importLink(text),
-      _ImportFromFile(:final file) => await controller.importFile(file),
-    };
-    if (!mounted) return;
-
-    switch (result.outcome) {
-      case ModpackImportOutcome.added:
-        showSnackBar(
-          context: context,
-          content: const Text('Modpack added to your library.'),
-        );
-      case ModpackImportOutcome.alreadyInLibrary:
-        showSnackBar(
-          context: context,
-          type: SnackBarType.info,
-          content: const Text('That modpack is already in your library.'),
-        );
-        controller.viewPack(result.packId!);
-      case ModpackImportOutcome.conflictsWithLibrary:
-        showSnackBar(
-          context: context,
-          type: SnackBarType.warn,
-          content: const Text(
-            'Your library already has a different version of this modpack. '
-            'Delete it first to import this one.',
-          ),
-        );
-      case ModpackImportOutcome.unreadable:
-        showSnackBar(
-          context: context,
-          type: SnackBarType.error,
-          content: Text('Could not read that as a modpack: ${result.error}'),
-        );
-    }
+    if (input == null || !mounted) return;
+    await ref
+        .read(incomingModpackHandlerProvider)
+        .receive(input, context: context);
   }
-}
-
-sealed class _ImportChoice {
-  const _ImportChoice();
-}
-
-class _ImportFromLink extends _ImportChoice {
-  final String text;
-
-  const _ImportFromLink(this.text);
-}
-
-class _ImportFromFile extends _ImportChoice {
-  final File file;
-
-  const _ImportFromFile(this.file);
 }
 
 class _ImportModpackDialog extends StatefulWidget {
@@ -515,7 +468,7 @@ class _ImportModpackDialogState extends State<_ImportModpackDialog> {
     );
     final path = picked?.files.firstOrNull?.path;
     if (path == null || !mounted) return;
-    Navigator.of(context).pop(_ImportFromFile(File(path)));
+    Navigator.of(context).pop(File(path).uri.toString());
   }
 
   @override
@@ -556,7 +509,7 @@ class _ImportModpackDialogState extends State<_ImportModpackDialog> {
           onPressed: _hasLink
               ? () =>
                     Navigator.of(context)
-                        .pop(_ImportFromLink(_textController.text))
+                        .pop(_textController.text)
               : null,
           child: const Text('Import'),
         ),

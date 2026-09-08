@@ -204,6 +204,28 @@ String? extractModpackLinkPayload(String text) {
 
 /// Decodes a modpack link.
 ModpackDefinition decodeModpackLink(String text) {
+  if (text.length > ModpackLimits.maxLinkCharacters) {
+    throw const ModpackFormatException(
+      ModpackFormatError.linkTooLarge,
+      'The modpack link is longer than 30,000 characters.',
+    );
+  }
+  final uri = Uri.tryParse(text.trim());
+  if (uri != null) {
+    final query = uri.queryParametersAll;
+    final fragment = Uri(query: uri.fragment).queryParametersAll;
+    if ([
+          query,
+          fragment,
+        ].any((p) => p.containsKey('mod') || p.containsKey('dep')) ||
+        (query['modpack']?.length ?? 0) + (fragment['modpack']?.length ?? 0) >
+            1) {
+      throw const ModpackFormatException(
+        ModpackFormatError.malformedPayload,
+        'A modpack link must contain one pack and no single-mod parameters.',
+      );
+    }
+  }
   final payload = extractModpackLinkPayload(text);
   if (payload == null) {
     throw const ModpackFormatException(

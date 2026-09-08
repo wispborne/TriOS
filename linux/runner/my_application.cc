@@ -86,9 +86,21 @@ static void forward_deep_link(char** args) {
     return;
   }
   const char* url = nullptr;
+  g_autofree gchar* file_url = nullptr;
   for (int i = 0; args[i] != nullptr; i++) {
     if (g_str_has_prefix(args[i], "starsector-mod://")) {
       url = args[i];
+      break;
+    }
+    g_autofree gchar* lower = g_ascii_strdown(args[i], -1);
+    if (g_str_has_suffix(lower, ".trios-modpack")) {
+      if (g_str_has_prefix(args[i], "file://")) {
+        url = args[i];
+      } else {
+        g_autofree gchar* absolute = g_canonicalize_filename(args[i], nullptr);
+        file_url = g_filename_to_uri(absolute, nullptr, nullptr);
+        url = file_url;
+      }
       break;
     }
   }

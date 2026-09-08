@@ -218,7 +218,7 @@ class ModpackDraft with ModpackDraftMappable {
       final label = item.label?.trim();
       if (label != null &&
           (label.length > ModpackLimits.maxLabelLength ||
-              RegExp(r'[\x00-\x1f\x7f-\x9f]').hasMatch(item.label!))) {
+              modpackLabelControlCharacters.hasMatch(item.label!))) {
         found.add(
           ModpackDraftIssue(
             ModpackDraftProblem.itemLabelInvalid,

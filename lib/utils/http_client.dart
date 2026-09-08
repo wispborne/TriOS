@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/http_probe.dart';
+import 'package:trios/utils/public_http_client.dart';
 
 final triOSHttpClient = Provider<TriOSHttpClient>(
   (ref) => TriOSHttpClient(
@@ -109,18 +110,29 @@ class TriOSHttpClient {
     required int maxBytes,
     required bool prefixOnly,
     required HttpProbeCancellation cancellation,
+    bool? allowSelfSignedCertificates,
   }) => Future.any([
-    _enqueueRequest(
-      () => probeHttpUrl(
-        url,
-        maxBytes: maxBytes,
-        prefixOnly: prefixOnly,
-        cancellation: cancellation,
-        client: allowInsecureConnectionsByDefault
-            ? _selfSignedHttpClient
-            : _defaultHttpClient,
-      ),
-    ),
+    _enqueueRequest(() async {
+      cancellation.check();
+      var active = true;
+      final client = createPublicHttpClient(
+        isActive: () => active && !cancellation.isCancelled,
+        allowSelfSignedCertificates:
+            allowSelfSignedCertificates ?? allowInsecureConnectionsByDefault,
+      );
+      try {
+        return await probeHttpUrl(
+          url,
+          maxBytes: maxBytes,
+          prefixOnly: prefixOnly,
+          cancellation: cancellation,
+          client: client,
+        );
+      } finally {
+        active = false;
+        client.close(force: true);
+      }
+    }),
     cancellation.whenCancelled.then<HttpProbeResult>(
       (_) => throw const HttpProbeCancelled(),
     ),

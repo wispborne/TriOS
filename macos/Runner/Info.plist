@@ -32,11 +32,31 @@
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>starsector-mod</string>
-			</array>
-			<key>CFBundleURLName</key>
-			<string>org.wisp.trios</string>
+			<array><string>starsector-mod</string></array>
+			<key>CFBundleURLName</key><string>org.wisp.trios</string>
+		</dict>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key><string>TriOS Modpack</string>
+			<key>CFBundleTypeRole</key><string>Viewer</string>
+			<key>LSHandlerRank</key><string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array><string>org.wisp.trios.modpack</string></array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key><string>org.wisp.trios.modpack</string>
+			<key>UTTypeDescription</key><string>TriOS Modpack</string>
+			<key>UTTypeConformsTo</key><array><string>public.data</string></array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key><array><string>trios-modpack</string></array>
+				<key>public.mime-type</key><string>application/x-trios-modpack</string>
+			</dict>
 		</dict>
 	</array>
 </dict>

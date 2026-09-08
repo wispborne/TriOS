@@ -385,6 +385,51 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     return _saveAsNewPack(definition);
   }
 
+  /// Applies a reviewed incoming definition only if the saved work still
+  /// matches what the person reviewed. Draft removal and replacement are atomic.
+  Future<ModpackLibraryEntry> acceptIncomingDefinition(
+    ModpackDefinition definition, {
+    required ModpackLibraryEntry? expectedEntry,
+    required ModpackDraft? expectedDraft,
+    bool discardDraft = false,
+  }) async {
+    _requireSupportedFormat(definition);
+    late ModpackLibraryEntry accepted;
+    await _write((data) {
+      if (data.packs[definition.id] != expectedEntry ||
+          data.drafts[definition.id] != expectedDraft) {
+        throw StateError(
+          'This pack changed while you were reviewing it. Review it again.',
+        );
+      }
+      if (expectedDraft != null && !discardDraft) {
+        throw StateError('Discard the draft explicitly before replacing it.');
+      }
+      accepted = (expectedEntry ?? ModpackLibraryEntry(definition: definition))
+          .copyWith(
+            definition: definition,
+            savedAt: DateTime.now(),
+            itemFailures: {
+              for (final failure
+                  in expectedEntry?.itemFailures.values ??
+                      <ModpackItemFailure>[])
+                if (definition.items.any(
+                  (item) =>
+                      item.modId == failure.modId &&
+                      modpackItemSourceFingerprint(item) ==
+                          failure.sourceFingerprint,
+                ))
+                  failure.modId: failure,
+            },
+          );
+      return data.copyWith(
+        packs: {...data.packs, definition.id: accepted},
+        drafts: {...data.drafts}..remove(definition.id),
+      );
+    });
+    return accepted;
+  }
+
   Future<ModpackLibraryEntry> _saveAsNewPack(
     ModpackDefinition definition,
   ) async {

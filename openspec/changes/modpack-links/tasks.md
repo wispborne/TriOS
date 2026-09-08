@@ -222,20 +222,24 @@ Installing from it arrives in Phase 8.
 
 ### Incoming packs
 
-- [ ] 7.1 Route links, dropped files, and operating-system file opens through
+- [x] 7.1 Route links, dropped files, and operating-system file opens through
       one incoming handler before ordinary mod-archive guards.
-- [ ] 7.2 Show incoming packs in a dialog using the compact pack information
+- [x] 7.2 Show incoming packs in a dialog using the compact pack information
       block and full-page item table. Offer Add to library, Install, Check for
       update, and Cancel.
-- [ ] 7.3 Do not save, install, or contact an incoming update URL on receipt.
+- [x] 7.3 Do not save, install, or contact an incoming update URL on receipt.
       Check only after an explicit request, add/accept, or install action.
-- [ ] 7.4 Keep the embedded definition selected while a check runs. Do not let a
+- [x] 7.4 Keep the embedded definition selected while a check runs. Do not let a
       late result change an add or installation already in progress.
-- [ ] 7.5 For identical incoming definitions, open the existing saved pack or
+- [x] 7.5 For identical incoming definitions, open the existing saved pack or
       draft. For conflicts, use explicit Replace, Add as copy, discard-draft,
       or Cancel choices without overwriting draft work.
-- [ ] 7.6 Block loopback, private, and link-local addresses for update and item
+- [x] 7.6 Block loopback, private, and link-local addresses for update and item
       requests. Revalidate redirects and enforce size and time limits.
+      Version Checker files, archive probes, and incoming update checks use the
+      same protected transport. The preview keeps Install unavailable until
+      Phase 8. Desktop file associations and warm/cold routing are implemented;
+      native OS behavior remains part of the manual release checks in 10.9.
 
 ## Phase 8 - Background installation
 

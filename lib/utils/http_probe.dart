@@ -8,6 +8,12 @@ class HttpProbeCancelled implements Exception {
   String toString() => 'Source check cancelled.';
 }
 
+class HttpProbeStatusException extends HttpException {
+  final int statusCode;
+  HttpProbeStatusException(this.statusCode, Uri url)
+    : super('Source returned HTTP $statusCode.', uri: url);
+}
+
 class HttpProbeCancellation {
   final _cancelled = Completer<void>();
   bool get isCancelled => _cancelled.isCompleted;
@@ -21,17 +27,21 @@ class HttpProbeCancellation {
   }
 }
 
+/// Reads the beginning of an HTTP response. Matches [TriOSHttpClient.probe]
+/// and the test fakes that stand in for it.
+typedef HttpProbe =
+    Future<HttpProbeResult> Function(
+      Uri url, {
+      required int maxBytes,
+      required bool prefixOnly,
+      required HttpProbeCancellation cancellation,
+    });
+
 class HttpProbeResult {
   final Uri url;
   final List<int> bytes;
   final String? contentType;
-  final String? disposition;
-  const HttpProbeResult(
-    this.url,
-    this.bytes,
-    this.contentType,
-    this.disposition,
-  );
+  const HttpProbeResult(this.url, this.bytes, this.contentType);
 }
 
 /// Reads only the beginning of a response using the existing HTTP client.
@@ -90,16 +100,13 @@ Future<HttpProbeResult> probeHttpUrl(
       }
       if (response.statusCode != 200 &&
           !(prefixOnly && response.statusCode == 206)) {
-        throw HttpException(
-          'Source returned HTTP ${response.statusCode}.',
-          uri: current,
-        );
+        throw HttpProbeStatusException(response.statusCode, current);
       }
       final bytes = BytesBuilder(copy: false);
       await for (final chunk in response) {
         cancellation.check();
         if (!prefixOnly && bytes.length + chunk.length > maxBytes) {
-          throw const FormatException('The Version Checker file is too large.');
+          throw const FormatException('The source response is too large.');
         }
         bytes.add(
           prefixOnly ? chunk.take(maxBytes - bytes.length).toList() : chunk,
@@ -111,7 +118,6 @@ Future<HttpProbeResult> probeHttpUrl(
         current,
         bytes.takeBytes(),
         response.headers.contentType?.mimeType,
-        response.headers.value('content-disposition'),
       );
     }
     throw const FormatException('The source redirects too many times.');

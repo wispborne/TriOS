@@ -261,7 +261,9 @@ void main(List<String> args) async {
   if (Platform.isMacOS) {
     try {
       final initialLink = await appLinks.getInitialLink();
-      if (initialLink != null && initialLink.scheme == deepLinkScheme) {
+      if (initialLink != null &&
+          (initialLink.scheme == deepLinkScheme ||
+              initialLink.scheme == 'file')) {
         launchDeepLink = initialLink.toString();
       }
       // macOS single-instances .app bundles at the OS level, so no manual
@@ -357,6 +359,16 @@ void main(List<String> args) async {
   }
 
   // Show deep link protocol registration toast for existing users who haven't been asked.
+  if (settings?.deepLinkProtocolRegistered == true) {
+    onAppLoadedActions.add((_) async {
+      try {
+        await ProtocolRegistration.ensureModpackFileRegistration();
+      } catch (e) {
+        Fimber.w('Could not register modpack files: $e');
+      }
+    });
+  }
+
   if (settings?.allowCrashReporting != null &&
       settings?.deepLinkProtocolRegistered == null) {
     onAppLoadedActions.add((context) async {

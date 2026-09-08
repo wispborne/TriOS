@@ -63,24 +63,34 @@ class ModpackShareController extends Notifier<ModpackShareState> {
         for (final item in definition.items) ModpackSourceCheck(item, .waiting),
       ],
     );
-    for (var index = 0; index < definition.items.length; index++) {
-      if (cancellation.isCancelled) return false;
-      final item = definition.items[index];
-      _setCheck(index, ModpackSourceCheck(item, .checking));
-      try {
-        final cached = await validator.validate(item, cancellation);
-        if (cancellation.isCancelled) return false;
-        _setCheck(index, ModpackSourceCheck(item, .passed, cached: cached));
-      } catch (e) {
-        if (cancellation.isCancelled) return false;
-        _setCheck(
-          index,
-          ModpackSourceCheck(item, .failed, error: e.toString()),
-        );
-      }
-    }
+    // Every item is at least one network round trip, so they run together
+    // instead of one after another. The HTTP client's own request queue caps
+    // how many are actually in flight.
+    await Future.wait([
+      for (var index = 0; index < definition.items.length; index++)
+        _validateItem(validator, definition.items[index], index, cancellation),
+    ]);
+    if (cancellation.isCancelled) return false;
     state = ModpackShareState(checks: state.checks);
     return state.checks.every((check) => check.status == .passed);
+  }
+
+  Future<void> _validateItem(
+    ModpackSourceValidator validator,
+    ModpackItem item,
+    int index,
+    HttpProbeCancellation cancellation,
+  ) async {
+    if (cancellation.isCancelled) return;
+    _setCheck(index, ModpackSourceCheck(item, .checking));
+    try {
+      final cached = await validator.validate(item, cancellation);
+      if (cancellation.isCancelled) return;
+      _setCheck(index, ModpackSourceCheck(item, .passed, cached: cached));
+    } catch (e) {
+      if (cancellation.isCancelled) return;
+      _setCheck(index, ModpackSourceCheck(item, .failed, error: e.toString()));
+    }
   }
 
   void _setCheck(int index, ModpackSourceCheck check) {

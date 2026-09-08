@@ -8,9 +8,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/modpacks/library/modpack_card_data.dart';
 import 'package:trios/modpacks/library/modpacks_page_controller.dart';
-import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/modpacks/modpack_install_progress.dart';
-import 'package:trios/modpacks/modpack_link_codec.dart';
 import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_draft.dart';
@@ -406,79 +404,6 @@ void main() {
     });
   });
 
-  group('importing a file', () {
-    late File file;
-
-    Future<void> writeFile(ModpackDefinition definition) =>
-        file.writeAsString(encodeModpackDefinitionFileJson(definition));
-
-    setUp(() {
-      file = File('${folder.path}/pack.trios-modpack');
-    });
-
-    test('a new pack is added to the library', () async {
-      await writeFile(_definition(id: _wispId, name: 'From a file'));
-
-      final result = await harness.controller.importFile(file);
-
-      expect(result.outcome, ModpackImportOutcome.added);
-      expect(result.packId, _wispId);
-      expect(visibleNames(), ['From a file']);
-    });
-
-    test('the same pack again is reported as already there', () async {
-      await writeFile(_definition(id: _wispId, name: 'From a file'));
-      await harness.controller.importFile(file);
-
-      final result = await harness.controller.importFile(file);
-
-      expect(result.outcome, ModpackImportOutcome.alreadyInLibrary);
-      expect(visibleNames(), ['From a file']);
-    });
-
-    test('a different pack with the same ID is left alone', () async {
-      await writeFile(_definition(id: _wispId, name: 'From a file'));
-      await harness.controller.importFile(file);
-      await writeFile(_definition(id: _wispId, name: 'Changed elsewhere'));
-
-      final result = await harness.controller.importFile(file);
-
-      expect(result.outcome, ModpackImportOutcome.conflictsWithLibrary);
-      expect(visibleNames(), ['From a file']);
-    });
-
-    test('a draft with the same ID also counts as a conflict', () async {
-      final draft = await harness.store.createDraft(name: 'Unfinished');
-      await writeFile(_definition(id: draft.id, name: 'From a file'));
-
-      final result = await harness.controller.importFile(file);
-
-      expect(result.outcome, ModpackImportOutcome.conflictsWithLibrary);
-      expect(
-        harness.container.read(modpackStoreProvider).requireValue.packs,
-        isEmpty,
-      );
-    });
-
-    test('a file that is not a modpack is reported, not thrown', () async {
-      await file.writeAsString('{"formatVersion": 1, "name": "no id"}');
-
-      final result = await harness.controller.importFile(file);
-
-      expect(result.outcome, ModpackImportOutcome.unreadable);
-      expect(result.error, isNotNull);
-      expect(state().allCards, isEmpty);
-    });
-
-    test('a missing file is reported, not thrown', () async {
-      final result = await harness.controller.importFile(
-        File('${folder.path}/does-not-exist.trios-modpack'),
-      );
-
-      expect(result.outcome, ModpackImportOutcome.unreadable);
-    });
-  });
-
   test('a draft item without a source marks the pack Needs sources', () async {
     final draft = await harness.store.createDraft(name: 'Unfinished');
     await harness.store.saveDraft(
@@ -486,25 +411,5 @@ void main() {
     );
 
     expect(state().allCards.single.needsSources, isTrue);
-  });
-
-  group('importing a link', () {
-    test('a share link adds the pack', () async {
-      final link = buildModpackShareLink(
-        _definition(id: _wispId, name: 'From a link'),
-      );
-
-      final result = await harness.controller.importLink(link);
-
-      expect(result.outcome, ModpackImportOutcome.added);
-      expect(visibleNames(), ['From a link']);
-    });
-
-    test('text that is not a link is reported, not thrown', () async {
-      final result = await harness.controller.importLink('not a link');
-
-      expect(result.outcome, ModpackImportOutcome.unreadable);
-      expect(state().allCards, isEmpty);
-    });
   });
 }

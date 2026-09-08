@@ -1,18 +1,11 @@
-import 'dart:io';
-
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/modpacks/library/modpack_card_data.dart';
-import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/modpacks/modpack_install_progress.dart';
-import 'package:trios/modpacks/modpack_link_codec.dart';
 import 'package:trios/modpacks/modpack_store.dart';
-import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_library_entry.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
-import 'package:trios/utils/extensions.dart';
-import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/notify_on_new_state.dart';
 import 'package:trios/utils/search_index.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
@@ -80,29 +73,6 @@ class ModpacksPageState with ModpacksPageStateMappable {
     this.openPackId,
     this.isEditing = false,
   });
-}
-
-/// Result of importing a `.trios-modpack` file.
-enum ModpackImportOutcome {
-  added,
-
-  /// An identical pack is already in the library.
-  alreadyInLibrary,
-
-  /// A saved pack or draft has the same ID but different contents.
-  conflictsWithLibrary,
-
-  unreadable,
-}
-
-class ModpackImportResult {
-  final ModpackImportOutcome outcome;
-
-  final String? packId;
-
-  final String? error;
-
-  const ModpackImportResult(this.outcome, {this.packId, this.error});
 }
 
 final modpacksPageControllerProvider =
@@ -324,68 +294,6 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
 
   Future<void> duplicatePack(String packId) async {
     await ref.read(modpackStoreProvider.notifier).duplicatePack(packId);
-  }
-
-  Future<ModpackImportResult> importFile(File file) => _import(
-    () async =>
-        decodeModpackDefinition((await file.readAsString()).parseJsonToMap()),
-    source: 'file ${file.path}',
-  );
-
-  Future<ModpackImportResult> importLink(String text) =>
-      _import(() async => decodeModpackLink(text), source: 'link');
-
-  Future<ModpackImportResult> _import(
-    Future<ModpackDefinition> Function() decode, {
-    required String source,
-  }) async {
-    try {
-      final definition = await decode();
-      final data = ref.read(modpackStoreProvider).value ?? const ModpacksData();
-
-      final existing = data.packs[definition.id];
-      if (existing != null) {
-        final identical = modpackDefinitionsAreIdentical(
-          existing.definition,
-          definition,
-        );
-        return ModpackImportResult(
-          identical
-              ? ModpackImportOutcome.alreadyInLibrary
-              : ModpackImportOutcome.conflictsWithLibrary,
-          packId: definition.id,
-        );
-      }
-      if (data.drafts.containsKey(definition.id)) {
-        return ModpackImportResult(
-          ModpackImportOutcome.conflictsWithLibrary,
-          packId: definition.id,
-        );
-      }
-
-      await ref
-          .read(modpackStoreProvider.notifier)
-          .saveIncomingDefinition(definition);
-      return ModpackImportResult(
-        ModpackImportOutcome.added,
-        packId: definition.id,
-      );
-    } on ModpackFormatException catch (e) {
-      return ModpackImportResult(
-        ModpackImportOutcome.unreadable,
-        error: e.message,
-      );
-    } catch (e, stacktrace) {
-      Fimber.w(
-        "Could not import modpack $source",
-        ex: e,
-        stacktrace: stacktrace,
-      );
-      return ModpackImportResult(
-        ModpackImportOutcome.unreadable,
-        error: e.toString(),
-      );
-    }
   }
 
   void _refilter() {

@@ -49,12 +49,24 @@ void main() {
       }
       await request.response.close();
     });
-    final regular = await fetchRemoteVersionCheckerInfo(
-      '$origin/mod.version',
-      client,
+    await expectLater(
+      fetchRemoteVersionCheckerInfo('$origin/mod.version', client),
+      throwsFormatException,
     );
-    expect(regular.directDownloadURL, '$origin/download');
-    final validator = ModpackSourceValidator.forClient(client);
+    final probeClient = HttpClient()
+      ..badCertificateCallback = (_, _, _) => true;
+    addTearDown(() => probeClient.close(force: true));
+    // Local fixture transport only. Production probes reject loopback targets.
+    final validator = ModpackSourceValidator(
+      (url, {required maxBytes, required prefixOnly, required cancellation}) =>
+          probeHttpUrl(
+            url,
+            maxBytes: maxBytes,
+            prefixOnly: prefixOnly,
+            cancellation: cancellation,
+            client: probeClient,
+          ),
+    );
     expect(
       await validator.validate(
         ModpackItem(
@@ -66,7 +78,7 @@ void main() {
       ),
       false,
     );
-    expect(paths, ['/mod.version', '/mod.version', '/download', '/archive']);
+    expect(paths, ['/mod.version', '/download', '/archive']);
   });
 
   test(

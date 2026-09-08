@@ -9,6 +9,8 @@ import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:trios/chipper/chipper_state.dart';
 import 'package:trios/mod_manager/batch_installation/batch_installation_notifier.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/modpacks/incoming/incoming_modpack.dart';
+import 'package:trios/modpacks/incoming/incoming_modpack_handler.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -32,6 +34,9 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
   bool _dragging = false;
   bool _inProgress = false;
   List<DropItem>? hoveredEvents;
+  Future<DroppedContents>? _hoveredContents;
+  DropSession? _modpackCheckSession;
+  Future<bool> _modpackCheck = Future.value(false);
 
   // Offset? _offset;
   static int _lastDropTimestamp = 0;
@@ -44,11 +49,6 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
     return DropRegion(
       formats: Formats.standardFormats,
       onPerformDrop: (detail) async {
-        final ignoringDrop = ref.read(AppState.ignoringDrop) == true;
-        if (isGameRunning || ignoringDrop) {
-          return;
-        }
-
         // The onDragDone callback is called twice for the same drop event, add a timer to avoid it.
         if (DateTime.now().millisecondsSinceEpoch - _lastDropTimestamp <
             _minDropInterval) {
@@ -66,6 +66,25 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           return;
         }
 
+        final contents = await readDroppedContents(droppedItems);
+        final files = contents.files;
+        final urls = contents.urls;
+        for (final incoming in contents.modpackInputs) {
+          if (!context.mounted) return;
+          setState(() {
+            _dragging = false;
+            hoveredEvents = null;
+            _hoveredContents = null;
+          });
+          await ref
+              .read(incomingModpackHandlerProvider)
+              .receive(incoming, context: context);
+        }
+        if (!context.mounted || (files.isEmpty && urls.isEmpty)) return;
+        if (ref.read(AppState.isGameRunning).value == true ||
+            ref.read(AppState.ignoringDrop) == true) {
+          return;
+        }
         if (ref.read(AppState.canWriteToModsFolder).value == false) {
           showDialog(
             context: context,
@@ -87,35 +106,16 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           return;
         }
 
-        final files = (await Future.wait(
-          droppedItems.map((e) async {
-            final reader = e.dataReader;
-            if (reader == null) return null;
-
-            // File
-            if (reader.canProvide(Formats.fileUri)) {
-              Fimber.i("Dropped file: ${await reader.getSuggestedName()}");
-              return await getFileFromReader(reader);
-            } else if (reader.canProvide(Formats.uri)) {
-              Fimber.i("Dropped uri: ${await reader.getSuggestedName()}");
-              final uri = await getUriFromReader(reader);
-              if (uri == null) return null;
-
-              ref
-                  .read(downloadManager.notifier)
-                  .downloadAndInstallMod(
-                    "Web link download",
-                    uri.uri.toString(),
-                    activateVariantOnComplete: false,
-                    sourceHint: null,
-                  );
-              return null;
-            }
-
-            return null;
-          }),
-        )).nonNulls.toList();
-
+        for (final uri in urls) {
+          ref
+              .read(downloadManager.notifier)
+              .downloadAndInstallMod(
+                'Web link download',
+                uri.toString(),
+                activateVariantOnComplete: false,
+                sourceHint: null,
+              );
+        }
         if (files.isEmpty) {
           Fimber.i("No files dropped.");
           return;
@@ -156,7 +156,8 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
       },
       onDropOver: (detail) async {
         final ignoringDrop = ref.read(AppState.ignoringDrop) == true;
-        if (detail.session.items.isEmpty || ignoringDrop) {
+        if (detail.session.items.isEmpty ||
+            (ignoringDrop && !await _containsModpack(detail.session))) {
           return DropOperation.none;
         } else if (detail.session.items.hashCode == hoveredEvents.hashCode) {
           return DropOperation.copy;
@@ -181,9 +182,9 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         //     .nonNulls
         //     .toList()
 
-        final files = (await filterToSupportedTypes(
-          detail.session.items,
-        )).orEmpty().toList();
+        final files = (await filterToSupportedTypes(detail.session.items))
+            .orEmpty()
+            .toList();
         if (files.isEmpty) {
           return DropOperation.none;
         }
@@ -191,6 +192,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         setState(() {
           _dragging = true;
           hoveredEvents = files;
+          _hoveredContents = readDroppedContents(files);
           // _offset = detail.localPosition;
         });
         return DropOperation.copy;
@@ -214,6 +216,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           _dragging = false;
           // _offset = null;
           hoveredEvents = null;
+          _hoveredContents = null;
         });
       },
       child: Builder(
@@ -238,54 +241,36 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
                             child: Center(
                               child: Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: isGameRunning
-                                    ? const Text(
-                                        "Game is running. Close to install mods.",
-                                      )
-                                    : FutureBuilder(
-                                        future: Future.wait(
-                                          hoveredEvents!.map((event) async {
-                                            if (event.dataReader == null) {
-                                              return null;
-                                            } else if (event.dataReader!
-                                                .canProvide(Formats.fileUri)) {
-                                              return await getFileFromReader(
-                                                event.dataReader!,
-                                              );
-                                            } else if (event.dataReader!
-                                                .canProvide(Formats.uri)) {
-                                              return (await getUriFromReader(
-                                                event.dataReader!,
-                                              ))?.uri;
-                                            }
-                                          }),
+                                child: FutureBuilder(
+                                  future: _hoveredContents,
+                                  builder: (context, snapshot) {
+                                    final contents = snapshot.data;
+                                    if (contents == null) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    if (contents.modpackInputs.isNotEmpty) {
+                                      return const Text('Open modpack preview');
+                                    }
+                                    if (isGameRunning) {
+                                      return const Text(
+                                        'Game is running. Close to install mods.',
+                                      );
+                                    }
+                                    return IntrinsicHeight(
+                                      child: IntrinsicWidth(
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            minWidth: 400,
+                                          ),
+                                          child: DragDropInstallModOverlay(
+                                            entities: contents.files,
+                                            urls: contents.urls,
+                                          ),
                                         ),
-                                        builder: (context, future) {
-                                          return IntrinsicHeight(
-                                            child: IntrinsicWidth(
-                                              child: ConstrainedBox(
-                                                constraints:
-                                                    const BoxConstraints(
-                                                      minWidth: 400,
-                                                    ),
-                                                child:
-                                                    DragDropInstallModOverlay(
-                                                      entities: future.data
-                                                          .orEmpty()
-                                                          .nonNulls
-                                                          .whereType<File>()
-                                                          .toList(),
-                                                      urls: future.data
-                                                          .orEmpty()
-                                                          .nonNulls
-                                                          .whereType<Uri>()
-                                                          .toList(),
-                                                    ),
-                                              ),
-                                            ),
-                                          );
-                                        },
                                       ),
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                           )
@@ -324,10 +309,9 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         final download = ref
             .read(downloadManager.notifier)
             .addInstallation(dir.toFile().nameWithExtension, dir.path);
-        ref.read(batchInstallationProvider.notifier).create(
-          [Directory(dir.path)],
-          download: download,
-        );
+        ref.read(batchInstallationProvider.notifier).create([
+          Directory(dir.path),
+        ], download: download);
       } catch (e, st) {
         Fimber.e("Failed to install mod from directory", ex: e, stacktrace: st);
       }
@@ -371,6 +355,67 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
 
     return supportedItems;
   }
+
+  /// Reads one dropped item. Returns a [FileSystemEntity], a [Uri], or null.
+  Future<Object?> _readDropItem(DropItem item) async {
+    final reader = item.dataReader;
+    if (reader == null) return null;
+    if (reader.canProvide(Formats.fileUri)) return getFileFromReader(reader);
+    if (reader.canProvide(Formats.uri)) {
+      return (await getUriFromReader(reader))?.uri;
+    }
+    return null;
+  }
+
+  /// Reads every dropped item at once, then sorts them. Each read is a
+  /// platform round trip, so they must not be awaited one at a time.
+  Future<DroppedContents> readDroppedContents(List<DropItem> items) async {
+    final resolved = await Future.wait(items.map(_readDropItem));
+    final files = <FileSystemEntity>[];
+    final urls = <Uri>[];
+    final modpackInputs = <String>[];
+    for (final entry in resolved) {
+      if (entry is FileSystemEntity) {
+        if (isModpackFile(entry.path)) {
+          modpackInputs.add(entry.uri.toString());
+        } else {
+          files.add(entry);
+        }
+      } else if (entry is Uri) {
+        if (isIncomingModpack(entry.toString())) {
+          modpackInputs.add(entry.toString());
+        } else {
+          urls.add(entry);
+        }
+      }
+    }
+    return DroppedContents(files, urls, modpackInputs);
+  }
+
+  /// onDropOver fires on every pointer move, so the reads are cached for as
+  /// long as the pointer stays with the same drag session.
+  Future<bool> _containsModpack(DropSession session) async {
+    if (!identical(session, _modpackCheckSession)) {
+      _modpackCheckSession = session;
+      _modpackCheck = readDroppedContents(
+        session.items,
+      ).then((contents) => contents.modpackInputs.isNotEmpty);
+    }
+    return _modpackCheck;
+  }
+}
+
+/// What a drag-and-drop session is offering, once every item has been read.
+class DroppedContents {
+  final List<FileSystemEntity> files;
+  final List<Uri> urls;
+
+  /// Inputs for [IncomingModpackHandler.receive]: file URIs or link text.
+  final List<String> modpackInputs;
+
+  const DroppedContents(this.files, this.urls, this.modpackInputs);
+
+  bool get isEmpty => files.isEmpty && urls.isEmpty && modpackInputs.isEmpty;
 }
 
 class IgnoreDropMouseRegion extends ConsumerStatefulWidget {

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:trios/trios/constants.dart';
+import 'package:trios/modpacks/incoming/incoming_modpack.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
 import 'package:trios/utils/logging.dart';
 
@@ -212,6 +213,11 @@ class SingleInstanceManager {
     for (final arg in args) {
       if (arg.startsWith('$deepLinkScheme://')) {
         return arg;
+      }
+      if (isIncomingModpack(arg)) {
+        return isModpackFile(arg) && !arg.contains('://')
+            ? File(arg).absolute.uri.toString()
+            : arg;
       }
     }
     return null;

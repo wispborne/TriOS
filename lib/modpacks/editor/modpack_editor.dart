@@ -51,7 +51,20 @@ enum _SaveChoice { copy, update }
 
 class _ModpackEditorState extends ConsumerState<ModpackEditor> {
   ModpackDraft? _draft;
-  List<_EditorRow> _rows = [];
+  List<_EditorRow> _rowsBacking = [];
+
+  /// Each row's position, so sorting and the Issues cell can look a row up
+  /// instead of scanning the list. Rebuilt only when the rows change.
+  Map<String, int> _orderByKey = const {};
+
+  List<_EditorRow> get _rows => _rowsBacking;
+
+  set _rows(List<_EditorRow> value) {
+    _rowsBacking = value;
+    _orderByKey = {
+      for (var i = 0; i < value.length; i++) value[i].key: i,
+    };
+  }
   int _nextRowKey = 0;
   bool _fieldsExpanded = true;
   bool _busy = false;
@@ -525,8 +538,8 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                                           ),
                                 ),
                               ),
-                          preSortComparator: (a, b) =>
-                              _rows.indexOf(a).compareTo(_rows.indexOf(b)),
+                          preSortComparator: (a, b) => (_orderByKey[a.key] ?? 0)
+                              .compareTo(_orderByKey[b.key] ?? 0),
                           checkedItemKeys: _packSelection,
                           onCheckedItemsChanged: (keys) =>
                               setState(() => _packSelection = keys),
@@ -879,6 +892,8 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     ),
   );
 
+  // Rebuilt field by field rather than with copyWith: the generated copyWith
+  // on this generic class returns WispGridColumn<WispGridItem>, losing <Mod>.
   WispGridColumn<Mod> _installedColumn(WispGridColumn<Mod> column) =>
       WispGridColumn<Mod>(
         key: column.key,
@@ -903,6 +918,15 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     Map<String, Mod> mods,
     List<WispGridColumn<Mod>> normal,
   ) {
+    // Validating the whole draft is a full pass over every item, so it runs
+    // once here rather than inside the Issues cell for each rendered row.
+    final issueCountByIndex = <int, int>{};
+    for (final issue in _draft?.issues ?? const []) {
+      final index = issue.itemIndex;
+      if (index != null) {
+        issueCountByIndex[index] = (issueCountByIndex[index] ?? 0) + 1;
+      }
+    }
     final columns = <WispGridColumn<_EditorRow>>[
       _column(
         'icons',
@@ -982,10 +1006,8 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
         ),
       ),
       _column('issues', 'Issues', 120, (row) {
-        final issues = _draft!.issues
-            .where((issue) => issue.itemIndex == _rows.indexOf(row))
-            .toList();
-        return issues.isEmpty
+        final issueCount = issueCountByIndex[_orderByKey[row.key]] ?? 0;
+        return issueCount == 0
             ? const SizedBox.shrink()
             : MovingTooltipWidget.text(
                 message: 'Expand this mod to complete or repair its fields.',
@@ -998,7 +1020,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                       color: Theme.of(context).colorScheme.error,
                     ),
                     Expanded(
-                      child: TextTriOS('${issues.length} issues', maxLines: 1),
+                      child: TextTriOS('$issueCount issues', maxLines: 1),
                     ),
                   ],
                 ),

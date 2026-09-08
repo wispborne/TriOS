@@ -239,7 +239,6 @@ void main() {
         Uri.parse(pack.items.single.url),
         [80, 75, 3, 4],
         'application/zip',
-        null,
       ),
     );
     await tester.pumpAndSettle();
@@ -294,7 +293,6 @@ void main() {
           Uri.parse(pack.items.single.url),
           [80, 75],
           'application/zip',
-          null,
         ),
       );
       await tester.pumpAndSettle();
@@ -324,7 +322,7 @@ void main() {
           required prefixOnly,
           required cancellation,
         }) async =>
-            HttpProbeResult(url, [80, 75, 3, 4], 'application/zip', null),
+            HttpProbeResult(url, [80, 75, 3, 4], 'application/zip'),
       );
       final pack = _definition().copyWith(items: [_definition().items.last]);
       await tester.pumpWidget(

@@ -104,7 +104,7 @@ String? modpackLabelError(String value) {
   if (label.length > ModpackLimits.maxLabelLength) {
     return 'Use at most 40 characters.';
   }
-  if (RegExp(r'[\x00-\x1f\x7f-\x9f]').hasMatch(value)) {
+  if (modpackLabelControlCharacters.hasMatch(value)) {
     return 'Use a single line without control characters.';
   }
   return null;

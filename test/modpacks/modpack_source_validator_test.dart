@@ -17,7 +17,7 @@ const item = ModpackItem(
   sourceType: ModpackItemSourceType.directDownload,
 );
 HttpProbeResult archive(Uri url) =>
-    HttpProbeResult(url, [0x50, 0x4b, 3, 4], 'application/zip', null);
+    HttpProbeResult(url, [0x50, 0x4b, 3, 4], 'application/zip');
 
 ModpackSourceValidator _validator(
   ModpackSourceProbe probe, {
@@ -53,7 +53,6 @@ void main() {
                     '{"DirectDownloadUrl":" https://example.com/archive.zip "}',
                   ),
                   'text/plain',
-                  null,
                 );
         },
         now: () => time,
@@ -101,7 +100,6 @@ void main() {
                 url,
                 utf8.encode('<html>Sign in</html>'),
                 'application/octet-stream',
-                null,
               );
       }, fetchVersionInfo: (_) async => VersionCheckerInfo());
       final token = HttpProbeCancellation();

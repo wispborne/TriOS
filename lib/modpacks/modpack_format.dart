@@ -124,6 +124,13 @@ bool _hasBannedControlCharacters(String value) {
   return false;
 }
 
+/// Control characters an item label may not contain.
+///
+/// Stricter than [_hasBannedControlCharacters]: a label is a single line, so
+/// tab and the C1 range are barred as well. Shared by the draft's validation
+/// and the editor so the two cannot drift apart.
+final RegExp modpackLabelControlCharacters = RegExp(r'[\x00-\x1f\x7f-\x9f]');
+
 final RegExp _packIdPattern = RegExp(r'^[A-Za-z0-9_-]{22}$');
 
 bool isValidModpackId(String value) => _packIdPattern.hasMatch(value);

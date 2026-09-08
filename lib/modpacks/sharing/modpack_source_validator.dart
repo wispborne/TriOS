@@ -8,12 +8,7 @@ import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/http_probe.dart';
 
-typedef ModpackSourceProbe = Future<HttpProbeResult> Function(
-  Uri url, {
-  required int maxBytes,
-  required bool prefixOnly,
-  required HttpProbeCancellation cancellation,
-});
+typedef ModpackSourceProbe = HttpProbe;
 
 final modpackSourceValidatorProvider = Provider(
   (ref) => ModpackSourceValidator.forClient(ref.watch(triOSHttpClient)),
@@ -21,20 +16,29 @@ final modpackSourceValidatorProvider = Provider(
 
 class ModpackSourceValidator {
   final ModpackSourceProbe probe;
-  final Future<VersionCheckerInfo> Function(String) fetchVersionInfo;
+  final Future<VersionCheckerInfo> Function(String)? fetchVersionInfo;
   final DateTime Function() now;
   final Map<String, DateTime> _successes = {};
   ModpackSourceValidator(
     this.probe, {
-    required this.fetchVersionInfo,
+    this.fetchVersionInfo,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
   factory ModpackSourceValidator.forClient(TriOSHttpClient client) =>
       ModpackSourceValidator(
         client.probe,
+        // Reads `.version` files exactly the way the update checker does,
+        // including its certificate support.
         fetchVersionInfo: (url) => fetchRemoteVersionCheckerInfo(url, client),
       );
+
+  Future<VersionCheckerInfo> _readVersionInfo(
+    String url,
+    HttpProbeCancellation cancellation,
+  ) =>
+      fetchVersionInfo?.call(url) ??
+      readVersionCheckerInfo(url, cancellation, probe: probe);
 
   Future<bool> validate(
     ModpackItem item,
@@ -53,7 +57,7 @@ class ModpackSourceValidator {
     var download = item.url;
     if (item.sourceType == ModpackItemSourceType.versionFile) {
       final info = await Future.any([
-        fetchVersionInfo(item.url.trim()),
+        _readVersionInfo(item.url.trim(), cancellation),
         cancellation.whenCancelled.then<VersionCheckerInfo>(
           (_) => throw const HttpProbeCancelled(),
         ),
@@ -105,10 +109,7 @@ bool isDownloadableModpackResponse(HttpProbeResult response) {
   final bytes = response.bytes;
   bool starts(List<int> signature) =>
       bytes.length >= signature.length &&
-      List.generate(
-        signature.length,
-        (i) => bytes[i] == signature[i],
-      ).every((same) => same);
+      signature.indexed.every((entry) => bytes[entry.$1] == entry.$2);
   return starts([0x50, 0x4b]) ||
       starts([0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c]) ||
       starts([0x52, 0x61, 0x72, 0x21]) ||

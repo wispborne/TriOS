@@ -21,12 +21,12 @@ Future<void> createModpackFromSelection(
   await ref.read(modpackStoreProvider.future);
   final records = await ref.read(modRecordsStore.future);
   if (!ref.context.mounted) return;
-  final installed = ref.read(AppState.modVariants).value ?? [];
-  final exactVariants = {
-    for (final variant in installed) variant.smolId: variant,
-  };
   final items = <String, ModpackDraftItem>{};
   if (profileVariants != null) {
+    final installed = ref.read(AppState.modVariants).value ?? [];
+    final exactVariants = {
+      for (final variant in installed) variant.smolId: variant,
+    };
     for (final selected in profileVariants) {
       final exact = exactVariants[selected.smolVariantId];
       items.putIfAbsent(

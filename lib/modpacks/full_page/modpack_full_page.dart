@@ -44,6 +44,7 @@ class ModpackFullPage extends ConsumerStatefulWidget {
   final VoidCallback onEdit;
   final Future<void> Function() onDuplicate;
   final Future<void> Function() onDelete;
+  final Widget? previewToolbar;
 
   const ModpackFullPage({
     super.key,
@@ -52,6 +53,7 @@ class ModpackFullPage extends ConsumerStatefulWidget {
     required this.onEdit,
     required this.onDuplicate,
     required this.onDelete,
+    this.previewToolbar,
   });
 
   @override
@@ -189,13 +191,14 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
           padding: const .only(top: 8, left: 8, right: 8),
           child: _buildPackHeader(rows),
         ),
-        ModpackSourceCheckSection(
-          state: sharing,
-          onCancel: () => ref
-              .read(modpackShareControllerProvider(definition.id).notifier)
-              .cancel(),
-          onRepair: widget.onEdit,
-        ),
+        if (widget.previewToolbar == null)
+          ModpackSourceCheckSection(
+            state: sharing,
+            onCancel: () => ref
+                .read(modpackShareControllerProvider(definition.id).notifier)
+                .cancel(),
+            onRepair: widget.onEdit,
+          ),
         _buildItemsToolbar(rows),
         Expanded(
           child: Padding(
@@ -251,94 +254,97 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
         padding: const .symmetric(horizontal: 8),
         child: Column(
           children: [
-            SizedBox(
-              height: 50,
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const .only(right: 16),
-                    child: _toolbarAction(
-                      label: 'Back',
-                      icon: Icons.arrow_back,
-                      onPressed: widget.onBack,
-                    ),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: .horizontal,
-                      child: Row(
-                        spacing: 8,
-                        children: [
-                          TextTriOS(
-                            definition.name,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontSize: 20),
-                            maxLines: 1,
-                          ),
-                          _MetadataBadge(label: 'v${definition.version}'),
-                          _buildCopyablePackId(),
-                          _externalLinkAction(
-                            url: definition.homepageUrl,
-                            icon: Icons.language,
-                            message: 'Open homepage',
-                          ),
-                          _externalLinkAction(
-                            url: definition.updateUrl,
-                            icon: Icons.refresh,
-                            message: 'Check for modpack updates',
-                          ),
-                        ],
+            if (widget.previewToolbar != null)
+              widget.previewToolbar!
+            else
+              SizedBox(
+                height: 50,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const .only(right: 16),
+                      child: _toolbarAction(
+                        label: 'Back',
+                        icon: Icons.arrow_back,
+                        onPressed: widget.onBack,
                       ),
                     ),
-                  ),
-                  _toolbarAction(
-                    label: 'Edit',
-                    icon: Icons.edit,
-                    onPressed: widget.onEdit,
-                  ),
-                  _toolbarAction(
-                    label: 'Copy link',
-                    icon: Icons.link,
-                    onPressed: _sharing
-                        ? null
-                        : () => _share(_ShareAction.copyLink),
-                  ),
-                  _toolbarAction(
-                    label: 'Export',
-                    icon: Icons.file_download_outlined,
-                    onPressed: _sharing
-                        ? null
-                        : () => _share(_ShareAction.export),
-                  ),
-                  _toolbarAction(
-                    label: 'Install',
-                    icon: Icons.download,
-                    disabledMessage:
-                        'Modpack installation is added in phase 8.',
-                  ),
-                  OverflowMenuButton(
-                    menuItems: [
-                      if (definition.updateUrl != null && !_sharing)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: .horizontal,
+                        child: Row(
+                          spacing: 8,
+                          children: [
+                            TextTriOS(
+                              definition.name,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontSize: 20),
+                              maxLines: 1,
+                            ),
+                            _MetadataBadge(label: 'v${definition.version}'),
+                            _buildCopyablePackId(),
+                            _externalLinkAction(
+                              url: definition.homepageUrl,
+                              icon: Icons.language,
+                              message: 'Open homepage',
+                            ),
+                            _externalLinkAction(
+                              url: definition.updateUrl,
+                              icon: Icons.refresh,
+                              message: 'Check for modpack updates',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    _toolbarAction(
+                      label: 'Edit',
+                      icon: Icons.edit,
+                      onPressed: widget.onEdit,
+                    ),
+                    _toolbarAction(
+                      label: 'Copy link',
+                      icon: Icons.link,
+                      onPressed: _sharing
+                          ? null
+                          : () => _share(_ShareAction.copyLink),
+                    ),
+                    _toolbarAction(
+                      label: 'Export',
+                      icon: Icons.file_download_outlined,
+                      onPressed: _sharing
+                          ? null
+                          : () => _share(_ShareAction.export),
+                    ),
+                    _toolbarAction(
+                      label: 'Install',
+                      icon: Icons.download,
+                      disabledMessage:
+                          'Modpack installation is added in phase 8.',
+                    ),
+                    OverflowMenuButton(
+                      menuItems: [
+                        if (definition.updateUrl != null && !_sharing)
+                          OverflowMenuItem(
+                            title: 'Publish update',
+                            icon: Icons.publish,
+                            onTap: () => _share(_ShareAction.publish),
+                          ).toEntry(2),
                         OverflowMenuItem(
-                          title: 'Publish update',
-                          icon: Icons.publish,
-                          onTap: () => _share(_ShareAction.publish),
-                        ).toEntry(2),
-                      OverflowMenuItem(
-                        title: 'Delete',
-                        icon: Icons.delete,
-                        onTap: widget.onDelete,
-                      ).toEntry(0),
-                      OverflowMenuItem(
-                        title: 'Duplicate',
-                        icon: Icons.copy,
-                        onTap: widget.onDuplicate,
-                      ).toEntry(1),
-                    ],
-                  ),
-                ],
+                          title: 'Delete',
+                          icon: Icons.delete,
+                          onTap: widget.onDelete,
+                        ).toEntry(0),
+                        OverflowMenuItem(
+                          title: 'Duplicate',
+                          icon: Icons.copy,
+                          onTap: widget.onDuplicate,
+                        ).toEntry(1),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
             Padding(
               padding: const .fromLTRB(8, 8, 8, 12),
               child: LayoutBuilder(
@@ -409,7 +415,6 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
   Widget _buildPackDetails(List<String> unknownKeys) {
     final theme = Theme.of(context);
     final updateVersion = widget.entry.onlineVersionAvailable;
-    final author = definition.author?.trim();
     final description = definition.description?.trim();
 
     return Column(
@@ -442,7 +447,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
           children: [
             _MetadataFact(
               label: 'Curated by',
-              value: author == null || author.isEmpty ? 'Not set' : author,
+              value: _orNotSet(definition.author),
             ),
             _MetadataFact(
               label: 'Starsector version',
@@ -463,9 +468,9 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     );
   }
 
-  Widget _buildCopyablePackId({Color? color}) {
+  Widget _buildCopyablePackId() {
     final theme = Theme.of(context);
-    final effectiveColor = color ?? theme.colorScheme.onSurfaceVariant;
+    final effectiveColor = theme.colorScheme.onSurfaceVariant;
     final abbreviatedId = _abbreviatePackId(definition.id);
 
     return MovingTooltipWidget.text(
@@ -486,17 +491,9 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
               content: const Text('Pack ID copied to clipboard'),
             );
           },
-          child: Row(
-            mainAxisSize: .min,
-            spacing: 4,
-            children: [
-              Text(
-                'ID: $abbreviatedId',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: effectiveColor,
-                ),
-              ),
-            ],
+          child: Text(
+            'ID: $abbreviatedId',
+            style: theme.textTheme.labelSmall?.copyWith(color: effectiveColor),
           ),
         ),
       ),
@@ -578,16 +575,9 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
       child: Row(
         spacing: 8,
         children: [
-          Column(
-            mainAxisSize: .min,
-            crossAxisAlignment: .start,
-            spacing: 2,
-            children: [
-              Text(
-                '${rows.length} mods',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-            ],
+          Text(
+            '${rows.length} mods',
+            style: Theme.of(context).textTheme.titleSmall,
           ),
           const Spacer(),
           TextButton.icon(
@@ -678,18 +668,11 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                 spacing: 4,
                 children: [
                   Icon(
-                    row.isInstalled
-                        ? Icons.check_circle_outline
-                        : Icons.cancel_outlined,
+                    Icons.cancel_outlined,
                     size: 16,
-                    color: row.isInstalled
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.error,
+                    color: theme.colorScheme.error,
                   ),
-                  Text(
-                    row.isInstalled ? 'Installed' : 'Missing',
-                    style: gridTextStyle,
-                  ),
+                  Text('Missing', style: gridTextStyle),
                 ],
               ),
         csvValue: (row) => row.isInstalled ? 'Installed' : 'Missing',

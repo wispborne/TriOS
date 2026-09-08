@@ -11,6 +11,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/generic_settings_manager.dart';
 import 'package:trios/utils/generic_settings_notifier.dart';
 import 'package:trios/utils/http_client.dart';
+import 'package:trios/utils/http_probe.dart';
 import 'package:trios/utils/logging.dart';
 
 import '../models/mod_variant.dart';
@@ -313,44 +314,49 @@ Future<RemoteVersionCheckResult> checkRemoteVersion(
 /// [VersionCheckerInfo].
 ///
 /// Applies [fixUrl] first (GitHub blob / Dropbox `dl=0` fixups), then fetches
-/// and decodes the JSON-ish body. Throws [VersionFileFetchException] on a
-/// non-200 response; rethrows any network/parse error.
+/// and decodes the JSON-ish body. Only public network destinations are allowed,
+/// including redirects. Reads at most 1 MiB with a 20-second total timeout.
 ///
 /// Shared by the update checker ([checkRemoteVersion]) and the deep-link
 /// installer so both read `.version` files the same way.
 Future<VersionCheckerInfo> fetchRemoteVersionCheckerInfo(
   String url,
-  TriOSHttpClient httpClient,
-) async {
-  final response = await httpClient.get(
-    fixUrl(url),
-    // Sending a Content-Type header makes Version Checker fail for Bitbucket
-    // repos, so we deliberately don't set one here.
-    allowSelfSignedCertificates: true,
+  TriOSHttpClient httpClient, {
+  HttpProbeCancellation? cancellation,
+}) => readVersionCheckerInfo(
+  url,
+  cancellation ?? HttpProbeCancellation(),
+  probe:
+      (url, {required maxBytes, required prefixOnly, required cancellation}) =>
+          httpClient.probe(
+            url,
+            maxBytes: maxBytes,
+            prefixOnly: prefixOnly,
+            cancellation: cancellation,
+            // Sending a Content-Type header makes Version Checker fail for
+            // Bitbucket repos, so we deliberately don't set one here.
+            allowSelfSignedCertificates: true,
+          ),
+);
+
+/// Reads a `.version` file through [probe] and decodes it.
+///
+/// Holds the rules every caller needs: the [fixUrl] fixups, the 1 MiB cap, and
+/// the JSON-ish decode. Callers supply the transport so share-time source
+/// checks can reuse their own probe.
+Future<VersionCheckerInfo> readVersionCheckerInfo(
+  String url,
+  HttpProbeCancellation cancellation, {
+  required HttpProbe probe,
+}) async {
+  final response = await probe(
+    Uri.parse(fixUrl(url.trim())),
+    maxBytes: 1024 * 1024,
+    prefixOnly: false,
+    cancellation: cancellation,
   );
-
-  var data = response.data;
-  if (data is List<int>) {
-    data = utf8.decode(data);
-  }
-  final String body = data;
-
-  if (response.statusCode != 200) {
-    throw VersionFileFetchException(response.statusCode);
-  }
-
+  final body = utf8.decode(response.bytes);
   return VersionCheckerInfoMapper.fromMap(parseVersionCheckerJson(body));
-}
-
-/// Thrown by [fetchRemoteVersionCheckerInfo] when the server returns a non-200
-/// status for a `.version` file request.
-class VersionFileFetchException implements Exception {
-  final int? statusCode;
-
-  VersionFileFetchException(this.statusCode);
-
-  @override
-  String toString() => 'Failed to fetch version file (HTTP $statusCode).';
 }
 
 /// User linked to the page for their version file on GitHub instead of to the raw file.

@@ -10,6 +10,8 @@ import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/modpacks/incoming/incoming_modpack.dart';
+import 'package:trios/modpacks/incoming/incoming_modpack_handler.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/deep_link/deep_link_confirmation_dialog.dart';
 import 'package:trios/trios/deep_link/deep_link_parser.dart';
@@ -19,6 +21,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/http_client.dart';
+import 'package:trios/utils/http_probe.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -183,6 +186,10 @@ class DeepLinkHandler extends Notifier<void> {
     );
 
     Fimber.i('Deep link received: $rawUri');
+    if (isIncomingModpack(rawUri)) {
+      unawaited(ref.read(incomingModpackHandlerProvider).receive(rawUri));
+      return;
+    }
     _queuedUris.add(rawUri);
     ref.read(deepLinkProcessing.notifier).state = true;
 
@@ -427,8 +434,7 @@ class DeepLinkHandler extends Notifier<void> {
           modVersion: versionInfo.modVersion?.toString() ?? entry.modVersion,
           downloadUrl: entry.url,
           alreadyInstalled: isInstalled,
-          error:
-              "The mod's version file has no download link and cannot be automatically installed.",
+          error: "The mod's version file has no download link and cannot be automatically installed.",
         );
       }
 
@@ -453,7 +459,7 @@ class DeepLinkHandler extends Notifier<void> {
         downloadUrl: resolvedUrl,
         alreadyInstalled: isInstalled,
       );
-    } on VersionFileFetchException catch (e) {
+    } on HttpProbeStatusException catch (e) {
       return ResolvedModEntry(
         entry: entry,
         modVersion: entry.modVersion,

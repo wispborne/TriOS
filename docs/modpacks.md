@@ -12,7 +12,7 @@ to add and remove several at once.
 
 Give the pack a name and optionally add an author, description, homepage,
 Starsector version, and update address. Each item may also have a note and an
-informational status such as Required, Recommended, Optional, or a custom
+informational label such as Core, Recommended, Optional, or a custom
 label. TriOS finds download sources automatically and identifies any items that
 still need attention. Unfinished work is autosaved as a draft, but **every
 shared item needs a mod ID and a source that TriOS successfully validates**.

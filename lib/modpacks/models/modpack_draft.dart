@@ -24,7 +24,7 @@ enum ModpackDraftProblem {
   itemUrlMissing,
   itemUrlInvalid,
   itemSourceTypeMissing,
-  itemStatusInvalid,
+  itemLabelInvalid,
   itemNoteTooLong,
   duplicateModId,
 }
@@ -49,7 +49,7 @@ class ModpackDraftItem with ModpackDraftItemMappable {
   final ModpackItemSourceType? sourceType;
   final String? name;
   final String? version;
-  final String? status;
+  final String? label;
   final String? note;
   final ModpackCatalogClues? catalog;
   final Map<String, dynamic> unknownFields;
@@ -60,7 +60,7 @@ class ModpackDraftItem with ModpackDraftItemMappable {
     this.sourceType,
     this.name,
     this.version,
-    this.status,
+    this.label,
     this.note,
     this.catalog,
     this.unknownFields = const {},
@@ -80,7 +80,7 @@ class ModpackDraftItem with ModpackDraftItemMappable {
       sourceType = item.sourceType,
       name = item.name,
       version = item.version,
-      status = item.status,
+      label = item.label,
       note = item.note,
       catalog = item.catalog,
       unknownFields = item.unknownFields;
@@ -215,14 +215,14 @@ class ModpackDraft with ModpackDraftMappable {
         );
       }
 
-      final status = item.status?.trim();
-      if (status != null &&
-          (status.length > ModpackLimits.maxStatusLength ||
-              status.contains('\n') ||
-              status.contains('\r'))) {
+      final label = item.label?.trim();
+      if (label != null &&
+          (label.length > ModpackLimits.maxLabelLength ||
+              label.contains('\n') ||
+              label.contains('\r'))) {
         found.add(
           ModpackDraftIssue(
-            ModpackDraftProblem.itemStatusInvalid,
+            ModpackDraftProblem.itemLabelInvalid,
             itemIndex: index,
           ),
         );
@@ -283,7 +283,7 @@ class ModpackDraft with ModpackDraftMappable {
             sourceType: item.sourceType!,
             name: _cleaned(item.name),
             version: _cleaned(item.version),
-            status: ModpackItemStatuses.normalize(item.status),
+            label: ModpackItemLabels.normalize(item.label),
             note: item.note?.isEmpty == true ? null : item.note,
             catalog: item.catalog?.isEmpty == true ? null : item.catalog,
             unknownFields: item.unknownFields,

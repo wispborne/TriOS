@@ -62,7 +62,7 @@ pack's own integer `version`.
       "id": "mod_id",
       "name": "Mod Name",
       "version": "1.4.0",
-      "status": "Recommended",
+      "label": "Recommended",
       "note": "Enable the optional LunaLib integration after installing.",
       "url": "https://example.com/Mod.version",
       "sourceType": "versionFile",
@@ -96,10 +96,10 @@ Item requirements:
 - `sourceType`: `versionFile` or `directDownload`.
 
 Optional item fields are the display `name`, observed mod `version`, a plain-
-text creator `note` of at most 2,000 characters, an informational `status`, and
-the catalog recovery clues. Status has no default. Required, Recommended, and
+text creator `note` of at most 2,000 characters, an informational `label`, and
+the catalog recovery clues. Label has no default. Core, Recommended, and
 Optional are standard labels, and a creator may use a custom single-line label
-up to 40 characters. Status never controls installation or validation. Item
+up to 40 characters. Label never controls installation or validation. Item
 order is retained for presentation but has no installation
 meaning. Older readers preserve unknown optional fields when comparing,
 editing, and exporting a definition. The typed models retain raw unknown keys
@@ -114,7 +114,7 @@ object keys, and preserved item order.
 
 New packs and copies begin at version 1. TriOS increments the integer once when
 Save changes commits a meaningful definition change. Editing a draft does not
-increment it by itself. Saving a changed item order, status, note,
+increment it by itself. Saving a changed item order, label, note,
 Starsector-version label, source, item list, or other shared field does. A no-op
 save does not. Copy link, Export, and Publish do not change the version.
 
@@ -147,7 +147,7 @@ making the embedded or saved pack unusable.
 
 Accepting an update replaces the saved definition as a whole. TriOS does not
 merge selected fields. The comparison groups pack information plus added,
-removed, and changed items and calls out source, status, note, and recorded
+removed, and changed items and calls out source, label, note, and recorded
 version changes.
 Changing the update address requires explicit confirmation before the whole
 update is accepted. Added items remain uninstalled until chosen. Removed items
@@ -181,7 +181,7 @@ definition available with a warning.
 
 Installation confirmation cannot be disabled for packs. Missing, installable
 items are selected by default. People may install only part of the pack,
-including skipping an item labelled Required. Successful items remain installed
+including skipping an item labelled Core. Successful items remain installed
 when another fails.
 
 Pack installation uses the normal download and batch-installation services and

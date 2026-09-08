@@ -29,7 +29,7 @@ abstract final class ModpackLimits {
   static const int maxModIdLength = 200;
   static const int maxItemNameLength = 200;
   static const int maxItemVersionLength = 60;
-  static const int maxStatusLength = 40;
+  static const int maxLabelLength = 40;
   static const int maxNoteLength = 2000;
   static const int maxCatalogNameLength = 200;
   static const int maxCatalogIdLength = 40;
@@ -60,7 +60,7 @@ enum ModpackFormatError {
   fieldTooLong('FIELD_TOO_LONG'),
   unsafeUrl('UNSAFE_URL'),
   invalidSourceType('INVALID_SOURCE_TYPE'),
-  invalidStatus('INVALID_STATUS'),
+  invalidLabel('INVALID_LABEL'),
   invalidNote('INVALID_NOTE'),
   invalidCatalog('INVALID_CATALOG'),
   invalidUnknownField('INVALID_UNKNOWN_FIELD');
@@ -104,7 +104,7 @@ const List<String> _itemKnownKeys = [
   'id',
   'name',
   'version',
-  'status',
+  'label',
   'note',
   'url',
   'sourceType',
@@ -279,7 +279,7 @@ ModpackItem _decodeItem(Object? raw) {
       ModpackLimits.maxItemVersionLength,
       'item version',
     ),
-    status: _readStatus(map['status']),
+    label: _readLabel(map['label']),
     note: _readNote(map['note']),
     catalog: _decodeCatalogClues(map['catalog']),
     unknownFields: _collectUnknownFields(map, _itemKnownKeys),
@@ -390,17 +390,17 @@ String? _readOptionalUrl(Object? value, String label) {
   return value.trim();
 }
 
-String? _readStatus(Object? value) {
+String? _readLabel(Object? value) {
   if (value == null) return null;
   if (value is! String) {
-    _fail(ModpackFormatError.invalidStatus, 'An item status is not text.');
+    _fail(ModpackFormatError.invalidLabel, 'An item label is not text.');
   }
   final trimmed = value.trim();
   if (trimmed.isEmpty) return null;
-  if (trimmed.length > ModpackLimits.maxStatusLength) {
+  if (trimmed.length > ModpackLimits.maxLabelLength) {
     _fail(
-      ModpackFormatError.invalidStatus,
-      'An item status is longer than ${ModpackLimits.maxStatusLength} '
+      ModpackFormatError.invalidLabel,
+      'An item label is longer than ${ModpackLimits.maxLabelLength} '
       'characters.',
     );
   }
@@ -408,11 +408,11 @@ String? _readStatus(Object? value) {
       trimmed.contains('\r') ||
       _hasBannedControlCharacters(trimmed)) {
     _fail(
-      ModpackFormatError.invalidStatus,
-      'An item status must be a single line of text.',
+      ModpackFormatError.invalidLabel,
+      'An item label must be a single line of text.',
     );
   }
-  return ModpackItemStatuses.normalize(trimmed);
+  return ModpackItemLabels.normalize(trimmed);
 }
 
 String? _readNote(Object? value) {
@@ -534,7 +534,7 @@ Map<String, Object?> _canonicalItemMap(ModpackItem item) {
   final map = <String, Object?>{'id': item.modId};
   _putIfPresent(map, 'name', item.name);
   _putIfPresent(map, 'version', item.version);
-  _putIfPresent(map, 'status', item.status);
+  _putIfPresent(map, 'label', item.label);
   _putIfPresent(map, 'note', item.note);
   map['url'] = item.url;
   map['sourceType'] = item.sourceType.name;

@@ -10,14 +10,14 @@ definition SHALL contain at least one item.
 Each item SHALL use a case-sensitive mod ID and an explicit Version Checker or
 fixed-download HTTP or HTTPS source. It MAY include name and version display
 snapshots, a creator note of at most 2,000 characters, catalog recovery clues,
-and an optional single-line status of at most 40 characters.
+and an optional single-line label of at most 40 characters.
 
-#### Scenario: Item status is absent
-- **WHEN** an item has no status
-- **THEN** TriOS SHALL display no status and SHALL NOT assign a default
+#### Scenario: Item label is absent
+- **WHEN** an item has no label
+- **THEN** TriOS SHALL display no label and SHALL NOT assign a default
 
-#### Scenario: Standard or custom item status is present
-- **WHEN** an item uses Required, Recommended, Optional, or a valid custom status
+#### Scenario: Standard or custom item label is present
+- **WHEN** an item uses Core, Recommended, Optional, or a valid custom label
 - **THEN** TriOS SHALL preserve and display it without changing selection, installation, dependency, validation, or enabling behavior
 
 #### Scenario: Recorded item version differs
@@ -43,7 +43,7 @@ the version once. Draft autosaves, no-op saves, Copy link, Export, and Publish
 SHALL NOT increment it.
 
 #### Scenario: Shared content changes
-- **WHEN** the person saves changed metadata, items, item order, statuses, notes, sources, or preserved unknown fields
+- **WHEN** the person saves changed metadata, items, item order, labels, notes, sources, or preserved unknown fields
 - **THEN** TriOS SHALL increment the saved pack version once
 
 #### Scenario: Existing pack is copied
@@ -165,7 +165,7 @@ Cards SHALL mix saved and draft-only packs and show name, author, pack and game
 versions, installed/total count, and applicable Draft, Unsaved changes, Update
 available, Failed, and Installing labels. Hover details SHALL include the
 description, homepage, update URL, and installed/missing counts, but not source
-problems, failed installs, last-check time, or item-status counts.
+problems, failed installs, last-check time, or item-label counts.
 
 #### Scenario: Draft-only card is opened
 - **WHEN** the person clicks a draft-only card
@@ -192,7 +192,7 @@ The full page SHALL place Back, Edit, Copy link, Export, Install, and overflow
 at the top in that order. Delete and Duplicate SHALL be in overflow. All pack
 information SHALL appear in one compact read-only block.
 
-The item grid SHALL default to icon, name, author, status, installed state,
+The item grid SHALL default to icon, name, author, label, installed state,
 combined installed/recorded version, and dependency warnings. It SHALL support
 other normal mod columns, read-only sorting with manual pack order as the
 default, multiple expanded items, and Expand all and Collapse all.
@@ -208,10 +208,10 @@ The left grid SHALL show one row per mod ID, preferring the active variant and
 then the highest installed version, and SHALL support the normal Mod Manager
 columns with independent defaults. The right grid SHALL use manual ordering
 only, support drag handles, controlled checkbox selection, Add/Remove selected,
-bulk Set status, multiple expanded items, and separate search for each side.
+bulk Set label, multiple expanded items, and separate search for each side.
 
-#### Scenario: Custom status is entered
-- **WHEN** the creator enters a single-line custom status of 40 characters or fewer
+#### Scenario: Custom label is entered
+- **WHEN** the creator enters a single-line custom label of 40 characters or fewer
 - **THEN** TriOS SHALL trim it, reject blank or control-character values, recognize standard labels case-insensitively, and preserve custom capitalization
 
 ### Requirement: Dependencies remain advisory
@@ -227,10 +227,10 @@ Preparation SHALL produce a selectable plan; the installer SHALL accept only a
 saved library entry and the confirmed selection.
 
 The confirmation dialog SHALL show a checkable table in pack order with icon,
-name, status, source, note indicator, installed state, version, and dependency
+name, label, source, note indicator, installed state, version, and dependency
 warnings. Missing installable items SHALL be selected by default. Installed
 items SHALL remain visible and unselected. Every item, including one labelled
-Required, MAY be unchecked.
+Core, MAY be unchecked.
 
 After starting, the dialog SHALL show live progress with Close and Stop.
 Closing SHALL leave installation running, keep TriOS usable, and show the same

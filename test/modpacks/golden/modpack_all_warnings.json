@@ -1,0 +1,78 @@
+{
+  "formatVersion": 1,
+  "id": "AllWarningsGoldenPk_01",
+  "name": "Everything Pack (test fixture)",
+  "version": 3,
+  "author": "TriOS test suite",
+  "description": "A deliberately messy pack. It lights up every text branch on the modpack page: standard and custom labels, notes, catalog recovery clues, fixed-download warnings, recorded versions set impossibly high, and unknown fields at every level. Load it against a real mod list to see the missing-mod, version-mismatch, and dependency warnings too.",
+  "gameVersion": "0.98a-RC8",
+  "homepageUrl": "https://fractalsoftworks.com/forum/index.php?topic=00000.0",
+  "updateUrl": "https://example.com/everything-pack.trios-modpack",
+  "items": [
+    {
+      "id": "MagicLib",
+      "name": "MagicLib",
+      "version": "999.0.0",
+      "label": "Core",
+      "note": "Turn on the settings page after first launch.\nRestart the game once more so the changes apply.",
+      "url": "https://example.com/MagicLib.version",
+      "sourceType": "versionFile",
+      "catalog": {
+        "name": "MagicLib",
+        "forumTopicId": "13718",
+        "nexusModsId": "16575",
+        "futureCatalogClue": "kept for a newer TriOS"
+      },
+      "futureItemDetails": {
+        "addedBy": "a newer TriOS",
+        "priority": 1
+      },
+      "futureItemFlag": true
+    },
+    {
+      "id": "lw_console",
+      "name": "Console Commands",
+      "version": "999.0.0",
+      "label": "Recommended",
+      "note": "Bundled here as a fixed download so the version never drifts.",
+      "url": "https://example.com/Console.zip",
+      "sourceType": "directDownload"
+    },
+    {
+      "id": "nexerelin",
+      "name": "Nexerelin",
+      "version": "999.0.0",
+      "label": "Optional",
+      "url": "https://example.com/Nexerelin.version",
+      "sourceType": "versionFile",
+      "catalog": {
+        "forumTopicId": "9175"
+      }
+    },
+    {
+      "id": "shaderLib",
+      "name": "GraphicsLib — normal maps, dynamic lighting, and environment effects used by a large number of other mods",
+      "version": "999.0.0",
+      "label": "Optional",
+      "url": "https://example.com/GraphicsLib.version",
+      "sourceType": "versionFile"
+    },
+    {
+      "id": "prv",
+      "label": "Not for first-timers",
+      "url": "https://example.com/prv.version",
+      "sourceType": "versionFile"
+    },
+    {
+      "id": "timid_admins",
+      "url": "https://example.com/timid-administrators.version",
+      "sourceType": "versionFile"
+    }
+  ],
+  "futurePackField": "kept as-is",
+  "futurePackList": [1, 2, 3],
+  "futurePackObject": {
+    "maintainer": "test suite",
+    "revision": 2
+  }
+}

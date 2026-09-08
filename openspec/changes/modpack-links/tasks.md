@@ -20,7 +20,7 @@ Checked by tests.
       base64url characters. Treat pack and mod IDs as case-sensitive.
 - [x] 1.4 Add definition format version 1 separately from the compressed-link
       transport prefix.
-- [x] 1.5 Store item status directly as an optional string. Accept Required,
+- [x] 1.5 Store item label directly as an optional string. Accept Core,
       Recommended, Optional, and trimmed custom single-line values up to 40
       characters. Do not assign a default or attach behavior to the value.
 - [x] 1.6 Preserve unknown optional object fields through decode, comparison,
@@ -104,7 +104,7 @@ listed, searched, sorted, filtered, and deleted.
       Update available, Failed, and Installing labels.
 - [x] 3.7 Put description, homepage, update URL, and installed/missing counts in
       the card hover details. Exclude source problems, failed-install details,
-      last-check time, and item-status counts.
+      last-check time, and item-label counts.
 - [x] 3.8 Open saved cards on the full page and draft-only cards in the editor.
       Put secondary actions in overflow except live progress and Stop.
 - [x] 3.9 Add toolbar count, update refresh, New, Import, sorting, smart search,
@@ -131,7 +131,7 @@ this page arrives with Phase 8.
 - [x] 3.14 Put Back, Edit, Copy link, Export, Install, and overflow at the top
       of the full page in that order. Put Delete and Duplicate in overflow.
 - [x] 3.15 Show all pack information in one compact read-only block.
-- [x] 3.16 Build the full-page item grid with icon, name, author, status,
+- [x] 3.16 Build the full-page item grid with icon, name, author, label,
       installed state, combined version, and dependency warnings visible by
       default. Offer other normal mod columns hidden by default.
 - [x] 3.17 Show one version when installed and recorded versions match. Show
@@ -159,16 +159,16 @@ sharing and no installing yet.
 - [ ] 5.6 Show one installed-mod row per mod ID, preferring the active variant
       and otherwise the highest installed version.
 - [ ] 5.7 Give each side its own search. Support drag-to-add, Add selected,
-      drag handles, Remove selected, and bulk Set status.
+      drag handles, Remove selected, and bulk Set label.
 - [ ] 5.8 Keep the right list in manual order and disable all sorting.
-- [ ] 5.9 In a collapsed right row show checkbox, icon, name, author, status,
+- [ ] 5.9 In a collapsed right row show checkbox, icon, name, author, label,
       source type, source host, and issue indicators.
-- [ ] 5.10 In an expanded right row show editable status, source type, full URL,
+- [ ] 5.10 In an expanded right row show editable label, source type, full URL,
       note, validation, repair, and Remove.
 - [ ] 5.11 Allow several expanded rows and add Expand all and Collapse all for
       currently visible rows. Keep expansion state session-only.
-- [ ] 5.12 Offer None, Required, Recommended, Optional, existing custom
-      statuses, and entry of a new custom status. Do not add a status-management
+- [ ] 5.12 Offer None, Core, Recommended, Optional, existing custom
+      labels, and entry of a new custom label. Do not add a label-management
       screen.
 - [ ] 5.13 Put Save changes and Discard changes in the editor toolbar. Leave a
       draft intact on Back. Disable Save for invalid drafts and show the next
@@ -252,10 +252,10 @@ still work before building anything modpack-specific on them.
 - [ ] 8.2 Save, replace, or copy an incoming pack into the library before
       installation starts.
 - [ ] 8.3 Always show confirmation. List items in pack order with checkbox,
-      icon, name, status, source, note indicator, installed state, version, and
+      icon, name, label, source, note indicator, installed state, version, and
       dependency warnings.
 - [ ] 8.4 Select missing installable items by default and keep installed items
-      visible but unselected. Allow every item, including Required, to be
+      visible but unselected. Allow every item, including Core, to be
       unchecked.
 - [ ] 8.5 Recompute dependencies during preparation and keep all warnings
       advisory.
@@ -311,7 +311,7 @@ definition.
 - [ ] 6.10 Review saved updates in a dialog over the full page. Reuse it for
       incoming conflicts.
 - [ ] 6.11 Group the comparison into Pack information, Added items, Removed
-      items, and Changed items. Call out status, source, note, and recorded
+      items, and Changed items. Call out label, source, note, and recorded
       version changes in one list, striking old values and placing new values
       beside them where useful.
 - [ ] 6.12 Accept an update as one complete definition. Do not merge fields.

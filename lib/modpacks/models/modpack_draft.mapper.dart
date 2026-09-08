@@ -47,8 +47,8 @@ class ModpackDraftProblemMapper extends EnumMapper<ModpackDraftProblem> {
         return ModpackDraftProblem.itemUrlInvalid;
       case r'itemSourceTypeMissing':
         return ModpackDraftProblem.itemSourceTypeMissing;
-      case r'itemStatusInvalid':
-        return ModpackDraftProblem.itemStatusInvalid;
+      case r'itemLabelInvalid':
+        return ModpackDraftProblem.itemLabelInvalid;
       case r'itemNoteTooLong':
         return ModpackDraftProblem.itemNoteTooLong;
       case r'duplicateModId':
@@ -81,8 +81,8 @@ class ModpackDraftProblemMapper extends EnumMapper<ModpackDraftProblem> {
         return r'itemUrlInvalid';
       case ModpackDraftProblem.itemSourceTypeMissing:
         return r'itemSourceTypeMissing';
-      case ModpackDraftProblem.itemStatusInvalid:
-        return r'itemStatusInvalid';
+      case ModpackDraftProblem.itemLabelInvalid:
+        return r'itemLabelInvalid';
       case ModpackDraftProblem.itemNoteTooLong:
         return r'itemNoteTooLong';
       case ModpackDraftProblem.duplicateModId:
@@ -286,10 +286,10 @@ class ModpackDraftItemMapper extends ClassMapperBase<ModpackDraftItem> {
     _$version,
     opt: true,
   );
-  static String? _$status(ModpackDraftItem v) => v.status;
-  static const Field<ModpackDraftItem, String> _f$status = Field(
-    'status',
-    _$status,
+  static String? _$label(ModpackDraftItem v) => v.label;
+  static const Field<ModpackDraftItem, String> _f$label = Field(
+    'label',
+    _$label,
     opt: true,
   );
   static String? _$note(ModpackDraftItem v) => v.note;
@@ -316,7 +316,7 @@ class ModpackDraftItemMapper extends ClassMapperBase<ModpackDraftItem> {
     #sourceType: _f$sourceType,
     #name: _f$name,
     #version: _f$version,
-    #status: _f$status,
+    #label: _f$label,
     #note: _f$note,
     #catalog: _f$catalog,
     #unknownFields: _f$unknownFields,
@@ -329,7 +329,7 @@ class ModpackDraftItemMapper extends ClassMapperBase<ModpackDraftItem> {
       sourceType: data.dec(_f$sourceType),
       name: data.dec(_f$name),
       version: data.dec(_f$version),
-      status: data.dec(_f$status),
+      label: data.dec(_f$label),
       note: data.dec(_f$note),
       catalog: data.dec(_f$catalog),
       unknownFields: data.dec(_f$unknownFields),
@@ -408,7 +408,7 @@ abstract class ModpackDraftItemCopyWith<$R, $In extends ModpackDraftItem, $Out>
     ModpackItemSourceType? sourceType,
     String? name,
     String? version,
-    String? status,
+    String? label,
     String? note,
     ModpackCatalogClues? catalog,
     Map<String, dynamic>? unknownFields,
@@ -443,7 +443,7 @@ class _ModpackDraftItemCopyWithImpl<$R, $Out>
     Object? sourceType = $none,
     Object? name = $none,
     Object? version = $none,
-    Object? status = $none,
+    Object? label = $none,
     Object? note = $none,
     Object? catalog = $none,
     Map<String, dynamic>? unknownFields,
@@ -454,7 +454,7 @@ class _ModpackDraftItemCopyWithImpl<$R, $Out>
       if (sourceType != $none) #sourceType: sourceType,
       if (name != $none) #name: name,
       if (version != $none) #version: version,
-      if (status != $none) #status: status,
+      if (label != $none) #label: label,
       if (note != $none) #note: note,
       if (catalog != $none) #catalog: catalog,
       if (unknownFields != null) #unknownFields: unknownFields,
@@ -467,7 +467,7 @@ class _ModpackDraftItemCopyWithImpl<$R, $Out>
     sourceType: data.get(#sourceType, or: $value.sourceType),
     name: data.get(#name, or: $value.name),
     version: data.get(#version, or: $value.version),
-    status: data.get(#status, or: $value.status),
+    label: data.get(#label, or: $value.label),
     note: data.get(#note, or: $value.note),
     catalog: data.get(#catalog, or: $value.catalog),
     unknownFields: data.get(#unknownFields, or: $value.unknownFields),

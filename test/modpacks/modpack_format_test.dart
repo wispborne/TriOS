@@ -86,15 +86,15 @@ void main() {
       final lazyLib = definition.items.first;
       expect(lazyLib.modId, 'lw_lazylib');
       expect(lazyLib.sourceType, ModpackItemSourceType.versionFile);
-      expect(lazyLib.status, ModpackItemStatuses.required);
+      expect(lazyLib.label, ModpackItemLabels.core);
       expect(lazyLib.catalog?.forumTopicId, '5444');
 
       final magicLib = definition.items[1];
       expect(magicLib.sourceType, ModpackItemSourceType.directDownload);
       expect(magicLib.note, contains('LunaLib'));
 
-      // A custom status keeps its own wording.
-      expect(definition.items[2].status, 'Not for first-timers');
+      // A custom label keeps its own wording.
+      expect(definition.items[2].label, 'Not for first-timers');
     });
 
     test('reads a minimal definition', () {
@@ -103,7 +103,7 @@ void main() {
       );
       expect(definition.items.single.modId, 'example_mod');
       expect(definition.author, isNull);
-      expect(definition.items.single.status, isNull);
+      expect(definition.items.single.label, isNull);
       expect(definition.items.single.catalog, isNull);
     });
 
@@ -227,7 +227,7 @@ void main() {
     test('leaves out optional fields that are not set', () {
       final json = encodeModpackDefinitionJson(_definition());
       expect(json, isNot(contains('author')));
-      expect(json, isNot(contains('status')));
+      expect(json, isNot(contains('label')));
       expect(json, isNot(contains('catalog')));
     });
 
@@ -251,7 +251,7 @@ void main() {
       expect(modpackDefinitionsAreIdentical(sameContent, saved), isFalse);
     });
 
-    test('sees a changed note, status, or source as a change', () {
+    test('sees a changed note, label, or source as a change', () {
       final saved = _definition();
       final item = saved.items.single;
 
@@ -264,7 +264,7 @@ void main() {
       );
       expect(
         modpackSharedContentMatches(
-          saved.copyWith(items: [item.copyWith(status: 'Required')]),
+          saved.copyWith(items: [item.copyWith(label: 'Core')]),
           saved,
         ),
         isFalse,
@@ -436,10 +436,10 @@ void main() {
             'id': 'example_mod',
             'url': 'https://example.com/Example.version',
             'sourceType': 'versionFile',
-            'status': 'x' * (ModpackLimits.maxStatusLength + 1),
+            'label': 'x' * (ModpackLimits.maxLabelLength + 1),
           },
         ],
-      }, ModpackFormatError.invalidStatus);
+      }, ModpackFormatError.invalidLabel);
       expectError({
         ...base,
         'items': [
@@ -453,7 +453,7 @@ void main() {
       }, ModpackFormatError.tooManyItems);
     });
 
-    test('rejects control characters in notes and statuses', () {
+    test('rejects control characters in notes and labels', () {
       final base = _golden('modpack_minimal.json');
       expectError({
         ...base,
@@ -473,10 +473,10 @@ void main() {
             'id': 'example_mod',
             'url': 'https://example.com/Example.version',
             'sourceType': 'versionFile',
-            'status': 'two\nlines',
+            'label': 'two\nlines',
           },
         ],
-      }, ModpackFormatError.invalidStatus);
+      }, ModpackFormatError.invalidLabel);
     });
 
     test('keeps line breaks in a note', () {
@@ -495,25 +495,25 @@ void main() {
     });
   });
 
-  group('item statuses', () {
+  group('item labels', () {
     test('recognise standard labels whatever the capitalization', () {
-      expect(ModpackItemStatuses.normalize('required'), 'Required');
-      expect(ModpackItemStatuses.normalize('  RECOMMENDED '), 'Recommended');
-      expect(ModpackItemStatuses.normalize('optional'), 'Optional');
-      expect(ModpackItemStatuses.isStandard('OPTIONAL'), isTrue);
+      expect(ModpackItemLabels.normalize('core'), 'Core');
+      expect(ModpackItemLabels.normalize('  RECOMMENDED '), 'Recommended');
+      expect(ModpackItemLabels.normalize('optional'), 'Optional');
+      expect(ModpackItemLabels.isStandard('OPTIONAL'), isTrue);
     });
 
     test('keep a custom label as it was typed', () {
       expect(
-        ModpackItemStatuses.normalize('  Vanilla-friendly  '),
+        ModpackItemLabels.normalize('  Vanilla-friendly  '),
         'Vanilla-friendly',
       );
-      expect(ModpackItemStatuses.isStandard('Vanilla-friendly'), isFalse);
+      expect(ModpackItemLabels.isStandard('Vanilla-friendly'), isFalse);
     });
 
-    test('treat blank as no status', () {
-      expect(ModpackItemStatuses.normalize(null), isNull);
-      expect(ModpackItemStatuses.normalize('   '), isNull);
+    test('treat blank as no label', () {
+      expect(ModpackItemLabels.normalize(null), isNull);
+      expect(ModpackItemLabels.normalize('   '), isNull);
     });
 
     test('are normalised when a definition is read', () {
@@ -524,11 +524,11 @@ void main() {
             'id': 'example_mod',
             'url': 'https://example.com/Example.version',
             'sourceType': 'versionFile',
-            'status': 'recommended',
+            'label': 'recommended',
           },
         ],
       });
-      expect(definition.items.single.status, 'Recommended');
+      expect(definition.items.single.label, 'Recommended');
     });
   });
 }

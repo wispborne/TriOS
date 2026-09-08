@@ -21,17 +21,17 @@ enum ModpackItemSourceType {
   directDownload,
 }
 
-/// The standard item statuses. Creators may type any other single-line
+/// The standard item labels. Creators may type any other single-line
 /// label.
 ///
-/// A status is informational only: it never affects selection, installation,
+/// A label is informational only: it never affects selection, installation,
 /// dependencies, or enabling.
-abstract final class ModpackItemStatuses {
-  static const String required = 'Required';
+abstract final class ModpackItemLabels {
+  static const String core = 'Core';
   static const String recommended = 'Recommended';
   static const String optional = 'Optional';
 
-  static const List<String> standard = [required, recommended, optional];
+  static const List<String> standard = [core, recommended, optional];
 
   /// Trims [value], matching standard labels case-insensitively and returning
   /// their standard spelling. Custom labels keep their capitalization. Blank
@@ -91,7 +91,7 @@ class ModpackItem with ModpackItemMappable {
   final ModpackItemSourceType sourceType;
   final String? name;
   final String? version;
-  final String? status;
+  final String? label;
   final String? note;
 
   /// Optional clues for Catalog recovery.
@@ -106,7 +106,7 @@ class ModpackItem with ModpackItemMappable {
     required this.sourceType,
     this.name,
     this.version,
-    this.status,
+    this.label,
     this.note,
     this.catalog,
     this.unknownFields = const {},

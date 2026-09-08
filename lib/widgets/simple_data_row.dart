@@ -10,7 +10,7 @@ class SimpleDataRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return SelectableText.rich(
       TextSpan(
-        style: Theme.of(context).textTheme.labelLarge,
+        style: Theme.of(context).textTheme.labelMedium,
         children: [
           TextSpan(
             text: label,
@@ -18,9 +18,8 @@ class SimpleDataRow extends StatelessWidget {
           ),
           TextSpan(
             text: value,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.labelMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

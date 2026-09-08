@@ -69,7 +69,7 @@ Every shareable definition has this shape:
       "id": "mod_id",
       "name": "Mod Name",
       "version": "1.4.0",
-      "status": "Recommended",
+      "label": "Recommended",
       "note": "Enable the optional LunaLib integration after installing.",
       "url": "https://example.com/Mod.version",
       "sourceType": "versionFile",
@@ -106,10 +106,10 @@ Required item fields are `id`, `url`, and `sourceType`.
   Version Checker endpoint does not always end in `.version`.
 - `name` and `version` are optional display snapshots. The item version does
   not freeze installation to that release.
-- `status` is an optional single-line label of at most 40 characters. Required,
+- `label` is an optional single-line label of at most 40 characters. Core,
   Recommended, and Optional are standard labels; custom labels are allowed.
   It is informational only and does not change selection, installation,
-  dependency, validation, or enabling behavior. There is no default status.
+  dependency, validation, or enabling behavior. There is no default label.
 - `note` is optional plain text written by the creator for that item. It may
   contain line breaks and is limited to 2,000 characters.
 - `catalog` is an optional set of recovery clues. Its fields are the catalog
@@ -146,7 +146,7 @@ definition is complete and every item source passes validation.
 Save changes commits the draft to the library. Compare user-editable shared
 content without treating the existing ID or version as an edit. Increment the
 integer version only when that content changed. Draft editing does not change
-the version by itself. Saving a changed item order, note, status,
+the version by itself. Saving a changed item order, note, label,
 Starsector-version label, source, item list, or metadata does. A no-op save does
 not. Copy link, Export, and Publish never change the version.
 
@@ -210,7 +210,7 @@ author, pack version, game version, installed/total count, and applicable Draft,
 Unsaved changes, Update available, Failed, and Installing labels. Its hover
 details include the description, homepage, update URL, and installed/missing
 counts, but not source problems, failed installs, last-update-check time, or an
-item-status summary. Clicking a saved card opens its full page; clicking a
+item-label summary. Clicking a saved card opens its full page; clicking a
 draft-only card opens its editor. Other actions use the overflow menu except
 that a running installation exposes progress and Stop.
 
@@ -231,7 +231,7 @@ Back, Edit, Copy link, Export, Install, and overflow, in that order. Delete and
 Duplicate are in the overflow menu. Show all pack information in one compact
 read-only block above the item grid.
 
-The full-page item grid defaults to icon, name, author, status, installed state,
+The full-page item grid defaults to icon, name, author, label, installed state,
 one combined version column, and dependency warnings. If installed and recorded
 pack versions differ, show `<installed> (modpack: <recorded>)`; otherwise show
 one version. Other normal mod columns are available but hidden by default. The
@@ -240,7 +240,7 @@ to show their full details, several may be open, and Expand all and Collapse all
 act on the currently visible rows.
 
 Expanded read-only details show the full download address, source type, note,
-status, recorded and installed versions, dependency warnings, and catalog
+label, recorded and installed versions, dependency warnings, and catalog
 recovery information.
 
 Deleting a library entry removes only the saved pack and draft. The
@@ -260,7 +260,7 @@ it is a power-user operation.
   their shareable sources.
 - For a new pack, prefill the optional Starsector-version label from the current
   installation when known. Keep it freely editable.
-- Edit the optional creator note and status for each item. Show notes on demand
+- Edit the optional creator note and label for each item. Show notes on demand
   in compact lists.
 
 Pack fields sit above the lists. Editable fields use compact Settings-style
@@ -274,19 +274,19 @@ both grids support the normal mod columns with different defaults and separate
 saved column state. Each side has its own search box.
 
 The right side is manual pack order only and cannot be sorted. It supports drag
-handles, checkbox selection, Remove selected, and Set status. A collapsed row
-shows checkbox, icon, name, author, status, source type, source host, and issue
-indicators. An expanded row shows editable status, source type, full URL, note,
+handles, checkbox selection, Remove selected, and Set label. A collapsed row
+shows checkbox, icon, name, author, label, source type, source host, and issue
+indicators. An expanded row shows editable label, source type, full URL, note,
 validation and repair controls, and Remove. Several rows may be expanded, with
 Expand all and Collapse all for currently visible rows. WispGrid needs reusable
 controlled selection and cross-grid drag support, without modpack-specific code
 inside the shared grid.
 
-The status control offers None, Required, Recommended, Optional, custom values
+The label control offers None, Core, Recommended, Optional, custom values
 already used by the pack, and entry of a new custom value. Trim values, reject
 blank or control-character custom values, recognize standard values without
 case sensitivity, and preserve custom capitalization. Do not add a separate
-status-management screen.
+label-management screen.
 
 The two lists live on the same page. Do not require dragging across navigation
 tabs. The current WispGrid drag payload is private and restricted to one grid,
@@ -466,7 +466,7 @@ definition available with a warning.
 Accept an online update as one complete definition. Do not merge selected
 fields or items. Review saved-pack updates in a dialog over the full pack page.
 Use the same comparison dialog for incoming conflicts. Show pack field changes,
-then Added, Removed, and Changed item sections; changed items call out status,
+then Added, Removed, and Changed item sections; changed items call out label,
 source, note, and recorded-version changes. Use one change list rather than
 side-by-side tables, with old values struck out and new values beside them when
 that makes the change easier to read.
@@ -515,10 +515,10 @@ plan, then start the confirmed selection as an observable run registered by
 pack ID in the in-memory installation manager.
 
 Resolve all items before the dialog when practical. Show a checkable table in
-pack order with icon, name, status, source, note indicator, installed state,
+pack order with icon, name, label, source, note indicator, installed state,
 version, and dependency warnings. Default-select missing, installable items.
 Already installed items remain visible but are not selected. People may uncheck
-any item, including one labelled Required, and install only part of the pack.
+any item, including one labelled Core, and install only part of the pack.
 Add an unchecked Enable installed items after installation option.
 
 After installation starts, the dialog becomes live progress with Close and

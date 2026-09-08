@@ -53,12 +53,12 @@ void main() {
       expect(definition.description, 'A note');
     });
 
-    test('gives standard statuses their standard spelling', () {
+    test('gives standard labels their standard spelling', () {
       final definition = _draft(
-        items: [_item('alpha_mod').copyWith(status: '  required ')],
+        items: [_item('alpha_mod').copyWith(label: '  core ')],
       ).toDefinition(version: 1);
 
-      expect(definition.items.single.status, ModpackItemStatuses.required);
+      expect(definition.items.single.label, ModpackItemLabels.core);
     });
 
     test('produces a definition the strict reader accepts', () {
@@ -140,17 +140,17 @@ void main() {
       );
     });
 
-    test('reports a status or note that is too long', () {
+    test('reports a label or note that is too long', () {
       expect(
         _problems(
           _draft(
             items: [
               _item('alpha_mod')
-                  .copyWith(status: 'x' * (ModpackLimits.maxStatusLength + 1)),
+                  .copyWith(label: 'x' * (ModpackLimits.maxLabelLength + 1)),
             ],
           ),
         ),
-        contains(ModpackDraftProblem.itemStatusInvalid),
+        contains(ModpackDraftProblem.itemLabelInvalid),
       );
       expect(
         _problems(
@@ -186,7 +186,7 @@ void main() {
             modId: 'alpha_mod',
             url: 'https://example.com/alpha.version',
             sourceType: ModpackItemSourceType.versionFile,
-            status: 'Required',
+            label: 'Core',
             note: 'First.',
           ),
         ],
@@ -200,7 +200,7 @@ void main() {
       expect(draft.author, 'Wisp');
       expect(draft.updateUrl, definition.updateUrl);
       expect(draft.unknownFields['futureField'], 'kept');
-      expect(draft.items.single.status, 'Required');
+      expect(draft.items.single.label, 'Core');
       expect(draft.isCommittable, isTrue);
 
       // Saving it again with the same version gives back the same pack.

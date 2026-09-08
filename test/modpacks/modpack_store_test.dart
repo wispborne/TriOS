@@ -35,13 +35,13 @@ ModpackDraftItem _item(
   String modId, {
   String? url,
   ModpackItemSourceType sourceType = ModpackItemSourceType.versionFile,
-  String? status,
+  String? label,
   String? note,
 }) => ModpackDraftItem(
   modId: modId,
   url: url ?? 'https://example.com/$modId.version',
   sourceType: sourceType,
-  status: status,
+  label: label,
   note: note,
 );
 
@@ -233,7 +233,7 @@ void main() {
       expect(reordered.definition.modIds, ['beta_mod', 'alpha_mod']);
     });
 
-    test('a changed status or note counts as a change', () async {
+    test('a changed label or note counts as a change', () async {
       final draft = await newFinishedDraft();
       await store.commitDraft(draft.id);
 
@@ -241,7 +241,7 @@ void main() {
       await store.saveDraft(
         editing.copyWith(
           items: [
-            editing.items.first.copyWith(status: 'Required'),
+            editing.items.first.copyWith(label: 'Core'),
             editing.items.last,
           ],
         ),

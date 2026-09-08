@@ -13,7 +13,7 @@
       "id": "lw_lazylib",
       "name": "LazyLib",
       "version": "2.9",
-      "status": "Required",
+      "label": "Core",
       "url": "https://example.com/LazyLib.version",
       "sourceType": "versionFile",
       "catalog": {
@@ -24,15 +24,15 @@
     {
       "id": "MagicLib",
       "name": "MagicLib",
-      "version": "1.4.6",
-      "status": "Recommended",
+      "version": "2.4.6",
+      "label": "Recommended",
       "note": "Enable the optional LunaLib integration after installing.",
-      "url": "https://example.com/MagicLib-1.4.6.zip",
+      "url": "https://example.com/MagicLib-2.4.6.zip",
       "sourceType": "directDownload"
     },
     {
       "id": "prv",
-      "status": "Not for first-timers",
+      "label": "Not for first-timers",
       "url": "https://example.com/prv.version",
       "sourceType": "versionFile"
     }

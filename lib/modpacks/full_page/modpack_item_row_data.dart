@@ -1,4 +1,5 @@
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -10,6 +11,10 @@ class ModpackItemRowData implements WispGridItem {
   final ModpackItem item;
   final int packOrder;
   final Mod? installedMod;
+
+  /// Required dependencies of the installed variant that the user's mods do
+  /// not currently satisfy (not installed, disabled, or wrong version).
+  /// Empty when the item isn't installed, since nothing can be checked yet.
   final List<ModpackDependencyWarning> dependencyWarnings;
 
   const ModpackItemRowData({
@@ -47,6 +52,12 @@ class ModpackItemRowData implements WispGridItem {
 
   Version? get parsedRecordedVersion => item.parsedVersion;
 
+  bool get installedVersionIsBelowRecordedVersion {
+    final installed = installedVariant?.modInfo.version;
+    final recorded = parsedRecordedVersion;
+    return installed != null && recorded != null && installed < recorded;
+  }
+
   /// Shows the installed version once, adding the recorded version only when
   /// the two differ.
   String get combinedVersion {
@@ -68,9 +79,9 @@ class ModpackItemRowData implements WispGridItem {
   String get dependencyWarningText =>
       dependencyWarnings.map((warning) => warning.message).join('\n');
 
-  String get catalogRecoveryText {
+  String? get catalogRecoveryText {
     final catalog = item.catalog;
-    if (catalog == null || catalog.isEmpty) return 'None';
+    if (catalog == null || catalog.isEmpty) return null;
     return [
       if (catalog.name?.trim().isNotEmpty == true)
         'Name: ${catalog.name!.trim()}',
@@ -84,24 +95,48 @@ class ModpackItemRowData implements WispGridItem {
   }
 }
 
+/// A required dependency of an installed pack item that the user can't satisfy
+/// with their current mods. Wraps the same check the Mods page grid uses.
 class ModpackDependencyWarning {
-  final Dependency dependency;
-  final String message;
+  final ModDependencyCheckResult check;
 
-  const ModpackDependencyWarning({
-    required this.dependency,
-    required this.message,
-  });
+  const ModpackDependencyWarning(this.check);
+
+  Dependency get dependency => check.dependency;
+
+  ModDependencySatisfiedState get state => check.satisfiedAmount;
+
+  /// e.g. "LazyLib (missing)", "MagicLib 1.4.0 (disabled: 1.2.0)".
+  ///
+  /// The parenthetical matches `ModDependencySatisfiedStateExt
+  /// .getDependencyStateText` in mod_manager_extensions.dart, the wording the
+  /// Mods page and the dashboard use. Kept inline because that extension name
+  /// collides with one in mod_manager_logic.dart, which this file needs.
+  String get message {
+    final have = state.modVariant?.modInfo.version;
+    final status = switch (state) {
+      Satisfied _ => '(found $have)',
+      Missing _ => '(missing)',
+      Disabled _ => '(disabled: $have)',
+      VersionInvalid _ => '(wrong version: $have)',
+      VersionWarning _ => '(found: $have)',
+    };
+    return '${dependency.formattedNameVersion} $status';
+  }
 }
 
 /// Joins saved item data to the preferred installed variant without changing
 /// the pack's manual order.
+///
+/// [modCompatibility] is `AppState.modCompatibility`: each installed variant's
+/// dependency check against the user's enabled mods. The same map drives the
+/// Mods page grid, so both screens agree on what's missing.
 List<ModpackItemRowData> buildModpackItemRows(
   ModpackDefinition definition,
-  List<Mod> installedMods,
-) {
+  List<Mod> installedMods, [
+  Map<SmolId, DependencyCheck> modCompatibility = const {},
+]) {
   final modsById = {for (final mod in installedMods) mod.id: mod};
-  final packModIds = definition.items.map((item) => item.modId).toSet();
 
   return [
     for (var index = 0; index < definition.items.length; index++)
@@ -109,7 +144,7 @@ List<ModpackItemRowData> buildModpackItemRows(
         definition.items[index],
         index,
         modsById[definition.items[index].modId],
-        packModIds,
+        modCompatibility,
       ),
   ];
 }
@@ -118,25 +153,19 @@ ModpackItemRowData _buildRow(
   ModpackItem item,
   int packOrder,
   Mod? installedMod,
-  Set<String> packModIds,
+  Map<SmolId, DependencyCheck> modCompatibility,
 ) {
-  final dependencies =
-      installedMod?.findFirstEnabledOrHighestVersion?.modInfo.dependencies ??
-      const <Dependency>[];
-  final warnings = <ModpackDependencyWarning>[];
+  final variant = installedMod?.findFirstEnabledOrHighestVersion;
+  final checks =
+      variant == null
+      ? const <ModDependencyCheckResult>[]
+      : modCompatibility[variant.smolId]?.dependencyChecks ??
+            const <ModDependencyCheckResult>[];
 
-  for (final dependency in dependencies) {
-    final dependencyId = dependency.id;
-    if (dependencyId != null && packModIds.contains(dependencyId)) continue;
-
-    final displayName = dependency.formattedNameVersion;
-    final message = dependencyId == null
-        ? 'Requires $displayName, but its mod ID is unknown.'
-        : 'Requires $displayName, which is not in this modpack.';
-    warnings.add(
-      ModpackDependencyWarning(dependency: dependency, message: message),
-    );
-  }
+  final warnings = [
+    for (final check in checks)
+      if (check.satisfiedAmount is! Satisfied) ModpackDependencyWarning(check),
+  ];
 
   return ModpackItemRowData(
     item: item,

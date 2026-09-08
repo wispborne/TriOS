@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_info_json.dart';
@@ -95,26 +96,89 @@ void main() {
     expect(rows.single.combinedVersion, '1.0.0');
   });
 
-  test('required dependencies absent from the pack become warnings', () {
+  test('recognizes an installed version below the recorded version', () {
     final rows = buildModpackItemRows(
-      _definition([_item('alpha'), _item('included')]),
+      _definition([
+        _item('older', version: '2.0.0'),
+        _item('matching', version: '2.0.0'),
+        _item('newer', version: '2.0.0'),
+      ]),
+      [
+        _mod('older', version: '1.0.0'),
+        _mod('matching', version: '2.0.0'),
+        _mod('newer', version: '3.0.0'),
+      ],
+    );
+
+    expect(rows[0].installedVersionIsBelowRecordedVersion, isTrue);
+    expect(rows[1].installedVersionIsBelowRecordedVersion, isFalse);
+    expect(rows[2].installedVersionIsBelowRecordedVersion, isFalse);
+  });
+
+  test('dependencies the user cannot satisfy become warnings', () {
+    final alpha = _mod(
+      'alpha',
+      version: '1.0.0',
+      dependencies: [
+        Dependency(id: 'have', name: 'Have It'),
+        Dependency(id: 'gone', name: 'Missing Library'),
+        Dependency(id: 'off', name: 'Disabled Library'),
+      ],
+    );
+    final have = _mod('have', version: '2.0.0');
+    final off = _mod('off', version: '1.0.0');
+
+    final rows = buildModpackItemRows(
+      _definition([_item('alpha'), _item('beta')]),
+      [alpha, have],
+      {
+        alpha.modVariants.first.smolId: DependencyCheck(
+          GameCompatibility.perfectMatch,
+          [
+            ModDependencyCheckResult(
+              Dependency(id: 'have', name: 'Have It'),
+              Satisfied(have.modVariants.first),
+            ),
+            ModDependencyCheckResult(
+              Dependency(id: 'gone', name: 'Missing Library'),
+              Missing(),
+            ),
+            ModDependencyCheckResult(
+              Dependency(id: 'off', name: 'Disabled Library'),
+              Disabled(off.modVariants.first),
+            ),
+          ],
+        ),
+      },
+    );
+
+    // The satisfied dependency is dropped; the other two are shown, using the
+    // same state wording as the Mods page.
+    expect(rows.first.dependencyWarnings, hasLength(2));
+    expect(
+      rows.first.dependencyWarningText,
+      contains('Missing Library (missing)'),
+    );
+    expect(
+      rows.first.dependencyWarningText,
+      contains('Disabled Library (disabled: 1.0.0)'),
+    );
+    // beta isn't installed, so nothing can be checked for it.
+    expect(rows.last.dependencyWarnings, isEmpty);
+  });
+
+  test('an installed item with no compatibility entry has no warnings', () {
+    final rows = buildModpackItemRows(
+      _definition([_item('alpha')]),
       [
         _mod(
           'alpha',
           version: '1.0.0',
-          dependencies: [
-            Dependency(id: 'included', name: 'Included'),
-            Dependency(id: 'missing', name: 'Missing Library'),
-          ],
+          dependencies: [Dependency(id: 'x', name: 'X')],
         ),
       ],
     );
 
-    expect(rows.first.dependencyWarnings, hasLength(1));
-    expect(
-      rows.first.dependencyWarningText,
-      'Requires Missing Library, which is not in this modpack.',
-    );
-    expect(rows.last.dependencyWarnings, isEmpty);
+    expect(rows.single.dependencyWarnings, isEmpty);
   });
 }

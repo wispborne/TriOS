@@ -1,17 +1,20 @@
 import 'package:flutter/services.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/mod_manager/homebrew_grid/mod_grid_columns.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/mod_manager_extensions.dart';
+import 'package:trios/mod_manager/mod_manager_logic.dart';
+import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/modpacks/full_page/modpack_item_row_data.dart';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_library_entry.dart';
+import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
@@ -20,6 +23,7 @@ import 'package:trios/widgets/simple_data_row.dart';
 import 'package:trios/widgets/snackbar.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _packOrderColumnKey = 'packOrder';
 
@@ -55,7 +59,8 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
   @override
   Widget build(BuildContext context) {
     final allMods = ref.watch(AppState.mods);
-    final rows = buildModpackItemRows(definition, allMods);
+    final modCompatibility = ref.watch(AppState.modCompatibility);
+    final rows = buildModpackItemRows(definition, allMods, modCompatibility);
     final columns = _buildColumns(allMods);
 
     return Column(
@@ -345,20 +350,17 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
               content: const Text('Pack ID copied to clipboard'),
             );
           },
-          child: Padding(
-            padding: const .symmetric(horizontal: 4, vertical: 2),
-            child: Row(
-              mainAxisSize: .min,
-              spacing: 4,
-              children: [
-                Text(
-                  'ID: $abbreviatedId',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+          child: Row(
+            mainAxisSize: .min,
+            spacing: 4,
+            children: [
+              Text(
+                'ID: $abbreviatedId',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: effectiveColor,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -525,6 +527,39 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
         ),
       ),
       WispGridColumn<ModpackItemRowData>(
+        key: 'installed',
+        name: 'Installed',
+        isSortable: true,
+        getSortValue: (row) => row.isInstalled ? 1 : 0,
+        headerCellBuilder: (_) => _columnHeader('Installed'),
+        itemCellBuilder: (row, modifiers) => row.isInstalled
+            ? ModVersionSelectionDropdown(
+                mod: row.installedMod!,
+                width: modifiers.columnState.width,
+                showTooltip: true,
+              )
+            : Row(
+                spacing: 4,
+                children: [
+                  Icon(
+                    row.isInstalled
+                        ? Icons.check_circle_outline
+                        : Icons.cancel_outlined,
+                    size: 16,
+                    color: row.isInstalled
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.error,
+                  ),
+                  Text(
+                    row.isInstalled ? 'Installed' : 'Missing',
+                    style: gridTextStyle,
+                  ),
+                ],
+              ),
+        csvValue: (row) => row.isInstalled ? 'Installed' : 'Missing',
+        defaultState: const WispGridColumnState(position: 1, width: 130),
+      ),
+      WispGridColumn<ModpackItemRowData>(
         key: 'icons',
         name: 'Icon',
         isSortable: true,
@@ -536,7 +571,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
           takeUpSpaceIfNoIcon: true,
         ),
         csvValue: (row) => row.installedVariant?.iconFilePath,
-        defaultState: const WispGridColumnState(position: 1, width: 32),
+        defaultState: const WispGridColumnState(position: 2, width: 32),
       ),
       WispGridColumn<ModpackItemRowData>(
         key: 'name',
@@ -544,25 +579,51 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
         isSortable: true,
         getSortValue: (row) => row.displayName.toLowerCase(),
         headerCellBuilder: (_) => _columnHeader('Name'),
-        itemCellBuilder: (row, _) => Column(
+        itemCellBuilder: (row, _) => Row(
           crossAxisAlignment: .start,
           children: [
-            TextTriOS(
-              row.displayName,
-              style: gridNameTextStyle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            TextTriOS(
-              row.item.modId,
-              style: gridMutedTextStyle.copyWith(fontSize: 10),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: .start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: TextTriOS(
+                          row.displayName,
+                          style: gridNameTextStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (row.item.note != null &&
+                          row.item.note.isNotNullOrBlank)
+                        Padding(
+                          padding: const .only(top: 3, left: 8),
+                          child: MovingTooltipWidget.text(
+                            message: row.item.note,
+                            child: Icon(
+                              Icons.sticky_note_2,
+                              size: 14,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  TextTriOS(
+                    row.item.modId,
+                    style: gridMutedTextStyle.copyWith(fontSize: 10),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         csvValue: (row) => row.displayName,
-        defaultState: const WispGridColumnState(position: 2, width: 240),
+        defaultState: const WispGridColumnState(position: 3, width: 240),
       ),
       WispGridColumn<ModpackItemRowData>(
         key: 'author',
@@ -577,49 +638,22 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
           overflow: TextOverflow.ellipsis,
         ),
         csvValue: (row) => row.author,
-        defaultState: const WispGridColumnState(position: 3, width: 160),
+        defaultState: const WispGridColumnState(position: 4, width: 160),
       ),
       WispGridColumn<ModpackItemRowData>(
-        key: 'status',
-        name: 'Status',
+        key: 'label',
+        name: 'Label',
         isSortable: true,
-        getSortValue: (row) => row.item.status?.toLowerCase() ?? '',
-        headerCellBuilder: (_) => _columnHeader('Status'),
+        getSortValue: (row) => row.item.label?.toLowerCase() ?? '',
+        headerCellBuilder: (_) => _columnHeader('Label'),
         itemCellBuilder: (row, _) => TextTriOS(
-          row.item.status ?? '—',
+          row.item.label ?? '—',
           style: gridTextStyle,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        csvValue: (row) => row.item.status,
-        defaultState: const WispGridColumnState(position: 4, width: 120),
-      ),
-      WispGridColumn<ModpackItemRowData>(
-        key: 'installed',
-        name: 'Installed',
-        isSortable: true,
-        getSortValue: (row) => row.isInstalled ? 1 : 0,
-        headerCellBuilder: (_) => _columnHeader('Installed'),
-        itemCellBuilder: (row, _) => Row(
-          spacing: 4,
-          children: [
-            Icon(
-              row.isInstalled
-                  ? Icons.check_circle_outline
-                  : Icons.cancel_outlined,
-              size: 16,
-              color: row.isInstalled
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.error,
-            ),
-            Text(
-              row.isInstalled ? 'Installed' : 'Missing',
-              style: gridTextStyle,
-            ),
-          ],
-        ),
-        csvValue: (row) => row.isInstalled ? 'Installed' : 'Missing',
-        defaultState: const WispGridColumnState(position: 5, width: 152),
+        csvValue: (row) => row.item.label,
+        defaultState: const WispGridColumnState(position: 5, width: 120),
       ),
       WispGridColumn<ModpackItemRowData>(
         key: 'version',
@@ -628,25 +662,63 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
         getSortValue: (row) =>
             row.installedVariant?.modInfo.version ?? row.parsedRecordedVersion,
         headerCellBuilder: (_) => _columnHeader('Version'),
-        itemCellBuilder: (row, _) => TextTriOS(
-          row.combinedVersion,
-          style: gridTextStyle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        itemCellBuilder: (row, _) {
+          final installedVersion = row.installedVersion;
+          final recordedVersion = row.recordedVersion;
+          if (installedVersion == null) {
+            return TextTriOS(
+              row.combinedVersion,
+              style: gridTextStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            );
+          }
+
+          final showsRecordedVersion =
+              recordedVersion != null &&
+              row.installedVariant?.modInfo.version !=
+                  row.parsedRecordedVersion;
+          final versionText = Text.rich(
+            TextSpan(
+              style: gridTextStyle,
+              children: [
+                TextSpan(
+                  text: installedVersion,
+                  style: row.installedVersionIsBelowRecordedVersion
+                      ? TextStyle(color: theme.triosExtensions.warning)
+                      : null,
+                ),
+                if (showsRecordedVersion)
+                  TextSpan(text: ' (modpack: $recordedVersion)'),
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          );
+          return row.installedVersionIsBelowRecordedVersion
+              ? MovingTooltipWidget.text(
+                  message:
+                      'You have $installedVersion. This modpack calls for '
+                      '$recordedVersion or newer.',
+                  warningLevel: TooltipWarningLevel.warning,
+                  child: versionText,
+                )
+              : versionText;
+        },
         csvValue: (row) => row.combinedVersion,
         defaultState: const WispGridColumnState(position: 6, width: 190),
       ),
       WispGridColumn<ModpackItemRowData>(
         key: 'dependencies',
-        name: 'Dependency warnings',
+        name: 'Dependencies',
         isSortable: true,
         getSortValue: (row) => row.dependencyWarnings.length,
         headerCellBuilder: (_) => _columnHeader('Dependencies'),
         itemCellBuilder: (row, _) {
-          if (row.dependencyWarnings.isEmpty) {
+          if (!row.isInstalled || row.dependencyWarnings.isEmpty) {
             return Text('—', style: gridTextStyle);
           }
+          final count = row.dependencyWarnings.length;
           return MovingTooltipWidget.text(
             message: row.dependencyWarningText,
             child: Row(
@@ -654,14 +726,10 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
               children: [
                 Icon(
                   Icons.warning_amber,
-                  size: 18,
+                  size: 16,
                   color: theme.colorScheme.error,
                 ),
-                Text(
-                  '${row.dependencyWarnings.length} '
-                  '${row.dependencyWarnings.length == 1 ? 'warning' : 'warnings'}',
-                  style: gridTextStyle,
-                ),
+                Text('$count needed', style: gridTextStyle),
               ],
             ),
           );
@@ -791,6 +859,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     final unknownKeys = item.unknownFields.keys.toList()..sort();
     final warnings = row.dependencyWarnings;
 
+    final theme = Theme.of(context);
     return Padding(
       padding: const .fromLTRB(16, 0, 16, 16),
       child: Padding(
@@ -799,15 +868,12 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
           crossAxisAlignment: .start,
           spacing: 8,
           children: [
+            if (item.label.isNotNullOrBlank)
+              Text(item.label!, style: theme.textTheme.labelMedium),
             Wrap(
               spacing: 24,
               runSpacing: 8,
               children: [
-                SimpleDataRow(
-                  label: 'Source type: ',
-                  value: row.sourceTypeLabel,
-                ),
-                SimpleDataRow(label: 'Status: ', value: _orNotSet(item.status)),
                 SimpleDataRow(
                   label: 'Installed version: ',
                   value: row.installedVersion ?? 'Not installed',
@@ -818,34 +884,61 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                 ),
               ],
             ),
-            SimpleDataRow(label: 'Download URL: ', value: item.url),
-            SimpleDataRow(label: 'Note: ', value: _orNotSet(item.note)),
-            SimpleDataRow(
-              label: 'Catalog recovery: ',
-              value: row.catalogRecoveryText,
+            Row(
+              spacing: 8,
+              children: [
+                SimpleDataRow(label: 'Download URL: ', value: item.url),
+                MovingTooltipWidget.text(
+                  message: switch (item.sourceType) {
+                    .versionFile =>
+                      'This download url uses Version Checker.'
+                          '\nIt will always download the latest version of the mod (per Version Checker).',
+                    .directDownload =>
+                      'This download url was hardcoded.'
+                          '\nIt will always download the same file, even if the mod updates.',
+                  },
+                  child: Icon(
+                    switch (item.sourceType) {
+                      ModpackItemSourceType.versionFile => Icons.link_off,
+                      ModpackItemSourceType.directDownload => Icons.link,
+                    },
+                    size: 16,
+                    color: switch (item.sourceType) {
+                      .versionFile => theme.iconTheme.color,
+                      .directDownload => theme.triosExtensions.warning,
+                    },
+                  ),
+                ),
+              ],
             ),
-            if (warnings.isEmpty)
-              const SimpleDataRow(label: 'Dependency warnings: ', value: 'None')
-            else
+            if (row.catalogRecoveryText.isNotNullOrBlank)
+              SimpleDataRow(
+                label: 'Catalog recovery: ',
+                value: row.catalogRecoveryText!,
+              ),
+            if (warnings.isNotEmpty)
               Column(
                 crossAxisAlignment: .start,
                 spacing: 4,
                 children: [
-                  Text(
-                    'Dependency warnings',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
+                  Text('Required mods', style: theme.textTheme.labelMedium),
                   for (final warning in warnings)
                     Row(
-                      crossAxisAlignment: .start,
                       spacing: 8,
                       children: [
                         Icon(
                           Icons.warning_amber,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.error,
+                          size: 14,
+                          color:
+                              getStateColorForDependencyText(warning.state) ??
+                              theme.colorScheme.error,
                         ),
-                        Expanded(child: SelectableText(warning.message)),
+                        Expanded(
+                          child: SelectableText(
+                            warning.message,
+                            style: theme.textTheme.labelMedium,
+                          ),
+                        ),
                       ],
                     ),
                 ],
@@ -855,6 +948,8 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                 label: 'Additional fields: ',
                 value: unknownKeys.join(', '),
               ),
+            if (item.note.isNotNullOrBlank)
+              SimpleDataRow(label: "Note: ", value: item.note!),
           ],
         ),
       ),

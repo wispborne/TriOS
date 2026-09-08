@@ -45,6 +45,21 @@ dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs
 ```
 
+### Windows Dart commands in Codex
+
+On this host, sandboxed `fvm` and `dart` cannot read Dart's per-user
+configuration under `C:\Users\whitm\AppData\Roaming`. For a Flutter test,
+Dart formatter, or code generation command, request escalated execution first
+and invoke the pinned SDK directly:
+
+```
+F:\Code\Starsector\TriOS\.fvm\flutter_sdk\bin\flutter.bat test ...
+F:\Code\Starsector\TriOS\.fvm\flutter_sdk\bin\cache\dart-sdk\bin\dart.exe ...
+```
+
+Run normal `build_runner build`; do not clean its cache unless the build itself
+requires it, because a clean regeneration rewrites unrelated mapper files.
+
 The Linux build needs `libcurl4-openssl-dev` installed (for Sentry). Don't use the Snap version of Flutter on Linux — install manually so it picks up system libs. Windows builds need the InAppWebView Windows setup (see https://inappwebview.dev/docs/intro/#setup-windows).
 
 ## OpenSpec Workflow

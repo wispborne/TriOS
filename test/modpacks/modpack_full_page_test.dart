@@ -61,7 +61,7 @@ ModpackDefinition _definition() => const ModpackDefinition(
       modId: 'alpha',
       name: 'Alpha',
       version: '1.0.0',
-      status: 'Required',
+      label: 'Core',
       note: 'Configure this after installing.',
       url: 'https://example.com/alpha.version',
       sourceType: ModpackItemSourceType.versionFile,
@@ -84,6 +84,7 @@ Widget _wrap({
 }) => ProviderScope(
   overrides: [
     AppState.mods.overrideWithValue(mods),
+    AppState.modCompatibility.overrideWithValue(const {}),
     AppState.modsMetadata.overrideWith(_FakeModMetadataStore.new),
     AppState.vramEstimatorProvider.overrideWith(_FakeVramEstimatorNotifier.new),
     AppState.isGameRunning.overrideWith((ref) async => false),
@@ -169,7 +170,7 @@ void main() {
         'icons',
         'name',
         'author',
-        'status',
+        'label',
         'installed',
         'version',
         'dependencies',

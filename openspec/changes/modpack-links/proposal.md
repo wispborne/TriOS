@@ -16,7 +16,7 @@ cannot publish membership changes to people who already saved the list.
 
 Add a Modpacks library and editor to TriOS. A modpack is a versioned,
 shareable definition of mods and their download sources. It may label the
-intended Starsector version and include a creator note and optional status for
+intended Starsector version and include a creator note and optional label for
 each item. People can create a pack from installed mods, add and remove items with drag-and-
 drop or checkboxes, save unfinished drafts, and share finished packs with one
 link.

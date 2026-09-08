@@ -10,6 +10,7 @@ import 'package:trios/mod_manager/widgets/category_context_menu.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/modpacks/editor/create_modpack.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
@@ -41,6 +42,12 @@ ContextMenu buildModContextMenu(
       buildMenuItemOpenForumPage(modVariant, context),
       buildMenuItemViewChangelog(mod, ref, context),
       buildMenuItemCopyInstallLink(modVariant, context),
+      MenuItem(
+        label: 'Create modpack',
+        icon: Icons.inventory_2_outlined,
+        onSelected: () =>
+            createModpackFromSelection(ref, variants: [modVariant]),
+      ),
       _buildCategorySubmenu(mod.id, ref, context),
       _buildColorSubmenu(mod.id, ref),
       if (isModGameVersionIncorrect(
@@ -83,6 +90,17 @@ ContextMenu buildModBulkActionContextMenu(
   return ContextMenu(
     entries: <ContextMenuEntry>[
       MenuHeader(text: "${selectedMods.length} mods"),
+      MenuItem(
+        label: 'Create modpack',
+        icon: Icons.inventory_2_outlined,
+        onSelected: () => createModpackFromSelection(
+          ref,
+          variants: selectedMods
+              .map((mod) => mod.findFirstEnabledOrHighestVersion)
+              .nonNulls
+              .toList(),
+        ),
+      ),
       if (!isGameRunning && selectedMods.any((mod) => !mod.hasEnabledVariant))
         MenuItem(
           label: 'Enable',
@@ -365,10 +383,7 @@ MenuItem _buildMenuItemViewModDetails(
       // Look up ModRepoEntry via ModRecord's catalog name
       ModRepoEntry? catalogMod;
       final modRecords = ref.read(modRecordsStore).value;
-      final catalogItems = ref
-          .read(browseModsNotifierProvider)
-          .value
-          ?.items;
+      final catalogItems = ref.read(browseModsNotifierProvider).value?.items;
       if (modRecords != null && catalogItems != null) {
         final record = modRecords.records[mod.id];
         final catalogName = record?.catalog?.name;

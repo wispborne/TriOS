@@ -582,6 +582,23 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: ModsGridUpdateVisibility.hide,
   );
+  static WispGridState _$modpackInstalledGridState(Settings v) =>
+      v.modpackInstalledGridState;
+  static const Field<Settings, WispGridState> _f$modpackInstalledGridState =
+      Field(
+        'modpackInstalledGridState',
+        _$modpackInstalledGridState,
+        opt: true,
+        def: const WispGridState(columnsState: {}, groupingSetting: null),
+      );
+  static WispGridState _$modpackItemsGridState(Settings v) =>
+      v.modpackItemsGridState;
+  static const Field<Settings, WispGridState> _f$modpackItemsGridState = Field(
+    'modpackItemsGridState',
+    _$modpackItemsGridState,
+    opt: true,
+    def: const WispGridState(columnsState: {}, groupingSetting: null),
+  );
   static WispGridState _$modsGridState(Settings v) => v.modsGridState;
   static const Field<Settings, WispGridState> _f$modsGridState = Field(
     'modsGridState',
@@ -1276,6 +1293,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #lastStarsectorVersion: _f$lastStarsectorVersion,
     #dashboardGridModUpdateVisibility: _f$dashboardGridModUpdateVisibility,
     #modsGridUpdateVisibility: _f$modsGridUpdateVisibility,
+    #modpackInstalledGridState: _f$modpackInstalledGridState,
+    #modpackItemsGridState: _f$modpackItemsGridState,
     #modsGridState: _f$modsGridState,
     #weaponsGridState: _f$weaponsGridState,
     #shipsGridState: _f$shipsGridState,
@@ -1393,6 +1412,8 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         _f$dashboardGridModUpdateVisibility,
       ),
       modsGridUpdateVisibility: data.dec(_f$modsGridUpdateVisibility),
+      modpackInstalledGridState: data.dec(_f$modpackInstalledGridState),
+      modpackItemsGridState: data.dec(_f$modpackItemsGridState),
       modsGridState: data.dec(_f$modsGridState),
       weaponsGridState: data.dec(_f$weaponsGridState),
       shipsGridState: data.dec(_f$shipsGridState),
@@ -1561,6 +1582,10 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
   get vmparamsFilePaths;
   ThemeModifiersCopyWith<$R, ThemeModifiers, ThemeModifiers> get themeModifiers;
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings> get launchSettings;
+  WispGridStateCopyWith<$R, WispGridState, WispGridState>
+  get modpackInstalledGridState;
+  WispGridStateCopyWith<$R, WispGridState, WispGridState>
+  get modpackItemsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get weaponsGridState;
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get shipsGridState;
@@ -1676,6 +1701,8 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     String? lastStarsectorVersion,
     DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
     ModsGridUpdateVisibility? modsGridUpdateVisibility,
+    WispGridState? modpackInstalledGridState,
+    WispGridState? modpackItemsGridState,
     WispGridState? modsGridState,
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
@@ -1800,6 +1827,15 @@ class _SettingsCopyWithImpl<$R, $Out>
   LaunchSettingsCopyWith<$R, LaunchSettings, LaunchSettings>
   get launchSettings =>
       $value.launchSettings.copyWith.$chain((v) => call(launchSettings: v));
+  @override
+  WispGridStateCopyWith<$R, WispGridState, WispGridState>
+  get modpackInstalledGridState => $value.modpackInstalledGridState.copyWith
+      .$chain((v) => call(modpackInstalledGridState: v));
+  @override
+  WispGridStateCopyWith<$R, WispGridState, WispGridState>
+  get modpackItemsGridState => $value.modpackItemsGridState.copyWith.$chain(
+    (v) => call(modpackItemsGridState: v),
+  );
   @override
   WispGridStateCopyWith<$R, WispGridState, WispGridState> get modsGridState =>
       $value.modsGridState.copyWith.$chain((v) => call(modsGridState: v));
@@ -1998,6 +2034,8 @@ class _SettingsCopyWithImpl<$R, $Out>
     Object? lastStarsectorVersion = $none,
     DashboardGridModUpdateVisibility? dashboardGridModUpdateVisibility,
     ModsGridUpdateVisibility? modsGridUpdateVisibility,
+    WispGridState? modpackInstalledGridState,
+    WispGridState? modpackItemsGridState,
     WispGridState? modsGridState,
     WispGridState? weaponsGridState,
     WispGridState? shipsGridState,
@@ -2113,6 +2151,10 @@ class _SettingsCopyWithImpl<$R, $Out>
         #dashboardGridModUpdateVisibility: dashboardGridModUpdateVisibility,
       if (modsGridUpdateVisibility != null)
         #modsGridUpdateVisibility: modsGridUpdateVisibility,
+      if (modpackInstalledGridState != null)
+        #modpackInstalledGridState: modpackInstalledGridState,
+      if (modpackItemsGridState != null)
+        #modpackItemsGridState: modpackItemsGridState,
       if (modsGridState != null) #modsGridState: modsGridState,
       if (weaponsGridState != null) #weaponsGridState: weaponsGridState,
       if (shipsGridState != null) #shipsGridState: shipsGridState,
@@ -2296,6 +2338,14 @@ class _SettingsCopyWithImpl<$R, $Out>
     modsGridUpdateVisibility: data.get(
       #modsGridUpdateVisibility,
       or: $value.modsGridUpdateVisibility,
+    ),
+    modpackInstalledGridState: data.get(
+      #modpackInstalledGridState,
+      or: $value.modpackInstalledGridState,
+    ),
+    modpackItemsGridState: data.get(
+      #modpackItemsGridState,
+      or: $value.modpackItemsGridState,
     ),
     modsGridState: data.get(#modsGridState, or: $value.modsGridState),
     weaponsGridState: data.get(#weaponsGridState, or: $value.weaponsGridState),

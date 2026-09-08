@@ -362,6 +362,11 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       appBarTheme: themeBase.appBarTheme.copyWith(
         backgroundColor: swatch.surfaceContainer,
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: themeBase.colorScheme.onSurface,
+        ),
+      ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: primaryVariant),

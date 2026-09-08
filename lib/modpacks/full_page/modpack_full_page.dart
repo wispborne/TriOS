@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +16,11 @@ import 'package:trios/models/mod.dart';
 import 'package:trios/modpacks/full_page/modpack_item_row_data.dart';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_library_entry.dart';
+import 'package:trios/modpacks/modpack_format.dart';
+import 'package:trios/modpacks/modpack_link_codec.dart';
+import 'package:trios/modpacks/modpack_store.dart';
+import 'package:trios/modpacks/sharing/modpack_share_controller.dart';
+import 'package:trios/modpacks/sharing/modpack_source_check_section.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/extensions.dart';
@@ -26,6 +35,8 @@ import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const _packOrderColumnKey = 'packOrder';
+
+enum _ShareAction { copyLink, export, publish }
 
 class ModpackFullPage extends ConsumerStatefulWidget {
   final ModpackLibraryEntry entry;
@@ -53,6 +64,114 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     groupingSetting: null,
   );
   final Set<String> _expandedItemIds = {};
+  bool _sharing = false;
+
+  Future<void> _share(_ShareAction action) async {
+    if (_sharing) return;
+    final snapshot = definition;
+    if (snapshot.items.isEmpty) {
+      showSnackBar(
+        context: context,
+        content: const Text('Add at least one mod before sharing this pack.'),
+      );
+      return;
+    }
+    setState(() => _sharing = true);
+    try {
+      final ready = await ref
+          .read(modpackShareControllerProvider(snapshot.id).notifier)
+          .validate(snapshot);
+      if (!mounted || !ready) return;
+      if (!modpackDefinitionsAreIdentical(snapshot, definition)) return;
+      if (action == _ShareAction.copyLink) {
+        final link = buildModpackShareLink(snapshot);
+        await Clipboard.setData(ClipboardData(text: link));
+        if (mounted) {
+          showSnackBar(
+            context: context,
+            content: const Text('Modpack link copied.'),
+          );
+        }
+        return;
+      }
+      final previous = widget.entry.lastExportPath;
+      final slug = snapshot.name
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+          .replaceAll(RegExp(r'^-|-$'), '');
+      final chosen = await FilePicker.platform.saveFile(
+        dialogTitle: action == _ShareAction.publish
+            ? 'Export modpack update'
+            : 'Export modpack',
+        initialDirectory: previous == null ? null : p.dirname(previous),
+        fileName: previous == null
+            ? '${slug.isEmpty ? 'modpack' : slug}.trios-modpack'
+            : p.basename(previous),
+        type: FileType.custom,
+        allowedExtensions: ['trios-modpack'],
+        lockParentWindow: true,
+      );
+      if (!mounted || chosen == null) return;
+      final file = File(
+        chosen.toLowerCase().endsWith('.trios-modpack')
+            ? chosen
+            : '$chosen.trios-modpack',
+      );
+      if (await file.exists()) {
+        if (!mounted) return;
+        final overwrite = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Replace exported modpack?'),
+            content: Text('Replace ${file.path}?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Replace'),
+              ),
+            ],
+          ),
+        );
+        if (!mounted || overwrite != true) return;
+      }
+      if (!modpackDefinitionsAreIdentical(snapshot, definition)) return;
+      await file.writeAsString(
+        encodeModpackDefinitionFileJson(snapshot),
+        flush: true,
+      );
+      if (!mounted) return;
+      await ref
+          .read(modpackStoreProvider.notifier)
+          .recordExportLocation(snapshot.id, file.path);
+      if (!mounted) return;
+      showSnackBar(
+        context: context,
+        content: Text(
+          action == _ShareAction.publish
+              ? 'Update exported. Upload this file to ${snapshot.updateUrl}.'
+              : 'Modpack exported to ${file.path}',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final message =
+          e is ModpackFormatException &&
+              e.error == ModpackFormatError.linkTooLarge
+          ? 'This pack is too large for a link. Shorten its description or notes, remove mods, or export a .trios-modpack file instead.'
+          : 'Could not share this modpack: $e';
+      showSnackBar(
+        context: context,
+        type: SnackBarType.error,
+        content: Text(message),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
 
   ModpackDefinition get definition => widget.entry.definition;
 
@@ -62,12 +181,20 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     final modCompatibility = ref.watch(AppState.modCompatibility);
     final rows = buildModpackItemRows(definition, allMods, modCompatibility);
     final columns = _buildColumns(allMods);
+    final sharing = ref.watch(modpackShareControllerProvider(definition.id));
 
     return Column(
       children: [
         Padding(
           padding: const .only(top: 8, left: 8, right: 8),
           child: _buildPackHeader(rows),
+        ),
+        ModpackSourceCheckSection(
+          state: sharing,
+          onCancel: () => ref
+              .read(modpackShareControllerProvider(definition.id).notifier)
+              .cancel(),
+          onRepair: widget.onEdit,
         ),
         _buildItemsToolbar(rows),
         Expanded(
@@ -172,13 +299,16 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                   _toolbarAction(
                     label: 'Copy link',
                     icon: Icons.link,
-                    disabledMessage: 'Source checking and link sharing are added in phase 6.',
+                    onPressed: _sharing
+                        ? null
+                        : () => _share(_ShareAction.copyLink),
                   ),
                   _toolbarAction(
                     label: 'Export',
                     icon: Icons.file_download_outlined,
-                    disabledMessage:
-                        'Source checking and file export are added in phase 6.',
+                    onPressed: _sharing
+                        ? null
+                        : () => _share(_ShareAction.export),
                   ),
                   _toolbarAction(
                     label: 'Install',
@@ -188,6 +318,12 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                   ),
                   OverflowMenuButton(
                     menuItems: [
+                      if (definition.updateUrl != null && !_sharing)
+                        OverflowMenuItem(
+                          title: 'Publish update',
+                          icon: Icons.publish,
+                          onTap: () => _share(_ShareAction.publish),
+                        ).toEntry(2),
                       OverflowMenuItem(
                         title: 'Delete',
                         icon: Icons.delete,

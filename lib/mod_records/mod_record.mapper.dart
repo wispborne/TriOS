@@ -47,6 +47,12 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
       v.userOverrides;
   static const Field<ModRecord, Map<String, ModRecordSource>> _f$userOverrides =
       Field('userOverrides', _$userOverrides, opt: true, def: const {});
+  static ModRecordSource? _$modpackSource(ModRecord v) => v.modpackSource;
+  static const Field<ModRecord, ModRecordSource> _f$modpackSource = Field(
+    'modpackSource',
+    _$modpackSource,
+    opt: true,
+  );
   static Map<String, ModRecordSource> _$resolvedSources(ModRecord v) =>
       v.resolvedSources;
   static const Field<ModRecord, Map<String, ModRecordSource>>
@@ -122,6 +128,7 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
     #firstSeen: _f$firstSeen,
     #sources: _f$sources,
     #userOverrides: _f$userOverrides,
+    #modpackSource: _f$modpackSource,
     #resolvedSources: _f$resolvedSources,
     #installed: _f$installed,
     #catalog: _f$catalog,
@@ -142,6 +149,7 @@ class ModRecordMapper extends ClassMapperBase<ModRecord> {
       firstSeen: data.dec(_f$firstSeen),
       sources: data.dec(_f$sources),
       userOverrides: data.dec(_f$userOverrides),
+      modpackSource: data.dec(_f$modpackSource),
     );
   }
 
@@ -218,12 +226,15 @@ abstract class ModRecordCopyWith<$R, $In extends ModRecord, $Out>
     ModRecordSourceCopyWith<$R, ModRecordSource, ModRecordSource>
   >
   get userOverrides;
+  ModRecordSourceCopyWith<$R, ModRecordSource, ModRecordSource>?
+  get modpackSource;
   $R call({
     String? recordKey,
     String? modId,
     DateTime? firstSeen,
     Map<String, ModRecordSource>? sources,
     Map<String, ModRecordSource>? userOverrides,
+    ModRecordSource? modpackSource,
   });
   ModRecordCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -261,12 +272,17 @@ class _ModRecordCopyWithImpl<$R, $Out>
     (v) => call(userOverrides: v),
   );
   @override
+  ModRecordSourceCopyWith<$R, ModRecordSource, ModRecordSource>?
+  get modpackSource =>
+      $value.modpackSource?.copyWith.$chain((v) => call(modpackSource: v));
+  @override
   $R call({
     String? recordKey,
     Object? modId = $none,
     Object? firstSeen = $none,
     Map<String, ModRecordSource>? sources,
     Map<String, ModRecordSource>? userOverrides,
+    Object? modpackSource = $none,
   }) => $apply(
     FieldCopyWithData({
       if (recordKey != null) #recordKey: recordKey,
@@ -274,6 +290,7 @@ class _ModRecordCopyWithImpl<$R, $Out>
       if (firstSeen != $none) #firstSeen: firstSeen,
       if (sources != null) #sources: sources,
       if (userOverrides != null) #userOverrides: userOverrides,
+      if (modpackSource != $none) #modpackSource: modpackSource,
     }),
   );
   @override
@@ -283,6 +300,7 @@ class _ModRecordCopyWithImpl<$R, $Out>
     firstSeen: data.get(#firstSeen, or: $value.firstSeen),
     sources: data.get(#sources, or: $value.sources),
     userOverrides: data.get(#userOverrides, or: $value.userOverrides),
+    modpackSource: data.get(#modpackSource, or: $value.modpackSource),
   );
 
   @override

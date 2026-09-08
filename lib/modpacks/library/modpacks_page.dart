@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:trios/modpacks/full_page/modpack_full_page.dart';
+import 'package:trios/modpacks/editor/modpack_editor.dart';
 import 'package:trios/modpacks/library/modpack_card.dart';
 import 'package:trios/modpacks/library/modpack_card_data.dart';
 import 'package:trios/modpacks/library/modpacks_page_controller.dart';
@@ -80,7 +81,12 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
           onDelete: () => _confirmDelete(card, controller),
         );
       }
-      return _OpenPackPlaceholder(card: card, onBack: controller.closePack);
+      return ModpackEditor(
+        key: ValueKey(openPackId),
+        packId: openPackId,
+        onBack: controller.closePack,
+        onSaved: controller.viewPack,
+      );
     }
 
     return Column(
@@ -643,49 +649,6 @@ class _NoMatches extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Temporary placeholder until the editor arrives in phase 5.
-class _OpenPackPlaceholder extends StatelessWidget {
-  final ModpackCardData? card;
-  final VoidCallback onBack;
-
-  const _OpenPackPlaceholder({required this.card, required this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final name = card?.name.isNotEmpty == true ? card!.name : 'Unnamed modpack';
-    return Column(
-      crossAxisAlignment: .start,
-      children: [
-        Padding(
-          padding: const .all(8),
-          child: Row(
-            spacing: 8,
-            children: [
-              TextButton.icon(
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Back'),
-              ),
-              Text(name, style: theme.textTheme.titleLarge),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Center(
-            child: Text(
-              'The modpack editor is not built yet.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

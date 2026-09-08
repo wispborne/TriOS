@@ -259,6 +259,7 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
 
     final entry = _data.packs[packId];
     if (entry == null) return null;
+    _requireSupportedFormat(entry.definition);
 
     final draft = ModpackDraft.fromDefinition(
       entry.definition,
@@ -289,6 +290,11 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
   }
 
   // --- Saving ---------------------------------------------------------------
+
+  int versionAfterSaving(ModpackDraft draft) {
+    final saved = _data.packs[draft.id]?.definition;
+    return saved == null ? 1 : _nextVersion(draft, saved);
+  }
 
   /// Saves a draft into the library.
   ///
@@ -512,6 +518,7 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
   @protected
   @visibleForTesting
   Future<void> writeItemSourcesToRecords(ModpackDefinition definition) async {
+    await ref.read(modRecordsStore.future);
     final records = ref.read(modRecordsStore.notifier);
     for (final item in definition.items) {
       await records.updateRecord(item.modId, (existing) {
@@ -540,7 +547,15 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
                   modId: item.modId,
                   firstSeen: DateTime.now(),
                 ))
-            .copyWith(userOverrides: overrides);
+            .copyWith(
+              userOverrides: overrides,
+              modpackSource: switch (item.sourceType) {
+                .versionFile => VersionCheckerSource(
+                  masterVersionFileUrl: item.url,
+                ),
+                .directDownload => CatalogSource(directDownloadUrl: item.url),
+              },
+            );
       });
     }
   }

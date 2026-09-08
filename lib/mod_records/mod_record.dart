@@ -31,12 +31,16 @@ class ModRecord with ModRecordMappable {
   /// Auto-population never touches this map.
   final Map<String, ModRecordSource> userOverrides;
 
+  /// The source explicitly chosen when a modpack was last saved.
+  final ModRecordSource? modpackSource;
+
   ModRecord({
     required this.recordKey,
     this.modId,
     this.firstSeen,
     this.sources = const {},
     this.userOverrides = const {},
+    this.modpackSource,
   });
 
   // --- Resolved sources (auto-populated + user overrides) ---
@@ -199,6 +203,7 @@ class ModRecord with ModRecordMappable {
       firstSeen: _earliest(firstSeen, other.firstSeen),
       sources: mergedSources,
       userOverrides: mergedOverrides,
+      modpackSource: modpackSource ?? other.modpackSource,
     );
   }
 

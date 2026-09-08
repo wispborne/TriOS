@@ -14,6 +14,8 @@ import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_profiles/save_reader.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/modpacks/editor/create_modpack.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
@@ -170,7 +172,9 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                   : Colors.transparent,
               width: 2,
             ),
-            borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+            borderRadius: BorderRadius.circular(
+              TriOSThemeConstants.cornerRadius,
+            ),
           ),
           child: Stack(
             children: [
@@ -242,8 +246,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                               return GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    _isPortraitExpanded =
-                                        !_isPortraitExpanded; // Toggle between expanded and thumbnail
+                                    _isPortraitExpanded = !_isPortraitExpanded; // Toggle between expanded and thumbnail
                                   });
                                 },
                                 child: Padding(
@@ -257,9 +260,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                         portraitImage.data!,
                                         width: _isPortraitExpanded ? null : 36,
                                         // Toggle width: full size or thumbnail
-                                        height: _isPortraitExpanded
-                                            ? null
-                                            : 36, // Optional: toggle height as well
+                                        height: _isPortraitExpanded ? null : 36, // Optional: toggle height as well
                                       ),
                                     ),
                                   ),
@@ -399,21 +400,37 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                         //   ),
                         // ),
                         MovingTooltipWidget.text(
-                          message: 'Copy mod profile to clipboard',
+                          message: 'Create modpack',
                           child: IconButton(
-                            icon: const Icon(Icons.content_copy),
-                            onPressed: () {
-                              copyModListToClipboard(
-                                id: profile?.id,
-                                name: profile?.name,
-                                description: profile?.description,
-                                variants: enabledModVariants,
-                                dateCreated: profile?.dateCreated,
-                                dateModified: profile?.dateModified,
-                                context: context,
-                              );
-                            },
+                            icon: const Icon(
+                              Icons.inventory_2_outlined,
+                              size: 20,
+                            ),
+                            onPressed: () => createModpackFromSelection(
+                              ref,
+                              name: profile?.name ?? '',
+                              profileVariants: enabledModVariants,
+                            ),
                           ),
+                        ),
+                        OverflowMenuButton(
+                          menuItems: [
+                            OverflowMenuItem(
+                              title: 'Copy mod profile to clipboard',
+                              icon: Icons.content_copy,
+                              onTap: () {
+                                copyModListToClipboard(
+                                  id: profile?.id,
+                                  name: profile?.name,
+                                  description: profile?.description,
+                                  variants: enabledModVariants,
+                                  dateCreated: profile?.dateCreated,
+                                  dateModified: profile?.dateModified,
+                                  context: context,
+                                );
+                              },
+                            ).toEntry(0),
+                          ],
                         ),
                         if (!isSaveGame)
                           Disable(
@@ -509,8 +526,7 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                           ),
                         if (isSaveGame)
                           MovingTooltipWidget.text(
-                            message:
-                                "Creates a profile based on this save's last-used mods.",
+                            message: "Creates a profile based on this save's last-used mods.",
                             child: OutlinedButton(
                               onPressed: () {
                                 ref

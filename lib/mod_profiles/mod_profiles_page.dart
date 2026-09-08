@@ -13,6 +13,7 @@ import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 import 'package:uuid/uuid.dart';
@@ -75,9 +76,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                       children: [
                         Text(
                           'Mod Profiles',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.headlineSmall?.copyWith(fontSize: 20),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontSize: 20),
                         ),
                         IconButton(
                           icon: const Icon(Icons.info),
@@ -150,7 +150,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                               isInitiallyExpanded: false,
                               cardPadding: cardPadding,
                               actualAxisSpacing: actualAxisSpacing,
-                              axisSpacingForHeightHack: axisSpacingForHeightHack,
+                              axisSpacingForHeightHack:
+                                  axisSpacingForHeightHack,
                             );
                           },
                         );
@@ -183,9 +184,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                         children: [
                           Text(
                             'Save Games',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.headlineSmall?.copyWith(fontSize: 20),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontSize: 20),
                           ),
                           const Spacer(),
                           MovingTooltipWidget.text(
@@ -215,7 +215,9 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                             crossAxisSpacing: axisSpacingForHeightHack,
                             mainAxisSpacing: 10,
                             crossAxisCount: 1,
-                            padding: EdgeInsets.only(bottom: widget.pagePadding),
+                            padding: EdgeInsets.only(
+                              bottom: widget.pagePadding,
+                            ),
                             itemCount: saveGames.length,
                             itemBuilder: (context, index) {
                               return ModProfileCard(
@@ -284,85 +286,88 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
             Row(
               children: [
                 const Spacer(),
-                MovingTooltipWidget.text(
-                  message: "Import a shared mod Profile from clipboard",
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final success = await _importModProfileFromClipboard();
-                      if (!success) {
-                        showAlertDialog(
-                          context,
-                          title: "Sharing Mod Profiles",
-                          widget: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "No valid mod profile was found on your clipboard.",
-                              ),
-                              const SizedBox(height: 8.0),
-                              Row(
-                                children: [
-                                  const Text(
-                                    "1. Export a profile by clicking the",
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
+                OverflowMenuButton(
+                  menuItems: [
+                    OverflowMenuItem(
+                      title: 'Import shared profile from clipboard',
+                      icon: Icons.content_paste,
+                      onTap: () async {
+                        final success = await _importModProfileFromClipboard();
+                        if (!mounted) return;
+                        if (!success) {
+                          showAlertDialog(
+                            context,
+                            title: "Sharing Mod Profiles",
+                            widget: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "No valid mod profile was found on your clipboard.",
+                                ),
+                                const SizedBox(height: 8.0),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      "1. Export a profile by clicking the",
                                     ),
-                                    child: Icon(
-                                      Icons.content_copy,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface,
-                                      size: 24,
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                      ),
+                                      child: Icon(
+                                        Icons.content_copy,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                        size: 24,
+                                      ),
+                                      // child: SvgImageIcon(
+                                      //   "assets/images/icon-export-horiz.svg",
+                                      //   color: Theme.of(
+                                      //     context,
+                                      //   ).colorScheme.onSurface,
+                                      //   width: 24,
+                                      //   height: 24,
+                                      // ),
                                     ),
-                                    // child: SvgImageIcon(
-                                    //   "assets/images/icon-export-horiz.svg",
-                                    //   color: Theme.of(
-                                    //     context,
-                                    //   ).colorScheme.onSurface,
-                                    //   width: 24,
-                                    //   height: 24,
-                                    // ),
-                                  ),
-                                  const Text("Copy button on a Mod Profile."),
-                                ],
-                              ),
-                              const Text(
-                                "2. Paste the text to another TriOS user.",
-                              ),
-                              Row(
-                                children: [
-                                  const Text("3. They may click"),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
+                                    const Flexible(
+                                      child: Text(
+                                        "Copy action in a profile's overflow menu.",
+                                      ),
                                     ),
-                                    child: SvgImageIcon(
-                                      "assets/images/icon-import-horiz.svg",
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface,
-                                      width: 24,
-                                      height: 24,
+                                  ],
+                                ),
+                                const Text(
+                                  "2. Paste the text to another TriOS user.",
+                                ),
+                                Row(
+                                  children: [
+                                    const Text("3. They may click"),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                      ),
+                                      child: SvgImageIcon(
+                                        "assets/images/icon-import-horiz.svg",
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                        width: 24,
+                                        height: 24,
+                                      ),
                                     ),
-                                  ),
-                                  const Text(
-                                    "Import Profile to use your profile.",
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
-                    icon: SvgImageIcon(
-                      "assets/images/icon-import-horiz.svg",
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    label: const Text('Import'),
-                  ),
+                                    const Text(
+                                      "Import Profile to use your profile.",
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                    ).toEntry(0),
+                  ],
                 ),
                 const SizedBox(width: 8),
                 MovingTooltipWidget.text(
@@ -415,9 +420,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
 
       if (clipboardData.text.isNullOrBlank) {
         Fimber.w('Clipboard is empty');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Clipboard is empty')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Clipboard is empty')));
         return false;
       }
 
@@ -430,9 +434,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
         // importedModList = SharedModListMapper.fromJson(clipboardData.text!);
       } catch (e) {
         Fimber.w('Failed to parse JSON from clipboard: $e');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
         return false;
       }
 

@@ -98,6 +98,8 @@ class Settings with SettingsMappable {
   final ModsGridUpdateVisibility modsGridUpdateVisibility;
   @MappableField(hook: SafeDecodeHook())
   final WispGridState modsGridState;
+  final WispGridState modpackInstalledGridState;
+  final WispGridState modpackItemsGridState;
   final WispGridState weaponsGridState;
   final WispGridState shipsGridState;
   @MappableField(hook: SafeDecodeHook())
@@ -276,6 +278,14 @@ class Settings with SettingsMappable {
     this.dashboardGridModUpdateVisibility =
         DashboardGridModUpdateVisibility.hideMuted,
     this.modsGridUpdateVisibility = ModsGridUpdateVisibility.hide,
+    this.modpackInstalledGridState = const WispGridState(
+      columnsState: {},
+      groupingSetting: null,
+    ),
+    this.modpackItemsGridState = const WispGridState(
+      columnsState: {},
+      groupingSetting: null,
+    ),
     this.modsGridState = const WispGridState(
       groupingSetting: GroupingSetting(
         currentGroupedByKey: 'enabledState',

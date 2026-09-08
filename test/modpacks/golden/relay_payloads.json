@@ -1,0 +1,180 @@
+{
+  "modpack_all_warnings.json": {
+    "payload": "1.eNqtVdtuG0cM_RVinlpgJVsx3MQLFEXi1IEBJw7StH1IC4Oa4e6ynstiyJWlBgb6Ef3Cfkkxq5ViG62bANUjxSXP4TnkfDRNygH1J8rCKZp6URl2pjbPvf8Zc-TYyqvkHcW311eHC1OZiIFMbb5fUd5ox7GFt2iv4SslUWh4rUOmr01lVruKR5XBQbuUTW3eZ778AcZUGVjJVMaR2My9jrnmOTjyvKSMSn4DgUQ20KO9nsO5gue2U4GhByrtQWmtsMwYbQcpgnYEIbmSDj22VIMoRofZAUYHdhBNATwuyUsFMSlJBRYVfWohk01jUeuHEm94TW7m0k30CR3cTMOoxsTsyMHEUEBIgUOfRHjpN9Bx21VjxyFex3QToWHyTgB1wu1pRX4OF6UwK2CLHEUBIRP6QgE8i4ImEKItLRbh2M5CctWu8SywBFQ7NXPUU3QU7WYPFjSlualMi4H2CpvD-ckznL07fWYq06VAZVQ_Zm9q06n2Uh8cNBmtopfU6E3K1zK3KRw0KQ_hgKOj9bzv-u809Wy_PSy_-aGpzNA71AeFaI2h9zR-T3vHzEZBNXOS2aSXqQwrBTH1h49bA77Glu0FLz9Z7k5kby5zcnIy3_YfdTW1OU25-KrIWxw35LjzhpDqOJbCGLBRytBwFgWPQ7Td_Jf4jkQx65hepgYp2mKqTCBpjNoOY0sC2Pd-U4Y7_CvjHeD5Dm5lJA3Z0vtNX7BN4TP2BfBkRFN__AfC4_Dfl4mfl-Esjp4uinyR1oO8Tk620W-Onx6X5KEs4em23qkfSq1r6hWalAEh0g1lGFfR3O6yz5XCS1JkLwUBOkfuxcbU5n5-ZfrMKbNuTL249_GZx9bUmge6rSYJ_c2VTVHSSG_idLoNwGkKAaOT_xDzHdkUQvG1-6TpiyE6Tw46ygQogNtlhf2yTlJNhSEW64HL3Kg8rtiEbv479w_FcpzJ6suphdmTjLSmTJ7jJ45v7oQeI3c5Xj30j0LaF_tiFz3wzMni6bG53eOWDh3lewv2KmPfsZULXsJff_wJsTwNHgL2UoHbRAxstzeYY7s9OhRXnFMMFBWoaciW8yzkYLkBBI-5JYhDWFKG1EDSjnK5b_J_TOYO3M-ZzZ55n1d3Wr1J270YD8FMOVCWR9v2efVF7ZQDuyt0gePjhcfE2ZjIohk1ZfmsTr_u9rC8xGflrdktPMqMxdz9-4JFTf1hUT2pju59d7n8jawW3wTkqMiRyot9763OtOKtZk9ub_8GZXTY5A",
+    "definition": {
+      "formatVersion": 1,
+      "id": "AllWarningsGoldenPk_01",
+      "name": "Everything Pack (test fixture)",
+      "version": 3,
+      "author": "TriOS test suite",
+      "description": "A deliberately messy pack. It lights up every text branch on the modpack page: standard and custom labels, notes, catalog recovery clues, fixed-download warnings, recorded versions set impossibly high, and unknown fields at every level. Load it against a real mod list to see the missing-mod, version-mismatch, and dependency warnings too.",
+      "gameVersion": "0.98a-RC8",
+      "homepageUrl": "https://fractalsoftworks.com/forum/index.php?topic=00000.0",
+      "updateUrl": "https://example.com/everything-pack.trios-modpack",
+      "items": [
+        {
+          "id": "MagicLib",
+          "name": "MagicLib",
+          "version": "999.0.0",
+          "label": "Core",
+          "note": "Turn on the settings page after first launch.\nRestart the game once more so the changes apply.",
+          "url": "https://example.com/MagicLib.version",
+          "sourceType": "versionFile",
+          "catalog": {
+            "name": "MagicLib",
+            "forumTopicId": "13718",
+            "nexusModsId": "16575",
+            "futureCatalogClue": "kept for a newer TriOS"
+          },
+          "futureItemDetails": {
+            "addedBy": "a newer TriOS",
+            "priority": 1
+          },
+          "futureItemFlag": true
+        },
+        {
+          "id": "lw_console",
+          "name": "Console Commands",
+          "version": "999.0.0",
+          "label": "Recommended",
+          "note": "Bundled here as a fixed download so the version never drifts.",
+          "url": "https://example.com/Console.zip",
+          "sourceType": "directDownload"
+        },
+        {
+          "id": "nexerelin",
+          "name": "Nexerelin",
+          "version": "999.0.0",
+          "label": "Optional",
+          "url": "https://example.com/Nexerelin.version",
+          "sourceType": "versionFile",
+          "catalog": {
+            "forumTopicId": "9175"
+          }
+        },
+        {
+          "id": "shaderLib",
+          "name": "GraphicsLib — normal maps, dynamic lighting, and environment effects used by a large number of other mods",
+          "version": "999.0.0",
+          "label": "Optional",
+          "url": "https://example.com/GraphicsLib.version",
+          "sourceType": "versionFile"
+        },
+        {
+          "id": "prv",
+          "label": "Not for first-timers",
+          "url": "https://example.com/prv.version",
+          "sourceType": "versionFile"
+        },
+        {
+          "id": "timid_admins",
+          "url": "https://example.com/timid-administrators.version",
+          "sourceType": "versionFile"
+        }
+      ],
+      "futurePackField": "kept as-is",
+      "futurePackList": [
+        1,
+        2,
+        3
+      ],
+      "futurePackObject": {
+        "maintainer": "test suite",
+        "revision": 2
+      }
+    }
+  },
+  "modpack_full.json": {
+    "payload": "1.eNqNkVtr20AQRv_KMi99keRrgiMopaQXAmpojZvQlhLGq5G0eFez2V1bvuD_HqTYrklp6OvszjdnzuygYGcw3JHzimtIBxGoHFK4HT1-zi_lZDo0d-vBT_yxuO8_vIcIajQEKdwrb9948Y0z8RXlAiJYHSNGEeAyVOwO3yCCnLx0yobuHWYVCcO5FzcCdYMbL1TtA2qdQAQlGjrRQD-5mmA8vZ5ABBUbsljSd6chhSoE69Ner3AoA2rPRWjYLXwi2fQKdkvTU3VO68RW9l1gq-TbwXA0vkj6EMHS5hheBNEajdXU9TfKWx8_so4tykUSnGIfG87t86oqkPGQ_to9u9LNg8btRqv5Hz8ZbjdZVzh5gWFyBRFonFM795odtSj_hDhEJMeACDwvnaTZxrYTDuVPSrcxEgNqLiHd_U3Q2Zi1Cm5a3IvxeAz7fXSg_4Klktk5-1nlHH6cXJ7hT0myMVTnlLedHNrOjzXONYlQkeDu2qhFtqwxU3Oh6kClw7YqsAjkjldXdZm8KuLIE3cMyVbZly5y5UiGD9zUmjGH027Wrc6QbzmIgp0olPMhDsqQ868Otm71P_b3v_dPAAoaHw",
+    "definition": {
+      "formatVersion": 1,
+      "id": "N3qGd6c8R2mVx1ZaYkW0_A",
+      "name": "Wisp's QoL Pack",
+      "version": 3,
+      "author": "Wisp",
+      "description": "The mods I always install.",
+      "gameVersion": "0.98a-RC8",
+      "homepageUrl": "https://fractalsoftworks.com/forum/index.php?topic=12345.0",
+      "updateUrl": "https://example.com/wisps-qol-pack.trios-modpack",
+      "items": [
+        {
+          "id": "lw_lazylib",
+          "name": "LazyLib",
+          "version": "2.9",
+          "label": "Core",
+          "url": "https://example.com/LazyLib.version",
+          "sourceType": "versionFile",
+          "catalog": {
+            "name": "LazyLib",
+            "forumTopicId": "5444"
+          }
+        },
+        {
+          "id": "MagicLib",
+          "name": "MagicLib",
+          "version": "2.4.6",
+          "label": "Recommended",
+          "note": "Enable the optional LunaLib integration after installing.",
+          "url": "https://example.com/MagicLib-2.4.6.zip",
+          "sourceType": "directDownload"
+        },
+        {
+          "id": "prv",
+          "label": "Not for first-timers",
+          "url": "https://example.com/prv.version",
+          "sourceType": "versionFile"
+        }
+      ]
+    }
+  },
+  "modpack_minimal.json": {
+    "payload": "1.eNpNjcsKwjAURH9FZh2s9W32unUjbkQktrc2mpuEJBWl9N9FWsHdMI8zLSoXWKUjhaidhcwFdAmJST6dzRfL1XqjrkVJ1a3W94eBgFVMkNhbGrErIfD8nybiCHlqewi9FHtDl77YBAOJOiUfZZYN2bhwnG0H_UMJRNeEgg5v__0a7J02hO7cfQCUJzxw",
+    "definition": {
+      "formatVersion": 1,
+      "id": "0123456789abcdefghijkl",
+      "name": "One mod",
+      "version": 1,
+      "items": [
+        {
+          "id": "example_mod",
+          "url": "https://example.com/Example.version",
+          "sourceType": "versionFile"
+        }
+      ]
+    }
+  },
+  "modpack_unknown_fields.json": {
+    "payload": "1.eNpVkFFLw0AQhP9KmOfTmBZU7k2qEUFUtFQ0hLJNNu2Ru1y8u2g19L9LaAL6tsy3M7Nsj8o6Q2HFzivbQCYCqoTEw_zjtjwvLp9nZrVP3umtfj1bX0GgIcOQeKKijipnTURRw1_soqVTjy8Q-JyiLgRUYOMhs_4Yynsyrea1sSUEOqchsQuh9TKOR3ZaWBPfjPMUJeBt5wpefrdD9yinSjMECgqk7Rayn24b7RCoutA5Xhw3FrobaM1twGFid4HNNQdS2g8JpNsdQWYgCGyQC_zwxhFk8s-RatpCBtfxIZ_04SOpYl2OHRH5E-XxF98rHyCzRMzEPD_8AppngDU",
+    "definition": {
+      "formatVersion": 1,
+      "id": "N3qGd6c8R2mVx1ZaYkW0_A",
+      "name": "Pack from a newer TriOS",
+      "version": 7,
+      "items": [
+        {
+          "id": "example_mod",
+          "url": "https://example.com/Example.version",
+          "sourceType": "versionFile",
+          "catalog": {
+            "name": "Example",
+            "futureCatalogClue": "kept"
+          },
+          "futureItemDetails": {
+            "alpha": [
+              "a",
+              "b"
+            ],
+            "zebra": 1
+          },
+          "futureItemFlag": true
+        }
+      ],
+      "futurePackField": "kept as-is",
+      "futurePackList": [
+        1,
+        2,
+        3
+      ]
+    }
+  }
+}

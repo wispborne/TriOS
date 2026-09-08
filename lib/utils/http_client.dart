@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/http_probe.dart';
 
 final triOSHttpClient = Provider<TriOSHttpClient>(
   (ref) => TriOSHttpClient(
@@ -56,11 +57,14 @@ class TriOSHttpClient {
     required this.config,
     this.maxConcurrentRequests = 10,
     this.allowInsecureConnectionsByDefault = false,
-  })  : _defaultHttpClient = HttpClient(),
-        _selfSignedHttpClient = HttpClient() {
+  }) : _defaultHttpClient = HttpClient(),
+       _selfSignedHttpClient = HttpClient() {
     // Set up the client that allows self-signed certificates
-    _selfSignedHttpClient.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
+    _selfSignedHttpClient.badCertificateCallback = (
+      X509Certificate cert,
+      String host,
+      int port,
+    ) => true;
 
     // Connection pooling and keep-alive settings
     _defaultHttpClient.idleTimeout = const Duration(seconds: 10);
@@ -84,10 +88,9 @@ class TriOSHttpClient {
         return Future.error(Exception('Invalid URL: $url'));
       }
 
-      final useInsecure = allowSelfSignedCertificates ?? allowInsecureConnectionsByDefault;
-      final client = useInsecure
-          ? _selfSignedHttpClient
-          : _defaultHttpClient;
+      final useInsecure =
+          allowSelfSignedCertificates ?? allowInsecureConnectionsByDefault;
+      final client = useInsecure ? _selfSignedHttpClient : _defaultHttpClient;
       return _retry(
         () => _createRequest(
           () => client.getUrl(url),
@@ -100,6 +103,29 @@ class TriOSHttpClient {
     });
   }
 
+  /// Reads a bounded metadata file or the beginning of a download.
+  Future<HttpProbeResult> probe(
+    Uri url, {
+    required int maxBytes,
+    required bool prefixOnly,
+    required HttpProbeCancellation cancellation,
+  }) => Future.any([
+    _enqueueRequest(
+      () => probeHttpUrl(
+        url,
+        maxBytes: maxBytes,
+        prefixOnly: prefixOnly,
+        cancellation: cancellation,
+        client: allowInsecureConnectionsByDefault
+            ? _selfSignedHttpClient
+            : _defaultHttpClient,
+      ),
+    ),
+    cancellation.whenCancelled.then<HttpProbeResult>(
+      (_) => throw const HttpProbeCancelled(),
+    ),
+  ]);
+
   /// Resolves whether to use baseUrl or treat it as a fully qualified URL.
   Uri _resolveUrl(String endpointOrUrl) {
     if (config.baseUrl != null && !endpointOrUrl.startsWith('http')) {
@@ -109,10 +135,8 @@ class TriOSHttpClient {
   }
 
   /// Enqueues the request and ensures concurrency limit.
-  Future<TriOSHttpResponse<dynamic>> _enqueueRequest(
-    Future<TriOSHttpResponse<dynamic>> Function() requestFactory,
-  ) {
-    final completer = Completer<TriOSHttpResponse<dynamic>>();
+  Future<T> _enqueueRequest<T>(Future<T> Function() requestFactory) {
+    final completer = Completer<T>();
     final requestItem = _RequestItem(requestFactory, completer);
     _requestQueue.add(requestItem);
     _tryExecuteNext();
@@ -299,9 +323,9 @@ class TriOSHttpClient {
   }
 }
 
-class _RequestItem {
-  final Future<TriOSHttpResponse<dynamic>> Function() requestFactory;
-  final Completer<TriOSHttpResponse<dynamic>> completer;
+class _RequestItem<T> {
+  final Future<T> Function() requestFactory;
+  final Completer<T> completer;
 
   _RequestItem(this.requestFactory, this.completer);
 }

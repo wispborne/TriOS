@@ -308,6 +308,7 @@ class ModpacksPageController extends Notifier<ModpacksPageState>
 
   /// Creates a draft and opens the editor.
   Future<String> createNewPack() async {
+    await ref.read(modpackStoreProvider.future);
     final gameVersion = ref.read(appSettings).lastStarsectorVersion;
     final draft = await ref
         .read(modpackStoreProvider.notifier)

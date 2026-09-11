@@ -131,7 +131,7 @@ class WeaponDerivedStats {
 
   /// Everything that fires projectiles, missiles included. The game
   /// multiplies each pull's damage and flux by [Weapon.barrelCount] here
-  /// (LINKED/DUAL_LINKED barrels fire together), and that multiplier
+  /// (LINKED/DUAL barrels fire together), and that multiplier
   /// deliberately cancels out of flux/damage and of sustained DPS.
   static WeaponDerivedStats _projectile(Weapon spec) {
     final chargeup = spec.chargeup ?? 0.0;

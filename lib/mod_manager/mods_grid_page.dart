@@ -2007,6 +2007,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                         icon: Icons.refresh,
                         onSelected: () {
                           ref
+                              .read(AppState.changelogsProvider.notifier)
+                              .clearCacheForMods([mod.id]);
+                          ref
                               .read(AppState.versionCheckResults.notifier)
                               .refresh(
                                 skipCache: true,

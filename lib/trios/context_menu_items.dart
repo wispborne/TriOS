@@ -522,6 +522,9 @@ MenuItem buildMenuItemToggleMuteUpdates(Mod mod, WidgetRef ref) {
     if (!muted) {
       // Checks stop while a mod is fully muted, so the cached result is stale.
       ref
+          .read(AppState.changelogsProvider.notifier)
+          .clearCacheForMods([mod.id]);
+      ref
           .read(AppState.versionCheckResults.notifier)
           .refresh(
             skipCache: true,

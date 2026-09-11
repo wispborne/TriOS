@@ -123,9 +123,9 @@ class Weapon with WeaponMappable implements WispGridItem {
   final String? projectileSpecId;
 
   /// How the barrels fire, from the `.wpn`: `ALTERNATING` (default, one
-  /// barrel per shot), `LINKED` (every barrel at once), `DUAL_LINKED` (two at
-  /// once), or `ALTERNATING_BURST`. LINKED and DUAL_LINKED multiply each
-  /// shot's damage and flux — see [barrelCount].
+  /// barrel per shot), `LINKED` (every barrel at once), `DUAL` (two at once),
+  /// or `ALTERNATING_BURST`. LINKED and DUAL multiply each shot's damage and
+  /// flux — see [barrelCount].
   final String? barrelMode;
 
   /// `.wpn` flag: the burst can be cut short by releasing the trigger. The
@@ -352,10 +352,15 @@ class Weapon with WeaponMappable implements WispGridItem {
 
   /// Projectiles per trigger pull from barrel wiring alone. The game fires
   /// every barrel at once for LINKED (one barrel per [turretOffsets] pair)
-  /// and two for DUAL_LINKED, and multiplies shot damage and flux to match.
-  /// Beams and the default ALTERNATING mode fire one barrel at a time. (Any
-  /// other string, including plain `DUAL`, fails the game's enum parse and
-  /// crashes it at load, so no working mod carries one.)
+  /// and two for DUAL, and multiplies shot damage and flux to match. Beams
+  /// and the default ALTERNATING mode fire one barrel at a time.
+  ///
+  /// The mode is one of exactly four names, read from the enum constants in
+  /// `loading/specs/Oo0O$o.class`: ALTERNATING, ALTERNATING_BURST, DUAL,
+  /// LINKED. The game parses the `.wpn` string with `Enum.valueOf`, so
+  /// anything else — `DUAL_LINKED` included — fails to load. Starsector's own
+  /// `WeaponAPI` javadoc says "by 2 for DUAL_LINKED"; that name was dropped
+  /// from the enum and the comment was never updated. Don't trust it.
   late final int barrelCount = () {
     if (isBeam) return 1;
     final mode = barrelMode?.trim().toUpperCase();
@@ -363,7 +368,7 @@ class Weapon with WeaponMappable implements WispGridItem {
       final barrels = (turretOffsets?.length ?? 0) ~/ 2;
       return barrels > 1 ? barrels : 1;
     }
-    if (mode == 'DUAL_LINKED') return 2;
+    if (mode == 'DUAL') return 2;
     return 1;
   }();
 

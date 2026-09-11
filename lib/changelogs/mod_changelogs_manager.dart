@@ -69,6 +69,18 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
     return results;
   }
 
+  /// Forgets the cached changelogs for the given mods, so the next build
+  /// downloads them again. Call this alongside clearing the version checker
+  /// cache, since a stale version check means a stale changelog URL.
+  void clearCacheForMods(Iterable<String> modIds) {
+    final cached = state.value;
+    if (cached == null) return;
+    final ids = modIds.toSet();
+    state = AsyncValue.data(
+      Map.of(cached)..removeWhere((modId, _) => ids.contains(modId)),
+    );
+  }
+
   /// Returns the changelog URL for a mod.
   ///
   /// This function checks the `remoteVersionCheck` for a changelog URL first.

@@ -93,28 +93,46 @@ void main() {
     });
   });
 
-  group('DUAL_LINKED barrels', () {
-    test('a DUAL_LINKED weapon doubles, whatever its offsets say', () {
-      // The game hardcodes 2 for DUAL_LINKED; the offsets are not consulted.
+  group('DUAL barrels', () {
+    test('a DUAL weapon doubles, whatever its offsets say', () {
+      // The game hardcodes 2 for DUAL; the offsets are not consulted.
       final w = weapon({
         'damage/shot': 100,
         'chargedown': 1,
         'specclass': 'projectile',
-        'barrelmode': 'DUAL_LINKED',
+        'barrelmode': 'DUAL',
         'turretoffsets': [10.0, 0.0],
       });
       expect(w.effectiveDps, closeTo(200, 0.001));
       expect(w.displayBurstSize, 2);
     });
 
-    test('plain DUAL is not a real mode and must not multiply', () {
-      // The game's enum parse rejects "DUAL" outright (it crashes the load),
-      // so a .wpn carrying it gets no multiplier anywhere.
+    test('the Mostro Cannon Array matches the game codex', () {
+      // Four barrels but DUAL fires two, so the game shows "Damage 250x2",
+      // 500 DPS and 500 flux/second — not the 250 of a single barrel.
+      final w = weapon({
+        'damage/shot': 250,
+        'energy/shot': 250,
+        'chargedown': 1,
+        'specclass': 'projectile',
+        'barrelmode': 'DUAL',
+        'turretoffsets': [29.0, 3.5, 29.0, -10.5, 29.0, -3.5, 29.0, 10.5],
+      });
+      expect(w.effectiveDps, closeTo(500, 0.001));
+      expect(w.fluxPerSecond, closeTo(500, 0.001));
+      expect(w.fluxPerDamage, closeTo(1.0, 0.001));
+      expect(w.displayBurstSize, 2);
+    });
+
+    test('DUAL_LINKED is not a real mode and must not multiply', () {
+      // The enum holds ALTERNATING, ALTERNATING_BURST, DUAL and LINKED. The
+      // game's WeaponAPI javadoc still names a DUAL_LINKED that was dropped,
+      // and a .wpn carrying it would fail Enum.valueOf at load.
       final w = weapon({
         'damage/shot': 100,
         'chargedown': 1,
         'specclass': 'projectile',
-        'barrelmode': 'DUAL',
+        'barrelmode': 'DUAL_LINKED',
         'turretoffsets': [10.0, 0.0],
       });
       expect(w.effectiveDps, closeTo(100, 0.001));

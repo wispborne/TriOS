@@ -102,7 +102,8 @@ class AppSidebar extends ConsumerWidget {
                           : Alignment.centerLeft,
                       child: const LauncherButton(
                         showTextInsteadOfIcon: false,
-                        fontSize: 20,
+                        fontSize: 19,
+                        iconOffset: Offset(0, -1),
                       ),
                     ),
                   ),

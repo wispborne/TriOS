@@ -266,7 +266,11 @@ void main() {
         await folder.delete(recursive: true);
       });
       await container.read(modpackStoreProvider.future);
-      final saved = await store.saveIncomingDefinition(incomingPack);
+      final saved = await store.acceptIncomingDefinition(
+        incomingPack,
+        expectedEntry: null,
+        expectedDraft: null,
+      );
       final draft = await store.openDraft(incomingPack.id);
       final newer = incomingPack.copyWith(version: 4);
       await expectLater(

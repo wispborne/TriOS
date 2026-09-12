@@ -8,15 +8,14 @@ import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/http_probe.dart';
 
-typedef ModpackSourceProbe = HttpProbe;
-
 final modpackSourceValidatorProvider = Provider(
   (ref) => ModpackSourceValidator.forClient(ref.watch(triOSHttpClient)),
 );
 
 class ModpackSourceValidator {
-  final ModpackSourceProbe probe;
-  final Future<VersionCheckerInfo> Function(String)? fetchVersionInfo;
+  final HttpProbe probe;
+  final Future<VersionCheckerInfo> Function(String, HttpProbeCancellation)?
+  fetchVersionInfo;
   final DateTime Function() now;
   final Map<String, DateTime> _successes = {};
   ModpackSourceValidator(
@@ -30,14 +29,18 @@ class ModpackSourceValidator {
         client.probe,
         // Reads `.version` files exactly the way the update checker does,
         // including its certificate support.
-        fetchVersionInfo: (url) => fetchRemoteVersionCheckerInfo(url, client),
+        fetchVersionInfo: (url, cancellation) => fetchRemoteVersionCheckerInfo(
+          url,
+          client,
+          cancellation: cancellation,
+        ),
       );
 
   Future<VersionCheckerInfo> _readVersionInfo(
     String url,
     HttpProbeCancellation cancellation,
   ) =>
-      fetchVersionInfo?.call(url) ??
+      fetchVersionInfo?.call(url, cancellation) ??
       readVersionCheckerInfo(url, cancellation, probe: probe);
 
   Future<bool> validate(
@@ -56,12 +59,7 @@ class ModpackSourceValidator {
     }
     var download = item.url;
     if (item.sourceType == ModpackItemSourceType.versionFile) {
-      final info = await Future.any([
-        _readVersionInfo(item.url.trim(), cancellation),
-        cancellation.whenCancelled.then<VersionCheckerInfo>(
-          (_) => throw const HttpProbeCancelled(),
-        ),
-      ]);
+      final info = await _readVersionInfo(item.url.trim(), cancellation);
       cancellation.check();
       final address = info.directDownloadURL;
       if (address is! String || !isSafeModpackUrl(address)) {

@@ -329,14 +329,22 @@ void main() {
 
   group('incoming definitions', () {
     test('keep their own ID and version', () async {
-      final entry = await store.saveIncomingDefinition(_definition(version: 7));
+      final entry = await store.acceptIncomingDefinition(
+        _definition(version: 7),
+        expectedEntry: null,
+        expectedDraft: null,
+      );
 
       expect(entry.definition.id, 'N3qGd6c8R2mVx1ZaYkW0_A');
       expect(entry.definition.version, 7);
     });
 
     test('can be saved as a copy without touching the existing pack', () async {
-      await store.saveIncomingDefinition(_definition(version: 7));
+      await store.acceptIncomingDefinition(
+        _definition(version: 7),
+        expectedEntry: null,
+        expectedDraft: null,
+      );
       final copy = await store.saveIncomingDefinitionAsCopy(
         _definition(version: 7, name: 'Their pack'),
       );
@@ -349,8 +357,10 @@ void main() {
 
     test('are refused when the format is too new', () async {
       expect(
-        () => store.saveIncomingDefinition(
+        () => store.acceptIncomingDefinition(
           _definition().copyWith(formatVersion: 99),
+          expectedEntry: null,
+          expectedDraft: null,
         ),
         throwsA(
           isA<ModpackFormatException>().having(
@@ -520,7 +530,11 @@ void main() {
       final incoming = _definition().copyWith(
         unknownFields: {'futureField': 'kept'},
       );
-      await store.saveIncomingDefinition(incoming);
+      await store.acceptIncomingDefinition(
+        incoming,
+        expectedEntry: null,
+        expectedDraft: null,
+      );
       await flushWrites();
 
       container.dispose();

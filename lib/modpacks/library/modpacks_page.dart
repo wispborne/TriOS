@@ -14,6 +14,7 @@ import 'package:trios/modpacks/library/modpacks_page_controller.dart';
 import 'package:trios/modpacks/modpack_link_codec.dart';
 import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
@@ -304,27 +305,15 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
     ModpackStore store,
     ModpackStorageProblem problem,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Start with an empty library?'),
-        content: Text(
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Start with an empty library?',
+      message:
           'The unreadable file stays at ${problem.keptCopy.path} in case '
           'you want to recover it by hand.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Start empty'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Start empty',
     );
-    if (confirmed == true) await store.startEmptyLibrary();
+    if (confirmed) await store.startEmptyLibrary();
   }
 
   Widget _buildBody(
@@ -384,24 +373,13 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
       (false, true) => 'Delete this modpack from your library?',
       (false, false) => "Delete '${card.name}' from your library?",
     };
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete modpack?'),
-        content: Text('$question\n\nNo mods will be disabled or uninstalled.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Delete modpack?',
+      message: '$question\n\nNo mods will be disabled or uninstalled.',
+      confirmLabel: 'Delete',
     );
-    if (confirmed == true) await controller.deletePack(card.packId);
+    if (confirmed) await controller.deletePack(card.packId);
   }
 
   /// The dialog returns link text or a file URI; both are inputs the incoming

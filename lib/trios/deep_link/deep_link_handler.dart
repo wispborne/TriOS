@@ -32,6 +32,10 @@ late final AppLinks appLinks;
 /// non-widget handler obtain a [BuildContext] to show dialogs reliably.
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Completes once the root navigator exists, so work that arrived before the
+/// UI was built can wait for a [BuildContext] instead of polling for one.
+final Completer<void> rootNavigatorReady = Completer<void>();
+
 /// Pending deep link URI from cold start (set before runApp).
 String? pendingDeepLinkUri;
 

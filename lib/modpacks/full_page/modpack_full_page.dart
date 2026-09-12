@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:stringr/stringr.dart';
 import 'package:trios/mod_manager/homebrew_grid/mod_grid_columns.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
@@ -23,6 +24,7 @@ import 'package:trios/modpacks/sharing/modpack_share_controller.dart';
 import 'package:trios/modpacks/sharing/modpack_source_check_section.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -41,18 +43,24 @@ enum _ShareAction { copyLink, export, publish }
 class ModpackFullPage extends ConsumerStatefulWidget {
   final ModpackLibraryEntry entry;
   final VoidCallback onBack;
-  final VoidCallback onEdit;
-  final Future<void> Function() onDuplicate;
-  final Future<void> Function() onDelete;
+
+  /// Library actions. All null in preview mode, where [previewToolbar]
+  /// replaces the library's own toolbar and none of these apply.
+  final VoidCallback? onEdit;
+  final Future<void> Function()? onDuplicate;
+  final Future<void> Function()? onDelete;
+
+  /// Replaces the library toolbar and hides the source-check section, for
+  /// showing a pack that is not in the library yet.
   final Widget? previewToolbar;
 
   const ModpackFullPage({
     super.key,
     required this.entry,
     required this.onBack,
-    required this.onEdit,
-    required this.onDuplicate,
-    required this.onDelete,
+    this.onEdit,
+    this.onDuplicate,
+    this.onDelete,
     this.previewToolbar,
   });
 
@@ -86,78 +94,10 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
       if (!mounted || !ready) return;
       if (!modpackDefinitionsAreIdentical(snapshot, definition)) return;
       if (action == _ShareAction.copyLink) {
-        final link = buildModpackShareLink(snapshot);
-        await Clipboard.setData(ClipboardData(text: link));
-        if (mounted) {
-          showSnackBar(
-            context: context,
-            content: const Text('Modpack link copied.'),
-          );
-        }
-        return;
+        await _copyLink(snapshot);
+      } else {
+        await _exportFile(snapshot, isUpdate: action == _ShareAction.publish);
       }
-      final previous = widget.entry.lastExportPath;
-      final slug = snapshot.name
-          .toLowerCase()
-          .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-          .replaceAll(RegExp(r'^-|-$'), '');
-      final chosen = await FilePicker.platform.saveFile(
-        dialogTitle: action == _ShareAction.publish
-            ? 'Export modpack update'
-            : 'Export modpack',
-        initialDirectory: previous == null ? null : p.dirname(previous),
-        fileName: previous == null
-            ? '${slug.isEmpty ? 'modpack' : slug}.trios-modpack'
-            : p.basename(previous),
-        type: FileType.custom,
-        allowedExtensions: ['trios-modpack'],
-        lockParentWindow: true,
-      );
-      if (!mounted || chosen == null) return;
-      final file = File(
-        chosen.toLowerCase().endsWith('.trios-modpack')
-            ? chosen
-            : '$chosen.trios-modpack',
-      );
-      if (await file.exists()) {
-        if (!mounted) return;
-        final overwrite = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Replace exported modpack?'),
-            content: Text('Replace ${file.path}?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Replace'),
-              ),
-            ],
-          ),
-        );
-        if (!mounted || overwrite != true) return;
-      }
-      if (!modpackDefinitionsAreIdentical(snapshot, definition)) return;
-      await file.writeAsString(
-        encodeModpackDefinitionFileJson(snapshot),
-        flush: true,
-      );
-      if (!mounted) return;
-      await ref
-          .read(modpackStoreProvider.notifier)
-          .recordExportLocation(snapshot.id, file.path);
-      if (!mounted) return;
-      showSnackBar(
-        context: context,
-        content: Text(
-          action == _ShareAction.publish
-              ? 'Update exported. Upload this file to ${snapshot.updateUrl}.'
-              : 'Modpack exported to ${file.path}',
-        ),
-      );
     } catch (e) {
       if (!mounted) return;
       final message =
@@ -175,6 +115,66 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     }
   }
 
+  Future<void> _copyLink(ModpackDefinition snapshot) async {
+    await Clipboard.setData(
+      ClipboardData(text: buildModpackShareLink(snapshot)),
+    );
+    if (!mounted) return;
+    showSnackBar(context: context, content: const Text('Modpack link copied.'));
+  }
+
+  Future<void> _exportFile(
+    ModpackDefinition snapshot, {
+    required bool isUpdate,
+  }) async {
+    final previous = widget.entry.lastExportPath;
+    final slug = snapshot.name.slugify();
+    final chosen = await FilePicker.platform.saveFile(
+      dialogTitle: isUpdate ? 'Export modpack update' : 'Export modpack',
+      initialDirectory: previous == null ? null : p.dirname(previous),
+      fileName: previous == null
+          ? '${slug.isEmpty ? 'modpack' : slug}.trios-modpack'
+          : p.basename(previous),
+      type: FileType.custom,
+      allowedExtensions: ['trios-modpack'],
+      lockParentWindow: true,
+    );
+    if (!mounted || chosen == null) return;
+    final file = File(
+      chosen.toLowerCase().endsWith('.trios-modpack')
+          ? chosen
+          : '$chosen.trios-modpack',
+    );
+    if (await file.exists()) {
+      if (!mounted) return;
+      final overwrite = await showConfirmDialog(
+        context,
+        title: 'Replace exported modpack?',
+        message: 'Replace ${file.path}?',
+        confirmLabel: 'Replace',
+      );
+      if (!mounted || !overwrite) return;
+    }
+    if (!modpackDefinitionsAreIdentical(snapshot, definition)) return;
+    await file.writeAsString(
+      encodeModpackDefinitionFileJson(snapshot),
+      flush: true,
+    );
+    if (!mounted) return;
+    await ref
+        .read(modpackStoreProvider.notifier)
+        .recordExportLocation(snapshot.id, file.path);
+    if (!mounted) return;
+    showSnackBar(
+      context: context,
+      content: Text(
+        isUpdate
+            ? 'Update exported. Upload this file to ${snapshot.updateUrl}.'
+            : 'Modpack exported to ${file.path}',
+      ),
+    );
+  }
+
   ModpackDefinition get definition => widget.entry.definition;
 
   @override
@@ -183,7 +183,6 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     final modCompatibility = ref.watch(AppState.modCompatibility);
     final rows = buildModpackItemRows(definition, allMods, modCompatibility);
     final columns = _buildColumns(allMods);
-    final sharing = ref.watch(modpackShareControllerProvider(definition.id));
 
     return Column(
       children: [
@@ -192,12 +191,14 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
           child: _buildPackHeader(rows),
         ),
         if (widget.previewToolbar == null)
-          ModpackSourceCheckSection(
-            state: sharing,
-            onCancel: () => ref
-                .read(modpackShareControllerProvider(definition.id).notifier)
-                .cancel(),
-            onRepair: widget.onEdit,
+          Consumer(
+            builder: (context, ref, _) => ModpackSourceCheckSection(
+              state: ref.watch(modpackShareControllerProvider(definition.id)),
+              onCancel: () => ref
+                  .read(modpackShareControllerProvider(definition.id).notifier)
+                  .cancel(),
+              onRepair: widget.onEdit!,
+            ),
           ),
         _buildItemsToolbar(rows),
         Expanded(
@@ -263,7 +264,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                   children: [
                     Padding(
                       padding: const .only(right: 16),
-                      child: _toolbarAction(
+                      child: triOSToolbarAction(
                         label: 'Back',
                         icon: Icons.arrow_back,
                         onPressed: widget.onBack,
@@ -297,26 +298,26 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                         ),
                       ),
                     ),
-                    _toolbarAction(
+                    triOSToolbarAction(
                       label: 'Edit',
                       icon: Icons.edit,
-                      onPressed: widget.onEdit,
+                      onPressed: widget.onEdit!,
                     ),
-                    _toolbarAction(
+                    triOSToolbarAction(
                       label: 'Copy link',
                       icon: Icons.link,
                       onPressed: _sharing
                           ? null
                           : () => _share(_ShareAction.copyLink),
                     ),
-                    _toolbarAction(
+                    triOSToolbarAction(
                       label: 'Export',
                       icon: Icons.file_download_outlined,
                       onPressed: _sharing
                           ? null
                           : () => _share(_ShareAction.export),
                     ),
-                    _toolbarAction(
+                    triOSToolbarAction(
                       label: 'Install',
                       icon: Icons.download,
                       disabledMessage:
@@ -333,12 +334,12 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                         OverflowMenuItem(
                           title: 'Delete',
                           icon: Icons.delete,
-                          onTap: widget.onDelete,
+                          onTap: widget.onDelete!,
                         ).toEntry(0),
                         OverflowMenuItem(
                           title: 'Duplicate',
                           icon: Icons.copy,
-                          onTap: widget.onDuplicate,
+                          onTap: widget.onDuplicate!,
                         ).toEntry(1),
                       ],
                     ),
@@ -372,24 +373,6 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _toolbarAction({
-    required String label,
-    required IconData icon,
-    VoidCallback? onPressed,
-    String? disabledMessage,
-  }) {
-    return MovingTooltipWidget.text(
-      message: onPressed == null ? disabledMessage : null,
-      child: TriOSToolbarItem(
-        child: TextButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon, size: 20),
-          label: Text(label),
         ),
       ),
     );

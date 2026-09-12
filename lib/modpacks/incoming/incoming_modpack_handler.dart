@@ -30,11 +30,9 @@ class IncomingModpackHandler {
 
   Future<void> _receive(String input, BuildContext? suppliedContext) async {
     // Cold-start delivery begins from TriOSApp.initState, before MaterialApp
-    // has attached its navigator. Keep the input until that navigator exists.
-    while (suppliedContext == null &&
-        rootNavigatorKey.currentContext == null &&
-        ref.mounted) {
-      await Future<void>.delayed(const Duration(milliseconds: 16));
+    // has attached its navigator. Hold the input until that navigator exists.
+    if (suppliedContext == null && rootNavigatorKey.currentContext == null) {
+      await rootNavigatorReady.future;
     }
     if (!ref.mounted) return;
     final context = suppliedContext ?? rootNavigatorKey.currentContext;

@@ -29,13 +29,12 @@ class HttpProbeCancellation {
 
 /// Reads the beginning of an HTTP response. Matches [TriOSHttpClient.probe]
 /// and the test fakes that stand in for it.
-typedef HttpProbe =
-    Future<HttpProbeResult> Function(
-      Uri url, {
-      required int maxBytes,
-      required bool prefixOnly,
-      required HttpProbeCancellation cancellation,
-    });
+typedef HttpProbe = Future<HttpProbeResult> Function(
+  Uri url, {
+  required int maxBytes,
+  required bool prefixOnly,
+  required HttpProbeCancellation cancellation,
+});
 
 class HttpProbeResult {
   final Uri url;
@@ -56,7 +55,6 @@ Future<HttpProbeResult> probeHttpUrl(
 }) async {
   cancellation.check();
   HttpClientRequest? activeRequest;
-  var finishedReading = false;
   final finished = Completer<void>();
   unawaited(
     Future.any([cancellation.whenCancelled, finished.future]).then((_) {
@@ -76,9 +74,34 @@ Future<HttpProbeResult> probeHttpUrl(
           'Enter an HTTP or HTTPS URL without login details.',
         );
       }
-      final request = await client.getUrl(current);
+      // getUrl covers the DNS lookup and the TCP/TLS connect. The client is
+      // shared, so there is no way to abort that work from here. Stop waiting
+      // on it when the check is cancelled and abort the request if it turns up
+      // afterwards; waiting would hold a slot in the client's request queue
+      // until the connect finished or timed out, delaying other requests.
+      var abandoned = false;
+      final pending = client.getUrl(current);
+      unawaited(
+        pending
+            .then((late) {
+              if (abandoned) late.abort(const HttpProbeCancelled());
+            })
+            .catchError((Object _) {}),
+      );
+      final HttpClientRequest request;
+      try {
+        request = await Future.any([
+          pending,
+          cancellation.whenCancelled.then<HttpClientRequest>(
+            (_) => throw const HttpProbeCancelled(),
+          ),
+        ]);
+      } catch (_) {
+        abandoned = true;
+        rethrow;
+      }
       activeRequest = request;
-      if (finishedReading || cancellation.isCancelled) {
+      if (finished.isCompleted || cancellation.isCancelled) {
         request.abort(const HttpProbeCancelled());
         throw const HttpProbeCancelled();
       }
@@ -129,7 +152,6 @@ Future<HttpProbeResult> probeHttpUrl(
     cancellation.check();
     rethrow;
   } finally {
-    finishedReading = true;
     finished.complete();
     activeRequest?.abort(const HttpProbeCancelled());
   }

@@ -22,7 +22,8 @@ class _ModpackFileParser {
 
   Object? parse() {
     space();
-    final result = current == '{' ? object(0) : object(0, root: true);
+    // A file may omit the outermost braces.
+    final result = object(0, root: current != '{');
     space();
     if (offset != text.length) fail('Unexpected text after the modpack.');
     return result;

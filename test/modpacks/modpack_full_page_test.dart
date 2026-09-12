@@ -172,15 +172,17 @@ Widget _wrap({
 );
 
 ModpackSourceValidator _validator(
-  ModpackSourceProbe probe, {
+  HttpProbe probe, {
   DateTime Function()? now,
-  Future<VersionCheckerInfo> Function(String)? fetchVersionInfo,
+  Future<VersionCheckerInfo> Function(String, HttpProbeCancellation)?
+  fetchVersionInfo,
 }) => ModpackSourceValidator(
   probe,
   now: now,
   fetchVersionInfo:
       fetchVersionInfo ??
-      (url) async => throw StateError('Unexpected Version Checker fetch: $url'),
+      (url, _) async =>
+          throw StateError('Unexpected Version Checker fetch: $url'),
 );
 
 void main() {
@@ -235,11 +237,12 @@ void main() {
     expect(find.text('Checking…'), findsOneWidget);
     expect(copied, isNull);
     pending.complete(
-      HttpProbeResult(
-        Uri.parse(pack.items.single.url),
-        [80, 75, 3, 4],
-        'application/zip',
-      ),
+      HttpProbeResult(Uri.parse(pack.items.single.url), [
+        80,
+        75,
+        3,
+        4,
+      ], 'application/zip'),
     );
     await tester.pumpAndSettle();
     expect(copied, buildModpackShareLink(pack));
@@ -289,11 +292,10 @@ void main() {
       await tester.tap(find.text('Cancel checks'));
       await tester.pump();
       pending.complete(
-        HttpProbeResult(
-          Uri.parse(pack.items.single.url),
-          [80, 75],
-          'application/zip',
-        ),
+        HttpProbeResult(Uri.parse(pack.items.single.url), [
+          80,
+          75,
+        ], 'application/zip'),
       );
       await tester.pumpAndSettle();
       expect(find.text('Cancelled'), findsOneWidget);
@@ -321,8 +323,7 @@ void main() {
           required maxBytes,
           required prefixOnly,
           required cancellation,
-        }) async =>
-            HttpProbeResult(url, [80, 75, 3, 4], 'application/zip'),
+        }) async => HttpProbeResult(url, [80, 75, 3, 4], 'application/zip'),
       );
       final pack = _definition().copyWith(items: [_definition().items.last]);
       await tester.pumpWidget(

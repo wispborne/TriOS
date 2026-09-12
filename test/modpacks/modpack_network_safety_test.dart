@@ -48,6 +48,35 @@ void main() {
     },
   );
 
+  test('a public client reuses one connection across probes', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) async {
+      request.response.add([80, 75, 3, 4]);
+      await request.response.close();
+    });
+    var connects = 0;
+    final client = createPublicHttpClient(
+      lookup: (_) async => [InternetAddress('8.8.8.8')],
+      connect: (address, port) {
+        connects++;
+        return Socket.startConnect(InternetAddress.loopbackIPv4, server.port);
+      },
+    );
+    addTearDown(() => client.close(force: true));
+    for (var i = 0; i < 8; i++) {
+      final result = await probeHttpUrl(
+        Uri.parse('http://source.test/archive'),
+        maxBytes: 512,
+        prefixOnly: false,
+        cancellation: HttpProbeCancellation(),
+        client: client,
+      );
+      expect(result.bytes, [80, 75, 3, 4]);
+    }
+    expect(connects, lessThan(3));
+  });
+
   test('rejects local and private IPv4 and IPv6 destinations', () {
     for (final value in [
       '0.0.0.0',
@@ -201,4 +230,35 @@ void main() {
       );
     },
   );
+
+  test('cancelling during the connect stops waiting on it', () async {
+    // The lookup never answers, standing in for a slow DNS or TCP connect.
+    final stuck = Completer<List<InternetAddress>>();
+    final client = createPublicHttpClient(
+      lookup: (_) => stuck.future,
+      connect: (_, _) => fail('The connect should not be reached.'),
+    );
+    addTearDown(() {
+      client.close(force: true);
+      if (!stuck.isCompleted) stuck.complete([InternetAddress('8.8.8.8')]);
+    });
+    final cancellation = HttpProbeCancellation();
+    final probe = probeHttpUrl(
+      Uri.parse('https://source.test/archive'),
+      maxBytes: 512,
+      prefixOnly: true,
+      cancellation: cancellation,
+      client: client,
+    );
+    await Future<void>.delayed(Duration.zero);
+    cancellation.cancel();
+
+    // Without giving up on the connect, this would hold its slot in the
+    // client's request queue until the probe's own 20 second timeout.
+    await expectLater(
+      probe.timeout(const Duration(seconds: 2)),
+      throwsA(isA<HttpProbeCancelled>()),
+    );
+    expect(stuck.isCompleted, isFalse);
+  });
 }

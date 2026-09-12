@@ -173,8 +173,10 @@ void main() {
   testWidgets('draft conflicts offer cancel, copy, and explicit discard', (
     tester,
   ) async {
-    await store.saveIncomingDefinition(
+    await store.acceptIncomingDefinition(
       incomingPack.copyWith(name: 'Saved name'),
+      expectedEntry: null,
+      expectedDraft: null,
     );
     final draft = await store.openDraft(incomingPack.id);
     await store.saveDraft(draft!.copyWith(name: 'Unfinished work'));

@@ -20,15 +20,17 @@ HttpProbeResult archive(Uri url) =>
     HttpProbeResult(url, [0x50, 0x4b, 3, 4], 'application/zip');
 
 ModpackSourceValidator _validator(
-  ModpackSourceProbe probe, {
+  HttpProbe probe, {
   DateTime Function()? now,
-  Future<VersionCheckerInfo> Function(String)? fetchVersionInfo,
+  Future<VersionCheckerInfo> Function(String, HttpProbeCancellation)?
+  fetchVersionInfo,
 }) => ModpackSourceValidator(
   probe,
   now: now,
   fetchVersionInfo:
       fetchVersionInfo ??
-      (url) async => throw StateError('Unexpected Version Checker fetch: $url'),
+      (url, _) async =>
+          throw StateError('Unexpected Version Checker fetch: $url'),
 );
 
 void main() {
@@ -56,7 +58,7 @@ void main() {
                 );
         },
         now: () => time,
-        fetchVersionInfo: (url) async {
+        fetchVersionInfo: (url, _) async {
           calls.add(Uri.parse(url));
           return VersionCheckerInfo(
             directDownloadURL: ' https://example.com/archive.zip ',
@@ -101,7 +103,7 @@ void main() {
                 utf8.encode('<html>Sign in</html>'),
                 'application/octet-stream',
               );
-      }, fetchVersionInfo: (_) async => VersionCheckerInfo());
+      }, fetchVersionInfo: (_, _) async => VersionCheckerInfo());
       final token = HttpProbeCancellation();
       await expectLater(validator.validate(item, token), throwsFormatException);
       valid = true;

@@ -9,8 +9,8 @@ import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/http_probe.dart';
 import 'package:trios/utils/public_http_client.dart';
 
-final triOSHttpClient = Provider<TriOSHttpClient>(
-  (ref) => TriOSHttpClient(
+final triOSHttpClient = Provider<TriOSHttpClient>((ref) {
+  final client = TriOSHttpClient(
     config: ApiClientConfig(),
     maxConcurrentRequests: ref.watch(
       appSettings.select((s) => s.maxHttpRequestsAtOnce),
@@ -18,8 +18,10 @@ final triOSHttpClient = Provider<TriOSHttpClient>(
     allowInsecureConnectionsByDefault: ref.watch(
       appSettings.select((s) => s.allowInsecureConnections),
     ),
-  ),
-);
+  );
+  ref.onDispose(client.close);
+  return client;
+});
 
 // Custom response class to encapsulate useful details
 class TriOSHttpResponse<T> {
@@ -50,6 +52,9 @@ class TriOSHttpClient {
   final bool allowInsecureConnectionsByDefault;
   final HttpClient _defaultHttpClient;
   final HttpClient _selfSignedHttpClient;
+
+  final HttpClient _publicHttpClient;
+  final HttpClient _publicSelfSignedHttpClient;
   final Queue<_RequestItem> _requestQueue = Queue();
   final ApiClientConfig config;
   int _activeRequests = 0;
@@ -59,7 +64,11 @@ class TriOSHttpClient {
     this.maxConcurrentRequests = 10,
     this.allowInsecureConnectionsByDefault = false,
   }) : _defaultHttpClient = HttpClient(),
-       _selfSignedHttpClient = HttpClient() {
+       _selfSignedHttpClient = HttpClient(),
+       _publicHttpClient = createPublicHttpClient(),
+       _publicSelfSignedHttpClient = createPublicHttpClient(
+         allowSelfSignedCertificates: true,
+       ) {
     // Set up the client that allows self-signed certificates
     _selfSignedHttpClient.badCertificateCallback = (
       X509Certificate cert,
@@ -68,11 +77,18 @@ class TriOSHttpClient {
     ) => true;
 
     // Connection pooling and keep-alive settings
-    _defaultHttpClient.idleTimeout = const Duration(seconds: 10);
-    _selfSignedHttpClient.idleTimeout = const Duration(seconds: 10);
-    _defaultHttpClient.maxConnectionsPerHost = 10;
-    _selfSignedHttpClient.maxConnectionsPerHost = 10;
+    for (final client in _allClients) {
+      client.idleTimeout = const Duration(seconds: 10);
+      client.maxConnectionsPerHost = 10;
+    }
   }
+
+  List<HttpClient> get _allClients => [
+    _defaultHttpClient,
+    _selfSignedHttpClient,
+    _publicHttpClient,
+    _publicSelfSignedHttpClient,
+  ];
 
   /// Sends an HTTP GET request to the specified [url] with optional headers and timeout.
   Future<TriOSHttpResponse<dynamic>> get(
@@ -112,26 +128,17 @@ class TriOSHttpClient {
     required HttpProbeCancellation cancellation,
     bool? allowSelfSignedCertificates,
   }) => Future.any([
-    _enqueueRequest(() async {
+    _enqueueRequest(() {
       cancellation.check();
-      var active = true;
-      final client = createPublicHttpClient(
-        isActive: () => active && !cancellation.isCancelled,
-        allowSelfSignedCertificates:
-            allowSelfSignedCertificates ?? allowInsecureConnectionsByDefault,
+      final useInsecure =
+          allowSelfSignedCertificates ?? allowInsecureConnectionsByDefault;
+      return probeHttpUrl(
+        url,
+        maxBytes: maxBytes,
+        prefixOnly: prefixOnly,
+        cancellation: cancellation,
+        client: useInsecure ? _publicSelfSignedHttpClient : _publicHttpClient,
       );
-      try {
-        return await probeHttpUrl(
-          url,
-          maxBytes: maxBytes,
-          prefixOnly: prefixOnly,
-          cancellation: cancellation,
-          client: client,
-        );
-      } finally {
-        active = false;
-        client.close(force: true);
-      }
     }),
     cancellation.whenCancelled.then<HttpProbeResult>(
       (_) => throw const HttpProbeCancelled(),
@@ -330,8 +337,9 @@ class TriOSHttpClient {
 
   /// Closes the [HttpClient] to free up resources.
   void close({bool force = false}) {
-    _defaultHttpClient.close(force: force);
-    _selfSignedHttpClient.close(force: force);
+    for (final client in _allClients) {
+      client.close(force: force);
+    }
   }
 }
 

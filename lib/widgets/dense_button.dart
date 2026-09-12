@@ -22,15 +22,16 @@ class DenseButton extends StatelessWidget {
         ? const Size(0, 24)
         : const Size(0, 30);
 
+    final theme = Theme.of(context);
+    final denseTextStyle = TextButton.styleFrom(
+      padding: padding,
+      minimumSize: minimumSize,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    ).merge(theme.textButtonTheme.style);
+
     return Theme(
-      data: Theme.of(context).copyWith(
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            padding: padding,
-            minimumSize: minimumSize,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
+      data: theme.copyWith(
+        textButtonTheme: TextButtonThemeData(style: denseTextStyle),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             padding: padding,

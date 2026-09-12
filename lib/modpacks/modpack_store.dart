@@ -361,21 +361,6 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     return _saveAsNewPack(existing.definition);
   }
 
-  /// Saves a definition that arrived in a link, a file, or an update, keeping
-  /// its own ID and version.
-  Future<ModpackLibraryEntry> saveIncomingDefinition(
-    ModpackDefinition definition,
-  ) async {
-    _requireSupportedFormat(definition);
-    final existing = _data.packs[definition.id];
-    final entry = (existing ?? ModpackLibraryEntry(definition: definition))
-        .copyWith(definition: definition, savedAt: DateTime.now());
-    await _write(
-      (data) => data.copyWith(packs: {...data.packs, definition.id: entry}),
-    );
-    return entry;
-  }
-
   /// Saves an incoming definition as a separate pack, leaving any existing
   /// pack with the same ID alone.
   Future<ModpackLibraryEntry> saveIncomingDefinitionAsCopy(

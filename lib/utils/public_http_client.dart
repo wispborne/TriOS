@@ -13,7 +13,6 @@ HttpClient createPublicHttpClient({
   bool allowSelfSignedCertificates = false,
   HttpAddressLookup? lookup,
   HttpSocketConnect? connect,
-  bool Function()? isActive,
 }) {
   final resolve = lookup ?? InternetAddress.lookup;
   final open = connect ?? Socket.startConnect;
@@ -21,16 +20,8 @@ HttpClient createPublicHttpClient({
   client.findProxy = (_) => 'DIRECT';
   client.connectionTimeout = const Duration(seconds: 20);
   client.connectionFactory = (url, proxyHost, proxyPort) async {
-    void checkActive() {
-      if (isActive != null && !isActive()) {
-        throw const SocketException('Connection cancelled.');
-      }
-    }
-
-    checkActive();
     final literal = InternetAddress.tryParse(url.host);
     final addresses = literal == null ? await resolve(url.host) : [literal];
-    checkActive();
     if (addresses.isEmpty || addresses.any((a) => !isPublicHttpAddress(a))) {
       throw const FormatException(
         'Sources must use a public internet address.',

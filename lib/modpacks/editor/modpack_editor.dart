@@ -16,6 +16,7 @@ import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/utils/dialogs.dart';
 import 'package:trios/widgets/labeled_text_field.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -23,6 +24,7 @@ import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/simple_data_row.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:trios/widgets/trios_dropdown_button.dart';
 
 class ModpackEditor extends ConsumerStatefulWidget {
   final String packId;
@@ -47,6 +49,34 @@ class _EditorRow implements WispGridItem {
   const _EditorRow(this.key, this.item);
 }
 
+class _EditorDerived {
+  final ModpackDraft draft;
+  final List<Mod> mods;
+  final ModpackDefinition? saved;
+  final List<ModpackDraftIssue> issues;
+  final ModpackDependencies dependencies;
+
+  final int? versionAfterSaving;
+
+  const _EditorDerived({
+    required this.draft,
+    required this.mods,
+    required this.saved,
+    required this.issues,
+    required this.dependencies,
+    required this.versionAfterSaving,
+  });
+}
+
+class _LabelChoice {
+  final String? label;
+  final bool isCustom;
+
+  const _LabelChoice(this.label) : isCustom = false;
+  const _LabelChoice.clear() : label = null, isCustom = false;
+  const _LabelChoice.custom() : label = null, isCustom = true;
+}
+
 enum _SaveChoice { copy, update }
 
 class _ModpackEditorState extends ConsumerState<ModpackEditor> {
@@ -61,10 +91,9 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
 
   set _rows(List<_EditorRow> value) {
     _rowsBacking = value;
-    _orderByKey = {
-      for (var i = 0; i < value.length; i++) value[i].key: i,
-    };
+    _orderByKey = {for (var i = 0; i < value.length; i++) value[i].key: i};
   }
+
   int _nextRowKey = 0;
   bool _fieldsExpanded = true;
   bool _busy = false;
@@ -75,6 +104,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
   Set<String> _packSelection = {};
   final Set<String> _expanded = {};
   Future<void> _pendingSave = Future.value();
+  _EditorDerived? _derived;
 
   String get _installedDrag => 'modpack:${widget.packId}:installed';
   String get _packDrag => 'modpack:${widget.packId}:items';
@@ -198,25 +228,13 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     }
   }
 
-  Future<bool> _confirm(String title, String message, String action) async =>
-      await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(action),
-            ),
-          ],
-        ),
-      ) ??
-      false;
+  Future<bool> _confirm(String title, String message, String action) =>
+      showConfirmDialog(
+        context,
+        title: title,
+        message: message,
+        confirmLabel: action,
+      );
 
   Future<void> _save() async {
     if (_busy || _draft?.isCommittable != true) return;
@@ -299,6 +317,35 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     }
   }
 
+  Set<String> _withKey(Set<String> selection, String key, bool? checked) =>
+      checked == true ? {...selection, key} : ({...selection}..remove(key));
+
+  _EditorDerived _derive(ModpackDraft draft, List<Mod> mods) {
+    final saved = ref
+        .read(modpackStoreProvider)
+        .value
+        ?.packs[widget.packId]
+        ?.definition;
+    final cached = _derived;
+    if (cached != null &&
+        identical(cached.draft, draft) &&
+        identical(cached.mods, mods) &&
+        identical(cached.saved, saved)) {
+      return cached;
+    }
+    final issues = draft.issues;
+    return _derived = _EditorDerived(
+      draft: draft,
+      mods: mods,
+      saved: saved,
+      issues: issues,
+      dependencies: findModpackDependencies(draft.items, mods),
+      versionAfterSaving: issues.isEmpty
+          ? _store.versionAfterSaving(draft)
+          : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final draft = _draft;
@@ -321,14 +368,17 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
       );
     }
     final mods = ref.watch(AppState.mods);
-    final dependencies = findModpackDependencies(draft.items, mods);
+    final derived = _derive(draft, mods);
+    final dependencies = derived.dependencies;
     final byId = {for (final mod in mods) mod.id: mod};
+    final installedQuery = _installedSearch.toLowerCase();
+    final packQuery = _packSearch.toLowerCase();
     final installed = mods
         .where(
           (mod) =>
               '${mod.name} ${mod.id} ${mod.findFirstEnabledOrHighestVersion?.modInfo.author ?? ''}'
                   .toLowerCase()
-                  .contains(_installedSearch.toLowerCase()),
+                  .contains(installedQuery),
         )
         .toList();
     final visible = _rows
@@ -336,7 +386,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           (row) =>
               '${row.item.displayName} ${row.item.modId} ${row.item.label ?? ''}'
                   .toLowerCase()
-                  .contains(_packSearch.toLowerCase()),
+                  .contains(packQuery),
         )
         .toList();
     final normalColumns = ModGridColumns(
@@ -353,7 +403,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
       absorbing: _busy,
       child: Column(
         children: [
-          _header(draft),
+          _header(draft, derived),
           if (_error != null)
             Padding(
               padding: const .all(8),
@@ -455,12 +505,13 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                           leadingItemWidth: 32,
                           leadingItemBuilder: (mod, _) => Checkbox(
                             value: _installedSelection.contains(mod.id),
-                            onChanged: (checked) => setState(() {
-                              _installedSelection = {..._installedSelection};
-                              checked == true
-                                  ? _installedSelection.add(mod.id)
-                                  : _installedSelection.remove(mod.id);
-                            }),
+                            onChanged: (checked) => setState(
+                              () => _installedSelection = _withKey(
+                                _installedSelection,
+                                mod.id,
+                                checked,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -517,7 +568,11 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                       Expanded(
                         child: WispGrid<_EditorRow>(
                           items: visible,
-                          columns: _itemColumns(byId, normalColumns),
+                          columns: _itemColumns(
+                            byId,
+                            normalColumns,
+                            derived.issues,
+                          ),
                           gridState: settings.modpackItemsGridState.copyWith(
                             sortedColumnKey: null,
                             groupingSetting: null,
@@ -550,12 +605,13 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                             children: [
                               Checkbox(
                                 value: _packSelection.contains(row.key),
-                                onChanged: (checked) => setState(() {
-                                  _packSelection = {..._packSelection};
-                                  checked == true
-                                      ? _packSelection.add(row.key)
-                                      : _packSelection.remove(row.key);
-                                }),
+                                onChanged: (checked) => setState(
+                                  () => _packSelection = _withKey(
+                                    _packSelection,
+                                    row.key,
+                                    checked,
+                                  ),
+                                ),
                               ),
                               Draggable<WispGridDragPayload>(
                                 data: WispGridDragPayload(
@@ -683,9 +739,9 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     );
   }
 
-  Widget _header(ModpackDraft draft) {
-    final valid = draft.isCommittable;
-    final version = valid ? _store.versionAfterSaving(draft) : null;
+  Widget _header(ModpackDraft draft, _EditorDerived derived) {
+    final valid = derived.issues.isEmpty;
+    final version = derived.versionAfterSaving;
     return Padding(
       padding: const .fromLTRB(8, 8, 8, 0),
       child: Card(
@@ -701,22 +757,34 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                 child: Row(
                   spacing: 8,
                   children: [
-                    _action('Back', Icons.arrow_back, widget.onBack),
+                    triOSToolbarAction(
+                      label: 'Back',
+                      icon: Icons.arrow_back,
+                      onPressed: widget.onBack,
+                    ),
                     Text(
                       draft.name.trim().isEmpty ? 'New modpack' : draft.name,
                       style: Theme.of(context).textTheme.titleLarge
                           ?.copyWith(fontSize: 20),
                     ),
-                    _action(
-                      'Save changes${version == null ? '' : ' · v$version'}',
-                      Icons.save_outlined,
-                      valid ? _save : null,
+                    triOSToolbarAction(
+                      label:
+                          'Save changes${version == null ? '' : ' · v$version'}',
+                      icon: Icons.save_outlined,
+                      onPressed: valid ? _save : null,
                     ),
-                    _action('Discard changes', Icons.undo, _discard),
-                    _action(
-                      'Pack details',
-                      _fieldsExpanded ? Icons.expand_less : Icons.expand_more,
-                      () => setState(() => _fieldsExpanded = !_fieldsExpanded),
+                    triOSToolbarAction(
+                      label: 'Discard changes',
+                      icon: Icons.undo,
+                      onPressed: _discard,
+                    ),
+                    triOSToolbarAction(
+                      label: 'Pack details',
+                      icon: _fieldsExpanded
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                      onPressed: () =>
+                          setState(() => _fieldsExpanded = !_fieldsExpanded),
                     ),
                   ],
                 ),
@@ -917,18 +985,37 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
   List<WispGridColumn<_EditorRow>> _itemColumns(
     Map<String, Mod> mods,
     List<WispGridColumn<Mod>> normal,
+    List<ModpackDraftIssue> issues,
   ) {
-    // Validating the whole draft is a full pass over every item, so it runs
-    // once here rather than inside the Issues cell for each rendered row.
+    var position = 0;
+    WispGridColumn<_EditorRow> column(
+      String key,
+      String name,
+      double width,
+      Widget Function(_EditorRow) cell,
+    ) => WispGridColumn<_EditorRow>(
+      key: key,
+      name: name,
+      isSortable: false,
+      csvValue: null,
+      headerCellBuilder: (_) => Text(
+        name,
+        style: Theme.of(context).textTheme.bodySmall
+            ?.copyWith(fontWeight: .bold),
+      ),
+      itemCellBuilder: (row, _) => cell(row),
+      defaultState: WispGridColumnState(position: position++, width: width),
+    );
+
     final issueCountByIndex = <int, int>{};
-    for (final issue in _draft?.issues ?? const []) {
+    for (final issue in issues) {
       final index = issue.itemIndex;
       if (index != null) {
         issueCountByIndex[index] = (issueCountByIndex[index] ?? 0) + 1;
       }
     }
     final columns = <WispGridColumn<_EditorRow>>[
-      _column(
+      column(
         'icons',
         'Icon',
         32,
@@ -938,7 +1025,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           takeUpSpaceIfNoIcon: true,
         ),
       ),
-      _column(
+      column(
         'name',
         'Name',
         200,
@@ -971,7 +1058,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           ],
         ),
       ),
-      _column(
+      column(
         'author',
         'Author',
         120,
@@ -984,19 +1071,19 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           maxLines: 1,
         ),
       ),
-      _column(
+      column(
         'label',
         'Label',
         112,
         (row) => TextTriOS(row.item.label ?? '—', maxLines: 1),
       ),
-      _column(
+      column(
         'sourceType',
         'Source type',
         144,
         (row) => TextTriOS(_sourceLabel(row.item.sourceType), maxLines: 1),
       ),
-      _column(
+      column(
         'sourceHost',
         'Source host',
         160,
@@ -1005,7 +1092,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           maxLines: 1,
         ),
       ),
-      _column('issues', 'Issues', 120, (row) {
+      column('issues', 'Issues', 120, (row) {
         final issueCount = issueCountByIndex[_orderByKey[row.key]] ?? 0;
         return issueCount == 0
             ? const SizedBox.shrink()
@@ -1055,35 +1142,6 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     return columns;
   }
 
-  WispGridColumn<_EditorRow> _column(
-    String key,
-    String name,
-    double width,
-    Widget Function(_EditorRow) cell,
-  ) => WispGridColumn<_EditorRow>(
-    key: key,
-    name: name,
-    isSortable: false,
-    csvValue: null,
-    headerCellBuilder: (_) => Text(
-      name,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: .bold),
-    ),
-    itemCellBuilder: (row, _) => cell(row),
-    defaultState: WispGridColumnState(
-      position: [
-        'icons',
-        'name',
-        'author',
-        'label',
-        'sourceType',
-        'sourceHost',
-        'issues',
-      ].indexOf(key),
-      width: width,
-    ),
-  );
-
   Widget _details(_EditorRow row, Mod? mod) {
     final item = row.item;
     return Padding(
@@ -1120,7 +1178,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                     (label) => _editItem(row, item.copyWith(label: label)),
                   ),
                   Expanded(
-                    child: DropdownButton<ModpackItemSourceType>(
+                    child: TriOSDropdownButton<ModpackItemSourceType>(
                       value: item.sourceType,
                       isExpanded: true,
                       hint: const Text('Choose source type'),
@@ -1225,25 +1283,28 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           .nonNulls
           .where((label) => modpackLabelError(label) == null),
     }.toList();
-    return PopupMenuButton<int>(
+    return PopupMenuButton<_LabelChoice>(
       enabled: enabled,
       tooltip: '',
-      onSelected: (selected) async {
-        if (selected == -2) {
+      onSelected: (choice) async {
+        if (choice.isCustom) {
           final result = await showDialog<String>(
             context: context,
             builder: (context) => const _CustomLabelDialog(),
           );
           if (result != null && mounted) onChanged(result);
         } else {
-          onChanged(selected == -1 ? null : labels[selected]);
+          onChanged(choice.label);
         }
       },
       itemBuilder: (_) => [
-        const PopupMenuItem(value: -1, child: Text('None')),
-        for (var index = 0; index < labels.length; index++)
-          PopupMenuItem(value: index, child: Text(labels[index])),
-        const PopupMenuItem(value: -2, child: Text('New custom label…')),
+        const PopupMenuItem(value: _LabelChoice.clear(), child: Text('None')),
+        for (final label in labels)
+          PopupMenuItem(value: _LabelChoice(label), child: Text(label)),
+        const PopupMenuItem(
+          value: _LabelChoice.custom(),
+          child: Text('New custom label…'),
+        ),
       ],
       child: Padding(
         padding: const .all(8),
@@ -1259,14 +1320,6 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     );
   }
 
-  Widget _action(String label, IconData icon, VoidCallback? onPressed) =>
-      TriOSToolbarItem(
-        child: TextButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon, size: 20),
-          label: Text(label),
-        ),
-      );
   Widget _iconAction(String label, IconData icon, VoidCallback onPressed) =>
       MovingTooltipWidget.text(
         message: label,

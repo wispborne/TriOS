@@ -20,8 +20,11 @@ class ModpackSourceCheck {
 
 class ModpackShareState {
   final List<ModpackSourceCheck> checks;
-  final bool running;
-  const ModpackShareState({this.checks = const [], this.running = false});
+  const ModpackShareState({this.checks = const []});
+
+  bool get running => checks.any(
+    (check) => check.status == .waiting || check.status == .checking,
+  );
 }
 
 final modpackShareControllerProvider = NotifierProvider.autoDispose
@@ -58,7 +61,6 @@ class ModpackShareController extends Notifier<ModpackShareState> {
     _cancellation = cancellation;
     final validator = ref.read(modpackSourceValidatorProvider);
     state = ModpackShareState(
-      running: true,
       checks: [
         for (final item in definition.items) ModpackSourceCheck(item, .waiting),
       ],
@@ -71,7 +73,6 @@ class ModpackShareController extends Notifier<ModpackShareState> {
         _validateItem(validator, definition.items[index], index, cancellation),
     ]);
     if (cancellation.isCancelled) return false;
-    state = ModpackShareState(checks: state.checks);
     return state.checks.every((check) => check.status == .passed);
   }
 
@@ -96,6 +97,6 @@ class ModpackShareController extends Notifier<ModpackShareState> {
   void _setCheck(int index, ModpackSourceCheck check) {
     final checks = [...state.checks];
     checks[index] = check;
-    state = ModpackShareState(checks: checks, running: true);
+    state = ModpackShareState(checks: checks);
   }
 }

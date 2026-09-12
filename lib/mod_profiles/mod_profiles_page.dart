@@ -321,14 +321,6 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                                             .onSurface,
                                         size: 24,
                                       ),
-                                      // child: SvgImageIcon(
-                                      //   "assets/images/icon-export-horiz.svg",
-                                      //   color: Theme.of(
-                                      //     context,
-                                      //   ).colorScheme.onSurface,
-                                      //   width: 24,
-                                      //   height: 24,
-                                      // ),
                                     ),
                                     const Flexible(
                                       child: Text(

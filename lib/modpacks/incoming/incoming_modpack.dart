@@ -132,6 +132,11 @@ class IncomingModpackSession extends ChangeNotifier {
 
   IncomingModpackSession(this.embedded, {required this.fetch});
 
+  /// True once a check's result no longer matters: the session is gone, or a
+  /// newer check or an add has started. [beginAction] bumps the generation, so
+  /// this covers acting too.
+  bool _stale(int generation) => _disposed || generation != _generation;
+
   Future<void> checkForUpdate() async {
     final url = selected.updateUrl;
     if (checking || acting || url == null) return;
@@ -145,7 +150,7 @@ class IncomingModpackSession extends ChangeNotifier {
     notifyListeners();
     try {
       final result = await fetch(url, cancellation);
-      if (_disposed || generation != _generation || acting) return;
+      if (_stale(generation)) return;
       if (result.id != snapshot.id) {
         message = 'The update address returned a different modpack. It cannot replace this pack.';
       } else if (result.version < snapshot.version) {
@@ -157,10 +162,10 @@ class IncomingModpackSession extends ChangeNotifier {
         message = 'An online definition is available to review.';
       }
     } catch (e) {
-      if (_disposed || generation != _generation || acting) return;
+      if (_stale(generation)) return;
       message = 'Could not check for an update: $e';
     } finally {
-      if (!_disposed && generation == _generation && !acting) {
+      if (!_stale(generation)) {
         checking = false;
         notifyListeners();
       }

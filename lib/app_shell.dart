@@ -23,6 +23,7 @@ import 'package:trios/toolbar/compact_top_bar.dart';
 import 'package:trios/toolbar/full_top_bar.dart';
 import 'package:trios/trios/activity_panel/activity_panel.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/deep_link/deep_link_handler.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/navigation_request.dart';
@@ -235,6 +236,9 @@ class _AppShellState extends ConsumerState<AppShell>
 
     // Execute all actions that were added while the app was loading
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // The root navigator exists by now, so anything that arrived before the
+      // UI was built can go ahead.
+      if (!rootNavigatorReady.isCompleted) rootNavigatorReady.complete();
       for (var action in onAppLoadedActions) {
         try {
           await action(context);

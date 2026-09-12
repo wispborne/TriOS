@@ -35,6 +35,12 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
   bool _inProgress = false;
   List<DropItem>? hoveredEvents;
   Future<DroppedContents>? _hoveredContents;
+
+  /// The drag session the hover state was read for, and whether it held
+  /// anything droppable. onDropOver fires on every pointer move, so the reads
+  /// happen once per session instead of once per move.
+  DropSession? _hoveredSession;
+  bool _hoveredSupported = false;
   DropSession? _modpackCheckSession;
   Future<bool> _modpackCheck = Future.value(false);
 
@@ -69,13 +75,16 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         final contents = await readDroppedContents(droppedItems);
         final files = contents.files;
         final urls = contents.urls;
-        for (final incoming in contents.modpackInputs) {
-          if (!context.mounted) return;
+        if (contents.modpackInputs.isNotEmpty) {
           setState(() {
             _dragging = false;
             hoveredEvents = null;
             _hoveredContents = null;
+            _hoveredSession = null;
           });
+        }
+        for (final incoming in contents.modpackInputs) {
+          if (!context.mounted) return;
           await ref
               .read(incomingModpackHandlerProvider)
               .receive(incoming, context: context);
@@ -159,9 +168,12 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         if (detail.session.items.isEmpty ||
             (ignoringDrop && !await _containsModpack(detail.session))) {
           return DropOperation.none;
-        } else if (detail.session.items.hashCode == hoveredEvents.hashCode) {
-          return DropOperation.copy;
+        } else if (identical(detail.session, _hoveredSession)) {
+          return _hoveredSupported ? DropOperation.copy : DropOperation.none;
         }
+        // Claim the session before the first await so overlapping moves don't
+        // both start a read.
+        _hoveredSession = detail.session;
 
         // final files = (await Future.wait(detail.session.items.map((e) async {
         //   final reader = e.dataReader;
@@ -185,6 +197,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
         final files = (await filterToSupportedTypes(detail.session.items))
             .orEmpty()
             .toList();
+        _hoveredSupported = files.isNotEmpty;
         if (files.isEmpty) {
           return DropOperation.none;
         }
@@ -217,6 +230,7 @@ class _DragDropHandlerState extends ConsumerState<DragDropHandler> {
           // _offset = null;
           hoveredEvents = null;
           _hoveredContents = null;
+          _hoveredSession = null;
         });
       },
       child: Builder(
@@ -414,8 +428,6 @@ class DroppedContents {
   final List<String> modpackInputs;
 
   const DroppedContents(this.files, this.urls, this.modpackInputs);
-
-  bool get isEmpty => files.isEmpty && urls.isEmpty && modpackInputs.isEmpty;
 }
 
 class IgnoreDropMouseRegion extends ConsumerStatefulWidget {

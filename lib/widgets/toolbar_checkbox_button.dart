@@ -1,5 +1,22 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
+
+Widget triOSToolbarAction({
+  required String label,
+  required IconData icon,
+  VoidCallback? onPressed,
+  String? disabledMessage,
+}) => MovingTooltipWidget.text(
+  message: onPressed == null ? disabledMessage : null,
+  child: TriOSToolbarItem(
+    child: TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      label: Text(label),
+    ),
+  ),
+);
 
 class TriOSToolbarCheckboxButton extends StatelessWidget {
   const TriOSToolbarCheckboxButton({

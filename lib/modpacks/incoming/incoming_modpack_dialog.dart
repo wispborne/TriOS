@@ -77,54 +77,36 @@ class _IncomingModpackDialogState extends ConsumerState<IncomingModpackDialog> {
       final draft = data.drafts[snapshot.id];
       var choice = _ConflictChoice.replace;
       if (match == .savedConflict || match == .draftConflict) {
-        final selected = await showDialog<_ConflictChoice>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(
-              draft == null
-                  ? 'This modpack is already saved'
-                  : 'This modpack has an unsaved draft',
-            ),
-            content: SizedBox(
-              width: 700,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: .start,
-                  spacing: 16,
-                  children: [
-                    if (draft != null)
-                      const Text(
-                        'Replacing this pack discards your unsaved draft.',
-                      ),
-                    ModpackComparison(
-                      incoming: snapshot,
-                      saved: existing?.definition,
-                      draft: draft,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, _ConflictChoice.copy),
-                child: const Text('Add as copy'),
-              ),
-              TextButton(
-                onPressed: () =>
-                    Navigator.pop(context, _ConflictChoice.replace),
-                child: Text(
-                  draft == null
-                      ? 'Replace existing'
-                      : 'Discard draft and replace',
-                ),
-              ),
-            ],
+        final selected = await _showComparison<_ConflictChoice>(
+          title: draft == null
+              ? 'This modpack is already saved'
+              : 'This modpack has an unsaved draft',
+          note: draft == null
+              ? null
+              : 'Replacing this pack discards your unsaved draft.',
+          comparison: ModpackComparison(
+            incoming: snapshot,
+            saved: existing?.definition,
+            draft: draft,
           ),
+          actions: (context) => [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, _ConflictChoice.copy),
+              child: const Text('Add as copy'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, _ConflictChoice.replace),
+              child: Text(
+                draft == null
+                    ? 'Replace existing'
+                    : 'Discard draft and replace',
+              ),
+            ),
+          ],
         );
         if (selected == null || !mounted) return;
         choice = selected;
@@ -148,41 +130,51 @@ class _IncomingModpackDialogState extends ConsumerState<IncomingModpackDialog> {
     }
   }
 
+  /// Shows a before/after comparison with an optional note above it. Both the
+  /// saved-conflict prompt and the online-review prompt use this shape.
+  Future<T?> _showComparison<T>({
+    required String title,
+    required String? note,
+    required Widget comparison,
+    required List<Widget> Function(BuildContext) actions,
+  }) => showDialog<T>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      content: SizedBox(
+        width: 700,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: .start,
+            spacing: 16,
+            children: [if (note != null) Text(note), comparison],
+          ),
+        ),
+      ),
+      actions: actions(context),
+    ),
+  );
+
   Future<void> _reviewOnline() async {
     final online = session.online;
     if (online == null) return;
     final selected = session.selected;
-    final accepted = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Review online modpack'),
-        content: SizedBox(
-          width: 700,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: .start,
-              spacing: 16,
-              children: [
-                if (selected.updateUrl != online.updateUrl)
-                  Text(
-                    'The update address changes to ${online.updateUrl ?? 'Not set'}. Using this definition accepts that change.',
-                  ),
-                ModpackComparison(incoming: online, saved: selected),
-              ],
-            ),
-          ),
+    final accepted = await _showComparison<bool>(
+      title: 'Review online modpack',
+      note: selected.updateUrl == online.updateUrl
+          ? null
+          : 'The update address changes to ${online.updateUrl ?? 'Not set'}. Using this definition accepts that change.',
+      comparison: ModpackComparison(incoming: online, saved: selected),
+      actions: (context) => [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Keep embedded definition'),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep embedded definition'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Use online definition'),
-          ),
-        ],
-      ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Use online definition'),
+        ),
+      ],
     );
     if (accepted == true && mounted) session.selectOnline();
   }
@@ -196,12 +188,10 @@ class _IncomingModpackDialogState extends ConsumerState<IncomingModpackDialog> {
         width: 1200,
         height: 760,
         child: ModpackFullPage(
-          key: ValueKey(definition),
+          // Identity is enough: a different definition is always a new object.
+          key: ObjectKey(definition),
           entry: ModpackLibraryEntry(definition: definition),
           onBack: () => Navigator.pop(context),
-          onEdit: () {},
-          onDuplicate: () async {},
-          onDelete: () async {},
           previewToolbar: Padding(
             padding: const .all(8),
             child: Column(

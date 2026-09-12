@@ -129,21 +129,25 @@ void main() {
       state().visibleCards.map((card) => card.name).toList();
 
   Future<void> saveTwoPacks() async {
-    await harness.store.saveIncomingDefinition(
+    await harness.store.acceptIncomingDefinition(
       _definition(
         id: _wispId,
         name: 'Wisp\'s pack',
         author: 'Wisp',
         gameVersion: '0.98a-RC8',
       ),
+      expectedEntry: null,
+      expectedDraft: null,
     );
-    await harness.store.saveIncomingDefinition(
+    await harness.store.acceptIncomingDefinition(
       _definition(
         id: _otherId,
         name: 'Another pack',
         author: 'Someone',
         modIds: ['alpha', 'missing_mod'],
       ),
+      expectedEntry: null,
+      expectedDraft: null,
     );
   }
 

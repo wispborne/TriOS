@@ -10,20 +10,47 @@ import 'package:trios/utils/logging.dart';
 /// - **macOS**: Handled via Info.plist at build time (always registered).
 /// - **Linux**: Copies/removes a .desktop file and runs xdg-mime.
 class ProtocolRegistration {
+  /// The file extension TriOS claims, and the Windows program id and Linux
+  /// names that go with it. Written by register and read back by the checks,
+  /// so they stay in step.
+  static const _modpackExtension = '.trios-modpack';
+  static const _windowsProgramId = 'TriOS.Modpack';
+  static const _linuxDesktopFile = 'trios-starsector-mod.desktop';
+  static const _linuxMimeType = 'application/x-trios-modpack';
+
+  static String get _classesRoot => r'HKCU\Software\Classes';
+  static String get _extensionKey => '$_classesRoot\\$_modpackExtension';
+  static String get _programIdKey => '$_classesRoot\\$_windowsProgramId';
+  static String get _schemeKey => '$_classesRoot\\$deepLinkScheme';
+  static String get _linuxShare =>
+      '${Platform.environment['HOME']}/.local/share';
+  static String get _linuxMimeDir => '$_linuxShare/mime';
+  static String get _linuxApplicationsDir => '$_linuxShare/applications';
+  static String get _linuxMimeFilePath =>
+      '$_linuxMimeDir/packages/trios-modpack.xml';
+  static String get _linuxDesktopFilePath =>
+      '$_linuxApplicationsDir/$_linuxDesktopFile';
+
+  /// Writes one registry value. Pass [name] for a named value, or leave it out
+  /// for the key's default value.
+  static Future<void> _regAdd(String key, String data, {String? name}) =>
+      Process.run('reg', [
+        'add',
+        key,
+        if (name == null) '/ve' else ...['/v', name],
+        '/d',
+        data,
+        '/f',
+      ]);
+
   /// Adds file handling for installations that enabled links before modpacks
   /// existed. Leave an existing file association alone.
   static Future<void> ensureModpackFileRegistration() async {
     if (Platform.isWindows) {
-      final result = await Process.run('reg', [
-        'query',
-        r'HKCU\Software\Classes\.trios-modpack',
-      ]);
+      final result = await Process.run('reg', ['query', _extensionKey]);
       if (result.exitCode != 0) await register();
     } else if (Platform.isLinux) {
-      final file = File(
-        '${Platform.environment['HOME']}/.local/share/mime/packages/trios-modpack.xml',
-      );
-      if (!await file.exists()) await register();
+      if (!await File(_linuxMimeFilePath).exists()) await register();
     }
   }
 
@@ -76,87 +103,24 @@ class ProtocolRegistration {
   // ── Windows ──────────────────────────────────────────────────────────
 
   static Future<void> _registerWindows() async {
-    // Import win32_registry only on Windows.
-    final exePath = Platform.resolvedExecutable;
-    final command = '"$exePath" "%1"';
+    final command = '"${Platform.resolvedExecutable}" "%1"';
 
-    // Use reg.exe to write keys — avoids needing to import win32_registry
-    // directly here (keeps this file platform-agnostic at the import level).
-    final regPath = r'HKCU\Software\Classes\' + deepLinkScheme;
-
-    await Process.run('reg', [
-      'add',
-      regPath,
-      '/ve',
-      '/d',
-      'URL:Starsector Mod Protocol',
-      '/f',
-    ]);
-
-    await Process.run('reg', [
-      'add',
-      regPath,
-      '/v',
-      'URL Protocol',
-      '/d',
-      '',
-      '/f',
-    ]);
-
-    await Process.run('reg', [
-      'add',
-      '$regPath\\shell\\open\\command',
-      '/ve',
-      '/d',
-      command,
-      '/f',
-    ]);
-    await Process.run('reg', [
-      'add',
-      r'HKCU\Software\Classes\.trios-modpack',
-      '/ve',
-      '/d',
-      'TriOS.Modpack',
-      '/f',
-    ]);
-    await Process.run('reg', [
-      'add',
-      r'HKCU\Software\Classes\TriOS.Modpack',
-      '/ve',
-      '/d',
-      'TriOS Modpack',
-      '/f',
-    ]);
-    await Process.run('reg', [
-      'add',
-      r'HKCU\Software\Classes\TriOS.Modpack\shell\open\command',
-      '/ve',
-      '/d',
-      command,
-      '/f',
-    ]);
+    // reg.exe is used instead of importing win32_registry, so this file has no
+    // platform-specific imports.
+    await _regAdd(_schemeKey, 'URL:Starsector Mod Protocol');
+    await _regAdd(_schemeKey, '', name: 'URL Protocol');
+    await _regAdd('$_schemeKey\\shell\\open\\command', command);
+    await _regAdd(_extensionKey, _windowsProgramId);
+    await _regAdd(_programIdKey, 'TriOS Modpack');
+    await _regAdd('$_programIdKey\\shell\\open\\command', command);
   }
 
   static Future<void> _unregisterWindows() async {
-    final regPath = r'HKCU\Software\Classes\' + deepLinkScheme;
-    await Process.run('reg', ['delete', regPath, '/f']);
-    await Process.run('reg', [
-      'delete',
-      r'HKCU\Software\Classes\TriOS.Modpack',
-      '/f',
-    ]);
-    final extension = await Process.run('reg', [
-      'query',
-      r'HKCU\Software\Classes\.trios-modpack',
-      '/ve',
-    ]);
-    if (extension.stdout.toString().contains('TriOS.Modpack')) {
-      await Process.run('reg', [
-        'delete',
-        r'HKCU\Software\Classes\.trios-modpack',
-        '/ve',
-        '/f',
-      ]);
+    await Process.run('reg', ['delete', _schemeKey, '/f']);
+    await Process.run('reg', ['delete', _programIdKey, '/f']);
+    final extension = await Process.run('reg', ['query', _extensionKey, '/ve']);
+    if (extension.stdout.toString().contains(_windowsProgramId)) {
+      await Process.run('reg', ['delete', _extensionKey, '/ve', '/f']);
     }
   }
 
@@ -181,44 +145,34 @@ class ProtocolRegistration {
 Name=TriOS
 Exec="${Platform.resolvedExecutable}" %u
 Type=Application
-MimeType=x-scheme-handler/$deepLinkScheme;application/x-trios-modpack;
+MimeType=x-scheme-handler/$deepLinkScheme;$_linuxMimeType;
 NoDisplay=true
 ''';
 
-    final applicationsDir = Directory(
-      '${Platform.environment['HOME']}/.local/share/applications',
-    );
+    final applicationsDir = Directory(_linuxApplicationsDir);
     if (!applicationsDir.existsSync()) {
       applicationsDir.createSync(recursive: true);
     }
 
-    final desktopFile = File(
-      '${applicationsDir.path}/trios-starsector-mod.desktop',
-    );
-    await desktopFile.writeAsString(desktopEntry);
-    final mimeDir = Directory(
-      '${Platform.environment['HOME']}/.local/share/mime',
-    );
-    final packages = Directory('${mimeDir.path}/packages');
-    await packages.create(recursive: true);
-    await File('${packages.path}/trios-modpack.xml')
-        .writeAsString('''<?xml version="1.0" encoding="UTF-8"?>
+    await File(_linuxDesktopFilePath).writeAsString(desktopEntry);
+    final mimeFile = File(_linuxMimeFilePath);
+    await mimeFile.parent.create(recursive: true);
+    await mimeFile.writeAsString('''<?xml version="1.0" encoding="UTF-8"?>
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
-  <mime-type type="application/x-trios-modpack">
-    <comment>TriOS Modpack</comment><glob pattern="*.trios-modpack"/>
+  <mime-type type="$_linuxMimeType">
+    <comment>TriOS Modpack</comment><glob pattern="*$_modpackExtension"/>
   </mime-type>
 </mime-info>
 ''');
-    await Process.run('update-mime-database', [mimeDir.path]);
+    await Process.run('update-mime-database', [_linuxMimeDir]);
     await Process.run('xdg-mime', [
       'default',
-      'trios-starsector-mod.desktop',
-      'application/x-trios-modpack',
+      _linuxDesktopFile,
+      _linuxMimeType,
     ]);
-
     await Process.run('xdg-mime', [
       'default',
-      'trios-starsector-mod.desktop',
+      _linuxDesktopFile,
       'x-scheme-handler/$deepLinkScheme',
     ]);
 
@@ -229,18 +183,13 @@ NoDisplay=true
   }
 
   static Future<void> _unregisterLinux() async {
-    final applicationsDir =
-        '${Platform.environment['HOME']}/.local/share/applications';
-    final desktopFile = File('$applicationsDir/trios-starsector-mod.desktop');
-    if (desktopFile.existsSync()) {
-      await desktopFile.delete();
-    }
-    final mimeDir = '${Platform.environment['HOME']}/.local/share/mime';
-    final mimeFile = File('$mimeDir/packages/trios-modpack.xml');
+    final desktopFile = File(_linuxDesktopFilePath);
+    if (desktopFile.existsSync()) await desktopFile.delete();
+    final mimeFile = File(_linuxMimeFilePath);
     if (await mimeFile.exists()) await mimeFile.delete();
-    await Process.run('update-mime-database', [mimeDir]);
+    await Process.run('update-mime-database', [_linuxMimeDir]);
     // Refresh the cache so the removed handler stops being advertised.
-    await Process.run('update-desktop-database', [applicationsDir]);
+    await Process.run('update-desktop-database', [_linuxApplicationsDir]);
   }
 
   static bool _isRegisteredLinux() {

@@ -135,9 +135,10 @@ class DownloadManager {
           "(Content-Type: $contentType, Content-Disposition: $disposition).",
         );
         throw Exception(
-          "This link points to a web page or folder, not a mod file.\n\n"
+          "This link is to a website or folder, not a mod file.\n\n"
           "If it's a Google Drive or Dropbox share, link directly to the "
-          "mod's .zip or .7z file rather than to a folder.",
+          "mod's .zip or .7z file rather than to a folder.\n\n"
+          "$url",
         );
       }
       Fimber.d(

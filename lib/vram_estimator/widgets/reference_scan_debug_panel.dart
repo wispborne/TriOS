@@ -35,14 +35,11 @@ class ReferenceScanDebugPanel extends ConsumerWidget {
                 MovingTooltipWidget.text(
                   message:
                       'Run the per-mod scan loop across an isolate pool. '
-                      'Faster on large mod lists, but uses more CPU and '
-                      'multiplies the per-isolate file-handle limit by the '
-                      'pool size. Takes effect on the next scan.',
+                      'Faster on large mod lists, but uses more CPU. '
+                      'Takes effect on the next scan.',
                   child: SwitchListTile(
                     title: const Text('Multithreaded scanning'),
-                    subtitle: const Text(
-                      'Faster scans, higher CPU and file-handle pressure',
-                    ),
+                    subtitle: const Text('Faster scans, higher CPU usage'),
                     value: settings.vramEstimatorMultithreaded,
                     onChanged: (val) => ref
                         .read(appSettings.notifier)

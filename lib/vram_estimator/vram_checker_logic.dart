@@ -19,6 +19,7 @@ import 'selectors/path_normalizer.dart';
 import 'selectors/vram_asset_selector.dart';
 import 'vram_check_scan_params.dart';
 import 'vram_scan_one_mod.dart';
+import 'vram_scan_file_budget.dart';
 import 'vram_scan_task.dart';
 
 typedef VramScanEntry = ({VramScanTask task, VramCheckerMod modInfo});
@@ -93,6 +94,7 @@ class VramChecker {
   GraphicsLibConfig graphicsLibConfig;
   Function(VramMod) modProgressOut = (it) => (it);
   Function(VramCheckerMod) onModStart = (it) => (it);
+
   /// Fires exactly once per mod whose scan reached its terminal state —
   /// success, failure, cancel, or executor-level error. Pairs with
   /// [onModStart] so callers can maintain "in-flight" UI state without
@@ -128,7 +130,9 @@ class VramChecker {
   /// selectors existed) so existing callers need no changes.
   VramAssetSelector selector;
 
+  /// Upper bound across the scan, divided among concurrent mod workers.
   int maxFileHandles;
+  late VramScanFileBudget _fileBudget;
 
   /// When true, run the per-mod scan loop across an `async_task`
   /// `AsyncExecutor` isolate pool. When false (default), keep the legacy
@@ -157,7 +161,7 @@ class VramChecker {
     required this.showSkippedFiles,
     required this.showCountedFiles,
     required this.graphicsLibConfig,
-    this.maxFileHandles = 2000,
+    this.maxFileHandles = VramScanFileBudget.defaultMaxFileHandles,
     this.gameCoreDir,
     VramAssetSelector? selector,
     Function(VramMod)? modProgressOut,
@@ -207,7 +211,7 @@ class VramChecker {
   /// top-level function consumes. The selector is passed by id + config
   /// instead of by instance so the same params survive an isolate hop in
   /// the multithreaded path.
-  VramCheckScanParams _buildParams(VramCheckerMod modInfo) {
+  VramCheckScanParams _buildParams(VramCheckerMod modInfo, {int workers = 1}) {
     // The current selector instance carries its own config (e.g.
     // `ReferencedAssetsSelector.config`). We can't introspect it
     // generically, so we rely on the selector exposing a `.toMap()`-able
@@ -238,7 +242,7 @@ class VramChecker {
       showPerformance: showPerformance,
       showSkippedFiles: showSkippedFiles,
       showCountedFiles: showCountedFiles,
-      maxFileHandles: maxFileHandles,
+      maxFileHandles: _fileBudget.handlesPerWorker(workers),
       vanillaAssets: _vanillaAssets,
     );
   }
@@ -302,9 +306,15 @@ class VramChecker {
   /// each mod's captured log buffer once its task settles, preserving
   /// per-mod-atomic ordering even when several mods run in parallel.
   Future<List<VramMod>> _checkMultithreaded() async {
-    final parallelism = max(
-      1,
-      min(Platform.numberOfProcessors - 1, 4),
+    final parallelism = _fileBudget.workerCount(
+      min(
+        variantsToCheck.length,
+        max(1, min(Platform.numberOfProcessors - 1, 4)),
+      ),
+    );
+    infoOut(
+      'VRAM scan workers: $parallelism, image reads per worker: '
+      '${_fileBudget.handlesPerWorker(parallelism)}',
     );
     final executor = AsyncExecutor(
       sequential: false,
@@ -326,7 +336,7 @@ class VramChecker {
           .toList();
       final taskQueue = Queue<VramScanEntry>();
       for (final modInfo in variants) {
-        final params = _buildParams(modInfo);
+        final params = _buildParams(modInfo, workers: parallelism);
         taskQueue.add((
           task: VramScanTask(params.toTransfer()),
           modInfo: modInfo,
@@ -482,6 +492,13 @@ class VramChecker {
   }
 
   Future<List<VramMod>> check() async {
+    _fileBudget = await VramScanFileBudget.forCurrentProcess(
+      requestedMax: maxFileHandles,
+    );
+    infoOut(
+      'VRAM scan image-read budget: ${_fileBudget.maxFileHandles} '
+      'across all scan workers',
+    );
     progressText = StringBuffer();
     modTotals = StringBuffer();
     summaryText = StringBuffer();
@@ -545,7 +562,8 @@ class VramChecker {
       final totalMs = DateTime.timestamp().millisecondsSinceEpoch - startTime;
       progressText.appendAndPrint("Finished run in $totalMs ms", verboseOut);
       Fimber.v(
-        () => "[VramChecker] runComplete selector=${selector.id.wireValue} "
+        () =>
+            "[VramChecker] runComplete selector=${selector.id.wireValue} "
             "mods=${mods.length} time=${totalMs}ms",
       );
     }

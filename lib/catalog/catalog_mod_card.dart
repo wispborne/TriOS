@@ -121,6 +121,9 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
               icon: Icons.refresh,
               onSelected: () {
                 ref
+                    .read(AppState.changelogsProvider.notifier)
+                    .clearCacheForMods([installedMod.id]);
+                ref
                     .read(AppState.versionCheckResults.notifier)
                     .refresh(
                   skipCache: true,

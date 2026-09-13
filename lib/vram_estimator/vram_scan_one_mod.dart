@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:collection';
 import 'dart:core';
 import 'dart:io';
 
@@ -40,22 +42,29 @@ const String scanDoneChannelMarker = '__scan_done__';
 class _FileHandleLimiter {
   final int max;
   int current = 0;
-  final void Function(String)? onWaiting;
+  final Queue<Completer<void>> _waiting = Queue();
 
-  _FileHandleLimiter(this.max, {this.onWaiting});
+  _FileHandleLimiter(this.max) {
+    if (max < 1) throw RangeError.range(max, 1, null, 'maxFileHandles');
+  }
 
   Future<T> run<T>(Future<T> Function() function) async {
-    while (current + 1 > max) {
-      onWaiting?.call(
-        "Waiting for file handles to free up. Current file handles: $current",
-      );
-      await Future.delayed(const Duration(milliseconds: 100));
+    if (current >= max) {
+      final permit = Completer<void>();
+      _waiting.add(permit);
+      await permit.future;
+    } else {
+      current++;
     }
-    current++;
     try {
       return await function();
     } finally {
-      current--;
+      if (_waiting.isEmpty) {
+        current--;
+      } else {
+        // Transfer the occupied permit directly to the next waiting read.
+        _waiting.removeFirst().complete();
+      }
     }
   }
 }
@@ -121,6 +130,7 @@ Future<VramScanOutcome> scanOneMod(
   }
 
   try {
+    final fileHandleLimiter = _FileHandleLimiter(params.maxFileHandles);
     logBuffer.writeln("\nFolder: ${modInfo.name}");
     if (channel != null) {
       channel.send(modStartMsg());
@@ -223,10 +233,6 @@ Future<VramScanOutcome> scanOneMod(
     }
 
     final imagePool = imageReaderPool ?? ReadImageHeaders();
-    final fileHandleLimiter = _FileHandleLimiter(
-      params.maxFileHandles,
-      onWaiting: verboseOut,
-    );
 
     final referencedFutures = _processAssets(
       selectedAssets.where((a) => a.isReferenced).toList(),
@@ -300,32 +306,27 @@ Future<VramScanOutcome> scanOneMod(
     final vanillaAssets = params.vanillaAssets;
 
     final filteredReferencedTable = ModImageTable.fromRows(
-      referencedViews
-          .map(
-            (view) {
-              int vanillaCost = 0;
-              if (vanillaAssets != null &&
-                  view.imageType != ImageType.background) {
-                final relPath = PathNormalizer.normalize(
-                  File(view.filePath).relativePath(modFolderDir),
-                );
-                final vanillaBytes = vanillaAssets[relPath];
-                if (vanillaBytes != null) vanillaCost = vanillaBytes;
-              }
-              return {
-                'filePath': view.filePath,
-                'textureHeight': view.textureHeight,
-                'textureWidth': view.textureWidth,
-                'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
-                'imageType': view.imageType.name,
-                'graphicsLibType': view.graphicsLibType?.name,
-                if (view.referencedBy != null && view.referencedBy!.isNotEmpty)
-                  'referencedBy': view.referencedBy,
-                if (vanillaCost != 0) 'vanillaReplacementCost': vanillaCost,
-              };
-            },
-          )
-          .toList(),
+      referencedViews.map((view) {
+        int vanillaCost = 0;
+        if (vanillaAssets != null && view.imageType != ImageType.background) {
+          final relPath = PathNormalizer.normalize(
+            File(view.filePath).relativePath(modFolderDir),
+          );
+          final vanillaBytes = vanillaAssets[relPath];
+          if (vanillaBytes != null) vanillaCost = vanillaBytes;
+        }
+        return {
+          'filePath': view.filePath,
+          'textureHeight': view.textureHeight,
+          'textureWidth': view.textureWidth,
+          'bitsInAllChannelsSum': view.bitsInAllChannelsSum,
+          'imageType': view.imageType.name,
+          'graphicsLibType': view.graphicsLibType?.name,
+          if (view.referencedBy != null && view.referencedBy!.isNotEmpty)
+            'referencedBy': view.referencedBy,
+          if (vanillaCost != 0) 'vanillaReplacementCost': vanillaCost,
+        };
+      }).toList(),
     );
 
     final mod = VramMod(
@@ -384,6 +385,7 @@ Iterable<Future<Map<String, dynamic>?>> _processAssets(
     final file = asset.file;
     try {
       return await limiter.run(() async {
+        if (isCancelled()) throw const _CancelledException();
         final image = await imageHeaderReaderPool.readImageDeterminingBest(
           file.file.path,
         );
@@ -392,10 +394,10 @@ Iterable<Future<Map<String, dynamic>?>> _processAssets(
         }
         final imageType =
             file.relativePath.contains(_backgroundFolderName) &&
-                    image.width >= 1024 &&
-                    image.height >= 1024
-                ? ImageType.background
-                : ImageType.texture;
+                image.width >= 1024 &&
+                image.height >= 1024
+            ? ImageType.background
+            : ImageType.texture;
         return {
           'filePath': file.file.path,
           'textureHeight': nextPowerOfTwo(image.height),
@@ -407,6 +409,8 @@ Iterable<Future<Map<String, dynamic>?>> _processAssets(
             'referencedBy': asset.referencedBy,
         };
       });
+    } on _CancelledException {
+      rethrow;
     } catch (e) {
       if (showSkippedFiles) {
         verboseOut("Skipped non-image ${file.relativePath} ($e)");

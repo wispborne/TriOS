@@ -178,6 +178,9 @@ ContextMenu buildModBulkActionContextMenu(
         icon: Icons.refresh,
         onSelected: () {
           ref
+              .read(AppState.changelogsProvider.notifier)
+              .clearCacheForMods(selectedMods.map((mod) => mod.id));
+          ref
               .read(AppState.versionCheckResults.notifier)
               .refresh(
                 skipCache: true,

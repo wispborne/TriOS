@@ -18,6 +18,7 @@ import 'package:trios/vram_estimator/vram_checker_explanation.dart';
 import 'package:trios/vram_estimator/vram_checker_logic.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 import 'package:trios/vram_estimator/vram_usage_estimate.dart';
+import 'package:trios/vram_estimator/vram_scan_error.dart';
 import 'package:trios/vram_estimator/widgets/reference_scan_debug_panel.dart';
 import 'package:trios/vram_estimator/widgets/scan_progress_panel.dart';
 import 'package:trios/widgets/disable.dart';
@@ -160,6 +161,7 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
       return Center(child: ThemedCircularProgressIndicator());
     }
     final vramState = vramStateProvider.requireValue;
+    final scanError = ref.watch(vramScanErrorProvider);
     final isScanning = vramState.isScanning;
     final enabledSmolIds = ref
         .watch(AppState.enabledModVariants)
@@ -255,6 +257,33 @@ class _VramEstimatorPageState extends ConsumerState<VramEstimatorPage>
           Padding(
             padding: const .symmetric(horizontal: 12, vertical: 8),
             child: _buildVramUsageBar(context, estimatedVramBytes, totalVram),
+          ),
+        if (scanError != null)
+          Padding(
+            padding: const .all(8),
+            child: Card(
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: Padding(
+                padding: const .all(16),
+                child: Row(
+                  spacing: 8,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                    Expanded(
+                      child: Text(
+                        'VRAM scan stopped. $scanError',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         if (modVramInfo.isNotEmpty)
           Expanded(

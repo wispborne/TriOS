@@ -1,0 +1,5 @@
+- [x] 1. Add and test the scan-wide budget and Linux headroom calculation.
+- [x] 2. Divide the budget across workers and log the selected budget before scanning.
+- [x] 3. Replace polling permits and test scan concurrency, failure recovery, and cancellation.
+- [x] 4. Run VRAM tests and targeted static analysis.
+- [x] 5. Show file-limit failures on the estimator page and verify the updated error handling.

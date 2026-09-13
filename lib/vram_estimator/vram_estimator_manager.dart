@@ -20,6 +20,7 @@ import 'graphics_lib_config_provider.dart';
 import 'models/active_mod_scan.dart';
 import 'models/graphics_lib_config.dart';
 import 'models/vram_checker_models.dart';
+import 'vram_scan_error.dart';
 
 part 'vram_estimator_manager.mapper.dart';
 
@@ -451,6 +452,7 @@ class VramEstimatorNotifier
 
   Future<void> startEstimating({List<ModVariant>? variantsToCheck}) async {
     if (state.value?.isScanning == true) return;
+    ref.read(vramScanErrorProvider.notifier).clear();
 
     var modsFolder = ref.read(AppState.modsFolder).value;
     if (modsFolder == null || !modsFolder.existsSync()) {
@@ -595,6 +597,9 @@ class VramEstimatorNotifier
       );
     } catch (e) {
       Fimber.w('Error scanning for VRAM usage: $e');
+      if (state.value?.isCancelled != true) {
+        ref.read(vramScanErrorProvider.notifier).report(e);
+      }
       // Surface any buffered progress before resetting the scanning flag,
       // so users see what got through before the error.
       await _flushPendingToState();

@@ -8,6 +8,7 @@
   - Catalog entries for add-on mods no longer get confused with their parent mod when they share a forum thread.
   - Radar background animation didn't move.
   - Refreshing the Ship Viewer now reloads changed sprites, graphics, engine and shield styles, and `trios.json` settings.
+  - Tentative mitigation for VRAM Estimator scanning when OS is low on file handles.
 - Changed
   - Default ship background is now space4 (darker).
 

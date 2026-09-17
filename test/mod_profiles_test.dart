@@ -544,4 +544,181 @@ void main() {
       expect(missingVariant.modId, 'modE');
     });
   });
+
+  group('computeModProfileMergeChanges', () {
+    final v100 = Version.parse("1.0.0", sanitizeInput: true);
+    final v110 = Version.parse("1.1.0", sanitizeInput: true);
+    final v200 = Version.parse("2.0.0", sanitizeInput: true);
+
+    ModVariant variantOf(String modId, Version version) => ModVariant(
+      modInfo: ModInfo(id: modId, version: version),
+      versionCheckerInfo: null,
+      modFolder: Directory(''),
+      hasNonBrickedModInfo: true,
+      gameCoreFolder: Directory(''),
+    );
+
+    Mod modOf(String modId, List<Version> installedVersions) => Mod(
+      id: modId,
+      isEnabledInGame: false,
+      modVariants: installedVersions
+          .map((version) => variantOf(modId, version))
+          .toList(),
+    );
+
+    ModProfile profileOf(List<ShallowModVariant> enabledModVariants) =>
+        ModProfile(
+          id: 'profile1',
+          name: 'Profile 1',
+          description: '',
+          sortOrder: 1,
+          enabledModVariants: enabledModVariants,
+        );
+
+    ShallowModVariant memberOf(String modId, Version version) =>
+        ShallowModVariant(
+          modId: modId,
+          smolVariantId: createSmolId(modId, version),
+          version: version,
+        );
+
+    test('enables a profile mod that is not currently enabled', () {
+      final changes = ModProfileManagerNotifier.computeModProfileMergeChanges(
+        profileOf([memberOf('modA', v100)]),
+        [modOf('modA', [v100])],
+        <ModVariant>[],
+      );
+
+      expect(changes, hasLength(1));
+      expect(changes.first.changeType, ModChangeType.enable);
+      expect(changes.first.modId, 'modA');
+      expect(changes.first.toVariant?.modInfo.version, v100);
+    });
+
+    test('newly enabled mods use the latest installed version, not the '
+        'version the profile saved', () {
+      final changes = ModProfileManagerNotifier.computeModProfileMergeChanges(
+        // Profile saved 1.0.0, but 2.0.0 is also installed.
+        profileOf([memberOf('modA', v100)]),
+        [modOf('modA', [v100, v200])],
+        <ModVariant>[],
+      );
+
+      expect(changes, hasLength(1));
+      expect(changes.first.changeType, ModChangeType.enable);
+      expect(changes.first.toVariant?.modInfo.version, v200);
+    });
+
+    test('leaves an already-enabled mod alone even when the profile wants a '
+        'different installed version', () {
+      final changes = ModProfileManagerNotifier.computeModProfileMergeChanges(
+        // Profile wants 2.0.0; 1.0.0 is the one that's on.
+        profileOf([memberOf('modA', v200)]),
+        [modOf('modA', [v100, v200])],
+        [variantOf('modA', v100)],
+      );
+
+      expect(changes, hasLength(1));
+      expect(changes.first.changeType, ModChangeType.skip);
+      expect(changes.first.modId, 'modA');
+      // The version that's on stays on, and nothing is queued to change it.
+      expect(changes.first.fromVariant?.modInfo.version, v100);
+      expect(changes.first.toVariant, isNull);
+      expect(
+        changes.where((c) => c.changeType == ModChangeType.swap),
+        isEmpty,
+      );
+    });
+
+    test('never disables a mod that is on but missing from the profile', () {
+      final changes = ModProfileManagerNotifier.computeModProfileMergeChanges(
+        profileOf([memberOf('modA', v100)]),
+        [modOf('modA', [v100]), modOf('modB', [v100])],
+        [variantOf('modB', v100)],
+      );
+
+      // modB isn't in the profile, so the merge says nothing about it at all.
+      expect(changes, hasLength(1));
+      expect(changes.first.modId, 'modA');
+      expect(
+        changes.where((c) => c.changeType == ModChangeType.disable),
+        isEmpty,
+      );
+    });
+
+    test('reports a profile mod that is not installed as missing', () {
+      final changes = ModProfileManagerNotifier.computeModProfileMergeChanges(
+        profileOf([memberOf('modA', v100)]),
+        <Mod>[],
+        <ModVariant>[],
+      );
+
+      expect(changes, hasLength(1));
+      expect(changes.first.changeType, ModChangeType.missingMod);
+      expect(changes.first.modId, 'modA');
+      expect(changes.first.toVariant, isNull);
+    });
+
+    test('produces no changes when the profile is empty', () {
+      final changes = ModProfileManagerNotifier.computeModProfileMergeChanges(
+        profileOf([]),
+        [modOf('modA', [v100])],
+        [variantOf('modA', v100)],
+      );
+
+      expect(changes, isEmpty);
+    });
+
+    test('handles a mix of enable, skip, and missing in one profile', () {
+      // modA: off, two versions installed -> enable at the newest, 2.0.0.
+      // modB: on at 1.0.0, profile wants 1.1.0 -> skip, stays on 1.0.0.
+      // modC: on at the same version the profile wants -> skip.
+      // modD: not installed -> missing.
+      final changes = ModProfileManagerNotifier.computeModProfileMergeChanges(
+        profileOf([
+          memberOf('modA', v100),
+          memberOf('modB', v110),
+          memberOf('modC', v100),
+          memberOf('modD', v100),
+        ]),
+        [
+          modOf('modA', [v100, v200]),
+          modOf('modB', [v100, v110]),
+          modOf('modC', [v100]),
+        ],
+        [variantOf('modB', v100), variantOf('modC', v100)],
+      );
+
+      expect(changes, hasLength(4));
+
+      final enabled = changes
+          .where((c) => c.changeType == ModChangeType.enable)
+          .toList();
+      expect(enabled, hasLength(1));
+      expect(enabled.first.modId, 'modA');
+      expect(enabled.first.toVariant?.modInfo.version, v200);
+
+      final skipped = changes
+          .where((c) => c.changeType == ModChangeType.skip)
+          .map((c) => c.modId)
+          .toList();
+      expect(skipped, containsAll(['modB', 'modC']));
+
+      final missing = changes
+          .where((c) => c.changeType == ModChangeType.missingMod)
+          .toList();
+      expect(missing, hasLength(1));
+      expect(missing.first.modId, 'modD');
+
+      // A merge only ever turns mods on.
+      expect(
+        changes.where(
+          (c) =>
+              c.changeType == ModChangeType.disable ||
+              c.changeType == ModChangeType.swap,
+        ),
+        isEmpty,
+      );
+    });
+  });
 }

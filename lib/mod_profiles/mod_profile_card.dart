@@ -430,6 +430,25 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                 );
                               },
                             ).toEntry(0),
+                            if (!isSaveGame)
+                              OverflowMenuItem(
+                                title: 'Merge into your enabled mods',
+                                subtitle:
+                                    "Turns on this profile's mods that you"
+                                    " don't already have on. Nothing else"
+                                    " changes.",
+                                icon: Icons.merge_type,
+                                enabled:
+                                    !isGameRunning && !trackedStatus.isLoading,
+                                tooltip: isGameRunning
+                                    ? "Game is running"
+                                    : null,
+                                onTap: () {
+                                  ref
+                                      .read(modProfilesProvider.notifier)
+                                      .showMergeDialog(profile!, context);
+                                },
+                              ).toEntry(1),
                           ],
                         ),
                         if (!isSaveGame)

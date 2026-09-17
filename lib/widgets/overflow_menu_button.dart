@@ -44,23 +44,39 @@ class OverflowMenuItem {
   final VoidCallback onTap;
   final String? subtitle;
 
+  /// When false, the row is greyed out and can't be tapped.
+  final bool enabled;
+
+  /// Shown on hover, e.g. to say why the row is greyed out.
+  final String? tooltip;
+
   const OverflowMenuItem({
     required this.title,
     required this.icon,
     required this.onTap,
     this.subtitle,
+    this.enabled = true,
+    this.tooltip,
   });
 
-  PopupMenuEntry<int> toEntry(int? key) => PopupMenuItem<int>(
-    value: key,
-    onTap: onTap,
-    child: ListTile(
+  PopupMenuEntry<int> toEntry(int? key) {
+    final content = ListTile(
       dense: true,
+      enabled: enabled,
       leading: Icon(icon),
       title: Text(title),
       subtitle: subtitle != null ? Text(subtitle!) : null,
-    ),
-  );
+    );
+
+    return PopupMenuItem<int>(
+      value: key,
+      enabled: enabled,
+      onTap: enabled ? onTap : null,
+      child: tooltip != null
+          ? MovingTooltipWidget.text(message: tooltip!, child: content)
+          : content,
+    );
+  }
 }
 
 /// Menu item that renders as a [CheckedPopupMenuItem] with a checkmark.

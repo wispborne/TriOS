@@ -20,8 +20,10 @@ final engineStylesProvider = FutureProvider<Map<String, EngineStyleSpec>>((
   ref,
 ) async {
   final core = ref.watch(AppState.gameCoreFolder).value;
-  // Every mod, enabled or not. Watched through orderedSourcesProvider so
-  // enabling a mod doesn't re-read this file out of every mod folder again.
+  // Every mod, enabled or not, in merge order — a mod that isn't enabled sorts
+  // behind the game core and so can't restyle vanilla's engines. That does mean
+  // a toggle re-reads this file out of every mod folder, which is one small
+  // JSON per mod and most mods don't ship one.
   final sources = ref.watch(orderedSourcesProvider(false));
 
   final jsonSources = <SourceJson>[];

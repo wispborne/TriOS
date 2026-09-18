@@ -10,6 +10,10 @@ import 'package:trios/utils/game_data_merge.dart';
 /// real mod folder behind them.
 MergeSource _mod(String name) => MergeSource(key: name, name: name);
 
+/// A stand-in for a mod that is installed but switched off.
+MergeSource _disabledMod(String name) =>
+    MergeSource(key: name, name: name, isEnabled: false);
+
 const _vanilla = MergeSource.vanilla;
 
 ModVariant _variant(String name, {String? sortString}) => ModVariant(
@@ -907,6 +911,152 @@ void main() {
       final base = sources.fileSources.last;
       expect(base.isVanilla, isTrue);
       expect(base.areas, isEmpty);
+    });
+  });
+
+  // Orbregion rewrites vanilla's text into baby talk. Installed but switched
+  // off, it was still winning every merge, so the viewers showed "Buwn Dwive"
+  // for a game that wasn't loading it.
+  group('mods that are not enabled lose every conflict', () {
+    test('orderedSources sorts them behind the game core', () {
+      final sources = orderedSources(
+        [_variant('Zeta'), _variant('Orbregion'), _variant('Alpha')],
+        isEnabled: (variant) => variant.modInfo.name != 'Orbregion',
+      );
+
+      expect(sources.map((s) => s.name), [
+        'Alpha',
+        'Zeta',
+        'Vanilla',
+        'Orbregion',
+      ]);
+      expect(sources.last.isEnabled, isFalse);
+      expect(sources[2].isVanilla, isTrue);
+      expect(sources.take(3).every((s) => s.isEnabled), isTrue);
+    });
+
+    test('orderedSources marks every mod enabled when not told otherwise', () {
+      final sources = orderedSources([_variant('Alpha')]);
+
+      expect(sources.every((s) => s.isEnabled), isTrue);
+    });
+
+    test('a CSV row from one does not override vanilla', () {
+      final merged = mergeDescriptions([
+        (
+          source: _vanilla,
+          items: [
+            {'id': 'burndrive', 'type': 'SHIP_SYSTEM', 'text1': 'Burn Drive'},
+          ],
+        ),
+        (
+          source: _disabledMod('Orbregion'),
+          items: [
+            {'id': 'burndrive', 'type': 'SHIP_SYSTEM', 'text1': 'Buwn Dwive'},
+          ],
+        ),
+      ]);
+
+      expect(merged.single.row['text1'], 'Burn Drive');
+      expect(merged.single.source.name, 'Vanilla');
+    });
+
+    test('a CSV row from one does not override an enabled mod', () {
+      final merged = mergeDescriptions([
+        (
+          source: _disabledMod('Orbregion'),
+          items: [
+            {'id': 'brdy_ship', 'type': 'SHIP', 'text1': 'Buwn Dwive'},
+          ],
+        ),
+        (
+          source: _mod('Blackrock'),
+          items: [
+            {'id': 'brdy_ship', 'type': 'SHIP', 'text1': 'Burn Drive'},
+          ],
+        ),
+      ]);
+
+      expect(merged.single.row['text1'], 'Burn Drive');
+      expect(merged.single.source.name, 'Blackrock');
+    });
+
+    test('it still supplies rows nothing else has', () {
+      final merged = mergeDescriptions([
+        (
+          source: _vanilla,
+          items: [
+            {'id': 'burndrive', 'type': 'SHIP_SYSTEM', 'text1': 'Burn Drive'},
+          ],
+        ),
+        (
+          source: _disabledMod('Orbregion'),
+          items: [
+            {'id': 'orb_ship', 'type': 'SHIP', 'text1': 'Orbregion ship'},
+          ],
+        ),
+      ]);
+
+      expect(
+        {for (final row in merged) row.row['id']: row.row['text1']},
+        {'burndrive': 'Burn Drive', 'orb_ship': 'Orbregion ship'},
+      );
+    });
+
+    test('deep merge: its scalars lose to vanilla and to enabled mods', () {
+      final merged = _deep([
+        (
+          source: _vanilla,
+          json: {'hullName': 'Wolf', 'armor': 200},
+        ),
+        (
+          source: _mod('Blackrock'),
+          json: {'armor': 300},
+        ),
+        (
+          source: _disabledMod('Orbregion'),
+          json: {'hullName': 'Wowf', 'armor': 1},
+        ),
+      ]);
+
+      expect(merged.merged['hullName'], 'Wolf');
+      expect(merged.merged['armor'], 300);
+      expect(merged.winningSource?.name, 'Blackrock');
+    });
+
+    test('deep merge: it still sets fields nothing else does', () {
+      final merged = _deep([
+        (
+          source: _vanilla,
+          json: {'hullName': 'Wolf'},
+        ),
+        (
+          source: _disabledMod('Orbregion'),
+          json: {'orbNote': 'kept'},
+        ),
+      ]);
+
+      expect(merged.merged['hullName'], 'Wolf');
+      expect(merged.merged['orbNote'], 'kept');
+    });
+
+    test('deep merge: its core_clearArray cannot wipe vanilla\'s list', () {
+      final merged = _deep([
+        (
+          source: _vanilla,
+          json: {
+            'roles': ['combatSmall', 'combatMedium'],
+          },
+        ),
+        (
+          source: _disabledMod('Orbregion'),
+          json: {
+            'roles': ['core_clearArray', 'orbOnly'],
+          },
+        ),
+      ]);
+
+      expect(merged.merged['roles'], ['orbOnly', 'combatSmall', 'combatMedium']);
     });
   });
 }

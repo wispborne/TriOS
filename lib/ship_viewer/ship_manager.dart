@@ -23,6 +23,7 @@ import 'package:trios/utils/game_json_values.dart';
 import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/mod_data_files.dart';
+import 'package:trios/utils/ordered_sources_provider.dart';
 import 'package:trios/viewer_cache/cached_stream_list_notifier.dart';
 import 'package:trios/viewer_cache/cached_variant_store.dart';
 import 'package:trios/viewer_cache/graphics_index_manager.dart';
@@ -58,7 +59,7 @@ final _lastMergedShips =
       bool,
       ({
         List<ShipsCachePayload> payloads,
-        String key,
+        List<MergeSource> sources,
         GameFileResolver resolver,
         List<Ship> ships,
       })
@@ -78,15 +79,7 @@ final shipListNotifierProvider = Provider.family<AsyncValue<List<Ship>>, bool>((
 ) {
   final sources = ref.watch(shipSourcesProvider);
   final resolver = ref.watch(gameFileResolverProvider(onlyEnabledMods));
-  final mods = ref.watch(AppState.mods);
-  final variants = mods
-      .map((mod) => mod.findFirstEnabledOrHighestVersion)
-      .nonNulls
-      .where(
-        (variant) =>
-            !onlyEnabledMods || variant.mod(mods)?.hasEnabledVariant == true,
-      );
-  final orderedSrcs = orderedSources(variants);
+  final orderedSrcs = ref.watch(orderedSourcesProvider(onlyEnabledMods));
 
   final memo = _lastMergedShips[onlyEnabledMods];
 
@@ -100,10 +93,13 @@ final shipListNotifierProvider = Provider.family<AsyncValue<List<Ship>>, bool>((
         : const AsyncValue.loading();
   }
 
-  final key = orderedSrcs.map((s) => s.key).join('\n');
+  // `orderedSourcesProvider` hands back the very same list while the sources
+  // haven't moved, so identity is enough — and unlike a key built from source
+  // ids it also catches a mod being enabled or disabled, which reorders the
+  // list without changing any id.
   if (memo != null &&
       identical(memo.payloads, payloads) &&
-      memo.key == key &&
+      identical(memo.sources, orderedSrcs) &&
       identical(memo.resolver, resolver)) {
     return AsyncValue.data(memo.ships);
   }
@@ -120,7 +116,7 @@ final shipListNotifierProvider = Provider.family<AsyncValue<List<Ship>>, bool>((
   }
   _lastMergedShips[onlyEnabledMods] = (
     payloads: payloads,
-    key: key,
+    sources: orderedSrcs,
     resolver: resolver,
     ships: ships,
   );
@@ -464,6 +460,12 @@ class ShipListNotifier
   /// merging happens afterwards, in [shipListNotifierProvider].
   @override
   String itemId(ShipsCachePayload item) => item.sourceKey;
+
+  /// [shipListNotifierProvider] does the merging and watches the mod list
+  /// itself, so a toggle already reaches the ships. Rebuilding here as well
+  /// would re-read every mod's cache file for the same payloads.
+  @override
+  bool get remergesOnModToggle => false;
 
   @override
   List<ShipsCachePayload> itemsFromPayload(ShipsCachePayload payload) => [

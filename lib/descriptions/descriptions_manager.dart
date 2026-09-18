@@ -10,6 +10,7 @@ import 'package:trios/utils/csv_parse_utils.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/game_data_merge.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/ordered_sources_provider.dart';
 
 typedef DescriptionKey = (String, String);
 
@@ -52,11 +53,12 @@ class DescriptionsNotifier
       return;
     }
 
-    final variants = ref
-        .read(AppState.mods)
-        .map((mod) => mod.findFirstEnabledOrHighestVersion)
-        .nonNulls
-        .toList();
+    // Every installed mod, enabled or not, tagged with which ones the game
+    // would load. Watched rather than read: a mod being toggled moves it in
+    // the merge order, and the rows are already cached, so composing them
+    // again is cheap.
+    final sources = ref.watch(orderedSourcesProvider(false));
+    final variants = sources.map((source) => source.variant).nonNulls.toList();
 
     // Invalidate vanilla cache if game path changed.
     if (gameCorePath != _cachedGameCorePath) {
@@ -98,12 +100,12 @@ class DescriptionsNotifier
 
       final now = DateTime.now();
       if (now.difference(lastYieldTime) >= yieldInterval) {
-        yield Map.unmodifiable(_composeDescriptions(variants));
+        yield Map.unmodifiable(_composeDescriptions(sources));
         lastYieldTime = now;
       }
     }
 
-    final composed = _composeDescriptions(variants);
+    final composed = _composeDescriptions(sources);
     yield Map.unmodifiable(composed);
 
     if (allErrors.isNotEmpty) {
@@ -119,11 +121,15 @@ class DescriptionsNotifier
   }
 
   /// Merges `descriptions.csv` rows across sources. See `mergeDescriptions`.
+  ///
+  /// [sources] is in merge order, so a mod that isn't enabled sits behind the
+  /// game core and only supplies descriptions no loaded source has. Without
+  /// that, a disabled translation mod rewrote every vanilla description.
   Map<DescriptionKey, DescriptionEntry> _composeDescriptions(
-    List<ModVariant> variants,
+    List<MergeSource> sources,
   ) {
     final merged = mergeDescriptions([
-      for (final source in orderedSources(variants))
+      for (final source in sources)
         if (_cachedRowsByVariant[source.key] case final rows?)
           (source: source, items: rows),
     ]);

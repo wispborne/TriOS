@@ -34,14 +34,25 @@ class MergeSource {
   /// Whether this is the game core (used by the deep merge to pick the base).
   final bool isVanilla;
 
+  /// Whether the game would actually load this mod right now. Always true for
+  /// the game core.
+  ///
+  /// A mod that isn't enabled still has its files on disk, and the viewers
+  /// still scan it so its own ships and weapons can be browsed. What it must
+  /// not do is win a conflict: the game isn't loading it, so vanilla and every
+  /// enabled mod keep their own values. Both merges put disabled sources where
+  /// they lose — see [orderedSources] and [_deepMerge].
+  final bool isEnabled;
+
   const MergeSource({
     required this.key,
     required this.name,
     this.variant,
     this.isVanilla = false,
+    this.isEnabled = true,
   });
 
-  MergeSource.fromVariant(ModVariant this.variant)
+  MergeSource.fromVariant(ModVariant this.variant, {this.isEnabled = true})
     : key = variant.smolId,
       name = variant.modInfo.nameOrId,
       isVanilla = false;
@@ -57,15 +68,35 @@ class MergeSource {
 }
 
 /// Sources in the game's load order: mods sorted by `sortString` (falling
-/// back to display name), then the game core last.
+/// back to display name), then the game core, then any mod that isn't enabled.
 ///
 /// Difference from the game: ties between identical sort keys break by mod id
 /// here. The game keeps its enabled-mods order, which TriOS can't reproduce.
-List<MergeSource> orderedSources(Iterable<ModVariant> variants) => [
-  for (final variant in variants.sortedByGameLoadOrder())
-    MergeSource.fromVariant(variant),
-  MergeSource.vanilla,
-];
+///
+/// [isEnabled] says whether the game would load a given variant right now.
+/// Leaving it out treats every variant as enabled. Disabled mods sort behind
+/// the game core so that every merge keyed on "first source wins" — the CSV
+/// merge, and path lookup in `GameFileResolver` — hands them only the ids and
+/// files nobody else supplies. See [MergeSource.isEnabled].
+List<MergeSource> orderedSources(
+  Iterable<ModVariant> variants, {
+  bool Function(ModVariant variant)? isEnabled,
+}) {
+  final sorted = [
+    for (final variant in variants.sortedByGameLoadOrder())
+      MergeSource.fromVariant(
+        variant,
+        isEnabled: isEnabled == null || isEnabled(variant),
+      ),
+  ];
+  return [
+    for (final source in sorted)
+      if (source.isEnabled) source,
+    MergeSource.vanilla,
+    for (final source in sorted)
+      if (!source.isEnabled) source,
+  ];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CSV / spreadsheet merge (first source keeps each key)
@@ -246,10 +277,20 @@ typedef SourceJson = ({MergeSource source, Map<String, dynamic> json});
 ///
 /// [sources] should be in [orderedSources] order. The game core's copy is
 /// pulled out and used as the base regardless of its position in the list.
+///
+/// Mods that aren't enabled are applied *before* the game core rather than
+/// after the enabled ones. Because the last writer wins here, that is where
+/// they lose: vanilla and every enabled mod overwrite anything they set, and a
+/// `core_clearArray` of theirs wipes an empty base instead of vanilla's list.
+/// What survives is only what no loaded source touches — the disabled mod's
+/// own content. See [MergeSource.isEnabled].
 DeepMergeResult _deepMerge(List<SourceJson> sources, LogCollapser issues) {
+  final disabled = sources.where((s) => !s.source.isEnabled).toList();
   final vanilla = sources.where((s) => s.source.isVanilla).toList();
-  final mods = sources.where((s) => !s.source.isVanilla).toList();
-  final inApplicationOrder = [...vanilla, ...mods];
+  final mods = sources
+      .where((s) => !s.source.isVanilla && s.source.isEnabled)
+      .toList();
+  final inApplicationOrder = [...disabled, ...vanilla, ...mods];
   if (inApplicationOrder.isEmpty) return DeepMergeResult.empty;
 
   final merged = <String, dynamic>{};

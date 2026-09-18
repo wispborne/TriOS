@@ -146,6 +146,12 @@ class GraphicsIndexNotifier
   @override
   String itemId(GraphicsIndexPayload item) => item.sourceKey;
 
+  /// [gameFileResolverProvider] puts the sources in priority order and watches
+  /// the mod list itself, so a toggle already reaches path lookup. Rebuilding
+  /// here as well would re-read every mod's image index for the same payloads.
+  @override
+  bool get remergesOnModToggle => false;
+
   @override
   List<GraphicsIndexPayload> itemsFromPayload(GraphicsIndexPayload payload) => [
     payload,

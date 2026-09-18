@@ -88,10 +88,25 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// Comes from the same provider [isReadyToScan] watches, so what gets scanned
   /// and what starts a new scan always agree.
   List<ModVariant> variantsToScan() => ref
-      .read(orderedSourcesProvider(false))
+      .read(scanSourcesProvider)
       .map((source) => source.variant)
       .nonNulls
       .toList();
+
+  /// Whether this domain's own output changes when a mod is enabled or
+  /// disabled.
+  ///
+  /// True for domains that let [_flatten] do the merging: a disabled mod has to
+  /// lose those merges, so the list has to be built again once one is toggled.
+  /// The rebuild is cheap — nothing on disk changed, so Phase 1 reads the cache
+  /// and Phase 2 skips every parse on its fingerprint.
+  ///
+  /// Domains that hand their payloads straight through and merge downstream
+  /// (ships, weapons, the graphics index) override this to false. Their merge
+  /// providers watch the mod list themselves, and one item per source means
+  /// [_flatten] has nothing to decide — so a toggle would cost a full cache
+  /// re-read for an identical answer.
+  bool get remergesOnModToggle => true;
 
   /// Path to the game core folder. Null means vanilla parsing is skipped for
   /// this build — used if game detection hasn't resolved yet.
@@ -184,13 +199,18 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// switched to another version, or moved to another folder. Only those change
   /// the files on disk. Enabling or disabling a mod writes nothing, and every
   /// domain scans mods whether they're on or off, so there'd be nothing new to
-  /// find.
+  /// find on disk.
   ///
-  /// [orderedSourcesProvider] draws that line — it hands back the very same
-  /// list when the sources haven't changed, so watching it here skips those
+  /// [scanSourcesProvider] draws that line — it hands back the very same list
+  /// when the sources haven't changed, so watching it here skips those
   /// rebuilds. Don't watch `AppState.mods` instead: it changes on every
   /// enable/disable, which would re-read every file and rebuild every merge
   /// downstream on each toggle.
+  ///
+  /// A toggle does still have to reach the domains that merge here rather than
+  /// downstream, since it changes who wins — see [remergesOnModToggle]. Those
+  /// watch [orderedSourcesProvider] and build again, reading the cache instead
+  /// of the mod folders.
   ///
   /// Nothing here waits, on purpose. `build()` uses `ref` again after this
   /// returns, and Riverpod doesn't allow that once a dependency has changed — so
@@ -198,7 +218,9 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
   /// itself the change. Returning false ends the build early instead; the watch
   /// brings us straight back.
   Future<bool> isReadyToScan() async {
-    ref.watch(orderedSourcesProvider(false));
+    ref.watch(
+      remergesOnModToggle ? orderedSourcesProvider(false) : scanSourcesProvider,
+    );
 
     // With no mods installed the source list is just vanilla from the very
     // start, so it can't tell us whether the mods folder has been read yet.
@@ -261,7 +283,9 @@ abstract class CachedStreamListNotifier<T, P> extends StreamNotifier<List<T>> {
 
     final variants = variantsToScan();
     final enabledSmolIds = variants.map((v) => v.smolId).toSet();
-    _sources = orderedSources(variants);
+    // Merge order, not scan order: this is what `_flatten` hands to `mergeById`,
+    // and a mod that isn't enabled has to sort behind the game core there.
+    _sources = ref.read(orderedSourcesProvider(false));
     onScanStart(coreDir, variants);
 
     // ── Phase 1: parallel cache read ──────────────────────────────────────

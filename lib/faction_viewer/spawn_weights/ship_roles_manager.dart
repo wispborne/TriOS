@@ -59,8 +59,10 @@ final mergedShipRolesProvider =
   final gameCore = ref.watch(AppState.gameCoreFolder).value;
   if (gameCore == null) return MergedShipRoles.empty;
 
-  // Watched through orderedSourcesProvider so enabling a mod only re-reads this
-  // file out of every mod folder when the sources actually changed.
+  // In merge order, so a mod that isn't enabled sorts behind the game core and
+  // can't rewrite vanilla's roles. Watched through orderedSourcesProvider, which
+  // holds still unless the sources actually changed — a toggle does move one, so
+  // that re-reads this file out of every mod folder, one small JSON each.
   final sources = ref.watch(orderedSourcesProvider(onlyEnabledMods));
 
   final jsonSources = <SourceJson>[];

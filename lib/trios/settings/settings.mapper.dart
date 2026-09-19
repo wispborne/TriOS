@@ -261,6 +261,57 @@ extension ModsGridUpdateVisibilityMapperExtension on ModsGridUpdateVisibility {
   }
 }
 
+class ModButtonVersionTextMapper extends EnumMapper<ModButtonVersionText> {
+  ModButtonVersionTextMapper._();
+
+  static ModButtonVersionTextMapper? _instance;
+  static ModButtonVersionTextMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ModButtonVersionTextMapper._());
+    }
+    return _instance!;
+  }
+
+  static ModButtonVersionText fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  ModButtonVersionText decode(dynamic value) {
+    switch (value) {
+      case r'showIfMultiple':
+        return ModButtonVersionText.showIfMultiple;
+      case r'stacked':
+        return ModButtonVersionText.stacked;
+      case r'hidden':
+        return ModButtonVersionText.hidden;
+      default:
+        return ModButtonVersionText.values[2];
+    }
+  }
+
+  @override
+  dynamic encode(ModButtonVersionText self) {
+    switch (self) {
+      case ModButtonVersionText.showIfMultiple:
+        return r'showIfMultiple';
+      case ModButtonVersionText.stacked:
+        return r'stacked';
+      case ModButtonVersionText.hidden:
+        return r'hidden';
+    }
+  }
+}
+
+extension ModButtonVersionTextMapperExtension on ModButtonVersionText {
+  String toValue() {
+    ModButtonVersionTextMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<ModButtonVersionText>(this)
+        as String;
+  }
+}
+
 class CompressionLibMapper extends EnumMapper<CompressionLib> {
   CompressionLibMapper._();
 
@@ -397,6 +448,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       TipsPageStatePersistedMapper.ensureInitialized();
       ModpacksPageStatePersistedMapper.ensureInitialized();
       PersistedFilterGroupMapper.ensureInitialized();
+      ModButtonVersionTextMapper.ensureInitialized();
       FolderNamingSettingMapper.ensureInitialized();
       ModUpdateBehaviorMapper.ensureInitialized();
       DashboardModListSortMapper.ensureInitialized();
@@ -818,6 +870,15 @@ class SettingsMapper extends ClassMapperBase<Settings> {
         opt: true,
         def: false,
       );
+  static ModButtonVersionText _$modsGridButtonVersionText(Settings v) =>
+      v.modsGridButtonVersionText;
+  static const Field<Settings, ModButtonVersionText>
+  _f$modsGridButtonVersionText = Field(
+    'modsGridButtonVersionText',
+    _$modsGridButtonVersionText,
+    opt: true,
+    def: ModButtonVersionText.hidden,
+  );
   static bool _$modsGridUpdatesShowDisabledMods(Settings v) =>
       v.modsGridUpdatesShowDisabledMods;
   static const Field<Settings, bool> _f$modsGridUpdatesShowDisabledMods = Field(
@@ -1320,6 +1381,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #dashboardModListColorful: _f$dashboardModListColorful,
     #modsGridColorful: _f$modsGridColorful,
     #modsGridHighContrastEnableButton: _f$modsGridHighContrastEnableButton,
+    #modsGridButtonVersionText: _f$modsGridButtonVersionText,
     #modsGridUpdatesShowDisabledMods: _f$modsGridUpdatesShowDisabledMods,
     #modsGridShowModInAllCategories: _f$modsGridShowModInAllCategories,
     #modsGridShowDataWarnings: _f$modsGridShowDataWarnings,
@@ -1441,6 +1503,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       modsGridHighContrastEnableButton: data.dec(
         _f$modsGridHighContrastEnableButton,
       ),
+      modsGridButtonVersionText: data.dec(_f$modsGridButtonVersionText),
       modsGridUpdatesShowDisabledMods: data.dec(
         _f$modsGridUpdatesShowDisabledMods,
       ),
@@ -1728,6 +1791,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? dashboardModListColorful,
     bool? modsGridColorful,
     bool? modsGridHighContrastEnableButton,
+    ModButtonVersionText? modsGridButtonVersionText,
     bool? modsGridUpdatesShowDisabledMods,
     bool? modsGridShowModInAllCategories,
     bool? modsGridShowDataWarnings,
@@ -2061,6 +2125,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? dashboardModListColorful,
     bool? modsGridColorful,
     bool? modsGridHighContrastEnableButton,
+    ModButtonVersionText? modsGridButtonVersionText,
     bool? modsGridUpdatesShowDisabledMods,
     bool? modsGridShowModInAllCategories,
     bool? modsGridShowDataWarnings,
@@ -2188,6 +2253,8 @@ class _SettingsCopyWithImpl<$R, $Out>
       if (modsGridColorful != null) #modsGridColorful: modsGridColorful,
       if (modsGridHighContrastEnableButton != null)
         #modsGridHighContrastEnableButton: modsGridHighContrastEnableButton,
+      if (modsGridButtonVersionText != null)
+        #modsGridButtonVersionText: modsGridButtonVersionText,
       if (modsGridUpdatesShowDisabledMods != null)
         #modsGridUpdatesShowDisabledMods: modsGridUpdatesShowDisabledMods,
       if (modsGridShowModInAllCategories != null)
@@ -2419,6 +2486,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     modsGridHighContrastEnableButton: data.get(
       #modsGridHighContrastEnableButton,
       or: $value.modsGridHighContrastEnableButton,
+    ),
+    modsGridButtonVersionText: data.get(
+      #modsGridButtonVersionText,
+      or: $value.modsGridButtonVersionText,
     ),
     modsGridUpdatesShowDisabledMods: data.get(
       #modsGridUpdatesShowDisabledMods,

@@ -1,25 +1,26 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
+
 // dropdown_button2 still uses Flutter's built-in Material library, and it
 // insists on a Material ancestor of that same library — material_ui's Material
 // doesn't count. See the wrapper in _buildDropdownSubButton.
 import 'package:flutter/material.dart' as legacy_material;
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:toastification/toastification.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
-import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow_accent_bar.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
-import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/widgets/text_trios.dart';
 
 import '../models/mod.dart';
@@ -72,6 +73,9 @@ class _ModVersionSelectionDropdownState
     final useHighContrastEnableButton = ref.watch(
       appSettings.select((s) => s.modsGridHighContrastEnableButton),
     );
+    final versionTextStyle = ref.watch(
+      appSettings.select((s) => s.modsGridButtonVersionText),
+    );
 
     // TODO consolidate this logic with the logic in smol2.
     final areAllDependenciesSatisfied = modDependenciesSatisfied?.every(
@@ -120,7 +124,9 @@ class _ModVersionSelectionDropdownState
               : theme.colorScheme.secondary.darker(
                   useHighContrastEnableButton ? 20 : (isEnabled ? 1 : 30),
                 ))
-        : TriOSThemeConstants.vanillaErrorColor.withOpacity(isEnabled ? 0.8 : 0.4);
+        : TriOSThemeConstants.vanillaErrorColor.withOpacity(
+            isEnabled ? 0.8 : 0.4,
+          );
 
     Color? getGameCompatibilityTextColor(ModVariant variant) {
       // Special handling if background color is errorColor. GameCompat color is orange/red, which is too hard to see.
@@ -171,13 +177,38 @@ class _ModVersionSelectionDropdownState
     };
     final warningIcon = Icon(Icons.warning, color: textColor, size: 20);
 
+    // The variant toggled by the main button.
+    final enabledVariant = widget.mod.findFirstEnabled;
+    final clickVariant = isEnabled
+        ? enabledVariant
+        : widget.mod.findHighestVersion;
+    final clickVersion = clickVariant?.modInfo.version.toString();
+    final actionText = isEnabled ? "Disable" : "Enable";
+    final label = _buildLabel(
+      primary: switch (versionTextStyle) {
+        ModButtonVersionText.showIfMultiple
+            when !isSingleVariant && isEnabled =>
+          clickVersion ?? actionText,
+        _ => actionText,
+      },
+      caption: versionTextStyle == ModButtonVersionText.stacked
+          ? clickVersion
+          : null,
+      textColor: textColor,
+    );
+    final clickTooltip = errorTooltip == null && clickVersion != null
+        ? "Click to ${actionText.toLowerCase()} $clickVersion"
+        : null;
+
     //////// Single variant button
     if (isSingleVariant) {
       final tooltipMessage =
           errorTooltip ??
-          (widget.showTooltip
-              ? (!isSupportedByGameVersion ? gameVersionMessage : "")
-              : null);
+          [
+            ?clickTooltip,
+            if (widget.showTooltip && !isSupportedByGameVersion)
+              gameVersionMessage,
+          ].join("\n");
       Widget button = SizedBox(
         width: rainbowAccent ? null : buttonWidth,
         height: rainbowAccent ? null : buttonHeight,
@@ -198,7 +229,7 @@ class _ModVersionSelectionDropdownState
               (useWarningUi
                   ? Align(alignment: Alignment.centerLeft, child: warningIcon)
                   : Container()),
-              Center(child: Text(isEnabled ? "Disable" : "Enable")),
+              label,
             ],
           ),
         ),
@@ -218,7 +249,9 @@ class _ModVersionSelectionDropdownState
 
       return MovingTooltipWidget.text(
         message: tooltipMessage,
-        warningLevel: tooltipMessage != null
+        warningLevel:
+            errorTooltip != null ||
+                (widget.showTooltip && !isSupportedByGameVersion)
             ? TooltipWarningLevel.warning
             : TooltipWarningLevel.none,
         child: Disable(isEnabled: isButtonEnabled, child: button),
@@ -249,7 +282,6 @@ class _ModVersionSelectionDropdownState
 
     final dropdownWidth = buttonWidth;
     final highestVersionVariant = widget.mod.modVariants.max()!;
-    final enabledVariant = widget.mod.findFirstEnabled;
     final canUpgradeVersion =
         enabledVariant != null &&
         enabledVariant.smolId != highestVersionVariant.smolId;
@@ -308,52 +340,39 @@ class _ModVersionSelectionDropdownState
                     // Main tap area — enable/disable
                     Expanded(
                       child: MovingTooltipWidget.text(
-                            message: isEnabled && errorTooltip == null
-                                ? "Click to disable"
-                                : null,
-                            child: InkWell(
-                              onTap: () async {
-                                if (!mounted) return;
-                                try {
-                                  isEnabled
-                                      ? await switchToVariant(null)
-                                      : await switchToVariant(
-                                          widget.mod.findHighestVersion,
-                                        );
-                                } catch (e, st) {
-                                  Fimber.e(
-                                    "Error changing active mod variant: $e\n$st",
-                                  );
-                                }
-                              },
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 32,
-                                    child: useWarningUi
-                                        ? Center(
-                                            child: Padding(
-                                              padding: const .only(left: 12),
-                                              child: warningIcon,
-                                            ),
-                                          )
-                                        : null,
-                                  ),
-                                  Expanded(
-                                    child: Center(
-                                      child: TextTriOS(
-                                        isEnabled
-                                            ? enabledVariant!.modInfo.version
-                                                  .toString()
-                                            : "Enable",
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                        message: clickTooltip,
+                        child: InkWell(
+                          onTap: () async {
+                            if (!mounted) return;
+                            try {
+                              isEnabled
+                                  ? await switchToVariant(null)
+                                  : await switchToVariant(
+                                      widget.mod.findHighestVersion,
+                                    );
+                            } catch (e, st) {
+                              Fimber.e(
+                                "Error changing active mod variant: $e\n$st",
+                              );
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 32,
+                                child: useWarningUi
+                                    ? Center(
+                                        child: Padding(
+                                          padding: const .only(left: 12),
+                                          child: warningIcon,
+                                        ),
+                                      )
+                                    : null,
                               ),
-                            ),
+                              Expanded(child: label),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                     // Sub-button on right side
@@ -389,6 +408,47 @@ class _ModVersionSelectionDropdownState
           widget.mod,
           modVariant,
         );
+  }
+
+  /// Centers the button text and optional version caption.
+  Widget _buildLabel({
+    required String primary,
+    required String? caption,
+    required Color textColor,
+  }) {
+    if (caption == null) {
+      return Center(
+        child: TextTriOS(primary, maxLines: 1, overflow: TextOverflow.ellipsis),
+      );
+    }
+
+    final captionStyle = TextStyle(
+      fontFamily: Theme.of(context).textTheme.labelLarge?.fontFamily,
+      fontWeight: FontWeight.w500,
+      fontSize: 8,
+      height: 0.5,
+      color: textColor.withValues(alpha: 0.7),
+    );
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 2,
+        children: [
+          TextTriOS(
+            primary,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13, height: 1),
+          ),
+          TextTriOS(
+            caption,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: captionStyle,
+          ),
+        ],
+      ),
+    );
   }
 
   /// Dropdown arrow sub-button that opens a version picker.

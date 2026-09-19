@@ -936,6 +936,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
     final modsGridUpdateVisibility = ref.watch(
       appSettings.select((s) => s.modsGridUpdateVisibility),
     );
+    final buttonVersionText = ref.watch(
+      appSettings.select((s) => s.modsGridButtonVersionText),
+    );
 
     return MovingTooltipWidget.text(
       message: "More options",
@@ -996,6 +999,41 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
             child: MovingTooltipWidget.text(
               message: "It doesn't mean you're old.",
               child: const Text("Mod Buttons: High Contrast"),
+            ),
+          ),
+          SubmenuButton(
+            leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+              const Icon(Icons.smart_button),
+            ),
+            menuChildren: [
+              for (final option in ModButtonVersionText.values)
+                MenuItemButton(
+                  leadingIcon: PopupStyleMenuAnchor.paddedIcon(
+                    Icon(
+                      buttonVersionText == option
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_unchecked,
+                    ),
+                  ),
+                  onPressed: () {
+                    ref
+                        .read(appSettings.notifier)
+                        .update(
+                          (s) => s.copyWith(modsGridButtonVersionText: option),
+                        );
+                  },
+                  child: Text(switch (option) {
+                    ModButtonVersionText.showIfMultiple =>
+                      "Show version when multiple",
+                    ModButtonVersionText.stacked => "Show version below",
+                    ModButtonVersionText.hidden => "Don't show version",
+                  }),
+                ),
+            ],
+            child: MovingTooltipWidget.text(
+              message:
+                  "Choose how mod versions appear on Enable/Disable buttons.",
+              child: const Text("Enable/Disable buttons"),
             ),
           ),
           PopupStyleMenuAnchor.checkboxItem(

@@ -132,6 +132,7 @@ class Settings with SettingsMappable {
   final bool dashboardModListColorful;
   final bool modsGridColorful;
   final bool modsGridHighContrastEnableButton;
+  final ModButtonVersionText modsGridButtonVersionText;
   final bool modsGridUpdatesShowDisabledMods;
   final bool modsGridShowModInAllCategories;
   final bool modsGridShowDataWarnings;
@@ -333,6 +334,7 @@ class Settings with SettingsMappable {
     this.dashboardModListColorful = false,
     this.modsGridColorful = false,
     this.modsGridHighContrastEnableButton = false,
+    this.modsGridButtonVersionText = ModButtonVersionText.hidden,
     this.modsGridUpdatesShowDisabledMods = true,
     this.modsGridShowModInAllCategories = false,
     this.modsGridShowDataWarnings = true,
@@ -417,6 +419,19 @@ enum DashboardGridModUpdateVisibility { allVisible, hideMuted, hideAll }
 
 @MappableEnum(defaultValue: ModsGridUpdateVisibility.hide)
 enum ModsGridUpdateVisibility { showAll, showUnmuted, hide }
+
+/// How the Enable/Disable button on the mods grid shows the mod version.
+@MappableEnum(defaultValue: ModButtonVersionText.hidden)
+enum ModButtonVersionText {
+  /// Enabled mods with more than one version show the version instead of "Disable".
+  showIfMultiple,
+
+  /// "Enable"/"Disable" with the version in small text underneath.
+  stacked,
+
+  /// Only "Enable"/"Disable".
+  hidden,
+}
 
 @MappableEnum(defaultValue: CompressionLib.sevenZip)
 enum CompressionLib {

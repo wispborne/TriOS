@@ -113,16 +113,14 @@ const List<String> _itemKnownKeys = [
 
 const List<String> _catalogKnownKeys = ['name', 'forumTopicId', 'nexusModsId'];
 
-/// Whether [value] contains a control character TriOS will not accept. Tab,
-/// newline, and carriage return are allowed, because notes may have line
-/// breaks.
-bool _hasBannedControlCharacters(String value) {
-  for (final code in value.codeUnits) {
-    if (code == 0x09 || code == 0x0a || code == 0x0d) continue;
-    if (code < 0x20 || code == 0x7f) return true;
-  }
-  return false;
-}
+/// Control characters a shared text field may not contain. Tab, newline, and
+/// carriage return are allowed, because notes may have line breaks.
+final RegExp modpackBannedControlCharacters = RegExp(
+  r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]',
+);
+
+bool _hasBannedControlCharacters(String value) =>
+    modpackBannedControlCharacters.hasMatch(value);
 
 /// Control characters an item label may not contain.
 ///

@@ -10,6 +10,7 @@ import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/navigation_request.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/modpacks/modpack_error_text.dart';
 
 final incomingModpackHandlerProvider = Provider(IncomingModpackHandler.new);
 
@@ -70,7 +71,7 @@ class IncomingModpackHandler {
       await showAlertDialog(
         context,
         title: 'Could not open modpack',
-        content: e.toString(),
+        content: modpackErrorText(e),
       );
     }
   }

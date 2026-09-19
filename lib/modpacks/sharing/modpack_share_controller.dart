@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/sharing/modpack_source_validator.dart';
 import 'package:trios/utils/http_probe.dart';
+import 'package:trios/modpacks/modpack_error_text.dart';
 
 enum ModpackSourceCheckStatus { waiting, checking, passed, failed, cancelled }
 
@@ -90,7 +91,10 @@ class ModpackShareController extends Notifier<ModpackShareState> {
       _setCheck(index, ModpackSourceCheck(item, .passed, cached: cached));
     } catch (e) {
       if (cancellation.isCancelled) return;
-      _setCheck(index, ModpackSourceCheck(item, .failed, error: e.toString()));
+      _setCheck(
+        index,
+        ModpackSourceCheck(item, .failed, error: modpackErrorText(e)),
+      );
     }
   }
 

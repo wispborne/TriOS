@@ -159,7 +159,8 @@ class ModpacksSettingsManager
   Future<ModpacksData?> readBackup({SevenZip? sevenZip}) async {
     final plainBackup = getBackupFile();
     if (await plainBackup.exists()) {
-      return _tryDeserializeFile(plainBackup);
+      final data = await _tryDeserializeFile(plainBackup);
+      if (data != null) return data;
     }
 
     final archive = getBackupArchiveFile();
@@ -289,6 +290,24 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     });
   }
 
+  /// Removes the draft of a saved pack when it holds nothing the saved pack
+  /// doesn't. Opening the editor creates a draft straight away, so leaving it
+  /// without editing would otherwise mark the pack as having unsaved changes.
+  Future<void> discardDraftIfUnchanged(String packId) async {
+    if (!_data.drafts.containsKey(packId)) return;
+    await _write((data) {
+      final draft = data.drafts[packId];
+      final saved = data.packs[packId]?.definition;
+      if (draft == null || saved == null || !draft.isCommittable) return data;
+      final unchanged = modpackDefinitionsAreIdentical(
+        draft.toDefinition(version: saved.version),
+        saved,
+      );
+      if (!unchanged) return data;
+      return data.copyWith(drafts: {...data.drafts}..remove(packId));
+    });
+  }
+
   // --- Saving ---------------------------------------------------------------
 
   int versionAfterSaving(ModpackDraft draft) {
@@ -299,60 +318,68 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
   /// Saves a draft into the library.
   ///
   /// The version bumps by one when the shared content changed; a first save
-  /// starts at 1, and a no-op save leaves it alone.
+  /// starts at 1, and a no-op save leaves it alone. Failures recorded against
+  /// a source the draft changed are dropped.
   ///
   /// Throws [StateError] when there's no draft for [packId] or it isn't
   /// finished. Callers should check [ModpackDraft.isCommittable] first and
   /// keep Save disabled.
   Future<ModpackLibraryEntry> commitDraft(String packId) async {
-    final draft = _data.drafts[packId];
-    if (draft == null) {
-      throw StateError('There is no modpack draft for $packId to save.');
-    }
-    if (!draft.isCommittable) {
-      throw StateError(
-        'This modpack draft cannot be saved yet: ${draft.issues.length} '
-        'problems remain.',
-      );
-    }
-
-    final existing = _data.packs[packId];
-    final version = existing == null
-        ? 1
-        : _nextVersion(draft, existing.definition);
-    final definition = draft.toDefinition(version: version);
-
-    final entry = (existing ?? ModpackLibraryEntry(definition: definition))
-        .copyWith(definition: definition, savedAt: DateTime.now());
-
+    _committableDraft(_data, packId);
+    late ModpackLibraryEntry entry;
     await _write((data) {
-      final drafts = Map<String, ModpackDraft>.of(data.drafts)..remove(packId);
+      final draft = _committableDraft(data, packId);
+      final existing = data.packs[packId];
+      final definition = _checkedDefinition(
+        draft,
+        version: existing == null
+            ? 1
+            : _nextVersion(draft, existing.definition),
+      );
+      entry = (existing ?? ModpackLibraryEntry(definition: definition))
+          .copyWith(
+            definition: definition,
+            savedAt: DateTime.now(),
+            itemFailures: _failuresStillApplying(
+              existing?.itemFailures ?? const {},
+              definition,
+            ),
+          );
       return data.copyWith(
         packs: {...data.packs, packId: entry},
-        drafts: drafts,
+        drafts: {...data.drafts}..remove(packId),
       );
     });
 
-    await writeItemSourcesToRecords(definition);
+    await writeItemSourcesToRecords(entry.definition);
     return entry;
   }
 
   /// Saves a draft as a brand-new pack: new ID, version 1, and no update
-  /// address, since the old one belongs to the original pack.
+  /// address, since the old one belongs to the original pack. The original
+  /// pack and its draft are left alone.
   Future<ModpackLibraryEntry> commitDraftAsNewPack(String packId) async {
-    final draft = _data.drafts[packId];
-    if (draft == null) {
-      throw StateError('There is no modpack draft for $packId to save.');
-    }
+    _committableDraft(_data, packId);
+    late ModpackLibraryEntry entry;
+    await _write((data) {
+      final draft = _committableDraft(data, packId);
+      final definition = _checkedDefinition(
+        draft.copyWith(id: _unusedPackId(data), updateUrl: null),
+        version: 1,
+      );
+      entry = ModpackLibraryEntry(
+        definition: definition,
+        savedAt: DateTime.now(),
+      );
+      return data.copyWith(packs: {...data.packs, definition.id: entry});
+    });
 
-    final copy = draft.copyWith(id: _unusedPackId(), updateUrl: null);
-    await _write(
-      (data) => data.copyWith(drafts: {...data.drafts, copy.id: copy}),
-    );
-    return commitDraft(copy.id);
+    await writeItemSourcesToRecords(entry.definition);
+    return entry;
   }
 
-  /// Copies a saved pack. The copy gets a new ID and starts at version 1.
+  /// Copies a saved pack. The copy gets a new ID, starts at version 1, and
+  /// has no update address, since that address belongs to the original.
   Future<ModpackLibraryEntry> duplicatePack(String packId) async {
     final existing = _data.packs[packId];
     if (existing == null) {
@@ -362,7 +389,8 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
   }
 
   /// Saves an incoming definition as a separate pack, leaving any existing
-  /// pack with the same ID alone.
+  /// pack with the same ID alone. Like [duplicatePack], the copy has no update
+  /// address.
   Future<ModpackLibraryEntry> saveIncomingDefinitionAsCopy(
     ModpackDefinition definition,
   ) async {
@@ -394,18 +422,10 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
           .copyWith(
             definition: definition,
             savedAt: DateTime.now(),
-            itemFailures: {
-              for (final failure
-                  in expectedEntry?.itemFailures.values ??
-                      <ModpackItemFailure>[])
-                if (definition.items.any(
-                  (item) =>
-                      item.modId == failure.modId &&
-                      modpackItemSourceFingerprint(item) ==
-                          failure.sourceFingerprint,
-                ))
-                  failure.modId: failure,
-            },
+            itemFailures: _failuresStillApplying(
+              expectedEntry?.itemFailures ?? const {},
+              definition,
+            ),
           );
       return data.copyWith(
         packs: {...data.packs, definition.id: accepted},
@@ -418,14 +438,16 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
   Future<ModpackLibraryEntry> _saveAsNewPack(
     ModpackDefinition definition,
   ) async {
-    final copy = definition.copyWith(id: _unusedPackId(), version: 1);
-    final entry = ModpackLibraryEntry(
-      definition: copy,
-      savedAt: DateTime.now(),
-    );
-    await _write(
-      (data) => data.copyWith(packs: {...data.packs, copy.id: entry}),
-    );
+    late ModpackLibraryEntry entry;
+    await _write((data) {
+      final copy = definition.copyWith(
+        id: _unusedPackId(data),
+        version: 1,
+        updateUrl: null,
+      );
+      entry = ModpackLibraryEntry(definition: copy, savedAt: DateTime.now());
+      return data.copyWith(packs: {...data.packs, copy.id: entry});
+    });
     return entry;
   }
 
@@ -483,17 +505,24 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     required String message,
   }) => _updateEntry(
     packId,
-    (entry) => entry.copyWith(
-      itemFailures: {
-        ...entry.itemFailures,
-        modId: ModpackItemFailure(
-          modId: modId,
-          sourceFingerprint: sourceFingerprint,
-          message: message,
-          failedAt: DateTime.now(),
-        ),
-      },
-    ),
+    (entry) =>
+        entry.definition.itemForModId(modId) == null ||
+            modpackItemSourceFingerprint(
+                  entry.definition.itemForModId(modId)!,
+                ) !=
+                sourceFingerprint
+        ? entry
+        : entry.copyWith(
+            itemFailures: {
+              ...entry.itemFailures,
+              modId: ModpackItemFailure(
+                modId: modId,
+                sourceFingerprint: sourceFingerprint,
+                message: message,
+                failedAt: DateTime.now(),
+              ),
+            },
+          ),
   );
 
   /// Clears a failure after the item installs.
@@ -506,18 +535,15 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
   );
 
   /// Drops failures whose source no longer matches the saved item.
-  Future<void> clearFailuresForChangedSources(String packId) =>
-      _updateEntry(packId, (entry) {
-        final kept = <String, ModpackItemFailure>{};
-        for (final failure in entry.itemFailures.values) {
-          final item = entry.definition.itemForModId(failure.modId);
-          if (item == null) continue;
-          if (modpackItemSourceFingerprint(item) == failure.sourceFingerprint) {
-            kept[failure.modId] = failure;
-          }
-        }
-        return entry.copyWith(itemFailures: kept);
-      });
+  Future<void> clearFailuresForChangedSources(String packId) => _updateEntry(
+    packId,
+    (entry) => entry.copyWith(
+      itemFailures: _failuresStillApplying(
+        entry.itemFailures,
+        entry.definition,
+      ),
+    ),
+  );
 
   // --- Unreadable storage ---------------------------------------------------
 
@@ -597,8 +623,43 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     return saved.version + 1;
   }
 
-  String _unusedPackId() {
-    final taken = _data.allPackIds;
+  ModpackDraft _committableDraft(ModpacksData data, String packId) {
+    final draft = data.drafts[packId];
+    if (draft == null) {
+      throw StateError('There is no modpack draft for $packId to save.');
+    }
+    if (!draft.isCommittable) {
+      throw StateError(
+        'This modpack draft cannot be saved yet: ${draft.issues.length} '
+        'problems remain.',
+      );
+    }
+    return draft;
+  }
+
+  /// Check the serialized definition against the reader before saving so
+  /// saved packs remain shareable.
+  ModpackDefinition _checkedDefinition(
+    ModpackDraft draft, {
+    required int version,
+  }) {
+    final definition = draft.toDefinition(version: version);
+    decodeModpackDefinition(canonicalModpackMap(definition));
+    return definition;
+  }
+
+  Map<String, ModpackItemFailure> _failuresStillApplying(
+    Map<String, ModpackItemFailure> failures,
+    ModpackDefinition definition,
+  ) => {
+    for (final failure in failures.values)
+      if (definition.itemForModId(failure.modId) case final item?
+          when modpackItemSourceFingerprint(item) == failure.sourceFingerprint)
+        failure.modId: failure,
+  };
+
+  String _unusedPackId([ModpacksData? data]) {
+    final taken = (data ?? _data).allPackIds;
     var id = generateModpackId();
     while (taken.contains(id)) {
       id = generateModpackId();
@@ -616,19 +677,32 @@ class ModpackStore extends GenericSettingsAsyncNotifier<ModpacksData> {
     }
   }
 
+  /// Changes one saved pack. The pack is looked up inside the write, so a
+  /// change queued behind another write builds on that write's result.
   Future<void> _updateEntry(
     String packId,
     ModpackLibraryEntry Function(ModpackLibraryEntry entry) change,
   ) async {
-    final existing = _data.packs[packId];
-    if (existing == null) return;
-    await _write(
-      (data) => data.copyWith(packs: {...data.packs, packId: change(existing)}),
-    );
+    if (!_data.packs.containsKey(packId)) return;
+    await _write((data) {
+      final existing = data.packs[packId];
+      if (existing == null) return data;
+      return data.copyWith(packs: {...data.packs, packId: change(existing)});
+    });
   }
 
-  Future<void> _write(ModpacksData Function(ModpacksData data) change) =>
-      updateState((current) => change(current), skipChangeCheck: true);
+  /// Every change to the library goes through here. While the saved file is
+  /// unreadable nothing is written: a write would replace that file, and the
+  /// next launch's backup would then replace the last good backup as well.
+  Future<void> _write(ModpacksData Function(ModpacksData data) change) async {
+    if (_manager.storageProblem != null) {
+      throw StateError(
+        'Your saved modpacks could not be read. On the Modpacks page, choose '
+        'Restore backup or Start empty first.',
+      );
+    }
+    await updateState((current) => change(current), skipChangeCheck: true);
+  }
 }
 
 /// Identifies the source one install attempt used, so a changed address

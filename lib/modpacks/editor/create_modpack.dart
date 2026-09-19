@@ -1,15 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:trios/mod_profiles/models/mod_profile.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/modpacks/editor/modpack_editor_logic.dart';
 import 'package:trios/modpacks/library/modpacks_page_controller.dart';
 import 'package:trios/modpacks/models/modpack_draft.dart';
+import 'package:trios/modpacks/modpack_error_text.dart';
 import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/navigation.dart';
 import 'package:trios/trios/navigation_request.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
+import 'package:trios/widgets/snackbar.dart';
 
 /// Every creation action opens the same autosaved editor.
 Future<void> createModpackFromSelection(
@@ -48,13 +51,25 @@ Future<void> createModpackFromSelection(
       );
     }
   }
-  final draft = await ref
-      .read(modpackStoreProvider.notifier)
-      .createDraft(
-        name: name,
-        gameVersion: ref.read(appSettings).lastStarsectorVersion,
-        items: items.values.toList(),
+  final ModpackDraft draft;
+  try {
+    draft = await ref
+        .read(modpackStoreProvider.notifier)
+        .createDraft(
+          name: name,
+          gameVersion: ref.read(appSettings).lastStarsectorVersion,
+          items: items.values.toList(),
+        );
+  } catch (e) {
+    if (ref.context.mounted) {
+      showSnackBar(
+        context: ref.context,
+        type: SnackBarType.error,
+        content: Text('Could not create a modpack: ${modpackErrorText(e)}'),
       );
+    }
+    return;
+  }
   if (!ref.context.mounted) return;
   ref.read(modpacksPageControllerProvider.notifier).editPack(draft.id);
   ref.read(AppState.navigationRequest.notifier).state = const NavigationRequest(

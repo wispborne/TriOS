@@ -10,6 +10,7 @@ import 'package:trios/modpacks/modpack_file_parser.dart';
 import 'package:trios/modpacks/modpack_link_codec.dart';
 import 'package:trios/utils/http_client.dart';
 import 'package:trios/utils/http_probe.dart';
+import 'package:trios/modpacks/modpack_error_text.dart';
 
 bool isModpackFile(String path) =>
     path.toLowerCase().endsWith('.trios-modpack');
@@ -163,7 +164,7 @@ class IncomingModpackSession extends ChangeNotifier {
       }
     } catch (e) {
       if (_stale(generation)) return;
-      message = 'Could not check for an update: $e';
+      message = 'Could not check for an update: ${modpackErrorText(e)}';
     } finally {
       if (!_stale(generation)) {
         checking = false;

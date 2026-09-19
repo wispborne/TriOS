@@ -315,6 +315,65 @@ void main() {
       expect(data().packs.length, 2);
     });
 
+    test('copies drop the original update address', () async {
+      final tracked = _definition().copyWith(
+        updateUrl: 'https://example.com/pack.trios-modpack',
+      );
+      await store.acceptIncomingDefinition(
+        tracked,
+        expectedEntry: null,
+        expectedDraft: null,
+      );
+
+      final duplicate = await store.duplicatePack(tracked.id);
+      final incomingCopy = await store.saveIncomingDefinitionAsCopy(tracked);
+
+      expect(duplicate.definition.updateUrl, isNull);
+      expect(incomingCopy.definition.updateUrl, isNull);
+      expect(data().packs[tracked.id]!.definition.updateUrl, isNotNull);
+    });
+
+    test('leaving the editor without changes removes the draft', () async {
+      final draft = await newFinishedDraft();
+      await store.commitDraft(draft.id);
+      await store.openDraft(draft.id);
+      expect(data().hasUnsavedChanges(draft.id), isTrue);
+
+      await store.discardDraftIfUnchanged(draft.id);
+
+      expect(data().drafts, isEmpty);
+      expect(data().packs.keys, [draft.id]);
+    });
+
+    test('a changed draft or a never-saved pack is kept', () async {
+      final saved = await newFinishedDraft();
+      await store.commitDraft(saved.id);
+      final editing = (await store.openDraft(saved.id))!;
+      await store.saveDraft(editing.copyWith(name: 'Changed'));
+      final unsaved = await newFinishedDraft(name: 'Never saved');
+
+      await store.discardDraftIfUnchanged(saved.id);
+      await store.discardDraftIfUnchanged(unsaved.id);
+
+      expect(data().drafts.keys, containsAll([saved.id, unsaved.id]));
+    });
+
+    test(
+      'saving rejects pack text a link reader cannot read',
+      () async {
+        final draft = await newFinishedDraft();
+        // A pasted control character that the editor doesn't show.
+        await store.saveDraft(draft.copyWith(author: 'Some\u0001one'));
+
+        await expectLater(
+          store.commitDraft(draft.id),
+          throwsA(isA<ModpackFormatException>()),
+        );
+        expect(data().packs, isEmpty);
+        expect(data().drafts.keys, [draft.id]);
+      },
+    );
+
     test('deleting a pack removes its draft too', () async {
       final draft = await newFinishedDraft();
       await store.commitDraft(draft.id);
@@ -492,6 +551,67 @@ void main() {
       expect(data().packs[draft.id]!.itemFailures, isEmpty);
     });
 
+    test('saving after an item source change drops its failure', () async {
+      final draft = await savedPack();
+      final item = data().packs[draft.id]!.definition.items.first;
+      await store.recordItemFailure(
+        packId: draft.id,
+        modId: item.modId,
+        sourceFingerprint: modpackItemSourceFingerprint(item),
+        message: 'Download failed',
+      );
+      final editing = (await store.openDraft(draft.id))!;
+      await store.saveDraft(
+        editing.copyWith(
+          items: [
+            editing.items.first.copyWith(
+              url: 'https://example.com/fixed.version',
+            ),
+            ...editing.items.skip(1),
+          ],
+        ),
+      );
+
+      await store.commitDraft(draft.id);
+
+      expect(data().packs[draft.id]!.itemFailures, isEmpty);
+    });
+
+    test('concurrent failure records are all kept', () async {
+      final draft = await savedPack();
+      final items = data().packs[draft.id]!.definition.items;
+
+      await Future.wait([
+        for (final item in items)
+          store.recordItemFailure(
+            packId: draft.id,
+            modId: item.modId,
+            sourceFingerprint: modpackItemSourceFingerprint(item),
+            message: 'Download failed',
+          ),
+      ]);
+
+      expect(
+        data().packs[draft.id]!.itemFailures.keys,
+        unorderedEquals(items.map((item) => item.modId)),
+      );
+    });
+
+    test('a queued export update preserves a completed save', () async {
+      final draft = await savedPack();
+      final editing = (await store.openDraft(draft.id))!;
+      await store.saveDraft(editing.copyWith(name: 'Renamed'));
+
+      await Future.wait([
+        store.commitDraft(draft.id),
+        store.recordExportLocation(draft.id, 'C:/packs/pack.trios-modpack'),
+      ]);
+
+      final entry = data().packs[draft.id]!;
+      expect(entry.definition.name, 'Renamed');
+      expect(entry.lastExportPath, 'C:/packs/pack.trios-modpack');
+    });
+
     test('are kept while the item source is unchanged', () async {
       final draft = await savedPack();
       final item = data().packs[draft.id]!.definition.items.first;
@@ -589,6 +709,17 @@ void main() {
 
       expect(await store.restoreBackup(), isFalse);
       expect(store.storageProblem, isNotNull);
+    });
+
+    test('nothing is written while the file is unreadable', () async {
+      await storageFile().writeAsString('not json at all');
+      container.dispose();
+      await openStore();
+
+      await expectLater(store.createDraft(), throwsStateError);
+      await flushWrites();
+
+      expect(await storageFile().readAsString(), 'not json at all');
     });
 
     test('starting empty replaces the unreadable file', () async {

@@ -228,6 +228,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('closing an unchanged saved pack removes its draft', (
+    tester,
+  ) async {
+    const definition = ModpackDefinition(
+      id: packId,
+      name: 'Untouched',
+      version: 2,
+      items: [
+        ModpackItem(
+          modId: 'alpha',
+          url: 'https://example.com/alpha.version',
+          sourceType: ModpackItemSourceType.versionFile,
+        ),
+      ],
+    );
+    final container = await mountEditor(
+      tester,
+      const ModpacksData(
+        packs: {packId: ModpackLibraryEntry(definition: definition)},
+      ),
+    );
+    expect(
+      container.read(modpackStoreProvider).value!.drafts[packId],
+      isNotNull,
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+
+    expect(container.read(modpackStoreProvider).value!.drafts, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Discard removes a draft-only pack after confirmation', (
     tester,
   ) async {

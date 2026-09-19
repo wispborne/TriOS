@@ -25,6 +25,7 @@ import 'package:trios/widgets/simple_data_row.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
+import 'package:trios/modpacks/modpack_error_text.dart';
 
 class ModpackEditor extends ConsumerStatefulWidget {
   final String packId;
@@ -108,12 +109,29 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
 
   String get _installedDrag => 'modpack:${widget.packId}:installed';
   String get _packDrag => 'modpack:${widget.packId}:items';
-  ModpackStore get _store => ref.read(modpackStoreProvider.notifier);
+  /// Read once, so saves still queued when the page closes can reach it.
+  late final ModpackStore _store;
 
   @override
   void initState() {
     super.initState();
-    _open();
+    _store = ref.read(modpackStoreProvider.notifier);
+    // Autosaves wait for the draft to open, and so does the cleanup below.
+    _pendingSave = _open();
+  }
+
+  @override
+  void dispose() {
+    // Opening a saved pack creates its draft right away. Leaving without
+    // changing anything should not mark the pack as having unsaved changes.
+    final store = _store;
+    final packId = widget.packId;
+    unawaited(
+      _pendingSave
+          .then((_) => store.discardDraftIfUnchanged(packId))
+          .catchError((Object _) {}),
+    );
+    super.dispose();
   }
 
   Future<void> _open() async {
@@ -137,7 +155,11 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
         }
       });
     } catch (e) {
-      if (mounted) setState(() => _error = 'Could not open this modpack: $e');
+      if (mounted) {
+        setState(
+          () => _error = 'Could not open this modpack: ${modpackErrorText(e)}',
+        );
+      }
     }
   }
 
@@ -146,13 +168,15 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
 
   void _change(ModpackDraft draft) {
     setState(() => _draft = draft);
-    // Capture the store now so Back may dispose this page while a write waits.
     final store = _store;
     _pendingSave = _pendingSave.then((_) => store.saveDraft(draft)).catchError((
       Object error,
     ) {
       if (mounted) {
-        setState(() => _error = 'Could not autosave this draft: $error');
+        setState(
+          () => _error =
+              'Could not autosave this draft: ${modpackErrorText(error)}',
+        );
       }
     });
   }
@@ -289,7 +313,11 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           : await _store.commitDraft(widget.packId);
       if (mounted) widget.onSaved(entry.definition.id);
     } catch (e) {
-      if (mounted) setState(() => _error = 'Could not save this modpack: $e');
+      if (mounted) {
+        setState(
+          () => _error = 'Could not save this modpack: ${modpackErrorText(e)}',
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -311,7 +339,11 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
       await _store.discardDraft(widget.packId);
       if (mounted) widget.onBack();
     } catch (e) {
-      if (mounted) setState(() => _error = 'Could not discard this draft: $e');
+      if (mounted) {
+        setState(
+          () => _error = 'Could not discard this draft: ${modpackErrorText(e)}',
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }

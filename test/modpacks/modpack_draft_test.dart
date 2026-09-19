@@ -213,4 +213,30 @@ void main() {
       );
     });
   });
+
+  test('invalid copied item text is sanitized', () {
+    final definition = ModpackDraft(
+      id: 'N3qGd6c8R2mVx1ZaYkW0_A',
+      name: 'Pack',
+      items: [
+        ModpackDraftItem(
+          modId: 'odd_mod',
+          url: 'https://example.com/odd.zip',
+          sourceType: ModpackItemSourceType.directDownload,
+          name: 'Odd\u0007 Mod',
+          version: '1.0.0-${'x' * 80}',
+          catalog: ModpackCatalogClues(forumTopicId: '9' * 50),
+        ),
+      ],
+    ).toDefinition(version: 1);
+
+    final item = definition.items.single;
+    expect(item.name, 'Odd Mod');
+    expect(item.version, isNull);
+    expect(item.catalog, isNull);
+    expect(
+      () => decodeModpackDefinition(canonicalModpackMap(definition)),
+      returnsNormally,
+    );
+  });
 }

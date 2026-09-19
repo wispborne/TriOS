@@ -280,11 +280,14 @@ class ModpackDraft with ModpackDraftMappable {
             modId: item.modId!.trim(),
             url: item.url!.trim(),
             sourceType: item.sourceType!,
-            name: _cleaned(item.name),
-            version: _cleaned(item.version),
+            name: _copiedText(item.name, ModpackLimits.maxItemNameLength),
+            version: _copiedText(
+              item.version,
+              ModpackLimits.maxItemVersionLength,
+            ),
             label: ModpackItemLabels.normalize(item.label),
             note: item.note?.isEmpty == true ? null : item.note,
-            catalog: item.catalog?.isEmpty == true ? null : item.catalog,
+            catalog: _copiedCatalog(item.catalog),
             unknownFields: item.unknownFields,
           ),
       ],
@@ -295,5 +298,31 @@ class ModpackDraft with ModpackDraftMappable {
   static String? _cleaned(String? value) {
     final trimmed = value?.trim();
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
+  }
+
+  /// Copied names, versions, and catalog clues cannot be edited. Remove
+  /// control characters and omit values too long for a shared link.
+  static String? _copiedText(String? value, int maxLength) {
+    final cleaned = _cleaned(
+      value?.replaceAll(modpackBannedControlCharacters, ''),
+    );
+    return cleaned == null || cleaned.length > maxLength ? null : cleaned;
+  }
+
+  static ModpackCatalogClues? _copiedCatalog(ModpackCatalogClues? catalog) {
+    if (catalog == null) return null;
+    final copied = ModpackCatalogClues(
+      name: _copiedText(catalog.name, ModpackLimits.maxCatalogNameLength),
+      forumTopicId: _copiedText(
+        catalog.forumTopicId,
+        ModpackLimits.maxCatalogIdLength,
+      ),
+      nexusModsId: _copiedText(
+        catalog.nexusModsId,
+        ModpackLimits.maxCatalogIdLength,
+      ),
+      unknownFields: catalog.unknownFields,
+    );
+    return copied.isEmpty ? null : copied;
   }
 }

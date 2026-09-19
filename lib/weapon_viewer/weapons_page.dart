@@ -516,6 +516,12 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         (w) => w.weaponType?.toTitleCase(),
         width: 100,
       ),
+      col(
+        'mountType',
+        'Mount Type',
+        (w) => w.effectiveMountType?.toTitleCase(),
+        width: 100,
+      ),
       col('size', 'Size', (w) => w.size?.toTitleCase(), width: 80),
       col(
         'damageType',

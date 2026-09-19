@@ -233,6 +233,12 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
         displayNameGetter: (name) => name.toTitleCase(),
       ),
       ChipFilterGroup<Weapon>(
+        id: 'mountType',
+        name: 'Mount Type',
+        valueGetter: (weapon) => weapon.effectiveMountType ?? '',
+        displayNameGetter: (name) => name.toTitleCase(),
+      ),
+      ChipFilterGroup<Weapon>(
         id: 'size',
         name: 'Size',
         valueGetter: (weapon) => weapon.size ?? '',
@@ -707,7 +713,7 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
       ),
       SearchField.string(
         'mount',
-        'Effective mount type (TURRET, HARDPOINT, HIDDEN)',
+        'Mount type (ballistic, energy, missile, hybrid, or synergy)',
         (w) => w.effectiveMountType,
       ),
       SearchField.string(

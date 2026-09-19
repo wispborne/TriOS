@@ -908,10 +908,10 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
       ),
       WispGridColumn<ModpackItemRowData>(
         key: 'dependencies',
-        name: 'Dependencies',
+        name: 'Missing',
         isSortable: true,
         getSortValue: (row) => row.dependencyWarnings.length,
-        headerCellBuilder: (_) => _columnHeader('Dependencies'),
+        headerCellBuilder: (_) => _columnHeader('Missing'),
         itemCellBuilder: (row, _) {
           if (!row.isInstalled || row.dependencyWarnings.isEmpty) {
             return Text('—', style: gridTextStyle);
@@ -927,7 +927,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                   size: 16,
                   color: theme.colorScheme.error,
                 ),
-                Text('$count needed', style: gridTextStyle),
+                Text('$count dependency', style: gridTextStyle),
               ],
             ),
           );

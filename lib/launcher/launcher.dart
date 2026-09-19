@@ -20,6 +20,7 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_paths.dart';
 import 'package:trios/vmparams/vmparams_manager.dart';
+import 'package:trios/widgets/primary_outlined_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/stroke_text.dart';
@@ -294,7 +295,7 @@ class LauncherButton extends HookConsumerWidget {
                             )
                           : null,
                       trailing: failure.fixActionName != null
-                          ? OutlinedButton(
+                          ? PrimaryOutlinedButton(
                               onPressed: () async {
                                 await failure.doFix!();
                                 Navigator.of(context).pop();

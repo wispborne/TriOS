@@ -179,6 +179,10 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
   final String? iconGradient;
   final String? appNameOverride;
 
+  /// Outline color for [PrimaryOutlinedButton]. Plain [OutlinedButton]s use
+  /// the theme's soft gray `outlineVariant` instead.
+  final Color primaryOutline;
+
   // Success
   final Color success;
   final Color onSuccess;
@@ -208,6 +212,7 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
     this.iconAsset,
     this.iconGradient,
     this.appNameOverride,
+    this.primaryOutline = const Color(0xFF2196F3),
     this.success = const Color(0xFF4CAF50),
     this.onSuccess = const Color(0xFFFFFFFF),
     this.successContainer = const Color(0xFF4CAF50),
@@ -232,6 +237,7 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
     String? iconAsset,
     String? iconGradient,
     String? appNameOverride,
+    Color? primaryOutline,
     Color? success,
     Color? onSuccess,
     Color? successContainer,
@@ -254,6 +260,7 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
       iconAsset: iconAsset ?? this.iconAsset,
       iconGradient: iconGradient ?? this.iconGradient,
       appNameOverride: appNameOverride ?? this.appNameOverride,
+      primaryOutline: primaryOutline ?? this.primaryOutline,
       success: success ?? this.success,
       onSuccess: onSuccess ?? this.onSuccess,
       successContainer: successContainer ?? this.successContainer,
@@ -281,6 +288,7 @@ class TriOSThemeExtension extends ThemeExtension<TriOSThemeExtension> {
       iconAsset: t < 0.5 ? iconAsset : other.iconAsset,
       iconGradient: t < 0.5 ? iconGradient : other.iconGradient,
       appNameOverride: t < 0.5 ? appNameOverride : other.appNameOverride,
+      primaryOutline: Color.lerp(primaryOutline, other.primaryOutline, t)!,
       success: Color.lerp(success, other.success, t)!,
       onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
       successContainer: Color.lerp(successContainer, other.successContainer, t)!,

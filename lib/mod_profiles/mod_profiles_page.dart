@@ -12,6 +12,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/widgets/primary_outlined_button.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/svg_image_icon.dart';
@@ -366,7 +367,7 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                   message:
                       "Creates a new profile using your current mods."
                       "\nDoes not set it to active.",
-                  child: OutlinedButton.icon(
+                  child: PrimaryOutlinedButton.icon(
                     onPressed: () {
                       _onSubmittedNewProfile(newProfileNameController);
                     },

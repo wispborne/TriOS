@@ -31,6 +31,7 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/trios/settings/settings.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/add_new_mods_button.dart';
+import 'package:trios/widgets/primary_outlined_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/export_to_csv_dialog.dart';
 import 'package:trios/widgets/mod_download/mod_download_button.dart';
@@ -1388,7 +1389,7 @@ class MissingDependencyButton extends ConsumerWidget {
                   if (checkResult.satisfiedAmount is Disabled) {
                     final disabledVariant =
                         (checkResult.satisfiedAmount as Disabled).modVariant;
-                    return OutlinedButton(
+                    return PrimaryOutlinedButton(
                       onPressed: () {
                         ref
                             .read(modManager.notifier)
@@ -1570,7 +1571,7 @@ class MissingDependencyButton extends ConsumerWidget {
                       );
                     }
 
-                    final button = OutlinedButton(
+                    final button = PrimaryOutlinedButton(
                       onPressed: onPressed,
                       style: buttonStyle,
                       child: TextWithIcon(

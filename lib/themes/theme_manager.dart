@@ -183,6 +183,12 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     );
     return TriOSThemeExtension(
       rainbowAccent: swatch.rainbowAccent,
+      // The light theme mixes less of the background in, or the outline is
+      // too faint to see against a light surface.
+      primaryOutline: swatch.primary.mix(
+        swatch.surfaceContainer!,
+        brightness == Brightness.light ? 0.2 : 0.7,
+      )!,
       iconAsset: swatch.iconAsset,
       iconGradient: swatch.iconGradient,
       appNameOverride: swatch.appNameOverride,
@@ -265,13 +271,6 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         unselectedLabelColor: customTheme.colorScheme.onSurfaceVariant,
       ),
       snackBarTheme: const SnackBarThemeData(),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(
-            color: swatch.primary.mix(swatch.surfaceContainer!, 0.2)!,
-          ),
-        ),
-      ),
       extensions: [_buildExtension(swatch, Brightness.light)],
     );
   }
@@ -336,7 +335,6 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
     final onSurfaceVariant = swatch.surface == null
         ? swatch.onSurface
         : swatch.onSurface?.mix(swatch.surface!, 0.5)!;
-    final primaryVariant = swatch.primary.mix(swatch.surfaceContainer!, 0.7)!;
 
     return themeBase.copyWith(
       colorScheme: themeBase.colorScheme.copyWith(
@@ -369,7 +367,10 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: primaryVariant),
+          // The same gray Flutter draws outlined cards with, so outlined
+          // buttons match the toolbar buttons. Use [PrimaryOutlinedButton]
+          // for buttons that should stand out.
+          side: BorderSide(color: themeBase.colorScheme.outlineVariant),
           iconColor: themeBase.colorScheme.onSurface.withValues(
             alpha: iconButtonOpacity,
           ),

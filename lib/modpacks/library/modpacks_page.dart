@@ -22,6 +22,7 @@ import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/widgets/collapsed_filter_button.dart';
+import 'package:trios/widgets/primary_outlined_button.dart';
 import 'package:trios/widgets/filter_engine/filter_engine.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/labeled_text_field.dart';
@@ -574,7 +575,7 @@ class _EmptyLibrary extends StatelessWidget {
               mainAxisSize: .min,
               spacing: 8,
               children: [
-                OutlinedButton.icon(
+                PrimaryOutlinedButton.icon(
                   onPressed: onNew,
                   icon: const Icon(Icons.add),
                   label: const Text('Create'),

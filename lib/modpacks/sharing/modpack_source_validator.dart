@@ -43,6 +43,43 @@ class ModpackSourceValidator {
       fetchVersionInfo?.call(url, cancellation) ??
       readVersionCheckerInfo(url, cancellation, probe: probe);
 
+  /// Resolve freshly for installation; sharing's success cache never stands
+  /// in for a current download address.
+  ///
+  /// Returns the address before any redirects. Some hosts, such as GitHub
+  /// releases, redirect to signed links that stop working after a few
+  /// minutes, and a queued download may start much later than this check.
+  Future<String> resolve(
+    ModpackItem item,
+    HttpProbeCancellation cancellation,
+  ) async {
+    if (!isSafeModpackUrl(item.url)) {
+      throw const FormatException('Enter an HTTP or HTTPS download URL.');
+    }
+    var url = item.url;
+    if (item.sourceType == ModpackItemSourceType.versionFile) {
+      final info = await _readVersionInfo(url, cancellation);
+      final direct = info.directDownloadURL;
+      if (direct == null || !isSafeModpackUrl(direct)) {
+        throw const FormatException(
+          'Version Checker has no usable direct download URL.',
+        );
+      }
+      url = direct;
+    }
+    final address = Uri.parse(fixUrl(url.trim()));
+    final result = await probe(
+      address,
+      maxBytes: 512,
+      prefixOnly: true,
+      cancellation: cancellation,
+    );
+    if (!isDownloadableModpackResponse(result)) {
+      throw const FormatException('Source did not return a mod archive.');
+    }
+    return address.toString();
+  }
+
   Future<bool> validate(
     ModpackItem item,
     HttpProbeCancellation cancellation,

@@ -85,6 +85,27 @@ void main() {
   );
 
   test(
+    'installation keeps the original URL after redirect resolution',
+    () async {
+      final validator = _validator((
+        url, {
+        required maxBytes,
+        required prefixOnly,
+        required cancellation,
+      }) async {
+        // The host redirects to a signed link that expires soon.
+        return archive(
+          Uri.parse('https://signed.example.net/blob?expires=300'),
+        );
+      });
+
+      final resolved = await validator.resolve(item, HttpProbeCancellation());
+
+      expect(resolved, 'https://example.com/mod.zip');
+    },
+  );
+
+  test(
     'failed responses retry and version files must resolve to archives',
     () async {
       var valid = false;

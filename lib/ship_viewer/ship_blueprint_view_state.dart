@@ -86,6 +86,11 @@ enum ShipBlueprintBackground {
   };
 }
 
+/// Default overlay opacity. These values preserve the original appearance.
+const double defaultBoundsOpacity = 0.6;
+const double defaultArcsOpacity = 0.3;
+const double defaultMountsOpacity = 1.0;
+
 /// Which layers the interactive ship blueprint view shows, plus its animation
 /// and background choices. Saved to app settings and shared by every
 /// interactive blueprint view in the app, so the choices stick across restarts
@@ -110,6 +115,11 @@ class ShipBlueprintViewState with ShipBlueprintViewStateMappable {
   final bool animateEngines;
   final ShipBlueprintBackground background;
 
+  /// Opacity of the bounds, firing arcs, and mount markers.
+  final double boundsOpacity;
+  final double arcsOpacity;
+  final double mountsOpacity;
+
   const ShipBlueprintViewState({
     this.showModules = true,
     this.showBounds = false,
@@ -122,5 +132,8 @@ class ShipBlueprintViewState with ShipBlueprintViewStateMappable {
     this.animateShields = true,
     this.animateEngines = true,
     this.background = ShipBlueprintBackground.background4,
+    this.boundsOpacity = defaultBoundsOpacity,
+    this.arcsOpacity = defaultArcsOpacity,
+    this.mountsOpacity = defaultMountsOpacity,
   });
 }

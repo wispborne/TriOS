@@ -255,6 +255,11 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   /// leave the background alone.
   ShipBlueprintBackground _background = ShipBlueprintBackground.background4;
 
+  /// Overlay opacity saved for interactive views. Thumbnails use the defaults.
+  double _boundsOpacity = defaultBoundsOpacity;
+  double _arcsOpacity = defaultArcsOpacity;
+  double _mountsOpacity = defaultMountsOpacity;
+
   /// Loops once every 16 seconds. Drives both the shield fill's slow spin and
   /// the edge ring's ripple. Only runs while a shield is showing, animation is
   /// on, and TriOS is the window in front.
@@ -355,6 +360,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
       _animateShields = saved.animateShields;
       _animateEngines = saved.animateEngines;
       _background = saved.background;
+      _boundsOpacity = saved.boundsOpacity;
+      _arcsOpacity = saved.arcsOpacity;
+      _mountsOpacity = saved.mountsOpacity;
     } else {
       _showModules = widget.initialShowModules;
       _showBounds = widget.initialShowBounds;
@@ -405,6 +413,9 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                 animateShields: _animateShields,
                 animateEngines: _animateEngines,
                 background: _background,
+                boundsOpacity: _boundsOpacity,
+                arcsOpacity: _arcsOpacity,
+                mountsOpacity: _mountsOpacity,
               ),
             ),
           );
@@ -1612,23 +1623,26 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                         height: imgH,
                         // IgnorePointer: see the engine glow overlay above.
                         child: IgnorePointer(
-                          child: CustomPaint(
-                            size: Size(imgW, imgH),
-                            painter: _BoundsPainter(
-                              parentBoundsPolygon:
-                                  ship.bounds != null &&
-                                      ship.bounds!.length >= 6 &&
-                                      hasCenter
-                                  ? parseBoundsToPolygon(
-                                      ship.bounds!,
-                                      center[0],
-                                      imgH - center[1],
-                                    )
-                                  : null,
-                              moduleBoundsPolygons: _showModules
-                                  ? (_cachedModuleGeometry?.polygons ??
-                                        const [])
-                                  : const [],
+                          child: Opacity(
+                            opacity: _boundsOpacity,
+                            child: CustomPaint(
+                              size: Size(imgW, imgH),
+                              painter: _BoundsPainter(
+                                parentBoundsPolygon:
+                                    ship.bounds != null &&
+                                        ship.bounds!.length >= 6 &&
+                                        hasCenter
+                                    ? parseBoundsToPolygon(
+                                        ship.bounds!,
+                                        center[0],
+                                        imgH - center[1],
+                                      )
+                                    : null,
+                                moduleBoundsPolygons: _showModules
+                                    ? (_cachedModuleGeometry?.polygons ??
+                                          const [])
+                                    : const [],
+                              ),
                             ),
                           ),
                         ),
@@ -1663,6 +1677,8 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
                               radiusForSize: _radiusForSize,
                               showMounts: _showMounts,
                               showArcs: _showArcs,
+                              mountsOpacity: _mountsOpacity,
+                              arcsOpacity: _arcsOpacity,
                             ),
                           ),
                         ),
@@ -1996,6 +2012,23 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
               const Text('Animate engines'),
             ),
           ),
+        const Divider(),
+        _opacitySlider(
+          label: 'Bounds',
+          value: _boundsOpacity,
+          onChanged: (v) => _boundsOpacity = v,
+        ),
+        _opacitySlider(
+          label: 'Arcs',
+          value: _arcsOpacity,
+          onChanged: (v) => _arcsOpacity = v,
+        ),
+        _opacitySlider(
+          label: 'Mounts',
+          value: _mountsOpacity,
+          onChanged: (v) => _mountsOpacity = v,
+        ),
+        const Divider(),
         SubmenuButton(
           menuStyle: PopupStyleMenuAnchor.popupMenuStyle(context),
           leadingIcon: PopupStyleMenuAnchor.paddedIcon(
@@ -2038,6 +2071,42 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
           child: const Text('Save image...'),
         ),
       ],
+    );
+  }
+
+  Widget _opacitySlider({
+    required String label,
+    required double value,
+    required ValueChanged<double> onChanged,
+  }) {
+    return MovingTooltipWidget.text(
+      message: 'Adjust ${label.toLowerCase()} opacity',
+      child: Padding(
+        padding: const .symmetric(horizontal: 16),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(width: 64, child: Text(label)),
+            SizedBox(
+              width: 160,
+              child: Slider(
+                value: value,
+                min: 0.05,
+                max: 1.0,
+                onChanged: (v) => setState(() => onChanged(v)),
+                onChangeEnd: (_) => _persistBlueprintState(),
+              ),
+            ),
+            SizedBox(
+              width: 40,
+              child: Text(
+                '${(value * 100).round()}%',
+                textAlign: TextAlign.end,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -2478,6 +2547,15 @@ class _ShipBlueprintViewState extends ConsumerState<ShipBlueprintView>
   }
 }
 
+typedef _SlotVisitor = void Function(
+  Offset pos,
+  double angleDeg,
+  ShipWeaponSlot slot,
+  Color color,
+  double radius,
+  bool isHovered,
+);
+
 class _WeaponSlotPainter extends CustomPainter {
   final List<ShipWeaponSlot> slots;
   final List<_TransformedSlot> moduleSlots;
@@ -2491,6 +2569,9 @@ class _WeaponSlotPainter extends CustomPainter {
   final bool showMounts;
   final bool showArcs;
 
+  final double mountsOpacity;
+  final double arcsOpacity;
+
   _WeaponSlotPainter({
     required this.slots,
     this.moduleSlots = const [],
@@ -2502,6 +2583,8 @@ class _WeaponSlotPainter extends CustomPainter {
     required this.radiusForSize,
     required this.showMounts,
     required this.showArcs,
+    this.mountsOpacity = 1.0,
+    this.arcsOpacity = defaultArcsOpacity,
   });
 
   Offset _slotPos(ShipWeaponSlot slot) {
@@ -2512,72 +2595,83 @@ class _WeaponSlotPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Draw arcs first so mount markers stay visible. Fade markers as one layer
+    // to keep their outlines and shadows from showing through each other.
+    if (showArcs) {
+      _forEachSlot((pos, angleDeg, slot, color, radius, isHovered) {
+        if (slot.arc > 0) {
+          _drawFiringArc(
+            canvas,
+            pos,
+            angleDeg,
+            slot.arc,
+            color,
+            radius,
+            isHovered,
+          );
+        }
+      });
+    }
+    if (showMounts) {
+      _paintLayer(canvas, size, mountsOpacity, (canvas) {
+        _forEachSlot((pos, angleDeg, slot, color, radius, isHovered) {
+          _drawSlotMarker(
+            canvas,
+            pos,
+            angleDeg,
+            slot,
+            color,
+            radius,
+            isHovered,
+          );
+        });
+      });
+    }
+  }
+
+  void _paintLayer(
+    Canvas canvas,
+    Size size,
+    double opacity,
+    void Function(Canvas canvas) draw,
+  ) {
+    if (opacity >= 1.0) {
+      draw(canvas);
+      return;
+    }
+    canvas.saveLayer(
+      Offset.zero & size,
+      Paint()..color = Color.fromRGBO(0, 0, 0, opacity),
+    );
+    draw(canvas);
+    canvas.restore();
+  }
+
+  void _forEachSlot(_SlotVisitor visit) {
     for (var i = 0; i < slots.length; i++) {
       final slot = slots[i];
       if (slot.locations.length < 2) continue;
-
-      final pos = _slotPos(slot);
-      final color = colorForType(slot.type);
-      final radius = radiusForSize(slot.size);
-      final isHovered = hoveredIndex == i;
-
-      if (showArcs && slot.arc > 0) {
-        _drawFiringArc(
-          canvas,
-          pos,
-          slot.angle,
-          slot.arc,
-          color,
-          radius,
-          isHovered,
-        );
-      }
-
-      if (showMounts) {
-        _drawSlotMarker(
-          canvas,
-          pos,
-          slot.angle,
-          slot,
-          color,
-          radius,
-          isHovered,
-        );
-      }
+      visit(
+        _slotPos(slot),
+        slot.angle,
+        slot,
+        colorForType(slot.type),
+        radiusForSize(slot.size),
+        hoveredIndex == i,
+      );
     }
 
-    // Draw module weapon slots (pre-transformed positions).
+    // Module weapon slots (pre-transformed positions).
     for (var i = 0; i < moduleSlots.length; i++) {
       final ts = moduleSlots[i];
-      final slot = ts.slot;
-      final pos = ts.screenPos;
-      final color = colorForType(slot.type);
-      final radius = radiusForSize(slot.size);
-      final isHovered = hoveredModuleSlotIndex == i;
-
-      if (showArcs && slot.arc > 0) {
-        _drawFiringArc(
-          canvas,
-          pos,
-          ts.adjustedAngleDeg,
-          slot.arc,
-          color,
-          radius,
-          isHovered,
-        );
-      }
-
-      if (showMounts) {
-        _drawSlotMarker(
-          canvas,
-          pos,
-          ts.adjustedAngleDeg,
-          slot,
-          color,
-          radius,
-          isHovered,
-        );
-      }
+      visit(
+        ts.screenPos,
+        ts.adjustedAngleDeg,
+        ts.slot,
+        colorForType(ts.slot.type),
+        radiusForSize(ts.slot.size),
+        hoveredModuleSlotIndex == i,
+      );
     }
   }
 
@@ -2606,8 +2700,12 @@ class _WeaponSlotPainter extends CustomPainter {
       sweepRad = arcDeg * (pi / 180);
     }
 
+    // [arcsOpacity] of 1.0 is the strongest the arcs get. A hovered arc never
+    // drops below 0.9, so the one under the mouse always stands out.
+    final strength = isHovered ? max(arcsOpacity, 0.9) : arcsOpacity;
+
     final fillPaint = Paint()
-      ..color = color.withValues(alpha: isHovered ? 0.35 : 0.12)
+      ..color = color.withValues(alpha: 0.4 * strength)
       ..style = PaintingStyle.fill;
 
     final path = Path()
@@ -2617,7 +2715,7 @@ class _WeaponSlotPainter extends CustomPainter {
     canvas.drawPath(path, fillPaint);
 
     final outlinePaint = Paint()
-      ..color = color.withValues(alpha: isHovered ? 0.7 : 0.3)
+      ..color = color.withValues(alpha: strength)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     canvas.drawPath(path, outlinePaint);
@@ -2701,7 +2799,9 @@ class _WeaponSlotPainter extends CustomPainter {
         !identical(oldDelegate.slots, slots) ||
         !identical(oldDelegate.moduleSlots, moduleSlots) ||
         oldDelegate.showMounts != showMounts ||
-        oldDelegate.showArcs != showArcs;
+        oldDelegate.showArcs != showArcs ||
+        oldDelegate.mountsOpacity != mountsOpacity ||
+        oldDelegate.arcsOpacity != arcsOpacity;
   }
 }
 
@@ -2716,12 +2816,14 @@ class _BoundsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Drawn at full strength and faded by the opacity slider. The fill keeps
+    // its old ratio to the outline (0.08 fill to 0.6 outline).
     final strokePaint = Paint()
-      ..color = Colors.greenAccent.withValues(alpha: 0.6)
+      ..color = Colors.greenAccent
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     final fillPaint = Paint()
-      ..color = Colors.greenAccent.withValues(alpha: 0.08)
+      ..color = Colors.greenAccent.withValues(alpha: 0.08 / 0.6)
       ..style = PaintingStyle.fill;
 
     if (parentBoundsPolygon != null && parentBoundsPolygon!.length >= 3) {

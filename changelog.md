@@ -2,6 +2,7 @@
 - Added
   - Ship blueprints may now be copied to the clipboard or saved as PNG files.
   - Added built-in custom shield textures for Project MISTRAL and Orbital Manipulation & Maintenance.
+  - Opacity sliders for ship overlays (bounds/mounts/weapon arcs).
 - Fixed
   - Vertical alignment of game icon with sidebar layout.
   - Weapons with dual barrels now display stats correctly.

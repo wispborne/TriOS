@@ -211,6 +211,27 @@ class ShipBlueprintViewStateMapper
     opt: true,
     def: ShipBlueprintBackground.background4,
   );
+  static double _$boundsOpacity(ShipBlueprintViewState v) => v.boundsOpacity;
+  static const Field<ShipBlueprintViewState, double> _f$boundsOpacity = Field(
+    'boundsOpacity',
+    _$boundsOpacity,
+    opt: true,
+    def: defaultBoundsOpacity,
+  );
+  static double _$arcsOpacity(ShipBlueprintViewState v) => v.arcsOpacity;
+  static const Field<ShipBlueprintViewState, double> _f$arcsOpacity = Field(
+    'arcsOpacity',
+    _$arcsOpacity,
+    opt: true,
+    def: defaultArcsOpacity,
+  );
+  static double _$mountsOpacity(ShipBlueprintViewState v) => v.mountsOpacity;
+  static const Field<ShipBlueprintViewState, double> _f$mountsOpacity = Field(
+    'mountsOpacity',
+    _$mountsOpacity,
+    opt: true,
+    def: defaultMountsOpacity,
+  );
 
   @override
   final MappableFields<ShipBlueprintViewState> fields = const {
@@ -225,6 +246,9 @@ class ShipBlueprintViewStateMapper
     #animateShields: _f$animateShields,
     #animateEngines: _f$animateEngines,
     #background: _f$background,
+    #boundsOpacity: _f$boundsOpacity,
+    #arcsOpacity: _f$arcsOpacity,
+    #mountsOpacity: _f$mountsOpacity,
   };
 
   static ShipBlueprintViewState _instantiate(DecodingData data) {
@@ -240,6 +264,9 @@ class ShipBlueprintViewStateMapper
       animateShields: data.dec(_f$animateShields),
       animateEngines: data.dec(_f$animateEngines),
       background: data.dec(_f$background),
+      boundsOpacity: data.dec(_f$boundsOpacity),
+      arcsOpacity: data.dec(_f$arcsOpacity),
+      mountsOpacity: data.dec(_f$mountsOpacity),
     );
   }
 
@@ -325,6 +352,9 @@ abstract class ShipBlueprintViewStateCopyWith<
     bool? animateShields,
     bool? animateEngines,
     ShipBlueprintBackground? background,
+    double? boundsOpacity,
+    double? arcsOpacity,
+    double? mountsOpacity,
   });
   ShipBlueprintViewStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -353,6 +383,9 @@ class _ShipBlueprintViewStateCopyWithImpl<$R, $Out>
     bool? animateShields,
     bool? animateEngines,
     ShipBlueprintBackground? background,
+    double? boundsOpacity,
+    double? arcsOpacity,
+    double? mountsOpacity,
   }) => $apply(
     FieldCopyWithData({
       if (showModules != null) #showModules: showModules,
@@ -367,6 +400,9 @@ class _ShipBlueprintViewStateCopyWithImpl<$R, $Out>
       if (animateShields != null) #animateShields: animateShields,
       if (animateEngines != null) #animateEngines: animateEngines,
       if (background != null) #background: background,
+      if (boundsOpacity != null) #boundsOpacity: boundsOpacity,
+      if (arcsOpacity != null) #arcsOpacity: arcsOpacity,
+      if (mountsOpacity != null) #mountsOpacity: mountsOpacity,
     }),
   );
   @override
@@ -385,6 +421,9 @@ class _ShipBlueprintViewStateCopyWithImpl<$R, $Out>
     animateShields: data.get(#animateShields, or: $value.animateShields),
     animateEngines: data.get(#animateEngines, or: $value.animateEngines),
     background: data.get(#background, or: $value.background),
+    boundsOpacity: data.get(#boundsOpacity, or: $value.boundsOpacity),
+    arcsOpacity: data.get(#arcsOpacity, or: $value.arcsOpacity),
+    mountsOpacity: data.get(#mountsOpacity, or: $value.mountsOpacity),
   );
 
   @override

@@ -8,6 +8,7 @@ import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_systems_manager/widgets/ship_system_codex_card.dart';
+import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/widgets/ship_codex_card.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
@@ -22,6 +23,7 @@ Widget codexEntryTooltip({
   required Map<String, ShipSystem> shipSystemsMap,
   required Map<String, Weapon> weaponsMap,
   required Map<String, Hullmod> hullmodsMap,
+  required Map<String, Ship> shipsByHull,
   required Directory? gameCoreDir,
   bool onlyEnabledMods = false,
 }) {
@@ -40,11 +42,20 @@ Widget codexEntryTooltip({
       return HullmodCodexCard.tooltip(hullmod: hullmod, child: child);
     case ShipSystemCodexEntry(:final system):
       return ShipSystemCodexCard.tooltip(system: system, child: child);
-    case WingCodexEntry(:final wing, :final shipName):
+    case WingCodexEntry(:final wing, :final name):
       return _framed(
         ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 300),
-          child: WingCodexCard.create(wing: wing, title: shipName ?? wing.id),
+          // Wide enough for the card to put the formation picture beside the
+          // technical data (it stacks them below 500), which keeps it short.
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: WingCodexCard.create(
+            wing: wing,
+            ship: wing.hullId == null ? null : shipsByHull[wing.hullId],
+            shipSystemsMap: shipSystemsMap,
+            weaponsMap: weaponsMap,
+            hullmodsMap: hullmodsMap,
+            title: name ?? wing.id,
+          ),
         ),
         child,
       );

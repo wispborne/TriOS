@@ -19,15 +19,39 @@ class WeaponMountIndicator extends StatelessWidget {
   /// Whether an enclosing row/card is hovered; reveals the weapon glow.
   final bool rowHovered;
 
+  /// When false, only the sprite is drawn, without the mount-type shapes.
+  final bool showMountShape;
+
+  /// Crop transparent sprite margins to fill the frame. See
+  /// [WeaponImageCell.trimTransparentEdges].
+  final bool trimTransparentEdges;
+
   const WeaponMountIndicator({
     super.key,
     required this.weapon,
     this.size = 80,
     this.rowHovered = false,
+    this.showMountShape = true,
+    this.trimTransparentEdges = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Sprite-only mode uses the image cell's padding; empty sprites collapse.
+    if (!showMountShape) {
+      if (weapon.spriteLayers.isEmpty) return const SizedBox.shrink();
+      return Transform.rotate(
+        angle: 0.785,
+        child: WeaponImageCell(
+          weapon: weapon,
+          fit: BoxFit.contain,
+          size: size * 0.7,
+          padding: EdgeInsets.all(size * 0.15),
+          rowHovered: rowHovered,
+          trimTransparentEdges: trimTransparentEdges,
+        ),
+      );
+    }
     return SizedBox(
       width: size,
       height: size,
@@ -52,6 +76,7 @@ class WeaponMountIndicator extends StatelessWidget {
                 fit: BoxFit.contain,
                 size: size * 0.7,
                 rowHovered: rowHovered,
+                trimTransparentEdges: trimTransparentEdges,
               ),
             ),
         ],

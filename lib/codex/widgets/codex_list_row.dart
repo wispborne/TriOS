@@ -4,10 +4,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/codex/codex_labels.dart';
 import 'package:trios/codex/models/codex_entry.dart';
+import 'package:trios/fighter_viewer/widgets/wing_formation_view.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/ship_viewer/widgets/ship_skin_badge.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/viewer_cache/graphics_index_manager.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_image_cell.dart';
 
 /// One row in the Codex list (and the related panel): a square image cell, the
@@ -133,9 +135,17 @@ class _CodexListRowState extends ConsumerState<CodexListRow> {
     switch (entry) {
       case ShipCodexEntry(:final ship):
         return _shipImage(ship);
-      case WingCodexEntry():
+      case WingCodexEntry(:final wing):
         final ship = widget.wingShip;
-        return ship != null ? _shipImage(ship) : _categoryFallback();
+        // The whole wing in formation, sized like the game's list icon.
+        return ship != null
+            ? WingFormationView(
+                wing: wing,
+                ship: ship,
+                listIcon: true,
+                forceEngineGlow: _hovered,
+              )
+            : _categoryFallback();
       case WeaponCodexEntry(:final weapon):
         return WeaponImageCell(
           weapon: weapon,
@@ -143,7 +153,10 @@ class _CodexListRowState extends ConsumerState<CodexListRow> {
           rowHovered: _hovered,
         );
       case HullmodCodexEntry(:final hullmod):
-        return _fileImage(hullmod.sprite);
+        // `sprite` is a game path as the CSV writes it; find the real file.
+        return _fileImage(
+          ref.watch(gameFileResolverProvider(false)).resolve(hullmod.sprite),
+        );
       case ShipSystemCodexEntry(:final system):
         return _fileImage(system.icon);
       case FactionCodexEntry(:final faction):

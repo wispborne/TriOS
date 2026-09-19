@@ -10,7 +10,7 @@ import 'package:trios/widgets/filter_engine/filter_group.dart';
 /// [itemsFor] returns the current spoiler+mod-filtered entries of the category
 /// (used for the tech/manufacturer most-common-spelling label). [shipForHull]
 /// resolves a wing's ship for the fighters' tech/manufacturer facet.
-List<ChipFilterGroup<CodexEntry>> buildCodexFacetGroups(
+List<FilterGroup<CodexEntry>> buildCodexFacetGroups(
   CodexEntryType category, {
   required List<CodexEntry> Function() itemsFor,
   required Ship? Function(String hullId) shipForHull,
@@ -124,6 +124,12 @@ List<ChipFilterGroup<CodexEntry>> buildCodexFacetGroups(
           name: 'Role',
           valueGetter: (e) => (e as WingCodexEntry).wing.role ?? '',
           displayNameGetter: (v) => v.toTitleCase(),
+        ),
+        RangeFilterGroup<CodexEntry>(
+          id: 'numCraft',
+          name: 'Fighters in wing',
+          valueGetter: (e) => (e as WingCodexEntry).wing.numCraft,
+          suffix: 'ct',
         ),
       ];
     case CodexEntryType.shipSystem:

@@ -157,12 +157,12 @@ class ShipSystemCodexEntry extends CodexEntry {
 class WingCodexEntry extends CodexEntry {
   final Wing wing;
 
-  /// Name of the ship behind the wing, resolved by the index provider (the wing
-  /// row itself has no name column). Falls back to the wing id when the ship
-  /// could not be resolved.
-  final String? shipName;
+  /// The entry's name, built by the index provider from the ship behind the
+  /// wing and the wing's variant (the wing row itself has no name column).
+  /// Falls back to the wing id when the ship could not be resolved.
+  final String? name;
 
-  const WingCodexEntry(this.wing, {this.shipName});
+  const WingCodexEntry(this.wing, {this.name});
 
   @override
   String get id => wing.id;
@@ -171,13 +171,17 @@ class WingCodexEntry extends CodexEntry {
   CodexEntryType get type => CodexEntryType.wing;
 
   @override
-  String get displayName => shipName ?? wing.id;
+  String get displayName => name ?? wing.id;
 
   @override
   String get sortName => displayName;
 
+  /// The role description ("Heavy Fighter"), else the role name, as the
+  /// game's Codex list shows it.
   @override
-  String? get subtitle => wing.role?.toTitleCase();
+  String? get subtitle => (wing.roleDesc ?? '').isNotEmpty
+      ? wing.roleDesc
+      : wing.role?.toLowerCase().toTitleCase();
 
   @override
   Set<String> get modIds => {?wing.modVariant?.modInfo.id};

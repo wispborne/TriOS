@@ -10,6 +10,7 @@ import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/faction_viewer/models/faction.dart';
 import 'package:trios/faction_viewer/widgets/faction_card.dart';
 import 'package:trios/faction_viewer/widgets/faction_profile_dialog.dart';
+import 'package:trios/fighter_viewer/models/wing.dart';
 import 'package:trios/fighter_viewer/widgets/wing_codex_card.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/hullmod_viewer/widgets/hullmod_codex_card.dart';
@@ -108,12 +109,35 @@ class CodexDetailPanel extends ConsumerWidget {
       ShipSystemCodexEntry(:final system) => ShipSystemCodexCard.create(
         system: system,
       ),
-      WingCodexEntry(:final wing, :final shipName) => WingCodexCard.create(
+      WingCodexEntry(:final wing, :final name) => WingCodexCard.create(
         wing: wing,
-        title: shipName ?? wing.id,
+        ship: wing.hullId == null
+            ? null
+            : visible
+                  .whereType<ShipCodexEntry>()
+                  .where((e) => e.ship.id == wing.hullId)
+                  .firstOrNull
+                  ?.ship,
+        shipSystemsMap: _mapById<ShipSystem>(
+          visible,
+          (e) => e is ShipSystemCodexEntry ? e.system : null,
+          (s) => s.id,
+        ),
+        weaponsMap: _mapById<Weapon>(
+          visible,
+          (e) => e is WeaponCodexEntry ? e.weapon : null,
+          (w) => w.id,
+        ),
+        hullmodsMap: _mapById<Hullmod>(
+          visible,
+          (e) => e is HullmodCodexEntry ? e.hullmod : null,
+          (h) => h.id,
+        ),
+        title: name ?? wing.id,
         onShipTap: wing.hullId != null
             ? () => controller.select((hullKeyType(wing.hullId!), wing.hullId!))
             : null,
+        onEntitySelected: controller.select,
       ),
       // FactionCard is built for a fixed-size grid cell (it uses a Spacer), so
       // it needs a bounded height — unlike the shrink-wrapping codex cards it
@@ -161,13 +185,21 @@ class CodexDetailPanel extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 card,
-                // "This ship is used by this faction…" — the in-game Codex's
-                // ship→factions section. Only ships have it.
+                // Show factions that can use this ship or fighter.
                 if (entry is ShipCodexEntry)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
-                    child: _ShipUsedByFactions(
-                      ship: entry.ship,
+                    child: _UsedByFactions.ship(
+                      entry.ship,
+                      onFactionTap: (id) =>
+                          controller.select((CodexEntryType.faction, id)),
+                    ),
+                  ),
+                if (entry is WingCodexEntry)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: _UsedByFactions.wing(
+                      entry.wing,
                       onFactionTap: (id) =>
                           controller.select((CodexEntryType.faction, id)),
                     ),
@@ -353,19 +385,69 @@ class CodexDetailPanel extends ConsumerWidget {
   }
 }
 
-/// The in-game Codex's "This ship is used by this faction…" section: a list of
-/// the factions whose fleets can field this ship. Shown below a ship's card.
-///
-/// A faction counts as using the ship if it appears in the intel tab and knows
-/// the hull — either by the hull id (a skin resolves to its base hull) or by a
-/// tag the ship carries. This mirrors the game's rule; the game additionally
-/// drops hulls a faction has explicitly weighted to zero, but that per-hull
-/// weighting isn't parsed here, so those rare cases may still show.
-class _ShipUsedByFactions extends ConsumerWidget {
-  final Ship ship;
+/// Lists factions that can field a ship or fighter.
+class _UsedByFactions extends ConsumerWidget {
+  /// Called only for factions shown in the Intel tab.
+  final bool Function(Faction faction) usesEntry;
+
+  /// Hover text on each chip.
+  final String chipTooltip;
+
   final void Function(String factionId) onFactionTap;
 
-  const _ShipUsedByFactions({required this.ship, required this.onFactionTap});
+  const _UsedByFactions({
+    required this.usesEntry,
+    required this.chipTooltip,
+    required this.onFactionTap,
+  });
+
+  /// A faction counts as using the ship if it knows the hull — either by the
+  /// hull id (a skin resolves to its base hull) or by a tag the ship carries.
+  /// This mirrors the game's rule; the game additionally drops hulls a faction
+  /// has explicitly weighted to zero, but that per-hull weighting isn't parsed
+  /// here, so those rare cases may still show.
+  factory _UsedByFactions.ship(
+    Ship ship, {
+    required void Function(String factionId) onFactionTap,
+  }) {
+    // The hull the game would check known-ship membership against: a skin
+    // resolves to its base hull, otherwise the ship's own id.
+    final baseHullId = ship.isSkin ? (ship.baseHullId ?? ship.id) : ship.id;
+    final shipTags = ship.tags?.toSet() ?? const <String>{};
+    return _UsedByFactions(
+      usesEntry: (f) =>
+          f.knownShipIds.contains(baseHullId) ||
+          f.knownShipIds.contains(ship.id) ||
+          f.knownShipTags.any(shipTags.contains),
+      chipTooltip:
+          'This ship is used by this faction, and may sometimes be found for '
+          'sale at their colonies.',
+      onFactionTap: onFactionTap,
+    );
+  }
+
+  /// A faction counts as using the fighter if it knows the wing id, or a tag
+  /// the wing carries. The game checks the faction's known fighters, which it
+  /// builds from those ids and tags when it loads.
+  factory _UsedByFactions.wing(
+    Wing wing, {
+    required void Function(String factionId) onFactionTap,
+  }) {
+    final wingTags = (wing.tags ?? '')
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toSet();
+    return _UsedByFactions(
+      usesEntry: (f) =>
+          f.knownFighterIds.contains(wing.id) ||
+          f.knownFighterTags.any(wingTags.contains),
+      chipTooltip:
+          "This fighter is used by this faction, and may be found for sale at "
+          "this faction's colonies.",
+      onFactionTap: onFactionTap,
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -379,18 +461,8 @@ class _ShipUsedByFactions extends ConsumerWidget {
         .toList();
     final gameCoreDir = ref.watch(AppState.gameCoreFolder).value;
 
-    // The hull the game would check known-ship membership against: a skin
-    // resolves to its base hull, otherwise the ship's own id.
-    final baseHullId = ship.isSkin ? (ship.baseHullId ?? ship.id) : ship.id;
-    final shipTags = ship.tags?.toSet() ?? const <String>{};
-
     final users =
-        factions.where((f) {
-          if (!f.showInIntelTab) return false;
-          if (f.knownShipIds.contains(baseHullId)) return true;
-          if (f.knownShipIds.contains(ship.id)) return true;
-          return f.knownShipTags.any(shipTags.contains);
-        }).toList()..sort(
+        factions.where((f) => f.showInIntelTab && usesEntry(f)).toList()..sort(
           (a, b) => a.displayNameBest.toLowerCase().compareTo(
             b.displayNameBest.toLowerCase(),
           ),
@@ -426,9 +498,7 @@ class _ShipUsedByFactions extends ConsumerWidget {
         _uiColor(faction.baseUIColor) ?? theme.colorScheme.onSurface;
 
     return MovingTooltipWidget.text(
-      message:
-          'This ship is used by this faction, and may sometimes be found for '
-          'sale at their colonies.',
+      message: chipTooltip,
       child: InkWell(
         borderRadius: BorderRadius.circular(4),
         onTap: () => onFactionTap(faction.id),

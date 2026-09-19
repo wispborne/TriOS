@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/trios/navigation.dart';
+import 'package:trios/widgets/svg_image_icon.dart';
 
 /// User-facing category names (approved copy).
 String codexCategoryLabel(CodexEntryType type) => switch (type) {
@@ -37,16 +38,24 @@ TriOSTools? codexCategoryTool(CodexEntryType type) => switch (type) {
 };
 
 /// The category icon. Reuses the sidebar tool's icon where one exists so the
-/// Codex menus match the sidebar; ship systems and fighters (no sidebar tab)
-/// fall back to a plain icon.
+/// Codex menus match the sidebar. Fighters use their own formation icon; ship
+/// systems and stations (no sidebar tab) fall back to a plain icon.
 Widget codexCategoryIcon(CodexEntryType type, {double size = 24, Color? color}) {
   final tool = codexCategoryTool(type);
   if (tool != null) return tool.icon(size: size, color: color);
+  if (type == CodexEntryType.wing) {
+    return SvgImageIcon(
+      "assets/images/icon-fighter-wing.svg",
+      height: size,
+      width: size,
+      color: color,
+    );
+  }
   return Icon(
     switch (type) {
       CodexEntryType.station => Icons.hub,
       CodexEntryType.shipSystem => Icons.bolt,
-      CodexEntryType.wing => Icons.flight,
+      CodexEntryType.wing => Icons.keyboard_double_arrow_up,
       _ => Icons.help_outline,
     },
     size: size,

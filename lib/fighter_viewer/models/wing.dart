@@ -54,6 +54,24 @@ class Wing with WingMappable {
   @MappableField(hook: SkipSerializationHook())
   String? hullId;
 
+  /// Weapons fitted by the wing's `.variant` file, as slot id -> weapon id.
+  /// Empty when the variant file could not be found. Persisted to the cache
+  /// manually, like [hullId].
+  @MappableField(hook: SkipSerializationHook())
+  Map<String, String> weaponsBySlot = const {};
+
+  /// Hull mods listed in the wing's `.variant` file. Fighters often get their
+  /// hull mods here rather than as built-ins on the hull. Persisted to the
+  /// cache manually, like [hullId].
+  @MappableField(hook: SkipSerializationHook())
+  List<String> variantHullMods = const [];
+
+  /// The `.variant` file's `displayName`, e.g. "Heavy Fighter". The game names
+  /// a fighter's Codex entry from the hull name plus this. Persisted to the
+  /// cache manually, like [hullId].
+  @MappableField(hook: SkipSerializationHook())
+  String? variantDisplayName;
+
   /// The mod this wing came from (null = vanilla). Set by the loader after
   /// parsing, so it is skipped during serialization and rehydrated on decode.
   @MappableField(hook: SkipSerializationHook())

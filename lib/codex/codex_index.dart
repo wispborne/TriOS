@@ -7,6 +7,7 @@ import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
 import 'package:trios/faction_viewer/faction_manager.dart';
+import 'package:trios/fighter_viewer/models/wing.dart';
 import 'package:trios/fighter_viewer/wings_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/hullmods_page_controller.dart';
@@ -126,7 +127,7 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
   final descriptions =
       ref.watch(descriptionsNotifierProvider).value ?? const {};
 
-  // Ship name by hull id, so a wing can show the name of the ship behind it
+  // Ship name by hull id, so a wing can be named after the ship behind it
   // (wing rows have no name column of their own).
   final shipNamesByHull = <String, String>{
     for (final s in ships)
@@ -146,7 +147,10 @@ final codexIndexProvider = Provider<List<CodexEntry>>((ref) {
     for (final wing in wings)
       WingCodexEntry(
         wing,
-        shipName: wing.hullId == null ? null : shipNamesByHull[wing.hullId],
+        name: _wingEntryName(
+          wing,
+          wing.hullId == null ? null : shipNamesByHull[wing.hullId],
+        ),
       ),
     for (final f in factions) FactionCodexEntry(f),
   ];
@@ -367,6 +371,20 @@ bool _matchesSpoiler(
     case FactionCodexEntry():
       return true;
   }
+}
+
+/// A fighter's Codex name, built the way the game builds it (`CodexDataV2`):
+/// the hull name, then the variant's display name ("Broadsword Heavy
+/// Fighter"). Swarm fighters put the display name first. Just the hull name
+/// when the variant has no display name. Null when the hull didn't resolve.
+String? _wingEntryName(Wing wing, String? hullName) {
+  if (hullName == null) return null;
+  final displayName = wing.variantDisplayName ?? '';
+  if (displayName.isEmpty) return hullName;
+  if (_splitTags(wing.tags).contains('swarm_fighter')) {
+    return '$displayName $hullName';
+  }
+  return '$hullName $displayName';
 }
 
 Iterable<String> _splitTags(String? tags) {

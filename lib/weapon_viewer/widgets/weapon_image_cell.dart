@@ -85,12 +85,22 @@ class WeaponImageCell extends ConsumerStatefulWidget {
   /// Whether the grid row is hovered; reveals the glow for the whole row.
   final bool rowHovered;
 
+  /// Crops transparent sprite margins before fitting the image. Glow may
+  /// extend past the cell; an empty sprite takes no space.
+  final bool trimTransparentEdges;
+
+  /// Space around the cell. Left out along with the cell when
+  /// [trimTransparentEdges] finds nothing to show.
+  final EdgeInsets padding;
+
   const WeaponImageCell({
     super.key,
     required this.weapon,
     this.fit = BoxFit.scaleDown,
     this.size = 40,
     this.rowHovered = false,
+    this.trimTransparentEdges = false,
+    this.padding = EdgeInsets.zero,
   });
 
   @override
@@ -105,6 +115,10 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
   // "Always show weapon glow" is enabled).
   List<_WeaponLayer> _glowLayers = const [];
   Size _canvasSize = Size.zero;
+
+  /// Visible canvas bounds when [WeaponImageCell.trimTransparentEdges] is on.
+  /// Null means show the full canvas.
+  Rect? _visibleBounds;
   bool _loaded = false;
   bool _hovering = false;
   bool _alwaysShowGlow = false;
@@ -153,7 +167,8 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
     // empty and are filled in on a later pass. The same weapon then arrives
     // with sprites it didn't have a moment ago.
     if (oldWidget.weapon.id != widget.weapon.id ||
-        _spriteKey(oldWidget.weapon) != _spriteKey(widget.weapon)) {
+        _spriteKey(oldWidget.weapon) != _spriteKey(widget.weapon) ||
+        oldWidget.trimTransparentEdges != widget.trimTransparentEdges) {
       // Drop the old weapon's layers right away, or a recycled row keeps
       // painting them until the async rebuild finishes (and forever, if the
       // new weapon has no sprite at all).
@@ -162,6 +177,7 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
         _layers = const [];
         _glowLayers = const [];
         _canvasSize = Size.zero;
+        _visibleBounds = null;
       });
       _build();
     }
@@ -391,11 +407,17 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
       glowTint: l.glowTint,
     );
 
+    final shiftedLayers = layers.map(shift).toList();
+    final visibleBounds = widget.trimTransparentEdges
+        ? await _opaqueBounds(shiftedLayers, bbox.size)
+        : null;
+
     if (mounted) {
       setState(() {
-        _layers = layers.map(shift).toList();
+        _layers = shiftedLayers;
         _glowLayers = glowLayers.map(shift).toList();
         _canvasSize = bbox.size;
+        _visibleBounds = visibleBounds;
         _loaded = true;
       });
     }
@@ -404,7 +426,14 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
   @override
   Widget build(BuildContext context) {
     if (!_loaded) {
-      return SizedBox(width: widget.size, height: widget.size);
+      return Padding(
+        padding: widget.padding,
+        child: SizedBox(width: widget.size, height: widget.size),
+      );
+    }
+    if (widget.trimTransparentEdges &&
+        (_layers.isEmpty || _visibleBounds == null)) {
+      return const SizedBox.shrink();
     }
     if ((_layers.isEmpty && _glowLayers.isEmpty) || _canvasSize.isEmpty) {
       return SizedBox(
@@ -428,16 +457,18 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
       });
     }
 
+    final shownArea = _visibleBounds ?? Offset.zero & _canvasSize;
     Widget composite = FittedBox(
       fit: widget.fit,
       child: SizedBox(
-        width: _canvasSize.width,
-        height: _canvasSize.height,
+        width: shownArea.width,
+        height: shownArea.height,
         child: CustomPaint(
           painter: _WeaponSpritePainter(
             layers: _layers,
             glowLayers: _glowLayers,
             glowOpacity: _glowController,
+            origin: shownArea.topLeft,
           ),
         ),
       ),
@@ -496,8 +527,62 @@ class _WeaponImageCellState extends ConsumerState<WeaponImageCell>
       );
     }
 
-    return SizedBox(width: widget.size, height: widget.size, child: composite);
+    return Padding(
+      padding: widget.padding,
+      child: SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: composite,
+      ),
+    );
   }
+}
+
+/// Bounds of visible [layers] pixels in canvas coordinates. Null when no
+/// pixels are visible or readable. Hover glow is excluded.
+Future<Rect?> _opaqueBounds(List<_WeaponLayer> layers, Size canvasSize) async {
+  final w = canvasSize.width.ceil();
+  final h = canvasSize.height.ceil();
+  if (w <= 0 || h <= 0) return null;
+
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  for (final l in layers) {
+    _drawWeaponLayer(canvas, l, l.paint);
+  }
+  final picture = recorder.endRecording();
+  final ByteData? data;
+  try {
+    final image = await picture.toImage(w, h);
+    try {
+      data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+    } finally {
+      image.dispose();
+    }
+  } finally {
+    picture.dispose();
+  }
+  if (data == null) return null;
+
+  // Ignore low-alpha pixels such as soft shadows and stray noise.
+  const minAlpha = 8;
+  var minX = w, minY = h, maxX = -1, maxY = -1;
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      if (data.getUint8((y * w + x) * 4 + 3) < minAlpha) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (maxX < 0) return null;
+  return Rect.fromLTRB(
+    minX.toDouble(),
+    minY.toDouble(),
+    maxX + 1.0,
+    maxY + 1.0,
+  );
 }
 
 void _drawWeaponLayer(Canvas canvas, _WeaponLayer l, Paint paint) {
@@ -529,14 +614,20 @@ class _WeaponSpritePainter extends CustomPainter {
   /// Current glow fade, 0 (hidden) to 1 (full). Drives repaint while animating.
   final Animation<double> glowOpacity;
 
+  /// Canvas point drawn at the widget's top-left corner. Non-zero when
+  /// transparent margins are cropped.
+  final Offset origin;
+
   _WeaponSpritePainter({
     required this.layers,
     required this.glowLayers,
     required this.glowOpacity,
+    this.origin = Offset.zero,
   }) : super(repaint: glowOpacity);
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.translate(-origin.dx, -origin.dy);
     for (final l in layers) {
       _drawWeaponLayer(canvas, l, l.paint);
     }
@@ -555,6 +646,6 @@ class _WeaponSpritePainter extends CustomPainter {
   @override
   bool shouldRepaint(_WeaponSpritePainter oldDelegate) =>
       !identical(oldDelegate.layers, layers) ||
-      !identical(oldDelegate.glowLayers, glowLayers);
+      !identical(oldDelegate.glowLayers, glowLayers) ||
+      oldDelegate.origin != origin;
 }
-

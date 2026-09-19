@@ -2,10 +2,11 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/codex/codex_facets.dart';
 import 'package:trios/codex/codex_grouping.dart';
@@ -68,7 +69,10 @@ class _CodexPageState extends ConsumerState<CodexPage>
   static const double _groupHeaderHeight = 34;
 
   final _searchController = TextEditingController();
-  final _searchFocus = FocusNode();
+  late final _searchFocus = FocusNode(onKeyEvent: _onSearchKeyEvent);
+
+  /// Hidden tabs have [TickerMode] disabled; their search shortcuts must be too.
+  bool _isPageVisible = false;
   final _listScrollController = ScrollController();
   final _relatedScrollController = ScrollController();
 
@@ -116,6 +120,9 @@ class _CodexPageState extends ConsumerState<CodexPage>
   /// sorted from, for the same skip-if-unchanged check.
   final Map<CodexEntryType, List<CodexEntry>> _facetItemsSource = {};
 
+  /// Index snapshot used to avoid recalculating unchanged range bounds.
+  final Map<CodexEntryType, List<CodexEntry>> _rangeSource = {};
+
   Directory? _gameCoreDir;
 
   /// The selected grouping id per category. Unset defaults to grouping by mod.
@@ -132,6 +139,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
   @override
   void initState() {
     super.initState();
+    HardwareKeyboard.instance.addHandler(_handleSearchHotkey);
     _facetControllers = {
       for (final type in codexCategoryOrder)
         type: FilterScopeController<CodexEntry>(
@@ -154,6 +162,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleSearchHotkey);
     _searchController.dispose();
     _searchFocus.dispose();
     _listScrollController.dispose();
@@ -198,6 +207,57 @@ class _CodexPageState extends ConsumerState<CodexPage>
     }
   }
 
+  /// Focus search on Ctrl+F, Cmd+F, or `/` while this page is active. Let `/`
+  /// through when another text field has focus.
+  bool _handleSearchHotkey(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+    if (!mounted || !_isPageVisible) return false;
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return false;
+
+    final keyboard = HardwareKeyboard.instance;
+    final mainModifier = Platform.isMacOS
+        ? keyboard.isMetaPressed
+        : keyboard.isControlPressed;
+    final isFind =
+        event.logicalKey == LogicalKeyboardKey.keyF &&
+        mainModifier &&
+        !keyboard.isAltPressed;
+    final isSlash =
+        event.logicalKey == LogicalKeyboardKey.slash &&
+        !keyboard.isControlPressed &&
+        !keyboard.isMetaPressed &&
+        !keyboard.isAltPressed &&
+        !_isTypingInTextField();
+    if (!isFind && !isSlash) return false;
+
+    _searchFocus.requestFocus();
+    _searchController.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _searchController.text.length,
+    );
+    return true;
+  }
+
+  bool _isTypingInTextField() =>
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<EditableText>() !=
+      null;
+
+  /// Esc in the search box clears the search. If it's already empty, Esc
+  /// moves the cursor out of the box.
+  KeyEventResult _onSearchKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.escape) {
+      return KeyEventResult.ignored;
+    }
+    if (_searchController.text.isNotEmpty) {
+      _controller.setSearch('');
+    } else {
+      node.unfocus();
+    }
+    return KeyEventResult.handled;
+  }
+
   void _randomEntry() {
     final pool = ref.read(codexListedIndexProvider);
     final state = ref.read(codexPageControllerProvider);
@@ -210,6 +270,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    _isPageVisible = TickerMode.valuesOf(context).enabled;
     final state = ref.watch(codexPageControllerProvider);
     _syncSearchField(state.searchQuery);
 
@@ -256,9 +317,16 @@ class _CodexPageState extends ConsumerState<CodexPage>
         );
         _facetItems[category] = items;
       }
+      final ctrl = _facetControllers[category]!;
+      // Keep range bounds based on the full category so other filters do not
+      // move the slider endpoints.
+      final all = ref.watch(codexIndexProvider);
+      if (!identical(_rangeSource[category], all)) {
+        _rangeSource[category] = all;
+        ctrl.updateRanges(all.where((e) => e.type == category));
+      }
       // Load locked facet state and merge staged selections whose values exist
       // in the current data — before the list below applies the chip filters.
-      final ctrl = _facetControllers[category]!;
       ctrl.loadPersisted(ref.read(filterGroupPersistenceProvider));
       ctrl.applyPendingChipMerge(_facetItems[category] ?? const []);
     }
@@ -447,19 +515,44 @@ class _CodexPageState extends ConsumerState<CodexPage>
               decoration: InputDecoration(
                 isDense: true,
                 prefixIcon: const Icon(Icons.search, size: 18),
-                hintText: 'Search the Codex…',
+                hintText: Platform.isMacOS
+                    ? 'Press ⌘F or / to search'
+                    : 'Press Ctrl+F or / to search',
                 border: const OutlineInputBorder(),
                 suffixIcon: state.isSearching
                     ? IconButton(
                         icon: const Icon(Icons.clear, size: 18),
                         onPressed: () => _controller.setSearch(''),
                       )
-                    : null,
+                    : Padding(
+                        padding: const .only(right: 8),
+                        child: Center(
+                          widthFactor: 1,
+                          child: _keyCap(context, '/'),
+                        ),
+                      ),
               ),
               onChanged: _controller.setSearch,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _keyCap(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const .symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        border: .all(color: theme.colorScheme.outline),
+        borderRadius: .circular(4),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -523,9 +616,10 @@ class _CodexPageState extends ConsumerState<CodexPage>
   Widget _buildCategoryList(BuildContext context, CodexPageState state) {
     final category = state.category!;
     // `_facetItems[category]` was computed (sorted) in build(); apply the
-    // category's facet chip selections to get the shown list.
+    // category's facet chip and range selections to get the shown list.
     final base = _facetItems[category] ?? const <CodexEntry>[];
-    final entries = _facetControllers[category]!.applyChipFilters(base);
+    final ctrl = _facetControllers[category]!;
+    final entries = ctrl.applyRangeFilters(ctrl.applyChipFilters(base));
 
     final groupings = _groupingsFor(category);
     // Default to grouping by mod; groupings always include a 'mod' option.
@@ -879,6 +973,7 @@ class _CodexPageState extends ConsumerState<CodexPage>
       shipSystemsMap: _shipSystemsMap,
       weaponsMap: _weaponsMap,
       hullmodsMap: _hullmodsMap,
+      shipsByHull: _shipsByHull,
       gameCoreDir: _gameCoreDir,
       onlyEnabledMods: ref.read(onlyEnabledModsProvider),
       child: row,

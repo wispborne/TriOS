@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/codex/models/codex_entry.dart';
@@ -12,8 +14,10 @@ import 'package:trios/ship_viewer/models/ship_weapon_slot.dart';
 import 'package:trios/ship_viewer/widgets/ship_blueprint_view.dart';
 import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/viewer_cache/graphics_index_manager.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
 import 'package:trios/weapon_viewer/widgets/weapon_codex_card.dart';
+import 'package:trios/weapon_viewer/widgets/weapon_mount_indicator.dart';
 import 'package:trios/widgets/description_with_substitutions.dart';
 import 'package:trios/widgets/ingame_tooltip_shared.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
@@ -387,54 +391,13 @@ class ShipCodexCard {
                 spacing: 4,
                 children: [
                   if (ship.systemId != null)
-                    Row(
-                      spacing: 8,
-                      children: [
-                        SizedBox(
-                          width: labelWidth,
-                          child: Text(
-                            'System:',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                        Expanded(
-                          child: asCodexLink(
-                            Text(
-                              _toDisplay(
-                                shipSystemsMap[ship.systemId!]?.name ??
-                                    ship.systemId!,
-                              ),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color:
-                                    TriOSThemeConstants.vanillaYellowGoldColor,
-                              ),
-                            ),
-                            // Only a link when the system resolves in the
-                            // index; otherwise plain text, not a broken link.
-                            shipSystemsMap.containsKey(ship.systemId!)
-                                ? onEntitySelected
-                                : null,
-                            (CodexEntryType.shipSystem, ship.systemId!),
-                          ),
-                        ),
-                      ],
-                    ),
-                  if (ship.systemId != null && systemDescription != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 78),
-                      child: Text(
-                        (systemDescription.text3 ??
-                                systemDescription.text1 ??
-                                '')
-                            .trim(),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.7,
-                          ),
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
+                    ...shipSystemRows(
+                      systemId: ship.systemId!,
+                      shipSystemsMap: shipSystemsMap,
+                      systemDescription: systemDescription,
+                      theme: theme,
+                      labelWidth: labelWidth,
+                      onEntitySelected: onEntitySelected,
                     ),
                   if (mountGroups.isNotEmpty || hasBays)
                     Row(
@@ -469,7 +432,7 @@ class ShipCodexCard {
                           ),
                         ),
                         Expanded(
-                          child: _armamentWrap(
+                          child: armamentWrap(
                             armamentGroups,
                             theme,
                             TriOSThemeConstants.vanillaYellowGoldColor,
@@ -490,7 +453,7 @@ class ShipCodexCard {
                           ),
                         ),
                         Expanded(
-                          child: _hullModWrap(
+                          child: hullModWrap(
                             hullMods,
                             hullmodsMap,
                             theme,
@@ -632,19 +595,106 @@ Map<String, int> _groupMounts(Ship ship) {
   );
 }
 
+/// The "System:" row: the system's name (a Codex link when it resolves in
+/// [shipSystemsMap]) with its description underneath. A null [systemId] shows
+/// "None", as the game's fighter Codex page does.
+List<Widget> shipSystemRows({
+  required String? systemId,
+  required Map<String, ShipSystem> shipSystemsMap,
+  required DescriptionEntry? systemDescription,
+  required ThemeData theme,
+  required double labelWidth,
+  CodexEntitySelected? onEntitySelected,
+}) {
+  final descriptionText =
+      (systemDescription?.text3 ?? systemDescription?.text1 ?? '').trim();
+  return [
+    Row(
+      spacing: 8,
+      children: [
+        SizedBox(
+          width: labelWidth,
+          child: Text('System:', style: theme.textTheme.bodySmall),
+        ),
+        Expanded(
+          child: systemId == null
+              ? Text('None', style: theme.textTheme.bodySmall)
+              : asCodexLink(
+                  Text(
+                    _toDisplay(shipSystemsMap[systemId]?.name ?? systemId),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: TriOSThemeConstants.vanillaYellowGoldColor,
+                    ),
+                  ),
+                  // Only a link when the system resolves in the index;
+                  // otherwise plain text, not a broken link.
+                  shipSystemsMap.containsKey(systemId)
+                      ? onEntitySelected
+                      : null,
+                  (CodexEntryType.shipSystem, systemId),
+                ),
+        ),
+      ],
+    ),
+    if (systemId != null && systemDescription != null)
+      Padding(
+        padding: EdgeInsets.only(left: labelWidth + 8),
+        child: Text(
+          descriptionText,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ),
+  ];
+}
+
 /// Groups built-in weapons and wings by display name, preserving the [Weapon]
 /// object (for tooltips) and, for wings, the wing id (for the Codex link).
 Map<String, ArmamentGroup> _groupArmaments(
   Ship ship,
   Map<String, Weapon> weaponsMap,
 ) {
+  final groups = groupWeaponArmaments(
+    ship.builtInWeapons?.values ?? const Iterable<String>.empty(),
+    weaponsMap,
+  );
+  for (final id in ship.builtInWings ?? const <String>[]) {
+    final name = _toDisplay(id);
+    final existing = groups[name];
+    groups[name] = (
+      count: (existing?.count ?? 0) + 1,
+      weapon: null,
+      wingId: id,
+    );
+  }
+  return groups;
+}
+
+/// Groups [weaponIds] by display name, counting repeats and keeping the
+/// [Weapon] object (for tooltips). Ids missing from [weaponsMap] (e.g. from a
+/// disabled mod) are named from the id.
+///
+/// Ships skip hidden weapons and add size and mount to each name. Fighters
+/// skip only decorative weapons and use bare names, as in the game's Codex.
+Map<String, ArmamentGroup> groupWeaponArmaments(
+  Iterable<String> weaponIds,
+  Map<String, Weapon> weaponsMap, {
+  bool forFighter = false,
+}) {
   final groups = <String, ArmamentGroup>{};
-  for (final id
-      in ship.builtInWeapons?.values ?? const Iterable<String>.empty()) {
+  for (final id in weaponIds) {
     final weapon = weaponsMap[id];
-    if (weapon?.isHidden() == true) continue;
+    final skip = forFighter
+        ? weapon?.weaponType?.toLowerCase() == 'decorative'
+        : weapon?.isHidden() == true;
+    if (skip) continue;
     var name = weapon?.name ?? _toDisplay(id);
-    if (weapon?.size != null && weapon?.effectiveMountType != null) {
+    if (!forFighter &&
+        weapon?.size != null &&
+        weapon?.effectiveMountType != null) {
       name +=
           ' (${weapon!.size!.toTitleCase()} ${weapon.effectiveMountType!.toTitleCase()})';
     }
@@ -653,15 +703,6 @@ Map<String, ArmamentGroup> _groupArmaments(
       count: (existing?.count ?? 0) + 1,
       weapon: weapon,
       wingId: null,
-    );
-  }
-  for (final id in ship.builtInWings ?? const <String>[]) {
-    final name = _toDisplay(id);
-    final existing = groups[name];
-    groups[name] = (
-      count: (existing?.count ?? 0) + 1,
-      weapon: null,
-      wingId: id,
     );
   }
   return groups;
@@ -707,11 +748,11 @@ Widget _mountWrap(
   );
 }
 
-/// Renders a ship's built-in armaments as one comma-joined line — the same look
+/// Renders armaments as one comma-joined line — the same look
 /// whether or not the items are interactive. When a [Weapon] resolves, its entry
 /// keeps its hover card (and, inside the Codex, click-to-open); wings link to
 /// their fighter entry; unresolved entries (e.g. from a disabled mod) stay plain.
-Widget _armamentWrap(
+Widget armamentWrap(
   Map<String, ArmamentGroup> groups,
   ThemeData theme,
   Color highlightColor,
@@ -745,12 +786,23 @@ InlineSpan _armamentSpan(
   TextStyle? countStyle,
   CodexEntitySelected? onEntitySelected,
 ) {
+  final weapon = entry.value.weapon;
   final labelSpans = <InlineSpan>[
     TextSpan(text: '${entry.value.count}×', style: countStyle),
+    // Omit the icon and its margin when the weapon has no sprite.
+    if (weapon != null && weapon.spriteLayers.isNotEmpty)
+      WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: WeaponMountIndicator(
+          weapon: weapon,
+          size: _inlineWeaponIconSize,
+          showMountShape: false,
+          trimTransparentEdges: true,
+        ),
+      ),
     TextSpan(text: ' ${entry.key}', style: baseStyle),
   ];
 
-  final weapon = entry.value.weapon;
   if (weapon != null) {
     return WidgetSpan(
       alignment: PlaceholderAlignment.baseline,
@@ -784,7 +836,7 @@ InlineSpan _armamentSpan(
 /// are interactive. Each resolved hull mod keeps its hover card (and, inside the
 /// Codex, click-to-open); an unresolved id (e.g. from a disabled mod) stays
 /// plain.
-Widget _hullModWrap(
+Widget hullModWrap(
   Iterable<String> hullMods,
   Map<String, Hullmod> hullmodsMap,
   ThemeData theme,
@@ -822,9 +874,51 @@ InlineSpan _hullModSpan(
     child: HullmodCodexCard.tooltip(
       hullmod: hullmod,
       onEntitySelected: onEntitySelected,
-      child: Text(name, style: baseStyle),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: _InlineHullmodIcon(hullmod: hullmod),
+            ),
+            TextSpan(text: ' $name', style: baseStyle),
+          ],
+        ),
+      ),
     ),
   );
+}
+
+/// Size of the small icons shown before each armament and hull mod name.
+const _inlineIconSize = 16.0;
+
+/// Size of the weapon icons on the armament line. Larger than
+/// [_inlineIconSize] because the sprite is turned 45° and only fills about 70%
+/// of its box.
+const _inlineWeaponIconSize = 28.0;
+
+/// A hull mod's icon at [_inlineIconSize], for the hull mod line. The CSV
+/// path is matched to a real file the way the hull mod card does it. Takes no
+/// space when no file is found.
+class _InlineHullmodIcon extends ConsumerWidget {
+  final Hullmod hullmod;
+
+  const _InlineHullmodIcon({required this.hullmod});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final path = ref
+        .watch(gameFileResolverProvider(false))
+        .resolve(hullmod.sprite);
+    if (path == null) return const SizedBox.shrink();
+    return Image.file(
+      File(path),
+      width: _inlineIconSize,
+      height: _inlineIconSize,
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+    );
+  }
 }
 
 /// Converts a snake_case / kebab-case id to a Title Cased display string.

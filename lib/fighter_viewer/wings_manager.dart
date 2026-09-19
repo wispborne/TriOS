@@ -35,7 +35,8 @@ class WingListNotifier extends CachedStreamListNotifier<Wing, WingsCachePayload>
   String get domain => 'wings';
 
   @override
-  int get schemaVersion => 1;
+  // Version 3 caches variant weapons, hull mods, and display names.
+  int get schemaVersion => 3;
 
   @override
   late final CachedVariantStore store =
@@ -116,9 +117,13 @@ class WingListNotifier extends CachedStreamListNotifier<Wing, WingsCachePayload>
     final map = <String, dynamic>{
       'wings': payload.wings.map((w) {
         final m = w.toMap();
-        // hullId is skipped by the mapper (resolved post-parse); persist it
-        // manually so a cache-only load keeps the wing → ship link.
+        // The fields read from the `.variant` file are skipped by the mapper
+        // (resolved post-parse); persist them manually so a cache-only load
+        // keeps them.
         m['hullId'] = w.hullId;
+        m['weaponsBySlot'] = w.weaponsBySlot;
+        m['variantHullMods'] = w.variantHullMods;
+        m['variantDisplayName'] = w.variantDisplayName;
         return m;
       }).toList(),
     };
@@ -136,6 +141,18 @@ class WingListNotifier extends CachedStreamListNotifier<Wing, WingsCachePayload>
       final wing = WingMapper.fromMap(map);
       final hullId = map['hullId'];
       if (hullId is String) wing.hullId = hullId;
+      final weaponsBySlot = map['weaponsBySlot'];
+      if (weaponsBySlot is Map) {
+        wing.weaponsBySlot = Map<String, String>.from(weaponsBySlot);
+      }
+      final variantHullMods = map['variantHullMods'];
+      if (variantHullMods is List) {
+        wing.variantHullMods = variantHullMods.whereType<String>().toList();
+      }
+      final variantDisplayName = map['variantDisplayName'];
+      if (variantDisplayName is String) {
+        wing.variantDisplayName = variantDisplayName;
+      }
       wing.modVariant = null;
       wings.add(wing);
     }
@@ -144,7 +161,7 @@ class WingListNotifier extends CachedStreamListNotifier<Wing, WingsCachePayload>
 }
 
 /// Reads `data/hulls/wing_data.csv` under [folder] and resolves each wing's
-/// `variant` to the hull id of the ship behind it.
+/// `variant` to the ship behind it and what the variant fits.
 Future<_WingParseResult> _parseWingsCsv(
   Directory folder,
   ModVariant? modVariant,
@@ -176,9 +193,8 @@ Future<_WingParseResult> _parseWingsCsv(
   }
   recorder.file(wingsCsv);
 
-  // Map every variant id in this folder to its hull id, so a wing's `variant`
-  // resolves to the ship behind it. Missing entries degrade to a null hull id.
-  final variantHullIds = await _buildVariantHullIdMap(folder, recorder);
+  // Missing variants leave the wing's hull and fitted data empty.
+  final variants = await _buildVariantMap(folder, recorder);
 
   String content;
   try {
@@ -233,8 +249,11 @@ Future<_WingParseResult> _parseWingsCsv(
     try {
       final wing = WingMapper.fromMap(data);
       wing.modVariant = modVariant;
-      final variantId = wing.variant;
-      wing.hullId = variantId == null ? null : variantHullIds[variantId];
+      final variant = variants[wing.variant];
+      wing.hullId = variant?.hullId;
+      wing.weaponsBySlot = variant?.weaponsBySlot ?? const {};
+      wing.variantHullMods = variant?.hullMods ?? const [];
+      wing.variantDisplayName = variant?.displayName;
       wings.add(wing);
     } catch (e) {
       errors.add('[$modName] Row ${i + 1}: $e');
@@ -244,13 +263,13 @@ Future<_WingParseResult> _parseWingsCsv(
   return _WingParseResult(wings, errors);
 }
 
-/// Scans `data/variants` under [folder] and returns `variantId -> hullId`,
+/// Scans `data/variants` under [folder] and returns `variantId -> variant`,
 /// following `ShipListNotifier`'s `.variant` parsing.
-Future<Map<String, String>> _buildVariantHullIdMap(
+Future<Map<String, _WingVariant>> _buildVariantMap(
   Directory folder,
   ParseRecorder recorder,
 ) async {
-  final result = <String, String>{};
+  final result = <String, _WingVariant>{};
   final variantsDir = Directory(p.join(folder.path, 'data/variants'));
   if (!await variantsDir.exists()) {
     recorder.directory(variantsDir, const [], recursive: true);
@@ -272,13 +291,57 @@ Future<Map<String, String>> _buildVariantHullIdMap(
       final variantId = map['variantId'] as String?;
       final hullId = map['hullId'] as String?;
       if (variantId != null && hullId != null) {
-        result[variantId] = hullId;
+        final hullMods = map['hullMods'];
+        final displayName = map['displayName'];
+        result[variantId] = _WingVariant(
+          hullId: hullId,
+          weaponsBySlot: weaponsBySlotFromVariant(map),
+          hullMods: hullMods is List
+              ? hullMods.whereType<String>().toList()
+              : const [],
+          displayName: displayName is String ? displayName : null,
+        );
       }
     } catch (_) {
       // Skip unparseable variant files; the wing just won't resolve its ship.
     }
   }
   return result;
+}
+
+/// Reads the fitted weapons out of a parsed `.variant` file, as
+/// slot id -> weapon id. Built-in weapons live on the hull, not here.
+Map<String, String> weaponsBySlotFromVariant(Map<String, dynamic> variant) {
+  final result = <String, String>{};
+  final groups = variant['weaponGroups'];
+  if (groups is! List) return result;
+  for (final group in groups) {
+    if (group is! Map) continue;
+    final weapons = group['weapons'];
+    if (weapons is! Map) continue;
+    for (final entry in weapons.entries) {
+      final slotId = entry.key;
+      final weaponId = entry.value;
+      if (slotId is String && weaponId is String && weaponId.isNotEmpty) {
+        result[slotId] = weaponId;
+      }
+    }
+  }
+  return result;
+}
+
+class _WingVariant {
+  final String hullId;
+  final Map<String, String> weaponsBySlot;
+  final List<String> hullMods;
+  final String? displayName;
+
+  _WingVariant({
+    required this.hullId,
+    required this.weaponsBySlot,
+    required this.hullMods,
+    required this.displayName,
+  });
 }
 
 class _WingParseResult {

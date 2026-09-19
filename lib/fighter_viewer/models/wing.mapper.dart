@@ -97,6 +97,24 @@ class WingMapper extends ClassMapperBase<Wing> {
     _$hullId,
     hook: SkipSerializationHook(),
   );
+  static Map<String, String> _$weaponsBySlot(Wing v) => v.weaponsBySlot;
+  static const Field<Wing, Map<String, String>> _f$weaponsBySlot = Field(
+    'weaponsBySlot',
+    _$weaponsBySlot,
+    hook: SkipSerializationHook(),
+  );
+  static List<String> _$variantHullMods(Wing v) => v.variantHullMods;
+  static const Field<Wing, List<String>> _f$variantHullMods = Field(
+    'variantHullMods',
+    _$variantHullMods,
+    hook: SkipSerializationHook(),
+  );
+  static String? _$variantDisplayName(Wing v) => v.variantDisplayName;
+  static const Field<Wing, String> _f$variantDisplayName = Field(
+    'variantDisplayName',
+    _$variantDisplayName,
+    hook: SkipSerializationHook(),
+  );
   static ModVariant? _$modVariant(Wing v) => v.modVariant;
   static const Field<Wing, ModVariant> _f$modVariant = Field(
     'modVariant',
@@ -121,6 +139,9 @@ class WingMapper extends ClassMapperBase<Wing> {
     #refit: _f$refit,
     #baseValue: _f$baseValue,
     #hullId: _f$hullId,
+    #weaponsBySlot: _f$weaponsBySlot,
+    #variantHullMods: _f$variantHullMods,
+    #variantDisplayName: _f$variantDisplayName,
     #modVariant: _f$modVariant,
   };
 

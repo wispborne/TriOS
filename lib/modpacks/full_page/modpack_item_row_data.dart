@@ -89,8 +89,6 @@ class ModpackItemRowData implements WispGridItem {
         'Forum topic: ${catalog.forumTopicId!.trim()}',
       if (catalog.nexusModsId?.trim().isNotEmpty == true)
         'Nexus Mods: ${catalog.nexusModsId!.trim()}',
-      if (catalog.unknownFields.isNotEmpty)
-        'Additional fields: ${catalog.unknownFields.keys.join(', ')}',
     ].join(' • ');
   }
 }

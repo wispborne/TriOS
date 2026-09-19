@@ -1,3 +1,8 @@
+import 'package:trios/modpacks/installation/modpack_installation.dart';
+import 'package:trios/modpacks/full_page/modpack_item_row_data.dart';
+
+import 'modpack_installation_test.dart' show TestInstaller;
+
 import 'dart:async';
 import 'dart:io';
 
@@ -48,10 +53,27 @@ class _MemoryStore extends ModpackStore {
   Future<ModpacksData> build() async => const ModpacksData();
 }
 
+class _Installer extends TestInstaller {
+  bool wasSavedBeforePreparation = false;
+  @override
+  Future<ModpackInstallPlan> prepare(ModpackLibraryEntry entry) async {
+    wasSavedBeforePreparation = ref
+        .read(modpackStoreProvider)
+        .requireValue
+        .packs
+        .containsKey(entry.definition.id);
+    return ModpackInstallPlan(entry, [
+      for (final row in buildModpackItemRows(entry.definition, []))
+        ModpackInstallChoice(row, downloadUrl: row.item.url),
+    ]);
+  }
+}
+
 void main() {
   late Directory folder;
   late ProviderContainer container;
   late ModpackStore store;
+  late _Installer installer;
   IncomingModpackResult? result;
   setUpAll(() {
     Constants.configDataFolderPath = Directory.systemTemp.createTempSync(
@@ -61,8 +83,10 @@ void main() {
   setUp(() async {
     folder = await Directory.systemTemp.createTemp('incoming-dialog');
     store = _MemoryStore();
+    installer = _Installer();
     container = ProviderContainer(
       overrides: [
+        modpackInstallationProvider.overrideWith(() => installer),
         modpackStoreProvider.overrideWith(() => store),
         appSettings.overrideWith(_Settings.new),
         AppState.mods.overrideWithValue(const []),
@@ -114,6 +138,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   }
+
+  testWidgets(
+    'Install saves first, always confirms, and keeps running after Close',
+    (tester) async {
+      await open(tester);
+      await tester.tap(find.text('Install'));
+      await tester.pumpAndSettle();
+      expect(installer.wasSavedBeforePreparation, isTrue);
+      expect(installer.started, isEmpty);
+      expect(find.text('Install 1 mods'), findsOneWidget);
+      expect(
+        find.text('Enable installed items after installation'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Install 1 mods'));
+      await tester.pump();
+      final run = container.read(modpackInstallationProvider)[incomingPack.id]!;
+      expect(installer.started, ['alpha']);
+      await tester.tap(find.text('Close').last);
+      await tester.pumpAndSettle();
+      expect(run.complete, isFalse);
+      expect(run.stopping, isFalse);
+      installer.active['alpha']!.complete();
+      await tester.pumpAndSettle();
+      await run.settled;
+      expect(run.results['alpha']!.status, ModpackItemInstallStatus.installed);
+      expect(installer.enabled, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'preview can be cancelled without fetching, saving, or installing',

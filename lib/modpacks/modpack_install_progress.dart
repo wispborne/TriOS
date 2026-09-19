@@ -1,6 +1,8 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'installation/modpack_installation.dart';
+
 part 'modpack_install_progress.mapper.dart';
 
 /// Installation progress, kept only in memory.
@@ -21,4 +23,13 @@ class ModpackInstallProgress with ModpackInstallProgressMappable {
 }
 
 final runningModpackInstallationsProvider =
-    Provider<Map<String, ModpackInstallProgress>>((ref) => const {});
+    Provider<Map<String, ModpackInstallProgress>>(
+      (ref) => {
+        for (final run in ref.watch(modpackInstallationProvider).values)
+          if (!run.complete)
+            run.packId: ModpackInstallProgress(
+              finishedCount: run.finishedCount,
+              totalCount: run.results.length,
+            ),
+      },
+    );

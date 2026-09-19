@@ -7,7 +7,8 @@ import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_library_entry.dart';
 import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/utils/http_client.dart';
-import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/modpacks/installation/modpack_install_dialog.dart';
+import 'package:trios/modpacks/modpack_error_text.dart';
 
 class IncomingModpackResult {
   final String packId;
@@ -57,7 +58,7 @@ class _IncomingModpackDialogState extends ConsumerState<IncomingModpackDialog> {
     super.dispose();
   }
 
-  Future<void> _add() async {
+  Future<void> _add({bool install = false}) async {
     if (session.acting) return;
     final snapshot = session.beginAction();
     setState(() => error = null);
@@ -67,7 +68,11 @@ class _IncomingModpackDialogState extends ConsumerState<IncomingModpackDialog> {
           (await ref.read(modpackStoreProvider.future));
       if (!mounted) return;
       final match = matchIncomingModpack(snapshot, data);
-      if (match == .saved || match == .draft) {
+      if (match == .saved || (match == .draft && !install)) {
+        if (install) {
+          await showModpackInstallDialog(context, data.packs[snapshot.id]!);
+          if (!mounted) return;
+        }
         Navigator.of(
           context,
         ).pop(IncomingModpackResult(snapshot.id, openDraft: match == .draft));
@@ -76,7 +81,9 @@ class _IncomingModpackDialogState extends ConsumerState<IncomingModpackDialog> {
       final existing = data.packs[snapshot.id];
       final draft = data.drafts[snapshot.id];
       var choice = _ConflictChoice.replace;
-      if (match == .savedConflict || match == .draftConflict) {
+      if (match == .savedConflict ||
+          match == .draftConflict ||
+          (match == .draft && install)) {
         final selected = await _showComparison<_ConflictChoice>(
           title: draft == null
               ? 'This modpack is already saved'
@@ -120,11 +127,12 @@ class _IncomingModpackDialogState extends ConsumerState<IncomingModpackDialog> {
               expectedDraft: draft,
               discardDraft: draft != null,
             );
+      if (mounted && install) await showModpackInstallDialog(context, entry);
       if (mounted) {
         Navigator.of(context).pop(IncomingModpackResult(entry.definition.id));
       }
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = modpackErrorText(e));
     } finally {
       session.endAction();
     }
@@ -210,15 +218,14 @@ class _IncomingModpackDialogState extends ConsumerState<IncomingModpackDialog> {
                   runSpacing: 8,
                   children: [
                     FilledButton(
-                      onPressed: session.acting ? null : _add,
+                      onPressed: session.acting ? null : () => _add(),
                       child: const Text('Add to library'),
                     ),
-                    MovingTooltipWidget.text(
-                      message: 'Modpack installation is not available yet.',
-                      child: const TextButton(
-                        onPressed: null,
-                        child: Text('Install'),
-                      ),
+                    TextButton(
+                      onPressed: session.acting
+                          ? null
+                          : () => _add(install: true),
+                      child: const Text('Install'),
                     ),
                     TextButton(
                       onPressed:

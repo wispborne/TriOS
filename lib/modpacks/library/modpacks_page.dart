@@ -1,3 +1,9 @@
+import 'package:trios/modpacks/full_page/modpack_debug_dialog.dart';
+import 'package:trios/modpacks/full_page/modpack_item_row_data.dart';
+import 'package:trios/trios/app_state.dart';
+import 'package:trios/modpacks/installation/modpack_install_dialog.dart';
+import 'package:trios/modpacks/installation/modpack_installation.dart';
+
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -91,6 +97,11 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
       );
     }
 
+    // Nothing can be saved while the library file is unreadable.
+    ref.watch(modpackStoreProvider);
+    final canCreate =
+        ref.read(modpackStoreProvider.notifier).storageProblem == null;
+
     return Column(
       children: [
         ViewerToolbar(
@@ -120,7 +131,7 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               label: 'Create',
-              onPressed: () => controller.createNewPack(),
+              onPressed: canCreate ? () => controller.createNewPack() : null,
             ),
             const SizedBox(width: 8),
             _toolbarButton(
@@ -142,7 +153,7 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
             crossAxisAlignment: .start,
             children: [
               _buildFiltersSection(state, controller),
-              Expanded(child: _buildBody(state, controller)),
+              Expanded(child: _buildBody(state, controller, canCreate)),
             ],
           ),
         ),
@@ -154,7 +165,7 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
     String? tooltip,
     required Widget icon,
     required String label,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
   }) {
     final textColor = Theme.of(context).colorScheme.onSurface;
     return MovingTooltipWidget.text(
@@ -319,13 +330,14 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
   Widget _buildBody(
     ModpacksPageState state,
     ModpacksPageController controller,
+    bool canCreate,
   ) {
     if (state.isLoading && state.allCards.isEmpty) {
       return const Center(child: ThemedCircularProgressIndicator());
     }
     if (state.allCards.isEmpty) {
       return _EmptyLibrary(
-        onNew: () => controller.createNewPack(),
+        onNew: canCreate ? () => controller.createNewPack() : null,
         onImport: _importFile,
       );
     }
@@ -352,11 +364,53 @@ class _ModpacksPageState extends ConsumerState<ModpacksPage>
         child: ModpackCard(
           card: card,
           onOpen: () => controller.openCard(card),
+          onStopInstallation: () =>
+              ref.read(modpackInstallationProvider.notifier).stop(card.packId),
           onEdit: () => controller.editPack(card.packId),
+          onEnableInstalledItems: card.isDraftOnly
+              ? null
+              : () {
+                  final entry = ref
+                      .read(modpackStoreProvider)
+                      .value
+                      ?.packs[card.packId];
+                  if (entry != null) confirmEnableModpack(context, ref, entry);
+                },
           onDuplicate: card.isDraftOnly
               ? null
               : () => controller.duplicatePack(card.packId),
           onDelete: () => _confirmDelete(card, controller),
+          onShowDebugInfo: card.isDraftOnly
+              ? null
+              : () {
+                  final entry = ref
+                      .read(modpackStoreProvider)
+                      .value
+                      ?.packs[card.packId];
+                  if (entry == null) return;
+                  final run = ref.read(
+                    modpackInstallationProvider,
+                  )[card.packId];
+                  showModpackDebugDialog(
+                    context,
+                    entry: entry,
+                    isPreview: false,
+                    rows: buildModpackItemRows(
+                      entry.definition,
+                      ref.read(AppState.mods),
+                      ref.read(AppState.modCompatibility),
+                    ),
+                    run: run,
+                    installResults: {
+                      for (final failure in entry.itemFailures.values)
+                        failure.modId: ModpackItemInstallResult(
+                          .failed,
+                          detail: failure.message,
+                        ),
+                      ...?run?.results,
+                    },
+                  );
+                },
         ),
       ),
     );
@@ -485,9 +539,7 @@ class _ImportModpackDialogState extends State<_ImportModpackDialog> {
         ),
         TextButton(
           onPressed: _hasLink
-              ? () =>
-                    Navigator.of(context)
-                        .pop(_textController.text)
+              ? () => Navigator.of(context).pop(_textController.text)
               : null,
           child: const Text('Import'),
         ),
@@ -497,7 +549,7 @@ class _ImportModpackDialogState extends State<_ImportModpackDialog> {
 }
 
 class _EmptyLibrary extends StatelessWidget {
-  final VoidCallback onNew;
+  final VoidCallback? onNew;
   final VoidCallback onImport;
 
   const _EmptyLibrary({required this.onNew, required this.onImport});

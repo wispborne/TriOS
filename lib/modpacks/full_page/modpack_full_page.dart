@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path/path.dart' as p;
 import 'package:stringr/stringr.dart';
 import 'package:trios/mod_manager/homebrew_grid/mod_grid_columns.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
@@ -14,9 +14,13 @@ import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/mod_version_selection_dropdown.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/modpacks/full_page/modpack_debug_dialog.dart';
 import 'package:trios/modpacks/full_page/modpack_item_row_data.dart';
+import 'package:trios/modpacks/installation/modpack_install_dialog.dart';
+import 'package:trios/modpacks/installation/modpack_installation.dart';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_library_entry.dart';
+import 'package:trios/modpacks/modpack_error_text.dart';
 import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/modpacks/modpack_link_codec.dart';
 import 'package:trios/modpacks/modpack_store.dart';
@@ -53,6 +57,10 @@ class ModpackFullPage extends ConsumerStatefulWidget {
   /// Replaces the library toolbar and hides the source-check section, for
   /// showing a pack that is not in the library yet.
   final Widget? previewToolbar;
+  final Set<String>? checkedItemKeys;
+  final void Function(Set<String>)? onCheckedItemsChanged;
+  final Map<String, ModpackItemInstallResult>? installationDetails;
+  final void Function(String)? onRecoverItem;
 
   const ModpackFullPage({
     super.key,
@@ -62,6 +70,10 @@ class ModpackFullPage extends ConsumerStatefulWidget {
     this.onDuplicate,
     this.onDelete,
     this.previewToolbar,
+    this.checkedItemKeys,
+    this.onCheckedItemsChanged,
+    this.installationDetails,
+    this.onRecoverItem,
   });
 
   @override
@@ -88,6 +100,9 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     }
     setState(() => _sharing = true);
     try {
+      // Validate the pack before checking sources so older saved packs cannot
+      // produce links rejected by TriOS or TriLink.
+      decodeModpackDefinition(canonicalModpackMap(snapshot));
       final ready = await ref
           .read(modpackShareControllerProvider(snapshot.id).notifier)
           .validate(snapshot);
@@ -104,7 +119,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
           e is ModpackFormatException &&
               e.error == ModpackFormatError.linkTooLarge
           ? 'This pack is too large for a link. Shorten its description or notes, remove mods, or export a .trios-modpack file instead.'
-          : 'Could not share this modpack: $e';
+          : 'Could not share this modpack: ${modpackErrorText(e)}';
       showSnackBar(
         context: context,
         type: SnackBarType.error,
@@ -175,11 +190,26 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     );
   }
 
+  bool get _running =>
+      ref.read(modpackInstallationProvider)[definition.id]?.complete == false;
+
+  Map<String, ModpackItemInstallResult> get _installationDetails =>
+      widget.installationDetails ??
+      {
+        for (final failure in widget.entry.itemFailures.values)
+          failure.modId: ModpackItemInstallResult(
+            .failed,
+            detail: failure.message,
+          ),
+        ...?ref.read(modpackInstallationProvider)[definition.id]?.results,
+      };
+
   ModpackDefinition get definition => widget.entry.definition;
 
   @override
   Widget build(BuildContext context) {
     final allMods = ref.watch(AppState.mods);
+    final run = ref.watch(modpackInstallationProvider)[definition.id];
     final modCompatibility = ref.watch(AppState.modCompatibility);
     final rows = buildModpackItemRows(definition, allMods, modCompatibility);
     final columns = _buildColumns(allMods);
@@ -200,12 +230,16 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
               onRepair: widget.onEdit!,
             ),
           ),
+        if (widget.previewToolbar == null && run != null)
+          ModpackRunProgress(run: run),
         _buildItemsToolbar(rows),
         Expanded(
           child: Padding(
             padding: const .only(top: 4),
             child: WispGrid<ModpackItemRowData>(
               items: rows,
+              checkedItemKeys: widget.checkedItemKeys,
+              onCheckedItemsChanged: widget.onCheckedItemsChanged,
               columns: columns,
               gridState: _gridState,
               defaultSortField: _packOrderColumnKey,
@@ -245,7 +279,6 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
   }
 
   Widget _buildPackHeader(List<ModpackItemRowData> rows) {
-    final unknownKeys = definition.unknownFields.keys.toList()..sort();
     final installedCount = rows.where((row) => row.isInstalled).length;
 
     return Card(
@@ -256,11 +289,18 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
         child: Column(
           children: [
             if (widget.previewToolbar != null)
-              widget.previewToolbar!
+              Row(
+                crossAxisAlignment: .start,
+                children: [
+                  Expanded(child: widget.previewToolbar!),
+                  OverflowMenuButton(menuItems: [_debugMenuItem().toEntry(0)]),
+                ],
+              )
             else
               SizedBox(
                 height: 50,
                 child: Row(
+                  spacing: 8,
                   children: [
                     Padding(
                       padding: const .only(right: 16),
@@ -289,10 +329,12 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                               icon: Icons.language,
                               message: 'Open homepage',
                             ),
+                            // Opens the file in a browser. TriOS doesn't check
+                            // this address for updates yet.
                             _externalLinkAction(
                               url: definition.updateUrl,
-                              icon: Icons.refresh,
-                              message: 'Check for modpack updates',
+                              icon: Icons.open_in_new,
+                              message: 'Open update URL in browser',
                             ),
                           ],
                         ),
@@ -318,13 +360,23 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                           : () => _share(_ShareAction.export),
                     ),
                     triOSToolbarAction(
-                      label: 'Install',
-                      icon: Icons.download,
-                      disabledMessage:
-                          'Modpack installation is added in phase 8.',
+                      label: _running ? 'Stop' : 'Install',
+                      icon: _running ? Icons.stop : Icons.download,
+                      onPressed: _running
+                          ? () => ref
+                                .read(modpackInstallationProvider.notifier)
+                                .stop(definition.id)
+                          : () =>
+                                showModpackInstallDialog(context, widget.entry),
                     ),
                     OverflowMenuButton(
                       menuItems: [
+                        OverflowMenuItem(
+                          title: 'Enable installed items',
+                          icon: Icons.check_circle_outline,
+                          onTap: () =>
+                              confirmEnableModpack(context, ref, widget.entry),
+                        ).toEntry(3),
                         if (definition.updateUrl != null && !_sharing)
                           OverflowMenuItem(
                             title: 'Publish update',
@@ -341,6 +393,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                           icon: Icons.copy,
                           onTap: widget.onDuplicate!,
                         ).toEntry(1),
+                        _debugMenuItem().toEntry(4),
                       ],
                     ),
                   ],
@@ -350,7 +403,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
               padding: const .fromLTRB(8, 8, 8, 12),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final packDetails = _buildPackDetails(unknownKeys);
+                  final packDetails = _buildPackDetails();
                   final coverage = _buildCoverage(installedCount, rows.length);
 
                   if (constraints.maxWidth < 860) {
@@ -378,6 +431,23 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     );
   }
 
+  OverflowMenuItem _debugMenuItem() => OverflowMenuItem(
+    title: 'Debug info',
+    icon: Icons.bug_report_outlined,
+    onTap: () => showModpackDebugDialog(
+      context,
+      entry: widget.entry,
+      isPreview: widget.previewToolbar != null,
+      rows: buildModpackItemRows(
+        definition,
+        ref.read(AppState.mods),
+        ref.read(AppState.modCompatibility),
+      ),
+      run: ref.read(modpackInstallationProvider)[definition.id],
+      installResults: _installationDetails,
+    ),
+  );
+
   Widget _externalLinkAction({
     required String? url,
     required IconData icon,
@@ -395,7 +465,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     );
   }
 
-  Widget _buildPackDetails(List<String> unknownKeys) {
+  Widget _buildPackDetails() {
     final theme = Theme.of(context);
     final updateVersion = widget.entry.onlineVersionAvailable;
     final description = definition.description?.trim();
@@ -442,11 +512,6 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
             ),
           ],
         ),
-        if (unknownKeys.isNotEmpty)
-          SimpleDataRow(
-            label: 'Additional fields: ',
-            value: unknownKeys.join(', '),
-          ),
       ],
     );
   }
@@ -637,25 +702,30 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
       ),
       WispGridColumn<ModpackItemRowData>(
         key: 'installed',
-        name: 'Installed',
+        name: 'Status',
         isSortable: true,
         getSortValue: (row) => row.isInstalled ? 1 : 0,
-        headerCellBuilder: (_) => _columnHeader('Installed'),
-        itemCellBuilder: (row, modifiers) => row.isInstalled
+        headerCellBuilder: (_) => _columnHeader('Status'),
+        itemCellBuilder: (row, modifiers) =>
+            row.isInstalled && widget.previewToolbar != null
+            ? const Text('Installed')
+            : row.isInstalled
             ? ModVersionSelectionDropdown(
                 mod: row.installedMod!,
                 width: modifiers.columnState.width,
                 showTooltip: true,
               )
             : Row(
-                spacing: 4,
+                spacing: 8,
+                mainAxisAlignment: .center,
                 children: [
-                  Icon(
-                    Icons.cancel_outlined,
-                    size: 16,
-                    color: theme.colorScheme.error,
+                  Text(
+                    'Missing',
+                    style: gridTextStyle.copyWith(
+                      color: theme.colorScheme.error,
+                      fontWeight: .w200,
+                    ),
                   ),
-                  Text('Missing', style: gridTextStyle),
                 ],
               ),
         csvValue: (row) => row.isInstalled ? 'Installed' : 'Missing',
@@ -839,6 +909,65 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
         csvValue: (row) => row.dependencyWarningText,
         defaultState: const WispGridColumnState(position: 7, width: 160),
       ),
+      WispGridColumn<ModpackItemRowData>(
+        key: 'installResult',
+        name: 'Installation',
+        csvValue: (row) => _installationDetails[row.key]?.text,
+        getSortValue: (row) => row.packOrder,
+        isSortable: false,
+        headerCellBuilder: (_) => _columnHeader('Installation'),
+        itemCellBuilder: (row, _) {
+          final result = _installationDetails[row.key];
+          return Row(
+            spacing: 8,
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: .center,
+                  crossAxisAlignment: .stretch,
+                  spacing: 4,
+                  children: [
+                    TextTriOS(result?.text ?? '—', maxLines: 1),
+                    if (result?.fraction != null)
+                      LinearProgressIndicator(value: result!.fraction),
+                  ],
+                ),
+              ),
+              if (result?.status == ModpackItemInstallStatus.failed &&
+                  (widget.onRecoverItem != null ||
+                      widget.previewToolbar == null))
+                TextButton(
+                  onPressed: () => widget.onRecoverItem != null
+                      ? widget.onRecoverItem!(row.key)
+                      : showModpackInstallDialog(context, widget.entry),
+                  child: const Text('Find in Catalog'),
+                ),
+            ],
+          );
+        },
+        defaultState: WispGridColumnState(
+          position: 8,
+          width: 240,
+          isVisible: _installationDetails.isNotEmpty,
+        ),
+      ),
+      if (widget.checkedItemKeys != null)
+        WispGridColumn<ModpackItemRowData>(
+          key: 'installSource',
+          name: 'Source',
+          csvValue: (row) => row.item.url,
+          getSortValue: (row) => row.packOrder,
+          isSortable: false,
+          headerCellBuilder: (_) => _columnHeader('Source'),
+          itemCellBuilder: (row, _) => MovingTooltipWidget.text(
+            message: row.item.url,
+            child: TextTriOS(
+              '${row.sourceTypeLabel} · ${Uri.tryParse(row.item.url)?.host ?? row.item.url}',
+              maxLines: 1,
+            ),
+          ),
+          defaultState: const WispGridColumnState(position: 9, width: 240),
+        ),
       ..._adaptNormalModColumns(normalColumns),
     ];
   }
@@ -958,7 +1087,6 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
 
   Widget _buildExpandedDetails(ModpackItemRowData row) {
     final item = row.item;
-    final unknownKeys = item.unknownFields.keys.toList()..sort();
     final warnings = row.dependencyWarnings;
 
     final theme = Theme.of(context);
@@ -970,8 +1098,30 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
           crossAxisAlignment: .start,
           spacing: 8,
           children: [
-            if (item.label.isNotNullOrBlank)
-              Text(item.label!, style: theme.textTheme.labelMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: item.label.isNotNullOrBlank
+                      ? Text(item.label!, style: theme.textTheme.labelMedium)
+                      : const SizedBox.shrink(),
+                ),
+                OverflowMenuButton(
+                  iconSize: 18,
+                  menuItems: [
+                    OverflowMenuItem(
+                      title: 'Debug info',
+                      icon: Icons.bug_report_outlined,
+                      onTap: () => showModpackItemDebugDialog(
+                        context,
+                        entry: widget.entry,
+                        row: row,
+                        installResult: _installationDetails[row.key],
+                      ),
+                    ).toEntry(0),
+                  ],
+                ),
+              ],
+            ),
             Wrap(
               spacing: 24,
               runSpacing: 8,
@@ -1044,11 +1194,6 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                       ],
                     ),
                 ],
-              ),
-            if (unknownKeys.isNotEmpty)
-              SimpleDataRow(
-                label: 'Additional fields: ',
-                value: unknownKeys.join(', '),
               ),
             if (item.note.isNotNullOrBlank)
               SimpleDataRow(label: "Note: ", value: item.note!),

@@ -15,6 +15,10 @@ class ModpackCard extends StatelessWidget {
   final VoidCallback? onDuplicate;
   final VoidCallback onDelete;
   final VoidCallback? onStopInstallation;
+  final VoidCallback? onEnableInstalledItems;
+
+  /// Null for unsaved drafts.
+  final VoidCallback? onShowDebugInfo;
 
   const ModpackCard({
     super.key,
@@ -24,6 +28,8 @@ class ModpackCard extends StatelessWidget {
     required this.onDelete,
     this.onDuplicate,
     this.onStopInstallation,
+    this.onEnableInstalledItems,
+    this.onShowDebugInfo,
   });
 
   @override
@@ -170,6 +176,12 @@ class ModpackCard extends StatelessWidget {
       if (!card.isDraftOnly)
         OverflowMenuItem(title: 'Open', icon: Icons.visibility, onTap: onOpen),
       OverflowMenuItem(title: 'Edit', icon: Icons.edit, onTap: onEdit),
+      if (onEnableInstalledItems != null)
+        OverflowMenuItem(
+          title: 'Enable installed items',
+          icon: Icons.check_circle_outline,
+          onTap: onEnableInstalledItems!,
+        ),
       if (onDuplicate != null)
         OverflowMenuItem(
           title: 'Duplicate',
@@ -177,6 +189,12 @@ class ModpackCard extends StatelessWidget {
           onTap: onDuplicate!,
         ),
       OverflowMenuItem(title: 'Delete', icon: Icons.delete, onTap: onDelete),
+      if (onShowDebugInfo != null)
+        OverflowMenuItem(
+          title: 'Debug info',
+          icon: Icons.bug_report_outlined,
+          onTap: onShowDebugInfo!,
+        ),
     ];
     return [for (var i = 0; i < items.length; i++) items[i].toEntry(i)];
   }

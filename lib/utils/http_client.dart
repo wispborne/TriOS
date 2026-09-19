@@ -3,6 +3,8 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:trios/utils/http_archive_download.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/logging.dart';
@@ -144,6 +146,21 @@ class TriOSHttpClient {
       (_) => throw const HttpProbeCancelled(),
     ),
   ]);
+
+  Future<Uri> downloadArchive(
+    Uri url,
+    File file, {
+    required void Function(int, int) onProgress,
+  }) => _enqueueRequest(
+    () => downloadHttpArchive(
+      allowInsecureConnectionsByDefault
+          ? _publicSelfSignedHttpClient
+          : _publicHttpClient,
+      url,
+      file,
+      onProgress: onProgress,
+    ),
+  );
 
   /// Resolves whether to use baseUrl or treat it as a fully qualified URL.
   Uri _resolveUrl(String endpointOrUrl) {

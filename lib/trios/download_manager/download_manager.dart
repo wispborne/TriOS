@@ -121,6 +121,47 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
         });
   }
 
+  /// Each selected item keeps its own Activity Panel entry while sharing the
+  /// archive's transfer progress.
+  Download observeSharedDownload(
+    String name,
+    DownloadTask task, {
+    DownloadSourceHint? sourceHint,
+    VoidCallback? onCancel,
+  }) {
+    // Installation errors belong to an item, not to the shared transfer.
+    final observed = DownloadTask(task.request);
+    void syncTransfer() {
+      observed.finalUrl = task.finalUrl;
+      observed.file.value = task.file.value;
+      observed.downloaded.value = task.downloaded.value;
+      observed.error = task.error;
+      observed.status.value = task.status.value;
+      ref.invalidateSelf();
+    }
+
+    syncTransfer();
+    final download = Download(
+      const Uuid().v4(),
+      name,
+      observed,
+      sourceHint: sourceHint,
+      onCancel: onCancel,
+    );
+    _downloads.add(download);
+    task.status.addListener(syncTransfer);
+    task.downloaded.addListener(syncTransfer);
+    download.installComplete.addListener(() {
+      task.status.removeListener(syncTransfer);
+      task.downloaded.removeListener(syncTransfer);
+      ref.invalidateSelf();
+    });
+    download.installCancelled.addListener(() => ref.invalidateSelf());
+    state = AsyncData(_downloads);
+    _notifyActivityStarted();
+    return download;
+  }
+
   /// Creates an install-only [Download] entry (no actual download).
   /// The task status is pre-set to [DownloadStatus.completed] so the toast
   /// immediately shows the "Installing..." state.
@@ -151,6 +192,10 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
   }
 
   void cancelDownload(Download download) {
+    if (download.onCancel != null) {
+      download.onCancel!();
+      return;
+    }
     final status = download.task.status.value;
     if (!status.isCompleted) {
       ref
@@ -332,6 +377,7 @@ class Download {
   final String id;
   final String displayName;
   final DownloadTask task;
+  final VoidCallback? onCancel;
 
   /// Where this download came from, when it's a catalog install; null otherwise.
   /// Read at install completion to link the real mod to its catalog entry.
@@ -353,7 +399,13 @@ class Download {
   /// [Download] objects that don't carry [ModInfo]).
   final ValueNotifier<ModVariant?> installedVariant = ValueNotifier(null);
 
-  Download(this.id, this.displayName, this.task, {this.sourceHint});
+  Download(
+    this.id,
+    this.displayName,
+    this.task, {
+    this.sourceHint,
+    this.onCancel,
+  });
 
   /// Whether installation completed with an error.
   bool get hasInstallError => installComplete.value && task.error != null;

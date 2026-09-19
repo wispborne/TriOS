@@ -3,6 +3,10 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'shared_download.dart';
+
+import 'package:trios/utils/http_probe.dart';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
@@ -26,6 +30,94 @@ class DownloadManager {
   static const partialExtension = ".partial";
   static const tempExtension = ".temp";
 
+  final _shared = <String, SharedDownload>{};
+  final _sharedOperations = <DownloadRequest, Future<void> Function()>{};
+
+  /// Probing and downloading use the same HTTP client. Different source URLs
+  /// resolving to the same archive share the transfer and archive scan.
+  ///
+  /// The transfer starts from [url] and follows its redirects again rather
+  /// than reusing the address the probe ended on. Some hosts, such as GitHub
+  /// releases, redirect to signed links that stop working after a few
+  /// minutes, and a queued transfer may start well after the probe.
+  Future<SharedDownload> acquireShared(String url) async {
+    final client = ref.read(triOSHttpClient);
+    final requested = Uri.parse(fixUrl(url));
+    final sameRequest = _shared[requested.toString()];
+    if (sameRequest != null) {
+      sameRequest.retain();
+      return sameRequest;
+    }
+    final resolved = await client.probe(
+      requested,
+      maxBytes: 512,
+      prefixOnly: true,
+      cancellation: HttpProbeCancellation(),
+    );
+    final address = resolved.url.toString();
+    final existing = _shared[requested.toString()] ?? _shared[address];
+    if (existing != null) {
+      existing.retain();
+      return existing;
+    }
+    // Register before the next await so callers cannot start duplicate
+    // transfers.
+    final directory = Directory.systemTemp.createTempSync('trios-shared-');
+    final archiveName = RegExp(r'\.(zip|7z|rar|gz|tar)$', caseSensitive: false);
+    final filename =
+        [
+          requested.pathSegments.lastOrNull,
+          resolved.url.pathSegments.lastOrNull,
+        ].firstWhere(
+          (name) => name != null && archiveName.hasMatch(name),
+          orElse: () => null,
+        ) ??
+        'mod.zip';
+    final request = DownloadRequest(
+      requested.toString(),
+      directory.path,
+      filename,
+    );
+    final task = DownloadTask(request)..finalUrl = address;
+    final keys = {requested.toString(), address};
+    final handle = SharedDownload(task, directory, () {
+      for (final key in keys) {
+        _shared.remove(key);
+      }
+    });
+    handle.retain();
+    for (final key in keys) {
+      _shared[key] = handle;
+    }
+    _sharedOperations[request] = () async {
+      try {
+        task.status.value = DownloadStatus.downloading;
+        final safeName = filename.fixFilenameForFileSystem();
+        final file = File(
+          '${directory.path}/${safeName.isEmpty ? 'mod.zip' : safeName}',
+        );
+        task.file.value = file;
+        final finalUrl = await client.downloadArchive(
+          requested,
+          file,
+          onProgress: (received, total) =>
+              task.downloaded.value = DownloadedAmount(received, total),
+        );
+        task.finalUrl = finalUrl.toString();
+        task.status.value = DownloadStatus.completed;
+      } catch (error) {
+        task.error = error;
+        task.status.value = DownloadStatus.failed;
+      } finally {
+        runningTasks--;
+        _startExecution();
+      }
+    };
+    _queue.add(request);
+    _startExecution();
+    return handle;
+  }
+
   int maxConcurrentTasks = 2;
   int runningTasks = 0;
 
@@ -38,7 +130,7 @@ class DownloadManager {
   }
 
   void Function(int, int) createDownloadProgressCallback(
-    url,
+    String url,
     int partialFileLength,
   ) => (int received, int total) {
     final download = DownloadedAmount(
@@ -56,7 +148,7 @@ class DownloadManager {
     String url,
     String destFolder,
     String? filename, {
-    forceDownload = false,
+    bool forceDownload = false,
   }) async {
     late String partialFilePath;
     late File partialFile;
@@ -108,6 +200,7 @@ class DownloadManager {
       Fimber.d(
         "Download T=${DateTime.now().millisecondsSinceEpoch - startTime}: Final direct download link: '$url'",
       );
+      task.finalUrl = url;
       Map<String, String> headersMap = finalUrlAndHeaders.headersMap;
 
       // If given a download folder, then get the file's name from the URL and put it in the folder.
@@ -359,9 +452,8 @@ class DownloadManager {
       }
 
       // Extract the direct download link
-      final match = RegExp(
-        "https://download[0-9]+.mediafire.com/[^\"]+",
-      ).firstMatch(response.data);
+      final match = RegExp("https://download[0-9]+.mediafire.com/[^\"]+")
+          .firstMatch(response.data);
       if (match != null) {
         return match.group(0)!;
       } else {
@@ -448,7 +540,8 @@ class DownloadManager {
 
   Future<void> cancelDownload(String url) async {
     Fimber.d("Cancel Download: $url");
-    var task = getDownload(url)!;
+    final task = getDownload(url);
+    if (task == null) return;
     setStatus(task, DownloadStatus.canceled);
     _queue.remove(task.request);
     // Handle cancellation logic with your HTTP client if supported
@@ -636,6 +729,11 @@ class DownloadManager {
       Fimber.d('Concurrent workers: $runningTasks');
       var currentRequest = _queue.removeFirst();
 
+      final sharedOperation = _sharedOperations.remove(currentRequest);
+      if (sharedOperation != null) {
+        unawaited(sharedOperation());
+        continue;
+      }
       runZonedGuarded(
         () {
           download(
@@ -927,9 +1025,9 @@ class DownloadManager {
             caseSensitive: false,
           ).firstMatch(content ?? '');
           if (urlMatch != null) {
-            currentUrl = Uri.parse(
-              currentUrl,
-            ).resolve(urlMatch.group(1)!).toString();
+            currentUrl = Uri.parse(currentUrl)
+                .resolve(urlMatch.group(1)!)
+                .toString();
             redirectCount++;
             continue;
           }

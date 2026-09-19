@@ -53,6 +53,20 @@ class ScannedArchive {
     this.allModInfos = const [],
     this.archiveFileList,
   });
+
+  /// A declared ID is exact and case-sensitive. A partial match must never
+  /// authorize extracting other mods from the same archive.
+  List<ExtractedModInfo> selectDeclaredIds(Set<String> ids) {
+    final missing = ids.difference(
+      allModInfos.map((m) => m.modInfo.id).toSet(),
+    );
+    if (missing.isNotEmpty) {
+      throw StateError(
+        'Archive does not contain declared mod IDs: ${missing.join(', ')}',
+      );
+    }
+    return allModInfos.where((m) => ids.contains(m.modInfo.id)).toList();
+  }
 }
 
 /// A single entry in a batch installation (one archive or folder).

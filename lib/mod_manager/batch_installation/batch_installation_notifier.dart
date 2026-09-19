@@ -1,4 +1,7 @@
 import 'dart:async';
+
+import 'package:trios/utils/fair_work_queue.dart';
+
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -41,6 +44,67 @@ class BatchModRef {
 /// Manages batch mod installation:
 /// scan archives → show confirmation → extract mods → reload mod list.
 class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
+  final _modOperations = <String, Future<void>>{};
+  late final _extractions = FairWorkQueue(
+    () => ref.read(appSettings).concurrentExtractions,
+  );
+
+  /// Runs the batch extraction and recording pipeline without opening the
+  /// batch UI or enabling installed variants.
+  Future<BatchEntry> installSelectedArchive(
+    BatchEntry entry, {
+    required Set<String> selectedIds,
+    required String owner,
+    required bool Function() stopped,
+  }) async {
+    // Wait for another install of the same mod ID to finish.
+    final preceding = [
+      for (final id in selectedIds)
+        if (_modOperations[id] != null) _modOperations[id]!,
+    ];
+    final settled = Completer<void>();
+    for (final id in selectedIds) {
+      _modOperations[id] = settled.future;
+    }
+    try {
+      await Future.wait(preceding);
+      return await _extractions.run(owner, () async {
+        if (stopped()) {
+          entry.status = BatchEntryStatus.skipped;
+          _settleEntry(entry, cancelled: true);
+          return entry;
+        }
+        if (ref.read(AppState.isGameRunning).value == true ||
+            ref.read(AppState.canWriteToModsFolder).value != true) {
+          throw StateError(
+            'Close Starsector and make sure the mods folder is writable.',
+          );
+        }
+        entry.selectedMods = entry.scanResult!.selectDeclaredIds(selectedIds);
+        entry.status = BatchEntryStatus.extracting;
+        await _extractSingleEntry(
+          entry,
+          ref.read(AppState.modsFolder).requireValue!,
+          ref.read(modManager.notifier),
+          ref.read(appSettings).folderNamingSetting,
+        );
+        await _finalize(
+          BatchInstallation(id: owner, entries: [entry]),
+          activateVariantOnComplete: false,
+          showErrors: false,
+        );
+        return entry;
+      });
+    } finally {
+      settled.complete();
+      for (final id in selectedIds) {
+        if (identical(_modOperations[id], settled.future)) {
+          _modOperations.remove(id);
+        }
+      }
+    }
+  }
+
   @override
   BatchInstallation? build() => null;
 
@@ -171,11 +235,14 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
         );
         entry.status = BatchEntryStatus.extracting;
         _notify();
-        await _extractSingleEntry(
-          entry,
-          modsFolder,
-          modManagerNotifier,
-          folderSetting,
+        await _extractions.run(
+          batch.id,
+          () => _extractSingleEntry(
+            entry,
+            modsFolder,
+            modManagerNotifier,
+            folderSetting,
+          ),
         );
         _notify();
         await _finalize(batch);
@@ -376,15 +443,20 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     void launchEntry(BatchEntry entry, Completer<void> c) {
       entry.status = BatchEntryStatus.extracting;
       _notify();
-      _extractSingleEntry(
-        entry,
-        modsFolder,
-        modManagerNotifier,
-        folderSetting,
-      ).whenComplete(() {
-        _notify();
-        c.complete();
-      });
+      _extractions
+          .run(
+            batch.id,
+            () => _extractSingleEntry(
+              entry,
+              modsFolder,
+              modManagerNotifier,
+              folderSetting,
+            ),
+          )
+          .whenComplete(() {
+            _notify();
+            c.complete();
+          });
     }
 
     // Fill all available slots. Because launchEntry doesn't await,
@@ -601,7 +673,11 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     }
   }
 
-  Future<void> _finalize(BatchInstallation batch) async {
+  Future<void> _finalize(
+    BatchInstallation batch, {
+    bool activateVariantOnComplete = true,
+    bool showErrors = true,
+  }) async {
     // Only process entries whose history hasn't been recorded yet.
     final unrecorded = batch.entries.where((e) => !e.historyRecorded).toList();
     if (unrecorded.isEmpty) return;
@@ -626,7 +702,8 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
     final allInstalledModInfos = unrecorded
         .expand((e) => e.installedMods)
         .toList();
-    if (allInstalledModInfos.isNotEmpty &&
+    if (activateVariantOnComplete &&
+        allInstalledModInfos.isNotEmpty &&
         ref.read(appSettings.select((s) => s.modUpdateBehavior)) ==
             ModUpdateBehavior.switchToNewVersionIfWasEnabled) {
       final mods = ref.read(AppState.mods);
@@ -685,7 +762,11 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
             // file whose name matches a catalog-only record): merge by name.
             final syntheticKey = ModRecord.syntheticKey(modInfo.nameOrId);
             if (store.lookupByModId(modId) == null &&
-                store.state.value?.records.containsKey(syntheticKey) ==
+                ref
+                        .read(modRecordsStore)
+                        .value
+                        ?.records
+                        .containsKey(syntheticKey) ==
                     true) {
               await store.mergeSyntheticIntoReal(syntheticKey, modId);
             }
@@ -803,7 +884,7 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
           (e) => e.status == BatchEntryStatus.failed && e.failedMods.isNotEmpty,
         )
         .toList();
-    if (failedWithErrors.isNotEmpty) {
+    if (showErrors && failedWithErrors.isNotEmpty) {
       final context = ref.read(AppState.appContext);
       final destinationFolder = ref.read(AppState.modsFolder).value;
       if (context != null && context.mounted && destinationFolder != null) {

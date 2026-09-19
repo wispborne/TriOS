@@ -16,29 +16,27 @@ class DownloadTask {
   );
   final ValueNotifier<File?> file = ValueNotifier(null);
   Object? error;
+  String? finalUrl;
 
   DownloadTask(this.request);
 
   Future<DownloadStatus> whenDownloadComplete({
     Duration timeout = const Duration(hours: 2),
   }) async {
-    var completer = Completer<DownloadStatus>();
-
-    if (status.value.isCompleted) {
-      completer.complete(status.value);
+    if (status.value.isCompleted) return status.value;
+    final completer = Completer<DownloadStatus>();
+    void listener() {
+      if (status.value.isCompleted && !completer.isCompleted) {
+        completer.complete(status.value);
+      }
     }
 
-    VoidCallback? listener;
-    listener = () {
-      if (status.value.isCompleted) {
-        completer.complete(status.value);
-        status.removeListener(listener!);
-      }
-    };
-
     status.addListener(listener);
-
-    return completer.future.timeout(timeout);
+    try {
+      return await completer.future.timeout(timeout);
+    } finally {
+      status.removeListener(listener);
+    }
   }
 }
 

@@ -509,6 +509,13 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                                           ? "Game is running"
                                           : "Activate this profile's mods.",
                                       child: OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(
+                                            color: theme
+                                                .colorScheme
+                                                .outlineVariant,
+                                          ),
+                                        ),
                                         onPressed: () {
                                           ref
                                               .read(
@@ -528,6 +535,11 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                           MovingTooltipWidget.text(
                             message: "Creates a profile based on this save's last-used mods.",
                             child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: theme.colorScheme.outlineVariant,
+                                ),
+                              ),
                               onPressed: () {
                                 ref
                                     .read(modProfilesProvider.notifier)

@@ -297,107 +297,133 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
                 ],
               )
             else
-              SizedBox(
-                height: 50,
-                child: Row(
-                  spacing: 8,
-                  children: [
-                    Padding(
-                      padding: const .only(right: 16),
-                      child: triOSToolbarAction(
-                        label: 'Back',
-                        icon: Icons.arrow_back,
-                        onPressed: widget.onBack,
-                      ),
-                    ),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: .horizontal,
-                        child: Row(
-                          spacing: 8,
-                          children: [
-                            TextTriOS(
-                              definition.name,
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(fontSize: 20),
-                              maxLines: 1,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final compactActions = constraints.maxWidth < 900;
+                  return SizedBox(
+                    height: 50,
+                    child: Row(
+                      spacing: 8,
+                      children: [
+                        Padding(
+                          padding: const .only(right: 16),
+                          child: triOSToolbarAction(
+                            label: 'Back',
+                            icon: Icons.arrow_back,
+                            onPressed: widget.onBack,
+                          ),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: .horizontal,
+                            child: Row(
+                              spacing: 8,
+                              children: [
+                                TextTriOS(
+                                  definition.name,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(fontSize: 20),
+                                  maxLines: 1,
+                                ),
+                                _MetadataBadge(label: 'v${definition.version}'),
+                                _buildCopyablePackId(),
+                                _externalLinkAction(
+                                  url: definition.homepageUrl,
+                                  icon: Icons.language,
+                                  message: 'Open homepage',
+                                ),
+                                // Opens the file in a browser. TriOS doesn't check
+                                // this address for updates yet.
+                                _externalLinkAction(
+                                  url: definition.updateUrl,
+                                  icon: Icons.open_in_new,
+                                  message: 'Open update URL in browser',
+                                ),
+                              ],
                             ),
-                            _MetadataBadge(label: 'v${definition.version}'),
-                            _buildCopyablePackId(),
-                            _externalLinkAction(
-                              url: definition.homepageUrl,
-                              icon: Icons.language,
-                              message: 'Open homepage',
-                            ),
-                            // Opens the file in a browser. TriOS doesn't check
-                            // this address for updates yet.
-                            _externalLinkAction(
-                              url: definition.updateUrl,
-                              icon: Icons.open_in_new,
-                              message: 'Open update URL in browser',
-                            ),
+                          ),
+                        ),
+                        triOSToolbarAction(
+                          label: 'Edit',
+                          icon: Icons.edit,
+                          onPressed: widget.onEdit!,
+                        ),
+                        if (!compactActions)
+                          triOSToolbarAction(
+                            label: 'Copy link',
+                            icon: Icons.link,
+                            onPressed: _sharing
+                                ? null
+                                : () => _share(_ShareAction.copyLink),
+                          ),
+                        if (!compactActions)
+                          triOSToolbarAction(
+                            label: 'Export',
+                            icon: Icons.file_download_outlined,
+                            onPressed: _sharing
+                                ? null
+                                : () => _share(_ShareAction.export),
+                          ),
+                        triOSToolbarAction(
+                          label: _running ? 'Stop' : 'Install',
+                          icon: _running ? Icons.stop : Icons.download,
+                          onPressed: _running
+                              ? () => ref
+                                    .read(modpackInstallationProvider.notifier)
+                                    .stop(definition.id)
+                              : () => showModpackInstallDialog(
+                                  context,
+                                  widget.entry,
+                                ),
+                        ),
+                        OverflowMenuButton(
+                          menuItems: [
+                            if (compactActions && !_sharing)
+                              OverflowMenuItem(
+                                title: 'Copy link',
+                                icon: Icons.link,
+                                onTap: () => _share(_ShareAction.copyLink),
+                              ).toEntry(0),
+                            if (compactActions && !_sharing)
+                              OverflowMenuItem(
+                                title: 'Export',
+                                icon: Icons.file_download_outlined,
+                                onTap: () => _share(_ShareAction.export),
+                              ).toEntry(1),
+                            OverflowMenuItem(
+                              title: 'Enable installed items',
+                              icon: Icons.check_circle_outline,
+                              onTap: () => confirmEnableModpack(
+                                context,
+                                ref,
+                                widget.entry,
+                              ),
+                            ).toEntry(3),
+                            if (definition.updateUrl != null && !_sharing)
+                              OverflowMenuItem(
+                                title: 'Publish update',
+                                icon: Icons.publish,
+                                onTap: () => _share(_ShareAction.publish),
+                              ).toEntry(2),
+                            OverflowMenuItem(
+                              title: 'Delete',
+                              icon: Icons.delete,
+                              onTap: widget.onDelete!,
+                            ).toEntry(0),
+                            OverflowMenuItem(
+                              title: 'Duplicate',
+                              icon: Icons.copy,
+                              onTap: widget.onDuplicate!,
+                            ).toEntry(1),
+                            _debugMenuItem().toEntry(4),
                           ],
                         ),
-                      ),
-                    ),
-                    triOSToolbarAction(
-                      label: 'Edit',
-                      icon: Icons.edit,
-                      onPressed: widget.onEdit!,
-                    ),
-                    triOSToolbarAction(
-                      label: 'Copy link',
-                      icon: Icons.link,
-                      onPressed: _sharing
-                          ? null
-                          : () => _share(_ShareAction.copyLink),
-                    ),
-                    triOSToolbarAction(
-                      label: 'Export',
-                      icon: Icons.file_download_outlined,
-                      onPressed: _sharing
-                          ? null
-                          : () => _share(_ShareAction.export),
-                    ),
-                    triOSToolbarAction(
-                      label: _running ? 'Stop' : 'Install',
-                      icon: _running ? Icons.stop : Icons.download,
-                      onPressed: _running
-                          ? () => ref
-                                .read(modpackInstallationProvider.notifier)
-                                .stop(definition.id)
-                          : () =>
-                                showModpackInstallDialog(context, widget.entry),
-                    ),
-                    OverflowMenuButton(
-                      menuItems: [
-                        OverflowMenuItem(
-                          title: 'Enable installed items',
-                          icon: Icons.check_circle_outline,
-                          onTap: () =>
-                              confirmEnableModpack(context, ref, widget.entry),
-                        ).toEntry(3),
-                        if (definition.updateUrl != null && !_sharing)
-                          OverflowMenuItem(
-                            title: 'Publish update',
-                            icon: Icons.publish,
-                            onTap: () => _share(_ShareAction.publish),
-                          ).toEntry(2),
-                        OverflowMenuItem(
-                          title: 'Delete',
-                          icon: Icons.delete,
-                          onTap: widget.onDelete!,
-                        ).toEntry(0),
-                        OverflowMenuItem(
-                          title: 'Duplicate',
-                          icon: Icons.copy,
-                          onTap: widget.onDuplicate!,
-                        ).toEntry(1),
-                        _debugMenuItem().toEntry(4),
                       ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             Padding(
               padding: const .fromLTRB(8, 8, 8, 12),

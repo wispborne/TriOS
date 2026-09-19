@@ -237,8 +237,8 @@ Installing from it arrives in Phase 8.
 - [x] 7.6 Block loopback, private, and link-local addresses for update and item
       requests. Revalidate redirects and enforce size and time limits.
       Version Checker files, archive probes, and incoming update checks use the
-      same protected transport. The preview keeps Install unavailable until
-      Phase 8. Desktop file associations and warm/cold routing are implemented;
+      same protected transport. Desktop file associations and warm/cold routing
+      are implemented;
       native OS behavior remains part of the manual release checks in 10.9.
 
 ## Phase 8 - Background installation
@@ -249,54 +249,61 @@ still work before building anything modpack-specific on them.
 
 ### Background installation
 
-- [ ] 8.1 Add preparation that accepts a ModpackLibraryEntry and returns a
+- [x] 8.1 Add preparation that accepts a ModpackLibraryEntry and returns a
       selectable install plan. Add installation that accepts that plan and the
       confirmed selection and returns an observable in-memory run.
-- [ ] 8.2 Save, replace, or copy an incoming pack into the library before
+- [x] 8.2 Save, replace, or copy an incoming pack into the library before
       installation starts.
-- [ ] 8.3 Always show confirmation. List items in pack order with checkbox,
+- [x] 8.3 Always show confirmation. List items in pack order with checkbox,
       icon, name, label, source, note indicator, installed state, version, and
       dependency warnings.
-- [ ] 8.4 Select missing installable items by default and keep installed items
+- [x] 8.4 Select missing installable items by default and keep installed items
       visible but unselected. Allow every item, including Core, to be
       unchecked.
-- [ ] 8.5 Recompute dependencies during preparation and keep all warnings
+- [x] 8.5 Recompute dependencies during preparation and keep all warnings
       advisory.
-- [ ] 8.6 After start, turn the confirmation dialog into live progress with
+- [x] 8.6 After start, turn the confirmation dialog into live progress with
       Close and Stop. Closing must not end the run or block use of TriOS.
-- [ ] 8.7 Keep one in-memory run per pack ID. Reject a second start internally
+- [x] 8.7 Keep one in-memory run per pack ID. Reject a second start internally
       and open the existing progress instead. Allow different packs to run
       concurrently.
-- [ ] 8.8 Share a fair global limit of two downloads and the existing
+- [x] 8.8 Share a fair global limit of two downloads and the existing
       configurable one-through-six extraction/install limit across all packs.
-- [ ] 8.9 Extend the existing downloader with an awaitable shared handle, final
+- [x] 8.9 Extend the existing downloader with an awaitable shared handle, final
       normalized address, shared transfer, scan, and progress.
-- [ ] 8.10 Move batch archive inspection and selected-ID extraction into
+- [x] 8.10 Move batch archive inspection and selected-ID extraction into
       reusable non-dialog code used by both the current batch UI and modpacks.
-- [ ] 8.11 Require an archive to contain its declared mod ID. Install only
+- [x] 8.11 Require an archive to contain its declared mod ID. Install only
       selected declared IDs, ignore and report extras, and fail wrong or missing
       IDs with catalog recovery available.
-- [ ] 8.12 Stop by finishing active operations safely and starting no new ones.
+- [x] 8.12 Stop by finishing active operations safely and starting no new ones.
       Keep completed installs, skip automatic enabling, and discard the attempt
       after active work settles.
-- [ ] 8.13 Do not persist jobs or queues. A later Install action, including
+- [x] 8.13 Do not persist jobs or queues. A later Install action, including
       after restart, creates a new plan from the library and current mod list.
-- [ ] 8.14 Keep successful installs after other failures and expose stored
+- [x] 8.14 Keep successful installs after other failures and expose stored
       failures on the pack page.
-- [ ] 8.15 Try catalog recovery clues, then exact name, then visible likely
+- [x] 8.15 Try catalog recovery clues, then exact name, then visible likely
       matches. Never automatically install a fuzzy match.
-- [ ] 8.16 Offer unchecked Enable installed items after installation. When
+- [x] 8.16 Offer unchecked Enable installed items after installation. When
       selected and not stopped, enable every installed pack item through normal
       Mod Manager behavior and dependency confirmation.
-- [ ] 8.17 Keep the separate confirmed Enable installed items action. Never
+- [x] 8.17 Keep the separate confirmed Enable installed items action. Never
       rewrite a saved profile; rely on explicit-profile-saving for Modified
       loadout behavior.
 
 ### Installation progress on the full pack page
 
-- [ ] 8.18 Show installation progress above the item grid, replace Install with
+- [x] 8.18 Show installation progress above the item grid, replace Install with
       Stop while running, and show per-item progress or results in the grid.
-- [ ] 8.19 Keep the existing Activity Panel behavior unchanged.
+- [x] 8.19 Keep the existing Activity Panel behavior unchanged.
+
+Phase 8 verification: the modpack, downloader, and batch suite passed (264
+checks, one existing skip), as did all 29 explicit-profile-saving checks. The
+final result-persistence regression and confirmation checks also passed.
+Changed Dart files pass static analysis, and code generation completed. The
+app was not launched; real-host downloads and desktop installation remain
+part of the manual release checks in Phase 10.
 
 ## Phase 9 - Online updates
 

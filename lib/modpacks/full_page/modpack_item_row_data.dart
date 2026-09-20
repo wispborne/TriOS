@@ -154,8 +154,7 @@ ModpackItemRowData _buildRow(
   Map<SmolId, DependencyCheck> modCompatibility,
 ) {
   final variant = installedMod?.findFirstEnabledOrHighestVersion;
-  final checks =
-      variant == null
+  final checks = variant == null
       ? const <ModDependencyCheckResult>[]
       : modCompatibility[variant.smolId]?.dependencyChecks ??
             const <ModDependencyCheckResult>[];

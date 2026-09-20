@@ -137,8 +137,7 @@ class _ModpackFileParser {
   }
 
   bool isPrimitive(String text) =>
-      const {'true', 'false', 'null'}.contains(text) ||
-      _number.hasMatch(text);
+      const {'true', 'false', 'null'}.contains(text) || _number.hasMatch(text);
 
   String quoted() {
     final quote = current;

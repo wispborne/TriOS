@@ -326,3 +326,52 @@ class ModpackDraft with ModpackDraftMappable {
     return copied.isEmpty ? null : copied;
   }
 }
+
+/// Plain-English lines saying why a draft can't be saved, in reading order.
+///
+/// Pass the issues you already have so they aren't recomputed.
+List<String> describeModpackDraftIssues(
+  ModpackDraft draft,
+  List<ModpackDraftIssue> issues,
+) => issues.map((issue) => _describeIssue(draft, issue)).toList();
+
+String _describeIssue(ModpackDraft draft, ModpackDraftIssue issue) {
+  final index = issue.itemIndex;
+  if (index == null) {
+    return switch (issue.problem) {
+      ModpackDraftProblem.packNameMissing => 'The pack needs a name.',
+      ModpackDraftProblem.packNameTooLong =>
+        'The pack name is longer than ${ModpackLimits.maxNameLength} '
+            'characters.',
+      ModpackDraftProblem.homepageUrlInvalid =>
+        'The homepage link must start with http:// or https://.',
+      ModpackDraftProblem.updateUrlInvalid =>
+        'The update link must start with http:// or https://.',
+      ModpackDraftProblem.noItems => 'The pack needs at least one mod.',
+      ModpackDraftProblem.tooManyItems =>
+        'The pack has more than ${ModpackLimits.maxItems} mods.',
+      _ => 'Something is wrong with the pack.',
+    };
+  }
+
+  final item = index >= 0 && index < draft.items.length
+      ? draft.items[index]
+      : null;
+  final name = item?.displayName ?? '';
+  final who = name.isEmpty ? 'Mod ${index + 1}' : name;
+  final what = switch (issue.problem) {
+    ModpackDraftProblem.itemModIdMissing => 'needs a mod ID.',
+    ModpackDraftProblem.duplicateModId =>
+      'has the same mod ID as another mod in the pack.',
+    ModpackDraftProblem.itemUrlMissing => 'needs a download link.',
+    ModpackDraftProblem.itemUrlInvalid =>
+      'needs a download link starting with http:// or https://.',
+    ModpackDraftProblem.itemSourceTypeMissing => 'needs a source type.',
+    ModpackDraftProblem.itemLabelInvalid =>
+      'has a label that is too long or uses characters that are not allowed.',
+    ModpackDraftProblem.itemNoteTooLong =>
+      'has a note longer than ${ModpackLimits.maxNoteLength} characters.',
+    _ => 'has a problem.',
+  };
+  return '$who $what';
+}

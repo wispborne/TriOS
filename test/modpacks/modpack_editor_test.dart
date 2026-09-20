@@ -311,7 +311,7 @@ void main() {
             .first,
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Add selected'));
+      await tester.tap(find.text('Add 1 mod'));
       await tester.pumpAndSettle();
       expect(
         container

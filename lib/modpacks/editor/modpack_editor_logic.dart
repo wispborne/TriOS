@@ -75,7 +75,7 @@ ModpackDependencies findModpackDependencies(
       final target = byId[dependency.id];
       if (!packIds.contains(dependency.id)) {
         warnings.add(
-          '${variant.modInfo.nameOrId} requires ${dependency.formattedNameVersion} (not in this pack).',
+          '${variant.modInfo.nameOrId} requires ${dependency.formattedNameVersion}.',
         );
         if (target != null) available[target.modInfo.id] = target;
       }

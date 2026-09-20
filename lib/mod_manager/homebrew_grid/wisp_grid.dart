@@ -152,6 +152,11 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   /// Called when the selection changes.
   final void Function(Set<String> checkedItemKeys)? onCheckedItemsChanged;
 
+  /// Whether clicking a row without Ctrl or Shift clears the selection.
+  /// Pass false where the selection is the point of the screen and the user
+  /// picks rows with checkboxes, so a stray click does not wipe their work.
+  final bool clearsCheckedItemsOnPlainTap;
+
   /// Type of rows dragged from this grid.
   final String? rowDragType;
 
@@ -190,6 +195,7 @@ class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
     this.pinnedGroupContextMenuEntries = const [],
     this.checkedItemKeys,
     this.onCheckedItemsChanged,
+    this.clearsCheckedItemsOnPlainTap = true,
     this.rowDragType,
     this.acceptedRowDragTypes = const {},
     this.onRowsDropped,
@@ -643,11 +649,17 @@ class _WispGridState<T extends WispGridItem>
                 if (widget.selectedItem != null) {
                   widget.onRowSelected?.call(item);
                 }
-                _onRowCheck(
-                  modId: item.key,
-                  shiftPressed: false,
-                  ctrlPressed: false,
-                );
+                if (widget.clearsCheckedItemsOnPlainTap) {
+                  _onRowCheck(
+                    modId: item.key,
+                    shiftPressed: false,
+                    ctrlPressed: false,
+                  );
+                } else {
+                  // Keep the selection, but move the anchor so a later
+                  // shift-click extends from the row just clicked.
+                  _lastCheckedItemId = item.key;
+                }
               }
             },
             onDoubleTapped: () {

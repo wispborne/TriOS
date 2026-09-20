@@ -59,6 +59,10 @@ class ModpackFullPage extends ConsumerStatefulWidget {
   final Widget? previewToolbar;
   final Set<String>? checkedItemKeys;
   final void Function(Set<String>)? onCheckedItemsChanged;
+
+  /// Rows that can be selected. Rows outside this set have disabled checkboxes.
+  /// Used only when [checkedItemKeys] is set.
+  final Set<String>? selectableItemKeys;
   final Map<String, ModpackItemInstallResult>? installationDetails;
   final void Function(String)? onRecoverItem;
 
@@ -72,6 +76,7 @@ class ModpackFullPage extends ConsumerStatefulWidget {
     this.previewToolbar,
     this.checkedItemKeys,
     this.onCheckedItemsChanged,
+    this.selectableItemKeys,
     this.installationDetails,
     this.onRecoverItem,
   });
@@ -216,10 +221,13 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
 
     return Column(
       children: [
-        Padding(
-          padding: const .only(top: 8, left: 8, right: 8),
-          child: _buildPackHeader(rows),
-        ),
+        if (widget.previewToolbar == null)
+          Padding(
+            padding: const .only(top: 8, left: 8, right: 8),
+            child: _buildPackHeader(rows),
+          )
+        else
+          _buildPackHeader(rows),
         if (widget.previewToolbar == null)
           Consumer(
             builder: (context, ref, _) => ModpackSourceCheckSection(
@@ -258,15 +266,18 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
               // selection.
               selectedItem: rows.isEmpty ? null : rows.first,
               onRowSelected: _toggleExpanded,
+              // Clicking to expand a row must preserve the install selection.
+              clearsCheckedItemsOnPlainTap: widget.checkedItemKeys == null,
               rowBuilder:
                   ({required item, required modifiers, required child}) =>
                       _buildItemRow(
                         item,
                         child,
                         isHovering: modifiers.isHovering,
+                        isChecked: modifiers.isRowChecked,
                       ),
-              leadingItemBuilder: (item, _) => _buildExpansionButton(item),
-              leadingItemWidth: 24,
+              leadingItemBuilder: (item, _) => _buildRowLeading(item),
+              leadingItemWidth: widget.checkedItemKeys == null ? 24 : 52,
               scrollbarConfig: const ScrollbarConfig(
                 showLeftScrollbar: .never,
                 showRightScrollbar: .always,
@@ -279,181 +290,188 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
   }
 
   Widget _buildPackHeader(List<ModpackItemRowData> rows) {
+    final theme = Theme.of(context);
     final installedCount = rows.where((row) => row.isInstalled).length;
+    final isPreview = widget.previewToolbar != null;
 
-    return Card(
-      margin: .zero,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const .symmetric(horizontal: 8),
-        child: Column(
-          children: [
-            if (widget.previewToolbar != null)
-              Row(
-                crossAxisAlignment: .start,
-                children: [
-                  Expanded(child: widget.previewToolbar!),
-                  OverflowMenuButton(menuItems: [_debugMenuItem().toEntry(0)]),
-                ],
-              )
-            else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final compactActions = constraints.maxWidth < 900;
-                  return SizedBox(
-                    height: 50,
-                    child: Row(
-                      spacing: 8,
-                      children: [
-                        Padding(
-                          padding: const .only(right: 16),
-                          child: triOSToolbarAction(
-                            label: 'Back',
-                            icon: Icons.arrow_back,
-                            onPressed: widget.onBack,
+    final content = Padding(
+      padding: const .symmetric(horizontal: 8),
+      child: Column(
+        children: [
+          if (isPreview) ...[
+            Row(
+              crossAxisAlignment: .start,
+              children: [
+                Expanded(child: widget.previewToolbar!),
+                OverflowMenuButton(menuItems: [_debugMenuItem().toEntry(0)]),
+              ],
+            ),
+          ] else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compactActions = constraints.maxWidth < 900;
+                return SizedBox(
+                  height: 50,
+                  child: Row(
+                    spacing: 8,
+                    children: [
+                      Padding(
+                        padding: const .only(right: 16),
+                        child: triOSToolbarAction(
+                          label: 'Back',
+                          icon: Icons.arrow_back,
+                          onPressed: widget.onBack,
+                        ),
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: .horizontal,
+                          child: Row(
+                            spacing: 8,
+                            children: [
+                              TextTriOS(
+                                definition.name,
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(fontSize: 20),
+                                maxLines: 1,
+                              ),
+                              _MetadataBadge(label: 'v${definition.version}'),
+                              _buildCopyablePackId(),
+                              _externalLinkAction(
+                                url: definition.homepageUrl,
+                                icon: Icons.language,
+                                message: 'Open homepage',
+                              ),
+                              // Opens the file in a browser. TriOS doesn't check
+                              // this address for updates yet.
+                              _externalLinkAction(
+                                url: definition.updateUrl,
+                                icon: Icons.open_in_new,
+                                message: 'Open update URL in browser',
+                              ),
+                            ],
                           ),
                         ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            scrollDirection: .horizontal,
-                            child: Row(
-                              spacing: 8,
-                              children: [
-                                TextTriOS(
-                                  definition.name,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(fontSize: 20),
-                                  maxLines: 1,
-                                ),
-                                _MetadataBadge(label: 'v${definition.version}'),
-                                _buildCopyablePackId(),
-                                _externalLinkAction(
-                                  url: definition.homepageUrl,
-                                  icon: Icons.language,
-                                  message: 'Open homepage',
-                                ),
-                                // Opens the file in a browser. TriOS doesn't check
-                                // this address for updates yet.
-                                _externalLinkAction(
-                                  url: definition.updateUrl,
-                                  icon: Icons.open_in_new,
-                                  message: 'Open update URL in browser',
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      ),
+                      triOSToolbarAction(
+                        label: 'Edit',
+                        icon: Icons.edit,
+                        onPressed: widget.onEdit!,
+                      ),
+                      if (!compactActions)
                         triOSToolbarAction(
-                          label: 'Edit',
-                          icon: Icons.edit,
-                          onPressed: widget.onEdit!,
+                          label: 'Copy link',
+                          icon: Icons.link,
+                          onPressed: _sharing
+                              ? null
+                              : () => _share(_ShareAction.copyLink),
                         ),
-                        if (!compactActions)
-                          triOSToolbarAction(
-                            label: 'Copy link',
-                            icon: Icons.link,
-                            onPressed: _sharing
-                                ? null
-                                : () => _share(_ShareAction.copyLink),
-                          ),
-                        if (!compactActions)
-                          triOSToolbarAction(
-                            label: 'Export',
-                            icon: Icons.file_download_outlined,
-                            onPressed: _sharing
-                                ? null
-                                : () => _share(_ShareAction.export),
-                          ),
+                      if (!compactActions)
                         triOSToolbarAction(
-                          label: _running ? 'Stop' : 'Install',
-                          icon: _running ? Icons.stop : Icons.download,
-                          onPressed: _running
-                              ? () => ref
-                                    .read(modpackInstallationProvider.notifier)
-                                    .stop(definition.id)
-                              : () => showModpackInstallDialog(
-                                  context,
-                                  widget.entry,
-                                ),
+                          label: 'Export',
+                          icon: Icons.file_download_outlined,
+                          onPressed: _sharing
+                              ? null
+                              : () => _share(_ShareAction.export),
                         ),
-                        OverflowMenuButton(
-                          menuItems: [
-                            if (compactActions && !_sharing)
-                              OverflowMenuItem(
-                                title: 'Copy link',
-                                icon: Icons.link,
-                                onTap: () => _share(_ShareAction.copyLink),
-                              ).toEntry(0),
-                            if (compactActions && !_sharing)
-                              OverflowMenuItem(
-                                title: 'Export',
-                                icon: Icons.file_download_outlined,
-                                onTap: () => _share(_ShareAction.export),
-                              ).toEntry(1),
-                            OverflowMenuItem(
-                              title: 'Enable installed items',
-                              icon: Icons.check_circle_outline,
-                              onTap: () => confirmEnableModpack(
+                      triOSToolbarAction(
+                        label: _running ? 'Stop' : 'Install',
+                        icon: _running ? Icons.stop : Icons.download,
+                        onPressed: _running
+                            ? () => ref
+                                  .read(modpackInstallationProvider.notifier)
+                                  .stop(definition.id)
+                            : () => showModpackInstallDialog(
                                 context,
-                                ref,
                                 widget.entry,
                               ),
-                            ).toEntry(3),
-                            if (definition.updateUrl != null && !_sharing)
-                              OverflowMenuItem(
-                                title: 'Publish update',
-                                icon: Icons.publish,
-                                onTap: () => _share(_ShareAction.publish),
-                              ).toEntry(2),
+                      ),
+                      OverflowMenuButton(
+                        menuItems: [
+                          if (compactActions && !_sharing)
                             OverflowMenuItem(
-                              title: 'Delete',
-                              icon: Icons.delete,
-                              onTap: widget.onDelete!,
+                              title: 'Copy link',
+                              icon: Icons.link,
+                              onTap: () => _share(_ShareAction.copyLink),
                             ).toEntry(0),
+                          if (compactActions && !_sharing)
                             OverflowMenuItem(
-                              title: 'Duplicate',
-                              icon: Icons.copy,
-                              onTap: widget.onDuplicate!,
+                              title: 'Export',
+                              icon: Icons.file_download_outlined,
+                              onTap: () => _share(_ShareAction.export),
                             ).toEntry(1),
-                            _debugMenuItem().toEntry(4),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            Padding(
-              padding: const .fromLTRB(8, 8, 8, 12),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final packDetails = _buildPackDetails();
-                  final coverage = _buildCoverage(installedCount, rows.length);
-
-                  if (constraints.maxWidth < 860) {
-                    return Column(
-                      crossAxisAlignment: .stretch,
-                      spacing: 16,
-                      children: [packDetails, coverage],
-                    );
-                  }
-
-                  return Row(
-                    crossAxisAlignment: .start,
-                    spacing: 24,
-                    children: [
-                      Expanded(child: packDetails),
-                      SizedBox(width: 240, child: coverage),
+                          OverflowMenuItem(
+                            title: 'Enable installed items',
+                            icon: Icons.check_circle_outline,
+                            onTap: () => confirmEnableModpack(
+                              context,
+                              ref,
+                              widget.entry,
+                            ),
+                          ).toEntry(3),
+                          if (definition.updateUrl != null && !_sharing)
+                            OverflowMenuItem(
+                              title: 'Publish update',
+                              icon: Icons.publish,
+                              onTap: () => _share(_ShareAction.publish),
+                            ).toEntry(2),
+                          OverflowMenuItem(
+                            title: 'Delete',
+                            icon: Icons.delete,
+                            onTap: widget.onDelete!,
+                          ).toEntry(0),
+                          OverflowMenuItem(
+                            title: 'Duplicate',
+                            icon: Icons.copy,
+                            onTap: widget.onDuplicate!,
+                          ).toEntry(1),
+                          _debugMenuItem().toEntry(4),
+                        ],
+                      ),
                     ],
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          Padding(
+            padding: .fromLTRB(8, isPreview ? 16 : 8, 8, 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final packDetails = _buildPackDetails();
+                final coverage = _buildCoverage(installedCount, rows.length);
+
+                if (constraints.maxWidth < 860) {
+                  return Column(
+                    crossAxisAlignment: .stretch,
+                    spacing: 16,
+                    children: [packDetails, coverage],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: .start,
+                  spacing: 24,
+                  children: [
+                    Expanded(child: packDetails),
+                    SizedBox(width: 240, child: coverage),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
+    );
+
+    if (!isPreview) {
+      return Card(margin: .zero, clipBehavior: Clip.antiAlias, child: content);
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: modpackHairlineColor(theme))),
+      ),
+      child: content,
     );
   }
 
@@ -579,62 +597,51 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     final missingCount = totalCount - installedCount;
     final fraction = totalCount == 0 ? 0.0 : installedCount / totalCount;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const .all(16),
-        child: Column(
-          mainAxisSize: .min,
-          crossAxisAlignment: .start,
-          spacing: 8,
-          children: [
-            Row(
-              spacing: 8,
-              children: [
-                Icon(
-                  Icons.playlist_add_check,
-                  color: theme.colorScheme.primary,
+    return Padding(
+      padding: const .all(16),
+      child: Column(
+        mainAxisSize: .min,
+        crossAxisAlignment: .start,
+        spacing: 8,
+        children: [
+          Row(
+            spacing: 8,
+            children: [
+              Icon(Icons.playlist_add_check, color: theme.colorScheme.primary),
+              Expanded(
+                child: TextTriOS(
+                  'Installed',
+                  style: theme.textTheme.titleSmall,
+                  maxLines: 1,
                 ),
-                Expanded(
-                  child: TextTriOS(
-                    'Installed mods',
-                    style: theme.textTheme.titleSmall,
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              totalCount == 0
-                  ? 'This modpack is empty'
-                  : '$installedCount of $totalCount installed',
-              style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20),
-            ),
-            ThemedLinearProgressIndicator(
-              value: fraction,
-              minHeight: 6,
-              color: missingCount == 0 && totalCount > 0
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.primary.withValues(alpha: 0.65),
-              backgroundColor: theme.colorScheme.onSurface.withValues(
-                alpha: 0.1,
               ),
+            ],
+          ),
+          Text(
+            totalCount == 0
+                ? 'This modpack is empty'
+                : '$installedCount of $totalCount installed',
+            style: theme.textTheme.headlineSmall?.copyWith(fontSize: 20),
+          ),
+          ThemedLinearProgressIndicator(
+            value: fraction,
+            minHeight: 6,
+            color: missingCount == 0 && totalCount > 0
+                ? theme.colorScheme.primary
+                : theme.colorScheme.primary.withValues(alpha: 0.65),
+            backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+          ),
+          Text(
+            missingCount == 0
+                ? totalCount == 0
+                      ? 'Add mods in the editor to get started.'
+                      : 'Everything in this pack is available locally.'
+                : '$missingCount ${missingCount == 1 ? 'mod is' : 'mods are'} missing locally.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            Text(
-              missingCount == 0
-                  ? totalCount == 0
-                        ? 'Add mods in the editor to get started.'
-                        : 'Everything in this pack is available locally.'
-                  : '$missingCount ${missingCount == 1 ? 'mod is' : 'mods are'} missing locally.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -643,16 +650,53 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     final visibleIds = rows.map((row) => row.key).toSet();
     final allExpanded =
         visibleIds.isNotEmpty && visibleIds.every(_expandedItemIds.contains);
+    final theme = Theme.of(context);
+    final checked = widget.checkedItemKeys;
+    final selectable = widget.selectableItemKeys ?? visibleIds;
+
+    final unusable = rows.length - selectable.length;
+    final alreadyInstalled = rows
+        .where((row) => row.isInstalled && selectable.contains(row.key))
+        .length;
+    final notes = [
+      if (alreadyInstalled > 0) '$alreadyInstalled already installed',
+      if (unusable > 0)
+        '$unusable ${unusable == 1 ? 'has' : 'have'} no working download',
+    ];
 
     return Padding(
-      padding: const .fromLTRB(16, 8, 16, 4),
+      padding: const .fromLTRB(16, 12, 16, 8),
       child: Row(
         spacing: 8,
         children: [
           Text(
-            '${rows.length} mods',
-            style: Theme.of(context).textTheme.titleSmall,
+            checked == null
+                ? '${rows.length} mods'
+                : '${checked.length} of ${selectable.length} selected',
+            style: theme.textTheme.titleSmall,
           ),
+          if (checked != null) ...[
+            if (notes.isNotEmpty)
+              Text(
+                notes.join(' · '),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: checked.containsAll(selectable)
+                  ? null
+                  : () => widget.onCheckedItemsChanged!(selectable),
+              child: const Text('Select all'),
+            ),
+            TextButton(
+              onPressed: checked.isEmpty
+                  ? null
+                  : () => widget.onCheckedItemsChanged!(const {}),
+              child: const Text('Clear'),
+            ),
+          ],
           const Spacer(),
           TextButton.icon(
             onPressed: allExpanded || rows.isEmpty
@@ -661,7 +705,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
             icon: const Icon(Icons.unfold_more, size: 18),
             label: const Text('Expand all'),
             style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              foregroundColor: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           TextButton.icon(
@@ -671,7 +715,7 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
             icon: const Icon(Icons.unfold_less, size: 18),
             label: const Text('Collapse all'),
             style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              foregroundColor: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -944,16 +988,36 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
         headerCellBuilder: (_) => _columnHeader('Installation'),
         itemCellBuilder: (row, _) {
           final result = _installationDetails[row.key];
+          final statusColor = switch (result?.status) {
+            ModpackItemInstallStatus.failed => theme.colorScheme.error,
+            ModpackItemInstallStatus.installed => theme.colorScheme.primary,
+            ModpackItemInstallStatus.queued ||
+            ModpackItemInstallStatus.skipped ||
+            null => theme.colorScheme.onSurfaceVariant,
+            _ => null,
+          };
+          final statusIcon = switch (result?.status) {
+            ModpackItemInstallStatus.failed => Icons.error_outline,
+            ModpackItemInstallStatus.installed => Icons.check_circle_outline,
+            ModpackItemInstallStatus.skipped => Icons.remove_circle_outline,
+            _ => null,
+          };
           return Row(
             spacing: 8,
             children: [
+              if (statusIcon != null)
+                Icon(statusIcon, size: 16, color: statusColor),
               Expanded(
                 child: Column(
                   mainAxisAlignment: .center,
                   crossAxisAlignment: .stretch,
                   spacing: 4,
                   children: [
-                    TextTriOS(result?.text ?? '—', maxLines: 1),
+                    TextTriOS(
+                      result?.text ?? '—',
+                      maxLines: 1,
+                      style: gridTextStyle.copyWith(color: statusColor),
+                    ),
                     if (result?.fraction != null)
                       LinearProgressIndicator(value: result!.fraction),
                   ],
@@ -1073,6 +1137,43 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     ),
   );
 
+  Widget _buildRowLeading(ModpackItemRowData row) {
+    if (widget.checkedItemKeys == null) return _buildExpansionButton(row);
+    return Row(
+      mainAxisSize: .min,
+      children: [_buildRowCheckbox(row), _buildExpansionButton(row)],
+    );
+  }
+
+  Widget _buildRowCheckbox(ModpackItemRowData row) {
+    final checked = widget.checkedItemKeys!.contains(row.key);
+    final canSelect = widget.selectableItemKeys?.contains(row.key) ?? true;
+
+    return MovingTooltipWidget.text(
+      message: !canSelect
+          ? 'TriOS has no working download for this mod'
+          : checked
+          ? 'Do not install this mod'
+          : 'Install this mod',
+      child: SizedBox(
+        width: 28,
+        child: Checkbox(
+          value: checked,
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: .shrinkWrap,
+          onChanged: canSelect
+              ? (value) => widget.onCheckedItemsChanged!(
+                  value == true
+                        ? {...widget.checkedItemKeys!, row.key}
+                        : {...widget.checkedItemKeys!}
+                    ..remove(row.key),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+
   Widget _buildExpansionButton(ModpackItemRowData row) =>
       MovingTooltipWidget.text(
         message: _expandedItemIds.contains(row.key)
@@ -1095,10 +1196,14 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     ModpackItemRowData row,
     Widget gridRow, {
     required bool isHovering,
+    required bool isChecked,
   }) {
     final theme = Theme.of(context);
     final expanded = _expandedItemIds.contains(row.key);
-    final background = expanded || isHovering
+    final highlighted = expanded || isHovering;
+    final background = isChecked
+        ? theme.colorScheme.primary.withValues(alpha: highlighted ? 0.18 : 0.1)
+        : highlighted
         ? theme.colorScheme.onInverseSurface.withValues(alpha: 0.2)
         : Colors.transparent;
 
@@ -1247,6 +1352,10 @@ class _ModpackFullPageState extends ConsumerState<ModpackFullPage> {
     return '${id.substring(0, 2)}…${id.substring(id.length - 4)}';
   }
 }
+
+/// Hairline shared by the modpack page and install dialog.
+Color modpackHairlineColor(ThemeData theme) =>
+    theme.colorScheme.outlineVariant.withValues(alpha: 0.5);
 
 class _MetadataFact extends StatelessWidget {
   final String label;

@@ -109,6 +109,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
 
   String get _installedDrag => 'modpack:${widget.packId}:installed';
   String get _packDrag => 'modpack:${widget.packId}:items';
+
   /// Read once, so saves still queued when the page closes can reach it.
   late final ModpackStore _store;
 
@@ -472,7 +473,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                                 dependencies.available
                                     .map((v) => v.modInfo.nameOrId)
                                     .join('\n'),
-                                'Add required dependencies',
+                                'Add dependencies',
                               )) {
                                 if (mounted) {
                                   await _addVariants(dependencies.available);
@@ -493,16 +494,30 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                   child: Column(
                     children: [
                       _listToolbar(
-                        'Installed mods',
-                        _installedSearch,
-                        (value) => setState(() => _installedSearch = value),
-                        [
-                          TextButton.icon(
-                            onPressed: _installedSelection.isEmpty
-                                ? null
-                                : () => _addIds(_installedSelection.toList()),
-                            icon: const Icon(Icons.arrow_forward, size: 18),
-                            label: const Text('Add selected'),
+                        title:
+                            '${_modCount(installed.length, mods.length)} '
+                            'installed',
+                        searchLabel: 'Search installed mods',
+                        search: _installedSearch,
+                        onSearch: (value) =>
+                            setState(() => _installedSearch = value),
+                        actions: [
+                          MovingTooltipWidget.text(
+                            message: _installedSelection.isEmpty
+                                ? 'Add checked mods to mod pack.'
+                                : null,
+                            child: TextButton.icon(
+                              onPressed: _installedSelection.isEmpty
+                                  ? null
+                                  : () => _addIds(_installedSelection.toList()),
+                              icon: const Icon(Icons.arrow_forward, size: 18),
+                              label: Text(
+                                _selectionLabel(
+                                  'Add',
+                                  _installedSelection.length,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -555,15 +570,30 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                   child: Column(
                     children: [
                       _listToolbar(
-                        '${_rows.length} mods in pack',
-                        _packSearch,
-                        (value) => setState(() => _packSearch = value),
-                        [
-                          TextButton(
-                            onPressed: _packSelection.isEmpty
-                                ? null
-                                : () => _remove({..._packSelection}),
-                            child: const Text('Remove selected'),
+                        title:
+                            '${_modCount(visible.length, _rows.length)} '
+                            'in pack',
+                        searchLabel: 'Search mods in pack',
+                        search: _packSearch,
+                        onSearch: (value) =>
+                            setState(() => _packSearch = value),
+                        actions: [
+                          MovingTooltipWidget.text(
+                            message: _packSelection.isEmpty
+                                ? 'Removed checked mods.'
+                                : null,
+                            child: TextButton.icon(
+                              onPressed: _packSelection.isEmpty
+                                  ? null
+                                  : () => _remove({..._packSelection}),
+                              icon: const Icon(Icons.delete, size: 18),
+                              label: Text(
+                                _selectionLabel(
+                                  'Remove',
+                                  _packSelection.length,
+                                ),
+                              ),
+                            ),
                           ),
                           _labelMenu(
                             null,
@@ -578,7 +608,10 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                             ]),
                             enabled: _packSelection.isNotEmpty,
                             title: 'Set label',
+                            disabledMessage:
+                                'Label checked mods.',
                           ),
+                          const _ToolbarDivider(),
                           _iconAction(
                             'Expand all',
                             Icons.unfold_more,
@@ -771,6 +804,22 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     );
   }
 
+  /// Tooltip for the disabled Save changes button: what has to be fixed first.
+  String _whySaveIsDisabled(
+    ModpackDraft draft,
+    List<ModpackDraftIssue> issues,
+  ) {
+    const maxLines = 8;
+    final lines = describeModpackDraftIssues(draft, issues);
+    final shown = lines.take(maxLines).map((line) => '• $line');
+    final extra = lines.length - maxLines;
+    return [
+      'Fix these before saving:',
+      ...shown,
+      if (extra > 0) '…and $extra more.',
+    ].join('\n');
+  }
+
   Widget _header(ModpackDraft draft, _EditorDerived derived) {
     final valid = derived.issues.isEmpty;
     final version = derived.versionAfterSaving;
@@ -804,6 +853,9 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                           'Save changes${version == null ? '' : ' · v$version'}',
                       icon: Icons.save_outlined,
                       onPressed: valid ? _save : null,
+                      disabledMessage: valid
+                          ? null
+                          : _whySaveIsDisabled(draft, derived.issues),
                     ),
                     triOSToolbarAction(
                       label: 'Discard changes',
@@ -971,19 +1023,20 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     );
   }
 
-  Widget _listToolbar(
-    String title,
-    String search,
-    ValueChanged<String> onSearch,
-    List<Widget> actions,
-  ) => Padding(
+  Widget _listToolbar({
+    required String title,
+    required String searchLabel,
+    required String search,
+    required ValueChanged<String> onSearch,
+    required List<Widget> actions,
+  }) => Padding(
     padding: const .all(8),
     child: Column(
       crossAxisAlignment: .stretch,
       spacing: 8,
       children: [
         Text(title, style: Theme.of(context).textTheme.titleSmall),
-        _DraftField(label: 'Search $title', value: search, onChanged: onSearch),
+        _DraftField(label: searchLabel, value: search, onChanged: onSearch),
         SingleChildScrollView(
           scrollDirection: .horizontal,
           child: Row(spacing: 8, children: actions),
@@ -991,6 +1044,16 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
       ],
     ),
   );
+
+  /// "8 mods", or "3 of 8 mods" while a search is narrowing the list.
+  String _modCount(int shown, int total) => shown == total
+      ? '$total ${total == 1 ? 'mod' : 'mods'}'
+      : '$shown of $total ${total == 1 ? 'mod' : 'mods'}';
+
+  /// "Add selected" when nothing is ticked, "Add 3 mods" when something is.
+  String _selectionLabel(String verb, int count) => count == 0
+      ? '$verb selected'
+      : '$verb $count ${count == 1 ? 'mod' : 'mods'}';
 
   // Rebuilt field by field rather than with copyWith: the generated copyWith
   // on this generic class returns WispGridColumn<WispGridItem>, losing <Mod>.
@@ -1057,18 +1120,19 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           takeUpSpaceIfNoIcon: true,
         ),
       ),
-      column(
-        'name',
-        'Name',
-        200,
-        (row) => Column(
+      column('name', 'Name', 200, (row) {
+        final modId = row.item.modId?.trim() ?? '';
+        return Column(
           crossAxisAlignment: .start,
           children: [
             Row(
+              spacing: 4,
               children: [
-                Expanded(
+                Flexible(
                   child: TextTriOS(
-                    row.item.displayName,
+                    row.item.displayName.isEmpty
+                        ? 'Unnamed mod'
+                        : row.item.displayName,
                     maxLines: 1,
                     style: Theme.of(context).textTheme.labelLarge
                         ?.copyWith(fontWeight: .bold),
@@ -1082,14 +1146,18 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
               ],
             ),
             TextTriOS(
-              row.item.modId ?? 'Missing mod ID',
+              modId.isEmpty ? 'Missing mod ID' : modId,
               maxLines: 1,
-              style: Theme.of(context).textTheme.labelSmall
-                  ?.copyWith(fontSize: 10),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontSize: 10,
+                color: modId.isEmpty
+                    ? Theme.of(context).colorScheme.error
+                    : null,
+              ),
             ),
           ],
-        ),
-      ),
+        );
+      }),
       column(
         'author',
         'Author',
@@ -1109,12 +1177,26 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
         112,
         (row) => TextTriOS(row.item.label ?? '—', maxLines: 1),
       ),
-      column(
-        'sourceType',
-        'Source type',
-        144,
-        (row) => TextTriOS(_sourceLabel(row.item.sourceType), maxLines: 1),
-      ),
+      column('sourceType', 'Source type', 144, (row) {
+        final type = row.item.sourceType;
+        if (type != null) {
+          return TextTriOS(_sourceLabel(type), maxLines: 1);
+        }
+        final error = Theme.of(context).colorScheme.error;
+        return Row(
+          spacing: 4,
+          children: [
+            Icon(Icons.warning_amber, size: 14, color: error),
+            Flexible(
+              child: TextTriOS(
+                _sourceLabel(null),
+                maxLines: 1,
+                style: TextStyle(color: error),
+              ),
+            ),
+          ],
+        );
+      }),
       column(
         'sourceHost',
         'Source host',
@@ -1307,6 +1389,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
     ValueChanged<String?> onChanged, {
     bool enabled = true,
     String? title,
+    String? disabledMessage,
   }) {
     final labels = {
       ...ModpackItemLabels.standard,
@@ -1315,37 +1398,40 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           .nonNulls
           .where((label) => modpackLabelError(label) == null),
     }.toList();
-    return PopupMenuButton<_LabelChoice>(
-      enabled: enabled,
-      tooltip: '',
-      onSelected: (choice) async {
-        if (choice.isCustom) {
-          final result = await showDialog<String>(
-            context: context,
-            builder: (context) => const _CustomLabelDialog(),
-          );
-          if (result != null && mounted) onChanged(result);
-        } else {
-          onChanged(choice.label);
-        }
-      },
-      itemBuilder: (_) => [
-        const PopupMenuItem(value: _LabelChoice.clear(), child: Text('None')),
-        for (final label in labels)
-          PopupMenuItem(value: _LabelChoice(label), child: Text(label)),
-        const PopupMenuItem(
-          value: _LabelChoice.custom(),
-          child: Text('New custom label…'),
-        ),
-      ],
-      child: Padding(
-        padding: const .all(8),
-        child: Text(
-          title ?? 'Label: ${value ?? 'None'}',
-          style: TextStyle(
-            color: enabled
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).disabledColor,
+    return MovingTooltipWidget.text(
+      message: enabled ? null : disabledMessage,
+      child: PopupMenuButton<_LabelChoice>(
+        enabled: enabled,
+        tooltip: '',
+        onSelected: (choice) async {
+          if (choice.isCustom) {
+            final result = await showDialog<String>(
+              context: context,
+              builder: (context) => const _CustomLabelDialog(),
+            );
+            if (result != null && mounted) onChanged(result);
+          } else {
+            onChanged(choice.label);
+          }
+        },
+        itemBuilder: (_) => [
+          const PopupMenuItem(value: _LabelChoice.clear(), child: Text('None')),
+          for (final label in labels)
+            PopupMenuItem(value: _LabelChoice(label), child: Text(label)),
+          const PopupMenuItem(
+            value: _LabelChoice.custom(),
+            child: Text('New custom label…'),
+          ),
+        ],
+        child: Padding(
+          padding: const .all(8),
+          child: Text(
+            title ?? 'Label: ${value ?? 'None'}',
+            style: TextStyle(
+              color: enabled
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).disabledColor,
+            ),
           ),
         ),
       ),
@@ -1358,6 +1444,8 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
         child: IconButton(
           onPressed: onPressed,
           padding: .zero,
+          visualDensity: .compact,
+          constraints: const BoxConstraints.tightFor(width: 32, height: 32),
           icon: Icon(icon, size: 18),
         ),
       );
@@ -1421,6 +1509,15 @@ class _DraftFieldState extends State<_DraftField> {
     maxLines: widget.maxLines,
     onChanged: widget.onChanged,
   );
+}
+
+/// A thin rule between groups of toolbar actions.
+class _ToolbarDivider extends StatelessWidget {
+  const _ToolbarDivider();
+
+  @override
+  Widget build(BuildContext context) =>
+      const SizedBox(height: 24, child: VerticalDivider(width: 1));
 }
 
 class _CustomLabelDialog extends StatefulWidget {

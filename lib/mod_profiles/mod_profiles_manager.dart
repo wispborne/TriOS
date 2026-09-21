@@ -448,6 +448,88 @@ class ModProfileManagerNotifier
     return toVariantAlternate;
   }
 
+  /// Computes what merging [profile] into the currently enabled mods would do.
+  ///
+  /// A merge only turns mods on. Any mod that already has a version enabled is
+  /// left exactly as it is, so having several versions of a mod installed can
+  /// never change which one is active. Nothing is disabled and no version is
+  /// swapped. Mods that aren't on yet are turned on at their latest installed
+  /// version, not at the version [profile] happens to have saved.
+  ///
+  /// Returns one change per mod in the profile: [ModChangeType.enable] for a
+  /// mod that will be turned on, [ModChangeType.skip] for one already on, and
+  /// [ModChangeType.missingMod] for one that isn't installed.
+  static List<ModChange> computeModProfileMergeChanges(
+    ModProfile profile,
+    List<Mod> allMods,
+    List<ModVariant> currentlyEnabledModVariants,
+  ) {
+    final modsById = {for (final mod in allMods) mod.id: mod};
+    final enabledVariantsByModId = {
+      for (final variant in currentlyEnabledModVariants)
+        variant.modInfo.id: variant,
+    };
+
+    final changes = <ModChange>[];
+    final handledModIds = <String>{};
+
+    for (final profileVariant in profile.enabledModVariants) {
+      final modId = profileVariant.modId;
+      // A profile shouldn't list the same mod twice, but if it does, the first
+      // entry wins rather than producing two rows for one mod.
+      if (!handledModIds.add(modId)) continue;
+
+      final mod = modsById[modId];
+      final alreadyEnabledVariant = enabledVariantsByModId[modId];
+
+      if (alreadyEnabledVariant != null) {
+        // Already on. Leave it alone, whichever version that happens to be.
+        changes.add(
+          ModChange(
+            modId: modId,
+            mod: mod,
+            fromVariant: alreadyEnabledVariant,
+            toVariant: null,
+            variantAsShallowMod: profileVariant,
+            toVariantAlternate: null,
+            changeType: ModChangeType.skip,
+          ),
+        );
+        continue;
+      }
+
+      final toVariant = mod?.findHighestVersion;
+      if (mod == null || toVariant == null) {
+        changes.add(
+          ModChange(
+            modId: modId,
+            mod: mod,
+            fromVariant: null,
+            toVariant: null,
+            variantAsShallowMod: profileVariant,
+            toVariantAlternate: null,
+            changeType: ModChangeType.missingMod,
+          ),
+        );
+        continue;
+      }
+
+      changes.add(
+        ModChange(
+          modId: modId,
+          mod: mod,
+          fromVariant: null,
+          toVariant: toVariant,
+          variantAsShallowMod: profileVariant,
+          toVariantAlternate: null,
+          changeType: ModChangeType.enable,
+        ),
+      );
+    }
+
+    return changes;
+  }
+
   /// Enables exactly the mods saved in [modProfileId] and tracks that profile.
   ///
   /// Pass [allowReapply] to run even when the profile is already tracked. That
@@ -536,6 +618,94 @@ class ModProfileManagerNotifier
       isChangingModProfileProvider = false;
       // Reload all just in case.
       await modVariantsNotifier.reloadModVariants();
+    }
+  }
+
+  /// Turns on every mod in [modProfileId] that isn't already enabled, leaving
+  /// the rest of the current setup alone.
+  ///
+  /// Mods that already have a version enabled are skipped entirely, so a merge
+  /// never changes which version of an already-on mod is active. Newly enabled
+  /// mods get their latest installed version. Nothing is ever disabled.
+  ///
+  /// Which profile is tracked doesn't change. A merge edits your enabled mods
+  /// the same way toggling mods by hand does, so a tracked profile shows up as
+  /// modified afterwards.
+  Future<void> mergeModProfile(String modProfileId) async {
+    Fimber.i("Merging mod profile $modProfileId into the enabled mods.");
+    final modVariantsNotifier = ref.read(AppState.modVariants.notifier);
+    final modManagerNotifier = ref.read(modManager.notifier);
+    var didChangeAnything = false;
+
+    try {
+      final profile = state.value?.modProfiles.firstWhereOrNull(
+        (profile) => profile.id == modProfileId,
+      );
+      if (profile == null) {
+        Fimber.w("Profile $modProfileId not found.");
+        return;
+      }
+
+      final allMods = ref.read(AppState.mods);
+      final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
+      final modsToEnable =
+          computeModProfileMergeChanges(
+                profile,
+                allMods,
+                currentlyEnabledModVariants,
+              )
+              .where((change) => change.changeType == ModChangeType.enable)
+              .toList();
+
+      if (modsToEnable.isEmpty) {
+        Fimber.i(
+          "Nothing to merge from '${profile.name}'; every mod in it is"
+          " already enabled or isn't installed.",
+        );
+        return;
+      }
+
+      modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = false;
+      isChangingModProfileProvider = true;
+      didChangeAnything = true;
+
+      for (final change in modsToEnable) {
+        final mod = change.mod;
+        if (mod == null) {
+          Fimber.w("Mod not found for change ${change.toVariant?.smolId}.");
+          continue;
+        }
+
+        Fimber.d(
+          "Merge: enabling ${mod.id} at ${change.toVariant?.smolId}.",
+        );
+        // Should check for game version, but we don't have a WidgetRef here.
+        await modManagerNotifier.changeActiveModVariant(
+          mod,
+          change.toVariant,
+          notifyWatchers: false,
+          validateDependencies: false,
+        );
+      }
+
+      await modManagerNotifier.validateModDependencies();
+      Fimber.i(
+        "Merged ${modsToEnable.length} mods from '${profile.name}' into the"
+        " enabled mods.",
+      );
+    } catch (e, stack) {
+      Fimber.e(
+        "Failed to merge mod profile $modProfileId.",
+        ex: e,
+        stacktrace: stack,
+      );
+    } finally {
+      if (didChangeAnything) {
+        modVariantsNotifier.shouldAutomaticallyReloadOnFilesChanged = true;
+        isChangingModProfileProvider = false;
+        // Reload all just in case.
+        await modVariantsNotifier.reloadModVariants();
+      }
     }
   }
 
@@ -655,6 +825,229 @@ class ModProfileManagerNotifier
             child: const Text('Save and deactivate'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Asks whether to merge [profile] into the enabled mods, then merges.
+  ///
+  /// Unlike activating, this leaves the tracked profile and everything already
+  /// enabled alone. See [mergeModProfile].
+  void showMergeDialog(ModProfile profile, BuildContext context) {
+    if (!context.mounted) return;
+    if (readTrackedProfileStatus().isLoading) return;
+
+    final allMods = ref.read(AppState.mods);
+    final currentlyEnabledModVariants = ref.read(AppState.enabledModVariants);
+    final changes = computeModProfileMergeChanges(
+      profile,
+      allMods,
+      currentlyEnabledModVariants,
+    );
+
+    final modsToEnable = changes
+        .where((change) => change.changeType == ModChangeType.enable)
+        .toList();
+    final modsLeftAlone = changes
+        .where((change) => change.changeType == ModChangeType.skip)
+        .toList();
+    final missingMods = changes
+        .where((change) => change.changeType == ModChangeType.missingMod)
+        .toList();
+
+    // Mods already on at some version other than the one the profile saved.
+    // The merge keeps what's on, which is the part worth spelling out. Profiles
+    // saved without a version can't be compared, so they aren't called out.
+    final keptAtOtherVersion = modsLeftAlone
+        .where(
+          (change) =>
+              change.variantAsShallowMod?.version != null &&
+              change.fromVariant?.modInfo.version !=
+                  change.variantAsShallowMod?.version,
+        )
+        .toList();
+
+    final modIconsById = Map.fromEntries(
+      allMods
+          .map((mod) => mod.findHighestVersion)
+          .nonNulls
+          .map((variant) => MapEntry(variant.modInfo.id, variant.iconFilePath)),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final iconColor = theme.iconTheme.color?.withOpacity(0.8);
+        final hasNothingToEnable = modsToEnable.isEmpty;
+
+        return AlertDialog(
+          title: Text("Merge '${profile.name}' into your mods?"),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Merging only turns mods on. Nothing is disabled, and mods"
+                  " you already have on keep the version they're on now.",
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                if (modsToEnable.isNotEmpty) ...[
+                  Text(
+                    "Mods Being Enabled",
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildChangeSection(
+                    null,
+                    "Enabling mod at its latest installed version",
+                    modsToEnable,
+                    Icons.check,
+                    iconColor,
+                    modIconsById,
+                    context,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (modsLeftAlone.isNotEmpty) ...[
+                  Text(
+                    "Already Enabled",
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    modsLeftAlone.length == 1
+                        ? "1 mod in this profile is already enabled and stays"
+                              " exactly as it is."
+                        : "${modsLeftAlone.length} mods in this profile are"
+                              " already enabled and stay exactly as they are.",
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  if (keptAtOtherVersion.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildKeptVersionsSection(
+                      keptAtOtherVersion,
+                      iconColor,
+                      modIconsById,
+                      context,
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                ],
+                if (missingMods.isNotEmpty)
+                  _buildMissingModsSection(
+                    missingMods,
+                    const [],
+                    iconColor,
+                    modIconsById,
+                    context,
+                  ),
+                if (changes.isEmpty)
+                  Text(
+                    "'${profile.name}' has no mods saved in it, so there's"
+                    " nothing to merge.",
+                    style: theme.textTheme.bodyMedium,
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(hasNothingToEnable ? 'Close' : 'Cancel'),
+            ),
+            if (!hasNothingToEnable)
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  mergeModProfile(profile.id);
+                },
+                icon: missingMods.isNotEmpty ? const Icon(Icons.warning) : null,
+                label: Text(
+                  missingMods.isNotEmpty
+                      ? 'Merge (ignore missing mods)'
+                      : 'Merge',
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Rows for mods a merge leaves alone because they're already enabled at a
+  /// version other than the one the profile saved.
+  Widget _buildKeptVersionsSection(
+    List<ModChange> keptAtOtherVersion,
+    Color? iconColor,
+    Map<String, String?> modIconsById,
+    BuildContext context,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: keptAtOtherVersion.map((change) {
+        final modName =
+            change.fromVariant?.modInfo.nameOrId ??
+            change.variantAsShallowMod?.nameOrId ??
+            change.modId;
+        final keptVersion =
+            change.fromVariant?.modInfo.version?.toString() ?? 'Unknown';
+        final profileVersion =
+            change.variantAsShallowMod?.version?.toString() ?? 'Unknown';
+
+        return _buildChangeRow(
+          change: change,
+          text:
+              '$modName stays on $keptVersion'
+              ' (this profile has $profileVersion).',
+          icon: Icons.remove,
+          tooltip: "Already enabled, so it's left alone",
+          iconColor: iconColor,
+          modIconsById: modIconsById,
+          context: context,
+        );
+      }).toList(),
+    );
+  }
+
+  /// One row of a change list: a change-type icon, the mod's icon, and text.
+  Widget _buildChangeRow({
+    required ModChange change,
+    required String text,
+    required IconData icon,
+    required String? tooltip,
+    required Color? iconColor,
+    required Map<String, String?> modIconsById,
+    required BuildContext context,
+  }) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const .symmetric(vertical: 2),
+      child: TextWithIcon(
+        leading: MovingTooltipWidget.text(
+          message: tooltip,
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        widget: TextWithIcon(
+          leading: modIconsById[change.modId] != null
+              ? Image.file(modIconsById[change.modId]!.toFile(), width: 20)
+              : null,
+          text: text,
+          style: GoogleFonts.roboto(
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 14,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -948,29 +1341,15 @@ class ModProfileManagerNotifier
       String text,
       IconData icon,
       String tooltip,
-    ) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: TextWithIcon(
-          leading: MovingTooltipWidget.text(
-            message: tooltip,
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          widget: TextWithIcon(
-            leading: modIconsById[change.modId] != null
-                ? Image.file(modIconsById[change.modId]!.toFile(), width: 20)
-                : null,
-            text: text,
-            style: GoogleFonts.roboto(
-              textStyle: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+    ) => _buildChangeRow(
+      change: change,
+      text: text,
+      icon: icon,
+      tooltip: tooltip,
+      iconColor: iconColor,
+      modIconsById: modIconsById,
+      context: context,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1074,7 +1453,11 @@ class ModProfileManagerNotifier
   }
 }
 
-enum ModChangeType { enable, disable, swap, missingMod, missingVariant }
+/// What applying a profile would do to one mod.
+///
+/// [skip] only comes out of [ModProfileManagerNotifier.computeModProfileMergeChanges]:
+/// the mod is already enabled, so a merge leaves it and its active version alone.
+enum ModChangeType { enable, disable, swap, missingMod, missingVariant, skip }
 
 class ModChange {
   final String modId;

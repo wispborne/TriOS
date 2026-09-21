@@ -278,8 +278,10 @@ Future<void> _runArchiveJobs(
           return SaveArchiveJobResult(
             succeeded: outcome.archiveCreated,
             needsAttention: !outcome.succeeded,
+            // Plain words rather than an arrow: the Roboto TriOS ships has no
+            // U+2192 glyph, so a theme using it would show an empty box.
             message: outcome.succeeded
-                ? '${outcome.originalSizeInBytes.bytesAsReadable()} → '
+                ? '${outcome.originalSizeInBytes.bytesAsReadable()} saved as '
                       '${outcome.archiveSizeInBytes.bytesAsReadable()}'
                 : outcome.message,
           );

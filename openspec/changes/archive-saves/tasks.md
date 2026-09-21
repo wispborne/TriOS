@@ -93,6 +93,11 @@
       while the game is running.
 - [x] An archived-saves button in the Save Games column header.
 - [x] Deleting an archive says whether it is the only copy.
+- [x] Use plain words rather than an arrow in the size summary: the Roboto
+      TriOS ships has no U+2192 glyph, so a theme using it shows an empty box.
+- [x] Add a screenshot tool that renders each dialog to a PNG in
+      `readme_resources/save_archiver/`. Tagged `local-only`, since golden
+      images differ between machines.
 
 ## Step 7 — before it ships
 

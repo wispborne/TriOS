@@ -445,6 +445,77 @@ class SevenZip implements ArchiveInterface {
     return results;
   }
 
+  /// Lists everything in [archiveFile] with the details needed to check an
+  /// archive against the folder it was made from: size, checksum, and whether
+  /// the item is a folder.
+  ///
+  /// [listFiles] only returns paths, which isn't enough to tell a complete
+  /// archive from a truncated one.
+  Future<List<SevenZipListedEntry>> listEntriesWithDetails(
+    File archiveFile,
+  ) async {
+    final result = await Process.run(sevenZipExecutable.path, [
+      'l',
+      '-slt',
+      '-sccUTF-8',
+      archiveFile.path,
+    ], stdoutEncoding: utf8);
+
+    if (result.exitCode != 0) {
+      throw Exception(
+        _describeArchiveError(
+          archiveFile,
+          '7z list failed (exit code: ${result.exitCode}).',
+          result.stdout?.toString(),
+          result.stderr?.toString(),
+        ),
+      );
+    }
+
+    return parseSevenZipDetailedListing(result.stdout as String);
+  }
+
+  /// Creates a new archive at [archiveFile] holding [sourceFolder] and
+  /// everything inside it.
+  ///
+  /// Paths inside the archive start with [sourceFolder]'s own name, so
+  /// extracting into a parent folder recreates the folder itself.
+  ///
+  /// 7-Zip adds to an existing archive rather than replacing it, so
+  /// [archiveFile] must not exist yet.
+  Future<void> createArchiveFromFolder(
+    File archiveFile,
+    Directory sourceFolder, {
+    List<String> extraArgs = const [],
+  }) async {
+    if (await archiveFile.exists()) {
+      throw Exception(
+        '7z would add to the existing archive at ${archiveFile.path} instead '
+        'of replacing it. Delete it first.',
+      );
+    }
+
+    final result = await Process.run(sevenZipExecutable.path, [
+      'a',
+      '-t7z',
+      '-y',
+      '-sccUTF-8',
+      ...extraArgs,
+      archiveFile.path,
+      // No trailing separator: with one, 7z stores the folder's contents at the
+      // archive root instead of inside a folder.
+      sourceFolder.normalize.path,
+    ], stdoutEncoding: utf8);
+
+    if (result.exitCode != 0) {
+      throw Exception(
+        '7z createArchiveFromFolder failed (exit code: ${result.exitCode}).\n'
+        'stdout: ${result.stdout}\n'
+        'stderr: ${result.stderr}',
+      );
+    }
+  }
+
   Future<bool> testArchive(File archiveFile) async {
     final result = await Process.run(sevenZipExecutable.path, [
       't',
@@ -669,4 +740,104 @@ class SevenZip implements ArchiveInterface {
 
     return buffer.toString();
   }
+}
+
+/// One item from `7z l -slt`.
+class SevenZipListedEntry {
+  final String path;
+  final int size;
+
+  /// The CRC32 7-Zip recorded, or null when it recorded none. Folders and
+  /// empty files have none.
+  final int? crc32;
+
+  final bool isDirectory;
+
+  const SevenZipListedEntry({
+    required this.path,
+    required this.size,
+    required this.crc32,
+    required this.isDirectory,
+  });
+
+  @override
+  String toString() =>
+      'SevenZipListedEntry($path, $size, crc: $crc32, dir: $isDirectory)';
+}
+
+/// Parses the output of `7z l -slt`.
+///
+/// The output starts with a block describing the archive file itself, then a
+/// line of dashes, then one block per item separated by blank lines. Only the
+/// blocks after the dashes are items, so the archive's own name never gets
+/// mistaken for an entry.
+List<SevenZipListedEntry> parseSevenZipDetailedListing(String stdout) {
+  final lines = const LineSplitter().convert(stdout);
+  final entries = <SevenZipListedEntry>[];
+
+  var reachedItems = false;
+  String? path;
+  int? size;
+  int? crc32;
+  var isDirectory = false;
+
+  void finishBlock() {
+    if (path != null && path!.isNotEmpty) {
+      entries.add(
+        SevenZipListedEntry(
+          path: path!,
+          size: size ?? 0,
+          crc32: crc32,
+          isDirectory: isDirectory,
+        ),
+      );
+    }
+    path = null;
+    size = null;
+    crc32 = null;
+    isDirectory = false;
+  }
+
+  for (final rawLine in lines) {
+    final line = rawLine.trimRight();
+
+    if (!reachedItems) {
+      // 7z prints exactly ten dashes between the header and the items.
+      if (line.trim() == '----------') reachedItems = true;
+      continue;
+    }
+
+    if (line.trim().isEmpty) {
+      finishBlock();
+      continue;
+    }
+
+    final separator = line.indexOf(' = ');
+    if (separator < 0) continue;
+    final key = line.substring(0, separator).trim();
+    final value = line.substring(separator + 3).trim();
+
+    switch (key) {
+      case 'Path':
+        // A new Path line without a blank line in between means the previous
+        // block ended; don't let two blocks merge into one.
+        if (path != null) finishBlock();
+        path = value;
+      case 'Size':
+        size = int.tryParse(value);
+      case 'CRC':
+        crc32 = value.isEmpty ? null : int.tryParse(value, radix: 16);
+      case 'Attributes':
+        // "D drwxr-xr-x" on Linux and macOS, "D...." on Windows. The DOS
+        // attribute letters come first, and D means folder.
+        final dosAttributes = value.split(RegExp(r'\s+')).first;
+        isDirectory = dosAttributes.contains('D');
+      case 'Folder':
+        // Some archive formats report this instead of an attribute letter.
+        if (value == '+') isDirectory = true;
+    }
+  }
+
+  finishBlock();
+  return entries;
 }

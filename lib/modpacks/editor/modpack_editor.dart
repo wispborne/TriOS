@@ -12,6 +12,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/modpacks/editor/modpack_editor_logic.dart';
 import 'package:trios/modpacks/models/modpack_definition.dart';
 import 'package:trios/modpacks/models/modpack_draft.dart';
+import 'package:trios/modpacks/modpack_error_text.dart';
 import 'package:trios/modpacks/modpack_format.dart';
 import 'package:trios/modpacks/modpack_store.dart';
 import 'package:trios/trios/app_state.dart';
@@ -25,7 +26,6 @@ import 'package:trios/widgets/simple_data_row.dart';
 import 'package:trios/widgets/text_trios.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_dropdown_button.dart';
-import 'package:trios/modpacks/modpack_error_text.dart';
 
 class ModpackEditor extends ConsumerStatefulWidget {
   final String packId;
@@ -47,6 +47,7 @@ class _EditorRow implements WispGridItem {
   @override
   final String key;
   final ModpackDraftItem item;
+
   const _EditorRow(this.key, this.item);
 }
 
@@ -74,7 +75,9 @@ class _LabelChoice {
   final bool isCustom;
 
   const _LabelChoice(this.label) : isCustom = false;
+
   const _LabelChoice.clear() : label = null, isCustom = false;
+
   const _LabelChoice.custom() : label = null, isCustom = true;
 }
 
@@ -108,6 +111,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
   _EditorDerived? _derived;
 
   String get _installedDrag => 'modpack:${widget.packId}:installed';
+
   String get _packDrag => 'modpack:${widget.packId}:items';
 
   /// Read once, so saves still queued when the page closes can reach it.
@@ -445,47 +449,6 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
-          if (dependencies.warnings.isNotEmpty)
-            Padding(
-              padding: const .symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                spacing: 8,
-                children: [
-                  MovingTooltipWidget.text(
-                    message: dependencies.warnings.join('\n'),
-                    child: Row(
-                      spacing: 8,
-                      children: [
-                        const Icon(Icons.warning_amber, size: 18),
-                        Text(
-                          '${dependencies.warnings.length} dependency warnings',
-                        ),
-                      ],
-                    ),
-                  ),
-                  Flexible(
-                    child: TextButton(
-                      onPressed: dependencies.available.isEmpty
-                          ? null
-                          : () async {
-                              if (await _confirm(
-                                'Add required dependencies?',
-                                dependencies.available
-                                    .map((v) => v.modInfo.nameOrId)
-                                    .join('\n'),
-                                'Add dependencies',
-                              )) {
-                                if (mounted) {
-                                  await _addVariants(dependencies.available);
-                                }
-                              }
-                            },
-                      child: const Text('Add required dependencies'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           Expanded(
             child: Row(
               crossAxisAlignment: .stretch,
@@ -608,8 +571,7 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                             ]),
                             enabled: _packSelection.isNotEmpty,
                             title: 'Set label',
-                            disabledMessage:
-                                'Label checked mods.',
+                            disabledMessage: 'Label checked mods.',
                           ),
                           const _ToolbarDivider(),
                           _iconAction(
@@ -628,6 +590,60 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                               ),
                             ),
                           ),
+                          if (dependencies.warnings.isNotEmpty)
+                            Padding(
+                              padding: const .symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              child: Row(
+                                spacing: 8,
+                                children: [
+                                  MovingTooltipWidget.text(
+                                    message: dependencies.warnings.join('\n'),
+                                    child: Row(
+                                      spacing: 8,
+                                      children: [
+                                        TextButton.icon(
+                                          icon: Icon(
+                                            Icons.warning_amber,
+                                            size: 18,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .error,
+                                          ),
+                                          label: Text(
+                                            'Add ${dependencies.available.length} required dependencies',
+                                          ),
+                                          onPressed:
+                                              dependencies.available.isEmpty
+                                              ? null
+                                              : () async {
+                                                  if (await _confirm(
+                                                    'Add required dependencies?',
+                                                    dependencies.available
+                                                        .map(
+                                                          (v) => v
+                                                              .modInfo
+                                                              .nameOrId,
+                                                        )
+                                                        .join('\n'),
+                                                    'Add dependencies',
+                                                  )) {
+                                                    if (mounted) {
+                                                      await _addVariants(
+                                                        dependencies.available,
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                       Expanded(
@@ -862,16 +878,32 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                       icon: Icons.undo,
                       onPressed: _discard,
                     ),
-                    triOSToolbarAction(
-                      label: 'Pack details',
-                      icon: _fieldsExpanded
-                          ? Icons.expand_less
-                          : Icons.expand_more,
-                      onPressed: () =>
-                          setState(() => _fieldsExpanded = !_fieldsExpanded),
-                    ),
                   ],
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  valid
+                      ? 'Draft saved automatically. Save changes adds it to your library.'
+                      : draft.items.isEmpty
+                      ? 'Add mods to this pack. Your draft is saved automatically.'
+                      : 'Draft saved automatically.',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+              Row(
+                crossAxisAlignment: .start,
+                children: [
+                  TextButton.icon(
+                    label: Text(
+                      _fieldsExpanded ? 'Hide editors' : 'Edit details',
+                    ),
+                    icon: Icon(_fieldsExpanded ? Icons.edit_off : Icons.edit),
+                    onPressed: () =>
+                        setState(() => _fieldsExpanded = !_fieldsExpanded),
+                  ),
+                ],
               ),
               if (_fieldsExpanded)
                 ConstrainedBox(
@@ -880,10 +912,10 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                     child: Padding(
                       padding: const .all(8),
                       child: Column(
+                        crossAxisAlignment: .start,
                         spacing: 16,
                         children: [
                           Row(
-                            crossAxisAlignment: .start,
                             spacing: 16,
                             children: [
                               Expanded(
@@ -1008,14 +1040,6 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
                     ],
                   ),
                 ),
-              Text(
-                valid
-                    ? 'Draft saved automatically. Save changes adds it to your library.'
-                    : draft.items.isEmpty
-                    ? 'Add mods to this pack. Your draft is saved automatically.'
-                    : 'Complete the highlighted fields and mod sources to save. Your draft is saved automatically.',
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
             ],
           ),
         ),
@@ -1449,13 +1473,16 @@ class _ModpackEditorState extends ConsumerState<ModpackEditor> {
           icon: Icon(icon, size: 18),
         ),
       );
+
   String? _optional(String value) => value.trim().isEmpty ? null : value;
+
   String? _urlError(String? value, {bool optional = false}) =>
       value == null || value.trim().isEmpty
       ? (optional ? null : 'Enter a download URL.')
       : isSafeModpackUrl(value)
       ? null
       : 'Enter an HTTP or HTTPS URL.';
+
   String _sourceLabel(ModpackItemSourceType? type) => switch (type) {
     .versionFile => 'Version Checker',
     .directDownload => 'Fixed download',
@@ -1471,6 +1498,7 @@ class _DraftField extends StatefulWidget {
   final int? maxLength;
   final int maxLines;
   final ValueChanged<String> onChanged;
+
   const _DraftField({
     super.key,
     required this.label,
@@ -1480,12 +1508,14 @@ class _DraftField extends StatefulWidget {
     this.maxLength,
     this.maxLines = 1,
   });
+
   @override
   State<_DraftField> createState() => _DraftFieldState();
 }
 
 class _DraftFieldState extends State<_DraftField> {
   late final _controller = TextEditingController(text: widget.value ?? '');
+
   @override
   void didUpdateWidget(covariant _DraftField oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -1522,12 +1552,14 @@ class _ToolbarDivider extends StatelessWidget {
 
 class _CustomLabelDialog extends StatefulWidget {
   const _CustomLabelDialog();
+
   @override
   State<_CustomLabelDialog> createState() => _CustomLabelDialogState();
 }
 
 class _CustomLabelDialogState extends State<_CustomLabelDialog> {
   String _value = '';
+
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: const Text('New custom label'),

@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:win32/win32.dart';
 
 import 'logging.dart';
@@ -76,10 +77,7 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
   final fileOpStruct = calloc<SHFILEOPSTRUCT>()
     ..ref.wFunc = FO_DELETE
     ..ref.pFrom = filePath.cast()
-    ..ref.fFlags =
-        FOF_ALLOWUNDO |
-        FOF_NOCONFIRMATION |
-        FOF_SILENT;
+    ..ref.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT;
 
   final result = SHFileOperation(fileOpStruct);
 
@@ -94,8 +92,17 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
         File(path).deleteSync(recursive: true);
         Fimber.i("Deleted file directly: $path");
       } catch (e) {
-        Fimber.e("Failed to delete file directly: $path. Error: $e");
-        rethrow;
+        Fimber.w(
+          "Failed to delete file directly: $path. Error: $e. "
+          "Retrying with Windows recursive deletion.",
+        );
+        try {
+          deleteRecursivelyWindows(path);
+          Fimber.i("Deleted file directly: $path");
+        } catch (e) {
+          Fimber.e("Failed to delete file directly: $path. Error: $e");
+          rethrow;
+        }
       }
     }
   } else {
@@ -103,11 +110,151 @@ void _moveToRecycleBinWindows(String path, bool deleteIfFailed) {
   }
 }
 
+/// The reparse tag that cloud sync apps (OneDrive, Dropbox, Google Drive) put
+/// on the files and folders they manage. Windows has 16 versions of it
+/// (IO_REPARSE_TAG_CLOUD to IO_REPARSE_TAG_CLOUD_F), which differ only in the
+/// bits covered by [_ioReparseTagCloudMask].
+const _ioReparseTagCloud = 0x9000001A;
+const _ioReparseTagCloudMask = 0x0000F000;
+
+/// Whether [reparseTag] marks a folder managed by a cloud sync app.
+/// Such a folder is a real folder with its files inside, not a link.
+@visibleForTesting
+bool isCloudReparseTagWindows(int reparseTag) =>
+    (reparseTag & ~_ioReparseTagCloudMask) == _ioReparseTagCloud;
+
+class _WindowsEntry {
+  final String name;
+  final int attributes;
+  final int reparseTag;
+
+  _WindowsEntry(this.name, this.attributes, this.reparseTag);
+
+  bool get isDirectory => attributes & FILE_ATTRIBUTE_DIRECTORY != 0;
+
+  bool get isReadOnly => attributes & FILE_ATTRIBUTE_READONLY != 0;
+
+  /// True for normal folders and cloud-synced folders, which have their files
+  /// inside. False for symbolic links and junctions, which point elsewhere.
+  bool get hasContentsInside =>
+      isDirectory &&
+      (attributes & FILE_ATTRIBUTE_REPARSE_POINT == 0 ||
+          isCloudReparseTagWindows(reparseTag));
+}
+
+/// Deletes [path] and everything inside it.
+///
+/// Dart's own recursive delete treats every folder with a reparse point as a
+/// link. It removes only the folder entry and doesn't go inside. OneDrive puts
+/// a reparse point on every folder it syncs, so Dart can't delete those
+/// folders while they have files in them.
+///
+/// This goes inside folders marked by a cloud sync app. Symbolic links and
+/// junctions are still removed as links only, so the folder they point to is
+/// left alone.
+///
+/// Throws a [FileSystemException] if something can't be deleted.
+/// Does nothing if [path] doesn't exist.
+@visibleForTesting
+void deleteRecursivelyWindows(String path) {
+  // Checked here because Dart can reset Windows' error code before we read it,
+  // so FindFirstFile can't reliably tell us the path is missing.
+  if (FileSystemEntity.typeSync(path, followLinks: false) ==
+      FileSystemEntityType.notFound) {
+    return;
+  }
+  final fullPath = _toLongPathWindows(path);
+  _deleteEntryWindows(fullPath, _findEntriesWindows(fullPath).single);
+}
+
+void _deleteEntryWindows(String path, _WindowsEntry entry) {
+  if (entry.hasContentsInside) {
+    for (final child in _findEntriesWindows('$path\\*')) {
+      if (child.name == '.' || child.name == '..') continue;
+      _deleteEntryWindows('$path\\${child.name}', child);
+    }
+  }
+
+  using((arena) {
+    final nativePath = path.toNativeUtf16(allocator: arena);
+    if (entry.isDirectory) {
+      if (RemoveDirectory(nativePath) == 0) _throwDeleteFailed(path);
+    } else {
+      if (entry.isReadOnly) {
+        SetFileAttributes(
+          nativePath,
+          entry.attributes & ~FILE_ATTRIBUTE_READONLY,
+        );
+      }
+      if (DeleteFile(nativePath) == 0) _throwDeleteFailed(path);
+    }
+  });
+}
+
+/// Lists entries matching [pattern], or throws if the search fails.
+List<_WindowsEntry> _findEntriesWindows(String pattern) {
+  return using((arena) {
+    final findData = arena<WIN32_FIND_DATA>();
+    final handle = FindFirstFile(
+      pattern.toNativeUtf16(allocator: arena),
+      findData,
+    );
+    if (handle == INVALID_HANDLE_VALUE) {
+      throw FileSystemException(
+        'Listing failed',
+        _fromLongPathWindows(pattern),
+        OSError('', GetLastError()),
+      );
+    }
+
+    final entries = <_WindowsEntry>[];
+    try {
+      do {
+        entries.add(
+          _WindowsEntry(
+            findData.ref.cFileName,
+            findData.ref.dwFileAttributes,
+            findData.ref.dwReserved0,
+          ),
+        );
+      } while (FindNextFile(handle, findData) != 0);
+    } finally {
+      FindClose(handle);
+    }
+    return entries;
+  });
+}
+
+Never _throwDeleteFailed(String path) {
+  throw FileSystemException(
+    'Deletion failed',
+    _fromLongPathWindows(path),
+    OSError('', GetLastError()),
+  );
+}
+
+/// Adds the `\\?\` prefix so Windows accepts paths longer than 260 characters.
+/// Network paths (starting with `\\`) are left as they are.
+String _toLongPathWindows(String path) {
+  var fullPath = File(path).absolute.path.replaceAll('/', r'\');
+  while (fullPath.endsWith(r'\')) {
+    fullPath = fullPath.substring(0, fullPath.length - 1);
+  }
+  return fullPath.startsWith(r'\\') ? fullPath : '\\\\?\\$fullPath';
+}
+
+String _fromLongPathWindows(String path) =>
+    path.startsWith(r'\\?\') ? path.substring(4) : path;
+
 // macOS's underlying API
-typedef MoveToTrashNative =
-    Int32 Function(Pointer<Utf8> path, Pointer<Pointer<Utf8>> errorMessage);
-typedef MoveToTrashDart =
-    int Function(Pointer<Utf8> path, Pointer<Pointer<Utf8>> errorMessage);
+typedef MoveToTrashNative = Int32 Function(
+  Pointer<Utf8> path,
+  Pointer<Pointer<Utf8>> errorMessage,
+);
+typedef MoveToTrashDart = int Function(
+  Pointer<Utf8> path,
+  Pointer<Pointer<Utf8>> errorMessage,
+);
 
 void _moveToTrashMacOS(String path, bool deleteIfFailed) {
   final library = DynamicLibrary.open(

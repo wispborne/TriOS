@@ -282,13 +282,29 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   Future<List<ModVariant>> cleanUpAllModVariantsBasedOnRetainSetting({
     bool dryRun = false,
   }) {
+    final lastNVersionsSetting = ref.read(
+      appSettings.select((s) => s.keepLastNVersions),
+    );
+    if (lastNVersionsSetting == null) {
+      Fimber.i(
+        "No version limit is set; keeping all mod versions.",
+      );
+      return Future.value([]);
+    }
+
     final mods = ref.read(AppState.mods);
     return Future.wait(
       mods.map(
         (mod) =>
             cleanUpModVariantsBasedOnRetainSetting(mod.id, [], dryRun: dryRun),
       ),
-    ).then((it) => it.flattened.toList());
+    ).then((it) {
+      final removed = it.flattened.toList();
+      if (removed.isEmpty) {
+        Fimber.i("No old mod versions need to be removed.");
+      }
+      return removed;
+    });
   }
 
   Future<List<ModVariant>> cleanUpModVariantsBasedOnRetainSetting(
@@ -333,7 +349,6 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         .toList();
 
     if (variantsToDelete.isEmpty) {
-      Fimber.i("All variants of $modId are being retained.");
       return [];
     }
 

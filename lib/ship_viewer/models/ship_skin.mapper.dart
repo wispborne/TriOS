@@ -98,6 +98,24 @@ class ShipSkinMapper extends ClassMapperBase<ShipSkin> {
     _$suppliesToRecover,
     opt: true,
   );
+  static num? _$suppliesPerMonth(ShipSkin v) => v.suppliesPerMonth;
+  static const Field<ShipSkin, num> _f$suppliesPerMonth = Field(
+    'suppliesPerMonth',
+    _$suppliesPerMonth,
+    opt: true,
+  );
+  static num? _$maxSpeed(ShipSkin v) => v.maxSpeed;
+  static const Field<ShipSkin, num> _f$maxSpeed = Field(
+    'maxSpeed',
+    _$maxSpeed,
+    opt: true,
+  );
+  static num? _$shieldEfficiency(ShipSkin v) => v.shieldEfficiency;
+  static const Field<ShipSkin, num> _f$shieldEfficiency = Field(
+    'shieldEfficiency',
+    _$shieldEfficiency,
+    opt: true,
+  );
   static num? _$baseValue(ShipSkin v) => v.baseValue;
   static const Field<ShipSkin, num> _f$baseValue = Field(
     'baseValue',
@@ -219,6 +237,9 @@ class ShipSkinMapper extends ClassMapperBase<ShipSkin> {
     #fleetPoints: _f$fleetPoints,
     #ordnancePoints: _f$ordnancePoints,
     #suppliesToRecover: _f$suppliesToRecover,
+    #suppliesPerMonth: _f$suppliesPerMonth,
+    #maxSpeed: _f$maxSpeed,
+    #shieldEfficiency: _f$shieldEfficiency,
     #baseValue: _f$baseValue,
     #baseValueMult: _f$baseValueMult,
     #fighterBays: _f$fighterBays,
@@ -254,6 +275,9 @@ class ShipSkinMapper extends ClassMapperBase<ShipSkin> {
       fleetPoints: data.dec(_f$fleetPoints),
       ordnancePoints: data.dec(_f$ordnancePoints),
       suppliesToRecover: data.dec(_f$suppliesToRecover),
+      suppliesPerMonth: data.dec(_f$suppliesPerMonth),
+      maxSpeed: data.dec(_f$maxSpeed),
+      shieldEfficiency: data.dec(_f$shieldEfficiency),
       baseValue: data.dec(_f$baseValue),
       baseValueMult: data.dec(_f$baseValueMult),
       fighterBays: data.dec(_f$fighterBays),
@@ -366,6 +390,9 @@ abstract class ShipSkinCopyWith<$R, $In extends ShipSkin, $Out>
     num? fleetPoints,
     num? ordnancePoints,
     num? suppliesToRecover,
+    num? suppliesPerMonth,
+    num? maxSpeed,
+    num? shieldEfficiency,
     num? baseValue,
     double? baseValueMult,
     num? fighterBays,
@@ -528,6 +555,9 @@ class _ShipSkinCopyWithImpl<$R, $Out>
     Object? fleetPoints = $none,
     Object? ordnancePoints = $none,
     Object? suppliesToRecover = $none,
+    Object? suppliesPerMonth = $none,
+    Object? maxSpeed = $none,
+    Object? shieldEfficiency = $none,
     Object? baseValue = $none,
     Object? baseValueMult = $none,
     Object? fighterBays = $none,
@@ -561,6 +591,9 @@ class _ShipSkinCopyWithImpl<$R, $Out>
       if (fleetPoints != $none) #fleetPoints: fleetPoints,
       if (ordnancePoints != $none) #ordnancePoints: ordnancePoints,
       if (suppliesToRecover != $none) #suppliesToRecover: suppliesToRecover,
+      if (suppliesPerMonth != $none) #suppliesPerMonth: suppliesPerMonth,
+      if (maxSpeed != $none) #maxSpeed: maxSpeed,
+      if (shieldEfficiency != $none) #shieldEfficiency: shieldEfficiency,
       if (baseValue != $none) #baseValue: baseValue,
       if (baseValueMult != $none) #baseValueMult: baseValueMult,
       if (fighterBays != $none) #fighterBays: fighterBays,
@@ -603,6 +636,9 @@ class _ShipSkinCopyWithImpl<$R, $Out>
       #suppliesToRecover,
       or: $value.suppliesToRecover,
     ),
+    suppliesPerMonth: data.get(#suppliesPerMonth, or: $value.suppliesPerMonth),
+    maxSpeed: data.get(#maxSpeed, or: $value.maxSpeed),
+    shieldEfficiency: data.get(#shieldEfficiency, or: $value.shieldEfficiency),
     baseValue: data.get(#baseValue, or: $value.baseValue),
     baseValueMult: data.get(#baseValueMult, or: $value.baseValueMult),
     fighterBays: data.get(#fighterBays, or: $value.fighterBays),

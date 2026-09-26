@@ -231,8 +231,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           appSettings.select((s) => s.showForceUpdateWarning),
                         );
                         return MovingTooltipWidget.text(
-                          message:
-                              "Whether to show the warning when forcing a mod to run on the current game version.",
+                          message: "Whether to show the warning when forcing a mod to run on the current game version.",
                           child: CheckboxWithLabel(
                             value: showForceUpdateWarning,
                             onChanged: (bool? value) => ref
@@ -338,12 +337,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   border: const OutlineInputBorder(),
                                   isDense: true,
                                   labelText: "${Constants.appName} scale",
-                                  hintStyle: Theme.of(
-                                    context,
-                                  ).textTheme.labelLarge,
-                                  labelStyle: Theme.of(
-                                    context,
-                                  ).textTheme.labelLarge,
+                                  hintStyle: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge,
+                                  labelStyle: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge,
                                 ),
                                 onChanged: (newPath) {
                                   final newScale =
@@ -471,8 +470,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         ),
                         const SizedBox(height: 8),
                         MovingTooltipWidget.text(
-                          message:
-                              "When checked, updating an enabled mod switches to the new version.",
+                          message: "When checked, updating an enabled mod switches to the new version.",
                           child: CheckboxWithLabel(
                             value:
                                 ref.watch(
@@ -504,8 +502,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                           name: "Old mod versions",
                           children: [
                             MovingTooltipWidget.text(
-                              message:
-                                  "Installing or updating a mod will replace the previous version of it.",
+                              message: "Installing or updating a mod will replace the previous version of it.",
                               child: IntrinsicWidth(
                                 child: RadioListTile(
                                   title: const Text(
@@ -529,10 +526,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                 IntrinsicWidth(
                                   child: MovingTooltipWidget.text(
                                     message: switch (lastNVersionsSetting) {
-                                      null =>
-                                        "TriOS will never automatically remove mod versions.",
-                                      1 =>
-                                        "Installing or updating a mod will replace the mod.",
+                                      null => "TriOS will never automatically remove mod versions.",
+                                      1 => "Installing or updating a mod will replace the mod.",
                                       _ =>
                                         "Installing or updating a mod will remove all but the last $lastNVersionsSetting highest versions.",
                                     },
@@ -612,7 +607,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                     onPressed: () async {
                                       final modsThatWouldBeRemoved = await ref
                                           .read(modManager.notifier)
-                                          .cleanUpAllModVariantsBasedOnRetainSetting();
+                                          .cleanUpAllModVariantsBasedOnRetainSetting(
+                                            dryRun: true,
+                                          );
 
                                       if (!context.mounted) return;
                                       showDeleteModFoldersConfirmationDialog(
@@ -863,8 +860,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
                         child: MovingTooltipWidget.text(
-                          message:
-                              "How long notifications (e.g. 'Downloading') should appear for.",
+                          message: "How long notifications (e.g. 'Downloading') should appear for.",
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -910,8 +906,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
                         child: MovingTooltipWidget.text(
-                          message:
-                              "Affects how quickly Version Checker searches. If version checker is showing timeout errors, reduce this number.",
+                          message: "Affects how quickly Version Checker searches. If version checker is showing timeout errors, reduce this number.",
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -1081,9 +1076,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         .textTheme
                                         .labelLarge
                                         ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.error,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .error,
                                         ),
                                   ),
                                 ),
@@ -1112,8 +1107,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             ),
                           );
                           return MovingTooltipWidget.text(
-                            message:
-                                "When enabled, mods opened via a 'Open with TriOS' link install immediately, skipping the confirmation dialog.",
+                            message: "When enabled, mods opened via a 'Open with TriOS' link install immediately, skipping the confirmation dialog.",
                             child: CheckboxWithLabel(
                               value: skipDeepLinkConfirmation,
                               onChanged: (bool? value) => ref
@@ -1123,8 +1117,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                       deepLinkSkipConfirmation: value ?? false,
                                     ),
                                   ),
-                              label:
-                                  "Always install mods from 'Open with TriOS' links without confirming",
+                              label: "Always install mods from 'Open with TriOS' links without confirming",
                             ),
                           );
                         },
@@ -1161,8 +1154,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                                   );
                               RestartableApp.softRestartApp(context);
                             },
-                            label:
-                                "Enable Accessibility Semantics (may cause freezes)",
+                            label: "Enable Accessibility Semantics (may cause freezes)",
                           ),
                         ),
                       ),
@@ -1204,9 +1196,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                     leading: Icon(
                       Icons.bug_report,
-                      color: Theme.of(
-                        context,
-                      ).iconTheme.color?.withOpacity(0.7),
+                      color: Theme.of(context).iconTheme.color
+                          ?.withOpacity(0.7),
                     ),
                     expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
                     children: const [
@@ -1674,8 +1665,7 @@ class _ThemeModifiersSection extends ConsumerWidget {
                     spacing: 16,
                     children: [
                       MovingTooltipWidget.text(
-                        message:
-                            "Override the app icon regardless of the active theme.",
+                        message: "Override the app icon regardless of the active theme.",
                         child: Row(
                           spacing: 8,
                           children: [
@@ -1765,8 +1755,7 @@ class _ThemeModifiersSection extends ConsumerWidget {
                         ),
                       ),
                       MovingTooltipWidget.text(
-                        message:
-                            "Override the app name regardless of the active theme.",
+                        message: "Override the app name regardless of the active theme.",
                         child: Row(
                           spacing: 8,
                           children: [
@@ -1842,8 +1831,7 @@ class _ThemeModifiersSection extends ConsumerWidget {
                     ],
                   ),
                   MovingTooltipWidget.text(
-                    message:
-                        "Override the launch button style regardless of the active theme.",
+                    message: "Override the launch button style regardless of the active theme.",
                     child: Row(
                       spacing: 8,
                       children: [
@@ -2083,12 +2071,12 @@ class _GlitterColorDropdown extends ConsumerWidget {
           labelWidget: Row(
             children: [
               for (final color in [
-                ThemeManager.convertToThemeData(
-                  entry.value,
-                ).colorScheme.primary,
-                ThemeManager.convertToThemeData(
-                  entry.value,
-                ).colorScheme.secondary,
+                ThemeManager.convertToThemeData(entry.value)
+                    .colorScheme
+                    .primary,
+                ThemeManager.convertToThemeData(entry.value)
+                    .colorScheme
+                    .secondary,
               ])
                 Padding(
                   padding: const EdgeInsets.only(right: 4),
@@ -2106,8 +2094,7 @@ class _GlitterColorDropdown extends ConsumerWidget {
     ];
 
     return MovingTooltipWidget.text(
-      message:
-          "Which theme's colors the motes use. Default follows the active theme.",
+      message: "Which theme's colors the motes use. Default follows the active theme.",
       child: Row(
         spacing: 8,
         children: [

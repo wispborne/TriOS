@@ -1017,7 +1017,7 @@ Ship _resolveSkin(
       ordnancePoints:
           skin.ordnancePoints?.toDouble() ?? baseHull.ordnancePoints,
       fighterBays: skin.fighterBays?.toDouble() ?? baseHull.fighterBays,
-      maxSpeed: baseHull.maxSpeed,
+      maxSpeed: skin.maxSpeed?.toDouble() ?? baseHull.maxSpeed,
       acceleration: baseHull.acceleration,
       deceleration: baseHull.deceleration,
       maxTurnRate: baseHull.maxTurnRate,
@@ -1027,7 +1027,8 @@ Ship _resolveSkin(
       defenseId: baseHull.defenseId,
       shieldArc: baseHull.shieldArc,
       shieldUpkeep: baseHull.shieldUpkeep,
-      shieldEfficiency: baseHull.shieldEfficiency,
+      shieldEfficiency:
+          skin.shieldEfficiency?.toDouble() ?? baseHull.shieldEfficiency,
       phaseCost: baseHull.phaseCost,
       phaseUpkeep: baseHull.phaseUpkeep,
       minCrew: baseHull.minCrew,
@@ -1043,7 +1044,7 @@ Ship _resolveSkin(
       peakCrSec: baseHull.peakCrSec,
       crLossPerSec: baseHull.crLossPerSec,
       suppliesRec: skin.suppliesToRecover?.toDouble() ?? baseHull.suppliesRec,
-      suppliesMo: baseHull.suppliesMo,
+      suppliesMo: skin.suppliesPerMonth?.toDouble() ?? baseHull.suppliesMo,
       hints: hints,
       tags: tags,
       rarity: baseHull.rarity,

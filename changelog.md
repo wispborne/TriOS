@@ -1,3 +1,9 @@
+# 1.7.1
+- Fixed
+  - Ship Viewer: skins now read top speed, shield efficiency, and monthly supply cost (e.g. the Executor showed the Pegasus's speed and shield).
+  - Pruning mods from the Settings page deleted mods when the dialog appeared instead of when you pressed Confirm.
+  - Deleting a mod whose folder is synced by OneDrive (or a similar cloud-link-creating thing) no longer fails, probably.
+
 # 1.7.0
 - Added
   - Catalog: 

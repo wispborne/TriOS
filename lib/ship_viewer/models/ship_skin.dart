@@ -17,6 +17,9 @@ class ShipSkin with ShipSkinMappable {
   final num? fleetPoints;
   final num? ordnancePoints;
   final num? suppliesToRecover;
+  final num? suppliesPerMonth;
+  final num? maxSpeed;
+  final num? shieldEfficiency;
   final num? baseValue;
   final double? baseValueMult;
   final num? fighterBays;
@@ -50,6 +53,9 @@ class ShipSkin with ShipSkinMappable {
     this.fleetPoints,
     this.ordnancePoints,
     this.suppliesToRecover,
+    this.suppliesPerMonth,
+    this.maxSpeed,
+    this.shieldEfficiency,
     this.baseValue,
     this.baseValueMult,
     this.fighterBays,

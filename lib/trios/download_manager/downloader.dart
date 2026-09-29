@@ -110,6 +110,28 @@ class DownloadManager {
       );
       Map<String, String> headersMap = finalUrlAndHeaders.headersMap;
 
+      // A missing file (e.g. a GitHub release asset that was renamed) comes
+      // back as an error page. Report the error instead of letting the
+      // "website or folder" check below give a misleading message.
+      final statusCode = finalUrlAndHeaders.statusCode;
+      if (statusCode != null && statusCode >= 400) {
+        Fimber.w("Download link returned HTTP $statusCode: '$url'");
+        if (statusCode == HttpStatus.notFound ||
+            statusCode == HttpStatus.gone) {
+          throw Exception(
+            "There is no file at this link (HTTP $statusCode).\n\n"
+            "The mod's download link is probably out of date. "
+            "Check the mod's forum page for a working link.\n\n"
+            "$url",
+          );
+        }
+        throw Exception(
+          "The server sent an error instead of the mod file "
+          "(HTTP $statusCode).\n\n"
+          "$url",
+        );
+      }
+
       // If given a download folder, then get the file's name from the URL and put it in the folder.
       // If given an actual filename rather than a folder, then we already have the name.
       final isDirectory = await Directory(destFolder).exists();
@@ -937,7 +959,11 @@ class DownloadManager {
       }
 
       // If no redirect or meta refresh, return the current URL and headers as final
-      return UrlResponse(currentUrl, currentHeaders);
+      return UrlResponse(
+        currentUrl,
+        currentHeaders,
+        statusCode: getResponse.statusCode,
+      );
     }
 
     // If max redirects exceeded, throw an error or return the last URL and headers
@@ -1100,5 +1126,8 @@ class UrlResponse {
   final String url;
   final Map<String, String> headersMap;
 
-  UrlResponse(this.url, this.headersMap);
+  /// HTTP status of the last response, or null if it wasn't recorded.
+  final int? statusCode;
+
+  UrlResponse(this.url, this.headersMap, {this.statusCode});
 }

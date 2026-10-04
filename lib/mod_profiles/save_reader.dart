@@ -16,7 +16,7 @@ final saveFileProvider =
     );
 
 class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
-  final String _descriptorFileName = "descriptor.xml";
+  final String _descriptorFileName = saveDescriptorFileName;
 
   @override
   Future<List<SaveFile>> build() async {
@@ -71,111 +71,119 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
   Future<SaveFile> readSave(Directory folderOfSave) async {
     final file = folderOfSave.resolve(_descriptorFileName).toFile();
     final contents = await file.readAsString();
-    final document = XmlDocument.parse(contents);
-    var rootElement = document.getElement('SaveGameData');
-
-    final portraitPath =
-        rootElement?.getElement('portraitName')?.innerText ?? "";
-    final characterName =
-        rootElement?.getElement('characterName')?.innerText ?? "";
-    final characterLevel =
-        int.tryParse(
-          rootElement?.getElement('characterLevel')?.innerText ?? '0',
-        ) ??
-        0;
-    final saveFileVersion =
-        rootElement?.getElement('saveFileVersion')?.innerText ?? "";
-    final saveDateString = rootElement?.getElement('saveDate')?.innerText ?? "";
-
-    DateTime saveDate = DateTime.now();
-    try {
-      saveDate = DateFormat("yyyy-MM-dd HH:mm:ss.SS")
-          // Save file dates are always in UTC
-          .parse(saveDateString.replaceAll(' UTC', ''), true);
-    } catch (e) {
-      Fimber.e('Error parsing save date: $e');
-    }
-
-    final compressed =
-        rootElement?.getElement('compressed')?.innerText == 'true';
-    final isIronMode =
-        rootElement?.getElement('isIronMode')?.innerText == 'true';
-    final difficulty =
-        rootElement?.getElement('difficulty')?.innerText ?? "normal";
-
-    final gameDateElement = rootElement?.getElement('gameDate');
-    final secondsPerDay =
-        double.tryParse(
-          gameDateElement?.getElement('secondsPerDay')?.innerText ?? '10.0',
-        ) ??
-        10.0;
-    final timestamp =
-        int.tryParse(
-          gameDateElement?.getElement('timestamp')?.innerText ?? '0',
-        ) ??
-        0;
-
-    // Reading mods
-    final modsElement = rootElement?.getElement('allModsEverEnabled');
-    Map<int, SaveFileMod> modsMap = {};
-
-    if (modsElement != null) {
-      modsElement.findElements('EnabledModData').forEach((modData) {
-        final spec = modData.getElement('spec');
-        if (spec != null) {
-          final id = spec.getElement('id')?.innerText ?? "";
-          final name = spec.getElement('name')?.innerText ?? "";
-          final versionInfo = spec.getElement('versionInfo');
-          final version = Version(
-            raw: versionInfo?.getElement('string')?.innerText,
-            major: versionInfo?.getElement('major')?.innerText ?? "",
-            minor: versionInfo?.getElement('minor')?.innerText ?? "",
-            patch: versionInfo?.getElement('patch')?.innerText ?? "",
-          );
-
-          final zAttribute = int.tryParse(spec.getAttribute('z') ?? '');
-          if (zAttribute != null) {
-            modsMap[zAttribute] = SaveFileMod(
-              id: id,
-              name: name,
-              version: version,
-            );
-          }
-        }
-      });
-    }
-
-    final enabledModsElement = rootElement?.getElement('enabledMods');
-    List<SaveFileMod> enabledMods = [];
-
-    if (enabledModsElement != null) {
-      enabledModsElement.findElements('EnabledModData').forEach((modData) {
-        final specRef = modData.getElement('spec')?.getAttribute('ref');
-        if (specRef != null) {
-          final modRef = int.tryParse(specRef);
-          if (modRef != null && modsMap.containsKey(modRef)) {
-            enabledMods.add(modsMap[modRef]!);
-          }
-        }
-      });
-    }
-
-    return SaveFile(
-      id: folderOfSave.name,
-      folder: folderOfSave,
-      characterName: characterName,
-      characterLevel: characterLevel,
-      portraitPath: portraitPath,
-      saveFileVersion: saveFileVersion,
-      saveDate: saveDate,
-      mods: enabledMods,
-      compressed: compressed,
-      isIronMode: isIronMode,
-      difficulty: difficulty,
-      gameTimestamp: timestamp,
-      secondsPerDay: secondsPerDay,
-    );
+    return parseSaveDescriptor(contents, folderOfSave);
   }
+}
+
+/// The name of the file in a save folder that describes the save.
+const saveDescriptorFileName = "descriptor.xml";
+
+/// Reads a save's `descriptor.xml` into a [SaveFile].
+///
+/// Takes the text rather than the folder so that a descriptor read out of an
+/// archive can be parsed the same way as one read off disk.
+SaveFile parseSaveDescriptor(String contents, Directory folderOfSave) {
+  final document = XmlDocument.parse(contents);
+  var rootElement = document.getElement('SaveGameData');
+
+  final portraitPath = rootElement?.getElement('portraitName')?.innerText ?? "";
+  final characterName =
+      rootElement?.getElement('characterName')?.innerText ?? "";
+  final characterLevel =
+      int.tryParse(
+        rootElement?.getElement('characterLevel')?.innerText ?? '0',
+      ) ??
+      0;
+  final saveFileVersion =
+      rootElement?.getElement('saveFileVersion')?.innerText ?? "";
+  final saveDateString = rootElement?.getElement('saveDate')?.innerText ?? "";
+
+  DateTime saveDate = DateTime.now();
+  try {
+    saveDate = DateFormat("yyyy-MM-dd HH:mm:ss.SS")
+        // Save file dates are always in UTC
+        .parse(saveDateString.replaceAll(' UTC', ''), true);
+  } catch (e) {
+    Fimber.e('Error parsing save date: $e');
+  }
+
+  final compressed = rootElement?.getElement('compressed')?.innerText == 'true';
+  final isIronMode = rootElement?.getElement('isIronMode')?.innerText == 'true';
+  final difficulty =
+      rootElement?.getElement('difficulty')?.innerText ?? "normal";
+
+  final gameDateElement = rootElement?.getElement('gameDate');
+  final secondsPerDay =
+      double.tryParse(
+        gameDateElement?.getElement('secondsPerDay')?.innerText ?? '10.0',
+      ) ??
+      10.0;
+  final timestamp =
+      int.tryParse(
+        gameDateElement?.getElement('timestamp')?.innerText ?? '0',
+      ) ??
+      0;
+
+  // Reading mods
+  final modsElement = rootElement?.getElement('allModsEverEnabled');
+  Map<int, SaveFileMod> modsMap = {};
+
+  if (modsElement != null) {
+    modsElement.findElements('EnabledModData').forEach((modData) {
+      final spec = modData.getElement('spec');
+      if (spec != null) {
+        final id = spec.getElement('id')?.innerText ?? "";
+        final name = spec.getElement('name')?.innerText ?? "";
+        final versionInfo = spec.getElement('versionInfo');
+        final version = Version(
+          raw: versionInfo?.getElement('string')?.innerText,
+          major: versionInfo?.getElement('major')?.innerText ?? "",
+          minor: versionInfo?.getElement('minor')?.innerText ?? "",
+          patch: versionInfo?.getElement('patch')?.innerText ?? "",
+        );
+
+        final zAttribute = int.tryParse(spec.getAttribute('z') ?? '');
+        if (zAttribute != null) {
+          modsMap[zAttribute] = SaveFileMod(
+            id: id,
+            name: name,
+            version: version,
+          );
+        }
+      }
+    });
+  }
+
+  final enabledModsElement = rootElement?.getElement('enabledMods');
+  List<SaveFileMod> enabledMods = [];
+
+  if (enabledModsElement != null) {
+    enabledModsElement.findElements('EnabledModData').forEach((modData) {
+      final specRef = modData.getElement('spec')?.getAttribute('ref');
+      if (specRef != null) {
+        final modRef = int.tryParse(specRef);
+        if (modRef != null && modsMap.containsKey(modRef)) {
+          enabledMods.add(modsMap[modRef]!);
+        }
+      }
+    });
+  }
+
+  return SaveFile(
+    id: folderOfSave.name,
+    folder: folderOfSave,
+    characterName: characterName,
+    characterLevel: characterLevel,
+    portraitPath: portraitPath,
+    saveFileVersion: saveFileVersion,
+    saveDate: saveDate,
+    mods: enabledMods,
+    compressed: compressed,
+    isIronMode: isIronMode,
+    difficulty: difficulty,
+    gameTimestamp: timestamp,
+    secondsPerDay: secondsPerDay,
+  );
 }
 
 class SaveFile {

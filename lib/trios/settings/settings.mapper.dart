@@ -736,6 +736,30 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static Directory? _$customSavesArchivePath(Settings v) =>
+      v.customSavesArchivePath;
+  static const Field<Settings, Directory> _f$customSavesArchivePath = Field(
+    'customSavesArchivePath',
+    _$customSavesArchivePath,
+    opt: true,
+    hook: DirectoryHook(),
+  );
+  static bool _$useCustomSavesArchivePath(Settings v) =>
+      v.useCustomSavesArchivePath;
+  static const Field<Settings, bool> _f$useCustomSavesArchivePath = Field(
+    'useCustomSavesArchivePath',
+    _$useCustomSavesArchivePath,
+    opt: true,
+    def: false,
+  );
+  static int _$saveArchiveKeepNewestCount(Settings v) =>
+      v.saveArchiveKeepNewestCount;
+  static const Field<Settings, int> _f$saveArchiveKeepNewestCount = Field(
+    'saveArchiveKeepNewestCount',
+    _$saveArchiveKeepNewestCount,
+    opt: true,
+    def: 5,
+  );
   static Directory? _$customCoreFolderPath(Settings v) =>
       v.customCoreFolderPath;
   static const Field<Settings, Directory> _f$customCoreFolderPath = Field(
@@ -1275,6 +1299,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #useCustomGameExePath: _f$useCustomGameExePath,
     #customSavesPath: _f$customSavesPath,
     #useCustomSavesPath: _f$useCustomSavesPath,
+    #customSavesArchivePath: _f$customSavesArchivePath,
+    #useCustomSavesArchivePath: _f$useCustomSavesArchivePath,
+    #saveArchiveKeepNewestCount: _f$saveArchiveKeepNewestCount,
     #customCoreFolderPath: _f$customCoreFolderPath,
     #useCustomCoreFolderPath: _f$useCustomCoreFolderPath,
     #doubleClickForModsPanel: _f$doubleClickForModsPanel,
@@ -1390,6 +1417,9 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       useCustomGameExePath: data.dec(_f$useCustomGameExePath),
       customSavesPath: data.dec(_f$customSavesPath),
       useCustomSavesPath: data.dec(_f$useCustomSavesPath),
+      customSavesArchivePath: data.dec(_f$customSavesArchivePath),
+      useCustomSavesArchivePath: data.dec(_f$useCustomSavesArchivePath),
+      saveArchiveKeepNewestCount: data.dec(_f$saveArchiveKeepNewestCount),
       customCoreFolderPath: data.dec(_f$customCoreFolderPath),
       useCustomCoreFolderPath: data.dec(_f$useCustomCoreFolderPath),
       doubleClickForModsPanel: data.dec(_f$doubleClickForModsPanel),
@@ -1663,6 +1693,9 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     bool? useCustomGameExePath,
     Directory? customSavesPath,
     bool? useCustomSavesPath,
+    Directory? customSavesArchivePath,
+    bool? useCustomSavesArchivePath,
+    int? saveArchiveKeepNewestCount,
     Directory? customCoreFolderPath,
     bool? useCustomCoreFolderPath,
     bool? doubleClickForModsPanel,
@@ -1967,6 +2000,9 @@ class _SettingsCopyWithImpl<$R, $Out>
     bool? useCustomGameExePath,
     Object? customSavesPath = $none,
     bool? useCustomSavesPath,
+    Object? customSavesArchivePath = $none,
+    bool? useCustomSavesArchivePath,
+    int? saveArchiveKeepNewestCount,
     Object? customCoreFolderPath = $none,
     bool? useCustomCoreFolderPath,
     bool? doubleClickForModsPanel,
@@ -2083,6 +2119,12 @@ class _SettingsCopyWithImpl<$R, $Out>
         #useCustomGameExePath: useCustomGameExePath,
       if (customSavesPath != $none) #customSavesPath: customSavesPath,
       if (useCustomSavesPath != null) #useCustomSavesPath: useCustomSavesPath,
+      if (customSavesArchivePath != $none)
+        #customSavesArchivePath: customSavesArchivePath,
+      if (useCustomSavesArchivePath != null)
+        #useCustomSavesArchivePath: useCustomSavesArchivePath,
+      if (saveArchiveKeepNewestCount != null)
+        #saveArchiveKeepNewestCount: saveArchiveKeepNewestCount,
       if (customCoreFolderPath != $none)
         #customCoreFolderPath: customCoreFolderPath,
       if (useCustomCoreFolderPath != null)
@@ -2290,6 +2332,18 @@ class _SettingsCopyWithImpl<$R, $Out>
     useCustomSavesPath: data.get(
       #useCustomSavesPath,
       or: $value.useCustomSavesPath,
+    ),
+    customSavesArchivePath: data.get(
+      #customSavesArchivePath,
+      or: $value.customSavesArchivePath,
+    ),
+    useCustomSavesArchivePath: data.get(
+      #useCustomSavesArchivePath,
+      or: $value.useCustomSavesArchivePath,
+    ),
+    saveArchiveKeepNewestCount: data.get(
+      #saveArchiveKeepNewestCount,
+      or: $value.saveArchiveKeepNewestCount,
     ),
     customCoreFolderPath: data.get(
       #customCoreFolderPath,

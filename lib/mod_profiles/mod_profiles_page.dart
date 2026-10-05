@@ -6,6 +6,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:trios/mod_manager/audit_page.dart';
 import 'package:trios/mod_profiles/models/shared_mod_list.dart';
 import 'package:trios/mod_profiles/save_reader.dart';
+import 'package:trios/save_archiver/save_archives_dialog.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/app_state.dart';
@@ -184,6 +185,15 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                             ).textTheme.headlineSmall?.copyWith(fontSize: 20),
                           ),
                           const Spacer(),
+                          MovingTooltipWidget.text(
+                            message:
+                                'Archived saves — compress the ones you '
+                                'are not playing, and put them back later',
+                            child: IconButton(
+                              onPressed: () => showSaveArchivesDialog(context),
+                              icon: const Icon(Icons.inventory_2_outlined),
+                            ),
+                          ),
                           MovingTooltipWidget.text(
                             message: 'Reread from Saves folder',
                             child: IconButton(

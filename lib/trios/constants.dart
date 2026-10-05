@@ -41,6 +41,11 @@ class Constants {
   static const savesFolderName = "saves";
   static const savesCommonFolderName = "saves/common";
   static const archivesFolderName = "Mod_Backups";
+
+  /// Folder that archived saves go in, beside the saves folder by default.
+  /// Not inside it: the game scans the saves folder for folders, and there is
+  /// no reason to make it look at ours.
+  static const savesArchiveFolderName = "TriOS_Save_Archives";
   static const modInfoFileName = "mod_info.json";
   static const unbrickedModInfoFileName = modInfoFileName;
   static final gameJreFolderName = switch (1) {

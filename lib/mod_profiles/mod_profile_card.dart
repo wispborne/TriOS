@@ -12,6 +12,7 @@ import 'package:toastification/toastification.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_profiles/save_reader.dart';
+import 'package:trios/save_archiver/save_archives_dialog.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
@@ -436,6 +437,27 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                         //       message: 'Id: ${profile.id}',
                         //       child: const Icon(
                         //           Icons.bug_report)),
+                        if (isSaveGame)
+                          Disable(
+                            isEnabled: !isGameRunning,
+                            child: MovingTooltipWidget.text(
+                              message: isGameRunning
+                                  ? 'Close the game first'
+                                  : 'Archive this save: compress it into a '
+                                        'single file and remove the folder, '
+                                        'after checking the archive holds '
+                                        'every file',
+                              child: IconButton(
+                                icon: const Icon(Icons.archive_outlined),
+                                onPressed: () =>
+                                    archiveOneSaveWithConfirmation(
+                                      context,
+                                      ref,
+                                      save!,
+                                    ),
+                              ),
+                            ),
+                          ),
                         if (isSaveGame)
                           // Open save folder
                           MovingTooltipWidget.text(

@@ -11,7 +11,7 @@
   - Refreshing the Ship Viewer now reloads changed sprites, graphics, engine and shield styles, and `trios.json` settings.
   - Tentative mitigation for VRAM Estimator scanning when OS is low on file handles.
 - Changed
-  - Default ship background is now space4 (darker).
+  - Default ship viewer background is now space4 (darker).
 
 # 1.7.0
 - Added

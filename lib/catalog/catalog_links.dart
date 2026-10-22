@@ -1,9 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/catalog_manager.dart';
-import 'package:trios/catalog/models/forum_llm_data.dart';
-import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/mod_records/mod_record.dart';
 import 'package:trios/mod_records/mod_records_store.dart';
@@ -30,6 +27,11 @@ String catalogEntryKey(String name) => name.toLowerCase().trim();
 String _catalogNameMatchKey(String name) =>
     cleanModDisplayName(name).alphanumericLower();
 
+/// Tells catalog entries apart: the permanent id when the entry has one, else
+/// the name key. Two entries can share a name, so the name alone isn't enough.
+String _entryLinkKey(ModRepoEntry entry) =>
+    entry.id ?? catalogEntryKey(entry.name);
+
 /// Which clue produced a match. Recording it costs nothing and helps with
 /// debugging and any future screen that wants to show how sure a match is.
 enum CatalogLinkSignal { persistedRecord, threadId, nexusId, exactName, fuzzyName }
@@ -49,9 +51,10 @@ class CatalogLink {
 
 /// Matches catalog entries to installed mods. Pure — no reads from providers.
 ///
-/// Clues in order (first that hits wins): a saved install-time record link, the
-/// version-checker forum thread id, the NexusMods id, an exact name, then a
-/// close-enough name with version text removed. The saved link normally comes
+/// Clues in order (first that hits wins): a saved install-time record link (by
+/// catalog id, then by catalog name), the version-checker forum thread id, the
+/// NexusMods id, an exact name, then a close-enough name with version text
+/// removed. The saved link normally comes
 /// first so an install made through the Catalog stays linked even when the
 /// mod's own `mod_info` name differs from the catalog name (the Ashpad/Aashpad
 /// case). A match to another entry's own name wins over a shared forum thread
@@ -83,16 +86,23 @@ List<CatalogLink> matchCatalogToInstalled({
     if (nexusId != null) byNexusId.putIfAbsent(nexusId, () => mod);
   }
 
-  // Saved install-time links: catalog entry key -> installed mod id. Only kept
-  // when that mod is actually installed, so a stale record can't win.
+  // Saved install-time links: catalog id or catalog entry key -> installed mod
+  // id. Only kept when that mod is actually installed, so a stale record can't
+  // win. A record with an id links by id only, since two catalog entries can
+  // share a name. Records saved before the catalog had ids link by name.
+  final persistedModIdByCatalogId = <String, String>{};
   final persistedModIdByKey = <String, String>{};
   if (records != null) {
     for (final record in records.records.values) {
       final modId = record.modId;
+      if (modId == null || !byModId.containsKey(modId)) continue;
+      final catalogId = record.catalog?.catalogId;
       final catalogName = record.catalog?.name;
-      if (modId == null || catalogName == null) continue;
-      if (!byModId.containsKey(modId)) continue;
-      persistedModIdByKey[catalogEntryKey(catalogName)] = modId;
+      if (catalogId != null) {
+        persistedModIdByCatalogId[catalogId] = modId;
+      } else if (catalogName != null) {
+        persistedModIdByKey[catalogEntryKey(catalogName)] = modId;
+      }
     }
   }
 
@@ -102,14 +112,14 @@ List<CatalogLink> matchCatalogToInstalled({
   // thread id, from assigning the child to the parent entry instead.
   final nameMatchedEntryKeysByModId = <String, Set<String>>{};
   for (final entry in entries) {
-    final entryKey = catalogEntryKey(entry.name);
-    if (entryKey.isEmpty) continue;
+    final nameKey = catalogEntryKey(entry.name);
+    if (nameKey.isEmpty) continue;
     final nameMatchedMod =
-        byName[entryKey] ?? byFuzzy[_catalogNameMatchKey(entry.name)];
+        byName[nameKey] ?? byFuzzy[_catalogNameMatchKey(entry.name)];
     if (nameMatchedMod == null) continue;
     nameMatchedEntryKeysByModId
         .putIfAbsent(nameMatchedMod.id, () => <String>{})
-        .add(entryKey);
+        .add(_entryLinkKey(entry));
   }
 
   bool hasNameMatchToAnotherEntry(Mod mod, String entryKey) {
@@ -119,19 +129,24 @@ List<CatalogLink> matchCatalogToInstalled({
 
   final links = <CatalogLink>[];
   for (final entry in entries) {
-    final key = catalogEntryKey(entry.name);
-    if (key.isEmpty) continue;
+    final nameKey = catalogEntryKey(entry.name);
+    if (nameKey.isEmpty) continue;
+    final key = _entryLinkKey(entry);
 
     Mod? mod;
     CatalogLinkSignal? signal;
 
-    final persistedId = persistedModIdByKey[key];
-    if (persistedId != null) {
+    for (final persistedId in [
+      if (entry.id != null) persistedModIdByCatalogId[entry.id],
+      persistedModIdByKey[nameKey],
+    ]) {
+      if (persistedId == null) continue;
       final persistedMod = byModId[persistedId];
       if (persistedMod != null &&
           !hasNameMatchToAnotherEntry(persistedMod, key)) {
         mod = persistedMod;
         signal = CatalogLinkSignal.persistedRecord;
+        break;
       }
     }
 
@@ -160,8 +175,8 @@ List<CatalogLink> matchCatalogToInstalled({
       }
     }
 
-    if (mod == null && byName.containsKey(key)) {
-      mod = byName[key];
+    if (mod == null && byName.containsKey(nameKey)) {
+      mod = byName[nameKey];
       signal = CatalogLinkSignal.exactName;
     }
 
@@ -183,11 +198,14 @@ List<CatalogLink> matchCatalogToInstalled({
 /// The resolved catalog links, ready to look up from either side.
 class CatalogLinks {
   final Map<String, CatalogLink> _byEntryKey;
+  final Map<String, CatalogLink> _byName;
   final Map<String, CatalogLink> _byModId;
 
   CatalogLinks(List<CatalogLink> links)
-    : _byEntryKey = {
-        for (final link in links) catalogEntryKey(link.entry.name): link,
+    : _byEntryKey = {for (final link in links) _entryLinkKey(link.entry): link},
+      _byName = {
+        for (final link in links.reversed)
+          catalogEntryKey(link.entry.name): link,
       },
       _byModId = {for (final link in links) link.mod.id: link};
 
@@ -195,23 +213,21 @@ class CatalogLinks {
   Iterable<CatalogLink> get all => _byEntryKey.values;
 
   /// The installed mod for a catalog entry, or null when it isn't installed.
-  Mod? modForEntry(ModRepoEntry entry) => _byEntryKey[catalogEntryKey(entry.name)]?.mod;
+  Mod? modForEntry(ModRepoEntry entry) => _byEntryKey[_entryLinkKey(entry)]?.mod;
 
-  /// The link for a catalog entry name, or null when it isn't installed.
-  CatalogLink? linkForName(String name) => _byEntryKey[catalogEntryKey(name)];
+  /// The link for a catalog entry name, or null when it isn't installed. When
+  /// two entries share the name, the first one's link.
+  CatalogLink? linkForName(String name) => _byName[catalogEntryKey(name)];
 
   /// The catalog link for an installed mod id, or null when it has no entry.
   CatalogLink? linkForModId(String modId) => _byModId[modId];
 }
 
-/// The full catalog list the page shows: real entries plus the made-up "part of
-/// a thread" add-on entries. Both the Catalog page and [catalogLinksProvider]
+/// The full catalog list. Both the Catalog page and [catalogLinksProvider]
 /// watch this so they always work from the same list.
 final modRepoEntriesProvider = Provider<List<ModRepoEntry>>((ref) {
   final repo = ref.watch(browseModsNotifierProvider).value;
-  final realMods = repo?.items ?? const <ModRepoEntry>[];
-  final forumLookup = ref.watch(forumDataByTopicId);
-  return withSynthesizedAddonEntries(realMods, forumLookup);
+  return repo?.items ?? const <ModRepoEntry>[];
 });
 
 /// The one place the app reads catalog links from. Recomputes only when the
@@ -228,125 +244,6 @@ final catalogLinksProvider = Provider<CatalogLinks>((ref) {
     ),
   );
 });
-
-/// Adds made-up cards for mods that only live inside another mod's forum
-/// thread. For each thread that lists more than one mod, every mod that doesn't
-/// already have its own catalog entry becomes a made-up card, marked with the
-/// thread title so the card can show `part of <thread>`. A child that already
-/// has a real catalog entry keeps that entry and gains the same thread data.
-///
-/// A thread is only ever reached through a real catalog entry, so one of its
-/// mods is that entry under another name. [_isTheCatalogEntry] finds it and
-/// skips it — otherwise the mod gets a second card that says "part of" its own
-/// thread and offers to install a mod the catalog already lists as installed.
-///
-/// Drops duplicate made-up names across threads (first thread wins), so a mod
-/// that appears in several threads isn't listed twice.
-List<ModRepoEntry> withSynthesizedAddonEntries(
-  List<ModRepoEntry> realMods,
-  Map<int, ForumModIndex> forumLookup,
-) {
-  if (realMods.isEmpty || forumLookup.isEmpty) return realMods;
-
-  final entries = realMods.toList();
-  final existingEntryIndexByKey = <String, int>{};
-  for (var i = 0; i < entries.length; i++) {
-    final name = entries[i].name;
-    if (name.trim().isEmpty) continue;
-    existingEntryIndexByKey.putIfAbsent(
-      catalogAddonEntryMatchKey(name),
-      () => i,
-    );
-  }
-  final synthesizedNames = <String>{};
-  final synthesized = <ModRepoEntry>[];
-  var enrichedExistingEntry = false;
-
-  for (final mod in realMods) {
-    final forumUrl = mod.urls?[ModUrlType.Forum];
-    final topicId = extractForumTopicId(forumUrl);
-    if (topicId == null) continue;
-    final index = forumLookup[topicId];
-    final llm = index?.llm;
-    if (index == null || llm == null || llm.mods.length < 2) continue;
-
-    final mainMods = llm.mods
-        .where((llmMod) => llmMod.role == LlmModRole.main)
-        .toList();
-
-    for (final llmMod in llm.mods) {
-      final key = llmMod.name.toLowerCase().trim();
-      if (key.isEmpty) continue;
-      final existingIndex =
-          existingEntryIndexByKey[catalogAddonEntryMatchKey(llmMod.name)];
-      if (existingIndex != null) {
-        final existing = entries[existingIndex];
-        final urls = Map<ModUrlType, String>.of(existing.urls ?? const {});
-        if (forumUrl != null) {
-          urls.putIfAbsent(ModUrlType.Forum, () => forumUrl);
-        }
-        entries[existingIndex] = existing.copyWith(
-          urls: urls,
-          partOfThreadTitle: existing.partOfThreadTitle ?? index.title,
-        );
-        enrichedExistingEntry = true;
-        continue;
-      }
-      if (_isTheCatalogEntry(llmMod, mod, mainMods)) continue;
-      if (!synthesizedNames.add(key)) continue;
-
-      synthesized.add(
-        ModRepoEntry(
-          name: llmMod.name,
-          // No summary or description: the only text a thread mod has is the
-          // AI one, and putting it here would credit it to the mod index and
-          // show it even with AI features switched off. It reaches the card
-          // through CatalogMod.aiSentence instead, labelled and gated.
-          // Prefer the thread's game version; fall back to the parent mod's
-          // so add-ons stay visible under the default Game Version filter
-          // even when the thread itself lists no version.
-          gameVersionReq: index.gameVersion ?? mod.gameVersionReq,
-          authorsList: mod.authorsList,
-          urls: {ModUrlType.Forum: ?forumUrl},
-          partOfThreadTitle: index.title,
-        ),
-      );
-    }
-  }
-
-  if (!enrichedExistingEntry && synthesized.isEmpty) return realMods;
-  return [...entries, ...synthesized];
-}
-
-/// Name key used only to avoid making a second card for a real catalog entry.
-/// Forum text may add a leading "The", while catalog names may add a version.
-String catalogAddonEntryMatchKey(String name) {
-  var cleaned = cleanModDisplayName(name).trim();
-  if (cleaned.toLowerCase().startsWith('the ')) {
-    cleaned = cleaned.substring(4).trim();
-  }
-  return cleaned.alphanumericLower();
-}
-
-/// True when [llmMod] is the thread mod that [entry] already stands for.
-///
-/// Two ways to tell. The names may agree once the version decoration is off
-/// them ("Big Pilum Energy 1.0.d" and "Big Pilum Energy"). Or the thread has a
-/// single main mod, which is what a catalog entry pointing at that thread
-/// means — the names often look nothing alike, e.g. the entry "Red" against
-/// "[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod".
-///
-/// A thread that lists several mods as main is a bundle, like "Hartley's
-/// Miscellaneous Mods", and those really are separate mods. Only the one whose
-/// name agrees is dropped there.
-bool _isTheCatalogEntry(
-  ForumLlmMod llmMod,
-  ModRepoEntry entry,
-  List<ForumLlmMod> mainMods,
-) {
-  if (modNamesMatch(llmMod.name, entry.name)) return true;
-  return llmMod.role == LlmModRole.main && mainMods.length == 1;
-}
 
 /// Look up a catalog entry's installed mod straight from a [Mod]. Pass the
 /// watched [CatalogLinks] (from [catalogLinksProvider]) so the caller keeps the

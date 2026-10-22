@@ -5,11 +5,15 @@ import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 
+/// A catalog entry from forum topic 1 (the default [_makeIndex] topic). The
+/// catalog names its AI answer [llmModName], which defaults to [name].
+/// [partOfThread] marks the topic as shared with other catalog mods.
 ModRepoEntry _makeMod({
   String name = 'TestMod',
+  String? llmModName,
   String? summary,
   String? description,
-  String? partOfThreadTitle,
+  bool partOfThread = false,
   Map<ModUrlType, String>? urls,
   List<ModSource>? sources,
 }) =>
@@ -17,9 +21,18 @@ ModRepoEntry _makeMod({
       name: name,
       summary: summary,
       description: description,
-      partOfThreadTitle: partOfThreadTitle,
       urls: urls,
       sources: sources,
+      sourcePosts: [
+        CatalogSourcePost(
+          kind: CatalogSourceKind.forum,
+          id: '1',
+          llmModName: llmModName ?? name,
+          foundBy: partOfThread
+              ? CatalogFoundBy.llm
+              : CatalogFoundBy.rulesAndLlm,
+        ),
+      ],
     );
 
 ForumModIndex _makeIndex({
@@ -86,19 +99,17 @@ void main() {
         ),
       ]);
       final index = _makeIndex(llm: llm);
-      final mod = _makeMod(
-        name: 'Nexerelin Extras',
-        partOfThreadTitle: 'Nexerelin Thread',
-      );
+      final mod = _makeMod(name: 'Nexerelin Extras', partOfThread: true);
 
       final gathered = gatherCatalogMod(mod: mod, forumIndex: index);
 
       expect(gathered.aiSentence, 'Addon sentence.');
       expect(gathered.aiParagraph, 'Addon paragraph.');
       expect(gathered.llmMod?.name, 'Nexerelin Extras');
+      expect(gathered.partOfThreadTitle, 'Thread Title');
     });
 
-    test('add-on with no name match falls back to main mod', () {
+    test('an AI name missing from the answer gives no AI entry', () {
       final mainExtras = ForumLlmExtras(
         summary: ForumLlmSummary(
           sentence: 'Main sentence.',
@@ -113,18 +124,15 @@ void main() {
         ),
       ]);
       final index = _makeIndex(llm: llm);
-      final mod = _makeMod(
-        name: 'Unknown Addon',
-        partOfThreadTitle: 'Nexerelin Thread',
-      );
+      final mod = _makeMod(name: 'Unknown Addon', partOfThread: true);
 
       final gathered = gatherCatalogMod(mod: mod, forumIndex: index);
 
-      expect(gathered.aiSentence, 'Main sentence.');
-      expect(gathered.llmMod?.name, 'Nexerelin');
+      expect(gathered.aiSentence, isNull);
+      expect(gathered.llmMod, isNull);
     });
 
-    test('normal entry gets main mod', () {
+    test('normal entry gets the AI entry the catalog names', () {
       final extras = ForumLlmExtras(
         summary: ForumLlmSummary(
           sentence: 'A sentence.',

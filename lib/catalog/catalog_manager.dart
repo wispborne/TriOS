@@ -10,9 +10,9 @@ final isLoadingCatalog = StateProvider<bool>((ref) => false);
 /// Shared fetcher for Wisp's mod repo. Exposed so the data-sources dialog
 /// can introspect and clear its cache without duplicating file-name wiring.
 final modRepoFetcher = CachedJsonFetcher(
-  cacheFileName: 'mod_repo.json',
-  metaFileName: 'mod_repo.meta',
-  url: Constants.modRepoUrl,
+  cacheFileName: 'mod_catalog.json',
+  metaFileName: 'mod_catalog.meta',
+  url: Constants.modCatalogUrl,
   maxAge: Duration(hours: 6),
   logTag: 'mod repo',
 );

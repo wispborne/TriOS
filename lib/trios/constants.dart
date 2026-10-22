@@ -42,9 +42,7 @@ class Constants {
   static const savesCommonFolderName = "saves/common";
   static const archivesFolderName = "Mod_Backups";
 
-  /// Folder that archived saves go in, beside the saves folder by default.
-  /// Not inside it: the game scans the saves folder for folders, and there is
-  /// no reason to make it look at ours.
+  /// Archives default to a sibling of the saves folder, outside the game's list.
   static const savesArchiveFolderName = "TriOS_Save_Archives";
   static const modInfoFileName = "mod_info.json";
   static const unbrickedModInfoFileName = modInfoFileName;
@@ -104,10 +102,10 @@ class Constants {
   static const companionModId = "wisp_trios_companion";
   static const gargoyleCharId = "gargoyle";
 
-  static const String modRepoUrl =
-      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/ModRepo.json";
-  static const String forumDataBundleUrl =
-      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/forum-data-bundle.json";
+  static const String modCatalogUrl =
+      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/mod-catalog.json";
+  static const String modCatalogDetailsUrl =
+      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/mod-catalog-details.json";
 
   // "https://raw.githubusercontent.com/theRoastSuckling/QBForumModData/refs/heads/main/forum-data-bundle.json";
   static const String patreonUrl = "https://www.patreon.com/wispborne";

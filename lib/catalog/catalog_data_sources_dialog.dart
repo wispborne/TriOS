@@ -22,7 +22,7 @@ Future<void> showCatalogDataSourcesDialog(BuildContext context) {
   );
 }
 
-/// Dialog showing the status of `mod_repo.json` and `forum_data_bundle.json`
+/// Dialog showing the status of `mod-catalog.json` and `mod-catalog-details.json`
 /// and exposing refresh / clear actions for each.
 class CatalogDataSourcesDialog extends ConsumerStatefulWidget {
   const CatalogDataSourcesDialog({super.key});

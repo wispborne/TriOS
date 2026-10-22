@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
+import 'package:trios/catalog/models/forum_data_bundle.dart';
 import 'package:trios/catalog/models/mod_image_source.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
@@ -190,20 +191,44 @@ String? _resolveAvatarUrl(String? p) {
   }
 }
 
-/// Picks the LLM mod entry this catalog mod represents: for a mod bundled in
-/// another mod's thread, the entry whose name matches; otherwise the thread's
-/// main mod.
-ForumLlmMod? _resolveLlmMod(ModRepoEntry mod, ForumLlmData? llm) {
-  if (llm == null) return null;
-  if (mod.isPartOfThread) {
-    final key = catalogAddonEntryMatchKey(mod.name);
-    return llm.mods.firstWhereOrNull(
-          (m) => catalogAddonEntryMatchKey(m.name) == key,
-        ) ??
-        llm.mainMod;
+/// The AI's answer for this catalog mod, found by the name the catalog gives
+/// it in each source post. The forum topic's answer comes first, then each
+/// Discord thread's. Null when no source post names an AI answer.
+///
+/// The catalog has already decided which answer belongs to which mod, so this
+/// never guesses by name or falls back to a post's main mod.
+ForumLlmMod? llmModForEntry(
+  ModRepoEntry mod, {
+  ForumModIndex? forumIndex,
+  List<DiscordThreadAnswer> discordThreads = const [],
+}) {
+  final forumName = mod.forumPost?.llmModName;
+  if (forumName != null) {
+    final match = forumIndex?.llm?.mods.firstWhereOrNull(
+      (m) => m.name == forumName,
+    );
+    if (match != null) return match;
   }
-  return llm.mainMod;
+  for (final post in mod.discordPosts) {
+    final name = post.llmModName;
+    if (name == null) continue;
+    final thread = discordThreads.firstWhereOrNull(
+      (t) => t.threadId == post.id,
+    );
+    final match = thread?.mods.firstWhereOrNull((m) => m.name == name);
+    if (match != null) return match;
+  }
+  return null;
 }
+
+/// The AI answers for the Discord threads [mod] came from, out of [byThreadId].
+List<DiscordThreadAnswer> discordThreadsFor(
+  ModRepoEntry mod,
+  Map<String, DiscordThreadAnswer> byThreadId,
+) => [
+  for (final post in mod.discordPosts)
+    if (byThreadId[post.id] case final thread?) thread,
+];
 
 /// Builds the set of Attribute chip-value keys for a mod. Pure — no provider
 /// reads. The `forumIndex` carries the WIP and Archived flags that used to
@@ -240,14 +265,21 @@ List<String> _buildAttributeKeys(
 /// [forumDetails] is optional: it's only available when the user has opened a
 /// specific mod's dialog and the forum post is cached. When present, its richer
 /// fields (author title, avatar, post count) win over the index.
+///
+/// [discordThreads] are the AI answers for the Discord threads the mod came
+/// from. They are used only when the forum topic has no AI answer for it.
 CatalogMod gatherCatalogMod({
   required ModRepoEntry mod,
   ForumModIndex? forumIndex,
+  List<DiscordThreadAnswer> discordThreads = const [],
   ForumModDetails? forumDetails,
   Mod? installedMod,
 }) {
-  final llm = forumIndex?.llm;
-  final llmMod = _resolveLlmMod(mod, llm);
+  final llmMod = llmModForEntry(
+    mod,
+    forumIndex: forumIndex,
+    discordThreads: discordThreads,
+  );
   final extras = llmMod?.extras;
   final sourceCodeUrl = extras?.sourceCodeUrl;
 
@@ -288,7 +320,7 @@ CatalogMod gatherCatalogMod({
     entry: mod,
     title: title,
     authors: authorsList,
-    partOfThreadTitle: mod.partOfThreadTitle,
+    partOfThreadTitle: mod.isPartOfThread ? forumIndex?.title : null,
     authorTitle: authorTitle,
     authorPostCount: authorPostCount,
     authorAvatarPath: avatarPathResolved,
@@ -333,6 +365,7 @@ CatalogMod gatherCatalogMod({
 final catalogModsProvider = Provider<List<CatalogMod>>((ref) {
   final entries = ref.watch(modRepoEntriesProvider);
   final forumLookup = ref.watch(forumDataByTopicId);
+  final discordLookup = ref.watch(discordThreadsById);
   final links = ref.watch(catalogLinksProvider);
 
   final sw = Stopwatch()..start();
@@ -343,6 +376,7 @@ final catalogModsProvider = Provider<List<CatalogMod>>((ref) {
     return gatherCatalogMod(
       mod: entry,
       forumIndex: forumIndex,
+      discordThreads: discordThreadsFor(entry, discordLookup),
       installedMod: installedMod,
     );
   }).toList();

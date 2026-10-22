@@ -78,9 +78,8 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     // puts saved install-time links first. Keyed by mod id so every variant of
     // a mod sees the same entry, and refreshed from current catalog data each
     // pass so linked records stay up to date as the catalog changes.
-    final matchingEntries = withSynthesizedAddonEntries(catalog, forumIndex);
     final links = matchCatalogToInstalled(
-      entries: matchingEntries,
+      entries: catalog,
       installedMods: ref.read(AppState.mods),
       records: current,
     );
@@ -247,6 +246,7 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
     final forumUrl = urls[ModUrlType.Forum];
     final nexusUrl = urls[ModUrlType.NexusMods];
     return CatalogSource(
+      catalogId: catalogMod.id,
       name: catalogMod.name,
       authors: catalogMod.getAuthors().isNotEmpty
           ? catalogMod.getAuthors()
@@ -330,12 +330,15 @@ class ModRecordsStore extends GenericSettingsAsyncNotifier<ModRecords> {
           ref.read(browseModsNotifierProvider).value?.items ??
           const <ModRepoEntry>[];
       final key = catalogEntryKey(catalogName);
-      final catalogMod = catalog.firstWhereOrNull(
-        (m) => catalogEntryKey(m.name) == key,
-      );
+      final catalogMod =
+          catalog.firstWhereOrNull(
+            (m) => hint.catalogId != null && m.id == hint.catalogId,
+          ) ??
+          catalog.firstWhereOrNull((m) => catalogEntryKey(m.name) == key);
       final catalogSource = catalogMod != null
           ? _buildCatalogSource(catalogMod, now)
           : CatalogSource(
+              catalogId: hint.catalogId,
               name: catalogName,
               forumThreadId: hint.forumThreadId,
               nexusModsId: hint.nexusModsId,

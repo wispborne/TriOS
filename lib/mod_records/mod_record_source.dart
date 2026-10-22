@@ -71,9 +71,12 @@ class VersionCheckerSource extends ModRecordSource
       );
 }
 
-/// Source: mod catalog (ModRepo.json).
+/// Source: mod catalog (`mod-catalog.json`).
 @MappableClass(discriminatorValue: 'catalog')
 class CatalogSource extends ModRecordSource with CatalogSourceMappable {
+  /// The catalog entry's permanent id. Records saved before the catalog had
+  /// ids only have [name].
+  final String? catalogId;
   final String? name;
   final List<String>? authors;
   final String? forumUrl;
@@ -86,6 +89,7 @@ class CatalogSource extends ModRecordSource with CatalogSourceMappable {
   final List<String>? categories;
 
   const CatalogSource({
+    this.catalogId,
     this.name,
     this.authors,
     this.forumUrl,
@@ -101,6 +105,7 @@ class CatalogSource extends ModRecordSource with CatalogSourceMappable {
 
   /// Returns a new [CatalogSource] with override fields winning when non-null.
   CatalogSource applyOverridesFrom(CatalogSource overrides) => CatalogSource(
+    catalogId: overrides.catalogId ?? catalogId,
     name: overrides.name ?? name,
     authors: overrides.authors ?? authors,
     forumUrl: overrides.forumUrl ?? forumUrl,

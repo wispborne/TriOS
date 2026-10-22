@@ -120,6 +120,114 @@ extension ModUrlTypeMapperExtension on ModUrlType {
   }
 }
 
+class CatalogSourceKindMapper extends EnumMapper<CatalogSourceKind> {
+  CatalogSourceKindMapper._();
+
+  static CatalogSourceKindMapper? _instance;
+  static CatalogSourceKindMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CatalogSourceKindMapper._());
+    }
+    return _instance!;
+  }
+
+  static CatalogSourceKind fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  CatalogSourceKind decode(dynamic value) {
+    switch (value) {
+      case r'forum':
+        return CatalogSourceKind.forum;
+      case r'discord':
+        return CatalogSourceKind.discord;
+      case r'nexus':
+        return CatalogSourceKind.nexus;
+      case r'unknown':
+        return CatalogSourceKind.unknown;
+      default:
+        return CatalogSourceKind.values[3];
+    }
+  }
+
+  @override
+  dynamic encode(CatalogSourceKind self) {
+    switch (self) {
+      case CatalogSourceKind.forum:
+        return r'forum';
+      case CatalogSourceKind.discord:
+        return r'discord';
+      case CatalogSourceKind.nexus:
+        return r'nexus';
+      case CatalogSourceKind.unknown:
+        return r'unknown';
+    }
+  }
+}
+
+extension CatalogSourceKindMapperExtension on CatalogSourceKind {
+  String toValue() {
+    CatalogSourceKindMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<CatalogSourceKind>(this) as String;
+  }
+}
+
+class CatalogFoundByMapper extends EnumMapper<CatalogFoundBy> {
+  CatalogFoundByMapper._();
+
+  static CatalogFoundByMapper? _instance;
+  static CatalogFoundByMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CatalogFoundByMapper._());
+    }
+    return _instance!;
+  }
+
+  static CatalogFoundBy fromValue(dynamic value) {
+    ensureInitialized();
+    return MapperContainer.globals.fromValue(value);
+  }
+
+  @override
+  CatalogFoundBy decode(dynamic value) {
+    switch (value) {
+      case r'rules':
+        return CatalogFoundBy.rules;
+      case r'llm':
+        return CatalogFoundBy.llm;
+      case r'rulesAndLlm':
+        return CatalogFoundBy.rulesAndLlm;
+      case r'unknown':
+        return CatalogFoundBy.unknown;
+      default:
+        return CatalogFoundBy.values[3];
+    }
+  }
+
+  @override
+  dynamic encode(CatalogFoundBy self) {
+    switch (self) {
+      case CatalogFoundBy.rules:
+        return r'rules';
+      case CatalogFoundBy.llm:
+        return r'llm';
+      case CatalogFoundBy.rulesAndLlm:
+        return r'rulesAndLlm';
+      case CatalogFoundBy.unknown:
+        return r'unknown';
+    }
+  }
+}
+
+extension CatalogFoundByMapperExtension on CatalogFoundBy {
+  String toValue() {
+    CatalogFoundByMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<CatalogFoundBy>(this) as String;
+  }
+}
+
 class ModRepoFileMapper extends ClassMapperBase<ModRepoFile> {
   ModRepoFileMapper._();
 
@@ -277,6 +385,7 @@ class ModRepoEntryMapper extends ClassMapperBase<ModRepoEntry> {
       ModUrlTypeMapper.ensureInitialized();
       ModSourceMapper.ensureInitialized();
       ModRepoImageMapper.ensureInitialized();
+      CatalogSourcePostMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -284,6 +393,8 @@ class ModRepoEntryMapper extends ClassMapperBase<ModRepoEntry> {
   @override
   final String id = 'ModRepoEntry';
 
+  static String? _$id(ModRepoEntry v) => v.id;
+  static const Field<ModRepoEntry, String> _f$id = Field('id', _$id, opt: true);
   static String _$name(ModRepoEntry v) => v.name;
   static const Field<ModRepoEntry, String> _f$name = Field('name', _$name);
   static String? _$summary(ModRepoEntry v) => v.summary;
@@ -353,15 +464,14 @@ class ModRepoEntryMapper extends ClassMapperBase<ModRepoEntry> {
     _$dateTimeEdited,
     opt: true,
   );
-  static String? _$partOfThreadTitle(ModRepoEntry v) => v.partOfThreadTitle;
-  static const Field<ModRepoEntry, String> _f$partOfThreadTitle = Field(
-    'partOfThreadTitle',
-    _$partOfThreadTitle,
-    opt: true,
-  );
+  static List<CatalogSourcePost>? _$sourcePosts(ModRepoEntry v) =>
+      v.sourcePosts;
+  static const Field<ModRepoEntry, List<CatalogSourcePost>> _f$sourcePosts =
+      Field('sourcePosts', _$sourcePosts, opt: true);
 
   @override
   final MappableFields<ModRepoEntry> fields = const {
+    #id: _f$id,
     #name: _f$name,
     #summary: _f$summary,
     #description: _f$description,
@@ -374,11 +484,12 @@ class ModRepoEntryMapper extends ClassMapperBase<ModRepoEntry> {
     #images: _f$images,
     #dateTimeCreated: _f$dateTimeCreated,
     #dateTimeEdited: _f$dateTimeEdited,
-    #partOfThreadTitle: _f$partOfThreadTitle,
+    #sourcePosts: _f$sourcePosts,
   };
 
   static ModRepoEntry _instantiate(DecodingData data) {
     return ModRepoEntry(
+      id: data.dec(_f$id),
       name: data.dec(_f$name),
       summary: data.dec(_f$summary),
       description: data.dec(_f$description),
@@ -391,7 +502,7 @@ class ModRepoEntryMapper extends ClassMapperBase<ModRepoEntry> {
       images: data.dec(_f$images),
       dateTimeCreated: data.dec(_f$dateTimeCreated),
       dateTimeEdited: data.dec(_f$dateTimeEdited),
-      partOfThreadTitle: data.dec(_f$partOfThreadTitle),
+      sourcePosts: data.dec(_f$sourcePosts),
     );
   }
 
@@ -470,7 +581,14 @@ abstract class ModRepoEntryCopyWith<$R, $In extends ModRepoEntry, $Out>
     ModRepoImageCopyWith<$R, ModRepoImage, ModRepoImage>
   >?
   get images;
+  ListCopyWith<
+    $R,
+    CatalogSourcePost,
+    CatalogSourcePostCopyWith<$R, CatalogSourcePost, CatalogSourcePost>
+  >?
+  get sourcePosts;
   $R call({
+    String? id,
     String? name,
     String? summary,
     String? description,
@@ -483,7 +601,7 @@ abstract class ModRepoEntryCopyWith<$R, $In extends ModRepoEntry, $Out>
     Map<String, ModRepoImage>? images,
     DateTime? dateTimeCreated,
     DateTime? dateTimeEdited,
-    String? partOfThreadTitle,
+    List<CatalogSourcePost>? sourcePosts,
   });
   ModRepoEntryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -547,7 +665,21 @@ class _ModRepoEntryCopyWithImpl<$R, $Out>
         )
       : null;
   @override
+  ListCopyWith<
+    $R,
+    CatalogSourcePost,
+    CatalogSourcePostCopyWith<$R, CatalogSourcePost, CatalogSourcePost>
+  >?
+  get sourcePosts => $value.sourcePosts != null
+      ? ListCopyWith(
+          $value.sourcePosts!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(sourcePosts: v),
+        )
+      : null;
+  @override
   $R call({
+    Object? id = $none,
     String? name,
     Object? summary = $none,
     Object? description = $none,
@@ -560,9 +692,10 @@ class _ModRepoEntryCopyWithImpl<$R, $Out>
     Object? images = $none,
     Object? dateTimeCreated = $none,
     Object? dateTimeEdited = $none,
-    Object? partOfThreadTitle = $none,
+    Object? sourcePosts = $none,
   }) => $apply(
     FieldCopyWithData({
+      if (id != $none) #id: id,
       if (name != null) #name: name,
       if (summary != $none) #summary: summary,
       if (description != $none) #description: description,
@@ -575,11 +708,12 @@ class _ModRepoEntryCopyWithImpl<$R, $Out>
       if (images != $none) #images: images,
       if (dateTimeCreated != $none) #dateTimeCreated: dateTimeCreated,
       if (dateTimeEdited != $none) #dateTimeEdited: dateTimeEdited,
-      if (partOfThreadTitle != $none) #partOfThreadTitle: partOfThreadTitle,
+      if (sourcePosts != $none) #sourcePosts: sourcePosts,
     }),
   );
   @override
   ModRepoEntry $make(CopyWithData data) => ModRepoEntry(
+    id: data.get(#id, or: $value.id),
     name: data.get(#name, or: $value.name),
     summary: data.get(#summary, or: $value.summary),
     description: data.get(#description, or: $value.description),
@@ -592,10 +726,7 @@ class _ModRepoEntryCopyWithImpl<$R, $Out>
     images: data.get(#images, or: $value.images),
     dateTimeCreated: data.get(#dateTimeCreated, or: $value.dateTimeCreated),
     dateTimeEdited: data.get(#dateTimeEdited, or: $value.dateTimeEdited),
-    partOfThreadTitle: data.get(
-      #partOfThreadTitle,
-      or: $value.partOfThreadTitle,
-    ),
+    sourcePosts: data.get(#sourcePosts, or: $value.sourcePosts),
   );
 
   @override
@@ -797,5 +928,177 @@ class _ModRepoImageCopyWithImpl<$R, $Out>
   ModRepoImageCopyWith<$R2, ModRepoImage, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _ModRepoImageCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class CatalogSourcePostMapper extends ClassMapperBase<CatalogSourcePost> {
+  CatalogSourcePostMapper._();
+
+  static CatalogSourcePostMapper? _instance;
+  static CatalogSourcePostMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CatalogSourcePostMapper._());
+      CatalogSourceKindMapper.ensureInitialized();
+      CatalogFoundByMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'CatalogSourcePost';
+
+  static CatalogSourceKind _$kind(CatalogSourcePost v) => v.kind;
+  static const Field<CatalogSourcePost, CatalogSourceKind> _f$kind = Field(
+    'kind',
+    _$kind,
+  );
+  static String _$id(CatalogSourcePost v) => v.id;
+  static const Field<CatalogSourcePost, String> _f$id = Field('id', _$id);
+  static String? _$llmModName(CatalogSourcePost v) => v.llmModName;
+  static const Field<CatalogSourcePost, String> _f$llmModName = Field(
+    'llmModName',
+    _$llmModName,
+    opt: true,
+  );
+  static CatalogFoundBy _$foundBy(CatalogSourcePost v) => v.foundBy;
+  static const Field<CatalogSourcePost, CatalogFoundBy> _f$foundBy = Field(
+    'foundBy',
+    _$foundBy,
+    opt: true,
+    def: CatalogFoundBy.unknown,
+  );
+
+  @override
+  final MappableFields<CatalogSourcePost> fields = const {
+    #kind: _f$kind,
+    #id: _f$id,
+    #llmModName: _f$llmModName,
+    #foundBy: _f$foundBy,
+  };
+
+  static CatalogSourcePost _instantiate(DecodingData data) {
+    return CatalogSourcePost(
+      kind: data.dec(_f$kind),
+      id: data.dec(_f$id),
+      llmModName: data.dec(_f$llmModName),
+      foundBy: data.dec(_f$foundBy),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static CatalogSourcePost fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogSourcePost>(map);
+  }
+
+  static CatalogSourcePost fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogSourcePost>(json);
+  }
+}
+
+mixin CatalogSourcePostMappable {
+  String toJson() {
+    return CatalogSourcePostMapper.ensureInitialized()
+        .encodeJson<CatalogSourcePost>(this as CatalogSourcePost);
+  }
+
+  Map<String, dynamic> toMap() {
+    return CatalogSourcePostMapper.ensureInitialized()
+        .encodeMap<CatalogSourcePost>(this as CatalogSourcePost);
+  }
+
+  CatalogSourcePostCopyWith<
+    CatalogSourcePost,
+    CatalogSourcePost,
+    CatalogSourcePost
+  >
+  get copyWith =>
+      _CatalogSourcePostCopyWithImpl<CatalogSourcePost, CatalogSourcePost>(
+        this as CatalogSourcePost,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return CatalogSourcePostMapper.ensureInitialized().stringifyValue(
+      this as CatalogSourcePost,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return CatalogSourcePostMapper.ensureInitialized().equalsValue(
+      this as CatalogSourcePost,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return CatalogSourcePostMapper.ensureInitialized().hashValue(
+      this as CatalogSourcePost,
+    );
+  }
+}
+
+extension CatalogSourcePostValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogSourcePost, $Out> {
+  CatalogSourcePostCopyWith<$R, CatalogSourcePost, $Out>
+  get $asCatalogSourcePost => $base.as(
+    (v, t, t2) => _CatalogSourcePostCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class CatalogSourcePostCopyWith<
+  $R,
+  $In extends CatalogSourcePost,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({
+    CatalogSourceKind? kind,
+    String? id,
+    String? llmModName,
+    CatalogFoundBy? foundBy,
+  });
+  CatalogSourcePostCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _CatalogSourcePostCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogSourcePost, $Out>
+    implements CatalogSourcePostCopyWith<$R, CatalogSourcePost, $Out> {
+  _CatalogSourcePostCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<CatalogSourcePost> $mapper =
+      CatalogSourcePostMapper.ensureInitialized();
+  @override
+  $R call({
+    CatalogSourceKind? kind,
+    String? id,
+    Object? llmModName = $none,
+    CatalogFoundBy? foundBy,
+  }) => $apply(
+    FieldCopyWithData({
+      if (kind != null) #kind: kind,
+      if (id != null) #id: id,
+      if (llmModName != $none) #llmModName: llmModName,
+      if (foundBy != null) #foundBy: foundBy,
+    }),
+  );
+  @override
+  CatalogSourcePost $make(CopyWithData data) => CatalogSourcePost(
+    kind: data.get(#kind, or: $value.kind),
+    id: data.get(#id, or: $value.id),
+    llmModName: data.get(#llmModName, or: $value.llmModName),
+    foundBy: data.get(#foundBy, or: $value.foundBy),
+  );
+
+  @override
+  CatalogSourcePostCopyWith<$R2, CatalogSourcePost, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _CatalogSourcePostCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

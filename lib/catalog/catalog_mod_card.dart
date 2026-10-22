@@ -182,6 +182,10 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
             ? gatherCatalogMod(
           mod: _entry,
           forumIndex: forumIndex,
+          discordThreads: discordThreadsFor(
+            _entry,
+            ref.watch(discordThreadsById),
+          ),
           forumDetails: forumDetails,
           installedMod: _catalogMod.installedMod,
         )

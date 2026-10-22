@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 
 part 'mod_repo_entry.mapper.dart';
@@ -37,6 +38,10 @@ class ModRepoFile with ModRepoFileMappable {
 
 @MappableClass()
 class ModRepoEntry with ModRepoEntryMappable {
+  /// The catalog's permanent id for this mod. It stays the same when the mod's
+  /// name changes. Null for entries made in code rather than read from the
+  /// catalog.
+  final String? id;
   final String name;
   final String? summary;
   final String? description;
@@ -51,13 +56,11 @@ class ModRepoEntry with ModRepoEntryMappable {
   final DateTime? dateTimeCreated;
   final DateTime? dateTimeEdited;
 
-  /// Set at runtime when a mod lives inside another mod's forum thread. This
-  /// includes made-up child entries and real catalog entries enriched with
-  /// their parent thread. The card is marked `part of <this thread title>`.
-  /// It is absent from the catalog data and never round-trips through it.
-  final String? partOfThreadTitle;
+  /// The forum topics and Discord threads this mod was built from.
+  final List<CatalogSourcePost>? sourcePosts;
 
   ModRepoEntry({
+    this.id,
     required this.name,
     this.summary,
     this.description,
@@ -70,11 +73,23 @@ class ModRepoEntry with ModRepoEntryMappable {
     this.images,
     this.dateTimeCreated,
     this.dateTimeEdited,
-    this.partOfThreadTitle,
+    this.sourcePosts,
   });
 
-  /// True when this mod is bundled in another mod's forum thread.
-  bool get isPartOfThread => partOfThreadTitle != null;
+  /// The forum topic this mod came from, if any.
+  CatalogSourcePost? get forumPost => sourcePosts?.firstWhereOrNull(
+    (post) => post.kind == CatalogSourceKind.forum,
+  );
+
+  /// The Discord threads this mod came from. Usually one, sometimes more.
+  List<CatalogSourcePost> get discordPosts => [
+    for (final post in sourcePosts ?? const <CatalogSourcePost>[])
+      if (post.kind == CatalogSourceKind.discord) post,
+  ];
+
+  /// True when this mod shares its forum topic with other catalog mods. Only
+  /// the AI finds mods like that, so their forum post has `foundBy: llm`.
+  bool get isPartOfThread => forumPost?.foundBy == CatalogFoundBy.llm;
 
   List<String> getAuthors() => authorsList ?? [];
 
@@ -112,6 +127,35 @@ enum ModSource { Index, ModdingSubforum, Discord, NexusMods }
 
 @MappableEnum()
 enum ModUrlType { Forum, Discord, NexusMods, DirectDownload, DownloadPage }
+
+/// Where a source post lives.
+@MappableEnum(defaultValue: CatalogSourceKind.unknown)
+enum CatalogSourceKind { forum, discord, nexus, unknown }
+
+/// What found a mod in a source post: the scraper's own rules, the AI, or both.
+@MappableEnum(defaultValue: CatalogFoundBy.unknown)
+enum CatalogFoundBy { rules, llm, rulesAndLlm, unknown }
+
+/// One forum topic or Discord thread a catalog mod was built from.
+@MappableClass()
+class CatalogSourcePost with CatalogSourcePostMappable {
+  final CatalogSourceKind kind;
+
+  /// The forum topic id or Discord thread id.
+  final String id;
+
+  /// This mod's name in that post's AI answer. Null when the AI found nothing
+  /// for this mod in the post.
+  final String? llmModName;
+  final CatalogFoundBy foundBy;
+
+  CatalogSourcePost({
+    required this.kind,
+    required this.id,
+    this.llmModName,
+    this.foundBy = CatalogFoundBy.unknown,
+  });
+}
 
 @MappableClass()
 class ModRepoImage with ModRepoImageMappable {

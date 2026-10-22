@@ -10,15 +10,16 @@ import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/cached_json_fetcher.dart';
+import 'package:trios/utils/log_collapser.dart';
 import 'package:trios/utils/logging.dart';
 
 final isLoadingForumData = StateProvider<bool>((ref) => false);
 
-/// Shared fetcher for QB's forum data bundle.
+/// Shared fetcher for the forum data bundle (`mod-catalog-details.json`).
 final forumDataFetcher = CachedJsonFetcher(
-  cacheFileName: 'forum_data_bundle.json',
-  metaFileName: 'forum_data_bundle.meta',
-  url: Constants.forumDataBundleUrl,
+  cacheFileName: 'mod_catalog_details.json',
+  metaFileName: 'mod_catalog_details.meta',
+  url: Constants.modCatalogDetailsUrl,
   maxAge: Duration(hours: 24),
   logTag: 'forum data',
 );
@@ -42,12 +43,13 @@ final forumDataProvider = StreamProvider<ForumDataBundle>((ref) async* {
     final bundle = ForumDataBundleMapper.fromMap({
       'updatedAt': decoded['updatedAt'],
       'index': decoded['index'],
-    });
+    }).copyWith(discordThreads: _parseDiscordThreads(decoded['discordThreads']));
     ForumLlmDataHook.flushDroppedBlocks();
 
     ref.watch(isLoadingForumData.notifier).state = false;
     Fimber.i(
-      'Parsed ${bundle.index.length} forum mod entries in '
+      'Parsed ${bundle.index.length} forum mod entries and '
+      '${bundle.discordThreads.length} Discord threads in '
       '${DateTime.now().difference(currentTime).inMilliseconds}ms',
     );
 
@@ -66,6 +68,32 @@ final forumDataByTopicId = Provider<Map<int, ForumModIndex>>((ref) {
   if (bundle == null) return {};
   return {for (final entry in bundle.index) entry.topicId: entry};
 });
+
+/// Lookup map from Discord thread id to the AI's answer for that thread.
+final discordThreadsById = Provider<Map<String, DiscordThreadAnswer>>((ref) {
+  final bundle = ref.watch(forumDataProvider).value;
+  if (bundle == null) return {};
+  return {for (final thread in bundle.discordThreads) thread.threadId: thread};
+});
+
+/// Parses the bundle's `discordThreads` one thread at a time, so one bad
+/// thread costs only that thread's AI answer instead of the whole bundle.
+List<DiscordThreadAnswer> _parseDiscordThreads(dynamic raw) {
+  if (raw is! List) return const [];
+  final threads = <DiscordThreadAnswer>[];
+  final dropped = LogCollapser();
+  for (final item in raw) {
+    try {
+      threads.add(
+        DiscordThreadAnswerMapper.fromMap(Map<String, dynamic>.from(item as Map)),
+      );
+    } catch (ex) {
+      dropped.add('$ex');
+    }
+  }
+  dropped.flush('Discord thread answers', noun: 'dropped thread', asInfo: true);
+  return threads;
+}
 
 /// Top-level function used with `compute()` to parse the `details` section of
 /// the cached forum bundle off the UI isolate. Input is the raw JSON body,

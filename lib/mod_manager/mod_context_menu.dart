@@ -365,7 +365,7 @@ MenuItem _buildMenuItemViewModDetails(
         }
       }
 
-      // Look up ModRepoEntry via ModRecord's catalog name
+      // Look up ModRepoEntry via ModRecord's catalog id, then its name
       ModRepoEntry? catalogMod;
       final modRecords = ref.read(modRecordsStore).value;
       final catalogItems = ref
@@ -374,8 +374,15 @@ MenuItem _buildMenuItemViewModDetails(
           ?.items;
       if (modRecords != null && catalogItems != null) {
         final record = modRecords.records[mod.id];
+        final catalogId = record?.catalog?.catalogId;
         final catalogName = record?.catalog?.name;
-        if (catalogName != null) {
+        if (catalogId != null) {
+          catalogMod = catalogItems.cast<ModRepoEntry?>().firstWhere(
+            (s) => s!.id == catalogId,
+            orElse: () => null,
+          );
+        }
+        if (catalogMod == null && catalogName != null) {
           final key = catalogName.toLowerCase().trim();
           catalogMod = catalogItems.cast<ModRepoEntry?>().firstWhere(
             (s) => s!.name.toLowerCase().trim() == key,

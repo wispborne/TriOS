@@ -307,11 +307,14 @@ class TriOSDownloadManager extends AsyncNotifier<List<Download>> {
 /// what identifies the entry even when a single forum thread lists several
 /// mods. [forumThreadId] and [nexusModsId] are extra clues used as a fallback.
 class DownloadSourceHint {
+  /// The catalog entry's permanent id, when the entry has one.
+  final String? catalogId;
   final String? catalogName;
   final String? forumThreadId;
   final String? nexusModsId;
 
   const DownloadSourceHint({
+    this.catalogId,
     this.catalogName,
     this.forumThreadId,
     this.nexusModsId,
@@ -321,6 +324,7 @@ class DownloadSourceHint {
   factory DownloadSourceHint.fromModRepoEntry(ModRepoEntry mod) {
     final urls = mod.getUrls();
     return DownloadSourceHint(
+      catalogId: mod.id,
       catalogName: mod.name,
       forumThreadId: extractForumThreadId(urls[ModUrlType.Forum]),
       nexusModsId: extractNexusModId(urls[ModUrlType.NexusMods]),

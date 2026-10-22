@@ -488,6 +488,12 @@ class CatalogSourceMapper extends SubClassMapperBase<CatalogSource> {
   @override
   final String id = 'CatalogSource';
 
+  static String? _$catalogId(CatalogSource v) => v.catalogId;
+  static const Field<CatalogSource, String> _f$catalogId = Field(
+    'catalogId',
+    _$catalogId,
+    opt: true,
+  );
   static String? _$name(CatalogSource v) => v.name;
   static const Field<CatalogSource, String> _f$name = Field(
     'name',
@@ -557,6 +563,7 @@ class CatalogSourceMapper extends SubClassMapperBase<CatalogSource> {
 
   @override
   final MappableFields<CatalogSource> fields = const {
+    #catalogId: _f$catalogId,
     #name: _f$name,
     #authors: _f$authors,
     #forumUrl: _f$forumUrl,
@@ -580,6 +587,7 @@ class CatalogSourceMapper extends SubClassMapperBase<CatalogSource> {
 
   static CatalogSource _instantiate(DecodingData data) {
     return CatalogSource(
+      catalogId: data.dec(_f$catalogId),
       name: data.dec(_f$name),
       authors: data.dec(_f$authors),
       forumUrl: data.dec(_f$forumUrl),
@@ -660,6 +668,7 @@ abstract class CatalogSourceCopyWith<$R, $In extends CatalogSource, $Out>
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get categories;
   @override
   $R call({
+    String? catalogId,
     String? name,
     List<String>? authors,
     String? forumUrl,
@@ -703,6 +712,7 @@ class _CatalogSourceCopyWithImpl<$R, $Out>
       : null;
   @override
   $R call({
+    Object? catalogId = $none,
     Object? name = $none,
     Object? authors = $none,
     Object? forumUrl = $none,
@@ -716,6 +726,7 @@ class _CatalogSourceCopyWithImpl<$R, $Out>
     Object? lastSeen = $none,
   }) => $apply(
     FieldCopyWithData({
+      if (catalogId != $none) #catalogId: catalogId,
       if (name != $none) #name: name,
       if (authors != $none) #authors: authors,
       if (forumUrl != $none) #forumUrl: forumUrl,
@@ -731,6 +742,7 @@ class _CatalogSourceCopyWithImpl<$R, $Out>
   );
   @override
   CatalogSource $make(CopyWithData data) => CatalogSource(
+    catalogId: data.get(#catalogId, or: $value.catalogId),
     name: data.get(#name, or: $value.name),
     authors: data.get(#authors, or: $value.authors),
     forumUrl: data.get(#forumUrl, or: $value.forumUrl),

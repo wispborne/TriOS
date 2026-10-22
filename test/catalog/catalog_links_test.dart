@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/catalog/catalog_links.dart';
+import 'package:trios/catalog/models/forum_data_bundle.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
@@ -13,6 +14,7 @@ import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/models/version_checker_info.dart';
+import 'package:trios/utils/catalog_search.dart';
 
 Mod _mod(
   String id, {
@@ -41,21 +43,48 @@ Mod _mod(
   );
 }
 
+/// A catalog entry. [partOfThread] marks its forum post as found only by the
+/// AI, which is how the catalog marks a mod sharing its topic with others.
 ModRepoEntry _entry(
   String name, {
+  String? id,
   String? forumUrl,
   String? nexusUrl,
-  String? partOfThreadTitle,
+  bool partOfThread = false,
+  List<CatalogSourcePost>? sourcePosts,
 }) {
   final urls = <ModUrlType, String>{};
   if (forumUrl != null) urls[ModUrlType.Forum] = forumUrl;
   if (nexusUrl != null) urls[ModUrlType.NexusMods] = nexusUrl;
+  final topicId = extractForumTopicId(forumUrl);
   return ModRepoEntry(
+    id: id,
     name: name,
     urls: urls.isEmpty ? null : urls,
-    partOfThreadTitle: partOfThreadTitle,
+    sourcePosts:
+        sourcePosts ??
+        [
+          if (topicId != null)
+            CatalogSourcePost(
+              kind: CatalogSourceKind.forum,
+              id: '$topicId',
+              foundBy: partOfThread ? CatalogFoundBy.llm : CatalogFoundBy.rules,
+            ),
+        ],
   );
 }
+
+CatalogSourcePost _post(
+  CatalogSourceKind kind,
+  String id,
+  String? llmModName, {
+  CatalogFoundBy foundBy = CatalogFoundBy.rulesAndLlm,
+}) => CatalogSourcePost(
+  kind: kind,
+  id: id,
+  llmModName: llmModName,
+  foundBy: foundBy,
+);
 
 ForumLlmMod _threadMod(String name, {LlmModRole role = LlmModRole.main}) =>
     ForumLlmMod(
@@ -81,15 +110,18 @@ Map<int, ForumModIndex> _thread(int topicId, String title, List<ForumLlmMod> mod
   ),
 };
 
-String _forum(int topicId) =>
-    'https://fractalsoftworks.com/forum/index.php?topic=$topicId.0';
-
-ModRecords _recordsLinking(String catalogName, String modId) => ModRecords(
+ModRecords _recordsLinking(
+  String catalogName,
+  String modId, {
+  String? catalogId,
+}) => ModRecords(
   records: {
     modId: ModRecord(
       recordKey: modId,
       modId: modId,
-      sources: {'catalog': CatalogSource(name: catalogName)},
+      sources: {
+        'catalog': CatalogSource(catalogId: catalogId, name: catalogName),
+      },
     ),
   },
 );
@@ -202,7 +234,7 @@ void main() {
       final supervillainsEntry = _entry(
         'HMI Supervillains 0.0.5c',
         forumUrl: forumUrl,
-        partOfThreadTitle: 'Hazard Mining Incorporated',
+        partOfThread: true,
       );
 
       final links = CatalogLinks(
@@ -229,7 +261,7 @@ void main() {
         final addonEntry = _entry(
           'Addon',
           forumUrl: forumUrl,
-          partOfThreadTitle: 'Parent Thread',
+          partOfThread: true,
         );
 
         final links = matchCatalogToInstalled(
@@ -301,98 +333,94 @@ void main() {
     });
   });
 
-  group('withSynthesizedAddonEntries', () {
-    test('a thread with one main mod does not get a second card', () {
-      final entries = withSynthesizedAddonEntries(
-        [_entry('Red', forumUrl: _forum(9035))],
-        _thread(9035, 'Red thread', [
-          _threadMod('[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod'),
-          _threadMod('Ocutek Pirates Addon', role: LlmModRole.addon),
-        ]),
+  group('catalog ids', () {
+    test('a saved catalog id links the entry after its name changes', () {
+      final links = matchCatalogToInstalled(
+        entries: [_entry('Ashpad 2.0', id: 'ashpad')],
+        installedMods: [_mod('aashpad', name: 'Aashpad')],
+        records: _recordsLinking('Ashpad', 'aashpad', catalogId: 'ashpad'),
       );
 
-      expect(entries.map((e) => e.name), ['Red', 'Ocutek Pirates Addon']);
+      expect(links.single.mod.id, 'aashpad');
+      expect(links.single.signal, CatalogLinkSignal.persistedRecord);
     });
 
-    test('a bundle thread keeps every main mod but the catalog entry', () {
-      final entries = withSynthesizedAddonEntries(
-        [_entry('Big Pilum Energy 1.0.d', forumUrl: _forum(34161))],
-        _thread(34161, "Hartley's Miscellaneous Mods", [
-          _threadMod('Useful.Tithes'),
-          _threadMod('Big Pilum Energy'),
-          _threadMod('Lost.Sector'),
-        ]),
+    test('two entries with the same name each keep their own link', () {
+      final first = _entry('Bushi', id: 'bushi');
+      final second = _entry('Bushi', id: 'bushi-2');
+      final links = CatalogLinks(
+        matchCatalogToInstalled(
+          entries: [first, second],
+          installedMods: [_mod('hiigaran', name: 'Hiigaran Descendants')],
+          records: _recordsLinking('Bushi', 'hiigaran', catalogId: 'bushi-2'),
+        ),
       );
 
-      expect(entries.map((e) => e.name), [
+      expect(links.modForEntry(second)?.id, 'hiigaran');
+      expect(links.modForEntry(first), isNull);
+    });
+  });
+
+  group('llmModForEntry', () {
+    test('picks the forum mod the catalog names on a shared topic', () {
+      final forum = _thread(34161, "Hartley's Miscellaneous Mods", [
+        _threadMod('Useful.Tithes'),
+        _threadMod('Big Pilum Energy'),
+        _threadMod('Lost.Sector'),
+      ]);
+      final entry = _entry(
         'Big Pilum Energy 1.0.d',
-        'Useful.Tithes',
-        'Lost.Sector',
-      ]);
-    });
-
-    test('a made-up entry carries no author text of its own', () {
-      final entries = withSynthesizedAddonEntries(
-        [_entry('Red', forumUrl: _forum(9035))],
-        _thread(9035, 'Red thread', [
-          _threadMod('[0.98a] Red - the Oculian Armada (0.10.2-RC4) Mod'),
-          _threadMod('Ocutek Pirates Addon', role: LlmModRole.addon),
-        ]),
-      );
-
-      final addon = entries.firstWhere((e) => e.name == 'Ocutek Pirates Addon');
-      expect(addon.summary, isNull);
-      expect(addon.description, isNull);
-      expect(addon.partOfThreadTitle, 'Red thread');
-    });
-
-    test('a child with a real catalog entry does not get a second card', () {
-      final forum = _thread(13236, 'Hazard Mining Incorporated', [
-        _threadMod('Hazard Mining Incorporated'),
-        _threadMod('The Brighton Federation', role: LlmModRole.separate),
-      ]);
-      final entries = withSynthesizedAddonEntries(
-        [
-          _entry('Hazard Mining Incorporated', forumUrl: _forum(13236)),
-          _entry('Brighton Federation 0.0.4a'),
+        sourcePosts: [
+          _post(
+            CatalogSourceKind.forum,
+            '34161',
+            'Big Pilum Energy',
+            foundBy: CatalogFoundBy.llm,
+          ),
         ],
-        forum,
       );
 
-      expect(entries.map((entry) => entry.name), [
-        'Hazard Mining Incorporated',
-        'Brighton Federation 0.0.4a',
-      ]);
+      final gathered = gatherCatalogMod(mod: entry, forumIndex: forum[34161]);
+      expect(gathered.llmMod?.name, 'Big Pilum Energy');
+      expect(gathered.partOfThreadTitle, "Hartley's Miscellaneous Mods");
+    });
 
-      final brighton = entries.singleWhere(
-        (entry) => entry.name == 'Brighton Federation 0.0.4a',
+    test('falls back to the Discord answer when the forum has none', () {
+      final entry = _entry(
+        'Discord Mod',
+        sourcePosts: [_post(CatalogSourceKind.discord, '42', 'Discord Mod')],
       );
-      expect(brighton.urls?[ModUrlType.Forum], _forum(13236));
-      expect(brighton.partOfThreadTitle, 'Hazard Mining Incorporated');
+      final thread = DiscordThreadAnswer(
+        threadId: '42',
+        url: 'https://discord.com/channels/1/42',
+        name: 'Discord Mod 1.0',
+        mods: [_threadMod('Discord Mod')],
+      );
 
       final gathered = gatherCatalogMod(
-        mod: brighton,
-        forumIndex: forum[13236],
+        mod: entry,
+        discordThreads: discordThreadsFor(entry, {'42': thread}),
       );
-      expect(gathered.llmMod?.name, 'The Brighton Federation');
-      expect(
-        gathered.aiSentence,
-        'AI wrote this about The Brighton Federation.',
-      );
+      expect(gathered.llmMod?.name, 'Discord Mod');
+      expect(gathered.aiSentence, 'AI wrote this about Discord Mod.');
+      expect(gathered.partOfThreadTitle, isNull);
     });
 
-    test('no made-up card says it is part of its own thread', () {
-      final entries = withSynthesizedAddonEntries(
-        [_entry('Anything', forumUrl: _forum(500))],
-        _thread(500, 'The Thread Title', [
-          _threadMod('The Thread Title'),
-          _threadMod('An Addon', role: LlmModRole.addon),
-        ]),
+    test('a rules-only entry gets no AI answer, even with a main mod', () {
+      final forum = _thread(9035, 'Red thread', [_threadMod('Red')]);
+      final entry = _entry(
+        'Red',
+        sourcePosts: [
+          _post(
+            CatalogSourceKind.forum,
+            '9035',
+            null,
+            foundBy: CatalogFoundBy.rules,
+          ),
+        ],
       );
 
-      for (final entry in entries) {
-        expect(entry.name, isNot(entry.partOfThreadTitle));
-      }
+      expect(llmModForEntry(entry, forumIndex: forum[9035]), isNull);
     });
   });
 }

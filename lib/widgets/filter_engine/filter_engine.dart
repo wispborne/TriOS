@@ -3,7 +3,8 @@
 /// filters.
 ///
 /// - Group types: [FilterGroup], [ChipFilterGroup], [BoolFilterGroup],
-///   [EnumFilterGroup], [CompositeFilterGroup] (+ [BoolField], [EnumField]).
+///   [EnumFilterGroup], [RangeFilterGroup], [CompositeFilterGroup]
+///   (+ [BoolField], [EnumField]), [CustomFilterGroup].
 /// - Identity: [FilterScope] (pageId, scopeId).
 /// - Toolkit: [FilterScopeController].
 /// - UI: [FilterGroupRenderer].

@@ -64,6 +64,10 @@ class GridFilterWidget<T> extends ConsumerStatefulWidget {
   /// the chip-filtered subset), so they don't change as chips are toggled.
   final bool showCounts;
 
+  /// When set, counts are taken from this list instead of [items]. The chips
+  /// are still built from [items], so a chip whose count drops to 0 stays.
+  final List<T>? countItems;
+
   const GridFilterWidget({
     super.key,
     required this.filter,
@@ -72,6 +76,7 @@ class GridFilterWidget<T> extends ConsumerStatefulWidget {
     required this.onSelectionChanged,
     required this.scope,
     this.showCounts = false,
+    this.countItems,
   });
 
   @override
@@ -140,7 +145,7 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
 
     if (widget.showCounts) {
       final counts = <String, int>{};
-      for (final item in widget.items) {
+      for (final item in widget.countItems ?? widget.items) {
         if (widget.filter.valuesGetter != null) {
           for (final v in widget.filter.valuesGetter!(item)) {
             if (v.isNotEmpty) counts[v] = (counts[v] ?? 0) + 1;
@@ -276,13 +281,18 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
     final text = widget.filter.displayNameGetter != null
         ? widget.filter.displayNameGetter!(value)
         : value;
-    if (!widget.showCounts) {
-      return Text(text, style: theme.textTheme.labelMedium);
-    }
+    // One line, cut with "…" when the panel is too narrow. The full name shows
+    // on hover.
+    final name = TextTriOS(
+      text,
+      maxLines: 1,
+      style: theme.textTheme.labelMedium,
+    );
+    if (!widget.showCounts) return name;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(text, style: theme.textTheme.labelMedium),
+        Flexible(child: name),
         const SizedBox(width: 4),
         Text(
           '${_valueCounts[value] ?? 0}',
@@ -540,12 +550,16 @@ class _GridFilterWidgetState<T> extends ConsumerState<GridFilterWidget<T>> {
                             break;
                         }
 
+                        final chipTooltip = widget.filter.chipTooltipGetter
+                            ?.call(value, state);
                         return MovingTooltipWidget.text(
-                          message: switch (state) {
-                            true => "Included",
-                            false => "Excluded",
-                            null => "",
-                          },
+                          message:
+                              chipTooltip ??
+                              switch (state) {
+                                true => "Included",
+                                false => "Excluded",
+                                null => "",
+                              },
                           child: FilterChip(
                             label: _chipLabel(theme, value),
                             selected: state != null,

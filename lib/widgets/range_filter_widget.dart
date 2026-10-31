@@ -1,9 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:trios/widgets/filter_engine/filter_group.dart';
-import 'package:trios/widgets/filter_group_persistence/filter_group_persist_button.dart';
+import 'package:trios/widgets/collapsible_filter_card.dart';
 import 'package:trios/widgets/filter_engine/filter_scope.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:trios/widgets/text_trios.dart';
 
 /// Two-handle slider for a [RangeFilterGroup], e.g. "deployment points
 /// between 10 and 30".
@@ -36,6 +35,8 @@ class _RangeFilterWidgetState<T> extends State<RangeFilterWidget<T>> {
   RangeValues? _dragging;
 
   String _format(num value) {
+    final valueLabel = widget.group.valueLabel;
+    if (valueLabel != null) return valueLabel(value);
     if (value == value.roundToDouble()) return value.round().toString();
     return value.toStringAsFixed(1);
   }
@@ -43,7 +44,9 @@ class _RangeFilterWidgetState<T> extends State<RangeFilterWidget<T>> {
   /// The selected range as text, e.g. "10–40", "20+" or "Any".
   String get _rangeLabel {
     final group = widget.group;
-    final suffix = group.suffix == null ? '' : ' ${group.suffix}';
+    final suffix = group.suffix == null || group.valueLabel != null
+        ? ''
+        : ' ${group.suffix}';
     if (!group.isActive) return 'Any';
     final atTop = group.curMax >= group.max;
     if (atTop && group.allowGreater) {
@@ -100,84 +103,64 @@ class _RangeFilterWidgetState<T> extends State<RangeFilterWidget<T>> {
           group.stopIndexFor(group.curMax).toDouble(),
         );
 
-    return Card(
+    return CollapsibleFilterCard(
+      name: group.name,
+      tooltip: group.tooltip,
+      scope: widget.scope,
+      groupId: group.id,
+      currentSelections: group.serialize,
       margin: const .symmetric(horizontal: 4, vertical: 1),
-      color: theme.colorScheme.surfaceContainer,
-      child: Padding(
-        padding: const .symmetric(horizontal: 4, vertical: 2),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                // Expanded with no Spacer after it, so the name gets all the
-                // room the range text and buttons don't need.
-                Expanded(
-                  child: Padding(
-                    padding: const .only(left: 8, right: 4, top: 2, bottom: 2),
-                    child: TextTriOS(
-                      group.name,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
-                Text(
-                  _dragging == null
-                      ? _rangeLabel
-                      : '${_format(_valueAt(positions.start))}–'
-                            '${_format(_valueAt(positions.end))}',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: group.isActive
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight: group.isActive ? FontWeight.bold : null,
-                  ),
-                ),
-                if (group.isActive)
-                  MovingTooltipWidget.text(
-                    message: 'Reset this range',
-                    child: IconButton(
-                      onPressed: _reset,
-                      icon: const Icon(Icons.close, size: 16),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(24, 28),
-                        maximumSize: const Size(24, 28),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        foregroundColor: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                FilterGridPersistButton(
-                  scope: widget.scope,
-                  filterGroupId: group.id,
-                  currentSelections: () => group.serialize(),
-                ),
-              ],
-            ),
-            // The slider hands the handle you grab keyboard focus and then
-            // rings it until something else takes the focus away. Nothing
-            // does, and the handles can't be moved by keyboard anyway, so
-            // keep them out of the focus tree.
-            ExcludeFocus(
-              child: RangeSlider(
-                // Without this the slider is as tall as its invisible touch
-                // area (48), which is more than twice the handle.
-                padding: const .symmetric(horizontal: 4, vertical: 2),
-                min: 0,
-                max: (group.stops.length - 1).toDouble(),
-                values: positions,
-                onChanged: _onChanged,
-                onChangeEnd: _onChangeEnd,
+      padding: const .only(left: 8, right: 4, top: 2, bottom: 2),
+      // The range text stays in the header, so a shut slider still shows
+      // what it filters on.
+      trailing: [
+        Text(
+          _dragging == null
+              ? _rangeLabel
+              : '${_format(_valueAt(positions.start))}–'
+                    '${_format(_valueAt(positions.end))}',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: group.isActive
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            fontWeight: group.isActive ? FontWeight.bold : null,
+          ),
+        ),
+        if (group.isActive)
+          MovingTooltipWidget.text(
+            message: 'Reset',
+            child: IconButton(
+              onPressed: _reset,
+              icon: const Icon(Icons.close, size: 16),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(24, 28),
+                maximumSize: const Size(24, 28),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                foregroundColor: theme.colorScheme.onSurface,
               ),
             ),
-          ],
+          ),
+      ],
+      children: [
+        // The slider hands the handle you grab keyboard focus and then rings
+        // it until something else takes the focus away. Nothing does, and the
+        // handles can't be moved by keyboard anyway, so keep them out of the
+        // focus tree.
+        ExcludeFocus(
+          child: RangeSlider(
+            // Without this the slider is as tall as its invisible touch area
+            // (48), which is more than twice the handle. No left padding, since
+            // the card already has more on that side.
+            padding: const .only(right: 4, top: 2, bottom: 2),
+            min: 0,
+            max: (group.stops.length - 1).toDouble(),
+            values: positions,
+            onChanged: _onChanged,
+            onChangeEnd: _onChangeEnd,
+          ),
         ),
-      ),
+      ],
     );
   }
 }

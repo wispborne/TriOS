@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:trios/widgets/collapsible_filter_card.dart';
 import 'package:trios/widgets/filter_engine/filter_group.dart';
 import 'package:trios/widgets/filter_engine/filter_scope.dart';
-import 'package:trios/widgets/filter_group_persistence/filter_group_persist_button.dart';
 import 'package:trios/widgets/filter_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/range_filter_widget.dart';
@@ -20,6 +20,10 @@ class FilterGroupRenderer<T> extends StatelessWidget {
   /// leave it off so they render unchanged.
   final bool showCounts;
 
+  /// When set, chip counts come from this list instead of [items]. See
+  /// [GridFilterWidget.countItems].
+  final List<T>? countItems;
+
   const FilterGroupRenderer({
     super.key,
     required this.group,
@@ -27,6 +31,7 @@ class FilterGroupRenderer<T> extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.showCounts = false,
+    this.countItems,
   });
 
   @override
@@ -41,6 +46,7 @@ class FilterGroupRenderer<T> extends StatelessWidget {
         filterStates: g.filterStates,
         scope: scope,
         showCounts: showCounts,
+        countItems: countItems,
         onSelectionChanged: (states) {
           g.setSelections(states);
           onChanged();
@@ -73,6 +79,19 @@ class FilterGroupRenderer<T> extends StatelessWidget {
         return const SizedBox.shrink();
       }
       return _CompositeCard<T>(group: g, scope: scope, onChanged: onChanged);
+    }
+    if (g is CustomFilterGroup<T>) {
+      if (!_nameMatchesSearch(options.searchTerm, [g.name])) {
+        return const SizedBox.shrink();
+      }
+      return CollapsibleFilterCard(
+        name: g.name,
+        scope: scope,
+        groupId: g.id,
+        currentSelections: g.serialize,
+        collapsedBadge: ActiveFilterCountPill(count: g.activeCount),
+        children: [g.buildBody(context, onChanged)],
+      );
     }
     return const SizedBox.shrink();
   }
@@ -167,47 +186,19 @@ class _CompositeCard<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      color: theme.colorScheme.surfaceContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisSize: .min,
-          crossAxisAlignment: .start,
-          children: [
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
-                  child: Text(
-                    group.name,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                FilterGridPersistButton(
-                  scope: scope,
-                  filterGroupId: group.id,
-                  currentSelections: () => group.serialize(),
-                ),
-              ],
-            ),
-            for (final f in group.fields)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: _renderField(context, f),
-              ),
-          ],
-        ),
-      ),
+    return CollapsibleFilterCard(
+      name: group.name,
+      scope: scope,
+      groupId: group.id,
+      currentSelections: group.serialize,
+      collapsedBadge: ActiveFilterCountPill(count: group.activeCount),
+      children: [
+        for (final f in group.fields)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: _renderField(context, f),
+          ),
+      ],
     );
   }
 
@@ -243,10 +234,7 @@ class _CompositeCard<T> extends StatelessWidget {
     }
     if (field is StringChoiceField<T>) {
       final entries = <DropdownMenuEntry<String?>>[
-        DropdownMenuEntry<String?>(
-          value: null,
-          label: field.labelFor(null),
-        ),
+        DropdownMenuEntry<String?>(value: null, label: field.labelFor(null)),
         for (final opt in field.options)
           DropdownMenuEntry<String?>(value: opt, label: field.labelFor(opt)),
       ];

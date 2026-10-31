@@ -1,8 +1,24 @@
 import 'package:flutter/foundation.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/filter_group_persistence/filter_group_persistence_provider.dart';
+
 import 'filter_group.dart';
 import 'filter_scope.dart';
+
+/// What [FilterScopeController.applyWithCountItems] returns.
+class FilterResultWithCounts<T> {
+  /// The items that pass every active group, in their original order.
+  final List<T> matching;
+
+  /// For each chip group, by id: the items that pass every other active
+  /// group.
+  final Map<String, List<T>> countItemsByGroup;
+
+  const FilterResultWithCounts({
+    required this.matching,
+    required this.countItemsByGroup,
+  });
+}
 
 /// Toolkit-style helper that owns a [FilterScope]'s groups and exposes
 /// functions for the hosting [Notifier] to compose into its own pipeline.
@@ -55,6 +71,54 @@ class FilterScopeController<T> {
       out = out.where(g.matches);
     }
     return out.toList();
+  }
+
+  /// Apply every group to [items] in one pass, and also collect each chip
+  /// group's count list: the items that pass every *other* active group.
+  /// Counting a chip's value over its list gives "how many items would this
+  /// chip leave".
+  ///
+  /// Gives the same matches as [applyChipFilters] then [applyNonChipFilters].
+  FilterResultWithCounts<T> applyWithCountItems(List<T> items) {
+    final active = [
+      for (final g in groups)
+        if (g.isActive) g,
+    ];
+    for (final g in active) {
+      // See applyChipFilters.
+      if (g is ChipFilterGroup<T> && g.logicMode == ChipLogicMode.all) {
+        g.updateKnownValues(items);
+      }
+    }
+
+    final matching = <T>[];
+    final countItems = {
+      for (final g in groups)
+        if (g is ChipFilterGroup<T>) g.id: <T>[],
+    };
+    for (final item in items) {
+      // An item that fails one group still counts for that group's chips.
+      // One that fails two counts nowhere.
+      FilterGroup<T>? failed;
+      var failures = 0;
+      for (final g in active) {
+        if (g.matches(item)) continue;
+        failed = g;
+        if (++failures > 1) break;
+      }
+      if (failures == 0) {
+        matching.add(item);
+        for (final list in countItems.values) {
+          list.add(item);
+        }
+      } else if (failures == 1) {
+        countItems[failed!.id]?.add(item);
+      }
+    }
+    return FilterResultWithCounts(
+      matching: matching,
+      countItemsByGroup: countItems,
+    );
   }
 
   /// Apply just the range groups. Only needed by pages that don't call
@@ -134,8 +198,7 @@ class FilterScopeController<T> {
         // Stage raw chip selections; apply-merge later when data is present.
         _pendingChipSelections[entry.key] = {
           for (final e in selections.entries)
-            if (e.value == null || e.value is bool)
-              e.key: e.value as bool?,
+            if (e.value == null || e.value is bool) e.key: e.value as bool?,
         };
       } else {
         group.restore(selections);
@@ -195,7 +258,11 @@ class FilterScopeController<T> {
     try {
       persistence.write(scope, groupId, serialized);
     } catch (e, st) {
-      Fimber.w('Failed to persist filter group $groupId', ex: e, stacktrace: st);
+      Fimber.w(
+        'Failed to persist filter group $groupId',
+        ex: e,
+        stacktrace: st,
+      );
     }
   }
 }

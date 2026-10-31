@@ -53,6 +53,15 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
   final bool useDefaultSort;
   final bool collapsedByDefault;
 
+  /// Chip values whose answer can be yes, no or unknown, each with a check
+  /// for whether an item said no. Excluding one of these keeps only the items
+  /// that said no, rather than every item that didn't say yes. Optional.
+  final Map<String, bool Function(T)> explicitNoChecks;
+
+  /// The tooltip for a chip, given its value and its state. Null falls back
+  /// to "Included" or "Excluded". Optional.
+  final String? Function(String value, bool? state)? chipTooltipGetter;
+
   final Map<String, bool?> filterStates = {};
 
   /// Key used to store [logicMode] alongside the chip states in the persisted
@@ -76,6 +85,8 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
     this.useDefaultSort = false,
     this.collapsedByDefault = false,
     this.logicMode = ChipLogicMode.any,
+    this.explicitNoChecks = const {},
+    this.chipTooltipGetter,
   });
 
   Set<String> get includedValues => filterStates.entries
@@ -96,14 +107,21 @@ class ChipFilterGroup<T> extends FilterGroup<T> {
 
   /// Canonical chip-match algorithm (ported from the hullmods variant):
   ///
-  /// 1. If any of the item's values is explicitly excluded, reject.
-  /// 2. Else if any value in the state map is explicitly included, the item
+  /// 1. If an excluded value is one of [explicitNoChecks], reject unless the
+  ///    item said no to it.
+  /// 2. If any of the item's values is explicitly excluded, reject.
+  /// 3. Else if any value in the state map is explicitly included, the item
   ///    must have at least one included value ("any" mode) or all of them
   ///    ("all" mode).
-  /// 3. Else (only exclusions or empty state), accept.
+  /// 4. Else (only exclusions or empty state), accept.
   @override
   bool matches(T item) {
     if (filterStates.isEmpty) return true;
+
+    for (final MapEntry(key: value, value: saidNo)
+        in explicitNoChecks.entries) {
+      if (filterStates[value] == false && !saidNo(item)) return false;
+    }
 
     final values = valuesGetter != null
         ? valuesGetter!(item)
@@ -213,6 +231,13 @@ class RangeFilterGroup<T> extends FilterGroup<T> {
   /// Shown after the numbers, e.g. "su" or "%". Optional.
   final String? suffix;
 
+  /// Turns a value into the text shown for it, e.g. a day number into a
+  /// date. When set, [suffix] is not shown. Optional.
+  final String Function(num)? valueLabel;
+
+  /// Shown when hovering the group's name. Optional.
+  final String? tooltip;
+
   /// When true, the top handle at the far right means "and above", so nothing
   /// falls off the end when new mods add higher values.
   final bool allowGreater;
@@ -238,6 +263,8 @@ class RangeFilterGroup<T> extends FilterGroup<T> {
     required this.name,
     required this.valueGetter,
     this.suffix,
+    this.valueLabel,
+    this.tooltip,
     this.allowGreater = true,
   });
 
@@ -606,6 +633,20 @@ class EnumField<T, E extends Enum> extends FilterField<T> {
     if (option is! E) return null;
     return optionIcon?.call(option);
   }
+}
+
+/// A group whose rule, saved form and controls all come from the page. Use
+/// it when one rule reads several settings together, so they can't be split
+/// into independent [FilterField]s.
+///
+/// A page subclasses it, keeping its settings on the subclass. Drawn as a
+/// card with a lock button, holding the widget [buildBody] returns.
+abstract class CustomFilterGroup<T> extends FilterGroup<T> {
+  @override
+  int get activeCount => isActive ? 1 : 0;
+
+  /// The controls. Call [onChanged] after the user changes a setting.
+  Widget buildBody(BuildContext context, VoidCallback onChanged);
 }
 
 /// Heterogeneous group holding an ordered list of [FilterField]s under a

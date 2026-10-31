@@ -124,7 +124,11 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                           minItemWidth: 340,
                           horizontalSpacing: actualAxisSpacing.toDouble(),
                           verticalSpacing: 10,
-                          padding: EdgeInsets.only(bottom: widget.pagePadding),
+                          // The right padding keeps cards clear of the scrollbar.
+                          padding: EdgeInsets.only(
+                            right: 16,
+                            bottom: widget.pagePadding,
+                          ),
                           itemBuilder: (context, profile, index) {
                             if (profile == null) {
                               return ConstrainedBox(
@@ -165,7 +169,8 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
             Padding(
               padding: const EdgeInsets.only(left: 0.0),
               child: SizedBox(
-                width: 320,
+                // 320 for the cards, plus 16 to keep them clear of the scrollbar.
+                width: 336,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -219,7 +224,11 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                             crossAxisSpacing: axisSpacingForHeightHack,
                             mainAxisSpacing: 10,
                             crossAxisCount: 1,
-                            padding: EdgeInsets.only(bottom: widget.pagePadding),
+                            // The right padding keeps cards clear of the scrollbar.
+                            padding: EdgeInsets.only(
+                              right: 16,
+                              bottom: widget.pagePadding,
+                            ),
                             itemCount: saveGames.length,
                             itemBuilder: (context, index) {
                               return ModProfileCard(

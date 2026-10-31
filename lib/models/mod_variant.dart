@@ -110,7 +110,7 @@ class ModVariant with ModVariantMappable implements Comparable<ModVariant> {
   }
 
   static String generateUniqueVariantFolderName(ModInfo modInfo) =>
-      "${modInfo.name?.fixFilenameForFileSystem().take(100)}-${modInfo.version}";
+      "${modInfo.name?.take(100)}-${modInfo.version}".fixFilenameForFileSystem();
 
   /// Don't use this for sorting! Use ModVariant directly, as it has multiple fallbacks.
   ///

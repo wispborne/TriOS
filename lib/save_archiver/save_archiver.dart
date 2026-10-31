@@ -6,72 +6,51 @@ import 'package:trios/save_archiver/save_archive_tool.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 
-/// Why archiving or restoring a save stopped.
-///
-/// Every one of these leaves both the save folder and the archive exactly as
-/// they were before the attempt, except [couldNotRemoveOriginal], which means
-/// the archive is finished and correct but the save folder is still there.
+/// Archive and restore failures. Outcome flags describe which steps completed.
 enum SaveArchiveFailure {
-  /// The save folder isn't where it was said to be.
   saveFolderMissing,
 
-  /// The folder holds no files, so there is nothing to archive.
   saveFolderEmpty,
 
-  /// The folder isn't directly inside the saves folder. Refusing to touch
-  /// anything else is the whole point of the check.
   saveFolderOutsideSavesFolder,
 
   /// The archive folder sits inside the save folder being archived, so
   /// archiving would try to compress its own output.
   archiveFolderInsideSaveFolder,
 
-  /// Couldn't create or write to the archive folder.
   archiveFolderNotWritable,
 
-  /// 7-Zip failed, or produced nothing.
   compressionFailed,
 
-  /// The archive is damaged, by its own format's check.
   integrityTestFailed,
 
-  /// The archive is readable, but it doesn't hold everything the save folder
-  /// holds. A file is missing, the wrong size, or has the wrong checksum.
+  /// A file is missing from the archive or has a different size or checksum.
   contentsDoNotMatch,
 
-  /// The save folder holds a shortcut or symlink, which can't be checked
-  /// against the archive, so archiving won't risk it.
+  /// The save contains a link that cannot be verified against the archive.
   unsupportedFolderContents,
 
-  /// The archive is complete and verified, but the save folder couldn't be
-  /// removed. Nothing was lost — there are now two copies.
+  /// The archive is verified, but the original save folder remains.
   couldNotRemoveOriginal,
 
-  /// The archive file isn't where it was said to be.
   archiveMissing,
 
-  /// The archive holds nothing.
   archiveEmpty,
 
-  /// A save folder of that name is already in the saves folder. Restoring
-  /// would overwrite it.
   saveAlreadyExists,
 
-  /// 7-Zip failed to unpack the archive.
   extractionFailed,
 
-  /// What came out of the archive doesn't match what the archive says is in
-  /// it. Nothing was moved into the saves folder.
+  /// Extracted files differ from the archive, or the file count changed after
+  /// the move. Check [RestoreSaveOutcome.restored] before treating this as a
+  /// failed restore.
   extractedContentsDoNotMatch,
 
-  /// The unpacked save couldn't be moved into the saves folder.
   couldNotMoveIntoPlace,
 
-  /// Something threw that wasn't expected.
   unexpectedError,
 }
 
-/// The stage a job is at, for showing progress.
 enum SaveArchiveStep {
   checking,
   readingSaveFolder,
@@ -80,6 +59,7 @@ enum SaveArchiveStep {
   removingOriginal,
   extracting,
   movingIntoPlace,
+  copying,
   finished,
 }
 
@@ -89,6 +69,7 @@ extension SaveArchiveStepLabel on SaveArchiveStep {
     SaveArchiveStep.readingSaveFolder => 'Reading save',
     SaveArchiveStep.compressing => 'Compressing',
     SaveArchiveStep.verifying => 'Verifying',
+    SaveArchiveStep.copying => 'Copying',
     SaveArchiveStep.removingOriginal => 'Removing original',
     SaveArchiveStep.extracting => 'Unpacking',
     SaveArchiveStep.movingIntoPlace => 'Moving into place',
@@ -98,7 +79,6 @@ extension SaveArchiveStepLabel on SaveArchiveStep {
 
 typedef SaveArchiveProgressCallback = void Function(SaveArchiveStep step);
 
-/// What happened to one save that was asked to be archived.
 class ArchiveSaveOutcome {
   /// True when a verified archive exists on disk at [archiveFile].
   final bool archiveCreated;
@@ -109,7 +89,7 @@ class ArchiveSaveOutcome {
   final File? archiveFile;
   final SaveArchiveFailure? failure;
 
-  /// Plain English, safe to show to a person as-is.
+  /// User-facing result or error message.
   final String message;
 
   /// How many files the save folder held. Zero when it was never read.
@@ -140,12 +120,12 @@ class ArchiveSaveOutcome {
       'failure: $failure, message: $message)';
 }
 
-/// What happened to one archive that was asked to be restored.
 class RestoreSaveOutcome {
-  /// True when the save folder is back in the saves folder, verified.
+  /// True when the extracted save was moved into the saves folder. A later
+  /// file-count mismatch is reported in [failure].
   final bool restored;
 
-  /// True when the archive was removed afterwards, because it was asked for.
+  /// True when the archive was removed after restoring.
   final bool archiveRemoved;
 
   final Directory? restoredFolder;
@@ -168,7 +148,6 @@ class RestoreSaveOutcome {
       'message: $message)';
 }
 
-/// One file in a save folder, with enough detail to prove the archive holds it.
 class SaveEntryFingerprint {
   /// Path relative to the save folder, `/` separated.
   final String relativePath;
@@ -182,7 +161,6 @@ class SaveEntryFingerprint {
   });
 }
 
-/// Everything in a save folder, as read off disk.
 class SaveFolderManifest {
   final List<SaveEntryFingerprint> files;
   final int totalSizeInBytes;
@@ -193,8 +171,7 @@ class SaveFolderManifest {
   });
 }
 
-/// Thrown while reading a save folder that holds something that can't be
-/// checked against an archive.
+/// The save contains an entry that cannot be verified against the archive.
 class UnsupportedSaveContentsException implements Exception {
   final String path;
 
@@ -204,45 +181,28 @@ class UnsupportedSaveContentsException implements Exception {
   String toString() => 'Cannot verify a shortcut or symlink: $path';
 }
 
-/// Compresses save folders, and puts them back.
+/// Archives and restores save folders.
 ///
-/// The rules this class is built around, in order of importance:
+/// Before removing a save, verifies archive integrity and each file's path,
+/// size, and checksum. Only direct children of [savesFolder] can be archived.
+/// Archives use a temporary name until verified; restores are extracted and
+/// checked in a temporary folder before moving into place.
 ///
-/// 1. A save folder is only ever removed after the archive has been written,
-///    passed its format's integrity check, and been compared file by file
-///    against the folder — name, size, and checksum, for every single file.
-/// 2. Nothing already on disk is overwritten. Not an existing archive, and
-///    never an existing save folder.
-/// 3. The archive is built under a temporary name and only renamed into place
-///    once it is verified, so a crash halfway can't leave a half-written file
-///    that looks finished.
-/// 4. Only a folder sitting directly inside the saves folder can be removed.
-/// 5. Anything unexpected stops the job with both copies intact.
-///
-/// It knows nothing about Riverpod, Flutter, or what a Starsector save looks
-/// like inside. [removeFolder] and [removeFile] are handed in so that tests can
-/// watch what would have been deleted, and so the app can send deletions to the
-/// recycle bin without this file depending on the platform code that does it.
+/// [removeFolder] and [removeFile] let the caller choose how to delete originals.
 class SaveArchiver {
   final SaveArchiveTool tool;
 
-  /// The game's saves folder. A folder is only ever removed from here, and a
-  /// restored save only ever lands here.
   final Directory savesFolder;
 
-  /// Where archives are kept.
   final Directory archiveFolder;
 
   final Future<void> Function(Directory folder) removeFolder;
   final Future<void> Function(File file) removeFile;
 
-  /// File extension used for archives, including the dot.
   static const archiveExtension = '.7z';
 
-  /// Extension used while an archive is still being written.
   static const partialExtension = '.part';
 
-  /// Prefix of the temporary folders used while unpacking.
   static const restoreTempPrefix = 'trios-restoring-';
 
   SaveArchiver({
@@ -255,8 +215,8 @@ class SaveArchiver {
 
   /// Compresses [saveFolder] into [archiveFolder], then removes the folder.
   ///
-  /// The folder is only removed once the archive is verified. Every failure
-  /// leaves the save folder untouched.
+  /// Removes the original only after verification. A removal failure leaves
+  /// the verified archive available and is reported separately.
   Future<ArchiveSaveOutcome> archiveSave(
     Directory saveFolder, {
     SaveArchiveProgressCallback? onProgress,
@@ -331,8 +291,7 @@ class SaveArchiver {
 
       partialArchive = File('${finalArchive.path}$partialExtension');
       if (await partialArchive.exists()) {
-        // Left over from a run that was interrupted. It was never verified, so
-        // it is safe to drop.
+        // Discard an unfinished archive before retrying.
         await partialArchive.delete();
       }
 
@@ -377,8 +336,7 @@ class SaveArchiver {
         );
       }
 
-      // Somebody could have created this name in the meantime. Renaming over it
-      // would destroy whatever is there.
+      // Compression may take long enough for another process to take this name.
       if (await finalArchive.exists()) {
         return _archiveFailed(
           SaveArchiveFailure.archiveFolderNotWritable,
@@ -412,8 +370,7 @@ class SaveArchiver {
         );
       }
 
-      // From here on the archive is real, verified, and final. Only now is the
-      // save folder allowed to go.
+      // The verified archive is in place; the original can now be removed.
       onProgress?.call(SaveArchiveStep.removingOriginal);
 
       try {
@@ -474,12 +431,11 @@ class SaveArchiver {
       );
       return _archiveFailed(
         SaveArchiveFailure.unexpectedError,
-        'Something went wrong, so the save was left alone: $error',
+        'Could not finish archiving the save: $error. '
+        'Check the saves and archive folders before retrying.',
       );
     } finally {
-      // A partial archive is never anything but rubbish: it is only renamed
-      // into place after it passes every check, so anything still under the
-      // partial name failed.
+      // Successful archives have already been renamed out of the partial path.
       await _deleteQuietly(partialArchive);
     }
   }
@@ -506,14 +462,7 @@ class SaveArchiver {
         );
       }
 
-      bool passedIntegrityTest;
-      try {
-        passedIntegrityTest = await tool.passesIntegrityTest(archiveFile);
-      } catch (error) {
-        passedIntegrityTest = false;
-        Fimber.w('Integrity test threw for ${archiveFile.path}', ex: error);
-      }
-      if (!passedIntegrityTest) {
+      if (!await _passesIntegrityTest(archiveFile)) {
         return _restoreFailed(
           SaveArchiveFailure.integrityTestFailed,
           'The archive is damaged, so nothing was unpacked. The archive was '
@@ -530,10 +479,10 @@ class SaveArchiver {
         );
       }
 
+      final archiveRoot = archiveRootFolderName(entries);
       final rootFolderName =
-          archiveRootFolderName(entries) ??
-          p.basenameWithoutExtension(archiveFile.path);
-      final archiveHasRootFolder = archiveRootFolderName(entries) != null;
+          archiveRoot ?? p.basenameWithoutExtension(archiveFile.path);
+      final archiveHasRootFolder = archiveRoot != null;
 
       if (rootFolderName.isEmpty) {
         return _restoreFailed(
@@ -617,8 +566,7 @@ class SaveArchiver {
 
       onProgress?.call(SaveArchiveStep.movingIntoPlace);
 
-      // Checked again right before the move, because unpacking takes time and
-      // the game could have written a save in the meantime.
+      // A save may have appeared while extraction was running.
       if (await target.exists()) {
         return _restoreFailed(
           SaveArchiveFailure.saveAlreadyExists,
@@ -635,13 +583,12 @@ class SaveArchiver {
           ex: error,
           stacktrace: stackTrace,
         );
-        // A half-copied folder in the saves folder would look like a save and
-        // fail to load, so take it back out.
+        // Remove an incomplete copy so the game does not list it as a save.
         await _deleteQuietly(target);
         return _restoreFailed(
           SaveArchiveFailure.couldNotMoveIntoPlace,
-          'The save could not be moved into the saves folder, so nothing was '
-          'left there: $error',
+          'Could not move the restored save into the saves folder: $error. '
+          'The archive was kept. Check for an incomplete save folder before retrying.',
         );
       }
 
@@ -695,7 +642,8 @@ class SaveArchiver {
       );
       return _restoreFailed(
         SaveArchiveFailure.unexpectedError,
-        'Something went wrong, so nothing was put in the saves folder: $error',
+        'Could not finish restoring the save: $error. '
+        'Check the saves and archive folders before retrying.',
       );
     } finally {
       await _deleteQuietly(tempFolder);
@@ -704,8 +652,8 @@ class SaveArchiver {
 
   /// Reads every file in [folder], with its size and checksum.
   ///
-  /// Throws [UnsupportedSaveContentsException] when it finds a shortcut or
-  /// symlink, because there is no way to check one of those against an archive.
+  /// Throws [UnsupportedSaveContentsException] for links, which cannot be
+  /// verified against archive entries.
   static Future<SaveFolderManifest> readSaveFolderManifest(
     Directory folder,
   ) async {
@@ -738,9 +686,8 @@ class SaveArchiver {
   /// The single folder every path in [entries] sits inside, or null when the
   /// entries aren't all under one folder.
   ///
-  /// Archives this app writes always have one: the save folder's own name.
-  /// An archive somebody made by hand might not, and that is handled rather
-  /// than refused.
+  /// TriOS archives include the save folder name. Flat archives use the archive
+  /// filename as the restore folder name instead.
   static String? archiveRootFolderName(List<SaveArchiveEntry> entries) {
     String? root;
     var sawNestedPath = false;
@@ -758,7 +705,7 @@ class SaveArchiver {
       }
     }
 
-    // A single file at the archive root is a file, not a folder.
+    // Top-level entries alone do not establish a shared root folder.
     if (!sawNestedPath) return null;
     return root;
   }
@@ -777,6 +724,15 @@ class SaveArchiver {
     return crc;
   }
 
+  Future<bool> _passesIntegrityTest(File archiveFile) async {
+    try {
+      return await tool.passesIntegrityTest(archiveFile);
+    } catch (error) {
+      Fimber.w('Integrity test threw for ${archiveFile.path}', ex: error);
+      return false;
+    }
+  }
+
   /// Checks that [archiveFile] holds every file in [manifest], under
   /// [rootFolderName], at the right size and checksum.
   ///
@@ -786,14 +742,7 @@ class SaveArchiver {
     required SaveFolderManifest manifest,
     required String rootFolderName,
   }) async {
-    bool passedIntegrityTest;
-    try {
-      passedIntegrityTest = await tool.passesIntegrityTest(archiveFile);
-    } catch (error) {
-      Fimber.w('Integrity test threw for ${archiveFile.path}', ex: error);
-      passedIntegrityTest = false;
-    }
-    if (!passedIntegrityTest) {
+    if (!await _passesIntegrityTest(archiveFile)) {
       return const _VerificationProblem(
         SaveArchiveFailure.integrityTestFailed,
         'The archive did not pass its integrity check.',
@@ -829,9 +778,7 @@ class SaveArchiver {
       final expectedPath = '$rootFolderName/${wanted.relativePath}';
       var found = byPath[expectedPath];
 
-      // Windows reports the same path with different capitalisation from time
-      // to time. Only fall back when there is exactly one candidate, so two
-      // files differing only in case can never be mistaken for each other.
+      // Accept case differences only when the match is unambiguous.
       if (found == null) {
         final lower = expectedPath.toLowerCase();
         if (!ambiguousLowercasePaths.contains(lower)) {
@@ -852,8 +799,7 @@ class SaveArchiver {
           'bytes, but the save has it at ${wanted.sizeInBytes}.',
         );
       }
-      // 7-Zip records no checksum for an empty file, and there is nothing to
-      // check in one anyway — the size already proved it.
+      // 7-Zip omits checksums for empty files; the size check is sufficient.
       if (wanted.sizeInBytes > 0 &&
           found.crc32 != null &&
           found.crc32 != wanted.crc32) {
@@ -877,7 +823,7 @@ class SaveArchiver {
 
   /// Checks the unpacked files against what the archive says it holds.
   ///
-  /// Returns null when everything matches, or a sentence saying what didn't.
+  /// Returns null on success, otherwise a user-facing error.
   Future<String?> _verifyExtractedMatchesArchive({
     required Directory extractedInto,
     required List<SaveArchiveEntry> fileEntries,
@@ -909,8 +855,7 @@ class SaveArchiver {
     return null;
   }
 
-  /// Refuses anything that isn't a folder sitting directly inside the saves
-  /// folder, so a wrong path can never take out something else.
+  /// Restricts archiving to direct children of [savesFolder].
   ArchiveSaveOutcome? _checkSaveFolderIsSafeToRemove(Directory saveFolder) {
     final normalized = saveFolder.normalize;
     final name = normalized.name;
@@ -943,10 +888,8 @@ class SaveArchiver {
     return null;
   }
 
-  /// An archive path that nothing is using yet.
-  ///
-  /// Never returns a path that exists, so an archive can't be written over a
-  /// previous one. Returns null if it somehow can't find a free name.
+  /// Finds a name with neither an archive nor a partial file already present.
+  /// Returns null after exhausting the numbered alternatives.
   File? _pickFreeArchiveFile(String saveFolderName) {
     final base = saveFolderName.fixFilenameForFileSystem();
     final safeBase = base.isEmpty ? 'save' : base;
@@ -986,8 +929,8 @@ class SaveArchiver {
     return count;
   }
 
-  /// Deletes [entity] and swallows any error. Only used on things this class
-  /// created itself: partial archives and its own temporary folders.
+  /// Cleans up partial archives, extraction folders, and failed restore copies.
+  /// Logs deletion failures without replacing the job's result.
   static Future<void> _deleteQuietly(FileSystemEntity? entity) async {
     if (entity == null) return;
     try {
@@ -1022,7 +965,6 @@ class SaveArchiver {
   );
 }
 
-/// A reason an archive doesn't match the folder it was made from.
 class _VerificationProblem {
   final SaveArchiveFailure failure;
   final String message;

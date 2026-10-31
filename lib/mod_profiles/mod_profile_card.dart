@@ -442,11 +442,8 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                             isEnabled: !isGameRunning,
                             child: MovingTooltipWidget.text(
                               message: isGameRunning
-                                  ? 'Close the game first'
-                                  : 'Archive this save: compress it into a '
-                                        'single file and remove the folder, '
-                                        'after checking the archive holds '
-                                        'every file',
+                                  ? 'Close the game first!'
+                                  : 'Archive this save to save space',
                               child: IconButton(
                                 icon: const Icon(Icons.archive_outlined),
                                 onPressed: () =>

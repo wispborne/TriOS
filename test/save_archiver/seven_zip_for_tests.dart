@@ -2,12 +2,8 @@ import 'dart:io';
 
 import 'package:trios/compression/seven_zip/seven_zip.dart';
 
-/// The 7-Zip binary checked into `assets/`, for the machine running the tests.
-///
-/// The normal [SevenZip] constructor looks for assets the way a packaged app
-/// would, which doesn't work from a test, so this points at the copy in the
-/// repo. Returns null when there is no binary for this platform, so a test can
-/// skip instead of failing for a reason that has nothing to do with the code.
+/// Uses the bundled binary directly because packaged asset lookup does not
+/// work in tests. Returns null on platforms without a bundled binary.
 SevenZip? sevenZipFromRepo() {
   final repoRoot = Directory.current.path;
 

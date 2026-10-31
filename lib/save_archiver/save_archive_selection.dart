@@ -3,9 +3,7 @@ import 'package:trios/save_archiver/archived_save_store.dart';
 
 /// Sorts [items] newest first.
 ///
-/// Anything without a date goes last, and ties fall back to [tieBreakerOf], so
-/// the same list always comes out in the same order. A checkbox list that
-/// reshuffles itself between openings is a good way to archive the wrong save.
+/// Undated items go last. [tieBreakerOf] keeps equal dates in a consistent order.
 List<T> sortedNewestFirst<T>(
   Iterable<T> items, {
   required DateTime? Function(T item) dateOf,
@@ -27,7 +25,6 @@ List<T> sortedNewestFirst<T>(
   return sorted;
 }
 
-/// Saves ordered newest first.
 List<SaveFile> savesNewestFirst(Iterable<SaveFile> saves) =>
     sortedNewestFirst<SaveFile>(
       saves,
@@ -35,19 +32,25 @@ List<SaveFile> savesNewestFirst(Iterable<SaveFile> saves) =>
       tieBreakerOf: (save) => save.id,
     );
 
-/// The saves that would be archived when keeping the [keepCount] newest.
-///
-/// A [keepCount] of 0 means every save, and anything larger than the number of
-/// saves means none. Never returns saves the caller didn't pass in.
-List<SaveFile> savesToArchiveKeepingNewest(
-  Iterable<SaveFile> saves,
-  int keepCount,
-) {
-  final keep = keepCount < 0 ? 0 : keepCount;
-  return savesNewestFirst(saves).skip(keep).toList();
+/// Selects the saves the bulk archive dialog starts with ticked: every save
+/// not saved in the last 30 days, plus any recent saves beyond the newest 5.
+/// The newest 3 saves are never selected, however old they are. Undated saves
+/// are never selected.
+List<SaveFile> savesToArchiveByDefault(
+  Iterable<SaveFile> saves, {
+  required DateTime now,
+}) {
+  final cutoff = now.subtract(const Duration(days: 30));
+  final dated = savesNewestFirst(saves)
+      .where((save) => save.saveDate != null)
+      .toList();
+  // Newest first, so recent saves always come before older ones.
+  return [
+    for (final (index, save) in dated.indexed)
+      if (index >= 3 && (index >= 5 || !save.saveDate!.isAfter(cutoff))) save,
+  ];
 }
 
-/// Archives ordered newest save first.
 List<ArchivedSaveEntry> archivesNewestFirst(
   Iterable<ArchivedSaveEntry> archives,
 ) => sortedNewestFirst<ArchivedSaveEntry>(
@@ -55,13 +58,3 @@ List<ArchivedSaveEntry> archivesNewestFirst(
   dateOf: (archive) => archive.sortDate,
   tieBreakerOf: (archive) => archive.sortTieBreaker,
 );
-
-/// The [count] newest archives, which is what "restore the most recent ones"
-/// starts from. A [count] of 0 means none.
-List<ArchivedSaveEntry> archivesToRestoreNewest(
-  Iterable<ArchivedSaveEntry> archives,
-  int count,
-) {
-  final take = count < 0 ? 0 : count;
-  return archivesNewestFirst(archives).take(take).toList();
-}

@@ -445,12 +445,7 @@ class SevenZip implements ArchiveInterface {
     return results;
   }
 
-  /// Lists everything in [archiveFile] with the details needed to check an
-  /// archive against the folder it was made from: size, checksum, and whether
-  /// the item is a folder.
-  ///
-  /// [listFiles] only returns paths, which isn't enough to tell a complete
-  /// archive from a truncated one.
+  /// Lists entries with sizes, checksums, and directory flags for verification.
   Future<List<SevenZipListedEntry>> listEntriesWithDetails(
     File archiveFile,
   ) async {
@@ -475,14 +470,9 @@ class SevenZip implements ArchiveInterface {
     return parseSevenZipDetailedListing(result.stdout as String);
   }
 
-  /// Creates a new archive at [archiveFile] holding [sourceFolder] and
-  /// everything inside it.
+  /// Creates an archive containing [sourceFolder] under its own name.
   ///
-  /// Paths inside the archive start with [sourceFolder]'s own name, so
-  /// extracting into a parent folder recreates the folder itself.
-  ///
-  /// 7-Zip adds to an existing archive rather than replacing it, so
-  /// [archiveFile] must not exist yet.
+  /// [archiveFile] must not exist: 7-Zip otherwise updates its contents.
   Future<void> createArchiveFromFolder(
     File archiveFile,
     Directory sourceFolder, {
@@ -767,10 +757,8 @@ class SevenZipListedEntry {
 
 /// Parses the output of `7z l -slt`.
 ///
-/// The output starts with a block describing the archive file itself, then a
-/// line of dashes, then one block per item separated by blank lines. Only the
-/// blocks after the dashes are items, so the archive's own name never gets
-/// mistaken for an entry.
+/// Only blocks after the header separator are entries; the header describes
+/// the archive file itself.
 List<SevenZipListedEntry> parseSevenZipDetailedListing(String stdout) {
   final lines = const LineSplitter().convert(stdout);
   final entries = <SevenZipListedEntry>[];
@@ -819,8 +807,7 @@ List<SevenZipListedEntry> parseSevenZipDetailedListing(String stdout) {
 
     switch (key) {
       case 'Path':
-        // A new Path line without a blank line in between means the previous
-        // block ended; don't let two blocks merge into one.
+        // A Path line can start a new block without a blank separator.
         if (path != null) finishBlock();
         path = value;
       case 'Size':

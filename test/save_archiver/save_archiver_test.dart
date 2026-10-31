@@ -7,9 +7,6 @@ import 'package:trios/save_archiver/save_archiver.dart';
 
 import 'fake_save_archive_tool.dart';
 
-/// Every test here is about the same promise: a save folder is only ever
-/// removed once there is a verified archive holding every byte of it, and
-/// nothing on disk is ever written over.
 void main() {
   late Directory root;
   late Directory savesFolder;
@@ -39,8 +36,7 @@ void main() {
         },
   );
 
-  /// A save folder with a descriptor, a nested file, and an empty file, since
-  /// each of those is checked differently.
+  /// Includes descriptor, nested, and empty files for verification coverage.
   Future<Directory> makeSave(
     String name, {
     String descriptor = '<SaveGameData></SaveGameData>',
@@ -396,8 +392,6 @@ void main() {
   });
 
   group('restoring a save', () {
-    /// Archives a save and returns the archive, so restore tests start from a
-    /// real round trip rather than a hand-made archive.
     Future<File> archiveOne(String name, {String campaign = 'campaign'}) async {
       final save = await makeSave(name, campaign: campaign);
       final outcome = await buildArchiver().archiveSave(save);
@@ -656,7 +650,7 @@ void main() {
 
       final manifest = await SaveArchiver.readSaveFolderManifest(folder);
 
-      // The standard CRC32 of "123456789", which every implementation agrees on.
+      // Standard CRC32 test vector.
       expect(manifest.files.single.crc32, 0xCBF43926);
     });
   });

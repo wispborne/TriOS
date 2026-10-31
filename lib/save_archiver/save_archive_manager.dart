@@ -14,10 +14,8 @@ import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/utils/platform_specific.dart';
 
-/// Where archived saves are kept.
-///
-/// Beside the saves folder by default, not inside it, so the game never has to
-/// look at it. Null when there is no saves folder to sit beside yet.
+/// Defaults to a sibling of the saves folder, outside the game's save list.
+/// Null when neither a custom path nor the saves folder is available.
 final saveArchiveFolderProvider = Provider<Directory?>((ref) {
   final useCustom = ref.watch(
     appSettings.select((settings) => settings.useCustomSavesArchivePath),
@@ -32,20 +30,16 @@ final saveArchiveFolderProvider = Provider<Directory?>((ref) {
   return defaultSaveArchiveFolder(savesFolder);
 });
 
-/// The folder archives go in when nothing else is set.
 Directory defaultSaveArchiveFolder(Directory savesFolder) => Directory(
   p.join(savesFolder.normalize.parent.path, Constants.savesArchiveFolderName),
 ).normalize;
 
-/// The 7-Zip-backed tool the archiver uses.
-///
-/// Built once: constructing [SevenZip] runs `chmod` on macOS and Linux.
+/// Reuses [SevenZip], whose constructor runs `chmod` on macOS and Linux.
 final saveArchiveToolProvider = Provider<SaveArchiveTool>(
   (ref) => SevenZipSaveArchiveTool(SevenZip()),
 );
 
-/// The archiver, or null when the saves folder or archive folder isn't known
-/// yet — which is what happens before the game folder has been set.
+/// Null until both save and archive folders are available.
 final saveArchiverProvider = Provider<SaveArchiver?>((ref) {
   final savesFolder = ref.watch(AppState.savesFolder).value;
   final archiveFolder = ref.watch(saveArchiveFolderProvider);
@@ -60,7 +54,6 @@ final saveArchiverProvider = Provider<SaveArchiver?>((ref) {
   );
 });
 
-/// The archives on disk, newest save first.
 final archivedSavesProvider =
     AsyncNotifierProvider<ArchivedSavesNotifier, List<ArchivedSaveEntry>>(
       ArchivedSavesNotifier.new,
@@ -74,7 +67,6 @@ class ArchivedSavesNotifier extends AsyncNotifier<List<ArchivedSaveEntry>> {
     return readArchivedSaves(archiveFolder, ref.watch(saveArchiveToolProvider));
   }
 
-  /// Rereads the archive folder.
   Future<void> reload() async {
     final archiveFolder = ref.read(saveArchiveFolderProvider);
     if (archiveFolder == null) {
@@ -87,13 +79,8 @@ class ArchivedSavesNotifier extends AsyncNotifier<List<ArchivedSaveEntry>> {
   }
 }
 
-/// Why the app won't archive or restore right now, or null when it will.
-///
-/// Takes a `WidgetRef` because everything here is started by somebody pressing
-/// a button; nothing archives on its own.
-///
-/// Checked before every job rather than once per dialog: batches take minutes,
-/// and somebody can start the game in the middle of one.
+/// Returns a blocking reason, or null when archiving and restoring are allowed.
+/// Checked before each job because the game can start during a batch.
 String? saveArchivingBlockedReason(WidgetRef ref) {
   if (ref.read(AppState.isGameRunning).value == true) {
     return 'Starsector is running. Close it first — archiving a save while the '
@@ -106,11 +93,8 @@ String? saveArchivingBlockedReason(WidgetRef ref) {
   return null;
 }
 
-/// Archives one save, then writes the note that lets the archive list show its
-/// character name and date without unpacking anything.
-///
-/// The note is written after the fact on purpose: it is a convenience, and a
-/// failure to write it must never turn a finished archive into a failed one.
+/// Caches metadata after archiving. A metadata write failure must not change
+/// the archive outcome.
 Future<ArchiveSaveOutcome> archiveOneSave(
   WidgetRef ref,
   SaveFile save, {
@@ -149,7 +133,6 @@ Future<ArchiveSaveOutcome> archiveOneSave(
   return outcome;
 }
 
-/// Restores one archive back into the saves folder.
 Future<RestoreSaveOutcome> restoreOneArchive(
   WidgetRef ref,
   ArchivedSaveEntry entry, {
@@ -181,11 +164,8 @@ Future<RestoreSaveOutcome> restoreOneArchive(
   return outcome;
 }
 
-/// Deletes an archive and the note beside it, after the person has confirmed.
-///
-/// This is the one place in the feature that removes something without a
-/// verified copy elsewhere, so it goes to the recycle bin and nothing calls it
-/// on its own.
+/// Deletes the archive and its metadata. The caller must confirm deletion;
+/// this may be the only copy, and trash failures fall back to permanent deletion.
 Future<void> deleteArchive(ArchivedSaveEntry entry) async {
   await moveFileToTrash(entry.archiveFile);
   await _removeQuietly(entry.metadataFile);
@@ -199,15 +179,13 @@ Future<void> _removeQuietly(File file) async {
   }
 }
 
-/// Sends a folder to the recycle bin, falling back to deleting it outright.
-///
-/// The fallback is only reached once the archive has been written and checked,
-/// so the recycle bin is a second net rather than the only one.
+/// Falls back to permanent deletion if trash is unavailable. Call only after
+/// verifying the archive.
 Future<void> moveFolderToTrash(Directory folder) async {
   folder.moveToTrash(deleteIfFailed: true);
 }
 
-/// Sends a file to the recycle bin, falling back to deleting it outright.
+/// Falls back to permanent deletion if trash is unavailable.
 Future<void> moveFileToTrash(File file) async {
   file.moveToTrash(deleteIfFailed: true);
 }

@@ -3,15 +3,13 @@ import 'dart:io';
 
 import 'package:trios/compression/seven_zip/seven_zip.dart';
 
-/// One item inside an archive.
 class SaveArchiveEntry {
   /// Path inside the archive, always separated by `/`, never starting with one.
   final String path;
 
   final int sizeInBytes;
 
-  /// The checksum the archive recorded for this item, or null when it didn't
-  /// record one. Folders and empty files have no checksum.
+  /// Null when the archive records no checksum, including for empty files.
   final int? crc32;
 
   final bool isDirectory;
@@ -28,13 +26,10 @@ class SaveArchiveEntry {
       'SaveArchiveEntry($path, $sizeInBytes bytes, crc: $crc32, dir: $isDirectory)';
 }
 
-/// The archive operations [SaveArchiver] needs, and nothing else.
+/// Archive operations used by the save archiver.
 ///
-/// This exists so tests can hand the archiver a tool that fails in one exact
-/// way — writes a truncated archive, loses a file, reports a bad checksum — and
-/// check that the original save survives it. Those are the cases that would
-/// cost somebody hundreds of hours, and they can't be triggered on demand with
-/// a real 7-Zip.
+/// Tests can inject compression, corruption, and extraction failures without
+/// depending on a real 7-Zip process.
 abstract class SaveArchiveTool {
   /// Compresses [sourceFolder] into [archiveFile].
   ///
@@ -47,11 +42,10 @@ abstract class SaveArchiveTool {
 
   /// Runs the archive format's own integrity check.
   ///
-  /// Returns false when the archive is damaged. Throws when it can't be read at
-  /// all; the archiver treats a throw the same as a false.
+  /// The archiver treats false and exceptions as verification failures.
   Future<bool> passesIntegrityTest(File archiveFile);
 
-  /// Everything the archive holds, files and folders.
+  /// Lists both files and directories.
   Future<List<SaveArchiveEntry>> listEntries(File archiveFile);
 
   /// Unpacks everything in [archiveFile] into [destination].
@@ -70,8 +64,6 @@ abstract class SaveArchiveTool {
 class SevenZipSaveArchiveTool implements SaveArchiveTool {
   final SevenZip sevenZip;
 
-  /// Compression level passed to 7-Zip. Save files are XML and shrink a lot
-  /// even at the default level; a higher one costs minutes and saves little.
   final int compressionLevel;
 
   SevenZipSaveArchiveTool(this.sevenZip, {this.compressionLevel = 5});
@@ -121,16 +113,15 @@ class SevenZipSaveArchiveTool implements SaveArchiveTool {
     );
     final found = read.nonNulls.firstOrNull;
     if (found == null) return null;
-    // Save files are UTF-8, but a damaged one shouldn't throw on the way to
-    // being reported as damaged.
+    // Leave damaged descriptor content for the parser to handle.
     return utf8.decode(found.extractedContent, allowMalformed: true);
   }
 }
 
-/// Puts an in-archive path in the one shape the archiver compares against:
+/// Normalizes paths for comparison across platforms:
 /// `/` separators, no leading or trailing separator, no `./` prefix.
 ///
-/// 7-Zip writes `\` on Windows and `/` everywhere else, for the same archive.
+/// 7-Zip uses platform-specific separators when listing the same archive.
 String normalizeArchivePath(String path) {
   var normalized = path.replaceAll('\\', '/');
   while (normalized.startsWith('./')) {

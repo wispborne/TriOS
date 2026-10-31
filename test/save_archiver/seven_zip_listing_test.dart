@@ -2,9 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/compression/seven_zip/seven_zip.dart';
 import 'package:trios/save_archiver/save_archive_tool.dart';
 
-/// Reading `7z l -slt` output. The archiver compares this against the folder
-/// it just compressed, so a parser that quietly drops an entry would let a
-/// missing file through.
 void main() {
   // Real output from 7-Zip 24.09, trimmed.
   const listing = '''

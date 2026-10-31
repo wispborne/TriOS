@@ -16,8 +16,6 @@ final saveFileProvider =
     );
 
 class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
-  final String _descriptorFileName = saveDescriptorFileName;
-
   @override
   Future<List<SaveFile>> build() async {
     readAllSaves().then((saves) => state = AsyncData(saves));
@@ -69,19 +67,15 @@ class SaveFileNotifier extends AsyncNotifier<List<SaveFile>> {
   }
 
   Future<SaveFile> readSave(Directory folderOfSave) async {
-    final file = folderOfSave.resolve(_descriptorFileName).toFile();
+    final file = folderOfSave.resolve(saveDescriptorFileName).toFile();
     final contents = await file.readAsString();
     return parseSaveDescriptor(contents, folderOfSave);
   }
 }
 
-/// The name of the file in a save folder that describes the save.
 const saveDescriptorFileName = "descriptor.xml";
 
-/// Reads a save's `descriptor.xml` into a [SaveFile].
-///
-/// Takes the text rather than the folder so that a descriptor read out of an
-/// archive can be parsed the same way as one read off disk.
+/// Shared descriptor parser for save folders and archives.
 SaveFile parseSaveDescriptor(String contents, Directory folderOfSave) {
   final document = XmlDocument.parse(contents);
   var rootElement = document.getElement('SaveGameData');
@@ -124,7 +118,6 @@ SaveFile parseSaveDescriptor(String contents, Directory folderOfSave) {
       ) ??
       0;
 
-  // Reading mods
   final modsElement = rootElement?.getElement('allModsEverEnabled');
   Map<int, SaveFileMod> modsMap = {};
 

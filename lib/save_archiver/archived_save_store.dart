@@ -9,18 +9,15 @@ import 'package:trios/save_archiver/save_archive_tool.dart';
 import 'package:trios/save_archiver/save_archiver.dart';
 import 'package:trios/utils/logging.dart';
 
-/// One archive on disk, with whatever is known about the save inside it.
+/// Archive file and cached save details.
 class ArchivedSaveEntry {
   final File archiveFile;
 
-  /// Null when neither the note beside the archive nor the archive's own
-  /// descriptor could be read. The archive can still be restored.
+  /// Missing metadata does not prevent restoring the archive.
   final ArchivedSave? info;
 
-  /// Size of the archive file right now.
   final int sizeOnDiskInBytes;
 
-  /// When the archive file was last written.
   final DateTime fileModified;
 
   const ArchivedSaveEntry({
@@ -30,38 +27,30 @@ class ArchivedSaveEntry {
     required this.fileModified,
   });
 
-  /// The name the save folder gets back when restored.
+  /// Folder name shown in the UI; restoration resolves it from archive entries.
   String get saveFolderName =>
       info?.saveFolderName ?? p.basenameWithoutExtension(archiveFile.path);
 
-  /// What to call this in a list.
   String get displayName {
     final character = info?.characterName;
     if (character != null && character.isNotEmpty) return character;
     return saveFolderName;
   }
 
-  /// The date to sort and filter on: when the game wrote the save, falling back
-  /// to when TriOS archived it, falling back to the file's own timestamp.
   DateTime get sortDate => info?.saveDate ?? info?.archivedDate ?? fileModified;
 
-  /// A stable second key, so two archives with the same date never swap order
-  /// between one listing and the next.
+  /// Keeps archives with the same date in a consistent order.
   String get sortTieBreaker => archiveFile.path;
 
-  /// The note file written beside [archiveFile].
   File get metadataFile => metadataFileFor(archiveFile);
 }
 
-/// The note written beside an archive, holding what TriOS knows about the save.
 File metadataFileFor(File archiveFile) =>
     File('${archiveFile.path}$archivedSaveMetadataSuffix');
 
-/// Suffix of the note file, appended to the whole archive file name so it never
-/// collides with an archive.
+/// Appended to the full archive filename.
 const archivedSaveMetadataSuffix = '.info.json';
 
-/// Builds the note to write beside an archive.
 ArchivedSave buildArchivedSave({
   required String saveFolderName,
   required SaveFile? save,
@@ -87,10 +76,9 @@ ArchivedSave buildArchivedSave({
   archivedDate: archivedDate ?? DateTime.now(),
 );
 
-/// Writes the note beside [archiveFile].
+/// Writes cached metadata beside [archiveFile].
 ///
-/// Failing to write it is not worth telling anybody about: the archive is
-/// already safe, and the list falls back to reading the archive itself.
+/// Failure is logged; the list can recover details from the archive.
 Future<void> writeArchivedSaveMetadata(
   File archiveFile,
   ArchivedSave info,
@@ -101,14 +89,14 @@ Future<void> writeArchivedSaveMetadata(
     ).writeAsString(const JsonEncoder.withIndent('  ').convert(info.toMap()));
   } catch (error, stackTrace) {
     Fimber.w(
-      'Could not write the note beside ${archiveFile.path}',
+      'Unable to write the note beside ${archiveFile.path}',
       ex: error,
       stacktrace: stackTrace,
     );
   }
 }
 
-/// Reads the note beside [archiveFile], or null when there isn't a usable one.
+/// Returns null when the metadata file is missing or unreadable.
 Future<ArchivedSave?> readArchivedSaveMetadata(File archiveFile) async {
   final file = metadataFileFor(archiveFile);
   if (!await file.exists()) return null;
@@ -118,7 +106,7 @@ Future<ArchivedSave?> readArchivedSaveMetadata(File archiveFile) async {
     );
   } catch (error) {
     Fimber.w(
-      'Could not read ${file.path}, will read the archive instead: $error',
+      'Unable to read ${file.path}. Will read the archive instead: $error',
     );
     return null;
   }
@@ -126,10 +114,8 @@ Future<ArchivedSave?> readArchivedSaveMetadata(File archiveFile) async {
 
 /// Lists the archives in [archiveFolder], newest save first.
 ///
-/// For each archive it tries the note beside it, then the `descriptor.xml`
-/// inside the archive, and failing both still lists the archive with just its
-/// file name — an archive TriOS can't describe is still an archive somebody
-/// might need back.
+/// Missing metadata falls back to the archived descriptor. Archives remain
+/// listed when neither can be read.
 Future<List<ArchivedSaveEntry>> readArchivedSaves(
   Directory archiveFolder,
   SaveArchiveTool tool,
@@ -163,8 +149,8 @@ Future<ArchivedSaveEntry> _readOne(File archive, SaveArchiveTool tool) async {
 
   var info = await readArchivedSaveMetadata(archive);
   if (info == null) {
-    info = await _readMetadataFromArchive(archive, tool, stat.size);
-    // Write the note so the next listing doesn't have to unpack anything.
+    info = await _readMetadataFromArchive(archive, tool, stat);
+    // Cache recovered metadata for subsequent listings.
     if (info != null) await writeArchivedSaveMetadata(archive, info);
   }
 
@@ -176,12 +162,11 @@ Future<ArchivedSaveEntry> _readOne(File archive, SaveArchiveTool tool) async {
   );
 }
 
-/// Reads the save's details out of the archive itself, for an archive with no
-/// note beside it — one made by an older version, or copied in by hand.
+/// Recovers metadata from an archive without a usable metadata file.
 Future<ArchivedSave?> _readMetadataFromArchive(
   File archive,
   SaveArchiveTool tool,
-  int archiveSizeInBytes,
+  FileStat stat,
 ) async {
   try {
     final entries = await tool.listEntries(archive);
@@ -214,13 +199,12 @@ Future<ArchivedSave?> _readMetadataFromArchive(
         0,
         (total, entry) => total + entry.sizeInBytes,
       ),
-      archiveSizeInBytes: archiveSizeInBytes,
-      // Nothing recorded when it was archived, so the file's own date is the
-      // closest thing there is.
-      archivedDate: archive.statSync().modified,
+      archiveSizeInBytes: stat.size,
+      // Use the file timestamp when the archive date is unknown.
+      archivedDate: stat.modified,
     );
   } catch (error) {
-    Fimber.w('Could not read the save details out of ${archive.path}: $error');
+    Fimber.w('Unable to read the save details out of ${archive.path}: $error');
     return null;
   }
 }

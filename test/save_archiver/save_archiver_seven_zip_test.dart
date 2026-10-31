@@ -9,13 +9,10 @@ import 'package:trios/save_archiver/save_archiver.dart';
 
 import 'seven_zip_for_tests.dart';
 
-/// The same promises as `save_archiver_test.dart`, but against the real 7-Zip
-/// binary the app ships, on real files. The fake tool can be told to fail on
-/// cue; only this one proves the whole thing works end to end.
+/// Round-trip and corruption tests using the bundled 7-Zip binary.
 void main() {
   final sevenZip = sevenZipFromRepo();
   if (sevenZip == null) {
-    // No binary for this machine's platform. Nothing here can run.
     return;
   }
 
@@ -33,9 +30,8 @@ void main() {
     removeFile: (file) => file.delete(),
   );
 
-  /// A save folder with the awkward cases in it: nested folders, an empty file,
-  /// bytes that aren't text, a name that isn't ASCII, and a file big enough to
-  /// be read in more than one chunk.
+  /// Covers nested folders, empty files, binary data, Unicode names, and
+  /// multi-chunk reads.
   Future<Directory> makeSave(String name) async {
     final folder = Directory(p.join(savesFolder.path, name));
     await folder.create(recursive: true);

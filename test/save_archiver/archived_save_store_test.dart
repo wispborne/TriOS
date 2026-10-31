@@ -5,14 +5,10 @@ import 'package:path/path.dart' as p;
 import 'package:trios/mod_profiles/save_reader.dart';
 import 'package:trios/save_archiver/archived_save_store.dart';
 import 'package:trios/save_archiver/models/archived_save.dart';
-import 'package:trios/save_archiver/save_archive_selection.dart';
 import 'package:trios/save_archiver/save_archiver.dart';
 
 import 'fake_save_archive_tool.dart';
 
-/// Reading an archive's details for the list. None of this is allowed to stop
-/// an archive from showing up: an archive TriOS can't describe is still an
-/// archive somebody might need back.
 void main() {
   late Directory root;
   late Directory savesFolder;
@@ -58,9 +54,7 @@ void main() {
 </SaveGameData>
 ''';
 
-  /// Makes a save folder and compresses it with the fake tool, returning the
-  /// archive. No note is written, so each test can decide what state to put the
-  /// archive in.
+  /// Creates an archive without metadata so tests can exercise recovery.
   Future<File> makeArchive(
     String folderName, {
     String? descriptor,
@@ -92,7 +86,7 @@ void main() {
     if (await root.exists()) await root.delete(recursive: true);
   });
 
-  group('the note beside an archive', () {
+  group('archive metadata', () {
     test('round trips everything the list shows', () async {
       final archive = await makeArchive(
         'save_Wisp_1',
@@ -122,7 +116,7 @@ void main() {
       expect(read.archivedDate, DateTime.utc(2026, 9, 20));
     });
 
-    test('is named after the whole archive file, so it never collides', () {
+    test('appends the metadata suffix to the full archive filename', () {
       final archive = File(p.join(archiveFolder.path, 'save_Wisp_1.7z'));
 
       expect(
@@ -131,7 +125,7 @@ void main() {
       );
     });
 
-    test('a note that is not readable is ignored rather than thrown', () async {
+    test('invalid metadata returns null', () async {
       final archive = await makeArchive('save_Wisp_1');
       await metadataFileFor(archive).writeAsString('{ this is not json');
 
@@ -162,9 +156,9 @@ void main() {
 
   group('listing the archive folder', () {
     test(
-      'reads the details out of the archive when there is no note',
+      'recovers details from the descriptor when metadata is missing',
       () async {
-        final archive = await makeArchive(
+        await makeArchive(
           'save_Wisp_1',
           descriptor: descriptorXml(characterName: 'Andrada', level: 7),
         );
@@ -180,22 +174,19 @@ void main() {
       },
     );
 
-    test(
-      'writes the note so the next listing does not unpack anything',
-      () async {
-        final archive = await makeArchive(
-          'save_Wisp_1',
-          descriptor: descriptorXml(),
-        );
-        expect(metadataFileFor(archive).existsSync(), isFalse);
+    test('caches recovered metadata for later listings', () async {
+      final archive = await makeArchive(
+        'save_Wisp_1',
+        descriptor: descriptorXml(),
+      );
+      expect(metadataFileFor(archive).existsSync(), isFalse);
 
-        await readArchivedSaves(archiveFolder, tool);
+      await readArchivedSaves(archiveFolder, tool);
 
-        expect(metadataFileFor(archive).existsSync(), isTrue);
-      },
-    );
+      expect(metadataFileFor(archive).existsSync(), isTrue);
+    });
 
-    test('prefers the note over unpacking the archive', () async {
+    test('prefers cached metadata over the archived descriptor', () async {
       final archive = await makeArchive(
         'save_Wisp_1',
         descriptor: descriptorXml(characterName: 'FromTheArchive'),
@@ -236,19 +227,15 @@ void main() {
       expect(entries.single.displayName, 'handmade');
     });
 
-    test(
-      'ignores the notes and anything else that is not an archive',
-      () async {
-        await makeArchive('save_Wisp_1', descriptor: descriptorXml());
-        await File(p.join(archiveFolder.path, 'readme.txt'))
-            .writeAsString('hi');
+    test('ignores metadata and other non-archive files', () async {
+      await makeArchive('save_Wisp_1', descriptor: descriptorXml());
+      await File(p.join(archiveFolder.path, 'readme.txt')).writeAsString('hi');
 
-        final entries = await readArchivedSaves(archiveFolder, tool);
+      final entries = await readArchivedSaves(archiveFolder, tool);
 
-        expect(entries, hasLength(1));
-        expect(p.basename(entries.single.archiveFile.path), 'save_Wisp_1.7z');
-      },
-    );
+      expect(entries, hasLength(1));
+      expect(p.basename(entries.single.archiveFile.path), 'save_Wisp_1.7z');
+    });
 
     test('an archive folder that is not there yet lists as empty', () async {
       final missing = Directory(p.join(root.path, 'not_created_yet'));
@@ -278,29 +265,10 @@ void main() {
         'save_old',
       ]);
     });
-
-    test('restoring the newest takes them off the top of that order', () async {
-      await makeArchive(
-        'save_old',
-        descriptor: descriptorXml(saveDate: '2026-01-01 10:00:00.00 UTC'),
-      );
-      await makeArchive(
-        'save_new',
-        descriptor: descriptorXml(saveDate: '2026-09-01 10:00:00.00 UTC'),
-      );
-
-      final entries = await readArchivedSaves(archiveFolder, tool);
-
-      expect(archivesToRestoreNewest(entries, 1).map((e) => e.saveFolderName), [
-        'save_new',
-      ]);
-      expect(archivesToRestoreNewest(entries, 0), isEmpty);
-      expect(archivesToRestoreNewest(entries, 99), hasLength(2));
-    });
   });
 
-  group('building the note after archiving', () {
-    test('copies what the save said about itself', () async {
+  group('building archive metadata', () {
+    test('copies save details and records archive sizes', () async {
       final folder = Directory(p.join(savesFolder.path, 'save_Wisp_1'))
         ..createSync(recursive: true);
       final save = parseSaveDescriptor(
@@ -326,7 +294,7 @@ void main() {
       expect(info.archivedDate, DateTime.utc(2026, 9, 21));
     });
 
-    test('works with no save details at all', () {
+    test('accepts missing save details', () {
       final info = buildArchivedSave(
         saveFolderName: 'save_Wisp_1',
         save: null,

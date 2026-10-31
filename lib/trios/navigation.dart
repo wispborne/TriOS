@@ -99,7 +99,7 @@ extension TriOSToolsUI on TriOSTools {
   String get tooltip => switch (this) {
     TriOSTools.dashboard => 'Dashboard',
     TriOSTools.modManager => 'Mod Manager',
-    TriOSTools.modProfiles => 'Mod Profiles',
+    TriOSTools.modProfiles => 'Mod Profiles & Saves',
     TriOSTools.catalog => 'Mod Catalog',
     TriOSTools.chipper => 'Log Viewer',
     TriOSTools.vramEstimator => 'VRAM Estimator',

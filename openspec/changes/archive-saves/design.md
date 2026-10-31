@@ -108,9 +108,11 @@ something.
 
 ## Progress and cancelling
 
-The batch dialog is modal and runs one job at a time. "Stop after this one"
-skips everything remaining but never interrupts the job in flight, because a
-half-finished job is the only way this feature could lose anything.
+The batch dialog is modal and runs one job at a time. "Cancel" skips
+everything remaining but never interrupts the job in flight, because a
+half-finished job is the only way this feature could lose anything. With a
+single job there is nothing to skip, so the Cancel button, progress bar, and
+"2 of 5" counter are hidden; the job's own row shows its spinner and step.
 
 7-Zip is run through `Process.run`, which gives no progress inside a single
 file, so each row shows the step it is on — compressing, verifying, removing

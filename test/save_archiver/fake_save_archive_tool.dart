@@ -5,14 +5,9 @@ import 'package:archive/archive.dart' show getCrc32;
 import 'package:path/path.dart' as p;
 import 'package:trios/save_archiver/save_archive_tool.dart';
 
-/// A stand-in archive tool that keeps everything in a small JSON file.
-///
-/// The point is not to be a good archiver. It is to be an archiver that can be
-/// told to fail in one exact way — lose a file, report a wrong size, write a
-/// damaged archive, unpack the wrong bytes — so the tests can check that none
-/// of those ever costs somebody their save folder.
+/// JSON-backed archive tool with injectable compression, verification, and
+/// extraction failures.
 class FakeSaveArchiveTool implements SaveArchiveTool {
-  /// Thrown out of [create] when set.
   Object? throwOnCreate;
 
   /// When true, [create] reports success without writing anything.
@@ -21,20 +16,18 @@ class FakeSaveArchiveTool implements SaveArchiveTool {
   /// When false, every archive fails its integrity check.
   bool integrityPasses = true;
 
-  /// Thrown out of [passesIntegrityTest] when set.
   Object? throwOnIntegrityTest;
 
-  /// Last chance to mangle the archive file after it is written.
+  /// Mutates the archive after creation to simulate corruption.
   void Function(File archiveFile)? afterCreate;
 
   /// Changes what [listEntries] reports, without changing the archive.
   List<SaveArchiveEntry> Function(List<SaveArchiveEntry> entries)?
   tamperWithListing;
 
-  /// Thrown out of [extractAll] when set.
   Object? throwOnExtract;
 
-  /// Runs after unpacking, so a test can damage what came out.
+  /// Mutates extracted files to simulate extraction errors.
   void Function(Directory destination)? afterExtract;
 
   /// Every archive this tool was asked to create, in order.
@@ -100,8 +93,9 @@ class FakeSaveArchiveTool implements SaveArchiveTool {
   @override
   Future<List<SaveArchiveEntry>> listEntries(File archiveFile) async {
     final body = _read(archiveFile);
-    if (body == null)
+    if (body == null) {
       throw Exception('Not a fake archive: ${archiveFile.path}');
+    }
 
     final entries = (body['entries'] as List)
         .cast<Map<String, dynamic>>()
@@ -127,8 +121,9 @@ class FakeSaveArchiveTool implements SaveArchiveTool {
     if (thrown != null) throw thrown;
 
     final body = _read(archiveFile);
-    if (body == null)
+    if (body == null) {
       throw Exception('Not a fake archive: ${archiveFile.path}');
+    }
 
     for (final entry
         in (body['entries'] as List).cast<Map<String, dynamic>>()) {

@@ -62,11 +62,6 @@ class Settings with SettingsMappable {
   final Directory? customSavesArchivePath;
   final bool useCustomSavesArchivePath;
 
-  /// How many of the newest saves the "archive older saves" dialog offers to
-  /// keep. Only a starting point — the dialog still shows every save with a
-  /// checkbox, and nothing is archived that isn't ticked.
-  final int saveArchiveKeepNewestCount;
-
   /// DO NOT USE directly; use `AppState.gameCoreFolder`
   @MappableField(hook: DirectoryHook())
   final Directory? customCoreFolderPath;
@@ -329,7 +324,6 @@ class Settings with SettingsMappable {
     this.useCustomSavesPath = false,
     this.customSavesArchivePath,
     this.useCustomSavesArchivePath = false,
-    this.saveArchiveKeepNewestCount = 5,
     this.customCoreFolderPath,
     this.useCustomCoreFolderPath = false,
     this.doubleClickForModsPanel = true,

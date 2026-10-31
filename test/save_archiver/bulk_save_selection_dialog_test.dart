@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:trios/save_archiver/bulk_save_selection_dialog.dart';
+import 'package:trios/utils/extensions.dart';
 
 /// The dialog's one promise: the ticks somebody is looking at are exactly what
 /// gets acted on. Nothing else, and nothing extra.
@@ -16,20 +17,22 @@ void main() {
   ];
 
   Set<String>? captured;
+  bool? capturedCheckbox;
 
   Future<void> open(
     WidgetTester tester, {
     required List<SaveSelectionItem> items,
     required Set<String> initiallySelected,
-    SaveSelectionCountFilter? countFilter,
+    String? checkboxLabel,
   }) async {
     captured = null;
+    capturedCheckbox = null;
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(
           builder: (context) => ElevatedButton(
             onPressed: () async {
-              captured = await showBulkSaveSelectionDialog(
+              final selection = await showBulkSaveSelectionDialog(
                 context: context,
                 title: 'Archive saves',
                 explanation: 'Pick some.',
@@ -37,8 +40,10 @@ void main() {
                 initiallySelected: initiallySelected,
                 confirmLabel: (count) => 'Archive $count',
                 confirmIcon: Icons.archive,
-                countFilter: countFilter,
+                checkboxLabel: checkboxLabel,
               );
+              captured = selection?.ids;
+              capturedCheckbox = selection?.checkboxTicked;
             },
             child: const Text('open'),
           ),
@@ -187,146 +192,86 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Archive 0'), findsOneWidget);
-    expect(find.text('0 of 2 selected'), findsOneWidget);
+    expect(find.text('0 of 2'), findsOneWidget);
   });
 
-  group('the "keep the newest" number', () {
-    SaveSelectionCountFilter filterOver(
-      List<String> ids, {
-      required int initialValue,
-      void Function(int)? onValueChanged,
-    }) => SaveSelectionCountFilter(
-      prefixLabel: 'Keep the newest',
-      suffixLabel: 'saves',
-      initialValue: initialValue,
-      maxValue: ids.length,
-      // Newest first, keep the first [value] of them.
-      selectionFor: (value) => ids.skip(value).toSet(),
-      onValueChanged: onValueChanged,
-    );
-
-    testWidgets('starts at the number it was given', (tester) async {
-      final ids = ['save_a', 'save_b', 'save_c'];
+  group('the checkbox', () {
+    testWidgets('is not shown unless asked for', (tester) async {
       await open(
         tester,
-        items: itemsNamed(ids),
-        initiallySelected: {'save_b', 'save_c'},
-        countFilter: filterOver(ids, initialValue: 1),
+        items: itemsNamed(['save_a']),
+        initiallySelected: {'save_a'},
       );
 
-      expect(find.text('1'), findsOneWidget);
-      expect(find.text('Archive 2'), findsOneWidget);
-    });
-
-    testWidgets('turning it up keeps more and archives fewer', (tester) async {
-      final ids = ['save_a', 'save_b', 'save_c'];
-      await open(
-        tester,
-        items: itemsNamed(ids),
-        initiallySelected: {'save_b', 'save_c'},
-        countFilter: filterOver(ids, initialValue: 1),
-      );
-
-      await tester.tap(find.byIcon(Icons.add));
-      await tester.pumpAndSettle();
-
-      expect(find.text('2'), findsOneWidget);
+      expect(find.byType(CheckboxListTile), findsNothing);
       await tester.tap(find.text('Archive 1'));
       await tester.pumpAndSettle();
-      expect(captured, {'save_c'});
+      expect(capturedCheckbox, isFalse);
     });
 
-    testWidgets('turning it down to zero picks everything', (tester) async {
-      final ids = ['save_a', 'save_b', 'save_c'];
+    testWidgets('starts unticked', (tester) async {
       await open(
         tester,
-        items: itemsNamed(ids),
-        initiallySelected: {'save_b', 'save_c'},
-        countFilter: filterOver(ids, initialValue: 1),
+        items: itemsNamed(['save_a']),
+        initiallySelected: {'save_a'},
+        checkboxLabel: 'Delete them',
       );
 
-      await tester.tap(find.byIcon(Icons.remove));
+      await tester.tap(find.text('Archive 1'));
       await tester.pumpAndSettle();
-
-      expect(find.text('Archive 3'), findsOneWidget);
+      expect(capturedCheckbox, isFalse);
     });
 
-    testWidgets('changing the number throws away hand-made ticks', (
-      tester,
-    ) async {
-      final ids = ['save_a', 'save_b', 'save_c'];
+    testWidgets('is returned when ticked', (tester) async {
       await open(
         tester,
-        items: itemsNamed(ids),
-        initiallySelected: {'save_c'},
-        countFilter: filterOver(ids, initialValue: 2),
+        items: itemsNamed(['save_a']),
+        initiallySelected: {'save_a'},
+        checkboxLabel: 'Delete them',
       );
 
-      await tester.tap(find.text('save_a'));
+      await tester.tap(find.text('Delete them'));
       await tester.pumpAndSettle();
-      expect(find.text('Archive 2'), findsOneWidget);
-
-      await tester.tap(find.byIcon(Icons.remove));
+      await tester.tap(find.text('Archive 1'));
       await tester.pumpAndSettle();
-
-      // Back to what "keep the newest 1" means, not what was ticked by hand.
-      await tester.tap(find.text('Archive 2'));
-      await tester.pumpAndSettle();
-      expect(captured, {'save_b', 'save_c'});
-    });
-
-    testWidgets('it is reported so it can be remembered', (tester) async {
-      final ids = ['save_a', 'save_b'];
-      final reported = <int>[];
-
-      await open(
-        tester,
-        items: itemsNamed(ids),
-        initiallySelected: {'save_b'},
-        countFilter: filterOver(
-          ids,
-          initialValue: 1,
-          onValueChanged: reported.add,
-        ),
-      );
-
-      await tester.tap(find.byIcon(Icons.add));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.remove));
-      await tester.pumpAndSettle();
-
-      expect(reported, [2, 1]);
-    });
-
-    testWidgets('it cannot go below zero or above the number of saves', (
-      tester,
-    ) async {
-      final ids = ['save_a', 'save_b'];
-      await open(
-        tester,
-        items: itemsNamed(ids),
-        initiallySelected: const {},
-        countFilter: filterOver(ids, initialValue: 0),
-      );
-
-      expect(
-        tester.widget<IconButton>(_iconButtonWith(Icons.remove)).onPressed,
-        isNull,
-      );
-
-      await tester.tap(find.byIcon(Icons.add));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.add));
-      await tester.pumpAndSettle();
-
-      expect(find.text('2'), findsOneWidget);
-      expect(
-        tester.widget<IconButton>(_iconButtonWith(Icons.add)).onPressed,
-        isNull,
-      );
+      expect(captured, {'save_a'});
+      expect(capturedCheckbox, isTrue);
     });
   });
-}
 
-Finder _iconButtonWith(IconData icon) =>
-    find.ancestor(of: find.byIcon(icon), matching: find.byType(IconButton));
+  testWidgets('adds up the space needed for the ticked saves', (tester) async {
+    await open(
+      tester,
+      items: const [
+        SaveSelectionItem(
+          id: 'save_a',
+          title: 'save_a',
+          subtitle: 'a save',
+          sizeInBytes: 1000,
+          restoredSizeInBytes: 3000000,
+        ),
+        SaveSelectionItem(
+          id: 'save_b',
+          title: 'save_b',
+          subtitle: 'a save',
+          sizeInBytes: 1000,
+          restoredSizeInBytes: 5000000,
+        ),
+        SaveSelectionItem(
+          id: 'save_c',
+          title: 'save_c',
+          subtitle: 'a save',
+          sizeInBytes: 1000,
+        ),
+      ],
+      initiallySelected: {'save_a', 'save_c'},
+    );
+
+    expect(find.text('Space needed'), findsOneWidget);
+    expect(find.text(3000000.bytesAsReadable()), findsOneWidget);
+    expect(
+      find.text('${3000000.bytesAsReadable()} when restored'),
+      findsOneWidget,
+    );
+  });
+}

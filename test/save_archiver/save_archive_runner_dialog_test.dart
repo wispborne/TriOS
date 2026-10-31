@@ -6,11 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:trios/save_archiver/save_archive_runner_dialog.dart';
 import 'package:trios/save_archiver/save_archiver.dart';
 
-/// The runner's promises: one job at a time, "stop" never interrupts the job in
-/// flight, and it can't be closed while something is still running.
 void main() {
-  /// A job that finishes when its completer is completed, so a test can hold
-  /// one open and look at the dialog mid-run.
+  /// Keeps a job running until the test completes it.
   SaveArchiveJobRequest heldJob(
     String title,
     Completer<SaveArchiveJobResult> completer, {
@@ -33,15 +30,20 @@ void main() {
     bool needsAttention = false,
     String message = 'done',
     List<String>? started,
+    String? subtitle,
+    int? originalSizeInBytes,
+    int? archiveSizeInBytes,
   }) => SaveArchiveJobRequest(
     title: title,
-    subtitle: 'save_$title',
+    subtitle: subtitle ?? 'save_$title',
     run: (onStep) async {
       started?.add(title);
       return SaveArchiveJobResult(
         succeeded: succeeded,
         needsAttention: needsAttention,
         message: message,
+        originalSizeInBytes: originalSizeInBytes,
+        archiveSizeInBytes: archiveSizeInBytes,
       );
     },
   );
@@ -58,6 +60,7 @@ void main() {
             onPressed: () => showSaveArchiveRunnerDialog(
               context: context,
               title: 'Archiving',
+              finishedTitle: 'Archived',
               jobs: jobs,
               onFinished: onFinished,
             ),
@@ -83,6 +86,7 @@ void main() {
     await tester.pump();
 
     expect(started, ['one'], reason: 'the second must wait its turn');
+    expect(find.text('1 of 2'), findsOneWidget);
 
     first.complete(
       const SaveArchiveJobResult(succeeded: true, message: 'done'),
@@ -91,6 +95,7 @@ void main() {
     await tester.pump();
 
     expect(started, ['one', 'two']);
+    expect(find.text('2 of 2'), findsOneWidget);
 
     second.complete(
       const SaveArchiveJobResult(succeeded: true, message: 'done'),
@@ -105,6 +110,12 @@ void main() {
     await tester.pump();
 
     expect(find.text('Compressing'), findsOneWidget);
+    expect(
+      find.text('Cancel'),
+      findsNothing,
+      reason: 'a single save has no later saves to skip',
+    );
+    expect(find.text('1 of 1'), findsNothing);
 
     held.complete(
       const SaveArchiveJobResult(succeeded: true, message: 'all good'),
@@ -114,7 +125,7 @@ void main() {
     expect(find.text('all good'), findsOneWidget);
   });
 
-  testWidgets('stopping skips the rest but finishes the one in flight', (
+  testWidgets('canceling skips the rest but finishes the one in flight', (
     tester,
   ) async {
     final first = Completer<SaveArchiveJobResult>();
@@ -127,13 +138,12 @@ void main() {
     ]);
     await tester.pump();
 
-    await tester.tap(find.text('Stop after this one'));
-    // Not pumpAndSettle: the progress bar animates while a job is in flight, so
-    // nothing ever settles until the last one is done.
+    await tester.tap(find.text('Cancel'));
+    // The progress animation prevents pumpAndSettle while jobs are running.
     await tester.pump();
 
-    expect(started, ['one'], reason: 'nothing new may start after stopping');
-    expect(find.text('Finishing current…'), findsOneWidget);
+    expect(started, ['one'], reason: 'nothing new may start after canceling');
+    expect(find.text('Canceling…'), findsOneWidget);
 
     first.complete(
       const SaveArchiveJobResult(succeeded: true, message: 'finished anyway'),
@@ -155,7 +165,6 @@ void main() {
 
     expect(find.text('Close'), findsNothing);
 
-    // Escape does nothing either.
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pump();
     await tester.pump();
@@ -165,6 +174,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Close'), findsOneWidget);
+    expect(find.text('Archived'), findsOneWidget);
+    expect(find.text('Archiving'), findsNothing);
   });
 
   testWidgets('a job that throws is reported, and the rest still run', (
@@ -202,8 +213,68 @@ void main() {
     ]);
     await tester.pumpAndSettle();
 
-    expect(find.text('1 need a look.'), findsOneWidget);
+    expect(find.text('1 completed with warnings.'), findsOneWidget);
     expect(find.text('there are two copies now'), findsOneWidget);
+  });
+
+  testWidgets('shows space saved per save and in total', (tester) async {
+    await open(tester, [
+      instantJob(
+        'one',
+        message: '',
+        originalSizeInBytes: 10000000,
+        archiveSizeInBytes: 1000000,
+      ),
+      instantJob(
+        'two',
+        message: '',
+        originalSizeInBytes: 10000000,
+        archiveSizeInBytes: 1000000,
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('9.54 MB compressed to 0.95 MB'), findsNWidgets(2));
+    expect(find.text('Space saved 8.58 MB (90%)'), findsNWidgets(2));
+    expect(find.text('Original size'), findsOneWidget);
+    expect(find.text('19.07 MB'), findsOneWidget);
+    expect(find.text('1.91 MB'), findsOneWidget);
+    expect(find.text('17.17 MB (90%)'), findsOneWidget);
+    expect(
+      find.textContaining('finished'),
+      findsNothing,
+      reason: 'the checkmarks already show that everything worked',
+    );
+  });
+
+  testWidgets('a single save has no total line', (tester) async {
+    await open(tester, [
+      instantJob(
+        'one',
+        message: '',
+        originalSizeInBytes: 10000000,
+        archiveSizeInBytes: 1000000,
+      ),
+    ]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Space saved 8.58 MB (90%)'), findsOneWidget);
+    expect(find.text('Original size'), findsNothing);
+  });
+
+  testWidgets('shows folder names only for saves with the same name', (
+    tester,
+  ) async {
+    await open(tester, [
+      instantJob('Ludd', subtitle: 'save_Ludd_1'),
+      instantJob('Ludd', subtitle: 'save_Ludd_2'),
+      instantJob('Kanta', subtitle: 'save_Kanta_1'),
+    ]);
+    await tester.pumpAndSettle();
+
+    expect(find.text('save_Ludd_1'), findsOneWidget);
+    expect(find.text('save_Ludd_2'), findsOneWidget);
+    expect(find.text('save_Kanta_1'), findsNothing);
   });
 
   testWidgets('tells the caller when everything has finished', (tester) async {

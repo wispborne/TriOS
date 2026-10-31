@@ -1,20 +1,26 @@
+import 'package:collection/collection.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:trios/save_archiver/size_stat.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
-/// One tickable row in [showBulkSaveSelectionDialog].
 class SaveSelectionItem {
-  /// Identifies the row. The dialog hands back the ids that were ticked.
   final String id;
 
   final String title;
   final String subtitle;
 
-  /// Size in bytes, shown on the right and added up at the bottom.
   final int sizeInBytes;
 
-  /// When false the row can't be ticked, and [blockedReason] says why.
+  /// Shown beside the size when set.
+  final int? estimatedSavingsInBytes;
+
+  /// How much space the save takes up once restored. Shown beside the size
+  /// when set.
+  final int? restoredSizeInBytes;
+
+  /// Disabled rows are excluded from the returned selection.
   final bool selectable;
   final String? blockedReason;
 
@@ -23,47 +29,28 @@ class SaveSelectionItem {
     required this.title,
     required this.subtitle,
     required this.sizeInBytes,
+    this.estimatedSavingsInBytes,
+    this.restoredSizeInBytes,
     this.selectable = true,
     this.blockedReason,
   });
 }
 
-/// The "newest N" spinner at the top of the dialog.
-///
-/// Changing it replaces the ticks with whatever [selectionFor] returns, so it
-/// is a starting point rather than a rule — every tick can still be changed by
-/// hand afterwards.
-class SaveSelectionCountFilter {
-  /// Words either side of the number, e.g. "Keep the newest" … "saves".
-  final String prefixLabel;
-  final String suffixLabel;
+class BulkSaveSelection {
+  /// Disabled rows are never included.
+  final Set<String> ids;
 
-  final int initialValue;
-  final int maxValue;
+  /// Whether the dialog's checkbox was ticked. False when it had none.
+  final bool checkboxTicked;
 
-  /// The ids to tick for a given number.
-  final Set<String> Function(int value) selectionFor;
-
-  /// Called when the number settles, for remembering it between openings.
-  final void Function(int value)? onValueChanged;
-
-  const SaveSelectionCountFilter({
-    required this.prefixLabel,
-    required this.suffixLabel,
-    required this.initialValue,
-    required this.maxValue,
-    required this.selectionFor,
-    this.onValueChanged,
-  });
+  const BulkSaveSelection({required this.ids, required this.checkboxTicked});
 }
 
-/// Asks which saves or archives to act on, and returns the ticked ids.
+/// Returns the selection, or null on cancellation. The caller should act only
+/// on the returned IDs.
 ///
-/// Returns null when the person backs out. Every row starts out exactly as
-/// [initiallySelected] says, and nothing outside the returned set is ever
-/// touched by the caller — the point of the dialog is that the list in front of
-/// somebody is the list that gets acted on.
-Future<Set<String>?> showBulkSaveSelectionDialog({
+/// [checkboxLabel] adds a checkbox under the totals, unticked at the start.
+Future<BulkSaveSelection?> showBulkSaveSelectionDialog({
   required BuildContext context,
   required String title,
   required String explanation,
@@ -71,9 +58,9 @@ Future<Set<String>?> showBulkSaveSelectionDialog({
   required Set<String> initiallySelected,
   required String Function(int count) confirmLabel,
   required IconData confirmIcon,
-  SaveSelectionCountFilter? countFilter,
-  String? warning,
-}) => showDialog<Set<String>>(
+  String? estimateTooltip,
+  String? checkboxLabel,
+}) => showDialog<BulkSaveSelection>(
   context: context,
   builder: (context) => _BulkSaveSelectionDialog(
     title: title,
@@ -82,8 +69,8 @@ Future<Set<String>?> showBulkSaveSelectionDialog({
     initiallySelected: initiallySelected,
     confirmLabel: confirmLabel,
     confirmIcon: confirmIcon,
-    countFilter: countFilter,
-    warning: warning,
+    estimateTooltip: estimateTooltip,
+    checkboxLabel: checkboxLabel,
   ),
 );
 
@@ -94,8 +81,11 @@ class _BulkSaveSelectionDialog extends StatefulWidget {
   final Set<String> initiallySelected;
   final String Function(int count) confirmLabel;
   final IconData confirmIcon;
-  final SaveSelectionCountFilter? countFilter;
-  final String? warning;
+
+  /// Shown on hover over the total estimated savings.
+  final String? estimateTooltip;
+
+  final String? checkboxLabel;
 
   const _BulkSaveSelectionDialog({
     required this.title,
@@ -104,8 +94,8 @@ class _BulkSaveSelectionDialog extends StatefulWidget {
     required this.initiallySelected,
     required this.confirmLabel,
     required this.confirmIcon,
-    required this.countFilter,
-    required this.warning,
+    required this.estimateTooltip,
+    required this.checkboxLabel,
   });
 
   @override
@@ -116,7 +106,7 @@ class _BulkSaveSelectionDialog extends StatefulWidget {
 class _BulkSaveSelectionDialogState extends State<_BulkSaveSelectionDialog> {
   final _scrollController = ScrollController();
   late Set<String> _selected = _onlySelectable(widget.initiallySelected);
-  late int _countValue = widget.countFilter?.initialValue ?? 0;
+  var _checkboxTicked = false;
 
   @override
   void dispose() {
@@ -129,43 +119,64 @@ class _BulkSaveSelectionDialogState extends State<_BulkSaveSelectionDialog> {
       .map((item) => item.id)
       .toSet();
 
-  void _applyCount(int value) {
-    final filter = widget.countFilter;
-    if (filter == null) return;
-    final clamped = value.clamp(0, filter.maxValue);
-    setState(() {
-      _countValue = clamped;
-      _selected = _onlySelectable(filter.selectionFor(clamped));
-    });
-    filter.onValueChanged?.call(clamped);
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final mutedColor = theme.textTheme.labelSmall?.color?.withAlpha(180);
     final selectedItems = widget.items
         .where((item) => _selected.contains(item.id))
         .toList();
-    final totalBytes = selectedItems.fold<int>(
-      0,
-      (total, item) => total + item.sizeInBytes,
+    final totalBytes = selectedItems.map((item) => item.sizeInBytes).sum;
+    final hasEstimates = widget.items.any(
+      (item) => item.estimatedSavingsInBytes != null,
     );
+    final totalSavings = selectedItems
+        .map((item) => item.estimatedSavingsInBytes ?? 0)
+        .sum;
+    final hasRestoredSizes = widget.items.any(
+      (item) => item.restoredSizeInBytes != null,
+    );
+    final totalRestoredSize = selectedItems
+        .map((item) => item.restoredSizeInBytes ?? 0)
+        .sum;
+    final missingRestoredSizeCount = selectedItems
+        .where((item) => item.restoredSizeInBytes == null)
+        .length;
     final selectableCount = widget.items
         .where((item) => item.selectable)
         .length;
 
+    final restoredSizeStat = SizeStat(
+      label: 'Space needed',
+      value: totalRestoredSize.bytesAsReadable(),
+    );
+
+    final savingsStat = SizeStat(
+      label: 'Space saved (estimate)',
+      value: '~${totalSavings.bytesAsReadable()}',
+    );
+
     return AlertDialog(
-      title: Text(widget.title),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 620),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8,
+        children: [
+          Text(widget.title),
+          Text(
+            widget.explanation,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.textTheme.labelMedium?.color?.withAlpha(180),
+            ),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 720,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 8,
           children: [
-            Text(widget.explanation, style: theme.textTheme.bodyMedium),
-            if (widget.countFilter != null) _buildCountFilter(theme),
-            const Divider(height: 8),
             Flexible(
               child: widget.items.isEmpty
                   ? Padding(
@@ -178,116 +189,113 @@ class _BulkSaveSelectionDialogState extends State<_BulkSaveSelectionDialog> {
                   : Scrollbar(
                       thumbVisibility: true,
                       controller: _scrollController,
-                      child: SingleChildScrollView(
+                      child: ListView.separated(
                         controller: _scrollController,
-                        child: Padding(
-                          padding: const .only(right: 16),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final item in widget.items)
-                                _buildRow(theme, item),
-                            ],
-                          ),
-                        ),
+                        shrinkWrap: true,
+                        itemCount: widget.items.length,
+                        separatorBuilder: (context, index) =>
+                            const Divider(height: 1),
+                        itemBuilder: (context, index) =>
+                            _buildRow(theme, widget.items[index], mutedColor),
                       ),
                     ),
             ),
-            const Divider(height: 8),
+            const Divider(height: 1),
             Row(
-              spacing: 8,
+              spacing: 32,
               children: [
-                TextButton(
-                  onPressed: selectableCount == 0
-                      ? null
-                      : () => setState(
-                          () => _selected = widget.items
-                              .where((item) => item.selectable)
-                              .map((item) => item.id)
-                              .toSet(),
+                SizeStat(
+                  label: 'Selected',
+                  value: '${_selected.length} of $selectableCount',
+                ),
+                SizeStat(
+                  label: 'Total size',
+                  value: totalBytes.bytesAsReadable(),
+                ),
+                if (hasEstimates)
+                  widget.estimateTooltip == null
+                      ? savingsStat
+                      : MovingTooltipWidget.text(
+                          message: widget.estimateTooltip!,
+                          child: savingsStat,
                         ),
-                  child: const Text('Select all'),
-                ),
-                TextButton(
-                  onPressed: _selected.isEmpty
-                      ? null
-                      : () => setState(() => _selected = {}),
-                  child: const Text('Select none'),
-                ),
-                Expanded(
-                  child: Text(
-                    '${_selected.length} of $selectableCount selected'
-                    '${totalBytes > 0 ? ' · ${totalBytes.bytesAsReadable()}' : ''}',
-                    textAlign: TextAlign.right,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelMedium,
-                  ),
-                ),
+                if (hasRestoredSizes)
+                  missingRestoredSizeCount == 0
+                      ? restoredSizeStat
+                      : MovingTooltipWidget.text(
+                          message:
+                              'Leaves out $missingRestoredSizeCount '
+                              'archive${missingRestoredSizeCount == 1 ? '' : 's'} '
+                              'with no recorded original size.',
+                          child: restoredSizeStat,
+                        ),
               ],
             ),
-            if (widget.warning != null)
-              Text(
-                widget.warning!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            if (widget.checkboxLabel case final label?)
+              CheckboxListTile(
+                value: _checkboxTicked,
+                onChanged: (value) =>
+                    setState(() => _checkboxTicked = value == true),
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+                title: Text(label),
               ),
           ],
         ),
       ),
+      actionsAlignment: .spaceBetween,
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
+          children: [
+            TextButton(
+              onPressed: selectableCount == 0
+                  ? null
+                  : () => setState(
+                      () => _selected = widget.items
+                          .where((item) => item.selectable)
+                          .map((item) => item.id)
+                          .toSet(),
+                    ),
+              child: const Text('Select all'),
+            ),
+            TextButton(
+              onPressed: _selected.isEmpty
+                  ? null
+                  : () => setState(() => _selected = {}),
+              child: const Text('Select none'),
+            ),
+          ],
         ),
-        Disable(
-          isEnabled: _selected.isNotEmpty,
-          child: TextButton.icon(
-            onPressed: () => Navigator.of(context).pop(_selected),
-            icon: Icon(widget.confirmIcon),
-            label: Text(widget.confirmLabel(_selected.length)),
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            Disable(
+              isEnabled: _selected.isNotEmpty,
+              child: TextButton.icon(
+                onPressed: () => Navigator.of(context).pop(
+                  BulkSaveSelection(
+                    ids: _selected,
+                    checkboxTicked: _checkboxTicked,
+                  ),
+                ),
+                icon: Icon(widget.confirmIcon),
+                label: Text(widget.confirmLabel(_selected.length)),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildCountFilter(ThemeData theme) {
-    final filter = widget.countFilter!;
-    return Row(
-      spacing: 8,
-      children: [
-        Text(filter.prefixLabel, style: theme.textTheme.bodyMedium),
-        IconButton(
-          icon: const Icon(Icons.remove),
-          iconSize: 18,
-          onPressed: _countValue <= 0
-              ? null
-              : () => _applyCount(_countValue - 1),
-        ),
-        SizedBox(
-          width: 36,
-          child: Text(
-            '$_countValue',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium,
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.add),
-          iconSize: 18,
-          onPressed: _countValue >= filter.maxValue
-              ? null
-              : () => _applyCount(_countValue + 1),
-        ),
-        Text(filter.suffixLabel, style: theme.textTheme.bodyMedium),
-      ],
-    );
-  }
-
-  Widget _buildRow(ThemeData theme, SaveSelectionItem item) {
+  Widget _buildRow(ThemeData theme, SaveSelectionItem item, Color? mutedColor) {
     final checked = _selected.contains(item.id);
 
     void toggle(bool? value) {
@@ -304,8 +312,9 @@ class _BulkSaveSelectionDialogState extends State<_BulkSaveSelectionDialog> {
     final row = InkWell(
       onTap: item.selectable ? () => toggle(!checked) : null,
       child: Padding(
-        padding: const .symmetric(vertical: 2),
+        padding: const .symmetric(vertical: 6),
         child: Row(
+          spacing: 8,
           children: [
             Checkbox(
               value: checked,
@@ -319,7 +328,7 @@ class _BulkSaveSelectionDialogState extends State<_BulkSaveSelectionDialog> {
                     item.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium,
+                    style: theme.textTheme.bodyLarge,
                   ),
                   Text(
                     item.blockedReason ?? item.subtitle,
@@ -327,7 +336,7 @@ class _BulkSaveSelectionDialogState extends State<_BulkSaveSelectionDialog> {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: item.selectable
-                          ? theme.textTheme.labelSmall?.color?.withAlpha(180)
+                          ? mutedColor
                           : theme.colorScheme.error,
                     ),
                   ),
@@ -336,10 +345,29 @@ class _BulkSaveSelectionDialogState extends State<_BulkSaveSelectionDialog> {
             ),
             if (item.sizeInBytes > 0)
               Padding(
-                padding: const .only(left: 8),
-                child: Text(
-                  item.sizeInBytes.bytesAsReadable(),
-                  style: theme.textTheme.labelMedium,
+                padding: const .only(right: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      item.sizeInBytes.bytesAsReadable(),
+                      style: theme.textTheme.labelMedium,
+                    ),
+                    if (item.estimatedSavingsInBytes case final savings?)
+                      Text(
+                        '~${savings.bytesAsReadable()} saved',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: mutedColor,
+                        ),
+                      ),
+                    if (item.restoredSizeInBytes case final restored?)
+                      Text(
+                        '${restored.bytesAsReadable()} when restored',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: mutedColor,
+                        ),
+                      ),
+                  ],
                 ),
               ),
           ],

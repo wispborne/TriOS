@@ -186,12 +186,10 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                           ),
                           const Spacer(),
                           MovingTooltipWidget.text(
-                            message:
-                                'Archived saves — compress the ones you '
-                                'are not playing, and put them back later',
+                            message: 'Manage archived saves',
                             child: IconButton(
                               onPressed: () => showSaveArchivesDialog(context),
-                              icon: const Icon(Icons.inventory_2_outlined),
+                              icon: const Icon(Icons.inventory),
                             ),
                           ),
                           MovingTooltipWidget.text(

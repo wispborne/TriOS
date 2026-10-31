@@ -74,6 +74,15 @@ class GamePathsSetupStateMapper extends ClassMapperBase<GamePathsSetupState> {
     opt: true,
     def: const CustomPathFieldState(),
   );
+  static bool _$customCorePathLooksLikeCore(GamePathsSetupState v) =>
+      v.customCorePathLooksLikeCore;
+  static const Field<GamePathsSetupState, bool> _f$customCorePathLooksLikeCore =
+      Field(
+        'customCorePathLooksLikeCore',
+        _$customCorePathLooksLikeCore,
+        opt: true,
+        def: true,
+      );
 
   @override
   final MappableFields<GamePathsSetupState> fields = const {
@@ -83,6 +92,7 @@ class GamePathsSetupStateMapper extends ClassMapperBase<GamePathsSetupState> {
     #customModsPathState: _f$customModsPathState,
     #customSavesPathState: _f$customSavesPathState,
     #customCorePathState: _f$customCorePathState,
+    #customCorePathLooksLikeCore: _f$customCorePathLooksLikeCore,
   };
 
   static GamePathsSetupState _instantiate(DecodingData data) {
@@ -93,6 +103,7 @@ class GamePathsSetupStateMapper extends ClassMapperBase<GamePathsSetupState> {
       customModsPathState: data.dec(_f$customModsPathState),
       customSavesPathState: data.dec(_f$customSavesPathState),
       customCorePathState: data.dec(_f$customCorePathState),
+      customCorePathLooksLikeCore: data.dec(_f$customCorePathLooksLikeCore),
     );
   }
 
@@ -181,6 +192,7 @@ abstract class GamePathsSetupStateCopyWith<
     CustomPathFieldState? customModsPathState,
     CustomPathFieldState? customSavesPathState,
     CustomPathFieldState? customCorePathState,
+    bool? customCorePathLooksLikeCore,
   });
   GamePathsSetupStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -222,6 +234,7 @@ class _GamePathsSetupStateCopyWithImpl<$R, $Out>
     CustomPathFieldState? customModsPathState,
     CustomPathFieldState? customSavesPathState,
     CustomPathFieldState? customCorePathState,
+    bool? customCorePathLooksLikeCore,
   }) => $apply(
     FieldCopyWithData({
       if (gamePathText != null) #gamePathText: gamePathText,
@@ -234,6 +247,8 @@ class _GamePathsSetupStateCopyWithImpl<$R, $Out>
         #customSavesPathState: customSavesPathState,
       if (customCorePathState != null)
         #customCorePathState: customCorePathState,
+      if (customCorePathLooksLikeCore != null)
+        #customCorePathLooksLikeCore: customCorePathLooksLikeCore,
     }),
   );
   @override
@@ -255,6 +270,10 @@ class _GamePathsSetupStateCopyWithImpl<$R, $Out>
     customCorePathState: data.get(
       #customCorePathState,
       or: $value.customCorePathState,
+    ),
+    customCorePathLooksLikeCore: data.get(
+      #customCorePathLooksLikeCore,
+      or: $value.customCorePathLooksLikeCore,
     ),
   );
 

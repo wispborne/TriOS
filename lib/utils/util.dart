@@ -79,6 +79,11 @@ Directory? generateGameCorePath(Directory gamePath) {
   }
 }
 
+/// Whether [folder] looks like the game's core folder. It must hold the game's
+/// main jar, which sits in the core folder on every platform.
+bool looksLikeGameCoreFolder(Directory folder) =>
+    File(p.join(folder.path, "starfarer_obf.jar")).existsSync();
+
 Directory? generateModsFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     return Directory(p.join(gamePath.path, "mods")).normalize;

@@ -25,6 +25,10 @@ class GamePathsSetupState with GamePathsSetupStateMappable {
   final CustomPathFieldState customSavesPathState;
   final CustomPathFieldState customCorePathState;
 
+  /// Whether the custom core folder holds the game's main jar. Only shown as a
+  /// warning; the path is still used.
+  final bool customCorePathLooksLikeCore;
+
   const GamePathsSetupState({
     this.gamePathText = '',
     this.gamePathExists = false,
@@ -32,6 +36,7 @@ class GamePathsSetupState with GamePathsSetupStateMappable {
     this.customModsPathState = const CustomPathFieldState(),
     this.customSavesPathState = const CustomPathFieldState(),
     this.customCorePathState = const CustomPathFieldState(),
+    this.customCorePathLooksLikeCore = true,
   });
 }
 
@@ -117,6 +122,8 @@ class GamePathsSetupController
 
     final customGameExecutableShown =
         (customExecutablePathTextFromSettings ?? nonCustomGameExecutable);
+    final customCorePathShown =
+        customCorePathTextFromSettings ?? nonCustomGameCorePath;
     return GamePathsSetupState(
       gamePathText: gameFolderPathFromSettings,
       gamePathExists: doesGamePathExist,
@@ -155,11 +162,12 @@ class GamePathsSetupController
         defaultPath: nonCustomGameCorePath,
         customPath: customCorePathTextFromSettings,
         pathExists: useCustomCorePath
-            ? (customCorePathTextFromSettings ?? nonCustomGameCorePath)
-                  .toDirectory()
-                  .existsSync()
+            ? customCorePathShown.toDirectory().existsSync()
             : true,
       ),
+      customCorePathLooksLikeCore: useCustomCorePath
+          ? looksLikeGameCoreFolder(customCorePathShown.toDirectory())
+          : true,
     );
   }
 
@@ -276,6 +284,9 @@ class GamePathsSetupController
     state = state.copyWith(
       customCorePathState: state.customCorePathState.copyWith(
         pathExists: newPathExists,
+      ),
+      customCorePathLooksLikeCore: looksLikeGameCoreFolder(
+        newPath.toDirectory(),
       ),
     );
   }

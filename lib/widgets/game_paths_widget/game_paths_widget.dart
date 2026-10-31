@@ -158,9 +158,11 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
           isDirectoryPicker: true,
           initialDirectory: settings.gameDir?.path ?? defaultGamePath().path,
           pickerDialogTitle: "Select Core folder",
-          errorMessage: state.customCorePathState.pathExists
-              ? null
-              : invalidPathMessage,
+          errorMessage: !state.customCorePathState.pathExists
+              ? invalidPathMessage
+              : !state.customCorePathLooksLikeCore
+              ? "This doesn't look like the game's core folder. It should contain starfarer_obf.jar."
+              : null,
           onCheckedChanged: (isEnabled) {
             customGamePathsController.toggleUseCustomCorePath(isEnabled);
           },

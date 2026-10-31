@@ -610,7 +610,7 @@ class TriOSAppState extends ConsumerState<TriOSApp> with WindowListener {
               .sorted();
 
           Sentry.configureScope((scope) {
-            scope.setContexts("mods", variantInfo);
+            scope.setContexts(sentryModsContextKey, variantInfo);
           });
         } catch (e) {
           Fimber.e("Error setting Sentry scope.", ex: e);

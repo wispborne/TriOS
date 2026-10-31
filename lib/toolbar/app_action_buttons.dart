@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:trios/bug_report/bug_report_dialog.dart';
 import 'package:trios/models/version.dart';
 import 'package:trios/rules_autofresh/rules_hotreload.dart';
 import 'package:trios/themes/theme_manager.dart';
@@ -93,66 +94,25 @@ class BugReportButton extends ConsumerWidget {
     }
     final allowSentry =
         ref.watch(appSettings.select((s) => s.allowCrashReporting)) ?? false;
+    // Sentry can fail to start even when the setting is on.
+    final isSentryRunning = Sentry.isEnabled;
     return MovingTooltipWidget.text(
-      message: allowSentry
-          ? "Report a bug"
-          : "You must enable 'Allow Crash Reporting' in Settings to report bugs."
-                "\nThis icon may be hidden on the Settings page.",
+      message: !allowSentry
+          ? "You must enable 'Allow error reporting' in Settings to report bugs."
+                "\nThis icon may be hidden on the Settings page."
+          : !isSentryRunning
+          ? "Bug reporting failed to start. Restart ${Constants.appName} to try again."
+          : "Report a bug",
       child: Disable(
-        isEnabled: allowSentry,
+        isEnabled: allowSentry && isSentryRunning,
         child: IconButton(
           icon: const Icon(Icons.bug_report),
           color: Theme.of(context).iconTheme.color,
           onPressed: () async {
             try {
-              final screenshot = await SentryFlutter.captureScreenshot();
-              SentryId id = Sentry.lastEventId;
-
-              if (id == SentryId.empty()) {
-                id = await Sentry.captureMessage(reportBugMagicString);
-              }
-
-              if (id == SentryId.empty()) {
-                id = SentryId.newId();
-              }
-
-              if (!context.mounted) return;
-              showAlertDialog(
-                context,
-                title: "Are you sure?",
-                content:
-                    "Continuing will send a bug report. You will be able to enter additional details about the issue on the next page.",
-                actions: [
-                  TextButton(
-                    child: const Text('Cancel'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  TextButton(
-                    child: const Text(
-                      'I want to report a ${Constants.appName} bug',
-                    ),
-                    onPressed: () async {
-                      Navigator.of(context).pop();
-                      await Future.delayed(const Duration(milliseconds: 500));
-                      if (!context.mounted) return;
-                      showDialog(
-                        context: context,
-                        builder: (context) => Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: SentryFeedbackWidget(
-                            associatedEventId: id,
-                            screenshot: screenshot,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              );
+              await showBugReportDialog(context);
             } catch (e, st) {
-              Fimber.e("Error opening log file: $e", ex: e, stacktrace: st);
+              Fimber.e("Error opening bug report: $e", ex: e, stacktrace: st);
             }
           },
         ),

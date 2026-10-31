@@ -465,8 +465,12 @@ base class RiverpodDebugObserver extends ProviderObserver {
 // Sentry Section
 
 final lastErrorMessagesAndTimestamps = <String, DateTime>{};
-// If tag key is present, the event won't be rate limited, regardless of the tag's value.
-final reportBugMagicString = "User clicked Report Bug";
+
+/// The Sentry context that holds the user's mod list.
+const sentryModsContextKey = "mods";
+
+/// Set on a bug report's hint when the user chose not to send their mod list.
+const excludeModListHintKey = "trios_exclude_mod_list";
 
 SentryFlutterOptions configureSentry(
   SentryFlutterOptions options,
@@ -496,39 +500,12 @@ SentryFlutterOptions configureSentry(
     ..privacy.maskAllImages = false
     ..privacy.maskAllText = false
     ..privacy.maskAssetImages = false
-    ..enableLogs = true
-    ..feedback.nameLabel = "Username (not required)"
-    ..feedback.namePlaceholder = [
-      "@JohnStarsector",
-      "@JaneStarsector",
-      "@LowHegemon",
-      "@MyLittleStarfarer",
-      "@NotAnAICore",
-      "@DefinitelyAnAICore",
-      "@AlphariusHumani",
-      "@GensNobody",
-      "@No1SebeFan",
-      "@RealGileadPrince",
-      "@TeaAndCotton",
-      "@CareBaird",
-      "@FinlayTipLine",
-      "@CaptainRoger",
-    ].random()
-    ..feedback.emailLabel = "Email (definitely not required!)"
-    // "\n  by entering an email, you agree to receive marketing messages from the TriTachyon Corporation"
-    ..feedback.emailPlaceholder = "you@email.com"
-    ..feedback.isEmailRequired = false
-    ..feedback.messageLabel = "Description"
-    ..feedback.isRequiredLabel = "(required)"
-    ..feedback.showCaptureScreenshot = false
-    ..feedback.messagePlaceholder =
-        "Please describe the issue you are experiencing with ${Constants.appName}."
-        "\n"
-        "\n${Constants.appName} is not affiliated with Fractal Softworks and cannot help with issues with the game, payments, license keys, or mods.";
+    ..enableLogs = true;
 
   options.beforeCaptureScreenshot = (event, hint, shouldDebounce) async {
-    // Only allow screenshots for the report bug flow.
-    return event.message?.formatted == reportBugMagicString;
+    // Never attach screenshots to errors. The Report Bug button takes its own.
+    // attachScreenshot must stay on, or SentryFlutter.captureScreenshot() returns null.
+    return false;
   };
 
   options.beforeSend = (event, hint) {
@@ -547,8 +524,7 @@ SentryFlutterOptions configureSentry(
       }
 
       // Don't report the same error message more than once every debounceMins minutes.
-      if (event.message?.formatted != reportBugMagicString &&
-          lastErrorMessagesAndTimestamps.containsKey(message)) {
+      if (lastErrorMessagesAndTimestamps.containsKey(message)) {
         final lastTime = lastErrorMessagesAndTimestamps[message];
         if (lastTime != null &&
             DateTime.now().difference(lastTime).inMinutes < debounceMins) {
@@ -565,6 +541,12 @@ SentryFlutterOptions configureSentry(
         (key, value) =>
             DateTime.now().difference(value).inMinutes > (debounceMins + 1),
       );
+    }
+
+    // The mod list is shared by all events, so it's removed here instead of from
+    // the scope. Removing it from the scope would drop it from later reports too.
+    if (hint.get(excludeModListHintKey) == true) {
+      event.contexts.remove(sentryModsContextKey);
     }
 
     // Strip out PII as much as possible.

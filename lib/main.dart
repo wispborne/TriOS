@@ -368,6 +368,11 @@ void main(List<String> args) async {
     });
   }
 
+  // Fix the protocol handler if TriOS was moved since it was registered.
+  if (settings?.deepLinkProtocolRegistered == true) {
+    ProtocolRegistration.ensureRegistered();
+  }
+
   // Show changelog notification if post-update.
   try {
     if (settings?.showChangelogNextLaunch == true) {

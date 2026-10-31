@@ -351,6 +351,15 @@ class ThemeManager extends AsyncNotifier<ThemeState> {
         errorContainer: TriOSThemeConstants.vanillaErrorColor.darker(5),
         onErrorContainer: swatch.onSurface,
       ),
+      // Folding panels keep their closed colors while open. Flutter's default
+      // turns the arrow, icons and title the accent color.
+      expansionTileTheme: themeBase.expansionTileTheme.copyWith(
+        iconColor: onSurfaceVariant ?? themeBase.colorScheme.onSurfaceVariant,
+        collapsedIconColor:
+            onSurfaceVariant ?? themeBase.colorScheme.onSurfaceVariant,
+        textColor: swatch.onSurface ?? themeBase.colorScheme.onSurface,
+        collapsedTextColor: swatch.onSurface ?? themeBase.colorScheme.onSurface,
+      ),
       scaffoldBackgroundColor: swatch.surfaceContainer,
       dialogBackgroundColor: swatch.surfaceContainer,
       cardColor: swatch.surfaceContainer,

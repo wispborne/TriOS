@@ -346,6 +346,9 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                   TriOSExpansionTile(
                     tilePadding: EdgeInsets.symmetric(horizontal: cardPadding),
                     initiallyExpanded: widget.isInitiallyExpanded,
+                    // Same as the collapsed color, so the buttons don't light
+                    // up when the card is expanded.
+                    iconColor: theme.colorScheme.onSurfaceVariant,
                     title: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

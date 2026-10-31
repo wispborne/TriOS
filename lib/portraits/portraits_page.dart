@@ -28,6 +28,7 @@ import 'package:trios/widgets/mode_switcher.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/multi_split_mixin_view.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
+import 'package:trios/widgets/search_hotkey.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
 import 'package:trios/trios/navigation.dart';
@@ -217,42 +218,50 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
       padding: const .only(left: 8, right: 8),
       child: SizedBox(
         height: 30,
-        child: SearchAnchor(
-          searchController: controller,
-          builder: (BuildContext context, SearchController controller) {
-            return SearchBar(
-              controller: controller,
-              leading: const Icon(Icons.search),
-              hintText: hintText,
-              trailing: [
-                controller.value.text.isEmpty
-                    ? Container()
-                    : IconButton(
-                        icon: const Icon(Icons.clear),
-                        constraints: const BoxConstraints(),
-                        padding: .zero,
-                        onPressed: () {
-                          controller.clear();
-                          ref
-                              .read(portraitsPageControllerProvider.notifier)
-                              .updateSearchQuery(pane, '');
-                        },
-                      ),
-              ],
-              backgroundColor: WidgetStateProperty.all(
-                Theme.of(context).colorScheme.surfaceContainer,
-              ),
-              onChanged: (value) {
-                ref
-                    .read(portraitsPageControllerProvider.notifier)
-                    .updateSearchQuery(pane, value);
-              },
-            );
-          },
-          suggestionsBuilder:
-              (BuildContext context, SearchController controller) {
-                return [];
-              },
+        // In replace mode both panes show a search box; `/` goes to the left.
+        child: SearchHotkey(
+          controller: controller,
+          enabled: pane != FilterPane.right,
+          builder: (context, focusNode) => SearchAnchor(
+            searchController: controller,
+            builder: (BuildContext context, SearchController controller) {
+              return SearchBar(
+                controller: controller,
+                focusNode: focusNode,
+                leading: const Icon(Icons.search),
+                hintText: pane == FilterPane.right
+                    ? hintText
+                    : '$hintText$searchHotkeyHint',
+                trailing: [
+                  controller.value.text.isEmpty
+                      ? Container()
+                      : IconButton(
+                          icon: const Icon(Icons.clear),
+                          constraints: const BoxConstraints(),
+                          padding: .zero,
+                          onPressed: () {
+                            controller.clear();
+                            ref
+                                .read(portraitsPageControllerProvider.notifier)
+                                .updateSearchQuery(pane, '');
+                          },
+                        ),
+                ],
+                backgroundColor: WidgetStateProperty.all(
+                  Theme.of(context).colorScheme.surfaceContainer,
+                ),
+                onChanged: (value) {
+                  ref
+                      .read(portraitsPageControllerProvider.notifier)
+                      .updateSearchQuery(pane, value);
+                },
+              );
+            },
+            suggestionsBuilder:
+                (BuildContext context, SearchController controller) {
+                  return [];
+                },
+          ),
         ),
       ),
     );
@@ -969,42 +978,46 @@ class _PortraitsPageState extends ConsumerState<PortraitsPage>
   SizedBox buildSearchBox() {
     return SizedBox(
       height: 30,
-      child: SearchAnchor(
-        searchController: _searchController,
-        builder: (BuildContext context, SearchController controller) {
-          return SearchBar(
-            controller: controller,
-            leading: const Icon(Icons.search),
-            hintText: "Filter...",
-            trailing: [
-              controller.value.text.isEmpty
-                  ? Container()
-                  : IconButton(
-                      icon: const Icon(Icons.clear),
-                      constraints: const BoxConstraints(),
-                      padding: .zero,
-                      onPressed: () {
-                        controller.clear();
-                        ref
-                            .read(portraitsPageControllerProvider.notifier)
-                            .updateSearchQuery(FilterPane.main, '');
-                      },
-                    ),
-            ],
-            backgroundColor: WidgetStateProperty.all(
-              Theme.of(context).colorScheme.surfaceContainer,
-            ),
-            onChanged: (value) {
-              ref
-                  .read(portraitsPageControllerProvider.notifier)
-                  .updateSearchQuery(FilterPane.main, value);
-            },
-          );
-        },
-        suggestionsBuilder:
-            (BuildContext context, SearchController controller) {
-              return [];
-            },
+      child: SearchHotkey(
+        controller: _searchController,
+        builder: (context, focusNode) => SearchAnchor(
+          searchController: _searchController,
+          builder: (BuildContext context, SearchController controller) {
+            return SearchBar(
+              controller: controller,
+              focusNode: focusNode,
+              leading: const Icon(Icons.search),
+              hintText: "Filter...$searchHotkeyHint",
+              trailing: [
+                controller.value.text.isEmpty
+                    ? Container()
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        constraints: const BoxConstraints(),
+                        padding: .zero,
+                        onPressed: () {
+                          controller.clear();
+                          ref
+                              .read(portraitsPageControllerProvider.notifier)
+                              .updateSearchQuery(FilterPane.main, '');
+                        },
+                      ),
+              ],
+              backgroundColor: WidgetStateProperty.all(
+                Theme.of(context).colorScheme.surfaceContainer,
+              ),
+              onChanged: (value) {
+                ref
+                    .read(portraitsPageControllerProvider.notifier)
+                    .updateSearchQuery(FilterPane.main, value);
+              },
+            );
+          },
+          suggestionsBuilder:
+              (BuildContext context, SearchController controller) {
+                return [];
+              },
+        ),
       ),
     );
   }

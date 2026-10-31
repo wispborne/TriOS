@@ -12,6 +12,7 @@ import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/toolbar_checkbox_button.dart';
+import 'package:trios/widgets/search_hotkey.dart';
 import 'package:trios/widgets/viewer_toolbar.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 import 'package:trios/trios/constants_theme.dart';
@@ -307,36 +308,40 @@ class _TipsPageState extends ConsumerState<TipsPage>
   Widget buildSearchBox(TipsPageController controller) {
     return SizedBox(
       height: 30,
-      child: SearchAnchor(
-        searchController: _searchController,
-        builder: (BuildContext context, SearchController searchController) {
-          return SearchBar(
-            controller: searchController,
-            leading: const Icon(Icons.search),
-            hintText: "Filter...",
-            trailing: [
-              searchController.value.text.isEmpty
-                  ? Container()
-                  : IconButton(
-                      icon: const Icon(Icons.clear),
-                      constraints: const BoxConstraints(),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        searchController.clear();
-                        controller.setSearchQuery('');
-                      },
-                    ),
-            ],
-            backgroundColor: WidgetStateProperty.all(
-              Theme.of(context).colorScheme.surfaceContainer,
-            ),
-            onChanged: controller.setSearchQuery,
-          );
-        },
-        suggestionsBuilder:
-            (BuildContext context, SearchController searchController) {
-              return [];
-            },
+      child: SearchHotkey(
+        controller: _searchController,
+        builder: (context, focusNode) => SearchAnchor(
+          searchController: _searchController,
+          builder: (BuildContext context, SearchController searchController) {
+            return SearchBar(
+              controller: searchController,
+              focusNode: focusNode,
+              leading: const Icon(Icons.search),
+              hintText: "Filter...$searchHotkeyHint",
+              trailing: [
+                searchController.value.text.isEmpty
+                    ? Container()
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          searchController.clear();
+                          controller.setSearchQuery('');
+                        },
+                      ),
+              ],
+              backgroundColor: WidgetStateProperty.all(
+                Theme.of(context).colorScheme.surfaceContainer,
+              ),
+              onChanged: controller.setSearchQuery,
+            );
+          },
+          suggestionsBuilder:
+              (BuildContext context, SearchController searchController) {
+                return [];
+              },
+        ),
       ),
     );
   }

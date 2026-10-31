@@ -18,6 +18,7 @@ import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/disable_if_cannot_write_mods.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+import 'package:trios/widgets/search_hotkey.dart';
 import 'package:vs_scrollbar/vs_scrollbar.dart';
 
 import '../mod_manager/mod_context_menu.dart';
@@ -787,37 +788,42 @@ class ModListBasicSearch extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SearchAnchor(
-      searchController: searchController,
-      builder: (BuildContext context, SearchController controller) {
-        return SearchBar(
-          controller: controller,
-          leading: const Icon(Icons.search),
-          hintText: "Filter...",
-          trailing: [
-            query.isEmpty
-                ? Container()
-                : IconButton(
-                    icon: const Icon(Icons.clear),
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      controller.clear();
-                      ref.read(_searchQuery.notifier).state = "";
-                    },
-                  ),
-          ],
-          backgroundColor: WidgetStateProperty.all(
-            Theme.of(context).colorScheme.surfaceContainer,
-          ),
-          onChanged: (value) {
-            ref.read(_searchQuery.notifier).state = value;
-          },
-        );
-      },
-      suggestionsBuilder: (BuildContext context, SearchController controller) {
-        return [];
-      },
+    return SearchHotkey(
+      controller: searchController,
+      builder: (context, focusNode) => SearchAnchor(
+        searchController: searchController,
+        builder: (BuildContext context, SearchController controller) {
+          return SearchBar(
+            controller: controller,
+            focusNode: focusNode,
+            leading: const Icon(Icons.search),
+            hintText: "Filter...$searchHotkeyHint",
+            trailing: [
+              query.isEmpty
+                  ? Container()
+                  : IconButton(
+                      icon: const Icon(Icons.clear),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        controller.clear();
+                        ref.read(_searchQuery.notifier).state = "";
+                      },
+                    ),
+            ],
+            backgroundColor: WidgetStateProperty.all(
+              Theme.of(context).colorScheme.surfaceContainer,
+            ),
+            onChanged: (value) {
+              ref.read(_searchQuery.notifier).state = value;
+            },
+          );
+        },
+        suggestionsBuilder:
+            (BuildContext context, SearchController controller) {
+              return [];
+            },
+      ),
     );
   }
 }

@@ -32,14 +32,32 @@ class CatalogPageStatePersistedMapper
     opt: true,
     def: false,
   );
+  static String? _$sortKey(CatalogPageStatePersisted v) => v.sortKey;
+  static const Field<CatalogPageStatePersisted, String> _f$sortKey = Field(
+    'sortKey',
+    _$sortKey,
+    opt: true,
+  );
+  static bool? _$sortAscending(CatalogPageStatePersisted v) => v.sortAscending;
+  static const Field<CatalogPageStatePersisted, bool> _f$sortAscending = Field(
+    'sortAscending',
+    _$sortAscending,
+    opt: true,
+  );
 
   @override
   final MappableFields<CatalogPageStatePersisted> fields = const {
     #showFilters: _f$showFilters,
+    #sortKey: _f$sortKey,
+    #sortAscending: _f$sortAscending,
   };
 
   static CatalogPageStatePersisted _instantiate(DecodingData data) {
-    return CatalogPageStatePersisted(showFilters: data.dec(_f$showFilters));
+    return CatalogPageStatePersisted(
+      showFilters: data.dec(_f$showFilters),
+      sortKey: data.dec(_f$sortKey),
+      sortAscending: data.dec(_f$sortAscending),
+    );
   }
 
   @override
@@ -116,7 +134,7 @@ abstract class CatalogPageStatePersistedCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({bool? showFilters});
+  $R call({bool? showFilters, String? sortKey, bool? sortAscending});
   CatalogPageStatePersistedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -132,13 +150,23 @@ class _CatalogPageStatePersistedCopyWithImpl<$R, $Out>
   late final ClassMapperBase<CatalogPageStatePersisted> $mapper =
       CatalogPageStatePersistedMapper.ensureInitialized();
   @override
-  $R call({bool? showFilters}) => $apply(
-    FieldCopyWithData({if (showFilters != null) #showFilters: showFilters}),
+  $R call({
+    bool? showFilters,
+    Object? sortKey = $none,
+    Object? sortAscending = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (showFilters != null) #showFilters: showFilters,
+      if (sortKey != $none) #sortKey: sortKey,
+      if (sortAscending != $none) #sortAscending: sortAscending,
+    }),
   );
   @override
   CatalogPageStatePersisted $make(CopyWithData data) =>
       CatalogPageStatePersisted(
         showFilters: data.get(#showFilters, or: $value.showFilters),
+        sortKey: data.get(#sortKey, or: $value.sortKey),
+        sortAscending: data.get(#sortAscending, or: $value.sortAscending),
       );
 
   @override
@@ -211,12 +239,45 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
     opt: true,
     def: false,
   );
+  static CatalogSortKey? _$sortBeforeSearch(CatalogPageState v) =>
+      v.sortBeforeSearch;
+  static const Field<CatalogPageState, CatalogSortKey> _f$sortBeforeSearch =
+      Field('sortBeforeSearch', _$sortBeforeSearch, opt: true);
+  static bool _$sortAscendingBeforeSearch(CatalogPageState v) =>
+      v.sortAscendingBeforeSearch;
+  static const Field<CatalogPageState, bool> _f$sortAscendingBeforeSearch =
+      Field(
+        'sortAscendingBeforeSearch',
+        _$sortAscendingBeforeSearch,
+        opt: true,
+        def: false,
+      );
+  static bool _$sortChosenWhileSearching(CatalogPageState v) =>
+      v.sortChosenWhileSearching;
+  static const Field<CatalogPageState, bool> _f$sortChosenWhileSearching =
+      Field(
+        'sortChosenWhileSearching',
+        _$sortChosenWhileSearching,
+        opt: true,
+        def: false,
+      );
   static bool _$isLoading(CatalogPageState v) => v.isLoading;
   static const Field<CatalogPageState, bool> _f$isLoading = Field(
     'isLoading',
     _$isLoading,
     opt: true,
     def: false,
+  );
+  static Map<String, List<CatalogMod>> _$countItemsByGroup(
+    CatalogPageState v,
+  ) => v.countItemsByGroup;
+  static const Field<CatalogPageState, Map<String, List<CatalogMod>>>
+  _f$countItemsByGroup = Field(
+    'countItemsByGroup',
+    _$countItemsByGroup,
+    opt: true,
+    def: const {},
+    hook: SkipSerializationHook(),
   );
 
   @override
@@ -227,7 +288,11 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
     #currentSearchQuery: _f$currentSearchQuery,
     #selectedSort: _f$selectedSort,
     #sortAscending: _f$sortAscending,
+    #sortBeforeSearch: _f$sortBeforeSearch,
+    #sortAscendingBeforeSearch: _f$sortAscendingBeforeSearch,
+    #sortChosenWhileSearching: _f$sortChosenWhileSearching,
     #isLoading: _f$isLoading,
+    #countItemsByGroup: _f$countItemsByGroup,
   };
 
   static CatalogPageState _instantiate(DecodingData data) {
@@ -238,7 +303,11 @@ class CatalogPageStateMapper extends ClassMapperBase<CatalogPageState> {
       currentSearchQuery: data.dec(_f$currentSearchQuery),
       selectedSort: data.dec(_f$selectedSort),
       sortAscending: data.dec(_f$sortAscending),
+      sortBeforeSearch: data.dec(_f$sortBeforeSearch),
+      sortAscendingBeforeSearch: data.dec(_f$sortAscendingBeforeSearch),
+      sortChosenWhileSearching: data.dec(_f$sortChosenWhileSearching),
       isLoading: data.dec(_f$isLoading),
+      countItemsByGroup: data.dec(_f$countItemsByGroup),
     );
   }
 
@@ -314,6 +383,13 @@ abstract class CatalogPageStateCopyWith<$R, $In extends CatalogPageState, $Out>
   get allMods;
   ListCopyWith<$R, CatalogMod, ObjectCopyWith<$R, CatalogMod, CatalogMod>>
   get displayedMods;
+  MapCopyWith<
+    $R,
+    String,
+    List<CatalogMod>,
+    ObjectCopyWith<$R, List<CatalogMod>, List<CatalogMod>>
+  >
+  get countItemsByGroup;
   $R call({
     CatalogPageStatePersisted? persisted,
     List<CatalogMod>? allMods,
@@ -321,7 +397,11 @@ abstract class CatalogPageStateCopyWith<$R, $In extends CatalogPageState, $Out>
     String? currentSearchQuery,
     CatalogSortKey? selectedSort,
     bool? sortAscending,
+    CatalogSortKey? sortBeforeSearch,
+    bool? sortAscendingBeforeSearch,
+    bool? sortChosenWhileSearching,
     bool? isLoading,
+    Map<String, List<CatalogMod>>? countItemsByGroup,
   });
   CatalogPageStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -358,6 +438,18 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
     (v) => call(displayedMods: v),
   );
   @override
+  MapCopyWith<
+    $R,
+    String,
+    List<CatalogMod>,
+    ObjectCopyWith<$R, List<CatalogMod>, List<CatalogMod>>
+  >
+  get countItemsByGroup => MapCopyWith(
+    $value.countItemsByGroup,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(countItemsByGroup: v),
+  );
+  @override
   $R call({
     CatalogPageStatePersisted? persisted,
     List<CatalogMod>? allMods,
@@ -365,7 +457,11 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
     String? currentSearchQuery,
     CatalogSortKey? selectedSort,
     bool? sortAscending,
+    Object? sortBeforeSearch = $none,
+    bool? sortAscendingBeforeSearch,
+    bool? sortChosenWhileSearching,
     bool? isLoading,
+    Map<String, List<CatalogMod>>? countItemsByGroup,
   }) => $apply(
     FieldCopyWithData({
       if (persisted != null) #persisted: persisted,
@@ -374,7 +470,13 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
       if (currentSearchQuery != null) #currentSearchQuery: currentSearchQuery,
       if (selectedSort != null) #selectedSort: selectedSort,
       if (sortAscending != null) #sortAscending: sortAscending,
+      if (sortBeforeSearch != $none) #sortBeforeSearch: sortBeforeSearch,
+      if (sortAscendingBeforeSearch != null)
+        #sortAscendingBeforeSearch: sortAscendingBeforeSearch,
+      if (sortChosenWhileSearching != null)
+        #sortChosenWhileSearching: sortChosenWhileSearching,
       if (isLoading != null) #isLoading: isLoading,
+      if (countItemsByGroup != null) #countItemsByGroup: countItemsByGroup,
     }),
   );
   @override
@@ -388,7 +490,20 @@ class _CatalogPageStateCopyWithImpl<$R, $Out>
     ),
     selectedSort: data.get(#selectedSort, or: $value.selectedSort),
     sortAscending: data.get(#sortAscending, or: $value.sortAscending),
+    sortBeforeSearch: data.get(#sortBeforeSearch, or: $value.sortBeforeSearch),
+    sortAscendingBeforeSearch: data.get(
+      #sortAscendingBeforeSearch,
+      or: $value.sortAscendingBeforeSearch,
+    ),
+    sortChosenWhileSearching: data.get(
+      #sortChosenWhileSearching,
+      or: $value.sortChosenWhileSearching,
+    ),
     isLoading: data.get(#isLoading, or: $value.isLoading),
+    countItemsByGroup: data.get(
+      #countItemsByGroup,
+      or: $value.countItemsByGroup,
+    ),
   );
 
   @override

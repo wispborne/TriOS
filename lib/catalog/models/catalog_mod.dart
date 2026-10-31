@@ -1,7 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/catalog/catalog_extras_manager.dart';
 import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
+import 'package:trios/catalog/models/catalog_extras.dart';
 import 'package:trios/catalog/models/forum_data_bundle.dart';
 import 'package:trios/catalog/models/mod_image_source.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
@@ -9,8 +11,10 @@ import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/mod_search.dart';
 import 'package:trios/utils/strip_markdown.dart';
 
 /// The description in an installed mod's `mod_info.json`. Reads the variant
@@ -34,7 +38,7 @@ String? _asPlainText(String? text) {
 
 /// Everything the app knows about one catalog mod, combined from the catalog
 /// entry, the forum index entry, the AI-written `llm` block, the cached forum
-/// post details, and the installed mod on disk.
+/// post details, the extras record, and the installed mod on disk.
 ///
 /// Holds every candidate value side by side and does not decide which one to
 /// show — that's the resolver's job. Not serialized; rebuilt from its sources
@@ -57,7 +61,8 @@ class CatalogMod {
 
   // -- Candidate texts, kept apart --
 
-  /// The catalog entry's `summary` field (short).
+  /// The mod's short summary in the author's own words: the extras record's
+  /// summary, which Starmodder shows too, else the catalog entry's `summary`.
   final String? summaryText;
 
   /// The catalog entry's `description` field (long).
@@ -117,6 +122,16 @@ class CatalogMod {
 
   final List<ForumLlmDownload> downloads;
 
+  // -- Extras --
+
+  /// The mod's record in `mod-catalog-extras.json`. Null when the file isn't
+  /// available, or when the mod was added after the file was built.
+  ///
+  /// Read [categories], [requiredMods], [optionalMods] and
+  /// [canAddToSaveAnswer] rather than these fields: they fall back to other
+  /// data when there's no record.
+  final CatalogExtras? extras;
+
   const CatalogMod({
     required this.entry,
     required this.title,
@@ -149,9 +164,80 @@ class CatalogMod {
     this.attributeKeys = const [],
     this.installedMod,
     this.downloads = const [],
+    this.extras,
   });
 
   bool get isPartOfThread => partOfThreadTitle != null;
+
+  /// Other names people use for the mod: the ones the scraper found in the
+  /// post, then the hand-kept list.
+  List<String> get nicknames => [
+    ...?llmMod?.nicknames,
+    ...?Constants.catalogNicknames[entry.id],
+  ];
+
+  /// Other names the mod's authors go by, e.g. "Wispborne" for "Wisp".
+  List<String> get otherAuthorNames => [
+    for (final author in entry.getAuthors()) ...getModAuthorAliases(author),
+  ];
+
+  /// True when the mod is a tool rather than a game mod. From the extras
+  /// record, or from the AI answer when there's no record.
+  bool get isTool => _isToolFrom(extras, llmMod);
+
+  /// True when the author says the mod can be added to a save in progress.
+  bool get canAddToSave => canAddToSaveAnswer == CatalogSaveAnswer.yes;
+
+  /// Whether the mod can be added to a save in progress. From the extras
+  /// record, or from the AI answer when there's no record.
+  CatalogSaveAnswer? get canAddToSaveAnswer =>
+      _canAddToSaveFrom(extras, llmMod);
+
+  /// The categories to show. Starmodder's cleaned-up ones from the extras
+  /// record, or the catalog entry's own when there's no record.
+  List<String> get categories => extras?.categories ?? entry.getCategories();
+
+  /// Mods this mod requires. From the extras record, or from the AI answer
+  /// when there's no record. Names from the AI answer have no catalog id.
+  List<CatalogNeed> get requiredMods =>
+      extras?.needs ?? _needsFromNames(llmMod?.extras?.needs);
+
+  /// Mods this mod works with but doesn't require. Same sources as
+  /// [requiredMods].
+  List<CatalogNeed> get optionalMods =>
+      extras?.optionalNeeds ?? _needsFromNames(llmMod?.extras?.optionalNeeds);
+
+  static List<CatalogNeed> _needsFromNames(List<String>? names) => [
+    for (final name in names ?? const <String>[]) CatalogNeed(name: name),
+  ];
+
+  /// What the author says about using AI. From the extras record, or from the
+  /// AI answer when the record has none. Null when nothing has read the post
+  /// for it.
+  CatalogAiUse? get aiUse => extras?.aiUse ?? llmMod?.extras?.aiUse;
+
+  /// True when the author says AI was used, false when they say none was, and
+  /// null when they say nothing about it.
+  bool? get usesAi => aiUse?.usesAi;
+
+  /// The day the mod was posted, as a [catalogDayNumber]. From the extras
+  /// record, or from [postDate] when there's no record.
+  int? get postedDay => catalogDayNumber(extras?.addedOn ?? postDate);
+
+  /// The day the mod's post was last edited, as a [catalogDayNumber]. From
+  /// the extras record, or [postedDay] when it has no edit date.
+  int? get editedDay => catalogDayNumber(extras?.editedOn) ?? postedDay;
+
+  /// The day the newest release was seen, as a [catalogDayNumber]. Only the
+  /// extras record has this, so there is no fallback.
+  int? get lastReleaseDay => catalogDayNumber(extras?.lastReleaseDate);
+
+  /// Every link the mod has: forum, Discord, NexusMods, direct download,
+  /// download page, and each download link the scraper found.
+  List<String> get allLinks => [
+    ...?entry.urls?.values,
+    for (final download in downloads) download.url,
+  ];
 
   /// The license when the whole thing is just a link — a few mods point at a
   /// Creative Commons page instead of writing terms out. Null when the
@@ -164,6 +250,40 @@ class CatalogMod {
     return null;
   }
 }
+
+bool _isToolFrom(CatalogExtras? extras, ForumLlmMod? llmMod) =>
+    (extras?.isTool ?? llmMod?.isTool) == true;
+
+CatalogSaveAnswer? _canAddToSaveFrom(
+  CatalogExtras? extras,
+  ForumLlmMod? llmMod,
+) {
+  if (extras != null) return extras.canAdd;
+  final text = llmMod?.extras?.canAdd;
+  if (text == null) return null;
+  return CatalogSaveAnswer.values.asNameMap()[text] ??
+      CatalogSaveAnswer.unknown;
+}
+
+final DateTime _epoch = DateTime.utc(1970);
+
+/// Whole days since 1970-01-01, for the calendar day [date] is written on.
+/// The date sliders run over these, so each stop is one day that some mod
+/// actually has.
+///
+/// The year, month and day are read as they are, not moved to UTC first. The
+/// extras file writes bare dates like "2025-03-01", which Dart reads as local
+/// midnight, and moving those to UTC would shift them a day east of UTC.
+int? catalogDayNumber(DateTime? date) {
+  if (date == null) return null;
+  return DateTime.utc(date.year, date.month, date.day)
+      .difference(_epoch)
+      .inDays;
+}
+
+/// The day a [catalogDayNumber] stands for, at midnight UTC.
+DateTime dateFromCatalogDayNumber(num day) =>
+    _epoch.add(Duration(days: day.round()));
 
 /// A human name for the site a source code link points at, e.g. "GitHub".
 /// Falls back to the site address for anywhere else.
@@ -237,6 +357,8 @@ List<String> _buildAttributeKeys(
   ModRepoEntry mod,
   ForumModIndex? forumIndex, {
   String? sourceCodeUrl,
+  CatalogSaveAnswer? canAddToSaveAnswer,
+  bool isTool = false,
 }) {
   final result = <String>[];
   final urls = mod.urls;
@@ -254,6 +376,8 @@ List<String> _buildAttributeKeys(
     if (forumIndex.isArchivedModIndex) result.add('archived');
   }
   if (sourceCodeUrl != null) result.add('sourceCode');
+  if (canAddToSaveAnswer == CatalogSaveAnswer.yes) result.add('safeToAdd');
+  if (isTool) result.add('tool');
   return result;
 }
 
@@ -268,20 +392,24 @@ List<String> _buildAttributeKeys(
 ///
 /// [discordThreads] are the AI answers for the Discord threads the mod came
 /// from. They are used only when the forum topic has no AI answer for it.
+///
+/// [extras] is the mod's record in `mod-catalog-extras.json`, found by its
+/// catalog id.
 CatalogMod gatherCatalogMod({
   required ModRepoEntry mod,
   ForumModIndex? forumIndex,
   List<DiscordThreadAnswer> discordThreads = const [],
   ForumModDetails? forumDetails,
   Mod? installedMod,
+  CatalogExtras? extras,
 }) {
   final llmMod = llmModForEntry(
     mod,
     forumIndex: forumIndex,
     discordThreads: discordThreads,
   );
-  final extras = llmMod?.extras;
-  final sourceCodeUrl = extras?.sourceCodeUrl;
+  final llmExtras = llmMod?.extras;
+  final sourceCodeUrl = llmExtras?.sourceCodeUrl;
 
   final authorsList = mod.authorsList?.isNotEmpty == true
       ? mod.getAuthorsDeduplicated().join(', ')
@@ -316,6 +444,8 @@ CatalogMod gatherCatalogMod({
         installedMod?.findFirstEnabledOrHighestVersion?.iconFilePath,
       );
 
+  final catalogForumUrl = mod.urls?[ModUrlType.Forum];
+
   return CatalogMod(
     entry: mod,
     title: title,
@@ -324,19 +454,19 @@ CatalogMod gatherCatalogMod({
     authorTitle: authorTitle,
     authorPostCount: authorPostCount,
     authorAvatarPath: avatarPathResolved,
-    summaryText: _asPlainText(mod.summary),
+    summaryText: _asPlainText(extras?.summary ?? mod.summary),
     descriptionText: _asPlainText(mod.description),
     modInfoText: _asPlainText(modInfoDescription(installedMod)),
-    aiSentence: _asPlainText(extras?.summary?.sentence),
-    aiParagraph: _asPlainText(extras?.summary?.paragraph),
+    aiSentence: _asPlainText(llmExtras?.summary?.sentence),
+    aiParagraph: _asPlainText(llmExtras?.summary?.paragraph),
     llmMod: llmMod,
-    changelog: extras?.changelog,
-    supportLinks: extras?.supportLinks ?? const [],
-    saveCompatibility: extras?.saveCompatibility,
+    changelog: llmExtras?.changelog,
+    supportLinks: llmExtras?.supportLinks ?? const [],
+    saveCompatibility: llmExtras?.saveCompatibility,
     sourceCodeUrl: sourceCodeUrl,
     // Forum posts write `&nbsp;` where they mean a space; the app shows the
     // license as-is, so the code turns it back into one here.
-    licenseText: trimmedOrNull(extras?.license?.replaceAll('&nbsp;', ' ')),
+    licenseText: trimmedOrNull(llmExtras?.license?.replaceAll('&nbsp;', ' ')),
     catalogImage: mainImage,
     category: category,
     postDate: postDate,
@@ -344,18 +474,20 @@ CatalogMod gatherCatalogMod({
     views: forumIndex?.views,
     replies: forumIndex?.replies,
     lastPostDate: forumIndex?.lastPostDate,
-    topicUrl: forumDetails != null
-        ? (forumIndex?.topicUrl ?? forumDetails.title)
-        : forumIndex?.topicUrl,
+    topicUrl:
+        forumIndex?.topicUrl ?? (forumDetails != null ? catalogForumUrl : null),
     isWip: forumIndex?.isWip ?? false,
     isArchived: forumIndex?.isArchivedModIndex ?? false,
     attributeKeys: _buildAttributeKeys(
       mod,
       forumIndex,
       sourceCodeUrl: sourceCodeUrl,
+      canAddToSaveAnswer: _canAddToSaveFrom(extras, llmMod),
+      isTool: _isToolFrom(extras, llmMod),
     ),
     installedMod: installedMod,
     downloads: llmMod?.downloads ?? const [],
+    extras: extras,
   );
 }
 
@@ -367,10 +499,11 @@ final catalogModsProvider = Provider<List<CatalogMod>>((ref) {
   final forumLookup = ref.watch(forumDataByTopicId);
   final discordLookup = ref.watch(discordThreadsById);
   final links = ref.watch(catalogLinksProvider);
+  final extrasById = ref.watch(catalogExtrasByIdProvider);
 
   final sw = Stopwatch()..start();
   final result = entries.map((entry) {
-    final topicId = extractForumTopicId(entry.urls?[ModUrlType.Forum]);
+    final topicId = catalogForumTopicId(entry);
     final forumIndex = topicId != null ? forumLookup[topicId] : null;
     final installedMod = links.modForEntry(entry);
     return gatherCatalogMod(
@@ -378,6 +511,7 @@ final catalogModsProvider = Provider<List<CatalogMod>>((ref) {
       forumIndex: forumIndex,
       discordThreads: discordThreadsFor(entry, discordLookup),
       installedMod: installedMod,
+      extras: extrasById[entry.id],
     );
   }).toList();
   Fimber.i(

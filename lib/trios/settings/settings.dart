@@ -190,6 +190,11 @@ class Settings with SettingsMappable {
   final AiSummaryMode catalogAiSummaryMode;
 
   /// Whether the mod pop-ups show the generated summary block at the top.
+  @Deprecated(
+    'The catalog details dialog no longer shows a summary block in its header; '
+    'this setting is no longer read. Kept to avoid a settings migration; '
+    'remove in a later cleanup.',
+  )
   final bool catalogShowDialogHeaderSummary;
   final double catalogMinItemWidth;
   final double catalogCardSpacing;

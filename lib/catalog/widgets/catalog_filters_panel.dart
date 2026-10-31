@@ -15,7 +15,7 @@ class CatalogFiltersPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.watch(catalogPageControllerProvider.notifier);
-    ref.watch(catalogPageControllerProvider);
+    final state = ref.watch(catalogPageControllerProvider);
 
     return Card(
       margin: .zero,
@@ -31,6 +31,8 @@ class CatalogFiltersPanel extends ConsumerWidget {
               group: g,
               scope: controller.scope,
               items: items,
+              showCounts: true,
+              countItems: state.countItemsByGroup[g.id],
               onChanged: () => controller.onGroupChanged(g.id),
             ),
         ],

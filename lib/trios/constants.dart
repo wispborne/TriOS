@@ -106,6 +106,8 @@ class Constants {
       "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/mod-catalog.json";
   static const String modCatalogDetailsUrl =
       "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/mod-catalog-details.json";
+  static const String modCatalogExtrasUrl =
+      "https://raw.githubusercontent.com/wispborne/StarsectorModRepo/refs/heads/main/mod-catalog-extras.json";
 
   // "https://raw.githubusercontent.com/theRoastSuckling/QBForumModData/refs/heads/main/forum-data-bundle.json";
   static const String patreonUrl = "https://www.patreon.com/wispborne";
@@ -184,6 +186,20 @@ class Constants {
     ["constat.", "Astarat", "Astarat and PureTilt"],
     ["Soren", "Søren", "Harmful Mechanic"],
   ];
+
+  /// Extra search names for catalog mods, keyed by catalog mod id. Only names
+  /// that can't be worked out from the title or found in the author's post.
+  /// Copied from Starmodder's `site/nicknames.js`.
+  static const catalogNicknames = <String, List<String>>{
+    // Starsector+ was "SS+", and SSP is how people still write it.
+    'starsector': ['ssp'],
+    // BRDY is the mod's own prefix, and its fork kept it.
+    'blackrock-drive-yards': ['brdy'],
+    'blackrock-drive-yards-2': ['brdy'],
+    // The rules find "armaa", but Project MISTRAL's own name holds the word
+    // "ArmaA" and would come first.
+    'arma-armatura': ['armaa'],
+  };
 }
 
 final currentDirectory = Platform.resolvedExecutable.toFile().parent;

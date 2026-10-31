@@ -159,12 +159,85 @@ String normalizeBaseVersion(String? rawVersion) {
   return base;
 }
 
+/// Compares two Starsector game versions, oldest first.
+///
+/// The game hasn't always used semver. The part after "0." is read as a
+/// decimal fraction, which is how the releases were numbered: 0.6.2, 0.62,
+/// 0.65, 0.7, 0.9, 0.95, 0.98. Plain [compareVersions] would put 0.65 after
+/// 0.9, since 65 is more than 9. Later parts count as plain numbers, so 0.65.2
+/// comes after 0.65.1. Versions with the same base, like "0.97a" and
+/// "0.97a-RC11", fall back to [compareVersions].
+int compareGameVersionOrder(String? a, String? b) {
+  if (a == b) return 0;
+  final aParts = _gameVersionParts(a);
+  final bParts = _gameVersionParts(b);
+  if (aParts.isEmpty || bParts.isEmpty) {
+    if (aParts.isEmpty != bParts.isEmpty) return aParts.isEmpty ? -1 : 1;
+    return compareVersions(a, b);
+  }
+
+  final major = int.parse(aParts[0]).compareTo(int.parse(bParts[0]));
+  if (major != 0) return major;
+
+  // Pad the fractions to the same length, so "9" reads as "90" next to "95".
+  final aMinor = aParts.length > 1 ? aParts[1] : '0';
+  final bMinor = bParts.length > 1 ? bParts[1] : '0';
+  final width = aMinor.length > bMinor.length ? aMinor.length : bMinor.length;
+  final minor = int.parse(aMinor.padRight(width, '0'))
+      .compareTo(int.parse(bMinor.padRight(width, '0')));
+  if (minor != 0) return minor;
+
+  final len = aParts.length > bParts.length ? aParts.length : bParts.length;
+  for (var i = 2; i < len; i++) {
+    final aNum = i < aParts.length ? int.parse(aParts[i]) : 0;
+    final bNum = i < bParts.length ? int.parse(bParts[i]) : 0;
+    if (aNum != bNum) return aNum.compareTo(bNum);
+  }
+  return compareVersions(a, b);
+}
+
+/// A game version as a sort key, for lists and groups that sort by
+/// [Comparable] values. Sorts with [compareGameVersionOrder]. Ignores case, so
+/// "0.98a-RC8" and "0.98a-rc8" are the same key.
+class GameVersionSortKey implements Comparable<GameVersionSortKey> {
+  final String version;
+
+  GameVersionSortKey(String? version) : version = (version ?? '').toLowerCase();
+
+  @override
+  int compareTo(GameVersionSortKey other) {
+    final order = compareGameVersionOrder(version, other.version);
+    // Different text never counts as equal, so sorting stays consistent with
+    // ==.
+    return order != 0 ? order : version.compareTo(other.version);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is GameVersionSortKey && other.version == version;
+
+  @override
+  int get hashCode => version.hashCode;
+}
+
+/// The numbers in [version]'s base, e.g. ["0", "65", "1"] for "0.65.1a".
+/// Empty when there are none.
+List<String> _gameVersionParts(String? version) {
+  final base = normalizeBaseVersion(version);
+  final parts = base.split('.');
+  if (parts.any((p) => int.tryParse(p) == null)) return const [];
+  return parts;
+}
+
 /// Whether a mod's required game version is the same base version as the
 /// user's installed game. Uses the same [normalizeBaseVersion] bucketing as
 /// the Game Version filter, so "0.98a-RC8" installed matches a mod that
 /// requires "0.98a". Returns null when either version is unknown (so callers
 /// can render a neutral state rather than a false match/mismatch).
-bool? gameVersionMatchesInstalled(String? requiredVersion, String? installedVersion) {
+bool? gameVersionMatchesInstalled(
+  String? requiredVersion,
+  String? installedVersion,
+) {
   final req = normalizeBaseVersion(requiredVersion);
   final installed = normalizeBaseVersion(installedVersion);
   if (req.isEmpty || installed.isEmpty) return null;
@@ -184,6 +257,14 @@ int? extractForumTopicId(String? url) {
   if (match == null) return null;
   return int.tryParse(match.group(1)!);
 }
+
+/// The forum topic of [mod]'s own forum post. The catalog's forum source post
+/// comes first: it names the mod's own thread even when the Forum link points
+/// at another one, such as a library the mod needs. Falls back to the Forum
+/// link.
+int? catalogForumTopicId(ModRepoEntry mod) =>
+    int.tryParse(mod.forumPost?.id ?? '') ??
+    extractForumTopicId(mod.urls?[ModUrlType.Forum]);
 
 /// Like [extractForumTopicId] but returns the raw string ID (no parse).
 String? extractForumThreadId(String? url) {
@@ -211,6 +292,15 @@ int nameCompare(CatalogMod a, CatalogMod b) {
   final bIsBracket = _nonAlphanumericStart.hasMatch(bName);
   if (aIsBracket != bIsBracket) return aIsBracket ? 1 : -1;
   return aName.compareTo(bName);
+}
+
+/// Best match order: higher score first, then by name, then by catalog id, so
+/// the same search always gives the same order.
+int compareBestMatch(CatalogMod a, CatalogMod b, int aScore, int bScore) {
+  if (aScore != bScore) return bScore.compareTo(aScore);
+  final byName = nameCompare(a, b);
+  if (byName != 0) return byName;
+  return (a.entry.id ?? '').compareTo(b.entry.id ?? '');
 }
 
 // ===== Filter Population Helpers =====
@@ -249,7 +339,7 @@ Map<String, Set<String>> extractVersionGroups(List<CatalogMod> mods) {
 
   final filtered = Map.fromEntries(
     versionMap.entries.where((e) => (versionModCount[e.key] ?? 0) >= 3).toList()
-      ..sort((a, b) => compareVersions(b.key, a.key)),
+      ..sort((a, b) => compareGameVersionOrder(b.key, a.key)),
   );
 
   return filtered;
@@ -264,7 +354,15 @@ enum CatalogSortKey {
   version('Game Version'),
   mostViewed('Popular'),
   mostReplies('Most Discussed'),
-  lastActivity('Recently Active');
+  lastActivity('Recently Active'),
+
+  /// A shuffled order, set by the shuffle seed. The direction button does not
+  /// apply.
+  random('Random'),
+
+  /// How well each mod matches the search. Only offered while there is search
+  /// text.
+  bestMatch('Best match');
 
   final String label;
 
@@ -279,14 +377,34 @@ enum CatalogSortKey {
 
 /// Sorts a list of gathered catalog mods by the given sort key. Returns a new
 /// list. Views, dates, and replies are on the gathered model — no lookup needed.
+///
+/// [scores] are the search scores, used by [CatalogSortKey.bestMatch]. A mod
+/// with no score counts as 0.
+///
+/// [shuffleSeed] sets the [CatalogSortKey.random] order. Each mod's place
+/// comes from a hash of the seed and its id, not from shuffling the list. So
+/// filtering or reloading the data never moves one mod past another.
 List<CatalogMod> sortCatalogMods(
   List<CatalogMod> mods,
   CatalogSortKey sortKey, {
   bool ascending = true,
+  Map<CatalogMod, int> scores = const {},
+  int shuffleSeed = 0,
 }) {
   final sorted = List<CatalogMod>.from(mods);
   final flip = ascending ? 1 : -1;
   switch (sortKey) {
+    case CatalogSortKey.bestMatch:
+      // Always best first; the direction button does not apply.
+      sorted.sort(
+        (a, b) => compareBestMatch(a, b, scores[a] ?? 0, scores[b] ?? 0),
+      );
+    case CatalogSortKey.random:
+      int place(CatalogMod mod) => Object.hash(shuffleSeed, mod.entry.id);
+      sorted.sort((a, b) {
+        final cmp = place(a).compareTo(place(b));
+        return cmp != 0 ? cmp : nameCompare(a, b);
+      });
     case CatalogSortKey.name:
       sorted.sort((a, b) => nameCompare(a, b) * flip);
     case CatalogSortKey.date:
@@ -306,7 +424,7 @@ List<CatalogMod> sortCatalogMods(
         if (aVer.isEmpty && bVer.isEmpty) return nameCompare(a, b);
         if (aVer.isEmpty) return 1;
         if (bVer.isEmpty) return -1;
-        final cmp = compareVersions(aVer, bVer) * flip;
+        final cmp = compareGameVersionOrder(aVer, bVer) * flip;
         return cmp != 0 ? cmp : nameCompare(a, b);
       });
     case CatalogSortKey.mostViewed:

@@ -1,11 +1,7 @@
-import 'dart:collection';
-
 import 'package:collection/collection.dart';
 import 'package:dart_extensions_methods/dart_extension_methods.dart';
 import 'package:stringr/stringr.dart';
 import 'package:text_search/text_search.dart';
-import 'package:trios/catalog/models/mod_repo_entry.dart';
-import 'package:trios/catalog/models/catalog_mod.dart';
 
 import '../models/mod.dart';
 import '../models/mod_info.dart';
@@ -155,104 +151,4 @@ List<ModVariant> searchModVariants(
             })
             .toList();
   return result;
-}
-
-// Catalog Mod search
-
-final Map<String, List<TextSearchItemTerm>> _catalogModSearchTagsCache = {};
-
-List<TextSearchItemTerm> getCatalogModSearchTags(ModRepoEntry mod) {
-  return _catalogModSearchTagsCache.putIfAbsent(
-    mod.name,
-    () => createCatalogModSearchTags(mod),
-  );
-}
-
-List<CatalogMod> searchCatalogMods(
-  List<CatalogMod> mods,
-  String? query,
-) {
-  if (query == null || query.isEmpty) {
-    return mods;
-  }
-
-  List<TextSearchItem<CatalogMod>> items = mods
-      .map((mod) => TextSearchItem(mod, getCatalogModSearchTags(mod.entry)))
-      .toList();
-  List<String> queryParts = query
-      .split(',')
-      .map((e) => e.trim())
-      .where((e) => e.isNotEmpty)
-      .toList();
-  Set<CatalogMod> positiveResults = {};
-  Set<CatalogMod> negativeResults = {};
-
-  for (var queryPart in queryParts) {
-    bool isNegative = queryPart.startsWith('-');
-    String actualQuery = isNegative ? queryPart.substring(1) : queryPart;
-
-    List<TextSearchItem<CatalogMod>> matchingItems =
-        items.where((item) {
-          return item.terms.any(
-            (term) => term.term.contains(actualQuery.toLowerCase()),
-          );
-        }).toList();
-
-    if (isNegative) {
-      negativeResults.addAll(matchingItems.map((item) => item.object));
-    } else {
-      positiveResults.addAll(matchingItems.map((item) => item.object));
-    }
-  }
-
-  if (positiveResults.isEmpty && negativeResults.isNotEmpty) {
-    return mods.where((mod) => !negativeResults.contains(mod)).toList();
-  } else if (positiveResults.isNotEmpty) {
-    return positiveResults
-        .where((mod) => !negativeResults.contains(mod))
-        .toList();
-  } else {
-    return [];
-  }
-}
-
-List<TextSearchItemTerm> createCatalogModSearchTags(ModRepoEntry mod) {
-  List<TextSearchItemTerm> tags = [];
-
-  void addTag(String? term, double penalty) {
-    if (term != null && term.isNotEmpty) {
-      tags.add(TextSearchItemTerm(term.toLowerCase(), penalty));
-    }
-  }
-
-  addTag(mod.name, 0.0);
-  String? alphaName = mod.name.slugify();
-  addTag(alphaName, 10.0);
-  List<String> parts = alphaName.split('-');
-  for (var part in parts) {
-    addTag(part, 10.0);
-  }
-  if (parts.isNotEmpty) {
-    String acronym = parts.where((e) => e.isNotEmpty).map((e) => e[0]).join();
-    addTag(acronym, 0.0);
-  }
-
-  for (var author in mod.authorsList ?? []) {
-    addTag(author, 0.0);
-    List<String> aliases = getModAuthorAliases(author);
-    for (var alias in aliases) {
-      addTag(alias, 0.0);
-    }
-  }
-
-  mod.categories?.forEach((it) => addTag(it, 0.0));
-  mod.sources?.forEach((it) => addTag(it.toString(), 0.0));
-  mod.urls?.forEach((key, value) => addTag(value, 0.0));
-
-  addTag(mod.gameVersionReq, 0.0);
-  addTag(mod.modVersion, 0.0);
-  addTag(mod.description, 15.0);
-
-  final uniqueTags = LinkedHashSet<TextSearchItemTerm>.from(tags);
-  return uniqueTags.toList();
 }

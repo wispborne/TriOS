@@ -5,11 +5,15 @@ class SettingsGroup extends StatelessWidget {
   final List<Widget> children;
   final double padding;
 
+  /// How far the contents sit in from the heading.
+  final double contentIndent;
+
   const SettingsGroup({
     super.key,
     required this.name,
     required this.children,
     this.padding = 16,
+    this.contentIndent = 24,
   });
 
   static SettingsGroup subsection({
@@ -42,7 +46,7 @@ class SettingsGroup extends StatelessWidget {
           ),
           SizedBox(height: padding),
           Padding(
-            padding: const EdgeInsets.only(left: 24),
+            padding: EdgeInsets.only(left: contentIndent),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,

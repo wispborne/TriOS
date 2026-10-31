@@ -142,7 +142,10 @@ class ModSummaryWidget extends ConsumerWidget {
                 mainAxisSize: .min,
                 spacing: 4,
                 children: [
-                  const _SectionHeader(icon: Icons.save, label: 'Summary'),
+                  const SummarySectionHeader(
+                    icon: Icons.notes,
+                    label: 'Summary',
+                  ),
                   Padding(
                     padding: const .only(left: 20),
                     child: _SummarySection(
@@ -154,25 +157,25 @@ class ModSummaryWidget extends ConsumerWidget {
                 ],
               )
             : null),
-        ?(showSaveCompat ? _SaveCompatibilitySection(text: saveCompat!) : null),
+        ?(showSaveCompat ? SaveCompatibilitySection(text: saveCompat!) : null),
         ?(showChangelog
-            ? _ChangelogSection(
+            ? ChangelogSection(
                 changelog: data.changelog!,
                 maxEntries: config.maxChangelogEntries,
                 interactive: config.interactive,
               )
             : null),
         ?(sourceCodeUrl != null
-            ? _SourceCodeSection(
+            ? SourceCodeSection(
                 url: sourceCodeUrl,
                 interactive: config.interactive,
               )
             : null),
         ?(hasLicense
-            ? _LicenseSection(data: data, interactive: config.interactive)
+            ? LicenseSection(data: data, interactive: config.interactive)
             : null),
         ?(showDonation
-            ? _DonationLinksSection(links: data.supportLinks)
+            ? DonationLinksSection(links: data.supportLinks)
             : null),
       ],
     );
@@ -560,13 +563,17 @@ class _SummarySection extends StatelessWidget {
 /// A consistent header for the content sections: a small icon and a bold
 /// label. Keeps the summary, save-compatibility, changelog, and donation
 /// blocks visually grouped instead of running together.
-class _SectionHeader extends StatelessWidget {
+class SummarySectionHeader extends StatelessWidget {
   final IconData? icon;
   final String? iconAsset;
   final String label;
 
-  const _SectionHeader({this.icon, this.iconAsset, required this.label})
-    : assert(icon != null || iconAsset != null);
+  const SummarySectionHeader({
+    super.key,
+    this.icon,
+    this.iconAsset,
+    required this.label,
+  }) : assert(icon != null || iconAsset != null);
 
   @override
   Widget build(BuildContext context) {
@@ -591,10 +598,10 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _SaveCompatibilitySection extends StatelessWidget {
+class SaveCompatibilitySection extends StatelessWidget {
   final String text;
 
-  const _SaveCompatibilitySection({required this.text});
+  const SaveCompatibilitySection({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -608,7 +615,10 @@ class _SaveCompatibilitySection extends StatelessWidget {
         mainAxisSize: .min,
         spacing: 4,
         children: [
-          const _SectionHeader(icon: Icons.save, label: 'Save compatibility'),
+          const SummarySectionHeader(
+            icon: Icons.save,
+            label: 'Save compatibility',
+          ),
           Padding(
             padding: const .only(left: 20),
             child: Text(text, style: theme.textTheme.bodySmall),
@@ -622,15 +632,21 @@ class _SaveCompatibilitySection extends StatelessWidget {
 /// The "Recent updates" section. Closed, it's a single line; opened, it lists
 /// the newest changelog entries (the latest one open) plus a link to the full
 /// changelog.
-class _ChangelogSection extends StatelessWidget {
+class ChangelogSection extends StatelessWidget {
   final ForumLlmChangelog changelog;
   final int maxEntries;
   final bool interactive;
 
-  const _ChangelogSection({
+  /// When false, leaves out the "Recent updates" heading and its indent, for
+  /// a place that gives the changelog its own heading.
+  final bool showHeader;
+
+  const ChangelogSection({
+    super.key,
     required this.changelog,
     required this.maxEntries,
     required this.interactive,
+    this.showHeader = true,
   });
 
   /// Tidies a raw changelog body: expands `&nbsp;`, strips markdown `#`
@@ -697,7 +713,7 @@ class _ChangelogSection extends StatelessWidget {
         mainAxisSize: .min,
         spacing: 4,
         children: [
-          const _SectionHeader(
+          const SummarySectionHeader(
             iconAsset: 'assets/images/icon-bullhorn-variant.svg',
             label: 'Recent updates',
           ),
@@ -752,10 +768,11 @@ class _ChangelogSection extends StatelessWidget {
         mainAxisSize: .min,
         spacing: 4,
         children: [
-          const _SectionHeader(
-            iconAsset: 'assets/images/icon-bullhorn-variant.svg',
-            label: 'Recent updates',
-          ),
+          if (showHeader)
+            const SummarySectionHeader(
+              iconAsset: 'assets/images/icon-bullhorn-variant.svg',
+              label: 'Recent updates',
+            ),
           ?fullChangelogLink,
         ],
       );
@@ -767,12 +784,13 @@ class _ChangelogSection extends StatelessWidget {
       mainAxisSize: .min,
       spacing: 4,
       children: [
-        _SectionHeader(
-          iconAsset: 'assets/images/icon-bullhorn-variant.svg',
-          label: 'Recent updates (${shownEntries.length})',
-        ),
+        if (showHeader)
+          SummarySectionHeader(
+            iconAsset: 'assets/images/icon-bullhorn-variant.svg',
+            label: 'Recent updates (${shownEntries.length})',
+          ),
         Padding(
-          padding: const .only(left: 20),
+          padding: .only(left: showHeader ? 20 : 0),
           child: Column(
             crossAxisAlignment: .start,
             mainAxisSize: .min,
@@ -861,11 +879,15 @@ class _DisclosureState extends State<_Disclosure> {
 
 /// Where the mod's code lives: a link that opens the page, or the site name
 /// and address as plain text when nothing here can be clicked.
-class _SourceCodeSection extends StatelessWidget {
+class SourceCodeSection extends StatelessWidget {
   final String url;
   final bool interactive;
 
-  const _SourceCodeSection({required this.url, required this.interactive});
+  const SourceCodeSection({
+    super.key,
+    required this.url,
+    required this.interactive,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -877,7 +899,7 @@ class _SourceCodeSection extends StatelessWidget {
       mainAxisSize: .min,
       spacing: 6,
       children: [
-        const _SectionHeader(icon: Icons.code, label: 'Source code'),
+        const SummarySectionHeader(icon: Icons.code, label: 'Source code'),
         Padding(
           padding: const .only(left: 20),
           child: interactive
@@ -917,11 +939,15 @@ class _SourceCodeSection extends StatelessWidget {
 
 /// The license the author wrote on the forum. Long ones are cut short, with a
 /// button to read the rest.
-class _LicenseSection extends StatelessWidget {
+class LicenseSection extends StatelessWidget {
   final CatalogMod data;
   final bool interactive;
 
-  const _LicenseSection({required this.data, required this.interactive});
+  const LicenseSection({
+    super.key,
+    required this.data,
+    required this.interactive,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -943,7 +969,7 @@ class _LicenseSection extends StatelessWidget {
       mainAxisSize: .min,
       spacing: 4,
       children: [
-        const _SectionHeader(icon: Icons.balance, label: 'License'),
+        const SummarySectionHeader(icon: Icons.balance, label: 'License'),
         Padding(
           padding: const .only(left: 20),
           child: Column(
@@ -986,12 +1012,12 @@ class _LicenseSection extends StatelessWidget {
 }
 
 /// Donation / support links as small tappable chips, one per link.
-class _DonationLinksSection extends StatelessWidget {
+class DonationLinksSection extends StatelessWidget {
   final List<ForumLlmSupportLink> links;
 
-  const _DonationLinksSection({required this.links});
+  const DonationLinksSection({super.key, required this.links});
 
-  static IconData _iconFor(String type) => switch (type.toLowerCase()) {
+  static IconData iconFor(String type) => switch (type.toLowerCase()) {
     'patreon' => Icons.favorite,
     'kofi' => Icons.coffee,
     'paypal' => Icons.paid,
@@ -1007,7 +1033,10 @@ class _DonationLinksSection extends StatelessWidget {
       mainAxisSize: .min,
       spacing: 6,
       children: [
-        const _SectionHeader(icon: Icons.favorite, label: 'Donation links'),
+        const SummarySectionHeader(
+          icon: Icons.favorite,
+          label: 'Donation links',
+        ),
         Padding(
           padding: const .only(left: 00),
           child: Wrap(
@@ -1019,7 +1048,7 @@ class _DonationLinksSection extends StatelessWidget {
                   message: link.url,
                   child: ActionChip(
                     avatar: Icon(
-                      _iconFor(link.type),
+                      iconFor(link.type),
                       size: 16,
                       color: theme.colorScheme.onSurface,
                     ),

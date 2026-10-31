@@ -19,12 +19,16 @@ class CachedJsonFetcher {
   /// Short name used in log messages, e.g. `"mod repo"`.
   final String logTag;
 
+  /// Used instead of the default HTTP client when set. For tests.
+  final http.Client? client;
+
   const CachedJsonFetcher({
     required this.cacheFileName,
     required this.metaFileName,
     required this.url,
     required this.maxAge,
     required this.logTag,
+    this.client,
   });
 
   File get _cacheFile =>
@@ -34,7 +38,8 @@ class CachedJsonFetcher {
 
   /// Returns the cached body if it's still fresh, otherwise fetches from
   /// [url] and updates the cache. On fetch failure, falls back to the stale
-  /// cache if one exists.
+  /// cache if one exists. A reply with any status other than 200 counts as a
+  /// failure, so an error page such as `404: Not Found` is never saved.
   Future<String> fetch({bool bypassCache = false}) async {
     if (!bypassCache) {
       try {
@@ -52,7 +57,14 @@ class CachedJsonFetcher {
     }
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final uri = Uri.parse(url);
+      final response = await (client?.get(uri) ?? http.get(uri));
+      if (response.statusCode != 200) {
+        throw HttpException(
+          'HTTP ${response.statusCode} for $logTag',
+          uri: uri,
+        );
+      }
       final body = response.body;
 
       try {
@@ -66,14 +78,16 @@ class CachedJsonFetcher {
       }
 
       return body;
-    } catch (ex) {
+    } catch (ex, st) {
+      final String body;
       try {
-        final body = _cacheFile.readAsStringSync();
-        Fimber.w('$logTag fetch failed, falling back to stale cache', ex: ex);
-        return body;
+        body = _cacheFile.readAsStringSync();
       } catch (_) {
-        rethrow;
+        // No saved copy. Report why the download failed, not the missing file.
+        Error.throwWithStackTrace(ex, st);
       }
+      Fimber.w('$logTag fetch failed, falling back to stale cache', ex: ex);
+      return body;
     }
   }
 

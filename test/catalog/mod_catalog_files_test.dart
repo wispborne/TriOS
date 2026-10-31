@@ -121,5 +121,78 @@ void main() {
       expect(mod.downloads.single.kind, LlmDownloadKind.direct);
       expect(mod.extras?.summary?.sentence, 'Adds a new mod to the game.');
     });
+
+    test('reads nicknames, the tool flag, canAdd and aiUse', () {
+      final mod = ForumLlmModMapper.fromMap({
+        'name': 'Example Mod',
+        'role': 'main',
+        'downloads': [],
+        'nicknames': ['EM'],
+        'isTool': true,
+        'extras': {
+          'canAdd': 'yes',
+          'aiUse': {
+            'quote': 'Some portraits were generated.',
+            'usesAi': true,
+            'uses': [
+              {'area': 'portraits', 'how': 'generated', 'extent': 'some'},
+              {'area': 'music', 'optional': true},
+            ],
+            'tools': ['Midjourney'],
+          },
+        },
+      });
+
+      expect(mod.nicknames, ['EM']);
+      expect(mod.isTool, isTrue);
+      expect(mod.extras?.canAdd, 'yes');
+      final aiUse = mod.extras?.aiUse;
+      expect(aiUse?.usesAi, isTrue);
+      expect(aiUse?.uses?.first.area, 'portraits');
+      expect(aiUse?.uses?.first.how, 'generated');
+      expect(aiUse?.uses?.last.optional, isTrue);
+      expect(aiUse?.tools, ['Midjourney']);
+    });
+
+    test('reads requirements and the save answers', () {
+      // Nexerelin's answer, copied from the details file.
+      final extras = ForumLlmExtrasMapper.fromMap({
+        'needs': ['LazyLib', 'MagicLib'],
+        'optionalNeeds': ['Version Checker'],
+        'canAdd': 'depends',
+        'saveCompatibility':
+            'Can be added to existing save, although a few features may be missing.',
+        'canRemove': 'no',
+        'removalCompatibility': 'Cannot be removed from an existing save.',
+        'updateNotes': [
+          {
+            'quote':
+                'Updates will almost always be save-compatible for several versions.',
+            'answer': 'depends',
+          },
+        ],
+      });
+
+      expect(extras.needs, ['LazyLib', 'MagicLib']);
+      expect(extras.optionalNeeds, ['Version Checker']);
+      expect(extras.canAdd, 'depends');
+      expect(extras.canRemove, 'no');
+      expect(
+        extras.removalCompatibility,
+        'Cannot be removed from an existing save.',
+      );
+      final note = extras.updateNotes!.single;
+      expect(note.version, isNull);
+      expect(note.answer, 'depends');
+    });
+
+    test('an empty aiUse means the post says nothing about AI', () {
+      final extras = ForumLlmExtrasMapper.fromMap({
+        'aiUse': <String, dynamic>{},
+      });
+
+      expect(extras.aiUse, isNotNull);
+      expect(extras.aiUse?.usesAi, isNull);
+    });
   });
 }

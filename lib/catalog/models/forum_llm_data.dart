@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'package:trios/catalog/models/catalog_extras.dart';
 import 'package:trios/utils/log_collapser.dart';
 
 part 'forum_llm_data.mapper.dart';
@@ -109,6 +110,12 @@ class ForumLlmMod with ForumLlmModMappable {
   /// URL. Use [imageUrl] to get a usable link.
   final String? image;
 
+  /// Other names people use for the mod, found in the post (e.g. "SSP").
+  final List<String>? nicknames;
+
+  /// True when the mod is a tool rather than a game mod.
+  final bool? isTool;
+
   ForumLlmMod({
     required this.name,
     this.role = LlmModRole.unknown,
@@ -116,6 +123,8 @@ class ForumLlmMod with ForumLlmModMappable {
     this.downloads = const [],
     this.extras,
     this.image,
+    this.nicknames,
+    this.isTool,
   });
 
   /// The mod's preview image as a plain http(s) URL, or null if there isn't a
@@ -178,6 +187,30 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
   /// GitHub link. Use [sourceCodeUrl] to get one that's safe to open.
   final String? sourceCode;
 
+  /// Whether the mod can be added to a save in progress: "yes", "no" or
+  /// "depends".
+  final String? canAdd;
+
+  /// What the author says about using AI tools to make the mod.
+  final CatalogAiUse? aiUse;
+
+  /// Names of mods this mod requires, e.g. "LazyLib".
+  final List<String>? needs;
+
+  /// Names of mods this mod works with but doesn't require.
+  final List<String>? optionalNeeds;
+
+  /// Whether the mod can be removed from a save in progress: "yes", "no" or
+  /// "depends".
+  final String? canRemove;
+
+  /// The post's words behind [canRemove].
+  final String? removalCompatibility;
+
+  /// What the post says about updating from older versions, one note per
+  /// release.
+  final List<ForumLlmUpdateNote>? updateNotes;
+
   ForumLlmExtras({
     this.version,
     this.summary,
@@ -186,6 +219,13 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
     this.supportLinks,
     this.saveCompatibility,
     this.sourceCode,
+    this.canAdd,
+    this.aiUse,
+    this.needs,
+    this.optionalNeeds,
+    this.canRemove,
+    this.removalCompatibility,
+    this.updateNotes,
   });
 
   /// [sourceCode] as a plain http(s) link, or null when it isn't one. An AI
@@ -197,6 +237,22 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
     return null;
   }
+}
+
+/// What a post says about updating a mod: whether a game using an older
+/// version survives moving to a newer one.
+@MappableClass()
+class ForumLlmUpdateNote with ForumLlmUpdateNoteMappable {
+  /// The release the note is about. Null when it isn't tied to one release.
+  final String? version;
+
+  /// The post's own words.
+  final String quote;
+
+  /// "yes", "no" or "depends", read from [quote].
+  final String? answer;
+
+  ForumLlmUpdateNote({this.version, required this.quote, this.answer});
 }
 
 /// An AI-written summary of a mod, in two lengths.

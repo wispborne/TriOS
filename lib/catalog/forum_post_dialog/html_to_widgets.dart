@@ -10,12 +10,16 @@ import 'package:trios/catalog/forum_post_dialog/spoiler_block.dart';
 ///
 /// Unsupported tags degrade gracefully to their text content. `<script>` and
 /// `<style>` are dropped entirely. Empty / malformed input returns `[]`.
+///
+/// [onImageTap] gets a picture's full address when a picture outside a link
+/// is clicked. See [postPictureUrls] for the post's list of pictures.
 List<Widget> htmlToWidgets(
   String html,
   BuildContext context, {
   required void Function(String href) onLinkTap,
   required void Function(String? href) onLinkHover,
   String? baseUrl,
+  void Function(String url)? onImageTap,
 }) {
   if (html.isEmpty) return const [];
   dom.Document doc;
@@ -33,8 +37,46 @@ List<Widget> htmlToWidgets(
     onLinkTap: onLinkTap,
     onLinkHover: onLinkHover,
     baseUrl: baseUrl,
+    onImageTap: onImageTap,
   );
   return _renderNodes(body.nodes, context, inlineCtx);
+}
+
+/// The full address of each picture in [html] that [htmlToWidgets] lets the
+/// user click, in the order they appear, without repeats. Pictures inside a
+/// link and SVG pictures are left out.
+List<String> postPictureUrls(String html, {String? baseUrl}) {
+  if (html.isEmpty) return const [];
+  final dom.Document doc;
+  try {
+    doc = html_parser.parse(html);
+  } catch (_) {
+    return const [];
+  }
+  final urls = <String>{};
+  for (final img in doc.querySelectorAll('img')) {
+    final src = img.attributes['src'];
+    if (src == null || src.isEmpty) continue;
+    if (_isInsideLink(img)) continue;
+    final resolved = resolvePostUrl(src, baseUrl);
+    if (isSvgPictureUrl(resolved)) continue;
+    urls.add(resolved);
+  }
+  return urls.toList();
+}
+
+bool _isInsideLink(dom.Element el) {
+  for (var parent = el.parent; parent != null; parent = parent.parent) {
+    final href = parent.attributes['href'];
+    // Links to "#..." aren't drawn as links, so their pictures stay clickable.
+    if (parent.localName?.toLowerCase() == 'a' &&
+        href != null &&
+        href.isNotEmpty &&
+        !href.startsWith('#')) {
+      return true;
+    }
+  }
+  return false;
 }
 
 List<Widget> _renderNodes(

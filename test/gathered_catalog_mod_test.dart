@@ -374,5 +374,21 @@ void main() {
       expect(gathered.views, 100);
       expect(gathered.replies, 10);
     });
+
+    test("topic URL falls back to the catalog's forum URL, not the title", () {
+      final details = ForumModDetails(
+        topicId: 1,
+        title: 'Detail Title',
+        author: 'DetailAuthor',
+        contentHtml: '<p>hello</p>',
+        isPlaceholderDetail: false,
+      );
+      const forumUrl = 'https://fractalsoftworks.com/forum/index.php?topic=1';
+      final mod = _makeMod(urls: {ModUrlType.Forum: forumUrl});
+
+      final gathered = gatherCatalogMod(mod: mod, forumDetails: details);
+
+      expect(gathered.topicUrl, forumUrl);
+    });
   });
 }

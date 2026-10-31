@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
 import 'package:html/dom.dart' as dom;
@@ -12,11 +13,16 @@ class InlineBuildContext {
   final void Function(String? href) onLinkHover;
   final String? baseUrl;
 
+  /// Called with the picture's full address when a picture that isn't inside
+  /// a link is clicked. Pictures can't be clicked when this is null.
+  final void Function(String url)? onImageTap;
+
   InlineBuildContext({
     required this.buildContext,
     required this.onLinkTap,
     required this.onLinkHover,
     required this.baseUrl,
+    this.onImageTap,
   });
 }
 
@@ -86,7 +92,13 @@ List<InlineSpan> _nodeToSpans(
     return [
       WidgetSpan(
         alignment: PlaceholderAlignment.middle,
-        child: _InlineImage(url: resolved, alt: alt, canToggleFullSize: true),
+        child: _InlineImage(
+          url: resolved,
+          alt: alt,
+          onTap: ctx.onImageTap == null
+              ? null
+              : () => ctx.onImageTap!(resolved),
+        ),
       ),
     ];
   }
@@ -540,6 +552,15 @@ bool _isSvgUrl(String url) {
   }
 }
 
+/// [url] made absolute against [baseUrl], the way the post's pictures and
+/// links are.
+String resolvePostUrl(String url, String? baseUrl) =>
+    _resolveUrl(url, baseUrl);
+
+/// True when [url] points at an SVG. The post draws these, but they aren't
+/// offered in the picture viewer or the gallery.
+bool isSvgPictureUrl(String url) => _isSvgUrl(url);
+
 String _resolveUrl(String url, String? baseUrl) {
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   if (baseUrl == null) return url;
@@ -551,78 +572,64 @@ String _resolveUrl(String url, String? baseUrl) {
   }
 }
 
-class _InlineImage extends StatefulWidget {
+class _InlineImage extends StatelessWidget {
   final String url;
   final String? alt;
 
-  /// When true, clicking the image toggles between constrained and full 1:1.
-  /// Set to false when the image is inside a link (link tap takes priority).
-  final bool canToggleFullSize;
+  /// Called when the picture is clicked. Null inside a link, where the link
+  /// gets the click.
+  final VoidCallback? onTap;
 
-  const _InlineImage({
-    required this.url,
-    this.alt,
-    this.canToggleFullSize = false,
-  });
-
-  @override
-  State<_InlineImage> createState() => _InlineImageState();
-}
-
-class _InlineImageState extends State<_InlineImage> {
-  bool _isFullSize = false;
+  const _InlineImage({required this.url, this.alt, this.onTap});
 
   static const _constrainedBox = BoxConstraints(maxWidth: 640, maxHeight: 480);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    if (_isSvgUrl(widget.url)) {
-      return _svgFallback(theme);
+    if (_isSvgUrl(url)) {
+      // Mostly badges, e.g. "Download" or "Discord" buttons. Falls back to a
+      // label when the picture can't be loaded or read.
+      return ConstrainedBox(
+        constraints: _constrainedBox,
+        child: SvgPicture.network(
+          url,
+          placeholderBuilder: (_) => const SizedBox(width: 16, height: 16),
+          errorBuilder: (_, _, _) => _svgFallback(theme),
+        ),
+      );
     }
 
-    final image = Image.network(
-      widget.url,
-      fit: _isFullSize ? BoxFit.none : BoxFit.scaleDown,
-      errorBuilder: (_, _, _) => _errorFallback(theme),
-      loadingBuilder: (ctx, child, progress) {
-        if (progress == null) return child;
-        return const SizedBox(
-          width: 40,
-          height: 40,
-          child: Center(
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: ThemedCircularProgressIndicator(strokeWidth: 2),
+    Widget result = ConstrainedBox(
+      constraints: _constrainedBox,
+      child: Image.network(
+        url,
+        fit: BoxFit.scaleDown,
+        errorBuilder: (_, _, _) => _errorFallback(theme),
+        loadingBuilder: (ctx, child, progress) {
+          if (progress == null) return child;
+          return const SizedBox(
+            width: 40,
+            height: 40,
+            child: Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: ThemedCircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
 
-    Widget result;
-    if (_isFullSize) {
-      // Full 1:1 — no constraints, allow horizontal scroll for wide images.
-      result = SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: image,
-      );
-    } else {
-      result = ConstrainedBox(constraints: _constrainedBox, child: image);
-    }
-
-    if (widget.canToggleFullSize) {
+    if (onTap != null) {
       // SelectionContainer.disabled prevents SelectableText.rich from
       // swallowing taps on this WidgetSpan (same fix as _LinkWrapper).
       result = SelectionContainer.disabled(
         child: MouseRegion(
-          cursor:
-              _isFullSize ? SystemMouseCursors.zoomOut : SystemMouseCursors.zoomIn,
-          child: GestureDetector(
-            onTap: () => setState(() => _isFullSize = !_isFullSize),
-            child: result,
-          ),
+          cursor: SystemMouseCursors.zoomIn,
+          child: GestureDetector(onTap: onTap, child: result),
         ),
       );
     }
@@ -632,8 +639,10 @@ class _InlineImageState extends State<_InlineImage> {
 
   Widget _svgFallback(ThemeData theme) {
     // Show a compact badge with alt text or a generic label.
-    final alt = widget.alt;
-    final label = (alt != null && alt.isNotEmpty) ? alt : 'SVG Image';
+    final altText = alt;
+    final label = (altText != null && altText.isNotEmpty)
+        ? altText
+        : 'SVG Image';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -656,12 +665,12 @@ class _InlineImageState extends State<_InlineImage> {
   }
 
   Widget _errorFallback(ThemeData theme) {
-    final alt = widget.alt;
-    if (alt != null && alt.isNotEmpty) {
+    final altText = alt;
+    if (altText != null && altText.isNotEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 2.0),
         child: Text(
-          alt,
+          altText,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.hintColor,
             fontStyle: FontStyle.italic,

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:text_search/text_search.dart';
 import 'package:trios/widgets/filter_pill.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/search_hotkey.dart';
 import 'package:trios/widgets/smart_search/search_dsl_field.dart';
 import 'package:trios/widgets/smart_search/search_dsl_parser.dart';
 
@@ -19,6 +20,16 @@ class SmartSearchBar extends StatefulWidget {
   final String initialValue;
   final String hintText;
 
+  /// When true, `key:value` pieces become pills. Pills move every field to
+  /// the front of the query. When false, the text stays exactly as typed and
+  /// is passed to [onChanged] unchanged; suggestions still work, and complete
+  /// the piece after the last space or comma before the cursor.
+  final bool useFieldPills;
+
+  /// Builds the help panel shown by the info button. When null, the info
+  /// button shows the field reference.
+  final WidgetBuilder? helpBuilder;
+
   const SmartSearchBar({
     super.key,
     required this.fields,
@@ -27,6 +38,8 @@ class SmartSearchBar extends StatefulWidget {
     this.onSubmitted,
     this.initialValue = '',
     this.hintText = 'Search',
+    this.useFieldPills = true,
+    this.helpBuilder,
   });
 
   @override
@@ -124,6 +137,10 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
   }
 
   void _initFromQuery(String query) {
+    if (!widget.useFieldPills) {
+      _setTextSilently(query, moveCursorToEnd: false);
+      return;
+    }
     final parsed = SearchDslParser.parse(query);
     final pills = parsed.tokens.whereType<FieldToken>().toList();
     final text = parsed.tokens
@@ -145,6 +162,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
   }
 
   String get _fullQuery {
+    if (!widget.useFieldPills) return _controller.text;
     final parts = [
       ..._committedPills.map((t) => t.toQueryString()),
       if (_controller.text.trim().isNotEmpty) _controller.text.trim(),
@@ -403,6 +421,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
   }
 
   void _commitAllFieldTokens() {
+    if (!widget.useFieldPills) return;
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
@@ -419,6 +438,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
   }
 
   void _tryCommitLastToken() {
+    if (!widget.useFieldPills) return;
     final text = _controller.text.trimRight();
     if (text.isEmpty) return;
 
@@ -511,14 +531,49 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     _emitQuery();
   }
 
+  /// The cursor position, or the end of the text when there is no cursor.
+  int get _cursor {
+    final offset = _controller.selection.baseOffset;
+    final length = _controller.text.length;
+    return offset < 0 || offset > length ? length : offset;
+  }
+
+  /// With pills off: where the piece being typed starts. That is just after
+  /// the last space or comma before [cursor] that isn't inside quotes.
+  static int _pieceStart(String text, int cursor) {
+    var start = 0;
+    var inQuote = false;
+    for (var i = 0; i < cursor; i++) {
+      final c = text[i];
+      if (c == '"') {
+        inQuote = !inQuote;
+      } else if (!inQuote && (c == ' ' || c == ',')) {
+        start = i + 1;
+      }
+    }
+    return start;
+  }
+
   void _updateSuggestions() {
     final text = _controller.text;
-    final parts = SearchDslParser.splitRespectingQuotes(text);
-    final currentToken = parts.isEmpty ? '' : parts.last;
+    final String currentToken;
+    if (widget.useFieldPills) {
+      final parts = SearchDslParser.splitRespectingQuotes(text);
+      currentToken = parts.isEmpty ? '' : parts.last;
+    } else {
+      final cursor = _cursor;
+      currentToken = text.substring(_pieceStart(text, cursor), cursor);
+    }
 
     List<_Suggestion> suggestions;
 
-    if (currentToken.isEmpty && text.trim().isEmpty && _isFocused) {
+    if (!widget.useFieldPills &&
+        currentToken.isEmpty &&
+        text.trim().isNotEmpty) {
+      // Starting a new word after other text. Listing every field after each
+      // space would get in the way of typing.
+      suggestions = [];
+    } else if (currentToken.isEmpty && text.trim().isEmpty && _isFocused) {
       suggestions = [
         ...widget.recentHistory.map(
           (h) => _Suggestion(
@@ -667,6 +722,11 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
       return;
     }
 
+    if (!widget.useFieldPills) {
+      _acceptSuggestionAsText(suggestion);
+      return;
+    }
+
     final text = _controller.text;
     final spaceIdx = text.lastIndexOf(' ');
     final prefix = spaceIdx < 0 ? '' : text.substring(0, spaceIdx + 1);
@@ -704,6 +764,52 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
         _controller.selection = TextSelection.collapsed(
           offset: _controller.text.length,
         );
+      }
+      _isSelectingSuggestion = false;
+    });
+  }
+
+  /// With pills off, a suggestion replaces only the piece being typed. The
+  /// rest of the text stays where it is.
+  void _acceptSuggestionAsText(_Suggestion suggestion) {
+    final text = _controller.text;
+    final cursor = _cursor;
+    final before = text.substring(0, _pieceStart(text, cursor));
+    final after = text.substring(cursor);
+    final caret = before.length + suggestion.insertText.length;
+
+    void setTextAndCursor() {
+      _controller.removeListener(_onTextChange);
+      _controller.value = TextEditingValue(
+        text: '$before${suggestion.insertText}$after',
+        selection: TextSelection.collapsed(offset: caret),
+      );
+      _previousText = _controller.text;
+      _controller.addListener(_onTextChange);
+    }
+
+    // Keep the flag raised so the focus-loss handler doesn't tear down the
+    // overlay before requestFocus re-focuses the text field.
+    _isSelectingSuggestion = true;
+    setTextAndCursor();
+    _focusNode.requestFocus();
+    if (suggestion.kind == _SuggestionKind.fieldValue) {
+      // The piece is finished, so there's nothing left to suggest.
+      _hideOverlay();
+      setState(() {
+        _suggestions = [];
+        _highlightedIndex = -1;
+      });
+    } else {
+      setState(() => _isFocused = true);
+      _updateSuggestions();
+    }
+    _emitQuery();
+    // Put the cursor back after focus is restored, since requestFocus can
+    // cause Flutter to select all text.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _controller.text == '$before${suggestion.insertText}$after') {
+        setTextAndCursor();
       }
       _isSelectingSuggestion = false;
     });
@@ -845,6 +951,26 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
   };
 
   void _showInfoPanel() {
+    final helpBuilder = widget.helpBuilder;
+    if (helpBuilder != null) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Search Help'),
+          content: SizedBox(
+            width: 460,
+            child: SingleChildScrollView(child: helpBuilder(ctx)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -934,90 +1060,96 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
     final hasSomething =
         _committedPills.isNotEmpty || _controller.text.isNotEmpty;
 
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        Expanded(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () {
-              _focusNode.requestFocus();
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) {
-                  _controller.selection = TextSelection.collapsed(
-                    offset: _controller.text.length,
-                  );
-                }
-              });
-            },
-            child: MouseRegion(
-              cursor: SystemMouseCursors.text,
-              child: Container(
-                height: 34,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.search,
-                      size: 18,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (ctx, constraints) => SingleChildScrollView(
-                          controller: _pillScrollController,
-                          scrollDirection: Axis.horizontal,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minWidth: constraints.maxWidth,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [..._buildPillsAndTextField(theme)],
+    return SearchHotkey(
+      controller: _controller,
+      focusNode: _focusNode,
+      builder: (context, _) => Row(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                _focusNode.requestFocus();
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    _controller.selection = TextSelection.collapsed(
+                      offset: _controller.text.length,
+                    );
+                  }
+                });
+              },
+              child: MouseRegion(
+                cursor: SystemMouseCursors.text,
+                child: Container(
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.search,
+                        size: 18,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (ctx, constraints) => SingleChildScrollView(
+                            controller: _pillScrollController,
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [..._buildPillsAndTextField(theme)],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    if (hasSomething)
+                      if (hasSomething)
+                        MovingTooltipWidget.text(
+                          message: 'Clear search',
+                          child: IconButton(
+                            icon: const Icon(Icons.clear, size: 16),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 28,
+                              minHeight: 28,
+                            ),
+                            onPressed: _clearAll,
+                          ),
+                        ),
+                      const SizedBox(width: 2),
                       MovingTooltipWidget.text(
-                        message: 'Clear search',
+                        message: widget.helpBuilder != null
+                            ? 'Search help'
+                            : 'View search field reference',
                         child: IconButton(
-                          icon: const Icon(Icons.clear, size: 16),
-                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.info_outline, size: 18),
+                          padding: const EdgeInsets.all(6),
                           constraints: const BoxConstraints(
-                            minWidth: 28,
-                            minHeight: 28,
+                            minWidth: 32,
+                            minHeight: 32,
                           ),
-                          onPressed: _clearAll,
+                          onPressed: _showInfoPanel,
                         ),
                       ),
-                    const SizedBox(width: 2),
-                    MovingTooltipWidget.text(
-                      message: 'View search field reference',
-                      child: IconButton(
-                        icon: const Icon(Icons.info_outline, size: 18),
-                        padding: const EdgeInsets.all(6),
-                        constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ),
-                        onPressed: _showInfoPanel,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                  ],
+                      const SizedBox(width: 2),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1031,7 +1163,7 @@ class _SmartSearchBarState extends State<SmartSearchBar> {
           onSubmitted: (_) => widget.onSubmitted?.call(),
           decoration: InputDecoration(
             hintText: _committedPills.isEmpty && _editingAtIndex == null
-                ? widget.hintText
+                ? '${widget.hintText}$searchHotkeyHint'
                 : null,
             border: InputBorder.none,
             isDense: true,

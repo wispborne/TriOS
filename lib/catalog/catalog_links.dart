@@ -24,7 +24,10 @@ import 'package:trios/utils/extensions.dart';
 /// its lowercase-and-trim step is the same idea as this.
 String catalogEntryKey(String name) => name.toLowerCase().trim();
 
-String _catalogNameMatchKey(String name) =>
+/// The looser name key: version text and decoration removed, then only
+/// letters and numbers kept. "[0.98a] LazyLib v2.8" and "Lazy Lib" both give
+/// "lazylib". Names with no English letters or numbers give "".
+String catalogNameMatchKey(String name) =>
     cleanModDisplayName(name).alphanumericLower();
 
 /// Tells catalog entries apart: the permanent id when the entry has one, else
@@ -76,9 +79,9 @@ List<CatalogLink> matchCatalogToInstalled({
     final name = variant?.modInfo.name;
     if (name != null && name.trim().isNotEmpty) {
       byName.putIfAbsent(catalogEntryKey(name), () => mod);
-      byFuzzy.putIfAbsent(_catalogNameMatchKey(name), () => mod);
+      byFuzzy.putIfAbsent(catalogNameMatchKey(name), () => mod);
     }
-    byFuzzy.putIfAbsent(_catalogNameMatchKey(mod.id), () => mod);
+    byFuzzy.putIfAbsent(catalogNameMatchKey(mod.id), () => mod);
     final vci = variant?.versionCheckerInfo;
     final threadId = vci?.modThreadId;
     if (threadId != null) byThreadId.putIfAbsent(threadId, () => mod);
@@ -115,7 +118,7 @@ List<CatalogLink> matchCatalogToInstalled({
     final nameKey = catalogEntryKey(entry.name);
     if (nameKey.isEmpty) continue;
     final nameMatchedMod =
-        byName[nameKey] ?? byFuzzy[_catalogNameMatchKey(entry.name)];
+        byName[nameKey] ?? byFuzzy[catalogNameMatchKey(entry.name)];
     if (nameMatchedMod == null) continue;
     nameMatchedEntryKeysByModId
         .putIfAbsent(nameMatchedMod.id, () => <String>{})
@@ -181,7 +184,7 @@ List<CatalogLink> matchCatalogToInstalled({
     }
 
     if (mod == null) {
-      final fuzzy = _catalogNameMatchKey(entry.name);
+      final fuzzy = catalogNameMatchKey(entry.name);
       if (byFuzzy.containsKey(fuzzy)) {
         mod = byFuzzy[fuzzy];
         signal = CatalogLinkSignal.fuzzyName;

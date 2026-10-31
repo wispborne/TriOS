@@ -10,6 +10,7 @@ import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/side_rail/side_rail.dart';
 import 'package:trios/catalog/side_rail/side_rail_panel.dart';
 import 'package:trios/catalog/widgets/catalog_filters_panel.dart';
+import 'package:trios/catalog/widgets/catalog_search_help.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
@@ -24,6 +25,7 @@ import 'package:trios/widgets/collapsed_filter_button.dart';
 import 'package:trios/widgets/disable.dart';
 import 'package:trios/widgets/overflow_menu_button.dart';
 import 'package:trios/widgets/rainbow/themed_progress_indicator.dart';
+import 'package:trios/widgets/smart_search/smart_search_bar.dart';
 import 'package:trios/widgets/trios_dropdown_menu.dart';
 import 'package:trios/widgets/wisp_adaptive_grid_view.dart';
 
@@ -54,7 +56,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     with AutomaticKeepAliveClientMixin<CatalogPage> {
   @override
   bool get wantKeepAlive => true;
-  final SearchController _searchController = SearchController();
   final urlController = TextEditingController();
   static const String _kBrowserPanelId = 'browser';
   static const double _kDefaultPanelWidth = 500;
@@ -194,6 +195,8 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
     final allMods = catalogState.allMods;
     final displayedMods = catalogState.displayedMods;
     final totalCount = allMods.length;
+    final isSearching = catalogState.currentSearchQuery.trim().isNotEmpty;
+    final isBestMatch = catalogState.selectedSort == CatalogSortKey.bestMatch;
 
     // Hydrate the browser panel state from persisted settings on first build.
     if (!_hydratedPanelState) {
@@ -267,6 +270,10 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                   maxWidth: 200,
                                 ),
                                 child: TriOSDropdownMenu<CatalogSortKey>(
+                                  // initialSelection doesn't follow later
+                                  // changes, so redraw when the controller
+                                  // switches the sort by itself.
+                                  key: ValueKey(catalogState.selectedSort),
                                   initialSelection: catalogState.selectedSort,
                                   onSelected: (value) {
                                     catalogController.setSort(
@@ -274,6 +281,11 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                     );
                                   },
                                   dropdownMenuEntries: CatalogSortKey.values
+                                      .where(
+                                        (key) =>
+                                            key != CatalogSortKey.bestMatch ||
+                                            isSearching,
+                                      )
                                       .map(
                                         (key) => DropdownMenuEntry(
                                           value: key,
@@ -283,28 +295,47 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                       .toList(),
                                 ),
                               ),
-                              MovingTooltipWidget.text(
-                                message: catalogState.sortAscending
-                                    ? 'Ascending'
-                                    : 'Descending',
-                                child: IconButton(
-                                  icon: Icon(
-                                    catalogState.sortAscending
-                                        ? Icons.arrow_upward
-                                        : Icons.arrow_downward,
-                                    size: 20,
+                              // Direction means nothing for Random, so its
+                              // place goes to a Shuffle button.
+                              if (catalogState.selectedSort ==
+                                  CatalogSortKey.random)
+                                MovingTooltipWidget.text(
+                                  message: 'Shuffle',
+                                  child: IconButton(
+                                    icon: const Icon(Icons.shuffle, size: 20),
+                                    onPressed: catalogController.shuffle,
                                   ),
-                                  onPressed:
-                                      catalogController.toggleSortDirection,
+                                )
+                              else
+                                MovingTooltipWidget.text(
+                                  message: isBestMatch
+                                      ? 'Best match is always best first'
+                                      : catalogState.sortAscending
+                                      ? 'Ascending'
+                                      : 'Descending',
+                                  child: IconButton(
+                                    icon: Icon(
+                                      catalogState.sortAscending
+                                          ? Icons.arrow_upward
+                                          : Icons.arrow_downward,
+                                      size: 20,
+                                    ),
+                                    onPressed: isBestMatch
+                                        ? null
+                                        : catalogController
+                                              .toggleSortDirection,
+                                  ),
                                 ),
-                              ),
                               Expanded(
                                 child: Align(
                                   alignment: .centerRight,
                                   child: SizedBox(
                                     height: 30,
                                     width: 240,
-                                    child: buildSearchBox(catalogController),
+                                    child: buildSearchBox(
+                                      catalogController,
+                                      catalogState.currentSearchQuery,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -952,43 +983,24 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
 
   @override
   void dispose() {
-    _searchController.dispose();
     urlController.dispose();
     super.dispose();
   }
 
-  Widget buildSearchBox(CatalogPageController catalogController) {
-    return SearchAnchor(
-      searchController: _searchController,
-      builder: (BuildContext context, SearchController controller) {
-        return SearchBar(
-          controller: controller,
-          leading: const Icon(Icons.search),
-          hintText: "Filter...",
-          trailing: [
-            controller.value.text.isEmpty
-                ? Container()
-                : IconButton(
-                    icon: const Icon(Icons.clear),
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      controller.clear();
-                      catalogController.updateSearchQuery('');
-                    },
-                  ),
-          ],
-          backgroundColor: WidgetStateProperty.all(
-            Theme.of(context).colorScheme.surfaceContainer,
-          ),
-          onChanged: (value) {
-            catalogController.updateSearchQuery(value);
-          },
-        );
-      },
-      suggestionsBuilder: (BuildContext context, SearchController controller) {
-        return [];
-      },
+  Widget buildSearchBox(
+    CatalogPageController catalogController,
+    String currentQuery,
+  ) {
+    // Pills are off: they move fields to the front, which changes what a
+    // comma-separated search asks for.
+    return SmartSearchBar(
+      fields: catalogController.searchFieldsMeta,
+      recentHistory: const [],
+      initialValue: currentQuery,
+      hintText: "Filter...",
+      useFieldPills: false,
+      helpBuilder: (context) => const CatalogSearchHelp(),
+      onChanged: catalogController.updateSearchQuery,
     );
   }
 
@@ -998,9 +1010,6 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
       appSettings.select((s) => s.catalogAiSummaryMode),
     );
     final aiEnabled = ref.watch(appSettings.select((s) => s.enableAiFeatures));
-    final showDialogHeaderSummary = ref.watch(
-      appSettings.select((s) => s.catalogShowDialogHeaderSummary),
-    );
 
     return OverflowMenuButton(
       menuItems: [

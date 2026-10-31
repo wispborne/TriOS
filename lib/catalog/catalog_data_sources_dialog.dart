@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderOrFamily;
 import 'package:open_filex/open_filex.dart';
+import 'package:trios/catalog/catalog_extras_manager.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/catalog_manager.dart';
 import 'package:trios/trios/constants.dart';
@@ -22,8 +23,8 @@ Future<void> showCatalogDataSourcesDialog(BuildContext context) {
   );
 }
 
-/// Dialog showing the status of `mod-catalog.json` and `mod-catalog-details.json`
-/// and exposing refresh / clear actions for each.
+/// Dialog showing the status of `mod-catalog.json`, `mod-catalog-details.json`
+/// and `mod-catalog-extras.json`, and exposing refresh / clear actions for each.
 class CatalogDataSourcesDialog extends ConsumerStatefulWidget {
   const CatalogDataSourcesDialog({super.key});
 
@@ -40,6 +41,8 @@ class _CatalogDataSourcesDialogState
   int? _modRepoSize;
   DateTime? _forumCachedAt;
   int? _forumSize;
+  DateTime? _extrasCachedAt;
+  int? _extrasSize;
 
   @override
   void initState() {
@@ -52,6 +55,8 @@ class _CatalogDataSourcesDialogState
     _modRepoSize = _fileSize(modRepoFetcher.cacheFilePath);
     _forumCachedAt = forumDataFetcher.getCacheTimestamp();
     _forumSize = _fileSize(forumDataFetcher.cacheFilePath);
+    _extrasCachedAt = catalogExtrasFetcher.getCacheTimestamp();
+    _extrasSize = _fileSize(catalogExtrasFetcher.cacheFilePath);
   }
 
   @override
@@ -59,17 +64,23 @@ class _CatalogDataSourcesDialogState
     final theme = Theme.of(context);
     final cacheDir = Constants.cacheDirPath;
 
-    // --- Wisp's Mod Repo state ---
+    // --- Mod Catalog state ---
     final modRepoAsync = ref.watch(browseModsNotifierProvider);
     final isLoadingMod = ref.watch(isLoadingCatalog);
     final modRepoStatus = _statusFor(modRepoAsync, _modRepoCachedAt);
     final modRepoCount = modRepoAsync.value?.items.length;
 
-    // --- QB's Forum Bundle state ---
+    // --- Mod Details state ---
     final forumAsync = ref.watch(forumDataProvider);
     final isLoadingForum = ref.watch(isLoadingForumData);
     final forumStatus = _statusFor(forumAsync, _forumCachedAt);
     final forumCount = forumAsync.value?.index.length;
+
+    // --- Mod Extras state ---
+    final extrasAsync = ref.watch(catalogExtrasProvider);
+    final isLoadingExtras = ref.watch(isLoadingCatalogExtras);
+    final extrasStatus = _statusFor(extrasAsync, _extrasCachedAt);
+    final extrasCount = extrasAsync.value?.mods.length;
 
     return AlertDialog(
       title: const Text('Catalog Data Sources'),
@@ -83,8 +94,9 @@ class _CatalogDataSourcesDialogState
             children: [
               _DataSourceCard(
                 info: _DataSourceInfo(
-                  title: "Wisp's Mod Repo",
-                  subtitle: 'forum index, subforums, and discord',
+                  title: 'Mod Catalog',
+                  subtitle:
+                      'mods from the forum index, the modding subforum and Discord',
                   status: modRepoStatus,
                   itemCount: modRepoCount,
                   itemNoun: 'mods',
@@ -109,9 +121,9 @@ class _CatalogDataSourcesDialogState
               ),
               _DataSourceCard(
                 info: _DataSourceInfo(
-                  title: "QB's Forum Bundle",
+                  title: 'Mod Details',
                   subtitle:
-                      'forum index, subforums, individual posts and stats',
+                      'forum posts, forum stats, and other stuff from posts',
                   status: forumStatus,
                   itemCount: forumCount,
                   itemNoun: 'threads',
@@ -122,7 +134,7 @@ class _CatalogDataSourcesDialogState
                   localPath: forumDataFetcher.cacheFilePath,
                   isLoading: isLoadingForum,
                   website: Uri.parse(
-                    "https://github.com/theRoastSuckling/QBForumModData",
+                    "https://github.com/wispborne/StarsectorModRepo",
                   ),
                 ),
                 onRefresh: () => _refresh(
@@ -132,6 +144,33 @@ class _CatalogDataSourcesDialogState
                 onClear: () => _clear(
                   fetcher: forumDataFetcher,
                   provider: forumDataProvider,
+                ),
+              ),
+              _DataSourceCard(
+                info: _DataSourceInfo(
+                  title: 'Mod Extras',
+                  subtitle:
+                      'release history, pictures, categories and requirements',
+                  status: extrasStatus,
+                  itemCount: extrasCount,
+                  itemNoun: 'mods',
+                  cachedAt: _extrasCachedAt,
+                  ttl: catalogExtrasFetcher.maxAge,
+                  sizeBytes: _extrasSize,
+                  sourceUrl: catalogExtrasFetcher.url,
+                  localPath: catalogExtrasFetcher.cacheFilePath,
+                  isLoading: isLoadingExtras,
+                  website: Uri.parse(
+                    "https://github.com/wispborne/StarsectorModRepo",
+                  ),
+                ),
+                onRefresh: () => _refresh(
+                  fetcher: catalogExtrasFetcher,
+                  provider: catalogExtrasProvider,
+                ),
+                onClear: () => _clear(
+                  fetcher: catalogExtrasFetcher,
+                  provider: catalogExtrasProvider,
                 ),
               ),
             ],

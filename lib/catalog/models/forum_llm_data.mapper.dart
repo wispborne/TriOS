@@ -357,6 +357,18 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
     _$image,
     opt: true,
   );
+  static List<String>? _$nicknames(ForumLlmMod v) => v.nicknames;
+  static const Field<ForumLlmMod, List<String>> _f$nicknames = Field(
+    'nicknames',
+    _$nicknames,
+    opt: true,
+  );
+  static bool? _$isTool(ForumLlmMod v) => v.isTool;
+  static const Field<ForumLlmMod, bool> _f$isTool = Field(
+    'isTool',
+    _$isTool,
+    opt: true,
+  );
 
   @override
   final MappableFields<ForumLlmMod> fields = const {
@@ -366,6 +378,8 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
     #downloads: _f$downloads,
     #extras: _f$extras,
     #image: _f$image,
+    #nicknames: _f$nicknames,
+    #isTool: _f$isTool,
   };
 
   static ForumLlmMod _instantiate(DecodingData data) {
@@ -376,6 +390,8 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
       downloads: data.dec(_f$downloads),
       extras: data.dec(_f$extras),
       image: data.dec(_f$image),
+      nicknames: data.dec(_f$nicknames),
+      isTool: data.dec(_f$isTool),
     );
   }
 
@@ -447,6 +463,7 @@ abstract class ForumLlmModCopyWith<$R, $In extends ForumLlmMod, $Out>
   >
   get downloads;
   ForumLlmExtrasCopyWith<$R, ForumLlmExtras, ForumLlmExtras>? get extras;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get nicknames;
   $R call({
     String? name,
     LlmModRole? role,
@@ -454,6 +471,8 @@ abstract class ForumLlmModCopyWith<$R, $In extends ForumLlmMod, $Out>
     List<ForumLlmDownload>? downloads,
     ForumLlmExtras? extras,
     String? image,
+    List<String>? nicknames,
+    bool? isTool,
   });
   ForumLlmModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -490,6 +509,15 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
   ForumLlmExtrasCopyWith<$R, ForumLlmExtras, ForumLlmExtras>? get extras =>
       $value.extras?.copyWith.$chain((v) => call(extras: v));
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get nicknames =>
+      $value.nicknames != null
+      ? ListCopyWith(
+          $value.nicknames!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(nicknames: v),
+        )
+      : null;
+  @override
   $R call({
     String? name,
     LlmModRole? role,
@@ -497,6 +525,8 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
     List<ForumLlmDownload>? downloads,
     Object? extras = $none,
     Object? image = $none,
+    Object? nicknames = $none,
+    Object? isTool = $none,
   }) => $apply(
     FieldCopyWithData({
       if (name != null) #name: name,
@@ -505,6 +535,8 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
       if (downloads != null) #downloads: downloads,
       if (extras != $none) #extras: extras,
       if (image != $none) #image: image,
+      if (nicknames != $none) #nicknames: nicknames,
+      if (isTool != $none) #isTool: isTool,
     }),
   );
   @override
@@ -515,6 +547,8 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
     downloads: data.get(#downloads, or: $value.downloads),
     extras: data.get(#extras, or: $value.extras),
     image: data.get(#image, or: $value.image),
+    nicknames: data.get(#nicknames, or: $value.nicknames),
+    isTool: data.get(#isTool, or: $value.isTool),
   );
 
   @override
@@ -755,6 +789,8 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
       ForumLlmSummaryMapper.ensureInitialized();
       ForumLlmChangelogMapper.ensureInitialized();
       ForumLlmSupportLinkMapper.ensureInitialized();
+      CatalogAiUseMapper.ensureInitialized();
+      ForumLlmUpdateNoteMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -802,6 +838,47 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
     _$sourceCode,
     opt: true,
   );
+  static String? _$canAdd(ForumLlmExtras v) => v.canAdd;
+  static const Field<ForumLlmExtras, String> _f$canAdd = Field(
+    'canAdd',
+    _$canAdd,
+    opt: true,
+  );
+  static CatalogAiUse? _$aiUse(ForumLlmExtras v) => v.aiUse;
+  static const Field<ForumLlmExtras, CatalogAiUse> _f$aiUse = Field(
+    'aiUse',
+    _$aiUse,
+    opt: true,
+  );
+  static List<String>? _$needs(ForumLlmExtras v) => v.needs;
+  static const Field<ForumLlmExtras, List<String>> _f$needs = Field(
+    'needs',
+    _$needs,
+    opt: true,
+  );
+  static List<String>? _$optionalNeeds(ForumLlmExtras v) => v.optionalNeeds;
+  static const Field<ForumLlmExtras, List<String>> _f$optionalNeeds = Field(
+    'optionalNeeds',
+    _$optionalNeeds,
+    opt: true,
+  );
+  static String? _$canRemove(ForumLlmExtras v) => v.canRemove;
+  static const Field<ForumLlmExtras, String> _f$canRemove = Field(
+    'canRemove',
+    _$canRemove,
+    opt: true,
+  );
+  static String? _$removalCompatibility(ForumLlmExtras v) =>
+      v.removalCompatibility;
+  static const Field<ForumLlmExtras, String> _f$removalCompatibility = Field(
+    'removalCompatibility',
+    _$removalCompatibility,
+    opt: true,
+  );
+  static List<ForumLlmUpdateNote>? _$updateNotes(ForumLlmExtras v) =>
+      v.updateNotes;
+  static const Field<ForumLlmExtras, List<ForumLlmUpdateNote>> _f$updateNotes =
+      Field('updateNotes', _$updateNotes, opt: true);
 
   @override
   final MappableFields<ForumLlmExtras> fields = const {
@@ -812,6 +889,13 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
     #supportLinks: _f$supportLinks,
     #saveCompatibility: _f$saveCompatibility,
     #sourceCode: _f$sourceCode,
+    #canAdd: _f$canAdd,
+    #aiUse: _f$aiUse,
+    #needs: _f$needs,
+    #optionalNeeds: _f$optionalNeeds,
+    #canRemove: _f$canRemove,
+    #removalCompatibility: _f$removalCompatibility,
+    #updateNotes: _f$updateNotes,
   };
 
   static ForumLlmExtras _instantiate(DecodingData data) {
@@ -823,6 +907,13 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
       supportLinks: data.dec(_f$supportLinks),
       saveCompatibility: data.dec(_f$saveCompatibility),
       sourceCode: data.dec(_f$sourceCode),
+      canAdd: data.dec(_f$canAdd),
+      aiUse: data.dec(_f$aiUse),
+      needs: data.dec(_f$needs),
+      optionalNeeds: data.dec(_f$optionalNeeds),
+      canRemove: data.dec(_f$canRemove),
+      removalCompatibility: data.dec(_f$removalCompatibility),
+      updateNotes: data.dec(_f$updateNotes),
     );
   }
 
@@ -897,6 +988,16 @@ abstract class ForumLlmExtrasCopyWith<$R, $In extends ForumLlmExtras, $Out>
     ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, ForumLlmSupportLink>
   >?
   get supportLinks;
+  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get needs;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
+  get optionalNeeds;
+  ListCopyWith<
+    $R,
+    ForumLlmUpdateNote,
+    ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, ForumLlmUpdateNote>
+  >?
+  get updateNotes;
   $R call({
     String? version,
     ForumLlmSummary? summary,
@@ -905,6 +1006,13 @@ abstract class ForumLlmExtrasCopyWith<$R, $In extends ForumLlmExtras, $Out>
     List<ForumLlmSupportLink>? supportLinks,
     String? saveCompatibility,
     String? sourceCode,
+    String? canAdd,
+    CatalogAiUse? aiUse,
+    List<String>? needs,
+    List<String>? optionalNeeds,
+    String? canRemove,
+    String? removalCompatibility,
+    List<ForumLlmUpdateNote>? updateNotes,
   });
   ForumLlmExtrasCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -939,6 +1047,40 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
         )
       : null;
   @override
+  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse =>
+      $value.aiUse?.copyWith.$chain((v) => call(aiUse: v));
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get needs =>
+      $value.needs != null
+      ? ListCopyWith(
+          $value.needs!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(needs: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
+  get optionalNeeds => $value.optionalNeeds != null
+      ? ListCopyWith(
+          $value.optionalNeeds!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(optionalNeeds: v),
+        )
+      : null;
+  @override
+  ListCopyWith<
+    $R,
+    ForumLlmUpdateNote,
+    ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, ForumLlmUpdateNote>
+  >?
+  get updateNotes => $value.updateNotes != null
+      ? ListCopyWith(
+          $value.updateNotes!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(updateNotes: v),
+        )
+      : null;
+  @override
   $R call({
     Object? version = $none,
     Object? summary = $none,
@@ -947,6 +1089,13 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
     Object? supportLinks = $none,
     Object? saveCompatibility = $none,
     Object? sourceCode = $none,
+    Object? canAdd = $none,
+    Object? aiUse = $none,
+    Object? needs = $none,
+    Object? optionalNeeds = $none,
+    Object? canRemove = $none,
+    Object? removalCompatibility = $none,
+    Object? updateNotes = $none,
   }) => $apply(
     FieldCopyWithData({
       if (version != $none) #version: version,
@@ -956,6 +1105,14 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
       if (supportLinks != $none) #supportLinks: supportLinks,
       if (saveCompatibility != $none) #saveCompatibility: saveCompatibility,
       if (sourceCode != $none) #sourceCode: sourceCode,
+      if (canAdd != $none) #canAdd: canAdd,
+      if (aiUse != $none) #aiUse: aiUse,
+      if (needs != $none) #needs: needs,
+      if (optionalNeeds != $none) #optionalNeeds: optionalNeeds,
+      if (canRemove != $none) #canRemove: canRemove,
+      if (removalCompatibility != $none)
+        #removalCompatibility: removalCompatibility,
+      if (updateNotes != $none) #updateNotes: updateNotes,
     }),
   );
   @override
@@ -970,6 +1127,16 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
       or: $value.saveCompatibility,
     ),
     sourceCode: data.get(#sourceCode, or: $value.sourceCode),
+    canAdd: data.get(#canAdd, or: $value.canAdd),
+    aiUse: data.get(#aiUse, or: $value.aiUse),
+    needs: data.get(#needs, or: $value.needs),
+    optionalNeeds: data.get(#optionalNeeds, or: $value.optionalNeeds),
+    canRemove: data.get(#canRemove, or: $value.canRemove),
+    removalCompatibility: data.get(
+      #removalCompatibility,
+      or: $value.removalCompatibility,
+    ),
+    updateNotes: data.get(#updateNotes, or: $value.updateNotes),
   );
 
   @override
@@ -1402,5 +1569,159 @@ class _ForumLlmSupportLinkCopyWithImpl<$R, $Out>
   ForumLlmSupportLinkCopyWith<$R2, ForumLlmSupportLink, $Out2>
   $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
       _ForumLlmSupportLinkCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumLlmUpdateNoteMapper extends ClassMapperBase<ForumLlmUpdateNote> {
+  ForumLlmUpdateNoteMapper._();
+
+  static ForumLlmUpdateNoteMapper? _instance;
+  static ForumLlmUpdateNoteMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumLlmUpdateNoteMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumLlmUpdateNote';
+
+  static String? _$version(ForumLlmUpdateNote v) => v.version;
+  static const Field<ForumLlmUpdateNote, String> _f$version = Field(
+    'version',
+    _$version,
+    opt: true,
+  );
+  static String _$quote(ForumLlmUpdateNote v) => v.quote;
+  static const Field<ForumLlmUpdateNote, String> _f$quote = Field(
+    'quote',
+    _$quote,
+  );
+  static String? _$answer(ForumLlmUpdateNote v) => v.answer;
+  static const Field<ForumLlmUpdateNote, String> _f$answer = Field(
+    'answer',
+    _$answer,
+    opt: true,
+  );
+
+  @override
+  final MappableFields<ForumLlmUpdateNote> fields = const {
+    #version: _f$version,
+    #quote: _f$quote,
+    #answer: _f$answer,
+  };
+
+  static ForumLlmUpdateNote _instantiate(DecodingData data) {
+    return ForumLlmUpdateNote(
+      version: data.dec(_f$version),
+      quote: data.dec(_f$quote),
+      answer: data.dec(_f$answer),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumLlmUpdateNote fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmUpdateNote>(map);
+  }
+
+  static ForumLlmUpdateNote fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmUpdateNote>(json);
+  }
+}
+
+mixin ForumLlmUpdateNoteMappable {
+  String toJson() {
+    return ForumLlmUpdateNoteMapper.ensureInitialized()
+        .encodeJson<ForumLlmUpdateNote>(this as ForumLlmUpdateNote);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumLlmUpdateNoteMapper.ensureInitialized()
+        .encodeMap<ForumLlmUpdateNote>(this as ForumLlmUpdateNote);
+  }
+
+  ForumLlmUpdateNoteCopyWith<
+    ForumLlmUpdateNote,
+    ForumLlmUpdateNote,
+    ForumLlmUpdateNote
+  >
+  get copyWith =>
+      _ForumLlmUpdateNoteCopyWithImpl<ForumLlmUpdateNote, ForumLlmUpdateNote>(
+        this as ForumLlmUpdateNote,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return ForumLlmUpdateNoteMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmUpdateNote,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumLlmUpdateNoteMapper.ensureInitialized().equalsValue(
+      this as ForumLlmUpdateNote,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumLlmUpdateNoteMapper.ensureInitialized().hashValue(
+      this as ForumLlmUpdateNote,
+    );
+  }
+}
+
+extension ForumLlmUpdateNoteValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmUpdateNote, $Out> {
+  ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, $Out>
+  get $asForumLlmUpdateNote => $base.as(
+    (v, t, t2) => _ForumLlmUpdateNoteCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class ForumLlmUpdateNoteCopyWith<
+  $R,
+  $In extends ForumLlmUpdateNote,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? version, String? quote, String? answer});
+  ForumLlmUpdateNoteCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumLlmUpdateNoteCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmUpdateNote, $Out>
+    implements ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, $Out> {
+  _ForumLlmUpdateNoteCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumLlmUpdateNote> $mapper =
+      ForumLlmUpdateNoteMapper.ensureInitialized();
+  @override
+  $R call({Object? version = $none, String? quote, Object? answer = $none}) =>
+      $apply(
+        FieldCopyWithData({
+          if (version != $none) #version: version,
+          if (quote != null) #quote: quote,
+          if (answer != $none) #answer: answer,
+        }),
+      );
+  @override
+  ForumLlmUpdateNote $make(CopyWithData data) => ForumLlmUpdateNote(
+    version: data.get(#version, or: $value.version),
+    quote: data.get(#quote, or: $value.quote),
+    answer: data.get(#answer, or: $value.answer),
+  );
+
+  @override
+  ForumLlmUpdateNoteCopyWith<$R2, ForumLlmUpdateNote, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _ForumLlmUpdateNoteCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

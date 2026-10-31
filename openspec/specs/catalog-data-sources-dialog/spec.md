@@ -12,27 +12,40 @@ The catalog page SHALL display an overflow button (`Icons.more_vert`) in its fil
 
 ### Requirement: Catalog Data Sources dialog
 
-The system SHALL provide a dialog titled "Catalog Data Sources" that displays two stacked cards:
-- "Wisp's Mod Repo" with subtitle "mod index + discord", backed by `mod_repo.json`
-- "QB's Forum Bundle" with subtitle "forum stats & posts", backed by `forum_data_bundle.json`
+The system SHALL provide a dialog titled "Catalog Data Sources" that shows three stacked cards, one per catalog file:
 
-Each card SHALL display: load status with a colored status dot, parsed item count, cached-at timestamp with age and TTL, file size on disk, source URL (with a copy-to-clipboard button), local cache path, a "Refresh now" action, and a "Clear cache" action. The dialog SHALL provide an "Open cache folder" footer action and a "Close" button.
+- `mod-catalog.json`, cached as `mod_catalog.json`
+- `mod-catalog-details.json`, cached as `mod_catalog_details.json`
+- `mod-catalog-extras.json`, cached as `mod_catalog_extras.json`
 
-#### Scenario: Dialog opens with both files cached
-- **WHEN** both `mod_repo.json` and `forum_data_bundle.json` are present in the cache directory and their providers have emitted
+Every card SHALL link to `https://github.com/wispborne/StarsectorModRepo`. No card SHALL name QB or link to QB's repository. The card titles and subtitles are the signed-off text in this change's `design.md`.
+
+Each card SHALL display:
+- load status with a colored status dot
+- parsed item count
+- cached-at timestamp with age and how long the file is kept
+- file size on disk
+- source URL, with a copy-to-clipboard button
+- local cache path
+- a "Refresh now" action and a "Clear cache" action
+
+The dialog SHALL provide an "Open cache folder" footer action and a "Close" button.
+
+#### Scenario: Dialog opens with every file cached
+- **WHEN** all three cache files are present and their providers have emitted
 - **THEN** each card shows "Loaded", the parsed item count, the cached-at timestamp with age, the file size, source URL, local path, and enabled refresh/clear buttons
 
 #### Scenario: Dialog opens with no cache
-- **WHEN** neither cache file exists
+- **WHEN** no cache file exists
 - **THEN** each card shows "Not cached", size "—", the clear button is disabled, and the refresh button is enabled
 
 #### Scenario: User force-refreshes a data source
 - **WHEN** the user clicks "Refresh now" on a card
-- **THEN** the system calls the corresponding `forceRefreshXxx()` helper (bypassing the cache TTL), invalidates the corresponding provider, and the refresh button is disabled until the in-flight fetch completes
+- **THEN** the system fetches that file again, skipping the cache age, and invalidates its provider. The refresh button is disabled until the fetch completes
 
 #### Scenario: User clears a cached data source
 - **WHEN** the user clicks "Clear cache" on a card
-- **THEN** the corresponding `.json` and `.meta` files are deleted from the cache directory, and the provider is invalidated so subsequent reads re-fetch
+- **THEN** that file's `.json` and `.meta` files are deleted from the cache directory, and its provider is invalidated so the next read fetches again
 
 #### Scenario: Clear cache with missing files does not crash
 - **WHEN** the user clicks "Clear cache" on a card whose files are already absent
@@ -48,26 +61,22 @@ Each card SHALL display: load status with a colored status dot, parsed item coun
 
 ### Requirement: Parity API on `catalog_manager`
 
-The system SHALL expose public top-level functions in `lib/catalog/catalog_manager.dart` mirroring those in `lib/catalog/forum_data_manager.dart`:
+Each catalog file SHALL be loaded through one shared `CachedJsonFetcher` (`lib/utils/cached_json_fetcher.dart`). The Data Sources dialog SHALL use that fetcher's `fetch(bypassCache: true)`, `clearCache()`, `getCacheTimestamp()` and `cacheFilePath`, rather than separate helper functions per file.
 
-- `Future<String> forceRefreshModRepo()` — bypasses the cache TTL and refetches
-- `void clearModRepoCache()` — deletes both `mod_repo.json` and `mod_repo.meta` from the cache directory
-- `DateTime? getModRepoCacheTimestamp()` — returns the `cachedAt` timestamp from `mod_repo.meta`, or null if the file is missing or corrupt
+When a fetch fails and a cached copy exists, whatever its age, the fetcher SHALL return the cached copy and log a warning rather than throw.
 
-Additionally, the private `_fetchModRepoWithCache()` SHALL accept an optional `bool bypassCache = false` parameter, and the manager SHALL fall back to stale cache on fetch failure (matching `forum_data_manager.dart`'s behavior).
+#### Scenario: Refresh bypasses a fresh cache
+- **WHEN** `fetch(bypassCache: true)` is called while the cached file is newer than its keep time
+- **THEN** the fetcher makes a network request and overwrites both cache files
 
-#### Scenario: `forceRefreshModRepo` bypasses a fresh cache
-- **WHEN** `forceRefreshModRepo()` is called with a cached `mod_repo.json` less than 1 hour old
-- **THEN** the system makes a network request and overwrites both cache files regardless of cache age
-
-#### Scenario: `clearModRepoCache` with missing files
-- **WHEN** `clearModRepoCache()` is called and neither cache file exists
+#### Scenario: Clear with missing files
+- **WHEN** `clearCache()` is called and neither cache file exists
 - **THEN** the call completes without throwing
 
-#### Scenario: `getModRepoCacheTimestamp` with missing meta
-- **WHEN** `mod_repo.meta` does not exist or is corrupt
-- **THEN** `getModRepoCacheTimestamp()` returns null without throwing
+#### Scenario: Timestamp with missing meta
+- **WHEN** the `.meta` file does not exist or is corrupt
+- **THEN** `getCacheTimestamp()` returns null without throwing
 
 #### Scenario: Fetch failure falls back to stale cache
-- **WHEN** a fetch fails (network error) but a cached `mod_repo.json` exists (regardless of age)
-- **THEN** the manager returns the stale cached content and logs a warning, rather than rethrowing
+- **WHEN** a fetch fails (network error) but a cached copy exists
+- **THEN** the fetcher returns the cached copy and logs a warning

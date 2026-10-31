@@ -5,13 +5,13 @@ import 'package:flutter_color/flutter_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
+import 'package:trios/catalog/catalog_mod_actions.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
-import 'package:trios/catalog/forum_post_dialog/catalog_mod_details_dialog.dart';
-import 'package:trios/catalog/forum_post_dialog/forum_post_dialog.dart';
+import 'package:trios/catalog/catalog_page_controller.dart';
+import 'package:trios/catalog/details_dialog/catalog_details_dialog.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
-import 'package:trios/catalog/models/forum_mod_details.dart';
 import 'package:trios/catalog/models/mod_image_source.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/summary_resolver.dart';
@@ -32,7 +32,6 @@ import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
-import 'package:trios/widgets/conditional_wrap.dart';
 import 'package:trios/widgets/mod_download/mod_download_button.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/safe_resize_image.dart';
@@ -169,7 +168,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     return Builder(
       builder: (context) {
         final websiteUrl = mod.getBestWebsiteUrl();
-        final topicId = extractForumTopicId(mod.urls?[ModUrlType.Forum]);
+        final topicId = catalogForumTopicId(mod);
         final forumDetails = topicId == null
             ? null
             : ref.watch(forumDetailsForTopic(topicId));
@@ -188,6 +187,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
           ),
           forumDetails: forumDetails,
           installedMod: _catalogMod.installedMod,
+          extras: _catalogMod.extras,
         )
             : _catalogMod;
         final hasDetailsToShow =
@@ -276,13 +276,21 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                   MenuItem(
                     label: 'Disable',
                     leading: const Icon(Icons.visibility_off, size: 16),
-                    onSelected: () => _setModEnabled(false),
+                    onSelected: () => setCatalogModEnabled(
+                      ref,
+                      _catalogMod.installedMod!,
+                      false,
+                    ),
                   )
                 else
                   MenuItem(
                     label: 'Enable',
                     leading: const Icon(Icons.visibility, size: 16),
-                    onSelected: () => _setModEnabled(true),
+                    onSelected: () => setCatalogModEnabled(
+                      ref,
+                      _catalogMod.installedMod!,
+                      true,
+                    ),
                   ),
                 buildMenuItemToggleMuteUpdates(_catalogMod.installedMod!, ref),
                 const MenuDivider(),
@@ -321,13 +329,8 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                   color: theme.colorScheme.surface.withValues(alpha: 0.5),
                 ),
               ),
-              child: ConditionalWrap(
-                condition: hasDetailsToShow,
-                wrapper: (child) =>
-                    InkWell(
-                      onTap: () => _openDetailsDialog(context, forumDetails),
-                      child: child,
-                    ),
+              child: InkWell(
+                onTap: () => _openDetailsDialog(context),
                 child: Stack(
                   children: [
                     Container(
@@ -377,6 +380,27 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
+                                      // The name shrinks first; the badges
+                                      // stay whole.
+                                      if (mod.modVersion?.trim()
+                                          case final version?
+                                          when version.isNotEmpty)
+                                        CatalogBadge(
+                                          label: version,
+                                          tooltip: 'Mod version',
+                                        ),
+                                      if (enrichedMod.isWip)
+                                        const CatalogBadge(
+                                          label: 'WIP',
+                                          tooltip: 'Work in progress',
+                                        ),
+                                      if (enrichedMod.isTool)
+                                        const CatalogBadge(
+                                          label: 'Tool',
+                                          tooltip:
+                                              'Tool: anything that runs '
+                                              'outside the game',
+                                        ),
                                     ],
                                   ),
                                   if (enrichedMod.authors.isNotEmpty)
@@ -459,7 +483,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                                           _ForumStatsFromGathered(
                                             gathered: enrichedMod,
                                           ),
-                                        Tags(mod: mod),
+                                        Tags(mod: enrichedMod),
                                       ],
                                     ),
                                   ),
@@ -474,7 +498,7 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
                       Positioned(
                         left: 8,
                         top: 4,
-                        child: _CatalogModGameVersionReq(mod: mod),
+                        child: CatalogGameVersionBadge(mod: mod),
                       ),
                     if (_catalogMod.installedMod != null)
                       Positioned(
@@ -623,44 +647,16 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
     // );
   }
 
-  /// Open the mod's details dialog: the cached forum post when available,
-  /// otherwise the fallback dialog built from catalog data.
-  void _openDetailsDialog(BuildContext context, ForumModDetails? forumDetails) {
-    if (forumDetails != null && !forumDetails.isPlaceholderDetail) {
-      final topicId = extractForumTopicId(_entry.urls?[ModUrlType.Forum]);
-      final forumIndex = topicId != null
-          ? ref.read(forumDataByTopicId)[topicId]
-          : null;
-      showForumPostDialog(
-        context,
-        details: forumDetails,
-        index: forumIndex,
-        mod: _entry,
-        linkLoader: widget.linkLoader,
-        canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
-      );
-    } else {
-      showCatalogModDetailsDialog(
-        context,
-        gathered: _catalogMod,
-        linkLoader: widget.linkLoader,
-        canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
-      );
-    }
-  }
-
-  /// Enable or disable the installed mod. Moved off the primary card button
-  /// so the button stays a pure Install/Update/Installed status.
-  void _setModEnabled(bool enabled) {
-    final mod = _catalogMod.installedMod;
-    if (mod == null) return;
-    if (enabled) {
-      final variant = mod.findHighestVersion;
-      if (variant == null) return;
-      ref.read(modManager.notifier).changeActiveModVariant(mod, variant);
-    } else {
-      ref.read(modManager.notifier).changeActiveModVariant(mod, null);
-    }
+  /// Opens the details dialog on this mod. Previous / Next in the dialog step
+  /// through the grid's current list.
+  void _openDetailsDialog(BuildContext context) {
+    showCatalogDetailsDialog(
+      context,
+      mod: _catalogMod,
+      mods: ref.read(catalogPageControllerProvider).displayedMods,
+      linkLoader: widget.linkLoader,
+      canUseEmbeddedBrowser: widget.canUseEmbeddedBrowser,
+    );
   }
 
   /// Context-menu link entries (Forum / Discord / NexusMods) for this mod.
@@ -791,8 +787,8 @@ class _CatalogModCardState extends ConsumerState<CatalogModCard> {
   }
 }
 
-class _CatalogModGameVersionReq extends ConsumerWidget {
-  const _CatalogModGameVersionReq({required this.mod});
+class CatalogGameVersionBadge extends ConsumerWidget {
+  const CatalogGameVersionBadge({super.key, required this.mod});
 
   final ModRepoEntry mod;
 
@@ -964,16 +960,55 @@ class ModImage extends StatelessWidget {
   }
 }
 
+/// A small outlined label on the card's name line, e.g. the mod version.
+class CatalogBadge extends StatelessWidget {
+  final String label;
+  final String tooltip;
+
+  const CatalogBadge({super.key, required this.label, required this.tooltip});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    return MovingTooltipWidget.text(
+      message: tooltip,
+      child: Container(
+        height: 16,
+        padding: const .symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        // widthFactor keeps the badge as wide as its text, even where it's
+        // offered more room, such as a Wrap.
+        child: Center(
+          widthFactor: 1,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 10,
+              height: 1,
+              color: color,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class Tags extends StatelessWidget {
-  final ModRepoEntry mod;
+  final CatalogMod mod;
 
   const Tags({super.key, required this.mod});
 
   @override
   Widget build(BuildContext context) {
     final tags = [
-      ...?mod.categories,
-      ...?mod.sources?.map((source) {
+      ...mod.categories,
+      ...?mod.entry.sources?.map((source) {
         switch (source) {
           case ModSource.Index:
             return 'Index';
@@ -1037,6 +1072,10 @@ class CatalogDownloadButton extends ConsumerWidget {
   /// plain "Installed" marker instead of offering the update.
   final bool isUpdateMuted;
 
+  /// Fills the width it's given and stands taller, for the details dialog's
+  /// Get it panel. The card uses the compact size.
+  final bool large;
+
   const CatalogDownloadButton({
     super.key,
     required this.mod,
@@ -1045,6 +1084,7 @@ class CatalogDownloadButton extends ConsumerWidget {
     required this.linkLoader,
     this.llmMainMod,
     this.isUpdateMuted = false,
+    this.large = false,
   });
 
   _CatalogDownloadState _resolveState({
@@ -1196,26 +1236,33 @@ class CatalogDownloadButton extends ConsumerWidget {
 
     // Installed: an inert status marker. Enable/disable lives in the card's
     // right-click menu, so the button never toggles the mod by surprise.
+    final height = large ? 40.0 : 30.0;
+    final iconSize = large ? 18.0 : 14.0;
+    final fontSize = large ? 14.0 : 11.0;
+
     if (isInstalledStatus) {
       return MovingTooltipWidget.text(
         message: tooltip,
         child: Container(
-          height: 28,
+          height: large ? height : 28,
+          width: large ? double.infinity : null,
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(large ? height / 2 : 14),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 14, color: foregroundColor),
+              Icon(icon, size: iconSize, color: foregroundColor),
               const SizedBox(width: 4),
               Text(
                 label,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: foregroundColor,
                   fontWeight: FontWeight.bold,
+                  fontSize: large ? fontSize : null,
                 ),
               ),
             ],
@@ -1246,7 +1293,8 @@ class CatalogDownloadButton extends ConsumerWidget {
 
     Widget buildButton(VoidCallback? onTap, {required bool marksPending}) =>
         SizedBox(
-          height: 30,
+          height: height,
+          width: large ? double.infinity : null,
           child: ModDownloadButton(
             target: target,
             onPressed: onTap,
@@ -1265,15 +1313,19 @@ class CatalogDownloadButton extends ConsumerWidget {
             spinnerSize: 20,
             spinnerColor: foregroundColor,
             icon: showTriosBrandIcon
-                ? TriOSAppIcon(width: 14, height: 14, color: foregroundColor)
-                : Icon(icon, size: 14),
+                ? TriOSAppIcon(
+                    width: iconSize,
+                    height: iconSize,
+                    color: foregroundColor,
+                  )
+                : Icon(icon, size: iconSize),
             label: Padding(
               padding: const .only(right: 4),
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 11,
+                  fontSize: fontSize,
                 ),
               ),
             ),

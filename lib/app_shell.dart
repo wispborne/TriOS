@@ -155,9 +155,8 @@ class _AppShellState extends ConsumerState<AppShell>
 
   void _appendToReport(String line) {
     try {
-      File(
-        '${Constants.configDataFolderPath.path}/memory-report.txt',
-      ).writeAsStringSync(line, mode: FileMode.append);
+      File('${Constants.configDataFolderPath.path}/memory-report.txt')
+          .writeAsStringSync(line, mode: FileMode.append);
     } catch (error) {
       Fimber.w('Could not write the memory report.', ex: error);
     }
@@ -328,9 +327,8 @@ class _AppShellState extends ConsumerState<AppShell>
             if (loggingError != null)
               Text(
                 loggingError.toString(),
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: TriOSThemeConstants.vanillaErrorColor,
-                ),
+                style: Theme.of(context).textTheme.bodyLarge
+                    ?.copyWith(color: TriOSThemeConstants.vanillaErrorColor),
               ),
             Expanded(
               child: () {
@@ -502,12 +500,10 @@ class _AppShellState extends ConsumerState<AppShell>
               height: _isResizeHandleHovered ? 48 : 40,
               decoration: BoxDecoration(
                 color: _isResizeHandleHovered
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6)
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.2),
+                    ? Theme.of(context).colorScheme.onSurface
+                          .withValues(alpha: 0.6)
+                    : Theme.of(context).colorScheme.onSurface
+                          .withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

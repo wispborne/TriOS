@@ -7,6 +7,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/mod_metadata.dart';
+import 'package:trios/utils/catalog_search.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/vram_estimator/vram_estimator_manager.dart';
 
@@ -192,8 +193,8 @@ extension ModExt on Mod {
           .sum() ??
       0;
 
-  Comparable<String> getSortValueForGameVersion() =>
-      findFirstEnabledOrHighestVersion?.modInfo.gameVersion ?? "";
+  GameVersionSortKey getSortValueForGameVersion() =>
+      GameVersionSortKey(findFirstEnabledOrHighestVersion?.modInfo.gameVersion);
 
   Comparable<num> getSortValueForFirstSeen(ModsMetadata? modsMetadata) =>
       modsMetadata?.getMergedModMetadata(id)?.firstSeen ?? 0;

@@ -14,9 +14,9 @@ enum SaveArchiveFailure {
 
   saveFolderOutsideSavesFolder,
 
-  /// The archive folder sits inside the save folder being archived, so
-  /// archiving would try to compress its own output.
-  archiveFolderInsideSaveFolder,
+  /// The archive folder is the saves folder or inside it. Archives there could
+  /// be compressed into another archive or deleted along with a save.
+  archiveFolderInsideSavesFolder,
 
   archiveFolderNotWritable,
 
@@ -237,11 +237,11 @@ class SaveArchiver {
       final guardFailure = _checkSaveFolderIsSafeToRemove(saveFolder);
       if (guardFailure != null) return guardFailure;
 
-      if (p.isWithin(saveFolder.normalize.path, archiveFolder.normalize.path)) {
+      if (isInsideSavesFolder(archiveFolder, savesFolder)) {
         return _archiveFailed(
-          SaveArchiveFailure.archiveFolderInsideSaveFolder,
-          'The archive folder is inside the save being archived. Pick a '
-          'different folder for archives.',
+          SaveArchiveFailure.archiveFolderInsideSavesFolder,
+          'The archive folder is inside the saves folder. Pick a different '
+          'folder for archives. Nothing was changed.',
         );
       }
 
@@ -459,6 +459,16 @@ class SaveArchiver {
         return _restoreFailed(
           SaveArchiveFailure.archiveMissing,
           'The archive is not there any more: ${archiveFile.path}',
+        );
+      }
+
+      // Restores unpack into the archive folder first, which must not show up
+      // in the game's save list.
+      if (isInsideSavesFolder(archiveFolder, savesFolder)) {
+        return _restoreFailed(
+          SaveArchiveFailure.archiveFolderInsideSavesFolder,
+          'The archive folder is inside the saves folder. Pick a different '
+          'folder for archives. Nothing was changed.',
         );
       }
 
@@ -708,6 +718,13 @@ class SaveArchiver {
     // Top-level entries alone do not establish a shared root folder.
     if (!sawNestedPath) return null;
     return root;
+  }
+
+  /// True when [folder] is [savesFolder] or anywhere inside it.
+  static bool isInsideSavesFolder(Directory folder, Directory savesFolder) {
+    final folderPath = folder.normalize.path;
+    final savesPath = savesFolder.normalize.path;
+    return p.equals(folderPath, savesPath) || p.isWithin(savesPath, folderPath);
   }
 
   /// [path] relative to [folder], with `/` separators.

@@ -369,8 +369,52 @@ void main() {
 
       final outcome = await archiver.archiveSave(save);
 
-      expect(outcome.failure, SaveArchiveFailure.archiveFolderInsideSaveFolder);
+      expect(
+        outcome.failure,
+        SaveArchiveFailure.archiveFolderInsideSavesFolder,
+      );
       expect(save.existsSync(), isTrue);
+    });
+
+    test('refuses when the archive folder is inside another save', () async {
+      final save = await makeSave('save_Wisp_1');
+      final otherSave = await makeSave('save_Other_2');
+      final archiver = SaveArchiver(
+        tool: tool,
+        savesFolder: savesFolder,
+        archiveFolder: Directory(p.join(otherSave.path, 'archives')),
+        removeFolder: (folder) async => removedFolders.add(folder),
+        removeFile: (file) async => removedFiles.add(file),
+      );
+
+      final outcome = await archiver.archiveSave(save);
+
+      expect(
+        outcome.failure,
+        SaveArchiveFailure.archiveFolderInsideSavesFolder,
+      );
+      expect(save.existsSync(), isTrue);
+      expect(tool.created, isEmpty);
+    });
+
+    test('refuses when the archive folder is the saves folder', () async {
+      final save = await makeSave('save_Wisp_1');
+      final archiver = SaveArchiver(
+        tool: tool,
+        savesFolder: savesFolder,
+        archiveFolder: savesFolder,
+        removeFolder: (folder) async => removedFolders.add(folder),
+        removeFile: (file) async => removedFiles.add(file),
+      );
+
+      final outcome = await archiver.archiveSave(save);
+
+      expect(
+        outcome.failure,
+        SaveArchiveFailure.archiveFolderInsideSavesFolder,
+      );
+      expect(save.existsSync(), isTrue);
+      expect(tool.created, isEmpty);
     });
 
     test('refuses a save folder holding a symlink', () async {
@@ -442,6 +486,36 @@ void main() {
       expect(outcome.archiveRemoved, isTrue);
       expect(archive.existsSync(), isFalse);
       expect(removedFiles.single.path, archive.path);
+    });
+
+    test('refuses when the archive folder is the saves folder', () async {
+      final archive = await archiveOne('save_Wisp_1');
+      final inSavesFolder = archive.copySync(
+        p.join(savesFolder.path, p.basename(archive.path)),
+      );
+      final archiver = SaveArchiver(
+        tool: tool,
+        savesFolder: savesFolder,
+        archiveFolder: savesFolder,
+        removeFolder: (folder) async => removedFolders.add(folder),
+        removeFile: (file) async => removedFiles.add(file),
+      );
+
+      final outcome = await archiver.restoreSave(inSavesFolder);
+
+      expect(
+        outcome.failure,
+        SaveArchiveFailure.archiveFolderInsideSavesFolder,
+      );
+      expect(
+        Directory(p.join(savesFolder.path, 'save_Wisp_1')).existsSync(),
+        isFalse,
+      );
+      expect(
+        savesFolder.listSync().whereType<Directory>().map((d) => d.path),
+        isEmpty,
+        reason: 'nothing should be unpacked into the saves folder',
+      );
     });
 
     test('refuses to write over a save folder that is already there', () async {

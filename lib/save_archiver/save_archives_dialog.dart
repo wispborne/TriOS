@@ -12,6 +12,7 @@ import 'package:trios/save_archiver/bulk_save_selection_dialog.dart';
 import 'package:trios/save_archiver/save_archive_manager.dart';
 import 'package:trios/save_archiver/save_archive_runner_dialog.dart';
 import 'package:trios/save_archiver/save_archive_selection.dart';
+import 'package:trios/save_archiver/save_archiver.dart';
 import 'package:trios/save_archiver/size_stat.dart';
 import 'package:trios/themes/theme.dart';
 import 'package:trios/trios/app_state.dart';
@@ -663,6 +664,19 @@ class _SaveArchivesDialogState extends ConsumerState<SaveArchivesDialog> {
               );
               if (picked == null || !context.mounted) return;
               final newFolder = picked.toDirectory().normalize;
+              if (savesFolder != null &&
+                  SaveArchiver.isInsideSavesFolder(newFolder, savesFolder)) {
+                await showAlertDialog(
+                  context,
+                  title: 'Unable to use this folder',
+                  content:
+                      'The archive folder cannot be the saves folder or a '
+                      'folder inside it. Pick a folder outside '
+                      '${savesFolder.path}.\n\n'
+                      'The archive folder was not changed.',
+                );
+                return;
+              }
               await _changeArchiveFolder(
                 context,
                 ref,

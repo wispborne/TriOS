@@ -170,6 +170,15 @@ class ForumLlmDownload with ForumLlmDownloadMappable {
   });
 }
 
+/// A mod the author says conflicts with this mod, with a quote from the author.
+@MappableClass()
+class ForumLlmConflict with ForumLlmConflictMappable {
+  final String name;
+  final String quote;
+
+  ForumLlmConflict({required this.name, required this.quote});
+}
+
 /// Optional extra metadata about a mod.
 @MappableClass()
 class ForumLlmExtras with ForumLlmExtrasMappable {
@@ -200,6 +209,9 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
   /// Names of mods this mod works with but doesn't require.
   final List<String>? optionalNeeds;
 
+  /// Mods the author says conflict with this mod.
+  final List<ForumLlmConflict>? conflicts;
+
   /// Whether the mod can be removed from a save in progress: "yes", "no" or
   /// "depends".
   final String? canRemove;
@@ -223,6 +235,7 @@ class ForumLlmExtras with ForumLlmExtrasMappable {
     this.aiUse,
     this.needs,
     this.optionalNeeds,
+    this.conflicts,
     this.canRemove,
     this.removalCompatibility,
     this.updateNotes,

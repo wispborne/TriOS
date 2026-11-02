@@ -790,6 +790,7 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
       ForumLlmChangelogMapper.ensureInitialized();
       ForumLlmSupportLinkMapper.ensureInitialized();
       CatalogAiUseMapper.ensureInitialized();
+      ForumLlmConflictMapper.ensureInitialized();
       ForumLlmUpdateNoteMapper.ensureInitialized();
     }
     return _instance!;
@@ -862,6 +863,9 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
     _$optionalNeeds,
     opt: true,
   );
+  static List<ForumLlmConflict>? _$conflicts(ForumLlmExtras v) => v.conflicts;
+  static const Field<ForumLlmExtras, List<ForumLlmConflict>> _f$conflicts =
+      Field('conflicts', _$conflicts, opt: true);
   static String? _$canRemove(ForumLlmExtras v) => v.canRemove;
   static const Field<ForumLlmExtras, String> _f$canRemove = Field(
     'canRemove',
@@ -893,6 +897,7 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
     #aiUse: _f$aiUse,
     #needs: _f$needs,
     #optionalNeeds: _f$optionalNeeds,
+    #conflicts: _f$conflicts,
     #canRemove: _f$canRemove,
     #removalCompatibility: _f$removalCompatibility,
     #updateNotes: _f$updateNotes,
@@ -911,6 +916,7 @@ class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
       aiUse: data.dec(_f$aiUse),
       needs: data.dec(_f$needs),
       optionalNeeds: data.dec(_f$optionalNeeds),
+      conflicts: data.dec(_f$conflicts),
       canRemove: data.dec(_f$canRemove),
       removalCompatibility: data.dec(_f$removalCompatibility),
       updateNotes: data.dec(_f$updateNotes),
@@ -994,6 +1000,12 @@ abstract class ForumLlmExtrasCopyWith<$R, $In extends ForumLlmExtras, $Out>
   get optionalNeeds;
   ListCopyWith<
     $R,
+    ForumLlmConflict,
+    ForumLlmConflictCopyWith<$R, ForumLlmConflict, ForumLlmConflict>
+  >?
+  get conflicts;
+  ListCopyWith<
+    $R,
     ForumLlmUpdateNote,
     ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, ForumLlmUpdateNote>
   >?
@@ -1010,6 +1022,7 @@ abstract class ForumLlmExtrasCopyWith<$R, $In extends ForumLlmExtras, $Out>
     CatalogAiUse? aiUse,
     List<String>? needs,
     List<String>? optionalNeeds,
+    List<ForumLlmConflict>? conflicts,
     String? canRemove,
     String? removalCompatibility,
     List<ForumLlmUpdateNote>? updateNotes,
@@ -1070,6 +1083,19 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
   @override
   ListCopyWith<
     $R,
+    ForumLlmConflict,
+    ForumLlmConflictCopyWith<$R, ForumLlmConflict, ForumLlmConflict>
+  >?
+  get conflicts => $value.conflicts != null
+      ? ListCopyWith(
+          $value.conflicts!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(conflicts: v),
+        )
+      : null;
+  @override
+  ListCopyWith<
+    $R,
     ForumLlmUpdateNote,
     ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, ForumLlmUpdateNote>
   >?
@@ -1093,6 +1119,7 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
     Object? aiUse = $none,
     Object? needs = $none,
     Object? optionalNeeds = $none,
+    Object? conflicts = $none,
     Object? canRemove = $none,
     Object? removalCompatibility = $none,
     Object? updateNotes = $none,
@@ -1109,6 +1136,7 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
       if (aiUse != $none) #aiUse: aiUse,
       if (needs != $none) #needs: needs,
       if (optionalNeeds != $none) #optionalNeeds: optionalNeeds,
+      if (conflicts != $none) #conflicts: conflicts,
       if (canRemove != $none) #canRemove: canRemove,
       if (removalCompatibility != $none)
         #removalCompatibility: removalCompatibility,
@@ -1131,6 +1159,7 @@ class _ForumLlmExtrasCopyWithImpl<$R, $Out>
     aiUse: data.get(#aiUse, or: $value.aiUse),
     needs: data.get(#needs, or: $value.needs),
     optionalNeeds: data.get(#optionalNeeds, or: $value.optionalNeeds),
+    conflicts: data.get(#conflicts, or: $value.conflicts),
     canRemove: data.get(#canRemove, or: $value.canRemove),
     removalCompatibility: data.get(
       #removalCompatibility,
@@ -1569,6 +1598,133 @@ class _ForumLlmSupportLinkCopyWithImpl<$R, $Out>
   ForumLlmSupportLinkCopyWith<$R2, ForumLlmSupportLink, $Out2>
   $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
       _ForumLlmSupportLinkCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumLlmConflictMapper extends ClassMapperBase<ForumLlmConflict> {
+  ForumLlmConflictMapper._();
+
+  static ForumLlmConflictMapper? _instance;
+  static ForumLlmConflictMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumLlmConflictMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumLlmConflict';
+
+  static String _$name(ForumLlmConflict v) => v.name;
+  static const Field<ForumLlmConflict, String> _f$name = Field('name', _$name);
+  static String _$quote(ForumLlmConflict v) => v.quote;
+  static const Field<ForumLlmConflict, String> _f$quote = Field(
+    'quote',
+    _$quote,
+  );
+
+  @override
+  final MappableFields<ForumLlmConflict> fields = const {
+    #name: _f$name,
+    #quote: _f$quote,
+  };
+
+  static ForumLlmConflict _instantiate(DecodingData data) {
+    return ForumLlmConflict(name: data.dec(_f$name), quote: data.dec(_f$quote));
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumLlmConflict fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmConflict>(map);
+  }
+
+  static ForumLlmConflict fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmConflict>(json);
+  }
+}
+
+mixin ForumLlmConflictMappable {
+  String toJson() {
+    return ForumLlmConflictMapper.ensureInitialized()
+        .encodeJson<ForumLlmConflict>(this as ForumLlmConflict);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumLlmConflictMapper.ensureInitialized()
+        .encodeMap<ForumLlmConflict>(this as ForumLlmConflict);
+  }
+
+  ForumLlmConflictCopyWith<ForumLlmConflict, ForumLlmConflict, ForumLlmConflict>
+  get copyWith =>
+      _ForumLlmConflictCopyWithImpl<ForumLlmConflict, ForumLlmConflict>(
+        this as ForumLlmConflict,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return ForumLlmConflictMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmConflict,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumLlmConflictMapper.ensureInitialized().equalsValue(
+      this as ForumLlmConflict,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumLlmConflictMapper.ensureInitialized().hashValue(
+      this as ForumLlmConflict,
+    );
+  }
+}
+
+extension ForumLlmConflictValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmConflict, $Out> {
+  ForumLlmConflictCopyWith<$R, ForumLlmConflict, $Out>
+  get $asForumLlmConflict =>
+      $base.as((v, t, t2) => _ForumLlmConflictCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class ForumLlmConflictCopyWith<$R, $In extends ForumLlmConflict, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? name, String? quote});
+  ForumLlmConflictCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumLlmConflictCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmConflict, $Out>
+    implements ForumLlmConflictCopyWith<$R, ForumLlmConflict, $Out> {
+  _ForumLlmConflictCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumLlmConflict> $mapper =
+      ForumLlmConflictMapper.ensureInitialized();
+  @override
+  $R call({String? name, String? quote}) => $apply(
+    FieldCopyWithData({
+      if (name != null) #name: name,
+      if (quote != null) #quote: quote,
+    }),
+  );
+  @override
+  ForumLlmConflict $make(CopyWithData data) => ForumLlmConflict(
+    name: data.get(#name, or: $value.name),
+    quote: data.get(#quote, or: $value.quote),
+  );
+
+  @override
+  ForumLlmConflictCopyWith<$R2, ForumLlmConflict, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _ForumLlmConflictCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ForumLlmUpdateNoteMapper extends ClassMapperBase<ForumLlmUpdateNote> {

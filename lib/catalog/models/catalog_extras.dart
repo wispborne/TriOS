@@ -183,6 +183,9 @@ class CatalogExtras with CatalogExtrasMappable {
   /// Mods this mod works with but doesn't require.
   final List<CatalogNeed> optionalNeeds;
 
+  /// Mods the author says conflict with this mod.
+  final List<CatalogConflict> conflicts;
+
   /// True when the mod is a tool rather than a game mod.
   final bool? isTool;
 
@@ -231,6 +234,7 @@ class CatalogExtras with CatalogExtrasMappable {
     this.releases = const [],
     this.needs = const [],
     this.optionalNeeds = const [],
+    this.conflicts = const [],
     this.isTool,
     this.saveCompatible,
     this.canAdd,
@@ -293,6 +297,20 @@ class CatalogNeed with CatalogNeedMappable {
   final String? via;
 
   CatalogNeed({required this.name, this.id, this.via});
+}
+
+/// A mod the author says conflicts with this mod.
+/// [id] is its catalog id, or null if the scraper found no catalog mod by that name.
+@MappableClass()
+class CatalogConflict with CatalogConflictMappable {
+  final String name;
+  final String? id;
+
+  /// Quote from the author on the conflict and how bad it is.
+  /// Some conflicts crash the game. Others only happen in very large battles.
+  final String quote;
+
+  CatalogConflict({required this.name, this.id, required this.quote});
 }
 
 /// Another mod with the same name.

@@ -282,6 +282,31 @@ void main() {
     expect(find.text('The catalog summary.'), findsNothing);
   });
 
+  testWidgets('the Compatibility panel lists conflicts with author quotes', (
+    tester,
+  ) async {
+    final mod = _mod(
+      'Fast Rendering',
+      extras: CatalogExtras(
+        conflicts: [
+          CatalogConflict(
+            name: 'Particle Engine',
+            quote: 'Particle Engine may rarely crash in very large battles.',
+          ),
+        ],
+      ),
+    );
+
+    await _pumpDialog(tester, grid: [mod]);
+
+    expect(find.text('Conflicts'), findsOneWidget);
+    expect(find.text('Particle Engine'), findsOneWidget);
+    expect(
+      find.text('“Particle Engine may rarely crash in very large battles.”'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('without extras, the extras-only parts are hidden', (
     tester,
   ) async {

@@ -74,8 +74,8 @@ CatalogMod? catalogModForNeed(
   return allMods.firstWhereOrNull((mod) => mod.entry.id == id);
 }
 
-/// The Compatibility panel: game version, required and optional mods, and the
-/// add / update / remove mid-game answers.
+/// Shows the game version, required and optional mods, and conflicts.
+/// Also shows whether the mod can be added, updated or removed mid-game.
 class CompatibilityPanel extends StatelessWidget {
   final CatalogMod mod;
 
@@ -107,6 +107,7 @@ class CompatibilityPanel extends StatelessWidget {
       (mod.entry.gameVersionReq?.isNotEmpty ?? false) ||
       mod.requiredMods.isNotEmpty ||
       mod.optionalMods.isNotEmpty ||
+      mod.conflictingMods.isNotEmpty ||
       saveQuestionsFor(mod).isNotEmpty;
 
   @override
@@ -159,6 +160,26 @@ class CompatibilityPanel extends StatelessWidget {
               tags(mod.requiredMods, offerInstall: true),
             ],
           ),
+        if (mod.conflictingMods.isNotEmpty)
+          Column(
+            crossAxisAlignment: .stretch,
+            spacing: 8,
+            children: [
+              const SidePanelLabel('Conflicts'),
+              for (final conflict in mod.conflictingMods)
+                _ConflictRow(
+                  conflict: conflict,
+                  catalogMod: catalogModForNeed(
+                    CatalogNeed(name: conflict.name, id: conflict.id),
+                    allMods,
+                    idsByNameKey: idsByNameKey,
+                  ),
+                  isInstalledByName: isInstalledByName,
+                  onOpenMod: onOpenMod,
+                ),
+            ],
+          ),
+        for (final question in questions) _SaveQuestionRow(question: question),
         if (mod.optionalMods.isNotEmpty)
           Column(
             crossAxisAlignment: .start,
@@ -168,7 +189,6 @@ class CompatibilityPanel extends StatelessWidget {
               tags(mod.optionalMods, offerInstall: false),
             ],
           ),
-        for (final question in questions) _SaveQuestionRow(question: question),
       ],
     );
   }
@@ -234,6 +254,58 @@ class _NeedTag extends StatelessWidget {
         if (via != null && via.isNotEmpty) 'Required by $via.',
       ].join('\n'),
       trailing: trailing,
+    );
+  }
+}
+
+/// A conflicting mod shown in the warning color.
+/// A quote from the author appears below it.
+/// Installed mods get a warning icon to draw the player's attention.
+class _ConflictRow extends StatelessWidget {
+  final CatalogConflict conflict;
+  final CatalogMod? catalogMod;
+  final bool Function(String name) isInstalledByName;
+  final void Function(CatalogMod mod) onOpenMod;
+
+  const _ConflictRow({
+    required this.conflict,
+    required this.catalogMod,
+    required this.isInstalledByName,
+    required this.onOpenMod,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final warning = theme.statusColors.warning;
+    final target = catalogMod;
+    final name = target?.title ?? cleanModDisplayName(conflict.name);
+    final installed = target?.installedMod != null || isInstalledByName(name);
+    final quote = conflict.quote.trim();
+
+    return Column(
+      crossAxisAlignment: .start,
+      spacing: 4,
+      children: [
+        DetailsTag(
+          label: name,
+          color: warning,
+          faded: target == null,
+          onTap: target == null ? null : () => onOpenMod(target),
+          tooltip: installed ? 'Installed' : 'Not installed',
+          trailing: installed
+              ? Icon(Icons.warning_amber, size: 14, color: warning)
+              : null,
+        ),
+        if (quote.isNotEmpty)
+          Text(
+            '“$quote”',
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontStyle: FontStyle.italic,
+              color: detailsMutedColor(theme),
+            ),
+          ),
+      ],
     );
   }
 }

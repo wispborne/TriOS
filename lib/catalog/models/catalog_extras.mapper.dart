@@ -616,6 +616,7 @@ class CatalogExtrasMapper extends ClassMapperBase<CatalogExtras> {
       MapperContainer.globals.use(_instance = CatalogExtrasMapper._());
       CatalogReleaseMapper.ensureInitialized();
       CatalogNeedMapper.ensureInitialized();
+      CatalogConflictMapper.ensureInitialized();
       CatalogSaveAnswerMapper.ensureInitialized();
       CatalogAiUseMapper.ensureInitialized();
       CatalogSameNameModMapper.ensureInitialized();
@@ -698,6 +699,13 @@ class CatalogExtrasMapper extends ClassMapperBase<CatalogExtras> {
   static const Field<CatalogExtras, List<CatalogNeed>> _f$optionalNeeds = Field(
     'optionalNeeds',
     _$optionalNeeds,
+    opt: true,
+    def: const [],
+  );
+  static List<CatalogConflict> _$conflicts(CatalogExtras v) => v.conflicts;
+  static const Field<CatalogExtras, List<CatalogConflict>> _f$conflicts = Field(
+    'conflicts',
+    _$conflicts,
     opt: true,
     def: const [],
   );
@@ -785,6 +793,7 @@ class CatalogExtrasMapper extends ClassMapperBase<CatalogExtras> {
     #releases: _f$releases,
     #needs: _f$needs,
     #optionalNeeds: _f$optionalNeeds,
+    #conflicts: _f$conflicts,
     #isTool: _f$isTool,
     #saveCompatible: _f$saveCompatible,
     #canAdd: _f$canAdd,
@@ -812,6 +821,7 @@ class CatalogExtrasMapper extends ClassMapperBase<CatalogExtras> {
       releases: data.dec(_f$releases),
       needs: data.dec(_f$needs),
       optionalNeeds: data.dec(_f$optionalNeeds),
+      conflicts: data.dec(_f$conflicts),
       isTool: data.dec(_f$isTool),
       saveCompatible: data.dec(_f$saveCompatible),
       canAdd: data.dec(_f$canAdd),
@@ -917,6 +927,12 @@ abstract class CatalogExtrasCopyWith<$R, $In extends CatalogExtras, $Out>
     CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
   >
   get optionalNeeds;
+  ListCopyWith<
+    $R,
+    CatalogConflict,
+    CatalogConflictCopyWith<$R, CatalogConflict, CatalogConflict>
+  >
+  get conflicts;
   CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse;
   ListCopyWith<
     $R,
@@ -946,6 +962,7 @@ abstract class CatalogExtrasCopyWith<$R, $In extends CatalogExtras, $Out>
     List<CatalogRelease>? releases,
     List<CatalogNeed>? needs,
     List<CatalogNeed>? optionalNeeds,
+    List<CatalogConflict>? conflicts,
     bool? isTool,
     bool? saveCompatible,
     CatalogSaveAnswer? canAdd,
@@ -1030,6 +1047,17 @@ class _CatalogExtrasCopyWithImpl<$R, $Out>
     (v) => call(optionalNeeds: v),
   );
   @override
+  ListCopyWith<
+    $R,
+    CatalogConflict,
+    CatalogConflictCopyWith<$R, CatalogConflict, CatalogConflict>
+  >
+  get conflicts => ListCopyWith(
+    $value.conflicts,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(conflicts: v),
+  );
+  @override
   CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse =>
       $value.aiUse?.copyWith.$chain((v) => call(aiUse: v));
   @override
@@ -1071,6 +1099,7 @@ class _CatalogExtrasCopyWithImpl<$R, $Out>
     List<CatalogRelease>? releases,
     List<CatalogNeed>? needs,
     List<CatalogNeed>? optionalNeeds,
+    List<CatalogConflict>? conflicts,
     Object? isTool = $none,
     Object? saveCompatible = $none,
     Object? canAdd = $none,
@@ -1096,6 +1125,7 @@ class _CatalogExtrasCopyWithImpl<$R, $Out>
       if (releases != null) #releases: releases,
       if (needs != null) #needs: needs,
       if (optionalNeeds != null) #optionalNeeds: optionalNeeds,
+      if (conflicts != null) #conflicts: conflicts,
       if (isTool != $none) #isTool: isTool,
       if (saveCompatible != $none) #saveCompatible: saveCompatible,
       if (canAdd != $none) #canAdd: canAdd,
@@ -1126,6 +1156,7 @@ class _CatalogExtrasCopyWithImpl<$R, $Out>
     releases: data.get(#releases, or: $value.releases),
     needs: data.get(#needs, or: $value.needs),
     optionalNeeds: data.get(#optionalNeeds, or: $value.optionalNeeds),
+    conflicts: data.get(#conflicts, or: $value.conflicts),
     isTool: data.get(#isTool, or: $value.isTool),
     saveCompatible: data.get(#saveCompatible, or: $value.saveCompatible),
     canAdd: data.get(#canAdd, or: $value.canAdd),
@@ -1491,6 +1522,146 @@ class _CatalogNeedCopyWithImpl<$R, $Out>
   CatalogNeedCopyWith<$R2, CatalogNeed, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _CatalogNeedCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class CatalogConflictMapper extends ClassMapperBase<CatalogConflict> {
+  CatalogConflictMapper._();
+
+  static CatalogConflictMapper? _instance;
+  static CatalogConflictMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CatalogConflictMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'CatalogConflict';
+
+  static String _$name(CatalogConflict v) => v.name;
+  static const Field<CatalogConflict, String> _f$name = Field('name', _$name);
+  static String? _$id(CatalogConflict v) => v.id;
+  static const Field<CatalogConflict, String> _f$id = Field(
+    'id',
+    _$id,
+    opt: true,
+  );
+  static String _$quote(CatalogConflict v) => v.quote;
+  static const Field<CatalogConflict, String> _f$quote = Field(
+    'quote',
+    _$quote,
+  );
+
+  @override
+  final MappableFields<CatalogConflict> fields = const {
+    #name: _f$name,
+    #id: _f$id,
+    #quote: _f$quote,
+  };
+
+  static CatalogConflict _instantiate(DecodingData data) {
+    return CatalogConflict(
+      name: data.dec(_f$name),
+      id: data.dec(_f$id),
+      quote: data.dec(_f$quote),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static CatalogConflict fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogConflict>(map);
+  }
+
+  static CatalogConflict fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogConflict>(json);
+  }
+}
+
+mixin CatalogConflictMappable {
+  String toJson() {
+    return CatalogConflictMapper.ensureInitialized()
+        .encodeJson<CatalogConflict>(this as CatalogConflict);
+  }
+
+  Map<String, dynamic> toMap() {
+    return CatalogConflictMapper.ensureInitialized().encodeMap<CatalogConflict>(
+      this as CatalogConflict,
+    );
+  }
+
+  CatalogConflictCopyWith<CatalogConflict, CatalogConflict, CatalogConflict>
+  get copyWith =>
+      _CatalogConflictCopyWithImpl<CatalogConflict, CatalogConflict>(
+        this as CatalogConflict,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return CatalogConflictMapper.ensureInitialized().stringifyValue(
+      this as CatalogConflict,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return CatalogConflictMapper.ensureInitialized().equalsValue(
+      this as CatalogConflict,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return CatalogConflictMapper.ensureInitialized().hashValue(
+      this as CatalogConflict,
+    );
+  }
+}
+
+extension CatalogConflictValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogConflict, $Out> {
+  CatalogConflictCopyWith<$R, CatalogConflict, $Out> get $asCatalogConflict =>
+      $base.as((v, t, t2) => _CatalogConflictCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class CatalogConflictCopyWith<$R, $In extends CatalogConflict, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? name, String? id, String? quote});
+  CatalogConflictCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _CatalogConflictCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogConflict, $Out>
+    implements CatalogConflictCopyWith<$R, CatalogConflict, $Out> {
+  _CatalogConflictCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<CatalogConflict> $mapper =
+      CatalogConflictMapper.ensureInitialized();
+  @override
+  $R call({String? name, Object? id = $none, String? quote}) => $apply(
+    FieldCopyWithData({
+      if (name != null) #name: name,
+      if (id != $none) #id: id,
+      if (quote != null) #quote: quote,
+    }),
+  );
+  @override
+  CatalogConflict $make(CopyWithData data) => CatalogConflict(
+    name: data.get(#name, or: $value.name),
+    id: data.get(#id, or: $value.id),
+    quote: data.get(#quote, or: $value.quote),
+  );
+
+  @override
+  CatalogConflictCopyWith<$R2, CatalogConflict, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _CatalogConflictCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class CatalogSameNameModMapper extends ClassMapperBase<CatalogSameNameMod> {

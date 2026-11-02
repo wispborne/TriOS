@@ -38,6 +38,13 @@ Map<String, dynamic> _fullRecord() => {
   'optionalNeeds': [
     {'name': 'Some Mod'},
   ],
+  'conflicts': [
+    {
+      'name': 'Particle Engine',
+      'id': 'particle-engine',
+      'quote': 'Particle Engine may rarely crash in very large battles.',
+    },
+  ],
   'isTool': false,
   'saveCompatible': true,
   'canAdd': 'yes',
@@ -143,6 +150,9 @@ void main() {
       expect(record.needs.single.name, 'LazyLib');
       expect(record.needs.single.id, 'lazylib');
       expect(record.optionalNeeds.single.id, isNull);
+      expect(record.conflicts.single.name, 'Particle Engine');
+      expect(record.conflicts.single.id, 'particle-engine');
+      expect(record.conflicts.single.quote, contains('rarely crash'));
       expect(record.isTool, isFalse);
       expect(record.saveCompatible, isTrue);
       expect(record.canAdd, CatalogSaveAnswer.yes);
@@ -247,6 +257,7 @@ void main() {
     final llmExtras = ForumLlmExtras(
       needs: ['LazyLib'],
       optionalNeeds: ['Nexerelin'],
+      conflicts: [ForumLlmConflict(name: 'BoxUtil', quote: 'BoxUtil breaks.')],
       canAdd: 'no',
     );
 
@@ -261,6 +272,8 @@ void main() {
       expect(mod.requiredMods.single.name, 'LazyLib');
       expect(mod.requiredMods.single.id, isNull);
       expect(mod.optionalMods.single.name, 'Nexerelin');
+      expect(mod.conflictingMods.single.name, 'BoxUtil');
+      expect(mod.conflictingMods.single.quote, 'BoxUtil breaks.');
       expect(mod.canAddToSaveAnswer, CatalogSaveAnswer.no);
       expect(mod.canAddToSave, isFalse);
     });
@@ -277,6 +290,7 @@ void main() {
       expect(mod.categories, ['Ships and weapons']);
       expect(mod.requiredMods.single.id, 'lazylib');
       expect(mod.optionalMods.single.name, 'Some Mod');
+      expect(mod.conflictingMods.single.id, 'particle-engine');
       expect(mod.canAddToSaveAnswer, CatalogSaveAnswer.yes);
       expect(mod.canAddToSave, isTrue);
     });
@@ -299,6 +313,7 @@ void main() {
       expect(mod.categories, isEmpty);
       expect(mod.requiredMods, isEmpty);
       expect(mod.optionalMods, isEmpty);
+      expect(mod.conflictingMods, isEmpty);
       expect(mod.canAddToSaveAnswer, isNull);
     });
   });

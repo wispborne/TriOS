@@ -207,6 +207,15 @@ class CatalogMod {
   List<CatalogNeed> get optionalMods =>
       extras?.optionalNeeds ?? _needsFromNames(llmMod?.extras?.optionalNeeds);
 
+  /// Mods the author says conflict with this mod.
+  /// Uses the same sources as [requiredMods].
+  List<CatalogConflict> get conflictingMods =>
+      extras?.conflicts ??
+      [
+        for (final conflict in llmMod?.extras?.conflicts ?? const [])
+          CatalogConflict(name: conflict.name, quote: conflict.quote),
+      ];
+
   static List<CatalogNeed> _needsFromNames(List<String>? names) => [
     for (final name in names ?? const <String>[]) CatalogNeed(name: name),
   ];

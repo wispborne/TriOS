@@ -11,6 +11,7 @@
   - Radar background animation didn't move.
   - Refreshing the Ship Viewer now reloads changed sprites, graphics, engine and shield styles, and `trios.json` settings.
   - Tentative mitigation for VRAM Estimator scanning when OS is low on file handles.
+  - Fixed random black screen on startup.
 - Changed
   - Default ship viewer background is now space4 (darker).
 

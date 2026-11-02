@@ -168,40 +168,6 @@ Future<void> _ensureWindowIsVisible() async {
   );
 }
 
-/// Resizes the window by one pixel and back, so the app redraws at the right
-/// size.
-///
-/// On Windows the app sometimes keeps drawing at the size the window had before
-/// startup resized it. The picture ends up in the wrong place inside the window,
-/// squashed or with a black gap. The app's own idea of the window size is right
-/// the whole time, so there is no wrong number here to correct — it's the
-/// drawing surface underneath that's stale, and nothing in Dart can see or set
-/// it. An actual resize is the only thing that rebuilds it, which is why
-/// dragging the window edge clears the problem. This does the same thing once,
-/// automatically. The real bug is in Flutter's Windows code; this works around
-/// it.
-Future<void> _nudgeWindowToRedraw() async {
-  if (!Platform.isWindows) return;
-
-  try {
-    // Wait until a frame has actually been drawn, so the resize doesn't land in
-    // the same startup gap that causes the problem.
-    await WidgetsBinding.instance.endOfFrame;
-
-    // A maximized window is sized by Windows, and setting bounds would only
-    // un-maximize it.
-    if (await windowManager.isMaximized()) return;
-
-    final bounds = await windowManager.getBounds();
-    await windowManager.setBounds(
-      Rect.fromLTWH(bounds.left, bounds.top, bounds.width, bounds.height + 1),
-    );
-    await windowManager.setBounds(bounds);
-  } catch (e) {
-    Fimber.w("Couldn't nudge the window into redrawing.", ex: e);
-  }
-}
-
 final shouldDebugRiverpod = false;
 
 void main(List<String> args) async {
@@ -414,6 +380,34 @@ void main(List<String> args) async {
     }
   }
 
+  // Size and place the window before the app starts drawing. On Windows the
+  // window appears with the app's first frame. Resizing it after that
+  // sometimes left the app drawing at the old size, or left the window black
+  // until the user resized it by hand.
+  try {
+    setWindowTitle(Constants.appTitle);
+  } catch (e) {
+    Fimber.e("Error setting window title.", ex: e);
+  }
+  const minSize = Size(1050, 700);
+
+  // Restore window position and size
+  Rect windowFrame = Rect.fromLTWH(
+    settings?.windowXPos ?? 0,
+    settings?.windowYPos ?? 0,
+    settings?.windowWidth ?? _defaultWindowSize.width,
+    settings?.windowHeight ?? _defaultWindowSize.height,
+  );
+  try {
+    windowFrame = await _clampWindowFrameToDesktop(windowFrame);
+    setWindowFrame(await _convertLogicalToPhysicalPixels(windowFrame));
+
+    // If the window is off screen, move it to the first display.
+    await _ensureWindowIsVisible();
+  } catch (e) {
+    Fimber.e("Error restoring window position and size.", ex: e);
+  }
+
   // Set up Sentry
   try {
     allowCrashReporting = settings?.allowCrashReporting ?? false;
@@ -448,27 +442,6 @@ void main(List<String> args) async {
   }
 
   try {
-    setWindowTitle(Constants.appTitle);
-  } catch (e) {
-    Fimber.e("Error setting window title.", ex: e);
-  }
-  const minSize = Size(1050, 700);
-
-  try {
-    // Restore window position and size
-    //     final settings = readAppSettings();
-    Rect windowFrame = Rect.fromLTWH(
-      settings?.windowXPos ?? 0,
-      settings?.windowYPos ?? 0,
-      settings?.windowWidth ?? _defaultWindowSize.width,
-      settings?.windowHeight ?? _defaultWindowSize.height,
-    );
-    windowFrame = await _clampWindowFrameToDesktop(windowFrame);
-    setWindowFrame(await _convertLogicalToPhysicalPixels(windowFrame));
-
-    // If the window is off screen, move it to the first display.
-    await _ensureWindowIsVisible();
-
     windowManager.waitUntilReadyToShow(
       WindowOptions(size: windowFrame.size, minimumSize: minSize),
       () async {
@@ -478,11 +451,10 @@ void main(List<String> args) async {
         if (settings?.isMaximized ?? false) {
           windowManager.maximize();
         }
-        await _nudgeWindowToRedraw();
       },
     );
   } catch (e) {
-    Fimber.e("Error restoring window position and size.", ex: e);
+    Fimber.e("Error showing the window.", ex: e);
   }
 
   // Clean up old files.

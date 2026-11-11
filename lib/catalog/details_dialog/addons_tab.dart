@@ -180,8 +180,9 @@ class DownloadSplitButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = primaryCandidate(candidates);
-    final mainCandidate = primary ?? candidates.first;
+    final options = uniqueByLink(candidates);
+    final primary = primaryCandidate(options);
+    final mainCandidate = primary ?? options.first;
     // No one-click candidate: the best we can do is open the download page.
     final label = primary != null ? 'Install' : 'Open download page';
 
@@ -209,14 +210,14 @@ class DownloadSplitButton extends StatelessWidget {
       onPressed: () => onDownload(mainCandidate, modName),
     );
 
-    if (candidates.length < 2) return button;
+    if (options.length < 2) return button;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         button,
         OtherDownloadOptionsButton(
-          candidates: candidates,
+          candidates: options,
           target: target,
           onSelected: (candidate) => onDownload(candidate, modName),
         ),
@@ -233,16 +234,20 @@ class OtherDownloadOptionsButton extends StatelessWidget {
   final DownloadTarget target;
   final void Function(DownloadCandidate candidate) onSelected;
 
-  /// Draws a square outlined button that matches a tall button beside it,
-  /// instead of a bare icon.
-  final bool outlined;
+  /// Draws the ▾ as the right end of a split button: a filled button in this
+  /// style and size. Without it, a bare icon.
+  final ButtonStyle? segmentStyle;
+  final double segmentWidth;
+  final double segmentHeight;
 
   const OtherDownloadOptionsButton({
     super.key,
     required this.candidates,
     required this.target,
     required this.onSelected,
-    this.outlined = false,
+    this.segmentStyle,
+    this.segmentWidth = 32,
+    this.segmentHeight = 40,
   });
 
   @override
@@ -261,20 +266,14 @@ class OtherDownloadOptionsButton extends StatelessWidget {
             controller.isOpen ? controller.close() : controller.open();
         return MovingTooltipWidget.text(
           message: 'Other download options',
-          child: outlined
+          child: segmentStyle != null
               ? SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: OutlinedButton(
+                  width: segmentWidth,
+                  height: segmentHeight,
+                  child: FilledButton(
                     onPressed: toggle,
-                    // Grey, the same as the toolbar items on other pages.
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                    ),
-                    child: const Icon(Icons.arrow_drop_down),
+                    style: segmentStyle,
+                    child: const Icon(Icons.arrow_drop_down, size: 24),
                   ),
                 )
               : IconButton(

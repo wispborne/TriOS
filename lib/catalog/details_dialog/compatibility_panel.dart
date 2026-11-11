@@ -1,6 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/catalog/catalog_download_resolver.dart';
+import 'package:trios/catalog/catalog_links.dart';
 import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/catalog/catalog_requires.dart';
 import 'package:trios/catalog/details_dialog/addons_tab.dart';
@@ -8,6 +10,7 @@ import 'package:trios/catalog/details_dialog/details_panel_section.dart';
 import 'package:trios/catalog/models/catalog_extras.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/utils/extensions.dart';
+import 'package:trios/widgets/mod_icon.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
 /// One add / update / remove mid-game question, with the author's answer.
@@ -160,6 +163,15 @@ class CompatibilityPanel extends StatelessWidget {
               tags(mod.requiredMods, offerInstall: true),
             ],
           ),
+        if (mod.optionalMods.isNotEmpty)
+          Column(
+            crossAxisAlignment: .start,
+            spacing: 8,
+            children: [
+              const SidePanelLabel('Optional'),
+              tags(mod.optionalMods, offerInstall: false),
+            ],
+          ),
         if (mod.conflictingMods.isNotEmpty)
           Column(
             crossAxisAlignment: .stretch,
@@ -180,23 +192,15 @@ class CompatibilityPanel extends StatelessWidget {
             ],
           ),
         for (final question in questions) _SaveQuestionRow(question: question),
-        if (mod.optionalMods.isNotEmpty)
-          Column(
-            crossAxisAlignment: .start,
-            spacing: 8,
-            children: [
-              const SidePanelLabel('Optional'),
-              tags(mod.optionalMods, offerInstall: false),
-            ],
-          ),
       ],
     );
   }
 }
 
 /// A required or optional mod. Clicking it shows that mod when it's in the
-/// catalog. It's faded when it isn't. An installed mod gets a check mark.
-class _NeedTag extends StatelessWidget {
+/// catalog. It's faded when it isn't. An installed mod gets a check mark, and
+/// its own icon when it has one.
+class _NeedTag extends ConsumerWidget {
   final CatalogNeed need;
   final CatalogMod? catalogMod;
   final bool Function(String name) isInstalledByName;
@@ -216,11 +220,16 @@ class _NeedTag extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final target = catalogMod;
     final name = target?.title ?? cleanModDisplayName(need.name);
     final installed = target?.installedMod != null || isInstalledByName(name);
+    final installedMod =
+        target?.installedMod ??
+        ref.watch(catalogLinksProvider).linkForName(name)?.mod;
+    final iconPath =
+        installedMod?.findFirstEnabledOrHighestVersion?.iconFilePath;
     final group = downloadGroup;
     final via = need.via?.trim();
 
@@ -247,6 +256,7 @@ class _NeedTag extends StatelessWidget {
 
     return DetailsTag(
       label: name,
+      avatar: iconPath == null ? null : ModIcon(iconPath, size: 16),
       faded: target == null,
       onTap: target == null ? null : () => onOpenMod(target),
       tooltip: [
@@ -338,7 +348,6 @@ class _SaveQuestionRow extends StatelessWidget {
       children: [
         SidePanelRow(
           label: question.label,
-          strongLabel: true,
           value: DetailsTag(
             label: label,
             color: color,

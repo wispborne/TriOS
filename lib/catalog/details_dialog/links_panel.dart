@@ -61,67 +61,57 @@ class LinksPanel extends StatelessWidget {
     final license = mod.licenseText;
     final licenseUrl = mod.licenseUrl;
 
+    final showLicenseAsText =
+        license != null &&
+        licenseUrl == null &&
+        license.length <= _shortLicenseLength;
+
+    final links = <Widget>[
+      for (final link in _pageLinks(mod))
+        SidePanelLink(
+          icon: link.icon,
+          label: link.label,
+          tooltip: link.shownUrl,
+          onTap: () => link.openUrl.openAsUriInBrowser(),
+        ),
+      if (sourceCodeUrl != null)
+        SidePanelLink(
+          icon: Icons.code,
+          label: 'Source code on ${sourceCodeHostName(sourceCodeUrl)}',
+          tooltip: sourceCodeUrl,
+          onTap: () => sourceCodeUrl.openAsUriInBrowser(),
+        ),
+      if (license != null && licenseUrl != null)
+        SidePanelLink(
+          icon: Icons.balance,
+          label: 'Read the license',
+          tooltip: licenseUrl,
+          onTap: () => licenseUrl.openAsUriInBrowser(),
+        )
+      else if (license != null && !showLicenseAsText)
+        SidePanelLink(
+          icon: Icons.balance,
+          label: 'Read full license',
+          tooltip: license.truncate(200),
+          onTap: () =>
+              showLicenseDialog(context, modTitle: mod.title, license: license),
+        ),
+      for (final link in mod.supportLinks)
+        SidePanelLink(
+          icon: DonationLinksSection.iconFor(link.type),
+          label: 'Donate on ${link.type.toTitleCase()}',
+          tooltip: link.url,
+          onTap: () => link.url.openAsUriInBrowser(),
+        ),
+    ];
+
     return SidePanelSection(
       title: 'Links',
       children: [
-        for (final link in _pageLinks(mod))
-          SidePanelLink(
-            icon: link.icon,
-            label: link.label,
-            tooltip: link.shownUrl,
-            onTap: () => link.openUrl.openAsUriInBrowser(),
-          ),
-        if (sourceCodeUrl != null)
-          SidePanelRow(
-            label: 'Source code',
-            value: DetailsTag(
-              label: sourceCodeHostName(sourceCodeUrl),
-              icon: Icons.code,
-              tooltip: sourceCodeUrl,
-              onTap: () => sourceCodeUrl.openAsUriInBrowser(),
-            ),
-          ),
-        if (license != null)
-          SidePanelRow(
-            label: 'License',
-            value: licenseUrl != null
-                ? DetailsTag(
-                    label: 'Read the license',
-                    icon: Icons.open_in_new,
-                    tooltip: licenseUrl,
-                    onTap: () => licenseUrl.openAsUriInBrowser(),
-                  )
-                : license.length <= _shortLicenseLength
-                ? Text(license, textAlign: TextAlign.end)
-                : DetailsTag(
-                    label: 'Read full license',
-                    icon: Icons.balance,
-                    tooltip: license.truncate(200),
-                    onTap: () => showLicenseDialog(
-                      context,
-                      modTitle: mod.title,
-                      license: license,
-                    ),
-                  ),
-          ),
-        if (mod.supportLinks.isNotEmpty)
-          SidePanelRow(
-            label: 'Donation links',
-            value: Wrap(
-              alignment: WrapAlignment.end,
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                for (final link in mod.supportLinks)
-                  DetailsTag(
-                    label: link.type.toTitleCase(),
-                    icon: DonationLinksSection.iconFor(link.type),
-                    tooltip: link.url,
-                    onTap: () => link.url.openAsUriInBrowser(),
-                  ),
-              ],
-            ),
-          ),
+        // One list, with no gap beyond each link's own padding.
+        if (links.isNotEmpty)
+          Column(crossAxisAlignment: .stretch, children: links),
+        if (showLicenseAsText) SidePanelRow.text('License', license),
       ],
     );
   }

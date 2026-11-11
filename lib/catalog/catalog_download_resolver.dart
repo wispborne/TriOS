@@ -242,6 +242,24 @@ List<DownloadCandidate> primaryTieSet(List<DownloadCandidate> candidates) {
       .toList();
 }
 
+/// [candidates] with each download link listed once, in the same order. The
+/// links are compared the way the download manager compares them.
+///
+/// When two candidates share a link, the first one stays, unless a later one
+/// downloads in one click and the first one doesn't.
+List<DownloadCandidate> uniqueByLink(List<DownloadCandidate> candidates) {
+  final byLink = <String, DownloadCandidate>{};
+  for (final candidate in candidates) {
+    final link = candidate.url.trim().fixModDownloadUrl();
+    final kept = byLink[link];
+    // Replacing a value keeps the link's place in the map's order.
+    if (kept == null || (!kept.isOneClick && candidate.isOneClick)) {
+      byLink[link] = candidate;
+    }
+  }
+  return byLink.values.toList();
+}
+
 String _forumLabel(ForumLlmDownload download, DownloadCandidateKind kind) {
   if (download.label.isNotEmpty) return download.label;
   if (download.fileName?.isNotEmpty == true) return download.fileName!;

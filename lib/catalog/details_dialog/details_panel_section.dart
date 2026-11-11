@@ -8,8 +8,11 @@ import 'package:trios/widgets/trios_expansion_tile.dart';
 /// The date format the details dialog uses, e.g. "March 1, 2026".
 final DateFormat detailsDateFormat = DateFormat.yMMMMd();
 
-/// The color the dialog uses for labels and secondary text.
-Color detailsMutedColor(ThemeData theme) => theme.colorScheme.onSurfaceVariant;
+/// The color the dialog uses for labels and secondary text. Brighter than
+/// `onSurfaceVariant`, which is hard to read on the dialog's lighter
+/// background at small sizes.
+Color detailsMutedColor(ThemeData theme) =>
+    theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
 /// One panel in the details dialog's side column. Uses the same heading as
 /// the settings page and the dashboard.
@@ -47,15 +50,7 @@ class SidePanelRow extends StatelessWidget {
   final String label;
   final Widget value;
 
-  /// Makes the label bold, for rows that ask a question.
-  final bool strongLabel;
-
-  const SidePanelRow({
-    super.key,
-    required this.label,
-    required this.value,
-    this.strongLabel = false,
-  });
+  const SidePanelRow({super.key, required this.label, required this.value});
 
   /// A row whose value is plain text.
   factory SidePanelRow.text(String label, String value) => SidePanelRow(
@@ -66,9 +61,9 @@ class SidePanelRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final labelStyle = strongLabel
-        ? theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)
-        : theme.textTheme.bodySmall?.copyWith(color: detailsMutedColor(theme));
+    final labelStyle = theme.textTheme.bodySmall?.copyWith(
+      color: detailsMutedColor(theme),
+    );
     return DefaultTextStyle.merge(
       style: theme.textTheme.bodySmall,
       child: Row(
@@ -113,6 +108,9 @@ class DetailsTag extends StatelessWidget {
   final Color? color;
   final IconData? icon;
 
+  /// Shown before the label in place of [icon], e.g. a mod's own icon.
+  final Widget? avatar;
+
   /// Shown after the label, e.g. a check mark or an Install button.
   final Widget? trailing;
   final VoidCallback? onTap;
@@ -124,6 +122,7 @@ class DetailsTag extends StatelessWidget {
     required this.label,
     this.color,
     this.icon,
+    this.avatar,
     this.trailing,
     this.onTap,
     this.tooltip,
@@ -135,7 +134,8 @@ class DetailsTag extends StatelessWidget {
     final theme = Theme.of(context);
     final tint = color;
     Widget chip = RawChip(
-      avatar: icon == null ? null : Icon(icon, size: 16, color: tint),
+      avatar:
+          avatar ?? (icon == null ? null : Icon(icon, size: 16, color: tint)),
       label: Row(
         mainAxisSize: .min,
         spacing: 4,
@@ -145,12 +145,16 @@ class DetailsTag extends StatelessWidget {
         ],
       ),
       labelStyle: theme.textTheme.labelMedium?.copyWith(color: tint),
-      color: tint == null
-          ? null
-          : WidgetStatePropertyAll(tint.withValues(alpha: 0.15)),
-      side: tint == null
-          ? null
-          : BorderSide(color: tint.withValues(alpha: 0.5)),
+      // Plain chips use the same fill as the cards in the tab area and the
+      // donation chips on the catalog card.
+      color: WidgetStatePropertyAll(
+        tint?.withValues(alpha: 0.15) ?? theme.colorScheme.surfaceContainerLow,
+      ),
+      side: BorderSide(
+        color:
+            tint?.withValues(alpha: 0.5) ??
+            theme.colorScheme.onSurface.withValues(alpha: 0.12),
+      ),
       isEnabled: !faded,
       onPressed: onTap,
       visualDensity: VisualDensity.compact,

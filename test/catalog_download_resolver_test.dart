@@ -450,4 +450,52 @@ void main() {
       expect(groups.map((g) => g.modName), ['Red - the Oculian Armada']);
     });
   });
+
+  group('uniqueByLink', () {
+    DownloadCandidate candidate(
+      String url,
+      DownloadCandidateKind kind, {
+      bool requiresManualStep = false,
+    }) => DownloadCandidate(
+      url: url,
+      label: kind.name,
+      kind: kind,
+      requiresManualStep: requiresManualStep,
+    );
+
+    test('lists a link once, keeping the first in order', () {
+      final result = uniqueByLink([
+        candidate('https://a.com/mod.zip', DownloadCandidateKind.forumDirect),
+        candidate('https://b.com/mod.zip', DownloadCandidateKind.forumMirror),
+        candidate(
+          'https://a.com/mod.zip',
+          DownloadCandidateKind.versionChecker,
+        ),
+        candidate(
+          ' https://a.com/mod.zip ',
+          DownloadCandidateKind.catalogDirect,
+        ),
+      ]);
+      expect(result.map((c) => c.kind), [
+        DownloadCandidateKind.forumDirect,
+        DownloadCandidateKind.forumMirror,
+      ]);
+    });
+
+    test('a one-click copy replaces a manual-step one in the same place', () {
+      final result = uniqueByLink([
+        candidate(
+          'https://a.com/mod.zip',
+          DownloadCandidateKind.forumDirect,
+          requiresManualStep: true,
+        ),
+        candidate('https://b.com/mod.zip', DownloadCandidateKind.forumMirror),
+        candidate('https://a.com/mod.zip', DownloadCandidateKind.catalogDirect),
+      ]);
+      expect(result.map((c) => c.kind), [
+        DownloadCandidateKind.catalogDirect,
+        DownloadCandidateKind.forumMirror,
+      ]);
+    });
+  });
 }

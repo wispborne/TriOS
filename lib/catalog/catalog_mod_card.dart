@@ -9,6 +9,7 @@ import 'package:trios/catalog/catalog_mod_actions.dart';
 import 'package:trios/catalog/download_candidate_actions.dart';
 import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/catalog/catalog_page_controller.dart';
+import 'package:trios/catalog/details_dialog/addons_tab.dart';
 import 'package:trios/catalog/details_dialog/catalog_details_dialog.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
@@ -25,6 +26,7 @@ import 'package:trios/models/version_checker_info.dart';
 import 'package:trios/thirdparty/flutter_context_menu/core/utils/extensions.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/context_menu_items.dart';
 import 'package:trios/trios/download_manager/download_manager.dart';
 import 'package:trios/trios/download_manager/download_target.dart';
@@ -1076,6 +1078,11 @@ class CatalogDownloadButton extends ConsumerWidget {
   /// Get it panel. The card uses the compact size.
   final bool large;
 
+  /// Every download for the mod. With more than one, the button is split and
+  /// its right end is a ▾ that lists them all.
+  final List<DownloadCandidate> otherOptions;
+  final void Function(DownloadCandidate candidate)? onOtherOptionSelected;
+
   const CatalogDownloadButton({
     super.key,
     required this.mod,
@@ -1085,6 +1092,8 @@ class CatalogDownloadButton extends ConsumerWidget {
     this.llmMainMod,
     this.isUpdateMuted = false,
     this.large = false,
+    this.otherOptions = const [],
+    this.onOtherOptionSelected,
   });
 
   _CatalogDownloadState _resolveState({
@@ -1121,7 +1130,7 @@ class CatalogDownloadButton extends ConsumerWidget {
       remoteVersion: versionCheckComparison?.remoteVersionCheck?.remoteVersion,
     );
     final primary = primaryCandidate(candidates);
-    final tieSet = primaryTieSet(candidates);
+    final tieSet = uniqueByLink(primaryTieSet(candidates));
     // Best browser-only link (a website or a manual-step link), used when no
     // one-click candidate exists.
     final browserLink = candidates.firstWhereOrNull((c) => !c.isOneClick);
@@ -1236,12 +1245,60 @@ class CatalogDownloadButton extends ConsumerWidget {
 
     // Installed: an inert status marker. Enable/disable lives in the card's
     // right-click menu, so the button never toggles the mod by surprise.
-    final height = large ? 40.0 : 30.0;
+    // 32 matches the Mods page's version button, which sits beside it in the
+    // Get it panel.
+    final height = large ? 32.0 : 30.0;
     final iconSize = large ? 18.0 : 14.0;
     final fontSize = large ? 14.0 : 11.0;
 
+    // The large size has the same corners as other TriOS buttons. The card
+    // keeps its pill shape.
+    final radius = large ? TriOSThemeConstants.cornerRadius : 14.0;
+
+    // Split the same way as the Mods page's version button: one shape, with
+    // a lighter ▾ part on the right behind a thin darker line.
+    final onOptionSelected = onOtherOptionSelected;
+    final isSplit = otherOptions.length > 1 && onOptionSelected != null;
+    Widget withOptions(Widget main) {
+      if (!isSplit) return main;
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: SizedBox(
+          height: height,
+          child: Row(
+            mainAxisSize: large ? MainAxisSize.max : MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              large ? Expanded(child: main) : main,
+              ColoredBox(
+                color: backgroundColor.darker(6),
+                child: const SizedBox(width: 1),
+              ),
+              OtherDownloadOptionsButton(
+                candidates: otherOptions,
+                target: target,
+                onSelected: onOptionSelected,
+                segmentWidth: 32,
+                segmentHeight: height,
+                segmentStyle: FilledButton.styleFrom(
+                  backgroundColor: backgroundColor.lighter(8),
+                  foregroundColor: foregroundColor,
+                  padding: EdgeInsets.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: const RoundedRectangleBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // When split, the clip above rounds the outside corners.
+    final mainRadius = BorderRadius.circular(isSplit ? 0 : radius);
+
     if (isInstalledStatus) {
-      return MovingTooltipWidget.text(
+      return withOptions(MovingTooltipWidget.text(
         message: tooltip,
         child: Container(
           height: large ? height : 28,
@@ -1249,7 +1306,7 @@ class CatalogDownloadButton extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(large ? height / 2 : 14),
+            borderRadius: mainRadius,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1268,7 +1325,7 @@ class CatalogDownloadButton extends ConsumerWidget {
             ],
           ),
         ),
-      );
+      ));
     }
 
     // The update states show the full version-check readout on hover instead
@@ -1309,6 +1366,9 @@ class CatalogDownloadButton extends ConsumerWidget {
               padding: const .symmetric(horizontal: 8),
               visualDensity: VisualDensity.compact,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: large || isSplit
+                  ? RoundedRectangleBorder(borderRadius: mainRadius)
+                  : null,
             ),
             spinnerSize: 20,
             spinnerColor: foregroundColor,
@@ -1335,7 +1395,7 @@ class CatalogDownloadButton extends ConsumerWidget {
         );
 
     if (useChooser) {
-      return MenuAnchor(
+      return withOptions(MenuAnchor(
         menuChildren: [
           for (final candidate in tieSet)
             DownloadCandidateMenuItem(
@@ -1361,11 +1421,13 @@ class CatalogDownloadButton extends ConsumerWidget {
               controller.isOpen ? controller.close() : controller.open(),
               marksPending: false,
             ),
-      );
+      ));
     }
 
     // Website and no-link states don't start a download, so they never spin.
-    return buildButton(onPressed, marksPending: isDownloadAction);
+    return withOptions(
+      buildButton(onPressed, marksPending: isDownloadAction),
+    );
   }
 }
 

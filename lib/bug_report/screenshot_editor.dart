@@ -256,19 +256,12 @@ class _ScreenshotEditorDialogState extends State<_ScreenshotEditorDialog> {
                     ButtonSegment(
                       value: _EditorTool.hide,
                       icon: const Icon(Icons.rectangle),
-                      label: MovingTooltipWidget.text(
-                        message:
-                            "Drag to cover part of the screenshot with a black box.",
-                        child: const Text("Hide"),
-                      ),
+                      label: const Text("Draw Rectangles"),
                     ),
                     ButtonSegment(
                       value: _EditorTool.draw,
                       icon: const Icon(Icons.brush),
-                      label: MovingTooltipWidget.text(
-                        message: "Draw to show the bug or issue.",
-                        child: const Text("Draw"),
-                      ),
+                      label: const Text("Draw Freehand"),
                     ),
                   ],
                   selected: {_tool},
@@ -276,7 +269,7 @@ class _ScreenshotEditorDialogState extends State<_ScreenshotEditorDialog> {
                       setState(() => _tool = selected.first),
                 ),
                 MovingTooltipWidget.text(
-                  message: "Undo",
+                  message: "Undoes",
                   child: TextButton.icon(
                     icon: const Icon(Icons.undo),
                     label: const Text("Undo"),
@@ -286,7 +279,7 @@ class _ScreenshotEditorDialogState extends State<_ScreenshotEditorDialog> {
                   ),
                 ),
                 MovingTooltipWidget.text(
-                  message: "Remove all boxes and drawings.",
+                  message: "Remove edits",
                   child: TextButton.icon(
                     icon: const Icon(Icons.delete_sweep),
                     label: const Text("Clear"),

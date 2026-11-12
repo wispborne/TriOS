@@ -91,10 +91,8 @@ Future<void> _retakeScreenshot(NavigatorState navigator) async {
   }
 
   final bar = OverlayEntry(
-    builder: (_) => _RetakeBar(
-      onTake: () => finish(true),
-      onCancel: () => finish(false),
-    ),
+    builder: (_) =>
+        _RetakeBar(onTake: () => finish(true), onCancel: () => finish(false)),
   );
   overlay.insert(bar);
   final takeScreenshot = await clicked.future;
@@ -236,8 +234,8 @@ class _BugReportDialogState extends State<_BugReportDialog> {
               spacing: 16,
               children: [
                 const Text(
-                  "This sends a report to the ${Constants.appName} developer. "
-                  "${Constants.appName} is not made by Fractal Softworks, "
+                  "This sends a report to the ${Constants.appName} dev. "
+                  "${Constants.appName} is not associated with Fractal Softworks, "
                   "and can't help with the game, payments, license keys, or mods.",
                 ),
                 TextFormField(
@@ -246,12 +244,12 @@ class _BugReportDialogState extends State<_BugReportDialog> {
                   minLines: 4,
                   maxLines: 8,
                   decoration: const InputDecoration(
-                    labelText: "What went wrong? (required)",
-                    hintText: "What were you doing, and what happened?",
+                    labelText: "Description (required)",
+                    hintText: "What were you doing, what happened, what did you expect to happen? Please be specific about any mods or other info involved.",
                     alignLabelWithHint: true,
                   ),
                   validator: (value) => value == null || value.trim().isEmpty
-                      ? "Please describe the problem."
+                      ? "This is required."
                       : null,
                 ),
                 Row(
@@ -265,7 +263,7 @@ class _BugReportDialogState extends State<_BugReportDialog> {
                           labelText: "Username (optional)",
                           hintText: "@YourUsername",
                           helperText:
-                              "Your forum or Discord name, if you'd like a reply.",
+                              "Your forum or Discord name, lets me follow up.",
                         ),
                       ),
                     ),
@@ -282,8 +280,7 @@ class _BugReportDialogState extends State<_BugReportDialog> {
                 ),
                 _buildScreenshotSection(smallText),
                 MovingTooltipWidget.text(
-                  message:
-                      "Whether to send your modlist, including which mods are enabled/disabled.",
+                  message: "Whether to send your modlist, including which mods are enabled/disabled.",
                   child: CheckboxWithLabel(
                     label: "Include mod list",
                     value: draft.includeModList,
@@ -292,7 +289,7 @@ class _BugReportDialogState extends State<_BugReportDialog> {
                   ),
                 ),
                 Text(
-                  "Also sent: ${Constants.appName} version and basic PC info (OS, RAM, screen size).",
+                  "Also sent: ${Constants.appName} version and anonymous hardware info (OS, RAM, screen size, etc).",
                   style: smallText,
                 ),
               ],
@@ -335,24 +332,15 @@ class _BugReportDialogState extends State<_BugReportDialog> {
       crossAxisAlignment: .start,
       spacing: 16,
       children: [
-        MovingTooltipWidget.framed(
-          tooltipWidget: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 960, maxHeight: 640),
-            child: ScreenshotWithMarks(
-              screenshot: screenshot,
-              marks: draft.marks,
-            ),
-          ),
-          child: InkWell(
-            onTap: _isSending ? null : () => _editScreenshot(screenshot),
-            child: SizedBox(
-              width: 240,
-              child: Opacity(
-                opacity: draft.includeScreenshot ? 1 : 0.4,
-                child: ScreenshotWithMarks(
-                  screenshot: screenshot,
-                  marks: draft.marks,
-                ),
+        InkWell(
+          onTap: _isSending ? null : () => _editScreenshot(screenshot),
+          child: SizedBox(
+            width: 240,
+            child: Opacity(
+              opacity: draft.includeScreenshot ? 1 : 0.4,
+              child: ScreenshotWithMarks(
+                screenshot: screenshot,
+                marks: draft.marks,
               ),
             ),
           ),

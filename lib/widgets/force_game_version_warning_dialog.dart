@@ -175,17 +175,18 @@ class ForceGameVersionWarningDialog extends ConsumerWidget {
     WidgetRef ref,
     String currentStarsectorVersion,
   ) async {
+    // Read these before popping. Popping disposes this widget, and `ref` can't be used after that.
+    final modManagerNotifier = ref.read(modManager.notifier);
+    final modVariantsNotifier = ref.read(AppState.modVariants.notifier);
     Navigator.of(context).pop();
     for (final variant in modsToForce) {
-      await ref
-          .read(modManager.notifier)
-          .forceChangeModGameVersion(
-            variant,
-            currentStarsectorVersion,
-            refreshModlistAfter: refreshModlistAfter,
-          );
+      await modManagerNotifier.forceChangeModGameVersion(
+        variant,
+        currentStarsectorVersion,
+        refreshModlistAfter: refreshModlistAfter,
+      );
     }
-    await ref.read(AppState.modVariants.notifier).reloadModVariants();
+    await modVariantsNotifier.reloadModVariants();
     await onForced?.call();
   }
 }

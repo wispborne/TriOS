@@ -54,7 +54,7 @@ void main() {
     }
 
     group('brickModInfoFile', () {
-      test('should rename mod_info.json to mod_info.json.disabled', () {
+      test('should rename mod_info.json to mod_info.json.disabled', () async {
         // Arrange
         final modFolder = tempDir;
         final modInfoFile = modFolder.resolve(Constants.unbrickedModInfoFileName).toFile();
@@ -62,7 +62,7 @@ void main() {
         final smolId = 'test_mod';
 
         // Act
-        core.brickModInfoFile(modFolder, smolId);
+        await core.brickModInfoFile(modFolder, smolId);
 
         // Assert
         expect(modInfoFile.existsSync(), isFalse,
@@ -75,15 +75,15 @@ void main() {
           reason: 'Content should be preserved');
       });
 
-      test('should do nothing when mod_info.json does not exist', () {
+      test('should do nothing when mod_info.json does not exist', () async {
         // Arrange
         final modFolder = tempDir;
         final smolId = 'test_mod';
 
         // Act & Assert
-        expect(
-          () => core.brickModInfoFile(modFolder, smolId),
-          returnsNormally,
+        await expectLater(
+          core.brickModInfoFile(modFolder, smolId),
+          completes,
           reason: 'Already-disabled mods are not an error',
         );
         final disabledFile = modFolder
@@ -213,7 +213,7 @@ void main() {
         final smolId = 'test_mod';
 
         // Act 1: Brick the mod
-        core.brickModInfoFile(modFolder, smolId);
+        await core.brickModInfoFile(modFolder, smolId);
 
         // Assert 1: Mod should be bricked
         expect(modInfoFile.existsSync(), isFalse);

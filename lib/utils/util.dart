@@ -406,6 +406,39 @@ T time<T>(T Function() function, {bool ignoreZero = true}) {
   return result;
 }
 
+/// Windows error codes that usually mean another program has the file open
+/// for a moment (antivirus, the search indexer, cloud sync).
+const _fileBusyErrorCodes = {
+  5, // ERROR_ACCESS_DENIED. Also returned while a file inside a folder is still being deleted.
+  32, // ERROR_SHARING_VIOLATION
+  33, // ERROR_LOCK_VIOLATION
+};
+
+/// Runs [action], and retries it a few times with a short wait if it fails
+/// because another program has the file open.
+///
+/// Rethrows the last error once the retries run out. Any other error is
+/// rethrown straight away.
+Future<T> retryWhileFileBusy<T>(
+  Future<T> Function() action, {
+  required String description,
+}) async {
+  const retryDelaysMs = [50, 100, 200, 400, 800];
+  for (var attempt = 0; ; attempt++) {
+    try {
+      return await action();
+    } on FileSystemException catch (e) {
+      final isBusy = _fileBusyErrorCodes.contains(e.osError?.errorCode);
+      if (!isBusy || attempt >= retryDelaysMs.length) rethrow;
+      Fimber.w(
+        "$description failed because the file is in use (attempt ${attempt + 1}). "
+        "Retrying in ${retryDelaysMs[attempt]}ms. $e",
+      );
+      await Future.delayed(Duration(milliseconds: retryDelaysMs[attempt]));
+    }
+  }
+}
+
 /// Checks a list of [files] to see if they are accessible (not locked).
 ///
 /// It repeatedly tries to open each file in append mode and immediately close it.

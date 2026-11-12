@@ -5,6 +5,7 @@ import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/constants.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
+import 'package:trios/utils/util.dart';
 
 /// Internal service for pure file system operations on mod variants.
 ///
@@ -19,7 +20,7 @@ class ModVariantCore {
   /// This "bricks" the mod so it won't be loaded by the game.
   /// Does nothing if mod_info.json isn't there, since that means the mod is
   /// already disabled (or the folder is gone).
-  void brickModInfoFile(Directory modFolder, String smolId) {
+  Future<void> brickModInfoFile(Directory modFolder, String smolId) async {
     final modInfoFile = modFolder.resolve(Constants.unbrickedModInfoFileName);
 
     if (!modInfoFile.existsSync()) {
@@ -29,8 +30,13 @@ class ModVariantCore {
       return;
     }
 
-    modInfoFile.renameSync(
-      modInfoFile.parent.resolve(Constants.modInfoFileDisabledNames.first).path,
+    await retryWhileFileBusy(
+      () => modInfoFile.rename(
+        modInfoFile.parent
+            .resolve(Constants.modInfoFileDisabledNames.first)
+            .path,
+      ),
+      description: "Disabling '$smolId'",
     );
     Fimber.i(
       "Disabled '$smolId': renamed to '${Constants.modInfoFileDisabledNames.first}'.",
@@ -50,15 +56,17 @@ class ModVariantCore {
             .toList();
 
     // And re-enable one.
-    if (!modVariant.isModInfoEnabled) {
-      disabledModInfoFiles.firstOrNull?.let((disabledModInfoFile) async {
-        disabledModInfoFile.renameSync(
+    final disabledModInfoFile = disabledModInfoFiles.firstOrNull;
+    if (!modVariant.isModInfoEnabled && disabledModInfoFile != null) {
+      await retryWhileFileBusy(
+        () => disabledModInfoFile.rename(
           modVariant.modFolder.resolve(Constants.modInfoFileName).path,
-        );
-        Fimber.i(
-          "Re-enabled ${modVariant.smolId}: renamed ${disabledModInfoFile.nameWithExtension} to ${Constants.modInfoFileName}.",
-        );
-      });
+        ),
+        description: "Re-enabling ${modVariant.smolId}",
+      );
+      Fimber.i(
+        "Re-enabled ${modVariant.smolId}: renamed ${disabledModInfoFile.nameWithExtension} to ${Constants.modInfoFileName}.",
+      );
     }
   }
 

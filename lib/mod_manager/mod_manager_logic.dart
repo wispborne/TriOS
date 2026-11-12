@@ -245,7 +245,7 @@ class ModManagerNotifier extends AsyncNotifier<void> {
         Fimber.i(
           "There is already an enabled variant for ${modInfo.id}. Disabling newly installed variant ${modInfo.smolId} so both aren't enabled.",
         );
-        _variantCore.brickModInfoFile(newModFolder, modInfo.smolId);
+        await _variantCore.brickModInfoFile(newModFolder, modInfo.smolId);
       }
 
       await cleanUpModVariantsBasedOnRetainSetting(modInfo.id, [
@@ -693,7 +693,10 @@ class ModManagerNotifier extends AsyncNotifier<void> {
     );
 
     if (brickModInfo) {
-      _variantCore.brickModInfoFile(modVariant.modFolder, modVariant.smolId);
+      await _variantCore.brickModInfoFile(
+        modVariant.modFolder,
+        modVariant.smolId,
+      );
     }
 
     if (disableModInVanillaLauncher) {
@@ -727,8 +730,8 @@ class ModManagerNotifier extends AsyncNotifier<void> {
   }
 
   // Moved to _ModVariantCore service
-  void disableModInfoFile(Directory modFolder, String smolId) {
-    _variantCore.brickModInfoFile(modFolder, smolId);
+  Future<void> disableModInfoFile(Directory modFolder, String smolId) {
+    return _variantCore.brickModInfoFile(modFolder, smolId);
   }
 
   Future<void> _disableModInEnabledMods(String modId) async {

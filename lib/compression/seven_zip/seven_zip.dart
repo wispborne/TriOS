@@ -416,7 +416,10 @@ class SevenZip implements ArchiveInterface {
     } finally {
       try {
         if (tempFolder.toDirectory().existsSync()) {
-          await tempFolder.toDirectory().delete(recursive: true);
+          await retryWhileFileBusy(
+            () => tempFolder.toDirectory().delete(recursive: true),
+            description: "Deleting temporary folder $tempFolder",
+          );
         }
       } catch (ex, st) {
         Fimber.e(

@@ -16,27 +16,21 @@ part 'mod_changelogs_manager.mapper.dart';
 
 /// String is mod id.
 class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
+  /// Mods whose changelog has been requested. [build] runs again every time a
+  /// version check finishes, and must not request the same changelog again.
+  final _requestedModIds = <String>{};
+
   @override
-  FutureOr<Map<String, ModChangelog>> build() async {
+  FutureOr<Map<String, ModChangelog>> build() {
     final mods = ref.watch(AppState.mods);
     final httpClient = ref.watch(triOSHttpClient);
     final cachedVersionChecks = ref
         .watch(AppState.versionCheckResults)
         .value;
 
-    // Show a spinner only the first time.
-    if (!state.hasValue && !state.isLoading && !state.hasError) {
-      state = const AsyncValue.loading();
-    }
-
-    // Start with whatever we already have.
-    final Map<String, ModChangelog> results = Map.of(
-      state.value ?? <String, ModChangelog>{},
-    );
-
     for (final mod in mods) {
       // Only fetch changelogs once per mod...
-      if (results.containsKey(mod.id)) continue;
+      if (_requestedModIds.contains(mod.id)) continue;
 
       // and only if there is Version Checker...
       final modVariant = mod.findFirstEnabledOrHighestVersion;
@@ -52,30 +46,44 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
       // and only if there is a changelog url.
       if (changelogUrl.isNullOrEmpty()) continue;
 
-      final raw = await fetchChangelog(httpClient, changelogUrl!, mod.id);
-      if (raw.isNullOrEmpty()) continue;
-
-      results[mod.id] = processChangelog(
-        raw!,
-        changelogUrl,
-        mod.id,
-        modVariant.smolId,
+      // Not awaited, so a slow server only delays its own mod's changelog.
+      _requestedModIds.add(mod.id);
+      unawaited(
+        _fetchAndStoreChangelog(
+          httpClient,
+          changelogUrl!,
+          mod.id,
+          modVariant.smolId,
+        ),
       );
-      // Add just-fetched changelog to state.
-      state = AsyncValue.data(Map<String, ModChangelog>.from(results));
     }
 
-    state = AsyncValue.data(results);
-    return results;
+    return state.value ?? <String, ModChangelog>{};
+  }
+
+  Future<void> _fetchAndStoreChangelog(
+    TriOSHttpClient httpClient,
+    String changelogUrl,
+    String modId,
+    String smolId,
+  ) async {
+    final raw = await fetchChangelog(httpClient, changelogUrl, modId);
+    if (raw.isNullOrEmpty() || !ref.mounted) return;
+
+    state = AsyncValue.data({
+      ...?state.value,
+      modId: processChangelog(raw!, changelogUrl, modId, smolId),
+    });
   }
 
   /// Forgets the cached changelogs for the given mods, so the next build
   /// downloads them again. Call this alongside clearing the version checker
   /// cache, since a stale version check means a stale changelog URL.
   void clearCacheForMods(Iterable<String> modIds) {
+    final ids = modIds.toSet();
+    _requestedModIds.removeAll(ids);
     final cached = state.value;
     if (cached == null) return;
-    final ids = modIds.toSet();
     state = AsyncValue.data(
       Map.of(cached)..removeWhere((modId, _) => ids.contains(modId)),
     );
@@ -107,10 +115,21 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
     String modId,
   ) async {
     try {
-      final response = await httpClient.get(changelogUrl);
+      final response = await httpClient.get(_toRawGithubUrl(changelogUrl));
       var data = response.data;
       if (data is List<int>) data = utf8.decode(data);
-      return data.toString().trim();
+      final text = data.toString().trim();
+
+      // The link goes to a web page, not a text file. Showing the page's HTML
+      // is useless, and drawing hundreds of KB of it can freeze or crash.
+      if (_htmlStartRegex.hasMatch(text)) {
+        Fimber.w(
+          'Changelog for mod "$modId" is a web page, not a text file ($changelogUrl)',
+        );
+        return "The changelog link points to a web page, not a text file.\n$changelogUrl";
+      }
+
+      return text;
     } catch (ex, st) {
       Fimber.w(
         'Failed to fetch changelog for mod "$modId" ($changelogUrl)',
@@ -200,6 +219,20 @@ class ModChangelogsManager extends AsyncNotifier<Map<String, ModChangelog>> {
       parsedVersions: parsedVersions,
     );
   }
+}
+
+final _htmlStartRegex = RegExp(r'^<(!doctype html|html)', caseSensitive: false);
+
+/// Mod authors often link to a file's page on GitHub instead of the raw file.
+final _githubBlobRegex = RegExp(
+  r'^https?://(www\.)?github\.com/([^/]+)/([^/]+)/blob/(.+)$',
+  caseSensitive: false,
+);
+
+String _toRawGithubUrl(String url) {
+  final match = _githubBlobRegex.firstMatch(url);
+  if (match == null) return url;
+  return 'https://raw.githubusercontent.com/${match[2]}/${match[3]}/${match[4]}';
 }
 
 /// Thanks Gemini.

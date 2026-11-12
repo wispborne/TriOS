@@ -432,6 +432,7 @@ class _WispGridState<T extends WispGridItem>
             grouping: _PinnedWispGridGroup<T>(info),
             itemsInGroup: pinnedItems,
             isCollapsed: isPinnedCollapsed,
+            setAllCollapsed: _setAllGroupsCollapsed,
             setCollapsed: (c) {
               setState(() {
                 collapseStates[pinnedCollapseKey] = c;
@@ -482,6 +483,7 @@ class _WispGridState<T extends WispGridItem>
           grouping: primaryGroupingLocal,
           itemsInGroup: primaryBucketItems,
           isCollapsed: isPrimaryCollapsed,
+          setAllCollapsed: _setAllGroupsCollapsed,
           setCollapsed: (c) {
             setState(() {
               collapseStates[primaryCollapseKey] = c;
@@ -531,6 +533,7 @@ class _WispGridState<T extends WispGridItem>
             grouping: sub.grouping!,
             itemsInGroup: sub.items,
             isCollapsed: isSecondaryCollapsed,
+            setAllCollapsed: _setAllGroupsCollapsed,
             setCollapsed: (c) {
               setState(() {
                 collapseStates[secondaryCollapseKey] = c;
@@ -936,6 +939,21 @@ class _WispGridState<T extends WispGridItem>
   /// - `modId` The unique identifier of the row that was clicked.
   /// - `shiftPressed` True if the Shift key was held during the click.
   /// - `ctrlPressed` True if the Control (or Command on macOS) key was held during the click.
+  /// Sets every group currently shown, including second-level groups and the
+  /// pinned group, to collapsed or expanded.
+  void _setAllGroupsCollapsed(bool collapsed) {
+    setState(() {
+      for (final group in _lastRenderedGroups) {
+        collapseStates[_CollapseKey(group.sortValue)] = collapsed;
+        for (final sub in group.subgroups) {
+          if (sub.grouping == null) continue;
+          collapseStates[_CollapseKey(group.sortValue, sub.sortValue)] =
+              collapsed;
+        }
+      }
+    });
+  }
+
   void _onRowCheck({
     required String modId,
     required bool shiftPressed,

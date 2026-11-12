@@ -18,6 +18,9 @@ class WispGridGroupRowView<T extends WispGridItem>
   final bool isCollapsed;
   final int shownIndex;
   final Function(bool isCollapsed) setCollapsed;
+
+  /// Collapses or expands every group in the grid, not just this one.
+  final Function(bool isCollapsed) setAllCollapsed;
   final List<WispGridColumn<T>> columns;
   final List<WispGridGroup<T>> groups;
   final WispGridState gridState;
@@ -41,6 +44,7 @@ class WispGridGroupRowView<T extends WispGridItem>
     required this.isCollapsed,
     required this.shownIndex,
     required this.setCollapsed,
+    required this.setAllCollapsed,
     required this.columns,
     required this.groups,
     required this.gridState,
@@ -393,6 +397,17 @@ class _WispGridRowState<T extends WispGridItem>
 
     return ContextMenu(
       entries: [
+        MenuItem(
+          label: 'Collapse All',
+          icon: Icons.unfold_less,
+          onSelected: () => widget.setAllCollapsed(true),
+        ),
+        MenuItem(
+          label: 'Expand All',
+          icon: Icons.unfold_more,
+          onSelected: () => widget.setAllCollapsed(false),
+        ),
+        const MenuDivider(),
         if (widget.groups.length > 1)
           MenuItem.submenu(
             label: 'Group By',

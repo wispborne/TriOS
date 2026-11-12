@@ -238,9 +238,7 @@ class AppState {
       >(PortraitMetadataNotifier.new);
 
   static final starsectorVersion = FutureProvider<String?>((ref) async {
-    final gamePath = ref
-        .watch(appSettings.select((value) => value.gameDir))
-        ?.toDirectory();
+    final gamePath = ref.watch(gameFolder).value;
     if (gamePath == null || gamePath.existsSync() == false) return null;
     final gameCorePath = ref.watch(gameCoreFolder).value;
     if (gameCorePath == null || gameCorePath.existsSync() == false) return null;
@@ -309,33 +307,32 @@ class AppState {
     return true;
   });
 
-  static final gameFolder = FutureProvider<Directory?>(
-    (ref) async =>
-        ref.watch(appSettings.select((value) => value.gameDir))?.toDirectory(),
-  );
+  static final gameFolder = FutureProvider<Directory?>((ref) async {
+    final configured = ref.watch(appSettings.select((value) => value.gameDir));
+    if (configured != null && configured.path.isNotEmpty) {
+      if (configured.existsSync()) {
+        return configured;
+      }
+      // The saved path may be a store path from a previous package version.
+      return gameDirFromEnvironment()?.toDirectory() ?? configured;
+    }
+    return gameDirFromEnvironment()?.toDirectory();
+  });
 
   static final modsFolder = FutureProvider<Directory?>((ref) async {
-    // Compute the *effective* mods path based on settings,
-    // and use that as the only dependency for this provider.
-    final effectiveModsPath = ref.watch(
-      appSettings.select((settings) {
-        final useCustom = settings.hasCustomModsDir;
-        final customModsDir = settings.modsDir;
-        final gameDir = settings.gameDir;
-
-        if (useCustom && customModsDir != null) {
-          // Custom path
-          return customModsDir.normalize.path;
-        }
-
-        // Non-custom path derived from gameDir
-        if (gameDir == null) return null;
-        return generateModsFolderPath(gameDir.toDirectory())?.normalize.path;
-      }),
+    final useCustom = ref.watch(
+      appSettings.select((value) => value.hasCustomModsDir),
     );
+    final customModsDir = ref.watch(
+      appSettings.select((value) => value.modsDir),
+    );
+    if (useCustom && customModsDir != null) {
+      return customModsDir.normalize;
+    }
 
-    if (effectiveModsPath == null) return null;
-    return Directory(effectiveModsPath);
+    final gamePath = ref.watch(gameFolder).value;
+    if (gamePath == null) return null;
+    return generateModsFolderPath(gamePath)?.normalize;
   });
 
   static final savesFolder = FutureProvider<Directory?>((ref) async {

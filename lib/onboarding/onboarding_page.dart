@@ -498,6 +498,11 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
 
   Future<void> _saveSettings(BuildContext context) async {
     final settings = ref.read(appSettings.notifier);
+    // A path that came from STARSECTOR_DIR is left out of the settings, so a
+    // package update that moves the game is followed instead of going stale.
+    final usingEnvGameDir =
+        gameDirPath != null &&
+        isGameRootFromEnvironment(gameDirPath!.toDirectory());
     // Must await: update() debounces the disk write 300ms, and softRestartApp
     // tears down the ProviderScope. If we don't wait, the rebuilt notifier
     // loads stale settings from disk and schedules its own write that races
@@ -505,10 +510,14 @@ class _OnboardingCarouselState extends ConsumerState<OnboardingCarousel> {
     // null and re-triggering the onboarding gate on next launch.
     await settings.update(
       (state) => state.copyWith(
-        gameDir: gameDirPath != null ? Directory(gameDirPath!) : null,
-        modsDir: generateModsFolderPath(
-          gameDirPath!.toDirectory(),
-        )?.toDirectory(),
+        gameDir: usingEnvGameDir
+            ? null
+            : (gameDirPath != null ? Directory(gameDirPath!) : null),
+        modsDir: usingEnvGameDir
+            ? null
+            : generateModsFolderPath(
+                gameDirPath!.toDirectory(),
+              )?.toDirectory(),
         keepLastNVersions: enableMultipleVersions ? lastNVersionsSetting : 1,
         allowCrashReporting: allowCrashReporting,
         deepLinkProtocolRegistered: enableDeepLinks,

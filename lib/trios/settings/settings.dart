@@ -233,6 +233,10 @@ class Settings with SettingsMappable {
   /// Work in progress, so it's off unless you turn it on.
   final bool showEngineTrails;
 
+  /// Whether the save archiver buttons show on the Mod Profiles page.
+  /// Work in progress, so it's off unless you turn it on.
+  final bool enableSaveArchiver;
+
   final List<String> weaponsSearchHistory;
   final List<String> shipsSearchHistory;
   final List<String> hullmodsSearchHistory;
@@ -379,6 +383,7 @@ class Settings with SettingsMappable {
     this.concurrentExtractions = 2,
     this.debugMode = false,
     this.showEngineTrails = false,
+    this.enableSaveArchiver = false,
     this.weaponsSearchHistory = const [],
     this.shipsSearchHistory = const [],
     this.hullmodsSearchHistory = const [],

@@ -1167,6 +1167,13 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     opt: true,
     def: false,
   );
+  static bool _$enableSaveArchiver(Settings v) => v.enableSaveArchiver;
+  static const Field<Settings, bool> _f$enableSaveArchiver = Field(
+    'enableSaveArchiver',
+    _$enableSaveArchiver,
+    opt: true,
+    def: false,
+  );
   static List<String> _$weaponsSearchHistory(Settings v) =>
       v.weaponsSearchHistory;
   static const Field<Settings, List<String>> _f$weaponsSearchHistory = Field(
@@ -1349,6 +1356,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
     #concurrentExtractions: _f$concurrentExtractions,
     #debugMode: _f$debugMode,
     #showEngineTrails: _f$showEngineTrails,
+    #enableSaveArchiver: _f$enableSaveArchiver,
     #weaponsSearchHistory: _f$weaponsSearchHistory,
     #shipsSearchHistory: _f$shipsSearchHistory,
     #hullmodsSearchHistory: _f$hullmodsSearchHistory,
@@ -1477,6 +1485,7 @@ class SettingsMapper extends ClassMapperBase<Settings> {
       concurrentExtractions: data.dec(_f$concurrentExtractions),
       debugMode: data.dec(_f$debugMode),
       showEngineTrails: data.dec(_f$showEngineTrails),
+      enableSaveArchiver: data.dec(_f$enableSaveArchiver),
       weaponsSearchHistory: data.dec(_f$weaponsSearchHistory),
       shipsSearchHistory: data.dec(_f$shipsSearchHistory),
       hullmodsSearchHistory: data.dec(_f$hullmodsSearchHistory),
@@ -1740,6 +1749,7 @@ abstract class SettingsCopyWith<$R, $In extends Settings, $Out>
     int? concurrentExtractions,
     bool? debugMode,
     bool? showEngineTrails,
+    bool? enableSaveArchiver,
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
     List<String>? hullmodsSearchHistory,
@@ -2046,6 +2056,7 @@ class _SettingsCopyWithImpl<$R, $Out>
     int? concurrentExtractions,
     bool? debugMode,
     bool? showEngineTrails,
+    bool? enableSaveArchiver,
     List<String>? weaponsSearchHistory,
     List<String>? shipsSearchHistory,
     List<String>? hullmodsSearchHistory,
@@ -2202,6 +2213,7 @@ class _SettingsCopyWithImpl<$R, $Out>
         #concurrentExtractions: concurrentExtractions,
       if (debugMode != null) #debugMode: debugMode,
       if (showEngineTrails != null) #showEngineTrails: showEngineTrails,
+      if (enableSaveArchiver != null) #enableSaveArchiver: enableSaveArchiver,
       if (weaponsSearchHistory != null)
         #weaponsSearchHistory: weaponsSearchHistory,
       if (shipsSearchHistory != null) #shipsSearchHistory: shipsSearchHistory,
@@ -2520,6 +2532,10 @@ class _SettingsCopyWithImpl<$R, $Out>
     ),
     debugMode: data.get(#debugMode, or: $value.debugMode),
     showEngineTrails: data.get(#showEngineTrails, or: $value.showEngineTrails),
+    enableSaveArchiver: data.get(
+      #enableSaveArchiver,
+      or: $value.enableSaveArchiver,
+    ),
     weaponsSearchHistory: data.get(
       #weaponsSearchHistory,
       or: $value.weaponsSearchHistory,

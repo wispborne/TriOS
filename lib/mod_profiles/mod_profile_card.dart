@@ -440,7 +440,10 @@ class _ModProfileCardState extends ConsumerState<ModProfileCard> {
                         //       message: 'Id: ${profile.id}',
                         //       child: const Icon(
                         //           Icons.bug_report)),
-                        if (isSaveGame)
+                        if (isSaveGame &&
+                            ref.watch(
+                              appSettings.select((s) => s.enableSaveArchiver),
+                            ))
                           Disable(
                             isEnabled: !isGameRunning,
                             child: MovingTooltipWidget.text(

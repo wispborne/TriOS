@@ -10,6 +10,7 @@ import 'package:trios/save_archiver/save_archives_dialog.dart';
 import 'package:trios/themes/theme_manager.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/dialogs.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/logging.dart';
@@ -190,13 +191,17 @@ class _ModProfilePageState extends ConsumerState<ModProfilePage>
                             ).textTheme.headlineSmall?.copyWith(fontSize: 20),
                           ),
                           const Spacer(),
-                          MovingTooltipWidget.text(
-                            message: 'Manage archived saves',
-                            child: IconButton(
-                              onPressed: () => showSaveArchivesDialog(context),
-                              icon: const Icon(Icons.inventory),
+                          if (ref.watch(
+                            appSettings.select((s) => s.enableSaveArchiver),
+                          ))
+                            MovingTooltipWidget.text(
+                              message: 'Manage archived saves',
+                              child: IconButton(
+                                onPressed: () =>
+                                    showSaveArchivesDialog(context),
+                                icon: const Icon(Icons.inventory),
+                              ),
                             ),
-                          ),
                           MovingTooltipWidget.text(
                             message: 'Reread from Saves folder',
                             child: IconButton(

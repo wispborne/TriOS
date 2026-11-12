@@ -128,6 +128,23 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
             label: "Show engine trails",
           ),
         ),
+        MovingTooltipWidget.text(
+          message:
+              "Shows the buttons for archiving saves on the Mod Profiles page."
+              "\nStill being worked on.",
+          child: CheckboxWithLabel(
+            value: ref.watch(appSettings.select((s) => s.enableSaveArchiver)),
+            onChanged: (value) {
+              ref
+                  .read(appSettings.notifier)
+                  .update(
+                    (state) =>
+                        state.copyWith(enableSaveArchiver: value ?? false),
+                  );
+            },
+            label: "Enable save archiver",
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Row(

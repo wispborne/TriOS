@@ -41,7 +41,17 @@ abstract class GenericSettingsAsyncNotifier<T> extends AsyncNotifier<T>
           final lastBackup = await settingsManager.lastBackupTime();
           if (lastBackup == null ||
               DateTime.now().difference(lastBackup) > Duration(minutes: 30)) {
-            settingsManager.createBackup();
+            // Not awaited, so loading settings isn't held up by the backup.
+            settingsManager.createBackup().catchError((
+              Object e,
+              StackTrace stackTrace,
+            ) {
+              Fimber.w(
+                "Error creating backup",
+                ex: e,
+                stacktrace: stackTrace,
+              );
+            });
           }
         } catch (e, stackTrace) {
           Fimber.w("Error creating backup", ex: e, stacktrace: stackTrace);

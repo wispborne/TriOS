@@ -251,11 +251,15 @@ abstract class GenericAsyncSettingsManager<T> {
 
   Future<void> createBackup() async {
     final backupFile = getBackupFile();
-    if (await backupFile.exists()) {
-      await backupFile.delete();
-    }
-    await settingsFile.copy(backupFile.path);
-    await settingsFile.setLastModified(DateTime.now());
+    // Hold the write lock while touching the settings file, so a write can't
+    // replace it halfway through the copy.
+    await _mutex.protect(() async {
+      if (await backupFile.exists()) {
+        await backupFile.delete();
+      }
+      await settingsFile.copy(backupFile.path);
+      await settingsFile.setLastModified(DateTime.now());
+    });
     Fimber.i("Backup of $fileName created at ${backupFile.path}");
     await compressBackupFile(backupFile);
   }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/version_checker.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
+import 'package:trios/models/version.dart';
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/mod_metadata.dart';
@@ -182,8 +183,8 @@ extension ModExt on Mod {
   Comparable<String>? getSortValueForModIcon() =>
       findFirstEnabledOrHighestVersion?.iconFilePath;
 
-  Comparable<String>? getSortValueForVersion() =>
-      findFirstEnabledOrHighestVersion?.modInfo.version?.toString();
+  Comparable<Version>? getSortValueForVersion() =>
+      findFirstEnabledOrHighestVersion?.modInfo.version;
 
   Comparable<num>? getSortValueForVram(
     VramEstimatorManagerState? vramEstState,

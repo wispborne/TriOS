@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/search_index.dart';
 import 'package:stringr/stringr.dart';
 import 'package:trios/models/mod.dart';
+import 'package:trios/mod_tag_manager/category_manager.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -18,6 +19,8 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
   @override
   ModsGridSearchState build() {
     final allMods = ref.watch(AppState.mods);
+    // A category: search has to update when a mod's categories change.
+    ref.watch(categoryManagerProvider);
 
     if (stateOrNull == null) {
       _searchFields = _buildSearchFields();
@@ -205,6 +208,26 @@ class ModsGridSearchController extends Notifier<ModsGridSearchState> {
                 (dep.name?.toLowerCase().contains(lowerValue) ?? false) ||
                 (dep.id?.toLowerCase().contains(lowerValue) ?? false),
           );
+        },
+      ),
+      SearchField<Mod>(
+        key: 'category',
+        description: 'Any category the mod is in',
+        valueSuggestions: (_) =>
+            ref
+                .read(categoryManagerProvider.notifier)
+                .getAllCategories()
+                .map((c) => c.name.toLowerCase())
+                .toSet()
+                .toList()
+              ..sort(),
+        matches: (mod, op, value) {
+          if (op != DslOperator.equals) return false;
+          final lowerValue = value.toLowerCase();
+          return ref
+              .read(categoryManagerProvider.notifier)
+              .getCategoriesForMod(mod.id)
+              .any((c) => c.name.toLowerCase().contains(lowerValue));
         },
       ),
       SearchField<Mod>(

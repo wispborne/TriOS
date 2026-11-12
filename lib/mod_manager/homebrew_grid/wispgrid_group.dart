@@ -56,6 +56,7 @@ abstract class WispGridGroup<T extends WispGridItem> {
     List<WispGridColumn<T>> columns, {
     required Widget child,
     List<ContextMenuEntry> additionalMenuEntries = const [],
+    Comparable? groupSortValue,
   }) {
     if (additionalMenuEntries.isEmpty) return child;
     return ContextMenuRegion(
@@ -72,11 +73,14 @@ abstract class WispGridGroup<T extends WispGridItem> {
   /// Called when items are dropped onto a group.
   /// [droppedItemKeys] are the keys of the dragged WispGridItems.
   /// [targetGroupItems] are the items currently in the target group.
+  /// [groupSortValue] identifies the target group. An item in several groups
+  /// can't be used to work out which group it was dropped on.
   void onItemsDropped(
     List<String> droppedItemKeys,
     List<T> targetGroupItems,
-    WidgetRef ref,
-  ) {}
+    WidgetRef ref, {
+    required Comparable? groupSortValue,
+  }) {}
 
   /// Returns the label shown on the drag feedback badge.
   /// [draggedKeys] are the keys of the items being dragged.
@@ -149,6 +153,7 @@ class EnabledStateModGridGroup extends WispGridGroup<Mod> {
     List<WispGridColumn<Mod>> columns, {
     required Widget child,
     List<ContextMenuEntry> additionalMenuEntries = const [],
+    Comparable? groupSortValue,
   }) => ContextMenuRegion(
     contextMenu: ContextMenu(
       entries: [
@@ -227,16 +232,14 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
   void onItemsDropped(
     List<String> droppedItemKeys,
     List<Mod> targetGroupItems,
-    WidgetRef ref,
-  ) {
+    WidgetRef ref, {
+    required Comparable? groupSortValue,
+  }) {
     final store = ref.read(categoryManagerProvider).value;
     if (store == null) return;
     final notifier = ref.read(categoryManagerProvider.notifier);
 
-    // Resolve target category from the first item in the target group.
-    final targetCategory = targetGroupItems.isEmpty
-        ? null
-        : _getCategoryForGroup(targetGroupItems);
+    final targetCategory = _categoryFromSortValue(groupSortValue);
 
     notifier.moveModsToCategory(droppedItemKeys, targetCategory?.id);
   }
@@ -305,14 +308,6 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
         ?.icon;
   }
 
-  /// Resolves the category for a group of mods (based on the first mod's primary assignment).
-  Category? _getCategoryForGroup(List<Mod> itemsInGroup) {
-    if (itemsInGroup.isEmpty) return null;
-    return ref
-        .read(categoryManagerProvider.notifier)
-        .getPrimaryCategory(itemsInGroup.first.id);
-  }
-
   @override
   Widget wrapGroupWidget(
     BuildContext context,
@@ -322,8 +317,9 @@ class CategoryModGridGroup extends WispGridGroup<Mod> {
     List<WispGridColumn<Mod>> columns, {
     required Widget child,
     List<ContextMenuEntry> additionalMenuEntries = const [],
+    Comparable? groupSortValue,
   }) {
-    final category = _getCategoryForGroup(itemsInGroup);
+    final category = _categoryFromSortValue(groupSortValue);
     final categoryEntries = category == null
         ? []
         : buildCategoryContextMenuEntries(
@@ -408,6 +404,7 @@ class AuthorModGridGroup extends WispGridGroup<Mod> {
     List<WispGridColumn<Mod>> columns, {
     required Widget child,
     List<ContextMenuEntry> additionalMenuEntries = const [],
+    Comparable? groupSortValue,
   }) => ContextMenuRegion(
     contextMenu: ContextMenu(
       entries: [
@@ -478,6 +475,7 @@ class ModTypeModGridGroup extends WispGridGroup<Mod> {
     List<WispGridColumn<Mod>> columns, {
     required Widget child,
     List<ContextMenuEntry> additionalMenuEntries = const [],
+    Comparable? groupSortValue,
   }) => ContextMenuRegion(
     contextMenu: ContextMenu(
       entries: [
@@ -532,6 +530,7 @@ class GameVersionModGridGroup extends WispGridGroup<Mod> {
     List<WispGridColumn<Mod>> columns, {
     required Widget child,
     List<ContextMenuEntry> additionalMenuEntries = const [],
+    Comparable? groupSortValue,
   }) => ContextMenuRegion(
     contextMenu: ContextMenu(
       entries: [

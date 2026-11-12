@@ -500,6 +500,7 @@ class _WispGridState<T extends WispGridItem>
           primaryHeader = _DragTargetGroupHeader<T>(
             grouping: primaryGroupingLocal,
             itemsInGroup: primaryBucketItems,
+            groupSortValue: group.sortValue,
             hoverGroupName: _dragTargetGroupName,
             child: primaryHeader,
           );
@@ -547,6 +548,7 @@ class _WispGridState<T extends WispGridItem>
             secondaryHeader = _DragTargetGroupHeader<T>(
               grouping: sub.grouping!,
               itemsInGroup: sub.items,
+              groupSortValue: sub.sortValue,
               hoverGroupName: _dragTargetGroupName,
               child: secondaryHeader,
             );
@@ -610,11 +612,13 @@ class _WispGridState<T extends WispGridItem>
                   details.data.itemKeys,
                   rowDragBucketItems,
                   ref,
+                  groupSortValue: group.sortValue,
                 );
               },
               onMove: (details) {
                 final targetName = rowDragGrouping!.getGroupName(
                   rowDragBucketItems.first,
+                  groupSortValue: group.sortValue,
                 );
                 _dragTargetGroupName.value = targetName == null
                     ? null
@@ -1144,6 +1148,7 @@ class _DragFeedbackBadge extends StatelessWidget {
 class _DragTargetGroupHeader<T extends WispGridItem> extends ConsumerWidget {
   final WispGridGroup<T> grouping;
   final List<T> itemsInGroup;
+  final Comparable? groupSortValue;
   final ValueNotifier<String?> hoverGroupName;
   final Widget child;
 
@@ -1151,6 +1156,7 @@ class _DragTargetGroupHeader<T extends WispGridItem> extends ConsumerWidget {
     super.key,
     required this.grouping,
     required this.itemsInGroup,
+    required this.groupSortValue,
     required this.hoverGroupName,
     required this.child,
   });
@@ -1163,10 +1169,18 @@ class _DragTargetGroupHeader<T extends WispGridItem> extends ConsumerWidget {
       },
       onAcceptWithDetails: (details) {
         hoverGroupName.value = null;
-        grouping.onItemsDropped(details.data.itemKeys, itemsInGroup, ref);
+        grouping.onItemsDropped(
+          details.data.itemKeys,
+          itemsInGroup,
+          ref,
+          groupSortValue: groupSortValue,
+        );
       },
       onMove: (details) {
-        final targetName = grouping.getGroupName(itemsInGroup.first);
+        final targetName = grouping.getGroupName(
+          itemsInGroup.first,
+          groupSortValue: groupSortValue,
+        );
         hoverGroupName.value = targetName == null
             ? null
             : grouping.dragHoverLabel(targetName, details.data.itemKeys);

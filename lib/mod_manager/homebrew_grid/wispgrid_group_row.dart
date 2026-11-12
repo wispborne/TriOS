@@ -126,6 +126,7 @@ class _WispGridRowState<T extends WispGridItem>
         ...widget.additionalContextMenuEntries,
         ..._buildGroupHeaderContextMenu().entries,
       ],
+      groupSortValue: sortValue,
       child: headerContent,
     );
   }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trios/mod_manager/mod_data_issues.dart';
+import 'package:trios/mod_manager/utils/mod_file_utils.dart';
 import 'package:trios/models/mod_info.dart';
 import 'package:trios/models/mod_info_json.dart';
 import 'package:trios/models/mod_variant.dart';
@@ -80,6 +81,59 @@ void main() {
       final issues = checkModDataIssues(variant);
       expect(issues, hasLength(1));
       expect(issues.single.type, ModDataIssueType.versionCheckerMismatch);
+    });
+
+    test('flags versions that differ only by a letter', () {
+      final variant = _makeVariant(
+        modInfoVersion: '1.3.0b',
+        versionCheckerVersion: VersionObject(1, 3, '0a'),
+      );
+      final issues = checkModDataIssues(variant);
+      expect(issues, hasLength(1));
+      expect(issues.single.summary, contains('1.3.0a'));
+      expect(issues.single.summary, contains('1.3.0b'));
+    });
+
+    test('no issue when the letters match but differ in case', () {
+      final variant = _makeVariant(
+        modInfoVersion: '1.3.0A',
+        versionCheckerVersion: VersionObject(1, 3, '0a'),
+      );
+      expect(checkModDataIssues(variant), isEmpty);
+    });
+
+    test('flags a letter in the .version file read with an unquoted 0a', () {
+      // Copied from Diktat Enhancement 1.3.0b, whose .version file still says
+      // 1.3.0a. The unquoted 0a is not valid JSON.
+      const versionFileText = '''
+{
+    "masterVersionFile":"https://github.com/Jal85/diktat-enhancement/blob/main/de.version?raw=true",
+    "modName":"Diktat Enhancement",
+    "modThreadId":22852,
+    "modVersion":
+    {
+        "major":1,
+        "minor":3,
+        "patch":0a,
+    },
+}''';
+      final info = VersionCheckerInfoMapper.fromMap(
+        parseVersionCheckerJson(versionFileText),
+      );
+      final variant = ModVariant(
+        modInfo: ModInfo(
+          id: 'test_mod',
+          name: 'Test Mod',
+          version: Version.parse('1.3.0b'),
+        ),
+        versionCheckerInfo: info,
+        modFolder: Directory('test_mod'),
+        hasNonBrickedModInfo: true,
+        gameCoreFolder: Directory('test_game_core'),
+      );
+      final issues = checkModDataIssues(variant);
+      expect(issues, hasLength(1));
+      expect(issues.single.summary, contains('1.3.0a'));
     });
   });
 }

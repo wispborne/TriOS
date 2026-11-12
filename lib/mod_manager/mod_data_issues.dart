@@ -40,10 +40,15 @@ ModDataIssue? _checkVersionCheckerVersionMatchesModInfo(ModVariant variant) {
   // Sanitize both the same way (strips letters, keeps digits/dots/hyphens) so
   // formatting differences like "v1.2.3" vs "1.2.3" don't warn, but genuinely
   // different numbers like "0.35" vs "0.3.5" do.
-  final versionsMatch = Version.parse(
+  final numbersMatch = Version.parse(
     versionCheckerVersion.toString(),
   ).equalsSymbolic(Version.parse(modInfoVersion.toString()));
-  if (versionsMatch) return null;
+  // The sanitizing above drops letters, so compare them separately.
+  // Otherwise "1.3.0a" vs "1.3.0b" would not warn.
+  final lettersMatch =
+      _versionLetters(versionCheckerVersion.toString()) ==
+      _versionLetters(modInfoVersion.toString());
+  if (numbersMatch && lettersMatch) return null;
 
   return ModDataIssue(
     type: ModDataIssueType.versionCheckerMismatch,
@@ -55,3 +60,11 @@ ModDataIssue? _checkVersionCheckerVersionMatchesModInfo(ModVariant variant) {
         " TriOS uses the Version Checker version ($versionCheckerVersion) when comparing versions.",
   );
 }
+
+/// The letters in a version, lowercased, ignoring a leading "v".
+/// "1.3.0b" gives "b", "v1.2.3" gives "", "1.0-RC2" gives "rc".
+String _versionLetters(String version) => version
+    .trim()
+    .toLowerCase()
+    .replaceFirst(RegExp(r'^v'), '')
+    .replaceAll(RegExp(r'[^a-z]'), '');

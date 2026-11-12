@@ -568,8 +568,14 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                             itemBuilder: (context, index) {
                               if (index == 0 &&
                                   modsWithUpdates.nonNulls.isNotEmpty) {
+                                // Leave out muted mods, whether or not they're
+                                // shown. Otherwise muting a mod whose update
+                                // downloads a different mod wouldn't stop this
+                                // from downloading it again.
+                                final modsToUpdate =
+                                    modsWithUpdates - mutedModsWithUpdates;
                                 final modUpdatesCount =
-                                    modsWithUpdates.nonNulls.length;
+                                    modsToUpdate.nonNulls.length;
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -597,7 +603,9 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                 ? "Game is running"
                                                 : "Download${modUpdatesCount > 1 ? " all" : ""} $modUpdatesCount update${modUpdatesCount == 1 ? "" : "s"}",
                                             child: Disable(
-                                              isEnabled: !isGameRunning,
+                                              isEnabled:
+                                                  !isGameRunning &&
+                                                  modUpdatesCount > 0,
                                               child: SizedBox(
                                                 child: TextButton.icon(
                                                   style: TextButton.styleFrom(
@@ -615,7 +623,7 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                                                   ),
                                                   onPressed: () {
                                                     _onClickedDownloadModUpdatesDialog(
-                                                      modsWithUpdates,
+                                                      modsToUpdate,
                                                       versionCheck,
                                                       context,
                                                     );

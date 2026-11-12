@@ -95,6 +95,11 @@ class BatchEntry {
   /// Whether activity history has already been recorded for this entry.
   bool historyRecorded = false;
 
+  /// Whether this entry has been checked for an update that installed a mod
+  /// with a different ID. Kept apart from [historyRecorded] because two
+  /// finalize calls can both see the entry before either records history.
+  bool idChangeChecked = false;
+
   /// Optional download associated with this entry (for notification driving).
   Download? download;
 

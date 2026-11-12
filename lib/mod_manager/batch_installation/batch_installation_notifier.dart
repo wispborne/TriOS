@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/compression/archive.dart';
 import 'package:trios/mod_manager/batch_installation/batch_installation.dart';
 import 'package:trios/mod_manager/batch_installation/batch_pre_scanner.dart';
+import 'package:trios/mod_manager/batch_installation/mod_id_change.dart';
+import 'package:trios/mod_manager/mod_id_change_dialog.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/mod_manager/widgets/mod_install_selection_dialog.dart';
 import 'package:trios/mod_manager/widgets/mod_installation_error_dialog.dart';
@@ -825,6 +827,63 @@ class BatchInstallationNotifier extends Notifier<BatchInstallation?> {
           await ModInstallationErrorDialog.show(context, errorResults);
         }
       }
+    }
+
+    _askAboutModIdChanges(unrecorded);
+  }
+
+  /// Shows the "Mod ID change" dialog for each update that installed a mod
+  /// with a different ID from the mod it was started from.
+  ///
+  /// Two finalize calls can run on the same batch at once, so each entry is
+  /// claimed with [BatchEntry.idChangeChecked]. Nothing here may `await`, or
+  /// both calls could claim the same entry and show its dialog twice.
+  void _askAboutModIdChanges(List<BatchEntry> entries) {
+    for (final entry in entries) {
+      // Not finished yet. A later finalize checks it once it is.
+      if (!entry.status.isTerminal) continue;
+      if (entry.idChangeChecked) continue;
+      entry.idChangeChecked = true;
+
+      final change = detectModIdChange(
+        download: entry.download,
+        modsInArchive: entry.scanResult?.allModInfos.length ?? 0,
+        installedMods: entry.installedMods,
+      );
+      if (change == null) continue;
+
+      final mods = ref.read(AppState.mods);
+      final oldId = change.oldModInfo.id;
+      // Missing if the new mod was installed into the old mod's folder. Then
+      // there's nothing to ask about.
+      final oldMod = mods.firstWhereOrNull((mod) => mod.id == oldId);
+      if (oldMod == null) continue;
+
+      final newVariant = (ref.read(AppState.modVariants).value ?? [])
+          .firstWhereOrNull((v) => v.smolId == change.newModInfo.smolId);
+      if (newVariant == null) {
+        Fimber.w(
+          "Mod ID change from $oldId to ${change.newModInfo.id}: the new mod isn't in the mod list.",
+        );
+        continue;
+      }
+
+      final context = ref.read(AppState.appContext);
+      if (context == null || !context.mounted) {
+        Fimber.w(
+          "Mod ID change from $oldId to ${change.newModInfo.id}: no app context to show the dialog.",
+        );
+        continue;
+      }
+
+      // Not awaited, so the install queue doesn't wait for the user.
+      askAboutModIdChange(
+        ref,
+        context,
+        oldMod: oldMod,
+        newVariant: newVariant,
+        dependents: enabledModsDependingOn(mods, oldId),
+      );
     }
   }
 

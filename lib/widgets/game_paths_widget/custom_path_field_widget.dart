@@ -91,8 +91,17 @@ class _CustomPathFieldState extends ConsumerState<CustomPathField> {
       }
 
       // widget.onPathChanged(_textController.text);
+    } else if (_savedPath(widget) != _savedPath(oldWidget)) {
+      // The saved path changed somewhere else, e.g. picking a new game folder
+      // moves the default paths. Show the new one.
+      _textController.text = _savedPath(widget);
     }
   }
+
+  /// The path the box shows when the user hasn't typed anything.
+  static String _savedPath(CustomPathField field) => field.isChecked
+      ? (field.customPathWhenChecked ?? field.pathWhenUnchecked)
+      : field.pathWhenUnchecked;
 
   void _submitIfChanged() {
     final currentText = _textController.text;

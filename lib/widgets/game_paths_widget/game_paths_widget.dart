@@ -34,6 +34,16 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
     );
     final state = ref.watch(gamePathsControllerProvider);
     final settings = ref.watch(appSettings);
+
+    // Keep the text box in sync when the path changes from the folder picker.
+    ref.listen(gamePathsControllerProvider.select((s) => s.gamePathText), (
+      _,
+      newPath,
+    ) {
+      if (gamePathController.text != newPath) {
+        gamePathController.text = newPath;
+      }
+    });
     final theme = Theme.of(context);
 
     final invalidPathMessage = "Path does not exist";
@@ -68,14 +78,20 @@ class _GamePathsWidgetState extends ConsumerState<GamePathsWidget> {
                   customGamePathsController.updateGameRootFolderPath(newGameDir);
                 },
               ),
-              if (gamePathController.text != state.gamePathText)
-                TextButton.icon(
-                  label: const Text("Apply"),
-                  icon: const Icon(Icons.check),
-                  onPressed: () => customGamePathsController.updateGameRootFolderPath(
-                    gamePathController.text,
-                  ),
-                ),
+              ValueListenableBuilder(
+                valueListenable: gamePathController,
+                builder: (context, value, _) {
+                  if (value.text == state.gamePathText) {
+                    return const SizedBox.shrink();
+                  }
+                  return TextButton.icon(
+                    label: const Text("Apply"),
+                    icon: const Icon(Icons.check),
+                    onPressed: () => customGamePathsController
+                        .updateGameRootFolderPath(value.text),
+                  );
+                },
+              ),
             ],
           ),
         ),

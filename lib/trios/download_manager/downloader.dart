@@ -730,7 +730,7 @@ class DownloadManager {
     return null;
   }
 
-  /// Sends a HEAD request to the given URL and returns the response headers.
+  /// Returns the headers of the given URL without downloading the file.
   /// Returns null if there was an error.
   Future<HttpHeaders?> fetchHeaders(String url) async {
     try {
@@ -744,8 +744,7 @@ class DownloadManager {
         return null;
       }
 
-      // Send a HEAD request to the URL
-      final response = await httpClient.get(url, headers: {'method': 'HEAD'});
+      final response = await httpClient.get(url, skipFileBody: true);
 
       // Return headers if the request is successful
       if (response.statusCode == 200) {
@@ -790,9 +789,12 @@ class DownloadManager {
     return false;
   }
 
-  /// Efficiently fetch headers.
-  /// - **Uses a fast "Range: bytes=0-0" GET request instead of HEAD, first.**
-  /// - **Falls back to HEAD request if needed.**
+  /// Fetches a link's headers without downloading the file.
+  ///
+  /// Tries a GET for only the first byte, then a plain GET that hangs up once
+  /// the headers arrive. Doesn't use real HEAD requests because some hosts
+  /// answer them differently: Bitbucket returns 403 and Dropbox gives the
+  /// wrong content type.
   static Future<Map<String, String>> fetchHeadersEfficiently(
     String url,
     TriOSHttpClient httpClient,
@@ -807,6 +809,7 @@ class DownloadManager {
         final getResponse = await httpClient.get(
           url,
           headers: {'Range': 'bytes=0-0'},
+          skipFileBody: true,
         );
         Fimber.d(
           "Partial GET request took ${DateTime.now().millisecondsSinceEpoch - timestamp} ms for URL: $url",
@@ -817,7 +820,7 @@ class DownloadManager {
           return headers;
         } else {
           Fimber.d(
-            "No downloadable file found from efficient GET request, falling back to normal HEAD request.",
+            "No downloadable file found from first-byte GET request, falling back to normal GET request.",
           );
         }
       } catch (e) {
@@ -827,20 +830,16 @@ class DownloadManager {
       }
     }
 
-    // Slower fallback (4+ seconds)
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final headResponse = await httpClient.get(
-        url,
-        headers: {'method': 'HEAD'},
-      );
+      final response = await httpClient.get(url, skipFileBody: true);
       Fimber.d(
-        "HEAD request took ${DateTime.now().millisecondsSinceEpoch - timestamp} ms for URL: $url",
+        "GET for headers took ${DateTime.now().millisecondsSinceEpoch - timestamp} ms for URL: $url",
       );
-      return _headersToMap(headResponse.headers);
+      return _headersToMap(response.headers);
     } catch (e) {
       Fimber.w(
-        "HEAD request failed for URL: $url, falling back to empty headers. Error: $e",
+        "GET for headers failed for URL: $url, falling back to empty headers. Error: $e",
       );
       return {};
     }
@@ -880,10 +879,16 @@ class DownloadManager {
 
     while (redirectCount < maxRedirects) {
       Fimber.d("Redirect count: $redirectCount, Current URL: $currentUrl");
-      final response = await httpClient.get(url, headers: {'method': 'HEAD'});
+      final response = await httpClient.get(url, skipFileBody: true);
 
       if (response.httpResponse.redirects.isNotEmpty) {
-        currentUrl = response.httpResponse.redirects.last.location.toString();
+        // A redirect's address can be relative to the page that sent it.
+        currentUrl = response.httpResponse.redirects
+            .fold(
+              Uri.parse(url),
+              (previous, redirect) => previous.resolveUri(redirect.location),
+            )
+            .toString();
         currentUrl = fixUrl(currentUrl);
       }
 
@@ -906,6 +911,7 @@ class DownloadManager {
       final getResponse = await httpClient.get(
         currentUrl,
         headers: {'User-Agent': 'Mozilla/5.0'},
+        skipFileBody: true,
       );
 
       // Update headers from the GET response

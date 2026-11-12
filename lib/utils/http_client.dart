@@ -67,9 +67,14 @@ class TriOSHttpClient {
     _selfSignedHttpClient.idleTimeout = const Duration(seconds: 10);
     _defaultHttpClient.maxConnectionsPerHost = 10;
     _selfSignedHttpClient.maxConnectionsPerHost = 10;
+    _defaultHttpClient.connectionTimeout = const Duration(seconds: 30);
+    _selfSignedHttpClient.connectionTimeout = const Duration(seconds: 30);
   }
 
   /// Sends an HTTP GET request to the specified [url] with optional headers and timeout.
+  ///
+  /// With [skipFileBody], a response that isn't text is not downloaded and its
+  /// `data` comes back empty. Use it to look at a link's headers.
   Future<TriOSHttpResponse<dynamic>> get(
     String endpointOrUrl, {
     bool? allowSelfSignedCertificates,
@@ -77,6 +82,7 @@ class TriOSHttpClient {
     Duration timeout = const Duration(seconds: 30),
     int tries = 2,
     void Function(int receivedBytes, int totalBytes)? onProgress,
+    bool skipFileBody = false,
   }) {
     return _enqueueRequest(() {
       final Uri url = _resolveUrl(endpointOrUrl);
@@ -94,6 +100,7 @@ class TriOSHttpClient {
           headers: headers,
           onProgress: onProgress,
           inactivityTimeout: timeout,
+          skipFileBody: skipFileBody,
         ),
         retries: tries,
       );
@@ -148,6 +155,7 @@ class TriOSHttpClient {
     Map<String, String>? headers,
     void Function(int receivedBytes, int totalBytes)? onProgress,
     Duration inactivityTimeout = const Duration(seconds: 30),
+    bool skipFileBody = false,
   }) async {
     final request = await requestFactory();
     _logRequest(request);
@@ -156,7 +164,13 @@ class TriOSHttpClient {
     config.defaultHeaders.forEach(request.headers.set);
     headers?.forEach(request.headers.set);
 
-    final response = await request.close();
+    final HttpClientResponse response;
+    try {
+      response = await request.close().timeout(inactivityTimeout);
+    } on TimeoutException {
+      request.abort();
+      rethrow;
+    }
     _logResponse(request, response);
 
     final contentType = response.headers.contentType?.mimeType;
@@ -164,13 +178,24 @@ class TriOSHttpClient {
     final headersMap = response.headers;
     final totalBytes = response.contentLength; // May be -1 if unknown
 
-    // Read the raw bytes with an inactivity (stall) timeout:
-    final rawBytes = await readStreamWithIdleTimeout(
-      response,
-      inactivityTimeout,
-      onProgress: onProgress,
-      totalBytes: totalBytes,
-    );
+    final isText =
+        contentType == 'application/json' ||
+        (contentType != null && contentType.startsWith('text/'));
+
+    final List<int> rawBytes;
+    if (skipFileBody && !isText) {
+      // Hangs up without reading the file.
+      await response.listen(null).cancel();
+      rawBytes = const [];
+    } else {
+      // Read the raw bytes with an inactivity (stall) timeout:
+      rawBytes = await readStreamWithIdleTimeout(
+        response,
+        inactivityTimeout,
+        onProgress: onProgress,
+        totalBytes: totalBytes,
+      );
+    }
 
     // Convert the bytes based on the MIME type
     dynamic responseBody;
@@ -232,12 +257,15 @@ class TriOSHttpClient {
     final buffer = <int>[];
 
     Timer? inactivityTimer;
+    late final StreamSubscription<List<int>> subscription;
     var receivedBytesCount = 0;
 
     void resetTimer() {
       inactivityTimer?.cancel();
       inactivityTimer = Timer(inactivityTimeout, () {
         if (!completer.isCompleted) {
+          // Closes the connection, so a stalled download doesn't keep using one.
+          subscription.cancel();
           completer.completeError(
             TimeoutException('No data received for $inactivityTimeout'),
           );
@@ -248,7 +276,7 @@ class TriOSHttpClient {
     // Start the timer as soon as we begin reading
     resetTimer();
 
-    stream.listen(
+    subscription = stream.listen(
       (chunk) {
         buffer.addAll(chunk);
         receivedBytesCount += chunk.length;

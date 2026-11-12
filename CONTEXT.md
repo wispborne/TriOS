@@ -49,3 +49,55 @@ _Avoid_: Manual link, user link, custom source
 **Frozen column**:
 A column the user has told a grid to keep in view while the other columns scroll sideways. Frozen columns always sit leftmost, keeping their order relative to each other. Named after Excel's "freeze panes".
 _Avoid_: Pinned column (pinning is the grids' word for rows held at the top), sticky column, locked column
+
+## Saves
+
+**Archived save**:
+A save that TriOS packed into one compressed file and moved out of the saves folder to free disk space. The user can restore it later.
+_Avoid_: Save backup, compressed save
+
+## Save sync
+
+**Save sync**:
+Opt-in copying of the saves the user picks, and of the common folder, between their PCs through a sync folder. TriOS reads and writes the folder. A cloud client the user already runs copies it between PCs.
+_Avoid_: Cloud saves, save upload, save backup
+
+**Common folder**:
+The game's `saves/common` folder, where the game and mods keep settings and unlocks that every campaign shares.
+_Avoid_: Shared saves folder, global settings
+
+**Sync blocklist**:
+File patterns, written like `.gitignore` lines, for files that save sync never copies.
+_Avoid_: Ignore list, exclude list, sync filter
+
+**Synced save**:
+A save the user has picked for save sync on this PC. Each PC has its own synced saves.
+_Avoid_: Picked save, selected save, ticked save
+
+**Sync folder**:
+The folder that save sync reads and writes. Something other than TriOS (Dropbox, OneDrive, SeaDrive, Syncthing) keeps it the same on every PC. Its path can differ between PCs.
+_Avoid_: Cloud folder, remote, sync target
+
+**Synced saves folder**:
+The saves folder that save sync reads and writes on this PC. The user picks it, and it can differ from the saves folder the rest of TriOS shows.
+_Avoid_: Sync folder (that's the shared one), save sync folder
+
+**Mod sync**:
+The opt-in part of save sync that also copies mod folders through the sync folder, so a pulled save has its mods on the other PC. The user chooses whether it copies every mod folder or only the mod versions the synced saves use.
+_Avoid_: Mod upload, mod mirror, mod backup
+
+**Synced copy**:
+The copy of a save or mod folder that sits in the sync folder. It is what another PC takes when it pulls that save or mod.
+_Avoid_: Save archive, archived save (both belong to archiving), remote save
+
+**Sync record**:
+What a PC remembers about a save or mod folder from its last successful sync. It tells whether this PC's copy, the synced copy, or both have changed since.
+_Avoid_: Sync state, last-sync cache
+
+**Sync lock**:
+A file a PC puts in the sync folder while its game is running, so other PCs can warn that newer saves may still be on the way.
+_Avoid_: Lock file, sync session (the session is the stretch of time; the lock is the file)
+
+**Sync session**:
+The time from the game starting until TriOS has written this PC's changed saves and mods to the sync folder after the game closes. This PC's sync lock stays in the sync folder for the whole session.
+_Avoid_: Play session

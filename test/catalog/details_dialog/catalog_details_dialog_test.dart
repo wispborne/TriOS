@@ -224,7 +224,7 @@ void main() {
       await _pumpDialog(tester, grid: [mod], aiEnabled: false);
 
       expect(find.text('An AI-written paragraph.'), findsNothing);
-      expect(find.text('AI use'), findsOneWidget);
+      expect(find.text('AI use:'), findsOneWidget);
       expect(find.text('None'), findsOneWidget);
 
       // Only the Gallery tab is left, so there's no tab bar to click.

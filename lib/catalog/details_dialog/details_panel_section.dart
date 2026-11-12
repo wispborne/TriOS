@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 import 'package:trios/widgets/settings_group.dart';
 import 'package:trios/widgets/trios_expansion_tile.dart';
@@ -8,14 +10,14 @@ import 'package:trios/widgets/trios_expansion_tile.dart';
 /// The date format the details dialog uses, e.g. "March 1, 2026".
 final DateFormat detailsDateFormat = DateFormat.yMMMMd();
 
-/// The color the dialog uses for labels and secondary text. Brighter than
-/// `onSurfaceVariant`, which is hard to read on the dialog's lighter
-/// background at small sizes.
+/// The color the dialog uses for secondary text. On the Starsector theme's
+/// cards this is about 5.5 to 1, the same as Starmodder's grey text.
 Color detailsMutedColor(ThemeData theme) =>
-    theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
-/// One panel in the details dialog's side column. Uses the same heading as
-/// the settings page and the dashboard.
+/// One panel in the details dialog's side column: a card in the same color
+/// as the cards in the tab area, with the same heading as the settings page
+/// and the dashboard.
 class SidePanelSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -28,81 +30,108 @@ class SidePanelSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SettingsGroup(
-      name: title,
-      padding: 12,
-      // The side column is narrow, so the contents line up with the heading.
-      contentIndent: 0,
-      children: [
-        Column(
-          crossAxisAlignment: .stretch,
-          mainAxisSize: .min,
-          spacing: 12,
-          children: children,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(TriOSThemeConstants.cornerRadius),
+      ),
+      child: Padding(
+        // With the heading's own left padding of 8, everything sits 16 in.
+        padding: const .fromLTRB(8, 0, 16, 0),
+        child: SettingsGroup(
+          name: title,
+          padding: 12,
+          // The side column is narrow, so the contents line up with the
+          // heading.
+          contentIndent: 0,
+          children: [
+            Column(
+              crossAxisAlignment: .stretch,
+              mainAxisSize: .min,
+              spacing: 12,
+              children: children,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
 
-/// A label on the left and its value on the right, for the side panels.
+/// The bold label style of the side panels. The same as the Mods page's
+/// side panel.
+TextStyle? sidePanelLabelStyle(ThemeData theme) =>
+    theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold);
+
+/// The style for values in the side panels. The same as the Mods page's side
+/// panel.
+TextStyle? sidePanelValueStyle(ThemeData theme) => theme.textTheme.labelLarge
+    ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.92));
+
+/// [sidePanelValueStyle] in the monospace font the Mods page uses for ids and
+/// versions.
+TextStyle? sidePanelMonoStyle(ThemeData theme) =>
+    sidePanelValueStyle(theme)
+        ?.copyWith(fontFamily: GoogleFonts.sourceCodePro().fontFamily);
+
+/// A label and its value on one line, e.g. "Added: March 1, 2026".
 class SidePanelRow extends StatelessWidget {
   final String label;
   final Widget value;
 
   const SidePanelRow({super.key, required this.label, required this.value});
 
-  /// A row whose value is plain text.
-  factory SidePanelRow.text(String label, String value) => SidePanelRow(
-    label: label,
-    value: Text(value, textAlign: TextAlign.end),
-  );
+  /// A row whose value is plain text. [mono] shows it in the monospace font,
+  /// for versions.
+  factory SidePanelRow.text(String label, String value, {bool mono = false}) =>
+      SidePanelRow(
+        label: label,
+        value: Builder(
+          builder: (context) => Text(
+            value,
+            style: mono ? sidePanelMonoStyle(Theme.of(context)) : null,
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final labelStyle = theme.textTheme.bodySmall?.copyWith(
-      color: detailsMutedColor(theme),
-    );
-    return DefaultTextStyle.merge(
-      style: theme.textTheme.bodySmall,
-      child: Row(
-        crossAxisAlignment: .center,
-        spacing: 16,
-        children: [
-          Text(label, style: labelStyle),
-          Expanded(
-            child: Align(alignment: Alignment.centerRight, child: value),
+    // A question reads better without a colon after it.
+    final shownLabel = label.endsWith('?') ? label : '$label:';
+    return Row(
+      crossAxisAlignment: .start,
+      spacing: 8,
+      children: [
+        Text(shownLabel, style: sidePanelLabelStyle(theme)),
+        Flexible(
+          child: DefaultTextStyle.merge(
+            style: sidePanelValueStyle(theme),
+            child: value,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-/// A small muted label above a group of chips, e.g. "Requires".
+/// A bold label above a list, e.g. "Requires".
 class SidePanelLabel extends StatelessWidget {
   final String text;
 
   const SidePanelLabel(this.text, {super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      text,
-      style: theme.textTheme.bodySmall?.copyWith(
-        color: detailsMutedColor(theme),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      Text(text, style: sidePanelLabelStyle(Theme.of(context)));
 }
 
-/// A chip for categories, answers and mods. Set up the same way as
-/// [DisplayChip], with a few extras.
+/// A chip for a mod. Set up the same way as [DisplayChip], with a few
+/// extras.
 ///
-/// [color] tints the chip, e.g. green for "Yes". With [onTap] the chip can be
-/// clicked. [faded] draws it disabled, for something that can't be opened.
+/// [color] tints the chip, e.g. the warning color for a conflict. With [onTap]
+/// the chip can be clicked. [faded] draws it disabled, for something that
+/// can't be opened.
 class DetailsTag extends StatelessWidget {
   final String label;
   final Color? color;
@@ -153,7 +182,7 @@ class DetailsTag extends StatelessWidget {
       side: BorderSide(
         color:
             tint?.withValues(alpha: 0.5) ??
-            theme.colorScheme.onSurface.withValues(alpha: 0.12),
+            theme.colorScheme.onSurface.withValues(alpha: 0.2),
       ),
       isEnabled: !faded,
       onPressed: onTap,
@@ -167,11 +196,12 @@ class DetailsTag extends StatelessWidget {
   }
 }
 
-/// A link in a side panel: an icon and a label. Opens [onTap] on click.
+/// A link in a side panel: an outlined button with an icon in the accent
+/// color, like the Forum Thread button on the Mods page.
 class SidePanelLink extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   /// Shown on hover, usually the address.
   final String? tooltip;
@@ -187,19 +217,13 @@ class SidePanelLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final link = InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Padding(
-        padding: const .symmetric(vertical: 4),
-        child: Row(
-          spacing: 8,
-          children: [
-            Icon(icon, size: 16, color: detailsMutedColor(theme)),
-            Expanded(child: Text(label, style: theme.textTheme.bodySmall)),
-          ],
-        ),
-      ),
+    final link = OutlinedButton.icon(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+      icon: icon == null
+          ? null
+          : Icon(icon, size: 18, color: theme.colorScheme.primary),
+      label: Text(label),
     );
     if (tooltip == null) return link;
     return MovingTooltipWidget.text(message: tooltip!, child: link);

@@ -67,15 +67,13 @@ class _RelatedModRow extends StatelessWidget {
                         child: TextTriOS(
                           mod.extras?.displayName ?? mod.title,
                           maxLines: 1,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: sidePanelLabelStyle(theme),
                         ),
                       ),
                       if (gameVersion != null && gameVersion.isNotEmpty)
                         Text(
                           gameVersion,
-                          style: theme.textTheme.labelSmall?.copyWith(
+                          style: theme.textTheme.bodySmall?.copyWith(
                             color: detailsMutedColor(theme),
                           ),
                         ),
@@ -85,7 +83,7 @@ class _RelatedModRow extends StatelessWidget {
                     TextTriOS(
                       subtitle,
                       maxLines: 1,
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: detailsMutedColor(theme),
                       ),
                     ),

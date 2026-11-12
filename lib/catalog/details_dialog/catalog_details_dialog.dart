@@ -95,6 +95,9 @@ class _CatalogDetailsDialogState extends State<CatalogDetailsDialog> {
     final height = _isFullScreen ? windowSize.height : windowSize.height * 0.9;
 
     return Dialog(
+      // The same background as TriOS's pages. The cards inside are darker.
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      surfaceTintColor: Colors.transparent,
       insetPadding: _isFullScreen ? EdgeInsets.zero : const .all(24),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
@@ -319,16 +322,19 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
         linkLoader: widget.linkLoader,
       ),
       if (LinksPanel.hasContent(mod)) LinksPanel(mod: mod),
-      if (CompatibilityPanel.hasContent(mod))
-        CompatibilityPanel(
-          mod: mod,
-          allMods: allMods,
-          downloadGroups: downloadGroups,
-          isInstalledByName: isInstalledByName,
-          onOpenMod: _openMod,
-          onDownload: onGroupDownload,
-        ),
-      DetailsPanel(mod: mod),
+      DetailsPanel(
+        mod: mod,
+        compatibility: CompatibilityRows.hasContent(mod)
+            ? CompatibilityRows(
+                mod: mod,
+                allMods: allMods,
+                downloadGroups: downloadGroups,
+                isInstalledByName: isInstalledByName,
+                onOpenMod: _openMod,
+                onDownload: onGroupDownload,
+              )
+            : null,
+      ),
       if (byAuthor.isNotEmpty)
         RelatedModsPanel(
           title: 'More by $firstAuthor',
@@ -365,7 +371,11 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
               ? () => setState(() => _tab = DetailsTab.addons)
               : null,
         ),
-        Divider(height: 1, color: theme.dividerColor),
+        // The same faint line as the side panels' headings.
+        Divider(
+          height: 1,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+        ),
         // A fresh subtree per shown mod, so scroll positions and folded
         // sections start over.
         Expanded(
@@ -406,13 +416,13 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
                           ],
                         ),
                       ),
-                      VerticalDivider(width: 1, color: theme.dividerColor),
                       SizedBox(
                         width: 320,
                         child: SingleChildScrollView(
-                          padding: const .fromLTRB(8, 0, 16, 16),
+                          padding: const .fromLTRB(0, 16, 16, 16),
                           child: Column(
                             crossAxisAlignment: .stretch,
+                            spacing: 16,
                             children: sidePanels,
                           ),
                         ),

@@ -32,7 +32,6 @@ class GetItPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final entry = mod.entry;
     final installedMod = mod.installedMod;
     // Dart skips the argument when the mod isn't installed, so the version
@@ -59,16 +58,6 @@ class GetItPanel extends ConsumerWidget {
     final muteItem = installedMod == null
         ? null
         : buildMenuItemToggleMuteUpdates(installedMod, ref);
-
-    // A grey outline. `outlineVariant` disappears on the dialog's background.
-    final secondaryStyle = OutlinedButton.styleFrom(
-      visualDensity: VisualDensity.compact,
-      textStyle: theme.textTheme.labelMedium,
-      padding: const .symmetric(horizontal: 12),
-      side: BorderSide(
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.24),
-      ),
-    );
 
     return SidePanelSection(
       title: 'Get it',
@@ -115,11 +104,10 @@ class GetItPanel extends ConsumerWidget {
           if (muteItem != null)
             Align(
               alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                style: secondaryStyle,
-                onPressed: muteItem.onSelected,
-                icon: Icon(muteItem.icon, size: 16),
-                label: Text(muteItem.label),
+              child: SidePanelLink(
+                icon: muteItem.icon,
+                label: muteItem.label,
+                onTap: muteItem.onSelected,
               ),
             ),
         ],

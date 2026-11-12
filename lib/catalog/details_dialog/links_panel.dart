@@ -33,10 +33,10 @@ class LinksPanel extends StatelessWidget {
     final changelogUrl = mod.changelog?.link?.trim();
     return [
       if (forumUrl != null && forumUrl.isNotEmpty)
-        _PageLink('Open forum page', Icons.public, forumUrl, forumUrl),
+        _PageLink('Forum thread', Icons.public, forumUrl, forumUrl),
       if (discordUrl != null && discordUrl.isNotEmpty)
         _PageLink(
-          'Open in Discord',
+          'Discord',
           Icons.discord,
           discordUrl,
           discordUrl
@@ -44,10 +44,10 @@ class LinksPanel extends StatelessWidget {
               .replaceAll('http://', 'discord://'),
         ),
       if (nexusUrl != null && nexusUrl.isNotEmpty)
-        _PageLink('Open NexusMods page', Icons.extension, nexusUrl, nexusUrl),
+        _PageLink('NexusMods', Icons.extension, nexusUrl, nexusUrl),
       if (changelogUrl != null && changelogUrl.isNotEmpty)
         _PageLink(
-          'Full changelog',
+          'Changelog',
           Icons.format_list_bulleted,
           changelogUrl,
           changelogUrl,
@@ -77,21 +77,23 @@ class LinksPanel extends StatelessWidget {
       if (sourceCodeUrl != null)
         SidePanelLink(
           icon: Icons.code,
-          label: 'Source code on ${sourceCodeHostName(sourceCodeUrl)}',
-          tooltip: sourceCodeUrl,
+          label: 'Source code',
+          tooltip:
+              'Source code on ${sourceCodeHostName(sourceCodeUrl)}\n'
+              '$sourceCodeUrl',
           onTap: () => sourceCodeUrl.openAsUriInBrowser(),
         ),
       if (license != null && licenseUrl != null)
         SidePanelLink(
           icon: Icons.balance,
-          label: 'Read the license',
+          label: 'License',
           tooltip: licenseUrl,
           onTap: () => licenseUrl.openAsUriInBrowser(),
         )
       else if (license != null && !showLicenseAsText)
         SidePanelLink(
           icon: Icons.balance,
-          label: 'Read full license',
+          label: 'License',
           tooltip: license.truncate(200),
           onTap: () =>
               showLicenseDialog(context, modTitle: mod.title, license: license),
@@ -99,8 +101,8 @@ class LinksPanel extends StatelessWidget {
       for (final link in mod.supportLinks)
         SidePanelLink(
           icon: DonationLinksSection.iconFor(link.type),
-          label: 'Donate on ${link.type.toTitleCase()}',
-          tooltip: link.url,
+          label: link.type.toTitleCase(),
+          tooltip: 'Donate on ${link.type.toTitleCase()}\n${link.url}',
           onTap: () => link.url.openAsUriInBrowser(),
         ),
     ];
@@ -108,9 +110,7 @@ class LinksPanel extends StatelessWidget {
     return SidePanelSection(
       title: 'Links',
       children: [
-        // One list, with no gap beyond each link's own padding.
-        if (links.isNotEmpty)
-          Column(crossAxisAlignment: .stretch, children: links),
+        if (links.isNotEmpty) Wrap(spacing: 8, runSpacing: 8, children: links),
         if (showLicenseAsText) SidePanelRow.text('License', license),
       ],
     );

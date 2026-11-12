@@ -6,12 +6,15 @@ import 'package:trios/catalog/models/catalog_mod.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
 
-/// The Details panel: mod version, categories, dates, and what the author
-/// says about AI use.
+/// The Details panel: mod version, then [compatibility], then categories,
+/// dates, and what the author says about AI use.
 class DetailsPanel extends StatefulWidget {
   final CatalogMod mod;
 
-  const DetailsPanel({super.key, required this.mod});
+  /// Shown after the mod version: the game version, required mods and so on.
+  final Widget? compatibility;
+
+  const DetailsPanel({super.key, required this.mod, this.compatibility});
 
   @override
   State<DetailsPanel> createState() => _DetailsPanelState();
@@ -44,11 +47,12 @@ class _DetailsPanelState extends State<DetailsPanel> {
       title: 'Details',
       children: [
         if (version != null && version.isNotEmpty)
-          SidePanelRow.text('Mod version', version),
+          SidePanelRow.text('Mod version', version, mono: true),
+        ?widget.compatibility,
         if (categories.isNotEmpty)
           Column(
             crossAxisAlignment: .stretch,
-            spacing: 8,
+            spacing: 4,
             children: [
               Row(
                 children: [
@@ -79,14 +83,11 @@ class _DetailsPanelState extends State<DetailsPanel> {
                     ),
                 ],
               ),
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: [
-                  for (final category
-                      in _showOriginalCategories ? rawCategories : categories)
-                    DetailsTag(label: category),
-                ],
+              Text(
+                (_showOriginalCategories ? rawCategories : categories).join(
+                  ', ',
+                ),
+                style: sidePanelValueStyle(theme),
               ),
             ],
           ),

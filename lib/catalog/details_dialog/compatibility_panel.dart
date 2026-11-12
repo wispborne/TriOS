@@ -77,9 +77,10 @@ CatalogMod? catalogModForNeed(
   return allMods.firstWhereOrNull((mod) => mod.entry.id == id);
 }
 
-/// Shows the game version, required and optional mods, and conflicts.
-/// Also shows whether the mod can be added, updated or removed mid-game.
-class CompatibilityPanel extends StatelessWidget {
+/// The game version, required and optional mods, and conflicts, and whether
+/// the mod can be added, updated or removed mid-game. Shown at the top of the
+/// Details panel.
+class CompatibilityRows extends StatelessWidget {
   final CatalogMod mod;
 
   /// Every catalog mod, for finding the required and optional mods.
@@ -95,7 +96,7 @@ class CompatibilityPanel extends StatelessWidget {
   final void Function(CatalogMod mod) onOpenMod;
   final OnGroupDownload onDownload;
 
-  const CompatibilityPanel({
+  const CompatibilityRows({
     super.key,
     required this.mod,
     required this.allMods,
@@ -105,7 +106,7 @@ class CompatibilityPanel extends StatelessWidget {
     required this.onDownload,
   });
 
-  /// True when the panel has anything to show.
+  /// True when there's anything to show.
   static bool hasContent(CatalogMod mod) =>
       (mod.entry.gameVersionReq?.isNotEmpty ?? false) ||
       mod.requiredMods.isNotEmpty ||
@@ -146,8 +147,10 @@ class CompatibilityPanel extends StatelessWidget {
       ],
     );
 
-    return SidePanelSection(
-      title: 'Compatibility',
+    return Column(
+      crossAxisAlignment: .stretch,
+      mainAxisSize: .min,
+      spacing: 12,
       children: [
         if (gameVersion != null && gameVersion.isNotEmpty)
           SidePanelRow(
@@ -338,7 +341,7 @@ class _SaveQuestionRow extends StatelessWidget {
       CatalogSaveAnswer.yes => theme.statusColors.success,
       CatalogSaveAnswer.no => theme.colorScheme.error,
       CatalogSaveAnswer.depends => theme.statusColors.warning,
-      CatalogSaveAnswer.unknown => null,
+      CatalogSaveAnswer.unknown => detailsMutedColor(theme),
     };
     final words = question.words?.trim();
 
@@ -348,10 +351,9 @@ class _SaveQuestionRow extends StatelessWidget {
       children: [
         SidePanelRow(
           label: question.label,
-          value: DetailsTag(
-            label: label,
-            color: color,
-            faded: question.answer == CatalogSaveAnswer.unknown,
+          value: Text(
+            label,
+            style: TextStyle(color: color, fontWeight: FontWeight.bold),
           ),
         ),
         if (words != null && words.isNotEmpty)

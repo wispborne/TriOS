@@ -1,18 +1,16 @@
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:multi_split_view/multi_split_view.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_column_fit.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/thirdparty/dartx/function.dart';
 import 'package:trios/thirdparty/flutter_context_menu/flutter_context_menu.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/widgets/hoverable_widget.dart';
 import 'package:trios/widgets/moving_tooltip.dart';
-import 'package:trios/widgets/multi_split_mixin_view.dart';
 
 import 'wisp_grid.dart';
 
@@ -28,12 +26,15 @@ typedef WispGridHeaderBuilder = WispGridHeader Function(
   bool isHovering,
 );
 
-class WispGridHeaderRowView extends ConsumerStatefulWidget {
+class WispGridHeaderRowView extends StatelessWidget {
   final WispGridState gridState;
   final Function(WispGridState? Function(WispGridState)) updateGridState;
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
   final String? defaultGridSort;
+
+  /// How wide each column needs to be to show all of its text.
+  final Map<String, double> contentWidths;
 
   /// Per-column additional context menu entries, keyed by column key.
   final Map<String, List<ContextMenuEntry>> perColumnContextMenuEntries;
@@ -44,178 +45,64 @@ class WispGridHeaderRowView extends ConsumerStatefulWidget {
     required this.updateGridState,
     required this.columns,
     required this.groups,
+    required this.contentWidths,
     this.defaultGridSort,
     this.perColumnContextMenuEntries = const {},
   });
 
-  @override
-  ConsumerState createState() => _WispGridHeaderRowViewState();
-}
-
-const _opacity = 0.5;
-
-class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
-    with MultiSplitViewMixin {
-  bool _isResizing = false;
-
-  List<WispGridColumn> get columns => widget.columns;
-
-  Function(WispGridState? Function(WispGridState)) get updateGridState =>
-      widget.updateGridState;
-
-  WispGridState get gridState => widget.gridState;
-
-  @override
-  List<Area> get areas =>
-      gridState
-          .sortedVisibleColumns(columns)
-          .map(
-            (entry) => Area(id: entry.key.toString(), size: entry.value.width),
-          )
-          .toList()
-        ..add(Area(id: 'endspace'));
-
-  @override
-  void initState() {
-    super.initState();
-    multiSplitController = MultiSplitViewController(areas: areas);
-    multiSplitController.addListener(onMultiSplitViewChanged);
-  }
-
-  @override
-  void didUpdateWidget(covariant WispGridHeaderRowView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // Only update areas if the configuration has changed
-    final updatedAreas = areas;
-    final lengthChanged =
-        multiSplitController.areas.length != updatedAreas.length;
-    final sizesChanged = !listEquals(
-      multiSplitController.areas.map((a) => a.size).toList(),
-      updatedAreas.map((a) => a.size).toList(),
-    );
-
-    if (lengthChanged) {
-      // Visible-column count changed — sync immediately so build doesn't
-      // run with stale areas and overflow / mis-render the header row.
-      multiSplitController.areas = updatedAreas;
-    } else if (sizesChanged) {
-      // Just resizing — defer to avoid fighting the user's active drag.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        multiSplitController.areas = updatedAreas;
-      });
-    }
-  }
-
-  @override
-  void onMultiSplitViewChanged() {
-    super.onMultiSplitViewChanged();
-
-    if (!_isResizing) {
-      _isResizing = true;
-      return;
-    }
-
-    // Defer state update until resizing finishes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _isResizing = false;
-      updateGridState((WispGridState state) {
-        var sortedColumns = state.sortedColumns(columns);
-        final columnSettings = Map.fromEntries(sortedColumns);
-        for (final area in multiSplitController.areas) {
-          final header = columns.firstWhereOrNull(
-            (header) => header.key.toString() == area.id,
-          );
-          if (header == null) continue;
-          columnSettings[header.key] = columnSettings[header.key]!.copyWith(
-            width: area.size,
-          );
-        }
-
-        return state.copyWith(columnsState: columnSettings);
-      });
-    });
-  }
+  void _setColumnWidth(String columnKey, double width) => updateGridState(
+    (state) => setColumnWidths(state, columns, {columnKey: width}),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return ContextMenuRegion(
-      contextMenu: buildHeaderContextMenu(gridState),
+      contextMenu: buildWispGridHeaderContextMenu(
+        gridState: gridState,
+        columns: columns,
+        groups: groups,
+        updateGridState: updateGridState,
+        contentWidths: contentWidths,
+      ),
       child: HoverableWidget(
         child: Builder(
           builder: (context) {
             final isHovering = HoverData.of(context)?.isHovering ?? false;
             return MovingTooltipWidget.text(
               message:
-                  'Click to sort. Drag the edges to resize.\n'
-                  'Right-click for grouping and column options.',
-              child: MultiSplitViewTheme(
-                data: MultiSplitViewThemeData(
-                  dividerThickness: WispGrid.gridRowSpacing,
-                  dividerPainter: DividerPainters.grooved1(
-                    color: isHovering
-                        ? theme.colorScheme.onSurface.withOpacity(_opacity)
-                        : Colors.transparent,
-                    highlightedColor: theme.colorScheme.onSurface,
-                    size: 20,
-                    animationDuration: const Duration(milliseconds: 100),
-                    highlightedSize: 20,
-                  ),
+                  'Click to sort. Drag\'n\'drop to reorder. Drag an edge to resize. Double-click an edge '
+                  'to auto-size.\n'
+                  'Right-click for more options.',
+              child: Padding(
+                padding: const .symmetric(
+                  horizontal: WispGrid.gridRowSpacing * 2,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: WispGrid.gridRowSpacing * 2,
-                  ),
-                  // idk why multiplying by 2 works
-                  child: MultiSplitView(
-                    controller: multiSplitController,
-                    axis: Axis.horizontal,
-                    builder: (context, area) {
-                      if (area.id == 'endspace') return Container();
-
-                      var sortedVisibleColumns = gridState.sortedVisibleColumns(
-                        widget.columns,
-                      );
-                      final columnSetting = sortedVisibleColumns.elementAt(
-                        min(area.index, sortedVisibleColumns.length - 1),
-                      );
-
-                      final column = widget.columns.firstWhere(
-                        (column) => column.key == columnSetting.key,
-                      );
-
-                      Widget header = DraggableHeader(
-                        columns: columns,
-                        showDragHandle: isHovering,
-                        header: columnSetting.key,
-                        gridState: gridState,
-                        updateGridState: updateGridState,
-                        child: buildWispGridHeaderCellContent(
-                          context,
-                          column,
-                          isHovering: isHovering,
-                          gridState: gridState,
-                          updateGridState: updateGridState,
-                          defaultGridSort: widget.defaultGridSort,
-                        ),
-                      );
-
-                      return ContextMenuRegion(
-                        contextMenu: buildWispGridColumnContextMenu(
-                          gridState: gridState,
-                          columns: columns,
-                          groups: widget.groups,
-                          updateGridState: updateGridState,
-                          columnKey: column.key,
-                          extraEntries:
-                              widget.perColumnContextMenuEntries[column.key],
-                        ),
-                        child: header,
-                      );
-                    },
-                  ),
+                child: Row(
+                  crossAxisAlignment: .stretch,
+                  children: [
+                    for (final entry in gridState.sortedVisibleColumns(
+                      columns,
+                    )) ...[
+                      SizedBox(
+                        width: entry.value.width,
+                        child: _buildHeaderCell(context, entry, isHovering),
+                      ),
+                      _ColumnResizeHandle(
+                        key: wispGridResizeHandleKey(entry.key),
+                        columnWidth: entry.value.width,
+                        isHeaderHovered: isHovering,
+                        onWidthChanged: (width) =>
+                            _setColumnWidth(entry.key, width),
+                        onFitToContents: switch (contentWidths[entry.key]) {
+                          final contentWidth? => () => _setColumnWidth(
+                            entry.key,
+                            contentWidth,
+                          ),
+                          null => null,
+                        },
+                      ),
+                    ],
+                  ],
                 ),
               ),
             );
@@ -225,16 +112,116 @@ class _WispGridHeaderRowViewState extends ConsumerState<WispGridHeaderRowView>
     );
   }
 
-  ContextMenu buildHeaderContextMenu(
-    WispGridState gridState, {
-    String? columnKey,
-  }) => buildWispGridHeaderContextMenu(
-    gridState: gridState,
-    columns: columns,
-    groups: widget.groups,
-    updateGridState: updateGridState,
-    columnKey: columnKey,
-  );
+  Widget _buildHeaderCell(
+    BuildContext context,
+    MapEntry<String, WispGridColumnState> columnSetting,
+    bool isHovering,
+  ) {
+    final column = columns.firstWhere(
+      (column) => column.key == columnSetting.key,
+    );
+
+    return ContextMenuRegion(
+      contextMenu: buildWispGridColumnContextMenu(
+        gridState: gridState,
+        columns: columns,
+        groups: groups,
+        updateGridState: updateGridState,
+        columnKey: column.key,
+        contentWidths: contentWidths,
+        extraEntries: perColumnContextMenuEntries[column.key],
+      ),
+      child: DraggableHeader(
+        columns: columns,
+        showDragHandle: isHovering,
+        header: columnSetting.key,
+        gridState: gridState,
+        updateGridState: updateGridState,
+        child: buildWispGridHeaderCellContent(
+          context,
+          column,
+          isHovering: isHovering,
+          gridState: gridState,
+          updateGridState: updateGridState,
+          defaultGridSort: defaultGridSort,
+        ),
+      ),
+    );
+  }
+}
+
+/// Identifies a column's drag strip.
+ValueKey<String> wispGridResizeHandleKey(String columnKey) =>
+    ValueKey('wispGridResizeHandle-$columnKey');
+
+/// The strip on a column's right edge. Dragging it changes only that column.
+/// The columns after it move over, as in a spreadsheet.
+class _ColumnResizeHandle extends StatefulWidget {
+  final double columnWidth;
+  final bool isHeaderHovered;
+  final ValueChanged<double> onWidthChanged;
+
+  /// Null for columns with no text to fit to.
+  final VoidCallback? onFitToContents;
+
+  const _ColumnResizeHandle({
+    super.key,
+    required this.columnWidth,
+    required this.isHeaderHovered,
+    required this.onWidthChanged,
+    required this.onFitToContents,
+  });
+
+  @override
+  State<_ColumnResizeHandle> createState() => _ColumnResizeHandleState();
+}
+
+class _ColumnResizeHandleState extends State<_ColumnResizeHandle> {
+  bool _isDragging = false;
+
+  /// Follows the mouse and can go below the minimum, so the column only starts
+  /// growing again once the mouse is back at its edge.
+  double _dragWidth = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurface;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      child: GestureDetector(
+        behavior: .opaque,
+        onDoubleTap: widget.onFitToContents,
+        // Count movement from the moment of the press, so the edge stays
+        // under the mouse.
+        dragStartBehavior: .down,
+        onHorizontalDragStart: (_) => setState(() {
+          _isDragging = true;
+          _dragWidth = widget.columnWidth;
+        }),
+        onHorizontalDragUpdate: (details) {
+          _dragWidth += details.primaryDelta!;
+          widget.onWidthChanged(max(_dragWidth, WispGrid.minColumnWidth));
+        },
+        onHorizontalDragEnd: (_) => setState(() => _isDragging = false),
+        onHorizontalDragCancel: () => setState(() => _isDragging = false),
+        child: SizedBox(
+          width: WispGrid.gridRowSpacing,
+          child: Center(
+            child: Container(
+              width: 2,
+              height: 20,
+              color: _isDragging
+                  ? color
+                  : widget.isHeaderHovered
+                  ? color.withValues(alpha: 0.5)
+                  : Colors.transparent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// One header cell's contents: the column's own header widget, made sortable
@@ -279,6 +266,7 @@ ContextMenu buildWispGridColumnContextMenu({
   required List<WispGridGroup> groups,
   required Function(WispGridState? Function(WispGridState)) updateGridState,
   required String columnKey,
+  required Map<String, double> contentWidths,
   List<ContextMenuEntry>? extraEntries,
 }) {
   final shared = buildWispGridHeaderContextMenu(
@@ -287,6 +275,7 @@ ContextMenu buildWispGridColumnContextMenu({
     groups: groups,
     updateGridState: updateGridState,
     columnKey: columnKey,
+    contentWidths: contentWidths,
   );
   if (extraEntries == null || extraEntries.isEmpty) return shared;
   return ContextMenu(
@@ -303,6 +292,7 @@ class WispGridFrozenHeaderRowView extends StatelessWidget {
   final List<WispGridColumn> columns;
   final List<WispGridGroup> groups;
   final String? defaultGridSort;
+  final Map<String, double> contentWidths;
   final Map<String, List<ContextMenuEntry>> perColumnContextMenuEntries;
 
   const WispGridFrozenHeaderRowView({
@@ -311,6 +301,7 @@ class WispGridFrozenHeaderRowView extends StatelessWidget {
     required this.updateGridState,
     required this.columns,
     required this.groups,
+    required this.contentWidths,
     this.defaultGridSort,
     this.perColumnContextMenuEntries = const {},
   });
@@ -347,6 +338,7 @@ class WispGridFrozenHeaderRowView extends StatelessWidget {
                       groups: groups,
                       updateGridState: updateGridState,
                       columnKey: column.key,
+                      contentWidths: contentWidths,
                       extraEntries: perColumnContextMenuEntries[column.key],
                     ),
                     child: Align(
@@ -378,8 +370,10 @@ ContextMenu buildWispGridHeaderContextMenu({
   required List<WispGridColumn> columns,
   required List<WispGridGroup> groups,
   required Function(WispGridState? Function(WispGridState)) updateGridState,
+  required Map<String, double> contentWidths,
   String? columnKey,
 }) {
+  final clickedColumnContentWidth = contentWidths[columnKey];
   final groupingSetting = gridState.groupingSetting;
   final currentPrimaryKey = groupingSetting?.currentGroupedByKey;
   final currentSecondaryKey = groupingSetting?.secondaryGroupedByKey;
@@ -419,6 +413,57 @@ ContextMenu buildWispGridHeaderContextMenu({
             });
           },
         ),
+      MenuItem.submenu(
+        label: 'Column Width',
+        icon: Icons.width_normal,
+        items: [
+          if (clickedColumnContentWidth != null)
+            MenuItem(
+              label: 'Auto-size',
+              icon: Icons.width_normal,
+              onSelected: () {
+                updateGridState(
+                  (state) => setColumnWidths(state, columns, {
+                    columnKey!: clickedColumnContentWidth,
+                  }),
+                );
+              },
+            ),
+          if (contentWidths.isNotEmpty)
+            MenuItem(
+              label: 'Auto-size all',
+              icon: Icons.width_full,
+              onSelected: () {
+                updateGridState(
+                  (state) => setColumnWidths(state, columns, contentWidths),
+                );
+              },
+            ),
+          if (clickedColumn != null)
+            MenuItem(
+              label: 'Reset to default',
+              icon: Icons.settings_backup_restore,
+              onSelected: () {
+                updateGridState(
+                  (state) => resetColumnWidths(state, columns, [columnKey!]),
+                );
+              },
+            ),
+          MenuItem(
+            label: 'Reset all to defaults',
+            icon: Icons.settings_backup_restore,
+            onSelected: () {
+              updateGridState(
+                (state) => resetColumnWidths(
+                  state,
+                  columns,
+                  columns.map((column) => column.key),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       if (groups.length > 1)
         MenuItem.submenu(
           label: "Group By",
@@ -634,7 +679,9 @@ class DraggableHeader extends ConsumerWidget {
         onWillAcceptWithDetails: (data) => data.data != header,
         onAcceptWithDetails: (data) {
           updateGridState((WispGridState state) {
-            final Map<String, WispGridColumnState> columnSettings = gridState
+            // Must be the saved state. The widget's gridState holds automatic
+            // widths, which would be saved as if the user had set them.
+            final Map<String, WispGridColumnState> columnSettings = state
                 .sortedVisibleColumns(columns)
                 .toMap();
             final draggedHeader = data.data;

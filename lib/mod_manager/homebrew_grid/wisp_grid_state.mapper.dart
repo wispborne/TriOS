@@ -576,6 +576,23 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
   static WispGridColumnState _$defaultState(WispGridColumn v) => v.defaultState;
   static const Field<WispGridColumn, WispGridColumnState> _f$defaultState =
       Field('defaultState', _$defaultState);
+  static Function? _$autoFitText(WispGridColumn v) =>
+      (v as dynamic).autoFitText as Function?;
+  static dynamic _arg$autoFitText<T extends WispGridItem>(f) =>
+      f<String? Function(T)>();
+  static const Field<WispGridColumn, Function?> _f$autoFitText = Field(
+    'autoFitText',
+    _$autoFitText,
+    opt: true,
+    arg: _arg$autoFitText,
+  );
+  static double _$autoFitExtraWidth(WispGridColumn v) => v.autoFitExtraWidth;
+  static const Field<WispGridColumn, double> _f$autoFitExtraWidth = Field(
+    'autoFitExtraWidth',
+    _$autoFitExtraWidth,
+    opt: true,
+    def: 0,
+  );
 
   @override
   final MappableFields<WispGridColumn> fields = const {
@@ -587,6 +604,8 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
     #itemCellBuilder: _f$itemCellBuilder,
     #csvValue: _f$csvValue,
     #defaultState: _f$defaultState,
+    #autoFitText: _f$autoFitText,
+    #autoFitExtraWidth: _f$autoFitExtraWidth,
   };
 
   static WispGridColumn<T> _instantiate<T extends WispGridItem>(
@@ -601,6 +620,8 @@ class WispGridColumnMapper extends ClassMapperBase<WispGridColumn> {
       itemCellBuilder: data.dec(_f$itemCellBuilder),
       csvValue: data.dec(_f$csvValue),
       defaultState: data.dec(_f$defaultState),
+      autoFitText: data.dec(_f$autoFitText),
+      autoFitExtraWidth: data.dec(_f$autoFitExtraWidth),
     );
   }
 
@@ -690,6 +711,8 @@ abstract class WispGridColumnCopyWith<
     Widget Function(T, CellBuilderModifiers)? itemCellBuilder,
     String? Function(T)? csvValue,
     WispGridColumnState? defaultState,
+    String? Function(T)? autoFitText,
+    double? autoFitExtraWidth,
   });
   WispGridColumnCopyWith<$R2, $In, $Out2, T> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -718,6 +741,8 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
     Object? itemCellBuilder = $none,
     Object? csvValue = $none,
     WispGridColumnState? defaultState,
+    Object? autoFitText = $none,
+    double? autoFitExtraWidth,
   }) => $apply(
     FieldCopyWithData({
       if (key != null) #key: key,
@@ -728,6 +753,8 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
       if (itemCellBuilder != $none) #itemCellBuilder: itemCellBuilder,
       if (csvValue != $none) #csvValue: csvValue,
       if (defaultState != null) #defaultState: defaultState,
+      if (autoFitText != $none) #autoFitText: autoFitText,
+      if (autoFitExtraWidth != null) #autoFitExtraWidth: autoFitExtraWidth,
     }),
   );
   @override
@@ -743,6 +770,11 @@ class _WispGridColumnCopyWithImpl<$R, $Out, T extends WispGridItem>
     itemCellBuilder: data.get(#itemCellBuilder, or: $value.itemCellBuilder),
     csvValue: data.get(#csvValue, or: $value.csvValue),
     defaultState: data.get(#defaultState, or: $value.defaultState),
+    autoFitText: data.get(#autoFitText, or: $value.autoFitText),
+    autoFitExtraWidth: data.get(
+      #autoFitExtraWidth,
+      or: $value.autoFitExtraWidth,
+    ),
   );
 
   @override
@@ -789,6 +821,13 @@ class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
     opt: true,
     def: false,
   );
+  static bool _$isWidthSetByUser(WispGridColumnState v) => v.isWidthSetByUser;
+  static const Field<WispGridColumnState, bool> _f$isWidthSetByUser = Field(
+    'isWidthSetByUser',
+    _$isWidthSetByUser,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<WispGridColumnState> fields = const {
@@ -796,6 +835,7 @@ class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
     #width: _f$width,
     #isVisible: _f$isVisible,
     #isFrozen: _f$isFrozen,
+    #isWidthSetByUser: _f$isWidthSetByUser,
   };
 
   static WispGridColumnState _instantiate(DecodingData data) {
@@ -804,6 +844,7 @@ class WispGridColumnStateMapper extends ClassMapperBase<WispGridColumnState> {
       width: data.dec(_f$width),
       isVisible: data.dec(_f$isVisible),
       isFrozen: data.dec(_f$isFrozen),
+      isWidthSetByUser: data.dec(_f$isWidthSetByUser),
     );
   }
 
@@ -877,7 +918,13 @@ abstract class WispGridColumnStateCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({int? position, double? width, bool? isVisible, bool? isFrozen});
+  $R call({
+    int? position,
+    double? width,
+    bool? isVisible,
+    bool? isFrozen,
+    bool? isWidthSetByUser,
+  });
   WispGridColumnStateCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -892,21 +939,28 @@ class _WispGridColumnStateCopyWithImpl<$R, $Out>
   late final ClassMapperBase<WispGridColumnState> $mapper =
       WispGridColumnStateMapper.ensureInitialized();
   @override
-  $R call({int? position, double? width, bool? isVisible, bool? isFrozen}) =>
-      $apply(
-        FieldCopyWithData({
-          if (position != null) #position: position,
-          if (width != null) #width: width,
-          if (isVisible != null) #isVisible: isVisible,
-          if (isFrozen != null) #isFrozen: isFrozen,
-        }),
-      );
+  $R call({
+    int? position,
+    double? width,
+    bool? isVisible,
+    bool? isFrozen,
+    bool? isWidthSetByUser,
+  }) => $apply(
+    FieldCopyWithData({
+      if (position != null) #position: position,
+      if (width != null) #width: width,
+      if (isVisible != null) #isVisible: isVisible,
+      if (isFrozen != null) #isFrozen: isFrozen,
+      if (isWidthSetByUser != null) #isWidthSetByUser: isWidthSetByUser,
+    }),
+  );
   @override
   WispGridColumnState $make(CopyWithData data) => WispGridColumnState(
     position: data.get(#position, or: $value.position),
     width: data.get(#width, or: $value.width),
     isVisible: data.get(#isVisible, or: $value.isVisible),
     isFrozen: data.get(#isFrozen, or: $value.isFrozen),
+    isWidthSetByUser: data.get(#isWidthSetByUser, or: $value.isWidthSetByUser),
   );
 
   @override

@@ -482,7 +482,7 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                   Padding(
                                     padding: EdgeInsets.only(
                                       left: _dependencyButtonLeftInset(
-                                        gridState,
+                                        WispGrid.displayedStateOf(context),
                                         modifiers.columns,
                                       ),
                                     ),
@@ -604,6 +604,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       csvValue: (mod) =>
                           loadOrderNumberLookupByModId[mod.id]?.toString() ??
                           "—",
+                      autoFitText: (mod) =>
+                          loadOrderNumberLookupByModId[mod.id]?.toString() ??
+                          "—",
                       defaultState: WispGridColumnState(
                         position: 4,
                         width: 70,
@@ -629,6 +632,12 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           .findFirstEnabledOrHighestVersion
                           ?.modInfo
                           .nameOrId,
+                      autoFitText: (mod) =>
+                          mod.findFirstEnabledOrHighestVersion?.modInfo.name ??
+                          "(no name)",
+                      // Room for the bold text, the warning icon and the
+                      // color strip.
+                      autoFitExtraWidth: 40,
                       defaultState: WispGridColumnState(
                         position: 4,
                         width: 200,
@@ -669,6 +678,11 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                       ),
                       csvValue: (mod) =>
                           mod.findFirstEnabledOrHighestVersion?.modInfo.author,
+                      autoFitText: (mod) =>
+                          mod.findFirstEnabledOrHighestVersion?.modInfo.author
+                              ?.toString()
+                              .replaceAll("\n", "   ") ??
+                          "(no author)",
                       defaultState: WispGridColumnState(
                         position: 5,
                         width: 200,
@@ -721,6 +735,9 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           ?.modInfo
                           .version
                           .toString(),
+                      autoFitText: (mod) => mod.modVariants
+                          .map((v) => v.modInfo.version.toString())
+                          .join(", "),
                       defaultState: WispGridColumnState(position: 7, width: 75),
                     ),
                     WispGridColumn<Mod>(
@@ -831,6 +848,12 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                           .findFirstEnabledOrHighestVersion
                           ?.modInfo
                           .gameVersion,
+                      autoFitText: (mod) {
+                        final info =
+                            mod.findFirstEnabledOrHighestVersion?.modInfo;
+                        return "${info?.gameVersion ?? "(no game version)"}"
+                            "${info?.originalGameVersion != null ? "**" : ""}";
+                      },
                       defaultState: WispGridColumnState(
                         position: 10,
                         width: 100,
@@ -873,6 +896,13 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                 ).toIso8601String(),
                               ) ??
                           "",
+                      autoFitText: (mod) => modsMetadata
+                          ?.getMergedModMetadata(mod.id)
+                          ?.let(
+                            (m) => Constants.dateTimeFormat.format(
+                              DateTime.fromMillisecondsSinceEpoch(m.firstSeen),
+                            ),
+                          ),
                       defaultState: WispGridColumnState(
                         position: 11,
                         width: 150,
@@ -919,6 +949,14 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                     ).toIso8601String(),
                               ) ??
                           "",
+                      autoFitText: (mod) => modsMetadata
+                          ?.getMergedModMetadata(mod.id)
+                          ?.lastEnabled
+                          ?.let(
+                            (lastEnabled) => Constants.dateTimeFormat.format(
+                              DateTime.fromMillisecondsSinceEpoch(lastEnabled),
+                            ),
+                          ),
                       defaultState: WispGridColumnState(
                         position: 12,
                         width: 150,
@@ -957,6 +995,14 @@ class _ModsGridState extends ConsumerState<ModsGridPage>
                                 ms,
                               ).toIso8601String()
                             : "";
+                      },
+                      autoFitText: (mod) {
+                        final ms = mod.getSortValueForLastUpdated(modsMetadata);
+                        return ms > 0
+                            ? Constants.dateTimeFormat.format(
+                                DateTime.fromMillisecondsSinceEpoch(ms),
+                              )
+                            : null;
                       },
                       defaultState: WispGridColumnState(
                         position: 13,

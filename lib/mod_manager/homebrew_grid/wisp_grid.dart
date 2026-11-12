@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
+import 'package:trios/mod_manager/homebrew_grid/wispgrid_column_fit.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_frozen_overlay.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group_row.dart';
@@ -96,6 +97,13 @@ const String _pinnedSortValue = '__pinned__';
 class WispGrid<T extends WispGridItem> extends ConsumerStatefulWidget {
   static const gridRowSpacing = 8.0;
   static const lightTextOpacity = 0.8;
+  static const minColumnWidth = 24.0;
+
+  /// The grid state as drawn by the grid around [context], with automatic
+  /// column widths applied. For layout only; don't save it.
+  static WispGridState displayedStateOf(BuildContext context) =>
+      context.findAncestorStateOfType<_WispGridState>()!.gridState;
+
   final List<T?> items;
   final Function(T item)? onRowSelected;
   final T? selectedItem;
@@ -232,7 +240,11 @@ class _WispGridState<T extends WispGridItem>
 
   List<WispGridColumn<T>> get columns => widget.columns;
 
-  WispGridState get gridState => widget.gridState;
+  final WispGridColumnFit<T> _columnFit = WispGridColumnFit<T>();
+
+  /// [WispGrid.gridState] with automatic column widths applied. Set at the
+  /// start of every build.
+  late WispGridState gridState;
 
   /// Used for shift-clicking to select a range.
   String? _lastCheckedItemId;
@@ -264,6 +276,20 @@ class _WispGridState<T extends WispGridItem>
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    _columnFit.measure(
+      columns: columns,
+      items: widget.items.whereType<T>(),
+      cellStyle: textTheme.labelLarge,
+      headerStyle: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+      textScaler: MediaQuery.textScalerOf(context),
+    );
+    gridState = withAutoFitWidths(
+      widget.gridState,
+      columns,
+      _columnFit.contentWidths,
+    );
+
     final groupingSetting = gridState.groupingSetting;
 
     final primaryGrouping = widget.groups.firstWhereOrNull(
@@ -674,20 +700,14 @@ class _WispGridState<T extends WispGridItem>
     //   Row body (WispGridRowView): 2 wrapping boxes + N columns +
     //     (N+1) inter-child gaps = sum(w) + (N+3)*spacing
     //   Header (WispGridHeaderRowView): horizontal padding of 2*spacing on
-    //     each side + N dividers between (N+1) MultiSplitView areas
-    //     = sum(w) + (N+4)*spacing (endspace flex floors at 0)
-    // The header is the larger of the two; under-allocating squeezes the
-    // header columns, and onMultiSplitViewChanged persists the squeezed
-    // widths back to state — a feedback loop that shrinks columns to zero.
+    //     each side + N resize handles = sum(w) + (N+4)*spacing
+    // The header is the larger of the two.
     final totalRowWidth =
         visibleColumnsForWidth.map((e) => e.value.width).sum +
         (visibleColumnsForWidth.length + 4) * WispGrid.gridRowSpacing;
 
     // If the columns don't fill the window, stretch the grid to the window
-    // anyway. The header's last area is empty filler; giving it the leftover
-    // space is what lets the user drag a column wider. Sized to the columns
-    // alone, the filler is always zero wide, so dragging can only move width
-    // from one column to another and the table can never grow.
+    // anyway so group headers span the whole row.
     return LayoutBuilder(
       builder: (context, constraints) {
         final gridWidth = constraints.maxWidth.isFinite
@@ -833,6 +853,7 @@ class _WispGridState<T extends WispGridItem>
                           groups: widget.groups,
                           updateGridState: widget.updateGridState,
                           columns: columns,
+                          contentWidths: _columnFit.contentWidths,
                           defaultGridSort: widget.defaultSortField,
                           perColumnContextMenuEntries:
                               widget.perColumnContextMenuEntries,
@@ -847,6 +868,7 @@ class _WispGridState<T extends WispGridItem>
                               groups: widget.groups,
                               updateGridState: widget.updateGridState,
                               columns: columns,
+                              contentWidths: _columnFit.contentWidths,
                               defaultGridSort: widget.defaultSortField,
                               perColumnContextMenuEntries:
                                   widget.perColumnContextMenuEntries,

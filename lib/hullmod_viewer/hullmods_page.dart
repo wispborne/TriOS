@@ -404,6 +404,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
           );
         },
         csvValue: (item) => hullmodValueToString(getValue, item),
+        autoFitText: (item) => hullmodValueToString(getValue, item),
         defaultState: WispGridColumnState(position: position++, width: width),
       );
     }
@@ -421,6 +422,8 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
           style: theme.textTheme.labelLarge,
         ),
         csvValue: (hullmod) =>
+            hullmod.modVariant?.modInfo.nameOrId ?? "Vanilla",
+        autoFitText: (hullmod) =>
             hullmod.modVariant?.modInfo.nameOrId ?? "Vanilla",
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
@@ -473,6 +476,7 @@ class _HullmodsPageState extends ConsumerState<HullmodsPage>
           ),
         ),
         csvValue: (item) => item.name ?? item.id,
+        autoFitText: (item) => item.name ?? item.id,
         defaultState: WispGridColumnState(position: position++, width: 180),
       ),
       col('id', 'ID', (h) => h.id),

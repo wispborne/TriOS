@@ -367,6 +367,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
           return TextTriOS(str, maxLines: 1, overflow: TextOverflow.ellipsis);
         },
         csvValue: (item) => getValue(item)?.toString(),
+        autoFitText: (item) => getValue(item)?.toString(),
         defaultState: WispGridColumnState(position: position++, width: width),
       );
     }
@@ -411,6 +412,7 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
           overflow: TextOverflow.ellipsis,
         ),
         csvValue: (item) => item.displayName,
+        autoFitText: (item) => item.displayName,
         defaultState: WispGridColumnState(position: position++, width: 150),
       ),
       WispGridColumn<Faction>(
@@ -480,6 +482,10 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
           final share = summaries[item.mergeKey]?.vanillaShare;
           return share == null ? '' : formatShare(share);
         },
+        autoFitText: (item) {
+          final share = summaries[item.mergeKey]?.vanillaShare;
+          return share == null ? '—' : formatShare(share);
+        },
         defaultState: WispGridColumnState(position: position++, width: 90),
       ),
       WispGridColumn<Faction>(
@@ -496,6 +502,8 @@ class _FactionViewerPageState extends ConsumerState<FactionViewerPage>
           ),
         ),
         csvValue: (item) => item.addedBy?.name ?? '',
+        autoFitText: (item) =>
+            item.addedBy?.name ?? (item.sources.isEmpty ? '' : 'Patch only'),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
     ];

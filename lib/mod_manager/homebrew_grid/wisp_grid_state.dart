@@ -17,6 +17,13 @@ class WispGridColumn<T extends WispGridItem> with WispGridColumnMappable {
   final String? Function(T item)? csvValue;
   final WispGridColumnState defaultState;
 
+  /// The text a cell shows, used to size the column to its contents. Leave
+  /// null for columns of icons or buttons, which keep their set width.
+  final String? Function(T item)? autoFitText;
+
+  /// Extra room for anything the cell draws next to [autoFitText].
+  final double autoFitExtraWidth;
+
   const WispGridColumn({
     required this.key,
     required this.name,
@@ -26,6 +33,8 @@ class WispGridColumn<T extends WispGridItem> with WispGridColumnMappable {
     this.itemCellBuilder,
     required this.csvValue,
     required this.defaultState,
+    this.autoFitText,
+    this.autoFitExtraWidth = 0,
   }) : assert(!isSortable || getSortValue != null);
 }
 
@@ -72,11 +81,16 @@ class WispGridColumnState with WispGridColumnStateMappable {
   /// the columns scroll sideways.
   final bool isFrozen;
 
+  /// True once the user has dragged this column or fitted it to its contents.
+  /// Until then the grid sizes the column automatically.
+  final bool isWidthSetByUser;
+
   const WispGridColumnState({
     required this.position,
     required this.width,
     this.isVisible = true,
     this.isFrozen = false,
+    this.isWidthSetByUser = false,
   });
 }
 
@@ -113,6 +127,7 @@ class WispGridState with WispGridStateMappable {
         width: userState?.width ?? base.width,
         isVisible: userState?.isVisible ?? base.isVisible,
         isFrozen: userState?.isFrozen ?? base.isFrozen,
+        isWidthSetByUser: userState?.isWidthSetByUser ?? base.isWidthSetByUser,
       );
 
       return MapEntry(spec.key, finalState);

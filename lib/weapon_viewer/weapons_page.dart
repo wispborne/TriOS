@@ -445,6 +445,7 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           );
         },
         csvValue: (item) => wepValueToString(getValue, item),
+        autoFitText: (item) => wepValueToString(getValue, item),
         defaultState: WispGridColumnState(
           position: position++,
           width: width,
@@ -466,6 +467,8 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
           style: theme.textTheme.labelLarge,
         ),
         csvValue: (weapon) => weapon.modVariant?.modInfo.nameOrId ?? "Vanilla",
+        autoFitText: (weapon) =>
+            weapon.modVariant?.modInfo.nameOrId ?? "Vanilla",
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -506,7 +509,8 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
             ),
           ),
         ),
-        csvValue: (weapon) => weapon.modVariant?.modInfo.nameOrId ?? "Vanilla",
+        csvValue: (weapon) => weapon.name ?? weapon.id,
+        autoFitText: (weapon) => weapon.name ?? weapon.id,
         defaultState: WispGridColumnState(position: position++, width: 150),
       ),
       col('id', 'ID', (w) => w.id),

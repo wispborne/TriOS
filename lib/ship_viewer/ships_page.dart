@@ -434,6 +434,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           return TextTriOS(str, maxLines: 1, overflow: TextOverflow.ellipsis);
         },
         csvValue: (item) => shipValueToString(getValue, item),
+        autoFitText: (item) => shipValueToString(getValue, item),
         defaultState: WispGridColumnState(position: position++, width: width),
       );
     }
@@ -451,6 +452,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           style: theme.textTheme.bodyMedium,
         ),
         csvValue: (ship) => ship.modVariant?.modInfo.nameOrId,
+        autoFitText: (ship) => ship.modVariant?.modInfo.nameOrId ?? "Vanilla",
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -509,6 +511,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
           ),
         ),
         csvValue: (item) => item.hullNameForDisplay(),
+        autoFitText: (item) => item.hullNameForDisplay(),
+        // Room for the "Skin" badge and the similar-skins count.
+        autoFitExtraWidth: 64,
         defaultState: WispGridColumnState(position: position++, width: 200),
       ),
       col('id', 'ID', (s) => s.id),
@@ -520,6 +525,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         getSortValue: (ship) => ship.mountableWeaponSlotCount,
         itemCellBuilder: (item, _) => Text('${item.mountableWeaponSlotCount}'),
         csvValue: (ship) => ship.mountableWeaponSlotCount.toString(),
+        autoFitText: (ship) => ship.mountableWeaponSlotCount.toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -530,6 +536,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         itemCellBuilder: (item, _) =>
             Text('${item.builtInWeapons?.length ?? 0}'),
         csvValue: (ship) => (ship.builtInWeapons?.length ?? 0).toString(),
+        autoFitText: (ship) => (ship.builtInWeapons?.length ?? 0).toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -539,6 +546,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         getSortValue: (ship) => ship.builtInMods?.length ?? 0,
         itemCellBuilder: (item, _) => Text('${item.builtInMods?.length ?? 0}'),
         csvValue: (ship) => (ship.builtInMods?.length ?? 0).toString(),
+        autoFitText: (ship) => (ship.builtInMods?.length ?? 0).toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       WispGridColumn(
@@ -548,6 +556,7 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         getSortValue: (ship) => ship.builtInWings?.length ?? 0,
         itemCellBuilder: (item, _) => Text('${item.builtInWings?.length ?? 0}'),
         csvValue: (ship) => (ship.builtInWings?.length ?? 0).toString(),
+        autoFitText: (ship) => (ship.builtInWings?.length ?? 0).toString(),
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),

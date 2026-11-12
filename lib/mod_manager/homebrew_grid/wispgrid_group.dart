@@ -613,11 +613,8 @@ OverlayWidgetData? _vramSummaryOverlayWidget(
       : null;
 
   // Calculate the offset of the VRAM column
-  final gridState = ref.watch(appSettings.select((s) => s.modsGridState));
-  final cellWidthBeforeVramColumn = gridState.getWidthUpToColumn(
-    ModGridHeader.vramImpact.name,
-    columns,
-  );
+  final cellWidthBeforeVramColumn = WispGrid.displayedStateOf(context)
+      .getWidthUpToColumn(ModGridHeader.vramImpact.name, columns);
 
   final overlayBody = Padding(
     padding: EdgeInsets.only(right: 8, left: 0),

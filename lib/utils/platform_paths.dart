@@ -28,7 +28,9 @@ File getLogPath(Directory gamePath, {TargetPlatform? platform}) {
     TargetPlatform.windows => generateGameCorePath(
       gamePath,
     )!.resolve("starsector.log"),
-    TargetPlatform.linux => gamePath.resolve("starsector.log"),
+    TargetPlatform.linux => usesXdgGameDirs(gamePath)
+        ? xdgStarsectorHome()!.resolve("starsector.log")
+        : gamePath.resolve("starsector.log"),
     TargetPlatform.macOS => gamePath.resolve("logs/starsector.log"),
     _ => throw UnsupportedError("Platform not supported: $platform"),
   }.toFile().normalize;
@@ -57,6 +59,18 @@ bool isGameExecutableADirectory() {
     TargetPlatform.macOS => true,
     _ => throw UnsupportedError("Platform not supported: $currentPlatform"),
   };
+}
+
+/// The game folder from [gameDirEnvVar], but only if it is set and looks like a
+/// Starsector installation. Lets a read-only install point TriOS at the game
+/// from its own configuration instead of having a store path baked into the
+/// application.
+String? gameDirFromEnvironment() {
+  final candidate = gameDirFromEnvironmentRaw();
+  if (candidate == null) {
+    return null;
+  }
+  return validateGameRootFolderPath(candidate) ? candidate : null;
 }
 
 /// WARNING: This checks to see if things are set up according to DEFAULTS.

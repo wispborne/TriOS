@@ -79,8 +79,73 @@ Directory? generateGameCorePath(Directory gamePath) {
   }
 }
 
+/// Environment variable pointing TriOS at a Starsector installation that may
+/// live outside the user's reach for writes, such as a read-only package store.
+const gameDirEnvVar = 'STARSECTOR_DIR';
+
+/// The raw [gameDirEnvVar] value, or null when unset.
+String? gameDirFromEnvironmentRaw() {
+  final candidate = Platform.environment[gameDirEnvVar];
+  if (candidate == null || candidate.isEmpty) {
+    return null;
+  }
+  return candidate;
+}
+
+/// The XDG data directory, or null when `XDG_DATA_HOME` is unset.
+Directory? xdgDataHome() {
+  final fromEnv = Platform.environment['XDG_DATA_HOME'];
+  if (fromEnv == null || fromEnv.isEmpty) {
+    return null;
+  }
+  return Directory(fromEnv);
+}
+
+/// [path] with symlinks resolved, falling back to an absolute lexical path when
+/// it cannot be resolved (it may not exist yet).
+String _resolvedPath(String path) {
+  try {
+    return Directory(path).resolveSymbolicLinksSync();
+  } catch (_) {
+    return Directory(path).absolute.normalize.path;
+  }
+}
+
+/// Whether [gamePath] is the install named by [gameDirEnvVar].
+bool isGameRootFromEnvironment(Directory gamePath) {
+  final fromEnv = gameDirFromEnvironmentRaw();
+  if (fromEnv == null) {
+    return false;
+  }
+  return p.equals(_resolvedPath(gamePath.path), _resolvedPath(fromEnv));
+}
+
+/// The per-user Starsector directory used when the game is installed read-only,
+/// i.e. `$XDG_DATA_HOME/starsector`. Null outside Linux or when
+/// `XDG_DATA_HOME` is unset.
+Directory? xdgStarsectorHome() {
+  if (!Platform.isLinux) {
+    return null;
+  }
+  final dataHome = xdgDataHome();
+  if (dataHome == null) {
+    return null;
+  }
+  return Directory(p.join(dataHome.path, "starsector")).normalize;
+}
+
+/// Whether TriOS should read and write mods, saves and the log through the XDG
+/// directories the game was given. Only true on Linux, only when
+/// `XDG_DATA_HOME` is set, and only for the install named by [gameDirEnvVar].
+bool usesXdgGameDirs(Directory gamePath) {
+  return xdgStarsectorHome() != null && isGameRootFromEnvironment(gamePath);
+}
+
 Directory? generateModsFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    if (usesXdgGameDirs(gamePath)) {
+      return Directory(p.join(xdgStarsectorHome()!.path, "mods")).normalize;
+    }
     return Directory(p.join(gamePath.path, "mods")).normalize;
   } else {
     return null;
@@ -89,6 +154,9 @@ Directory? generateModsFolderPath(Directory gamePath) {
 
 Directory? generateSavesFolderPath(Directory gamePath) {
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    if (usesXdgGameDirs(gamePath)) {
+      return Directory(p.join(xdgStarsectorHome()!.path, "saves")).normalize;
+    }
     return Directory(p.join(gamePath.path, "saves")).normalize;
   } else {
     return null;

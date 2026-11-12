@@ -50,6 +50,51 @@ class SevenZipReadFile implements ArchiveReadFile<SevenZipEntry> {
 class SevenZip implements ArchiveInterface {
   late final File sevenZipExecutable;
 
+  /// Environment variable used to point TriOS at a specific 7-Zip binary.
+  static const systemBinaryEnvVar = 'TRIOS_7ZZ';
+
+  /// Binary names used by the 7-Zip packages shipped on Linux and macOS.
+  /// `7zz` is the upstream name; `7zzs` is the statically linked variant.
+  static const _systemBinaryNames = ['7zz', '7zzs'];
+
+  /// Looks for a 7-Zip binary provided by the system, returning null when no
+  /// usable one is found so that the bundled binary is used instead.
+  ///
+  /// Source-based package managers build their own 7-Zip and do not want to
+  /// ship the prebuilt binary committed under `assets/`, so honour
+  /// [systemBinaryEnvVar] first and then fall back to a `PATH` lookup.
+  static File? findSystemSevenZip() {
+    final fromEnv = Platform.environment[systemBinaryEnvVar];
+    if (fromEnv != null && fromEnv.isNotEmpty) {
+      final candidate = File(fromEnv);
+      if (candidate.existsSync()) {
+        Fimber.i('Using $systemBinaryEnvVar: ${candidate.path}');
+        return candidate;
+      }
+      Fimber.w(
+        '$systemBinaryEnvVar points to ${candidate.path}, which does not '
+        'exist; falling back to a PATH lookup.',
+      );
+    }
+
+    final pathSeparator = Platform.isWindows ? ';' : ':';
+    for (final dir in (Platform.environment['PATH'] ?? '').split(
+      pathSeparator,
+    )) {
+      if (dir.isEmpty) {
+        continue;
+      }
+      for (final name in _systemBinaryNames) {
+        final candidate = File(p.join(dir, name));
+        if (candidate.existsSync()) {
+          Fimber.i('Found system 7-Zip at ${candidate.path}');
+          return candidate;
+        }
+      }
+    }
+    return null;
+  }
+
   SevenZip() {
     final assetsPath = getAssetsPath();
     sevenZipExecutable = switch (currentPlatform) {
@@ -57,6 +102,10 @@ class SevenZip implements ArchiveInterface {
         "$assetsPath/windows/7zip/7z.exe",
       ).normalize,
       TargetPlatform.linux => () {
+        final systemExecutable = findSystemSevenZip();
+        if (systemExecutable != null) {
+          return systemExecutable;
+        }
         final platform = Process.runSync('uname', [
           '-m',
         ]).stdout.toString().trim();
@@ -74,9 +123,14 @@ class SevenZip implements ArchiveInterface {
         Fimber.i(
           "Making $executable executable result: success: $success, error: $failure",
         );
+        Fimber.i("Using bundled 7-Zip at ${executable.path}");
         return executable;
       }(),
       TargetPlatform.macOS => () {
+        final systemExecutable = findSystemSevenZip();
+        if (systemExecutable != null) {
+          return systemExecutable;
+        }
         final executable = assetsPath
             .toDirectory()
             .resolve("macos/7zip/7zz")
@@ -87,6 +141,7 @@ class SevenZip implements ArchiveInterface {
         Fimber.i(
           "Making $executable executable result: success: $success, error: $failure",
         );
+        Fimber.i("Using bundled 7-Zip at ${executable.path}");
         return executable;
       }(),
       _ => File(

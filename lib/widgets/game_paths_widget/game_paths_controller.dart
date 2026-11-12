@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/thirdparty/dartx/string.dart';
+import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/extensions.dart';
 import 'package:trios/utils/platform_paths.dart';
@@ -56,7 +57,7 @@ class GamePathsSetupController
   @override
   GamePathsSetupState build() {
     final gameFolderPathFromSettings =
-        ref.watch(appSettings.select((s) => s.gameDir))?.normalize.path ??
+        ref.watch(AppState.gameFolder).value?.normalize.path ??
         defaultGamePath().path;
 
     // Custom exe path
@@ -288,8 +289,9 @@ class GamePathsSetupController
 
   /// Get the current launch path for display
   String getCurrentLaunchPath() {
-    final settings = ref.read(appSettings);
-    final gamePath = settings.gameDir?.toDirectory();
+    final gamePath =
+        ref.read(AppState.gameFolder).value ??
+        ref.read(appSettings).gameDir;
     return gamePath?.let(
           (dir) => getDefaultGameExecutable(dir).toFile().path,
         ) ??

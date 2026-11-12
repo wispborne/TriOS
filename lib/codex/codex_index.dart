@@ -16,6 +16,7 @@ import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
 import 'package:trios/ship_viewer/ships_page_controller.dart';
+import 'package:trios/ship_viewer/skin_collapsing.dart';
 import 'package:trios/weapon_viewer/weapons_manager.dart';
 import 'package:trios/weapon_viewer/weapons_page_controller.dart';
 
@@ -43,6 +44,10 @@ class CodexStandingFilters {
   /// When false, ship systems tagged `hide_in_codex` are not listed.
   final bool showHiddenShipSystems;
 
+  /// When true, skins with the same base hull and name share one row in the
+  /// list and in the locked rows. They stay in the index as link targets.
+  final bool collapseSimilarSkins;
+
   /// When false, station modules (the child hulls docked in a station's module
   /// slots) are not listed as their own ship entries. They stay in the index as
   /// link targets regardless, so a station still shows them as related.
@@ -54,6 +59,7 @@ class CodexStandingFilters {
     this.showHidden = false,
     this.showHiddenHullmods = false,
     this.showHiddenShipSystems = false,
+    this.collapseSimilarSkins = true,
     this.showModulesAsShips = false,
   });
 
@@ -64,6 +70,7 @@ class CodexStandingFilters {
     bool? showHidden,
     bool? showHiddenHullmods,
     bool? showHiddenShipSystems,
+    bool? collapseSimilarSkins,
     bool? showModulesAsShips,
   }) {
     return CodexStandingFilters(
@@ -73,6 +80,7 @@ class CodexStandingFilters {
       showHiddenHullmods: showHiddenHullmods ?? this.showHiddenHullmods,
       showHiddenShipSystems:
           showHiddenShipSystems ?? this.showHiddenShipSystems,
+      collapseSimilarSkins: collapseSimilarSkins ?? this.collapseSimilarSkins,
       showModulesAsShips: showModulesAsShips ?? this.showModulesAsShips,
     );
   }
@@ -96,6 +104,9 @@ class CodexStandingFiltersNotifier extends Notifier<CodexStandingFilters> {
 
   void setShowHiddenShipSystems(bool show) =>
       state = state.copyWith(showHiddenShipSystems: show);
+
+  void setCollapseSimilarSkins(bool collapse) =>
+      state = state.copyWith(collapseSimilarSkins: collapse);
 
   void setShowModulesAsShips(bool show) =>
       state = state.copyWith(showModulesAsShips: show);
@@ -271,7 +282,15 @@ final _codexFilteredIndexProvider =
           locked.add(e);
         }
       }
-      return (visible: visible, listed: listed, locked: locked);
+      if (!filters.collapseSimilarSkins) {
+        return (visible: visible, listed: listed, locked: locked);
+      }
+      Ship? shipOf(CodexEntry e) => e is ShipCodexEntry ? e.ship : null;
+      return (
+        visible: visible,
+        listed: collapseSimilarSkins(listed, shipOf).items,
+        locked: collapseSimilarSkins(locked, shipOf).items,
+      );
     });
 
 /// The index after the standing spoiler and mod filters. This is the universe

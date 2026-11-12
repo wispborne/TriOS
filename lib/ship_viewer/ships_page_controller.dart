@@ -12,6 +12,7 @@ import 'package:trios/ship_viewer/models/ship.dart';
 import 'package:trios/ship_viewer/models/ship_variant.dart';
 import 'package:trios/ship_viewer/ship_manager.dart';
 import 'package:trios/ship_viewer/ship_module_resolver.dart';
+import 'package:trios/ship_viewer/skin_collapsing.dart' as skins;
 import 'package:trios/thirdparty/dartx/iterable.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -199,9 +200,21 @@ class ShipsPageController extends Notifier<ShipsPageState>
   BoolField<Ship> get _showModuleShipsField =>
       _general.fieldById('showModuleShips') as BoolField<Ship>;
 
+  BoolField<Ship> get _collapseSimilarSkinsField =>
+      _general.fieldById('collapseSimilarSkins') as BoolField<Ship>;
+
   bool get showEnabled => ref.read(appSettings).onlyEnabledMods;
 
   bool get showModuleShips => _showModuleShipsField.value;
+
+  bool get collapseSimilarSkins => _collapseSimilarSkinsField.value;
+
+  /// How many skins a row stands for, by ship id. Only has rows that stand for
+  /// two or more skins.
+  Map<String, int> _collapsedSkinCounts = const {};
+
+  /// How many skins the row for [shipId] stands for, or null if just one.
+  int? collapsedSkinCount(String shipId) => _collapsedSkinCounts[shipId];
 
   SpoilerLevel get spoilerLevelToShow => _spoilerField.selected;
 
@@ -408,6 +421,17 @@ class ShipsPageController extends Notifier<ShipsPageState>
             // brings the module ships back.
             defaultValue: true,
             initialValue: false,
+          ),
+          BoolField<Ship>(
+            id: 'collapseSimilarSkins',
+            label: 'Collapse Similar Skins',
+            tooltip:
+                'Show one row for skins with the same base hull and name.',
+            // Collapsing has to see the whole list, so the real work is in
+            // [_processAllFilters]. Starts on, and clearing the filters turns
+            // it off so that every skin shows.
+            predicate: (_) => true,
+            initialValue: true,
           ),
         ],
       ),
@@ -673,6 +697,14 @@ class ShipsPageController extends Notifier<ShipsPageState>
       currentState.currentSearchQuery,
       currentState.shipSearchIndices,
     );
+
+    // Last, so that spoiler filters and search see every skin.
+    _collapsedSkinCounts = const {};
+    if (collapseSimilarSkins) {
+      final collapsed = skins.collapseSimilarSkins(ships, (ship) => ship);
+      ships = collapsed.items;
+      _collapsedSkinCounts = collapsed.groupSizes;
+    }
 
     return currentState.copyWith(
       filteredShips: ships,

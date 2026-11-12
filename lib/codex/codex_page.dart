@@ -1319,6 +1319,15 @@ class _CodexPageState extends ConsumerState<CodexPage>
             ),
             Align(
               alignment: Alignment.centerLeft,
+              child: CheckboxWithLabel(
+                label: 'Collapse similar skins',
+                value: filters.collapseSimilarSkins,
+                labelStyle: theme.textTheme.labelMedium,
+                onChanged: (v) => notifier.setCollapseSimilarSkins(v ?? false),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
               child: MovingTooltipWidget.text(
                 message:
                     'List a station\'s modules (its docked parts) as their own '

@@ -512,6 +512,27 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
                         child: ShipSkinBadge(),
                       ),
                     ),
+                  if (ref
+                          .read(shipsPageControllerProvider.notifier)
+                          .collapsedSkinCount(item.id)
+                      case final count?)
+                    MouseRegion(
+                      cursor: SystemMouseCursors.basic,
+                      child: MovingTooltipWidget.text(
+                        message:
+                            "Uncheck 'Collapse Similar Skins' to see all "
+                            '$count similar skins',
+                        child: Padding(
+                          padding: const .only(left: 8, top: 3),
+                          child: Text(
+                            '×$count',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: .bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

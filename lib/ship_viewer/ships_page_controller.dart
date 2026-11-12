@@ -20,6 +20,7 @@ import 'package:trios/utils/search_index.dart';
 import 'package:trios/widgets/smart_search/search_dsl_field.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/descriptions/descriptions_manager.dart';
+import 'package:trios/faction_viewer/faction_knowledge.dart';
 import 'package:trios/hullmod_viewer/hullmods_manager.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/weapon_viewer/models/weapon.dart';
@@ -163,6 +164,10 @@ class ShipsPageController extends Notifier<ShipsPageState>
   /// because searching also runs during `build()`, before state is set.
   Map<String, Hullmod> _hullmodsById = const {};
 
+  /// Which factions know each ship. Kept here for the same reason as
+  /// [_hullmodsById]: filtering also runs during `build()`.
+  FactionKnowledge factionKnowledge = FactionKnowledge.empty;
+
   // Memoization for shipsWithModuleIds, keyed by input identity so we skip
   // the O(N²) recompute on rebuilds where ship/variant references haven't
   // actually changed (e.g. an unrelated watched provider ticked).
@@ -255,6 +260,16 @@ class ShipsPageController extends Notifier<ShipsPageState>
     final hullmodsAsync = ref.watch(hullmodListNotifierProvider);
 
     final allShips = shipsAsync.value ?? [];
+    // Factions finish loading separately from ships, so a change here has to
+    // re-run the filters too.
+    final latestFactionKnowledge = ref.watch(
+      shipFactionKnowledgeProvider(onlyEnabledMods),
+    );
+    final factionsChanged = !identical(
+      latestFactionKnowledge,
+      factionKnowledge,
+    );
+    factionKnowledge = latestFactionKnowledge;
     final moduleVariants = ref.watch(moduleVariantsProvider);
     final variantHullIdMap = ref.watch(variantHullIdMapProvider);
     final shipSystems = shipSystemsAsync.value ?? [];
@@ -320,6 +335,7 @@ class ShipsPageController extends Notifier<ShipsPageState>
 
     if (!itemsChanged &&
         !moduleShipsChanged &&
+        !factionsChanged &&
         !showEnabled &&
         stateOrNull != null) {
       return initialState.copyWith(
@@ -466,6 +482,14 @@ class ShipsPageController extends Notifier<ShipsPageState>
             : b == vanillaName
             ? 1
             : a.compareTo(b),
+      ),
+      ChipFilterGroup<Ship>(
+        id: 'faction',
+        name: 'Faction',
+        collapsedByDefault: true,
+        valueGetter: (_) => '',
+        valuesGetter: (ship) => factionKnowledge.factionKeysOf(ship.id),
+        displayNameGetter: (key) => factionKnowledge.nameOf(key),
       ),
       ChipFilterGroup<Ship>(
         id: 'system',

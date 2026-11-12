@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:super_clipboard/super_clipboard.dart';
+import 'package:trios/faction_viewer/faction_knowledge.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
@@ -353,6 +354,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         groups: [
           UngroupedShipGridGroup(),
           ModShipGridGroup(),
+          FactionGridGroup<Ship>(
+            ref.read(shipsPageControllerProvider.notifier).factionKnowledge,
+          ),
           HullSizeShipGridGroup(),
           TechShipGridGroup(),
           DesignationShipGridGroup(),
@@ -403,6 +407,9 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
     ShipsPageState controllerState,
   ) {
     int position = 0;
+    final factionKnowledge = ref
+        .read(shipsPageControllerProvider.notifier)
+        .factionKnowledge;
 
     String shipValueToString(
       Comparable<dynamic>? Function(Ship) getValue,
@@ -560,6 +567,12 @@ class _ShipsPageState extends ConsumerState<ShipsPage>
         defaultState: WispGridColumnState(position: position++, width: 120),
       ),
       col('techManufacturer', 'Tech', (s) => s.techManufacturer, width: 220),
+      col(
+        'factions',
+        'Factions',
+        (s) => factionKnowledge.factionNamesOf(s.id),
+        width: 200,
+      ),
       ...[
         col('designation', 'Designation', (s) => s.designation),
         col(

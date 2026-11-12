@@ -14,7 +14,18 @@ List<FilterGroup<CodexEntry>> buildCodexFacetGroups(
   CodexEntryType category, {
   required List<CodexEntry> Function() itemsFor,
   required Ship? Function(String hullId) shipForHull,
+  required List<String> Function(CodexEntry entry) factionKeysOf,
+  required String Function(String factionKey) factionNameOf,
 }) {
+  ChipFilterGroup<CodexEntry> factionGroup() => ChipFilterGroup<CodexEntry>(
+    id: 'faction',
+    name: 'Faction',
+    collapsedByDefault: true,
+    valueGetter: (_) => '',
+    valuesGetter: factionKeysOf,
+    displayNameGetter: factionNameOf,
+  );
+
   switch (category) {
     case CodexEntryType.ship:
       return [
@@ -22,6 +33,7 @@ List<FilterGroup<CodexEntry>> buildCodexFacetGroups(
           itemsFor,
           (e) => (e as ShipCodexEntry).ship.techManufacturer,
         ),
+        factionGroup(),
         ChipFilterGroup<CodexEntry>(
           id: 'size',
           name: 'Size',
@@ -54,6 +66,7 @@ List<FilterGroup<CodexEntry>> buildCodexFacetGroups(
           itemsFor,
           (e) => (e as WeaponCodexEntry).weapon.techManufacturer,
         ),
+        factionGroup(),
         ChipFilterGroup<CodexEntry>(
           id: 'size',
           name: 'Size',
@@ -119,6 +132,7 @@ List<FilterGroup<CodexEntry>> buildCodexFacetGroups(
           final hull = wing.hullId;
           return hull == null ? null : shipForHull(hull)?.techManufacturer;
         }),
+        factionGroup(),
         ChipFilterGroup<CodexEntry>(
           id: 'role',
           name: 'Role',

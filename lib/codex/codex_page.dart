@@ -19,6 +19,7 @@ import 'package:trios/codex/models/codex_entry.dart';
 import 'package:trios/codex/widgets/codex_detail_panel.dart';
 import 'package:trios/codex/widgets/codex_entry_tooltip.dart';
 import 'package:trios/codex/widgets/codex_list_row.dart';
+import 'package:trios/faction_viewer/faction_knowledge.dart';
 import 'package:trios/hullmod_viewer/models/hullmod.dart';
 import 'package:trios/ship_systems_manager/ship_system.dart';
 import 'package:trios/ship_viewer/models/ship.dart';
@@ -123,6 +124,12 @@ class _CodexPageState extends ConsumerState<CodexPage>
   /// Index snapshot used to avoid recalculating unchanged range bounds.
   final Map<CodexEntryType, List<CodexEntry>> _rangeSource = {};
 
+  /// Which factions know each ship, weapon and fighter wing. Refreshed on every
+  /// build; the facet groups read these when filtering and grouping.
+  FactionKnowledge _shipFactions = FactionKnowledge.empty;
+  FactionKnowledge _weaponFactions = FactionKnowledge.empty;
+  FactionKnowledge _wingFactions = FactionKnowledge.empty;
+
   Directory? _gameCoreDir;
 
   /// The selected grouping id per category. Unset defaults to grouping by mod.
@@ -148,6 +155,9 @@ class _CodexPageState extends ConsumerState<CodexPage>
             type,
             itemsFor: () => _facetItems[type] ?? const [],
             shipForHull: (hullId) => _shipsByHull[hullId],
+            factionKeysOf: _factionKeysOf,
+            // All three lookups are built from the same factions.
+            factionNameOf: (key) => _shipFactions.nameOf(key),
           ),
         ),
     };
@@ -171,6 +181,13 @@ class _CodexPageState extends ConsumerState<CodexPage>
     _centerSplitController.dispose();
     super.dispose();
   }
+
+  List<String> _factionKeysOf(CodexEntry entry) => switch (entry) {
+    ShipCodexEntry(:final ship) => _shipFactions.factionKeysOf(ship.id),
+    WeaponCodexEntry(:final weapon) => _weaponFactions.factionKeysOf(weapon.id),
+    WingCodexEntry(:final wing) => _wingFactions.factionKeysOf(wing.id),
+    _ => const [],
+  };
 
   Map<String, Map<String, Object?>> _captureFacets(CodexEntryType category) {
     final ctrl = _facetControllers[category];
@@ -299,6 +316,12 @@ class _CodexPageState extends ConsumerState<CodexPage>
       };
     }
     _gameCoreDir = ref.watch(AppState.gameCoreFolder).value;
+    final onlyEnabledMods = ref.watch(onlyEnabledModsProvider);
+    _shipFactions = ref.watch(shipFactionKnowledgeProvider(onlyEnabledMods));
+    _weaponFactions = ref.watch(
+      weaponFactionKnowledgeProvider(onlyEnabledMods),
+    );
+    _wingFactions = ref.watch(wingFactionKnowledgeProvider(onlyEnabledMods));
 
     // Count basis for the active category's facets (pre-chip-filter).
     final category = state.category;

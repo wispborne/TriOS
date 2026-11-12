@@ -4,6 +4,7 @@ import 'package:dart_mappable/dart_mappable.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trios/utils/notify_on_new_state.dart';
+import 'package:trios/faction_viewer/faction_knowledge.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/trios/app_state.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
@@ -97,6 +98,10 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
   late final Map<String, SearchField<Weapon>> _fieldsByKey;
   List<Weapon>? _searchIndexItems;
 
+  /// Which factions know each weapon. Kept here because filtering also runs
+  /// during `build()`, before state is set.
+  FactionKnowledge factionKnowledge = FactionKnowledge.empty;
+
   final vanillaName = 'Vanilla';
 
   FilterScope get scope => _scope;
@@ -145,6 +150,16 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
     final isLoadingWeapons = ref.watch(isLoadingWeaponsList);
 
     final allWeapons = weaponsAsync.value ?? [];
+    // Factions finish loading separately from weapons, so a change here has to
+    // re-run the filters too.
+    final latestFactionKnowledge = ref.watch(
+      weaponFactionKnowledgeProvider(onlyEnabledMods),
+    );
+    final factionsChanged = !identical(
+      latestFactionKnowledge,
+      factionKnowledge,
+    );
+    factionKnowledge = latestFactionKnowledge;
 
     _filters.applyPendingChipMerge(allWeapons);
 
@@ -174,7 +189,10 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
               isLoading: isLoadingWeapons,
             );
 
-    if (!itemsChanged && !showEnabled && stateOrNull != null) {
+    if (!itemsChanged &&
+        !factionsChanged &&
+        !showEnabled &&
+        stateOrNull != null) {
       return initialState.copyWith(
         filteredWeapons: stateOrNull!.filteredWeapons,
         weaponsBeforeGridFilter: stateOrNull!.weaponsBeforeGridFilter,
@@ -262,6 +280,14 @@ class WeaponsPageController extends Notifier<WeaponsPageState>
             : b == vanillaName
             ? 1
             : a.compareTo(b),
+      ),
+      ChipFilterGroup<Weapon>(
+        id: 'faction',
+        name: 'Faction',
+        collapsedByDefault: true,
+        valueGetter: (_) => '',
+        valuesGetter: (weapon) => factionKnowledge.factionKeysOf(weapon.id),
+        displayNameGetter: (key) => factionKnowledge.nameOf(key),
       ),
       ChipFilterGroup<Weapon>(
         id: 'techManufacturer',

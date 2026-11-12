@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:trios/faction_viewer/faction_knowledge.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid.dart';
 import 'package:trios/mod_manager/homebrew_grid/wisp_grid_state.dart';
 import 'package:trios/mod_manager/homebrew_grid/wispgrid_group.dart';
@@ -358,7 +359,13 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
                 ),
               ),
             ),
-        groups: [UngroupedWeaponGridGroup(), ModNameWeaponGridGroup()],
+        groups: [
+          UngroupedWeaponGridGroup(),
+          ModNameWeaponGridGroup(),
+          FactionGridGroup<Weapon>(
+            ref.read(weaponsPageControllerProvider.notifier).factionKnowledge,
+          ),
+        ],
       ),
     );
   }
@@ -410,6 +417,9 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
     WeaponsPageState controllerState,
   ) {
     int position = 0;
+    final factionKnowledge = ref
+        .read(weaponsPageControllerProvider.notifier)
+        .factionKnowledge;
 
     String wepValueToString(
       Comparable<dynamic>? Function(Weapon) getValue,
@@ -538,6 +548,12 @@ class _WeaponsPageState extends ConsumerState<WeaponsPage>
         'Tech/Manufacturer',
         (w) => w.techManufacturer,
         width: 150,
+      ),
+      col(
+        'factions',
+        'Factions',
+        (w) => factionKnowledge.factionNamesOf(w.id),
+        width: 200,
       ),
       col(
         'specClass',

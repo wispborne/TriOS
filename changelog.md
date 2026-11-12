@@ -1,9 +1,15 @@
-# 1.7.1
+# 1.8.0
 - Added
+  - Catalog: better search, new filters/sorts, updated mod detail page (still unpolished UI, but didn't want to hold up this release more).
   - Ship blueprints may now be copied to the clipboard or saved as PNG files.
-  - Added built-in custom shield textures for Project MISTRAL and Orbital Manipulation & Maintenance.
   - Opacity sliders for ship overlays (bounds/mounts/weapon arcs).
-  - Catalog: mod pop-ups list conflicts reported by the author. Each conflict includes a quote from the author. Installed conflicts get a warning icon.
+  - Added built-in custom shield textures for Project MISTRAL and Orbital Manipulation & Maintenance.
+  - Mod page now lets you search by mod category.
+  - Clicking "Report Bug" now lets you censor/draw on your screenshots and not send your mod list.
+  - Weapons can be filtered/sorted by mount type.
+  - Ships and weapons can be grouped/sorted by faction.
+  - Data warning if .version file says something different than mod_info.json (like the 1.7.0 feature but now works in the other direction).
+  - Grid column widths can auto-size now.
 - Fixed
   - Vertical alignment of game icon with sidebar layout.
   - Weapons with dual barrels now display stats correctly.
@@ -11,9 +17,19 @@
   - Radar background animation didn't move.
   - Refreshing the Ship Viewer now reloads changed sprites, graphics, engine and shield styles, and `trios.json` settings.
   - Tentative mitigation for VRAM Estimator scanning when OS is low on file handles.
+  - Invalid Windows filename characters in a mod's version (whyyyy) prevented mods from installing.
   - Fixed random black screen on startup.
+  - Drag'n'drop to change a mod's category no longer has a risk of assigning the wrong category if "Repeat mods in all categories" is enabled.
+  - "Open with TriOS" is no longer broken if you move TriOS on disk.
+  - Game paths on settings page now apply correctly again.
+  - Changelogs now download more efficiently.
+  - Ship credit cost column now sorts numbers correctly.
 - Changed
   - Default ship viewer background is now space4 (darker).
+  - You may now hit `/` to focus the searchbar on all pages.
+  - Skins with the same name and base hull are now collapsed into a single row.
+  - Sorting the mod grid by version now works too, but why would you do that.
+  - Updated Sentry (opt-in error reporting library) to hopefully not spawn Powershell instances on launch.
 
 # 1.7.0
 - Added

@@ -137,7 +137,7 @@ class _AiUseRow extends StatelessWidget {
           [
             ?use.how,
             ?use.extent,
-            if (use.optional == true) 'optional',
+            if (use.isOptional == true) 'optional',
           ].join(', '),
         ].where((part) => part.isNotEmpty).join(': '),
       if (aiUse.tools?.isNotEmpty ?? false) 'Tools: ${aiUse.tools!.join(', ')}',

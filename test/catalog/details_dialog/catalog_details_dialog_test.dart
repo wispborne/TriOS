@@ -141,7 +141,7 @@ void main() {
         ForumLlmDownload(
           url: 'https://example.com/discord-mod.zip',
           label: 'Zip',
-          kind: LlmDownloadKind.direct,
+          type: LlmDownloadType.direct,
           confidence: LlmDownloadConfidence.high,
         ),
       ],

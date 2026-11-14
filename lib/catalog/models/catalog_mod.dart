@@ -199,20 +199,22 @@ class CatalogMod {
 
   /// Mods this mod requires. From the extras record, or from the AI answer
   /// when there's no record. Names from the AI answer have no catalog id.
-  List<CatalogNeed> get requiredMods =>
-      extras?.needs ?? _needsFromNames(llmMod?.extras?.needs);
+  List<CatalogNeed> get requiredMods => extras != null
+      ? extras!.requirements?.required ?? const []
+      : _needsFromNames(llmMod?.requirements?.required);
 
   /// Mods this mod works with but doesn't require. Same sources as
   /// [requiredMods].
-  List<CatalogNeed> get optionalMods =>
-      extras?.optionalNeeds ?? _needsFromNames(llmMod?.extras?.optionalNeeds);
+  List<CatalogNeed> get optionalMods => extras != null
+      ? extras!.requirements?.optional ?? const []
+      : _needsFromNames(llmMod?.requirements?.optional);
 
   /// Mods the author says conflict with this mod.
   /// Uses the same sources as [requiredMods].
   List<CatalogConflict> get conflictingMods =>
       extras?.conflicts ??
       [
-        for (final conflict in llmMod?.extras?.conflicts ?? const [])
+        for (final conflict in llmMod?.conflicts ?? const [])
           CatalogConflict(name: conflict.name, quote: conflict.quote),
       ];
 
@@ -223,7 +225,7 @@ class CatalogMod {
   /// What the author says about using AI. From the extras record, or from the
   /// AI answer when the record has none. Null when nothing has read the post
   /// for it.
-  CatalogAiUse? get aiUse => extras?.aiUse ?? llmMod?.extras?.aiUse;
+  CatalogAiUse? get aiUse => extras?.aiUse ?? llmMod?.aiUse;
 
   /// True when the author says AI was used, false when they say none was, and
   /// null when they say nothing about it.
@@ -267,11 +269,8 @@ CatalogSaveAnswer? _canAddToSaveFrom(
   CatalogExtras? extras,
   ForumLlmMod? llmMod,
 ) {
-  if (extras != null) return extras.canAdd;
-  final text = llmMod?.extras?.canAdd;
-  if (text == null) return null;
-  return CatalogSaveAnswer.values.asNameMap()[text] ??
-      CatalogSaveAnswer.unknown;
+  if (extras != null) return extras.saveCompat?.adding?.answer;
+  return llmMod?.saveCompat?.adding?.answer;
 }
 
 final DateTime _epoch = DateTime.utc(1970);
@@ -417,8 +416,7 @@ CatalogMod gatherCatalogMod({
     forumIndex: forumIndex,
     discordThreads: discordThreads,
   );
-  final llmExtras = llmMod?.extras;
-  final sourceCodeUrl = llmExtras?.sourceCodeUrl;
+  final sourceCodeUrl = llmMod?.sourceCode?.safeUrl;
 
   final authorsList = mod.authorsList?.isNotEmpty == true
       ? mod.getAuthorsDeduplicated().join(', ')
@@ -466,16 +464,18 @@ CatalogMod gatherCatalogMod({
     summaryText: _asPlainText(extras?.summary ?? mod.summary),
     descriptionText: _asPlainText(mod.description),
     modInfoText: _asPlainText(modInfoDescription(installedMod)),
-    aiSentence: _asPlainText(llmExtras?.summary?.sentence),
-    aiParagraph: _asPlainText(llmExtras?.summary?.paragraph),
+    aiSentence: _asPlainText(llmMod?.summary?.sentence),
+    aiParagraph: _asPlainText(llmMod?.summary?.paragraph),
     llmMod: llmMod,
-    changelog: llmExtras?.changelog,
-    supportLinks: llmExtras?.supportLinks ?? const [],
-    saveCompatibility: llmExtras?.saveCompatibility,
+    changelog: llmMod?.release?.changelog,
+    supportLinks: llmMod?.supportLinks ?? const [],
+    saveCompatibility: llmMod?.saveCompat?.adding?.quote,
     sourceCodeUrl: sourceCodeUrl,
     // Forum posts write `&nbsp;` where they mean a space; the app shows the
     // license as-is, so the code turns it back into one here.
-    licenseText: trimmedOrNull(llmExtras?.license?.replaceAll('&nbsp;', ' ')),
+    licenseText: trimmedOrNull(
+      llmMod?.sourceCode?.license?.replaceAll('&nbsp;', ' '),
+    ),
     catalogImage: mainImage,
     category: category,
     postDate: postDate,

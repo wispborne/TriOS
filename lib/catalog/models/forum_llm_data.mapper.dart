@@ -62,57 +62,57 @@ extension LlmModRoleMapperExtension on LlmModRole {
   }
 }
 
-class LlmDownloadKindMapper extends EnumMapper<LlmDownloadKind> {
-  LlmDownloadKindMapper._();
+class LlmDownloadTypeMapper extends EnumMapper<LlmDownloadType> {
+  LlmDownloadTypeMapper._();
 
-  static LlmDownloadKindMapper? _instance;
-  static LlmDownloadKindMapper ensureInitialized() {
+  static LlmDownloadTypeMapper? _instance;
+  static LlmDownloadTypeMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = LlmDownloadKindMapper._());
+      MapperContainer.globals.use(_instance = LlmDownloadTypeMapper._());
     }
     return _instance!;
   }
 
-  static LlmDownloadKind fromValue(dynamic value) {
+  static LlmDownloadType fromValue(dynamic value) {
     ensureInitialized();
     return MapperContainer.globals.fromValue(value);
   }
 
   @override
-  LlmDownloadKind decode(dynamic value) {
+  LlmDownloadType decode(dynamic value) {
     switch (value) {
       case r'trios':
-        return LlmDownloadKind.trios;
+        return LlmDownloadType.trios;
       case r'direct':
-        return LlmDownloadKind.direct;
+        return LlmDownloadType.direct;
       case r'mirror':
-        return LlmDownloadKind.mirror;
+        return LlmDownloadType.mirror;
       case r'unknown':
-        return LlmDownloadKind.unknown;
+        return LlmDownloadType.unknown;
       default:
-        return LlmDownloadKind.values[3];
+        return LlmDownloadType.values[3];
     }
   }
 
   @override
-  dynamic encode(LlmDownloadKind self) {
+  dynamic encode(LlmDownloadType self) {
     switch (self) {
-      case LlmDownloadKind.trios:
+      case LlmDownloadType.trios:
         return r'trios';
-      case LlmDownloadKind.direct:
+      case LlmDownloadType.direct:
         return r'direct';
-      case LlmDownloadKind.mirror:
+      case LlmDownloadType.mirror:
         return r'mirror';
-      case LlmDownloadKind.unknown:
+      case LlmDownloadType.unknown:
         return r'unknown';
     }
   }
 }
 
-extension LlmDownloadKindMapperExtension on LlmDownloadKind {
+extension LlmDownloadTypeMapperExtension on LlmDownloadType {
   String toValue() {
-    LlmDownloadKindMapper.ensureInitialized();
-    return MapperContainer.globals.toValue<LlmDownloadKind>(this) as String;
+    LlmDownloadTypeMapper.ensureInitialized();
+    return MapperContainer.globals.toValue<LlmDownloadType>(this) as String;
   }
 }
 
@@ -314,7 +314,14 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
       MapperContainer.globals.use(_instance = ForumLlmModMapper._());
       LlmModRoleMapper.ensureInitialized();
       ForumLlmDownloadMapper.ensureInitialized();
-      ForumLlmExtrasMapper.ensureInitialized();
+      ForumLlmReleaseMapper.ensureInitialized();
+      ForumLlmSaveCompatMapper.ensureInitialized();
+      ForumLlmRequirementsMapper.ensureInitialized();
+      ForumLlmConflictMapper.ensureInitialized();
+      CatalogAiUseMapper.ensureInitialized();
+      ForumLlmSourceCodeMapper.ensureInitialized();
+      ForumLlmSupportLinkMapper.ensureInitialized();
+      ForumLlmDescriptionMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -331,12 +338,19 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
     opt: true,
     def: LlmModRole.unknown,
   );
-  static List<String>? _$requires(ForumLlmMod v) => v.requires;
-  static const Field<ForumLlmMod, List<String>> _f$requires = Field(
-    'requires',
-    _$requires,
+  static List<String>? _$parentMods(ForumLlmMod v) => v.parentMods;
+  static const Field<ForumLlmMod, List<String>> _f$parentMods = Field(
+    'parentMods',
+    _$parentMods,
+    key: r'parentMod',
     opt: true,
     hook: RequiredModsHook(),
+  );
+  static List<String>? _$types(ForumLlmMod v) => v.types;
+  static const Field<ForumLlmMod, List<String>> _f$types = Field(
+    'types',
+    _$types,
+    opt: true,
   );
   static List<ForumLlmDownload> _$downloads(ForumLlmMod v) => v.downloads;
   static const Field<ForumLlmMod, List<ForumLlmDownload>> _f$downloads = Field(
@@ -345,28 +359,63 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
     opt: true,
     def: const [],
   );
-  static ForumLlmExtras? _$extras(ForumLlmMod v) => v.extras;
-  static const Field<ForumLlmMod, ForumLlmExtras> _f$extras = Field(
-    'extras',
-    _$extras,
-    opt: true,
-  );
-  static String? _$image(ForumLlmMod v) => v.image;
-  static const Field<ForumLlmMod, String> _f$image = Field(
-    'image',
-    _$image,
-    opt: true,
-  );
   static List<String>? _$nicknames(ForumLlmMod v) => v.nicknames;
   static const Field<ForumLlmMod, List<String>> _f$nicknames = Field(
     'nicknames',
     _$nicknames,
     opt: true,
   );
-  static bool? _$isTool(ForumLlmMod v) => v.isTool;
-  static const Field<ForumLlmMod, bool> _f$isTool = Field(
-    'isTool',
-    _$isTool,
+  static String? _$image(ForumLlmMod v) => v.image;
+  static const Field<ForumLlmMod, String> _f$image = Field(
+    'image',
+    _$image,
+    key: r'imageUrl',
+    opt: true,
+  );
+  static ForumLlmRelease? _$release(ForumLlmMod v) => v.release;
+  static const Field<ForumLlmMod, ForumLlmRelease> _f$release = Field(
+    'release',
+    _$release,
+    opt: true,
+  );
+  static ForumLlmSaveCompat? _$saveCompat(ForumLlmMod v) => v.saveCompat;
+  static const Field<ForumLlmMod, ForumLlmSaveCompat> _f$saveCompat = Field(
+    'saveCompat',
+    _$saveCompat,
+    opt: true,
+  );
+  static ForumLlmRequirements? _$requirements(ForumLlmMod v) => v.requirements;
+  static const Field<ForumLlmMod, ForumLlmRequirements> _f$requirements = Field(
+    'requirements',
+    _$requirements,
+    opt: true,
+  );
+  static List<ForumLlmConflict>? _$conflicts(ForumLlmMod v) => v.conflicts;
+  static const Field<ForumLlmMod, List<ForumLlmConflict>> _f$conflicts = Field(
+    'conflicts',
+    _$conflicts,
+    opt: true,
+  );
+  static CatalogAiUse? _$aiUse(ForumLlmMod v) => v.aiUse;
+  static const Field<ForumLlmMod, CatalogAiUse> _f$aiUse = Field(
+    'aiUse',
+    _$aiUse,
+    opt: true,
+  );
+  static ForumLlmSourceCode? _$sourceCode(ForumLlmMod v) => v.sourceCode;
+  static const Field<ForumLlmMod, ForumLlmSourceCode> _f$sourceCode = Field(
+    'sourceCode',
+    _$sourceCode,
+    opt: true,
+  );
+  static List<ForumLlmSupportLink>? _$supportLinks(ForumLlmMod v) =>
+      v.supportLinks;
+  static const Field<ForumLlmMod, List<ForumLlmSupportLink>> _f$supportLinks =
+      Field('supportLinks', _$supportLinks, opt: true);
+  static ForumLlmDescription? _$description(ForumLlmMod v) => v.description;
+  static const Field<ForumLlmMod, ForumLlmDescription> _f$description = Field(
+    'description',
+    _$description,
     opt: true,
   );
 
@@ -374,24 +423,40 @@ class ForumLlmModMapper extends ClassMapperBase<ForumLlmMod> {
   final MappableFields<ForumLlmMod> fields = const {
     #name: _f$name,
     #role: _f$role,
-    #requires: _f$requires,
+    #parentMods: _f$parentMods,
+    #types: _f$types,
     #downloads: _f$downloads,
-    #extras: _f$extras,
-    #image: _f$image,
     #nicknames: _f$nicknames,
-    #isTool: _f$isTool,
+    #image: _f$image,
+    #release: _f$release,
+    #saveCompat: _f$saveCompat,
+    #requirements: _f$requirements,
+    #conflicts: _f$conflicts,
+    #aiUse: _f$aiUse,
+    #sourceCode: _f$sourceCode,
+    #supportLinks: _f$supportLinks,
+    #description: _f$description,
   };
 
+  @override
+  final MappingHook hook = const OldLlmFormatHook();
   static ForumLlmMod _instantiate(DecodingData data) {
     return ForumLlmMod(
       name: data.dec(_f$name),
       role: data.dec(_f$role),
-      requires: data.dec(_f$requires),
+      parentMods: data.dec(_f$parentMods),
+      types: data.dec(_f$types),
       downloads: data.dec(_f$downloads),
-      extras: data.dec(_f$extras),
-      image: data.dec(_f$image),
       nicknames: data.dec(_f$nicknames),
-      isTool: data.dec(_f$isTool),
+      image: data.dec(_f$image),
+      release: data.dec(_f$release),
+      saveCompat: data.dec(_f$saveCompat),
+      requirements: data.dec(_f$requirements),
+      conflicts: data.dec(_f$conflicts),
+      aiUse: data.dec(_f$aiUse),
+      sourceCode: data.dec(_f$sourceCode),
+      supportLinks: data.dec(_f$supportLinks),
+      description: data.dec(_f$description),
     );
   }
 
@@ -455,24 +520,53 @@ extension ForumLlmModValueCopy<$R, $Out>
 
 abstract class ForumLlmModCopyWith<$R, $In extends ForumLlmMod, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get requires;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get parentMods;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get types;
   ListCopyWith<
     $R,
     ForumLlmDownload,
     ForumLlmDownloadCopyWith<$R, ForumLlmDownload, ForumLlmDownload>
   >
   get downloads;
-  ForumLlmExtrasCopyWith<$R, ForumLlmExtras, ForumLlmExtras>? get extras;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get nicknames;
+  ForumLlmReleaseCopyWith<$R, ForumLlmRelease, ForumLlmRelease>? get release;
+  ForumLlmSaveCompatCopyWith<$R, ForumLlmSaveCompat, ForumLlmSaveCompat>?
+  get saveCompat;
+  ForumLlmRequirementsCopyWith<$R, ForumLlmRequirements, ForumLlmRequirements>?
+  get requirements;
+  ListCopyWith<
+    $R,
+    ForumLlmConflict,
+    ForumLlmConflictCopyWith<$R, ForumLlmConflict, ForumLlmConflict>
+  >?
+  get conflicts;
+  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse;
+  ForumLlmSourceCodeCopyWith<$R, ForumLlmSourceCode, ForumLlmSourceCode>?
+  get sourceCode;
+  ListCopyWith<
+    $R,
+    ForumLlmSupportLink,
+    ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, ForumLlmSupportLink>
+  >?
+  get supportLinks;
+  ForumLlmDescriptionCopyWith<$R, ForumLlmDescription, ForumLlmDescription>?
+  get description;
   $R call({
     String? name,
     LlmModRole? role,
-    List<String>? requires,
+    List<String>? parentMods,
+    List<String>? types,
     List<ForumLlmDownload>? downloads,
-    ForumLlmExtras? extras,
-    String? image,
     List<String>? nicknames,
-    bool? isTool,
+    String? image,
+    ForumLlmRelease? release,
+    ForumLlmSaveCompat? saveCompat,
+    ForumLlmRequirements? requirements,
+    List<ForumLlmConflict>? conflicts,
+    CatalogAiUse? aiUse,
+    ForumLlmSourceCode? sourceCode,
+    List<ForumLlmSupportLink>? supportLinks,
+    ForumLlmDescription? description,
   });
   ForumLlmModCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -486,12 +580,21 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ForumLlmMod> $mapper =
       ForumLlmModMapper.ensureInitialized();
   @override
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get requires =>
-      $value.requires != null
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
+  get parentMods => $value.parentMods != null
       ? ListCopyWith(
-          $value.requires!,
+          $value.parentMods!,
           (v, t) => ObjectCopyWith(v, $identity, t),
-          (v) => call(requires: v),
+          (v) => call(parentMods: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get types =>
+      $value.types != null
+      ? ListCopyWith(
+          $value.types!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(types: v),
         )
       : null;
   @override
@@ -506,9 +609,6 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
     (v) => call(downloads: v),
   );
   @override
-  ForumLlmExtrasCopyWith<$R, ForumLlmExtras, ForumLlmExtras>? get extras =>
-      $value.extras?.copyWith.$chain((v) => call(extras: v));
-  @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get nicknames =>
       $value.nicknames != null
       ? ListCopyWith(
@@ -518,37 +618,106 @@ class _ForumLlmModCopyWithImpl<$R, $Out>
         )
       : null;
   @override
+  ForumLlmReleaseCopyWith<$R, ForumLlmRelease, ForumLlmRelease>? get release =>
+      $value.release?.copyWith.$chain((v) => call(release: v));
+  @override
+  ForumLlmSaveCompatCopyWith<$R, ForumLlmSaveCompat, ForumLlmSaveCompat>?
+  get saveCompat =>
+      $value.saveCompat?.copyWith.$chain((v) => call(saveCompat: v));
+  @override
+  ForumLlmRequirementsCopyWith<$R, ForumLlmRequirements, ForumLlmRequirements>?
+  get requirements =>
+      $value.requirements?.copyWith.$chain((v) => call(requirements: v));
+  @override
+  ListCopyWith<
+    $R,
+    ForumLlmConflict,
+    ForumLlmConflictCopyWith<$R, ForumLlmConflict, ForumLlmConflict>
+  >?
+  get conflicts => $value.conflicts != null
+      ? ListCopyWith(
+          $value.conflicts!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(conflicts: v),
+        )
+      : null;
+  @override
+  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse =>
+      $value.aiUse?.copyWith.$chain((v) => call(aiUse: v));
+  @override
+  ForumLlmSourceCodeCopyWith<$R, ForumLlmSourceCode, ForumLlmSourceCode>?
+  get sourceCode =>
+      $value.sourceCode?.copyWith.$chain((v) => call(sourceCode: v));
+  @override
+  ListCopyWith<
+    $R,
+    ForumLlmSupportLink,
+    ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, ForumLlmSupportLink>
+  >?
+  get supportLinks => $value.supportLinks != null
+      ? ListCopyWith(
+          $value.supportLinks!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(supportLinks: v),
+        )
+      : null;
+  @override
+  ForumLlmDescriptionCopyWith<$R, ForumLlmDescription, ForumLlmDescription>?
+  get description =>
+      $value.description?.copyWith.$chain((v) => call(description: v));
+  @override
   $R call({
     String? name,
     LlmModRole? role,
-    Object? requires = $none,
+    Object? parentMods = $none,
+    Object? types = $none,
     List<ForumLlmDownload>? downloads,
-    Object? extras = $none,
-    Object? image = $none,
     Object? nicknames = $none,
-    Object? isTool = $none,
+    Object? image = $none,
+    Object? release = $none,
+    Object? saveCompat = $none,
+    Object? requirements = $none,
+    Object? conflicts = $none,
+    Object? aiUse = $none,
+    Object? sourceCode = $none,
+    Object? supportLinks = $none,
+    Object? description = $none,
   }) => $apply(
     FieldCopyWithData({
       if (name != null) #name: name,
       if (role != null) #role: role,
-      if (requires != $none) #requires: requires,
+      if (parentMods != $none) #parentMods: parentMods,
+      if (types != $none) #types: types,
       if (downloads != null) #downloads: downloads,
-      if (extras != $none) #extras: extras,
-      if (image != $none) #image: image,
       if (nicknames != $none) #nicknames: nicknames,
-      if (isTool != $none) #isTool: isTool,
+      if (image != $none) #image: image,
+      if (release != $none) #release: release,
+      if (saveCompat != $none) #saveCompat: saveCompat,
+      if (requirements != $none) #requirements: requirements,
+      if (conflicts != $none) #conflicts: conflicts,
+      if (aiUse != $none) #aiUse: aiUse,
+      if (sourceCode != $none) #sourceCode: sourceCode,
+      if (supportLinks != $none) #supportLinks: supportLinks,
+      if (description != $none) #description: description,
     }),
   );
   @override
   ForumLlmMod $make(CopyWithData data) => ForumLlmMod(
     name: data.get(#name, or: $value.name),
     role: data.get(#role, or: $value.role),
-    requires: data.get(#requires, or: $value.requires),
+    parentMods: data.get(#parentMods, or: $value.parentMods),
+    types: data.get(#types, or: $value.types),
     downloads: data.get(#downloads, or: $value.downloads),
-    extras: data.get(#extras, or: $value.extras),
-    image: data.get(#image, or: $value.image),
     nicknames: data.get(#nicknames, or: $value.nicknames),
-    isTool: data.get(#isTool, or: $value.isTool),
+    image: data.get(#image, or: $value.image),
+    release: data.get(#release, or: $value.release),
+    saveCompat: data.get(#saveCompat, or: $value.saveCompat),
+    requirements: data.get(#requirements, or: $value.requirements),
+    conflicts: data.get(#conflicts, or: $value.conflicts),
+    aiUse: data.get(#aiUse, or: $value.aiUse),
+    sourceCode: data.get(#sourceCode, or: $value.sourceCode),
+    supportLinks: data.get(#supportLinks, or: $value.supportLinks),
+    description: data.get(#description, or: $value.description),
   );
 
   @override
@@ -564,7 +733,7 @@ class ForumLlmDownloadMapper extends ClassMapperBase<ForumLlmDownload> {
   static ForumLlmDownloadMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ForumLlmDownloadMapper._());
-      LlmDownloadKindMapper.ensureInitialized();
+      LlmDownloadTypeMapper.ensureInitialized();
       LlmDownloadConfidenceMapper.ensureInitialized();
     }
     return _instance!;
@@ -582,12 +751,12 @@ class ForumLlmDownloadMapper extends ClassMapperBase<ForumLlmDownload> {
     opt: true,
     def: '',
   );
-  static LlmDownloadKind _$kind(ForumLlmDownload v) => v.kind;
-  static const Field<ForumLlmDownload, LlmDownloadKind> _f$kind = Field(
-    'kind',
-    _$kind,
+  static LlmDownloadType _$type(ForumLlmDownload v) => v.type;
+  static const Field<ForumLlmDownload, LlmDownloadType> _f$type = Field(
+    'type',
+    _$type,
     opt: true,
-    def: LlmDownloadKind.unknown,
+    def: LlmDownloadType.unknown,
   );
   static LlmDownloadConfidence _$confidence(ForumLlmDownload v) => v.confidence;
   static const Field<ForumLlmDownload, LlmDownloadConfidence> _f$confidence =
@@ -627,7 +796,7 @@ class ForumLlmDownloadMapper extends ClassMapperBase<ForumLlmDownload> {
   final MappableFields<ForumLlmDownload> fields = const {
     #url: _f$url,
     #label: _f$label,
-    #kind: _f$kind,
+    #type: _f$type,
     #confidence: _f$confidence,
     #requiresManualStep: _f$requiresManualStep,
     #sourceHost: _f$sourceHost,
@@ -639,7 +808,7 @@ class ForumLlmDownloadMapper extends ClassMapperBase<ForumLlmDownload> {
     return ForumLlmDownload(
       url: data.dec(_f$url),
       label: data.dec(_f$label),
-      kind: data.dec(_f$kind),
+      type: data.dec(_f$type),
       confidence: data.dec(_f$confidence),
       requiresManualStep: data.dec(_f$requiresManualStep),
       sourceHost: data.dec(_f$sourceHost),
@@ -713,7 +882,7 @@ abstract class ForumLlmDownloadCopyWith<$R, $In extends ForumLlmDownload, $Out>
   $R call({
     String? url,
     String? label,
-    LlmDownloadKind? kind,
+    LlmDownloadType? type,
     LlmDownloadConfidence? confidence,
     bool? requiresManualStep,
     String? sourceHost,
@@ -737,7 +906,7 @@ class _ForumLlmDownloadCopyWithImpl<$R, $Out>
   $R call({
     String? url,
     String? label,
-    LlmDownloadKind? kind,
+    LlmDownloadType? type,
     LlmDownloadConfidence? confidence,
     bool? requiresManualStep,
     Object? sourceHost = $none,
@@ -747,7 +916,7 @@ class _ForumLlmDownloadCopyWithImpl<$R, $Out>
     FieldCopyWithData({
       if (url != null) #url: url,
       if (label != null) #label: label,
-      if (kind != null) #kind: kind,
+      if (type != null) #type: type,
       if (confidence != null) #confidence: confidence,
       if (requiresManualStep != null) #requiresManualStep: requiresManualStep,
       if (sourceHost != $none) #sourceHost: sourceHost,
@@ -759,7 +928,7 @@ class _ForumLlmDownloadCopyWithImpl<$R, $Out>
   ForumLlmDownload $make(CopyWithData data) => ForumLlmDownload(
     url: data.get(#url, or: $value.url),
     label: data.get(#label, or: $value.label),
-    kind: data.get(#kind, or: $value.kind),
+    type: data.get(#type, or: $value.type),
     confidence: data.get(#confidence, or: $value.confidence),
     requiresManualStep: data.get(
       #requiresManualStep,
@@ -779,533 +948,145 @@ class _ForumLlmDownloadCopyWithImpl<$R, $Out>
   ) => _ForumLlmDownloadCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
-class ForumLlmExtrasMapper extends ClassMapperBase<ForumLlmExtras> {
-  ForumLlmExtrasMapper._();
+class ForumLlmReleaseMapper extends ClassMapperBase<ForumLlmRelease> {
+  ForumLlmReleaseMapper._();
 
-  static ForumLlmExtrasMapper? _instance;
-  static ForumLlmExtrasMapper ensureInitialized() {
+  static ForumLlmReleaseMapper? _instance;
+  static ForumLlmReleaseMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = ForumLlmExtrasMapper._());
-      ForumLlmSummaryMapper.ensureInitialized();
+      MapperContainer.globals.use(_instance = ForumLlmReleaseMapper._());
       ForumLlmChangelogMapper.ensureInitialized();
-      ForumLlmSupportLinkMapper.ensureInitialized();
-      CatalogAiUseMapper.ensureInitialized();
-      ForumLlmConflictMapper.ensureInitialized();
-      ForumLlmUpdateNoteMapper.ensureInitialized();
     }
     return _instance!;
   }
 
   @override
-  final String id = 'ForumLlmExtras';
+  final String id = 'ForumLlmRelease';
 
-  static String? _$version(ForumLlmExtras v) => v.version;
-  static const Field<ForumLlmExtras, String> _f$version = Field(
+  static String? _$version(ForumLlmRelease v) => v.version;
+  static const Field<ForumLlmRelease, String> _f$version = Field(
     'version',
     _$version,
     opt: true,
   );
-  static ForumLlmSummary? _$summary(ForumLlmExtras v) => v.summary;
-  static const Field<ForumLlmExtras, ForumLlmSummary> _f$summary = Field(
-    'summary',
-    _$summary,
-    opt: true,
-  );
-  static ForumLlmChangelog? _$changelog(ForumLlmExtras v) => v.changelog;
-  static const Field<ForumLlmExtras, ForumLlmChangelog> _f$changelog = Field(
+  static ForumLlmChangelog? _$changelog(ForumLlmRelease v) => v.changelog;
+  static const Field<ForumLlmRelease, ForumLlmChangelog> _f$changelog = Field(
     'changelog',
     _$changelog,
     opt: true,
   );
-  static String? _$license(ForumLlmExtras v) => v.license;
-  static const Field<ForumLlmExtras, String> _f$license = Field(
-    'license',
-    _$license,
-    opt: true,
-  );
-  static List<ForumLlmSupportLink>? _$supportLinks(ForumLlmExtras v) =>
-      v.supportLinks;
-  static const Field<ForumLlmExtras, List<ForumLlmSupportLink>>
-  _f$supportLinks = Field('supportLinks', _$supportLinks, opt: true);
-  static String? _$saveCompatibility(ForumLlmExtras v) => v.saveCompatibility;
-  static const Field<ForumLlmExtras, String> _f$saveCompatibility = Field(
-    'saveCompatibility',
-    _$saveCompatibility,
-    opt: true,
-  );
-  static String? _$sourceCode(ForumLlmExtras v) => v.sourceCode;
-  static const Field<ForumLlmExtras, String> _f$sourceCode = Field(
-    'sourceCode',
-    _$sourceCode,
-    opt: true,
-  );
-  static String? _$canAdd(ForumLlmExtras v) => v.canAdd;
-  static const Field<ForumLlmExtras, String> _f$canAdd = Field(
-    'canAdd',
-    _$canAdd,
-    opt: true,
-  );
-  static CatalogAiUse? _$aiUse(ForumLlmExtras v) => v.aiUse;
-  static const Field<ForumLlmExtras, CatalogAiUse> _f$aiUse = Field(
-    'aiUse',
-    _$aiUse,
-    opt: true,
-  );
-  static List<String>? _$needs(ForumLlmExtras v) => v.needs;
-  static const Field<ForumLlmExtras, List<String>> _f$needs = Field(
-    'needs',
-    _$needs,
-    opt: true,
-  );
-  static List<String>? _$optionalNeeds(ForumLlmExtras v) => v.optionalNeeds;
-  static const Field<ForumLlmExtras, List<String>> _f$optionalNeeds = Field(
-    'optionalNeeds',
-    _$optionalNeeds,
-    opt: true,
-  );
-  static List<ForumLlmConflict>? _$conflicts(ForumLlmExtras v) => v.conflicts;
-  static const Field<ForumLlmExtras, List<ForumLlmConflict>> _f$conflicts =
-      Field('conflicts', _$conflicts, opt: true);
-  static String? _$canRemove(ForumLlmExtras v) => v.canRemove;
-  static const Field<ForumLlmExtras, String> _f$canRemove = Field(
-    'canRemove',
-    _$canRemove,
-    opt: true,
-  );
-  static String? _$removalCompatibility(ForumLlmExtras v) =>
-      v.removalCompatibility;
-  static const Field<ForumLlmExtras, String> _f$removalCompatibility = Field(
-    'removalCompatibility',
-    _$removalCompatibility,
-    opt: true,
-  );
-  static List<ForumLlmUpdateNote>? _$updateNotes(ForumLlmExtras v) =>
-      v.updateNotes;
-  static const Field<ForumLlmExtras, List<ForumLlmUpdateNote>> _f$updateNotes =
-      Field('updateNotes', _$updateNotes, opt: true);
 
   @override
-  final MappableFields<ForumLlmExtras> fields = const {
+  final MappableFields<ForumLlmRelease> fields = const {
     #version: _f$version,
-    #summary: _f$summary,
     #changelog: _f$changelog,
-    #license: _f$license,
-    #supportLinks: _f$supportLinks,
-    #saveCompatibility: _f$saveCompatibility,
-    #sourceCode: _f$sourceCode,
-    #canAdd: _f$canAdd,
-    #aiUse: _f$aiUse,
-    #needs: _f$needs,
-    #optionalNeeds: _f$optionalNeeds,
-    #conflicts: _f$conflicts,
-    #canRemove: _f$canRemove,
-    #removalCompatibility: _f$removalCompatibility,
-    #updateNotes: _f$updateNotes,
   };
 
-  static ForumLlmExtras _instantiate(DecodingData data) {
-    return ForumLlmExtras(
+  static ForumLlmRelease _instantiate(DecodingData data) {
+    return ForumLlmRelease(
       version: data.dec(_f$version),
-      summary: data.dec(_f$summary),
       changelog: data.dec(_f$changelog),
-      license: data.dec(_f$license),
-      supportLinks: data.dec(_f$supportLinks),
-      saveCompatibility: data.dec(_f$saveCompatibility),
-      sourceCode: data.dec(_f$sourceCode),
-      canAdd: data.dec(_f$canAdd),
-      aiUse: data.dec(_f$aiUse),
-      needs: data.dec(_f$needs),
-      optionalNeeds: data.dec(_f$optionalNeeds),
-      conflicts: data.dec(_f$conflicts),
-      canRemove: data.dec(_f$canRemove),
-      removalCompatibility: data.dec(_f$removalCompatibility),
-      updateNotes: data.dec(_f$updateNotes),
     );
   }
 
   @override
   final Function instantiate = _instantiate;
 
-  static ForumLlmExtras fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<ForumLlmExtras>(map);
+  static ForumLlmRelease fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmRelease>(map);
   }
 
-  static ForumLlmExtras fromJson(String json) {
-    return ensureInitialized().decodeJson<ForumLlmExtras>(json);
+  static ForumLlmRelease fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmRelease>(json);
   }
 }
 
-mixin ForumLlmExtrasMappable {
+mixin ForumLlmReleaseMappable {
   String toJson() {
-    return ForumLlmExtrasMapper.ensureInitialized().encodeJson<ForumLlmExtras>(
-      this as ForumLlmExtras,
-    );
+    return ForumLlmReleaseMapper.ensureInitialized()
+        .encodeJson<ForumLlmRelease>(this as ForumLlmRelease);
   }
 
   Map<String, dynamic> toMap() {
-    return ForumLlmExtrasMapper.ensureInitialized().encodeMap<ForumLlmExtras>(
-      this as ForumLlmExtras,
+    return ForumLlmReleaseMapper.ensureInitialized().encodeMap<ForumLlmRelease>(
+      this as ForumLlmRelease,
     );
   }
 
-  ForumLlmExtrasCopyWith<ForumLlmExtras, ForumLlmExtras, ForumLlmExtras>
-  get copyWith => _ForumLlmExtrasCopyWithImpl<ForumLlmExtras, ForumLlmExtras>(
-    this as ForumLlmExtras,
-    $identity,
-    $identity,
-  );
-  @override
-  String toString() {
-    return ForumLlmExtrasMapper.ensureInitialized().stringifyValue(
-      this as ForumLlmExtras,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return ForumLlmExtrasMapper.ensureInitialized().equalsValue(
-      this as ForumLlmExtras,
-      other,
-    );
-  }
-
-  @override
-  int get hashCode {
-    return ForumLlmExtrasMapper.ensureInitialized().hashValue(
-      this as ForumLlmExtras,
-    );
-  }
-}
-
-extension ForumLlmExtrasValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, ForumLlmExtras, $Out> {
-  ForumLlmExtrasCopyWith<$R, ForumLlmExtras, $Out> get $asForumLlmExtras =>
-      $base.as((v, t, t2) => _ForumLlmExtrasCopyWithImpl<$R, $Out>(v, t, t2));
-}
-
-abstract class ForumLlmExtrasCopyWith<$R, $In extends ForumLlmExtras, $Out>
-    implements ClassCopyWith<$R, $In, $Out> {
-  ForumLlmSummaryCopyWith<$R, ForumLlmSummary, ForumLlmSummary>? get summary;
-  ForumLlmChangelogCopyWith<$R, ForumLlmChangelog, ForumLlmChangelog>?
-  get changelog;
-  ListCopyWith<
-    $R,
-    ForumLlmSupportLink,
-    ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, ForumLlmSupportLink>
-  >?
-  get supportLinks;
-  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse;
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get needs;
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
-  get optionalNeeds;
-  ListCopyWith<
-    $R,
-    ForumLlmConflict,
-    ForumLlmConflictCopyWith<$R, ForumLlmConflict, ForumLlmConflict>
-  >?
-  get conflicts;
-  ListCopyWith<
-    $R,
-    ForumLlmUpdateNote,
-    ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, ForumLlmUpdateNote>
-  >?
-  get updateNotes;
-  $R call({
-    String? version,
-    ForumLlmSummary? summary,
-    ForumLlmChangelog? changelog,
-    String? license,
-    List<ForumLlmSupportLink>? supportLinks,
-    String? saveCompatibility,
-    String? sourceCode,
-    String? canAdd,
-    CatalogAiUse? aiUse,
-    List<String>? needs,
-    List<String>? optionalNeeds,
-    List<ForumLlmConflict>? conflicts,
-    String? canRemove,
-    String? removalCompatibility,
-    List<ForumLlmUpdateNote>? updateNotes,
-  });
-  ForumLlmExtrasCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
-}
-
-class _ForumLlmExtrasCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, ForumLlmExtras, $Out>
-    implements ForumLlmExtrasCopyWith<$R, ForumLlmExtras, $Out> {
-  _ForumLlmExtrasCopyWithImpl(super.value, super.then, super.then2);
-
-  @override
-  late final ClassMapperBase<ForumLlmExtras> $mapper =
-      ForumLlmExtrasMapper.ensureInitialized();
-  @override
-  ForumLlmSummaryCopyWith<$R, ForumLlmSummary, ForumLlmSummary>? get summary =>
-      $value.summary?.copyWith.$chain((v) => call(summary: v));
-  @override
-  ForumLlmChangelogCopyWith<$R, ForumLlmChangelog, ForumLlmChangelog>?
-  get changelog => $value.changelog?.copyWith.$chain((v) => call(changelog: v));
-  @override
-  ListCopyWith<
-    $R,
-    ForumLlmSupportLink,
-    ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, ForumLlmSupportLink>
-  >?
-  get supportLinks => $value.supportLinks != null
-      ? ListCopyWith(
-          $value.supportLinks!,
-          (v, t) => v.copyWith.$chain(t),
-          (v) => call(supportLinks: v),
-        )
-      : null;
-  @override
-  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse =>
-      $value.aiUse?.copyWith.$chain((v) => call(aiUse: v));
-  @override
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get needs =>
-      $value.needs != null
-      ? ListCopyWith(
-          $value.needs!,
-          (v, t) => ObjectCopyWith(v, $identity, t),
-          (v) => call(needs: v),
-        )
-      : null;
-  @override
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>?
-  get optionalNeeds => $value.optionalNeeds != null
-      ? ListCopyWith(
-          $value.optionalNeeds!,
-          (v, t) => ObjectCopyWith(v, $identity, t),
-          (v) => call(optionalNeeds: v),
-        )
-      : null;
-  @override
-  ListCopyWith<
-    $R,
-    ForumLlmConflict,
-    ForumLlmConflictCopyWith<$R, ForumLlmConflict, ForumLlmConflict>
-  >?
-  get conflicts => $value.conflicts != null
-      ? ListCopyWith(
-          $value.conflicts!,
-          (v, t) => v.copyWith.$chain(t),
-          (v) => call(conflicts: v),
-        )
-      : null;
-  @override
-  ListCopyWith<
-    $R,
-    ForumLlmUpdateNote,
-    ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, ForumLlmUpdateNote>
-  >?
-  get updateNotes => $value.updateNotes != null
-      ? ListCopyWith(
-          $value.updateNotes!,
-          (v, t) => v.copyWith.$chain(t),
-          (v) => call(updateNotes: v),
-        )
-      : null;
-  @override
-  $R call({
-    Object? version = $none,
-    Object? summary = $none,
-    Object? changelog = $none,
-    Object? license = $none,
-    Object? supportLinks = $none,
-    Object? saveCompatibility = $none,
-    Object? sourceCode = $none,
-    Object? canAdd = $none,
-    Object? aiUse = $none,
-    Object? needs = $none,
-    Object? optionalNeeds = $none,
-    Object? conflicts = $none,
-    Object? canRemove = $none,
-    Object? removalCompatibility = $none,
-    Object? updateNotes = $none,
-  }) => $apply(
-    FieldCopyWithData({
-      if (version != $none) #version: version,
-      if (summary != $none) #summary: summary,
-      if (changelog != $none) #changelog: changelog,
-      if (license != $none) #license: license,
-      if (supportLinks != $none) #supportLinks: supportLinks,
-      if (saveCompatibility != $none) #saveCompatibility: saveCompatibility,
-      if (sourceCode != $none) #sourceCode: sourceCode,
-      if (canAdd != $none) #canAdd: canAdd,
-      if (aiUse != $none) #aiUse: aiUse,
-      if (needs != $none) #needs: needs,
-      if (optionalNeeds != $none) #optionalNeeds: optionalNeeds,
-      if (conflicts != $none) #conflicts: conflicts,
-      if (canRemove != $none) #canRemove: canRemove,
-      if (removalCompatibility != $none)
-        #removalCompatibility: removalCompatibility,
-      if (updateNotes != $none) #updateNotes: updateNotes,
-    }),
-  );
-  @override
-  ForumLlmExtras $make(CopyWithData data) => ForumLlmExtras(
-    version: data.get(#version, or: $value.version),
-    summary: data.get(#summary, or: $value.summary),
-    changelog: data.get(#changelog, or: $value.changelog),
-    license: data.get(#license, or: $value.license),
-    supportLinks: data.get(#supportLinks, or: $value.supportLinks),
-    saveCompatibility: data.get(
-      #saveCompatibility,
-      or: $value.saveCompatibility,
-    ),
-    sourceCode: data.get(#sourceCode, or: $value.sourceCode),
-    canAdd: data.get(#canAdd, or: $value.canAdd),
-    aiUse: data.get(#aiUse, or: $value.aiUse),
-    needs: data.get(#needs, or: $value.needs),
-    optionalNeeds: data.get(#optionalNeeds, or: $value.optionalNeeds),
-    conflicts: data.get(#conflicts, or: $value.conflicts),
-    canRemove: data.get(#canRemove, or: $value.canRemove),
-    removalCompatibility: data.get(
-      #removalCompatibility,
-      or: $value.removalCompatibility,
-    ),
-    updateNotes: data.get(#updateNotes, or: $value.updateNotes),
-  );
-
-  @override
-  ForumLlmExtrasCopyWith<$R2, ForumLlmExtras, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  ) => _ForumLlmExtrasCopyWithImpl<$R2, $Out2>($value, $cast, t);
-}
-
-class ForumLlmSummaryMapper extends ClassMapperBase<ForumLlmSummary> {
-  ForumLlmSummaryMapper._();
-
-  static ForumLlmSummaryMapper? _instance;
-  static ForumLlmSummaryMapper ensureInitialized() {
-    if (_instance == null) {
-      MapperContainer.globals.use(_instance = ForumLlmSummaryMapper._());
-    }
-    return _instance!;
-  }
-
-  @override
-  final String id = 'ForumLlmSummary';
-
-  static String _$sentence(ForumLlmSummary v) => v.sentence;
-  static const Field<ForumLlmSummary, String> _f$sentence = Field(
-    'sentence',
-    _$sentence,
-  );
-  static String? _$paragraph(ForumLlmSummary v) => v.paragraph;
-  static const Field<ForumLlmSummary, String> _f$paragraph = Field(
-    'paragraph',
-    _$paragraph,
-    opt: true,
-  );
-
-  @override
-  final MappableFields<ForumLlmSummary> fields = const {
-    #sentence: _f$sentence,
-    #paragraph: _f$paragraph,
-  };
-
-  static ForumLlmSummary _instantiate(DecodingData data) {
-    return ForumLlmSummary(
-      sentence: data.dec(_f$sentence),
-      paragraph: data.dec(_f$paragraph),
-    );
-  }
-
-  @override
-  final Function instantiate = _instantiate;
-
-  static ForumLlmSummary fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<ForumLlmSummary>(map);
-  }
-
-  static ForumLlmSummary fromJson(String json) {
-    return ensureInitialized().decodeJson<ForumLlmSummary>(json);
-  }
-}
-
-mixin ForumLlmSummaryMappable {
-  String toJson() {
-    return ForumLlmSummaryMapper.ensureInitialized()
-        .encodeJson<ForumLlmSummary>(this as ForumLlmSummary);
-  }
-
-  Map<String, dynamic> toMap() {
-    return ForumLlmSummaryMapper.ensureInitialized().encodeMap<ForumLlmSummary>(
-      this as ForumLlmSummary,
-    );
-  }
-
-  ForumLlmSummaryCopyWith<ForumLlmSummary, ForumLlmSummary, ForumLlmSummary>
+  ForumLlmReleaseCopyWith<ForumLlmRelease, ForumLlmRelease, ForumLlmRelease>
   get copyWith =>
-      _ForumLlmSummaryCopyWithImpl<ForumLlmSummary, ForumLlmSummary>(
-        this as ForumLlmSummary,
+      _ForumLlmReleaseCopyWithImpl<ForumLlmRelease, ForumLlmRelease>(
+        this as ForumLlmRelease,
         $identity,
         $identity,
       );
   @override
   String toString() {
-    return ForumLlmSummaryMapper.ensureInitialized().stringifyValue(
-      this as ForumLlmSummary,
+    return ForumLlmReleaseMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmRelease,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return ForumLlmSummaryMapper.ensureInitialized().equalsValue(
-      this as ForumLlmSummary,
+    return ForumLlmReleaseMapper.ensureInitialized().equalsValue(
+      this as ForumLlmRelease,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return ForumLlmSummaryMapper.ensureInitialized().hashValue(
-      this as ForumLlmSummary,
+    return ForumLlmReleaseMapper.ensureInitialized().hashValue(
+      this as ForumLlmRelease,
     );
   }
 }
 
-extension ForumLlmSummaryValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, ForumLlmSummary, $Out> {
-  ForumLlmSummaryCopyWith<$R, ForumLlmSummary, $Out> get $asForumLlmSummary =>
-      $base.as((v, t, t2) => _ForumLlmSummaryCopyWithImpl<$R, $Out>(v, t, t2));
+extension ForumLlmReleaseValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmRelease, $Out> {
+  ForumLlmReleaseCopyWith<$R, ForumLlmRelease, $Out> get $asForumLlmRelease =>
+      $base.as((v, t, t2) => _ForumLlmReleaseCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class ForumLlmSummaryCopyWith<$R, $In extends ForumLlmSummary, $Out>
+abstract class ForumLlmReleaseCopyWith<$R, $In extends ForumLlmRelease, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? sentence, String? paragraph});
-  ForumLlmSummaryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+  ForumLlmChangelogCopyWith<$R, ForumLlmChangelog, ForumLlmChangelog>?
+  get changelog;
+  $R call({String? version, ForumLlmChangelog? changelog});
+  ForumLlmReleaseCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
 }
 
-class _ForumLlmSummaryCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, ForumLlmSummary, $Out>
-    implements ForumLlmSummaryCopyWith<$R, ForumLlmSummary, $Out> {
-  _ForumLlmSummaryCopyWithImpl(super.value, super.then, super.then2);
+class _ForumLlmReleaseCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmRelease, $Out>
+    implements ForumLlmReleaseCopyWith<$R, ForumLlmRelease, $Out> {
+  _ForumLlmReleaseCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<ForumLlmSummary> $mapper =
-      ForumLlmSummaryMapper.ensureInitialized();
+  late final ClassMapperBase<ForumLlmRelease> $mapper =
+      ForumLlmReleaseMapper.ensureInitialized();
   @override
-  $R call({String? sentence, Object? paragraph = $none}) => $apply(
+  ForumLlmChangelogCopyWith<$R, ForumLlmChangelog, ForumLlmChangelog>?
+  get changelog => $value.changelog?.copyWith.$chain((v) => call(changelog: v));
+  @override
+  $R call({Object? version = $none, Object? changelog = $none}) => $apply(
     FieldCopyWithData({
-      if (sentence != null) #sentence: sentence,
-      if (paragraph != $none) #paragraph: paragraph,
+      if (version != $none) #version: version,
+      if (changelog != $none) #changelog: changelog,
     }),
   );
   @override
-  ForumLlmSummary $make(CopyWithData data) => ForumLlmSummary(
-    sentence: data.get(#sentence, or: $value.sentence),
-    paragraph: data.get(#paragraph, or: $value.paragraph),
+  ForumLlmRelease $make(CopyWithData data) => ForumLlmRelease(
+    version: data.get(#version, or: $value.version),
+    changelog: data.get(#changelog, or: $value.changelog),
   );
 
   @override
-  ForumLlmSummaryCopyWith<$R2, ForumLlmSummary, $Out2> $chain<$R2, $Out2>(
+  ForumLlmReleaseCopyWith<$R2, ForumLlmRelease, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _ForumLlmSummaryCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _ForumLlmReleaseCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ForumLlmChangelogMapper extends ClassMapperBase<ForumLlmChangelog> {
@@ -1328,23 +1109,23 @@ class ForumLlmChangelogMapper extends ClassMapperBase<ForumLlmChangelog> {
     _$entries,
     opt: true,
   );
-  static String? _$link(ForumLlmChangelog v) => v.link;
-  static const Field<ForumLlmChangelog, String> _f$link = Field(
-    'link',
-    _$link,
+  static String? _$url(ForumLlmChangelog v) => v.url;
+  static const Field<ForumLlmChangelog, String> _f$url = Field(
+    'url',
+    _$url,
     opt: true,
   );
 
   @override
   final MappableFields<ForumLlmChangelog> fields = const {
     #entries: _f$entries,
-    #link: _f$link,
+    #url: _f$url,
   };
 
   static ForumLlmChangelog _instantiate(DecodingData data) {
     return ForumLlmChangelog(
       entries: data.dec(_f$entries),
-      link: data.dec(_f$link),
+      url: data.dec(_f$url),
     );
   }
 
@@ -1421,7 +1202,7 @@ abstract class ForumLlmChangelogCopyWith<
     implements ClassCopyWith<$R, $In, $Out> {
   MapCopyWith<$R, String, String, ObjectCopyWith<$R, String, String>>?
   get entries;
-  $R call({Map<String, String>? entries, String? link});
+  $R call({Map<String, String>? entries, String? url});
   ForumLlmChangelogCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -1445,16 +1226,16 @@ class _ForumLlmChangelogCopyWithImpl<$R, $Out>
         )
       : null;
   @override
-  $R call({Object? entries = $none, Object? link = $none}) => $apply(
+  $R call({Object? entries = $none, Object? url = $none}) => $apply(
     FieldCopyWithData({
       if (entries != $none) #entries: entries,
-      if (link != $none) #link: link,
+      if (url != $none) #url: url,
     }),
   );
   @override
   ForumLlmChangelog $make(CopyWithData data) => ForumLlmChangelog(
     entries: data.get(#entries, or: $value.entries),
-    link: data.get(#link, or: $value.link),
+    url: data.get(#url, or: $value.url),
   );
 
   @override
@@ -1463,268 +1244,189 @@ class _ForumLlmChangelogCopyWithImpl<$R, $Out>
   ) => _ForumLlmChangelogCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
-class ForumLlmSupportLinkMapper extends ClassMapperBase<ForumLlmSupportLink> {
-  ForumLlmSupportLinkMapper._();
+class ForumLlmSaveCompatMapper extends ClassMapperBase<ForumLlmSaveCompat> {
+  ForumLlmSaveCompatMapper._();
 
-  static ForumLlmSupportLinkMapper? _instance;
-  static ForumLlmSupportLinkMapper ensureInitialized() {
+  static ForumLlmSaveCompatMapper? _instance;
+  static ForumLlmSaveCompatMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = ForumLlmSupportLinkMapper._());
+      MapperContainer.globals.use(_instance = ForumLlmSaveCompatMapper._());
+      CatalogSaveStatementMapper.ensureInitialized();
+      ForumLlmUpdateNoteMapper.ensureInitialized();
     }
     return _instance!;
   }
 
   @override
-  final String id = 'ForumLlmSupportLink';
+  final String id = 'ForumLlmSaveCompat';
 
-  static String _$url(ForumLlmSupportLink v) => v.url;
-  static const Field<ForumLlmSupportLink, String> _f$url = Field('url', _$url);
-  static String _$type(ForumLlmSupportLink v) => v.type;
-  static const Field<ForumLlmSupportLink, String> _f$type = Field(
-    'type',
-    _$type,
-    opt: true,
-    def: 'other',
-  );
+  static CatalogSaveStatement? _$adding(ForumLlmSaveCompat v) => v.adding;
+  static const Field<ForumLlmSaveCompat, CatalogSaveStatement> _f$adding =
+      Field('adding', _$adding, opt: true);
+  static CatalogSaveStatement? _$removing(ForumLlmSaveCompat v) => v.removing;
+  static const Field<ForumLlmSaveCompat, CatalogSaveStatement> _f$removing =
+      Field('removing', _$removing, opt: true);
+  static List<ForumLlmUpdateNote>? _$updateNotes(ForumLlmSaveCompat v) =>
+      v.updateNotes;
+  static const Field<ForumLlmSaveCompat, List<ForumLlmUpdateNote>>
+  _f$updateNotes = Field('updateNotes', _$updateNotes, opt: true);
 
   @override
-  final MappableFields<ForumLlmSupportLink> fields = const {
-    #url: _f$url,
-    #type: _f$type,
+  final MappableFields<ForumLlmSaveCompat> fields = const {
+    #adding: _f$adding,
+    #removing: _f$removing,
+    #updateNotes: _f$updateNotes,
   };
 
-  static ForumLlmSupportLink _instantiate(DecodingData data) {
-    return ForumLlmSupportLink(url: data.dec(_f$url), type: data.dec(_f$type));
+  static ForumLlmSaveCompat _instantiate(DecodingData data) {
+    return ForumLlmSaveCompat(
+      adding: data.dec(_f$adding),
+      removing: data.dec(_f$removing),
+      updateNotes: data.dec(_f$updateNotes),
+    );
   }
 
   @override
   final Function instantiate = _instantiate;
 
-  static ForumLlmSupportLink fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<ForumLlmSupportLink>(map);
+  static ForumLlmSaveCompat fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmSaveCompat>(map);
   }
 
-  static ForumLlmSupportLink fromJson(String json) {
-    return ensureInitialized().decodeJson<ForumLlmSupportLink>(json);
+  static ForumLlmSaveCompat fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmSaveCompat>(json);
   }
 }
 
-mixin ForumLlmSupportLinkMappable {
+mixin ForumLlmSaveCompatMappable {
   String toJson() {
-    return ForumLlmSupportLinkMapper.ensureInitialized()
-        .encodeJson<ForumLlmSupportLink>(this as ForumLlmSupportLink);
+    return ForumLlmSaveCompatMapper.ensureInitialized()
+        .encodeJson<ForumLlmSaveCompat>(this as ForumLlmSaveCompat);
   }
 
   Map<String, dynamic> toMap() {
-    return ForumLlmSupportLinkMapper.ensureInitialized()
-        .encodeMap<ForumLlmSupportLink>(this as ForumLlmSupportLink);
+    return ForumLlmSaveCompatMapper.ensureInitialized()
+        .encodeMap<ForumLlmSaveCompat>(this as ForumLlmSaveCompat);
   }
 
-  ForumLlmSupportLinkCopyWith<
-    ForumLlmSupportLink,
-    ForumLlmSupportLink,
-    ForumLlmSupportLink
+  ForumLlmSaveCompatCopyWith<
+    ForumLlmSaveCompat,
+    ForumLlmSaveCompat,
+    ForumLlmSaveCompat
   >
   get copyWith =>
-      _ForumLlmSupportLinkCopyWithImpl<
-        ForumLlmSupportLink,
-        ForumLlmSupportLink
-      >(this as ForumLlmSupportLink, $identity, $identity);
-  @override
-  String toString() {
-    return ForumLlmSupportLinkMapper.ensureInitialized().stringifyValue(
-      this as ForumLlmSupportLink,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return ForumLlmSupportLinkMapper.ensureInitialized().equalsValue(
-      this as ForumLlmSupportLink,
-      other,
-    );
-  }
-
-  @override
-  int get hashCode {
-    return ForumLlmSupportLinkMapper.ensureInitialized().hashValue(
-      this as ForumLlmSupportLink,
-    );
-  }
-}
-
-extension ForumLlmSupportLinkValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, ForumLlmSupportLink, $Out> {
-  ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, $Out>
-  get $asForumLlmSupportLink => $base.as(
-    (v, t, t2) => _ForumLlmSupportLinkCopyWithImpl<$R, $Out>(v, t, t2),
-  );
-}
-
-abstract class ForumLlmSupportLinkCopyWith<
-  $R,
-  $In extends ForumLlmSupportLink,
-  $Out
->
-    implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? url, String? type});
-  ForumLlmSupportLinkCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
-}
-
-class _ForumLlmSupportLinkCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, ForumLlmSupportLink, $Out>
-    implements ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, $Out> {
-  _ForumLlmSupportLinkCopyWithImpl(super.value, super.then, super.then2);
-
-  @override
-  late final ClassMapperBase<ForumLlmSupportLink> $mapper =
-      ForumLlmSupportLinkMapper.ensureInitialized();
-  @override
-  $R call({String? url, String? type}) => $apply(
-    FieldCopyWithData({
-      if (url != null) #url: url,
-      if (type != null) #type: type,
-    }),
-  );
-  @override
-  ForumLlmSupportLink $make(CopyWithData data) => ForumLlmSupportLink(
-    url: data.get(#url, or: $value.url),
-    type: data.get(#type, or: $value.type),
-  );
-
-  @override
-  ForumLlmSupportLinkCopyWith<$R2, ForumLlmSupportLink, $Out2>
-  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-      _ForumLlmSupportLinkCopyWithImpl<$R2, $Out2>($value, $cast, t);
-}
-
-class ForumLlmConflictMapper extends ClassMapperBase<ForumLlmConflict> {
-  ForumLlmConflictMapper._();
-
-  static ForumLlmConflictMapper? _instance;
-  static ForumLlmConflictMapper ensureInitialized() {
-    if (_instance == null) {
-      MapperContainer.globals.use(_instance = ForumLlmConflictMapper._());
-    }
-    return _instance!;
-  }
-
-  @override
-  final String id = 'ForumLlmConflict';
-
-  static String _$name(ForumLlmConflict v) => v.name;
-  static const Field<ForumLlmConflict, String> _f$name = Field('name', _$name);
-  static String _$quote(ForumLlmConflict v) => v.quote;
-  static const Field<ForumLlmConflict, String> _f$quote = Field(
-    'quote',
-    _$quote,
-  );
-
-  @override
-  final MappableFields<ForumLlmConflict> fields = const {
-    #name: _f$name,
-    #quote: _f$quote,
-  };
-
-  static ForumLlmConflict _instantiate(DecodingData data) {
-    return ForumLlmConflict(name: data.dec(_f$name), quote: data.dec(_f$quote));
-  }
-
-  @override
-  final Function instantiate = _instantiate;
-
-  static ForumLlmConflict fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<ForumLlmConflict>(map);
-  }
-
-  static ForumLlmConflict fromJson(String json) {
-    return ensureInitialized().decodeJson<ForumLlmConflict>(json);
-  }
-}
-
-mixin ForumLlmConflictMappable {
-  String toJson() {
-    return ForumLlmConflictMapper.ensureInitialized()
-        .encodeJson<ForumLlmConflict>(this as ForumLlmConflict);
-  }
-
-  Map<String, dynamic> toMap() {
-    return ForumLlmConflictMapper.ensureInitialized()
-        .encodeMap<ForumLlmConflict>(this as ForumLlmConflict);
-  }
-
-  ForumLlmConflictCopyWith<ForumLlmConflict, ForumLlmConflict, ForumLlmConflict>
-  get copyWith =>
-      _ForumLlmConflictCopyWithImpl<ForumLlmConflict, ForumLlmConflict>(
-        this as ForumLlmConflict,
+      _ForumLlmSaveCompatCopyWithImpl<ForumLlmSaveCompat, ForumLlmSaveCompat>(
+        this as ForumLlmSaveCompat,
         $identity,
         $identity,
       );
   @override
   String toString() {
-    return ForumLlmConflictMapper.ensureInitialized().stringifyValue(
-      this as ForumLlmConflict,
+    return ForumLlmSaveCompatMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmSaveCompat,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return ForumLlmConflictMapper.ensureInitialized().equalsValue(
-      this as ForumLlmConflict,
+    return ForumLlmSaveCompatMapper.ensureInitialized().equalsValue(
+      this as ForumLlmSaveCompat,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return ForumLlmConflictMapper.ensureInitialized().hashValue(
-      this as ForumLlmConflict,
+    return ForumLlmSaveCompatMapper.ensureInitialized().hashValue(
+      this as ForumLlmSaveCompat,
     );
   }
 }
 
-extension ForumLlmConflictValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, ForumLlmConflict, $Out> {
-  ForumLlmConflictCopyWith<$R, ForumLlmConflict, $Out>
-  get $asForumLlmConflict =>
-      $base.as((v, t, t2) => _ForumLlmConflictCopyWithImpl<$R, $Out>(v, t, t2));
+extension ForumLlmSaveCompatValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmSaveCompat, $Out> {
+  ForumLlmSaveCompatCopyWith<$R, ForumLlmSaveCompat, $Out>
+  get $asForumLlmSaveCompat => $base.as(
+    (v, t, t2) => _ForumLlmSaveCompatCopyWithImpl<$R, $Out>(v, t, t2),
+  );
 }
 
-abstract class ForumLlmConflictCopyWith<$R, $In extends ForumLlmConflict, $Out>
+abstract class ForumLlmSaveCompatCopyWith<
+  $R,
+  $In extends ForumLlmSaveCompat,
+  $Out
+>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? name, String? quote});
-  ForumLlmConflictCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get adding;
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get removing;
+  ListCopyWith<
+    $R,
+    ForumLlmUpdateNote,
+    ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, ForumLlmUpdateNote>
+  >?
+  get updateNotes;
+  $R call({
+    CatalogSaveStatement? adding,
+    CatalogSaveStatement? removing,
+    List<ForumLlmUpdateNote>? updateNotes,
+  });
+  ForumLlmSaveCompatCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
 }
 
-class _ForumLlmConflictCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, ForumLlmConflict, $Out>
-    implements ForumLlmConflictCopyWith<$R, ForumLlmConflict, $Out> {
-  _ForumLlmConflictCopyWithImpl(super.value, super.then, super.then2);
+class _ForumLlmSaveCompatCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmSaveCompat, $Out>
+    implements ForumLlmSaveCompatCopyWith<$R, ForumLlmSaveCompat, $Out> {
+  _ForumLlmSaveCompatCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<ForumLlmConflict> $mapper =
-      ForumLlmConflictMapper.ensureInitialized();
+  late final ClassMapperBase<ForumLlmSaveCompat> $mapper =
+      ForumLlmSaveCompatMapper.ensureInitialized();
   @override
-  $R call({String? name, String? quote}) => $apply(
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get adding => $value.adding?.copyWith.$chain((v) => call(adding: v));
+  @override
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get removing => $value.removing?.copyWith.$chain((v) => call(removing: v));
+  @override
+  ListCopyWith<
+    $R,
+    ForumLlmUpdateNote,
+    ForumLlmUpdateNoteCopyWith<$R, ForumLlmUpdateNote, ForumLlmUpdateNote>
+  >?
+  get updateNotes => $value.updateNotes != null
+      ? ListCopyWith(
+          $value.updateNotes!,
+          (v, t) => v.copyWith.$chain(t),
+          (v) => call(updateNotes: v),
+        )
+      : null;
+  @override
+  $R call({
+    Object? adding = $none,
+    Object? removing = $none,
+    Object? updateNotes = $none,
+  }) => $apply(
     FieldCopyWithData({
-      if (name != null) #name: name,
-      if (quote != null) #quote: quote,
+      if (adding != $none) #adding: adding,
+      if (removing != $none) #removing: removing,
+      if (updateNotes != $none) #updateNotes: updateNotes,
     }),
   );
   @override
-  ForumLlmConflict $make(CopyWithData data) => ForumLlmConflict(
-    name: data.get(#name, or: $value.name),
-    quote: data.get(#quote, or: $value.quote),
+  ForumLlmSaveCompat $make(CopyWithData data) => ForumLlmSaveCompat(
+    adding: data.get(#adding, or: $value.adding),
+    removing: data.get(#removing, or: $value.removing),
+    updateNotes: data.get(#updateNotes, or: $value.updateNotes),
   );
 
   @override
-  ForumLlmConflictCopyWith<$R2, ForumLlmConflict, $Out2> $chain<$R2, $Out2>(
+  ForumLlmSaveCompatCopyWith<$R2, ForumLlmSaveCompat, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _ForumLlmConflictCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _ForumLlmSaveCompatCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ForumLlmUpdateNoteMapper extends ClassMapperBase<ForumLlmUpdateNote> {
@@ -1879,5 +1581,842 @@ class _ForumLlmUpdateNoteCopyWithImpl<$R, $Out>
   ForumLlmUpdateNoteCopyWith<$R2, ForumLlmUpdateNote, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _ForumLlmUpdateNoteCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumLlmRequirementsMapper extends ClassMapperBase<ForumLlmRequirements> {
+  ForumLlmRequirementsMapper._();
+
+  static ForumLlmRequirementsMapper? _instance;
+  static ForumLlmRequirementsMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumLlmRequirementsMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumLlmRequirements';
+
+  static List<String>? _$required(ForumLlmRequirements v) => v.required;
+  static const Field<ForumLlmRequirements, List<String>> _f$required = Field(
+    'required',
+    _$required,
+    opt: true,
+  );
+  static List<String>? _$optional(ForumLlmRequirements v) => v.optional;
+  static const Field<ForumLlmRequirements, List<String>> _f$optional = Field(
+    'optional',
+    _$optional,
+    opt: true,
+  );
+
+  @override
+  final MappableFields<ForumLlmRequirements> fields = const {
+    #required: _f$required,
+    #optional: _f$optional,
+  };
+
+  static ForumLlmRequirements _instantiate(DecodingData data) {
+    return ForumLlmRequirements(
+      required: data.dec(_f$required),
+      optional: data.dec(_f$optional),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumLlmRequirements fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmRequirements>(map);
+  }
+
+  static ForumLlmRequirements fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmRequirements>(json);
+  }
+}
+
+mixin ForumLlmRequirementsMappable {
+  String toJson() {
+    return ForumLlmRequirementsMapper.ensureInitialized()
+        .encodeJson<ForumLlmRequirements>(this as ForumLlmRequirements);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumLlmRequirementsMapper.ensureInitialized()
+        .encodeMap<ForumLlmRequirements>(this as ForumLlmRequirements);
+  }
+
+  ForumLlmRequirementsCopyWith<
+    ForumLlmRequirements,
+    ForumLlmRequirements,
+    ForumLlmRequirements
+  >
+  get copyWith =>
+      _ForumLlmRequirementsCopyWithImpl<
+        ForumLlmRequirements,
+        ForumLlmRequirements
+      >(this as ForumLlmRequirements, $identity, $identity);
+  @override
+  String toString() {
+    return ForumLlmRequirementsMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmRequirements,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumLlmRequirementsMapper.ensureInitialized().equalsValue(
+      this as ForumLlmRequirements,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumLlmRequirementsMapper.ensureInitialized().hashValue(
+      this as ForumLlmRequirements,
+    );
+  }
+}
+
+extension ForumLlmRequirementsValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmRequirements, $Out> {
+  ForumLlmRequirementsCopyWith<$R, ForumLlmRequirements, $Out>
+  get $asForumLlmRequirements => $base.as(
+    (v, t, t2) => _ForumLlmRequirementsCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class ForumLlmRequirementsCopyWith<
+  $R,
+  $In extends ForumLlmRequirements,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get required;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get optional;
+  $R call({List<String>? required, List<String>? optional});
+  ForumLlmRequirementsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumLlmRequirementsCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmRequirements, $Out>
+    implements ForumLlmRequirementsCopyWith<$R, ForumLlmRequirements, $Out> {
+  _ForumLlmRequirementsCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumLlmRequirements> $mapper =
+      ForumLlmRequirementsMapper.ensureInitialized();
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get required =>
+      $value.required != null
+      ? ListCopyWith(
+          $value.required!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(required: v),
+        )
+      : null;
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get optional =>
+      $value.optional != null
+      ? ListCopyWith(
+          $value.optional!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(optional: v),
+        )
+      : null;
+  @override
+  $R call({Object? required = $none, Object? optional = $none}) => $apply(
+    FieldCopyWithData({
+      if (required != $none) #required: required,
+      if (optional != $none) #optional: optional,
+    }),
+  );
+  @override
+  ForumLlmRequirements $make(CopyWithData data) => ForumLlmRequirements(
+    required: data.get(#required, or: $value.required),
+    optional: data.get(#optional, or: $value.optional),
+  );
+
+  @override
+  ForumLlmRequirementsCopyWith<$R2, ForumLlmRequirements, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _ForumLlmRequirementsCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumLlmConflictMapper extends ClassMapperBase<ForumLlmConflict> {
+  ForumLlmConflictMapper._();
+
+  static ForumLlmConflictMapper? _instance;
+  static ForumLlmConflictMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumLlmConflictMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumLlmConflict';
+
+  static String _$name(ForumLlmConflict v) => v.name;
+  static const Field<ForumLlmConflict, String> _f$name = Field('name', _$name);
+  static String _$quote(ForumLlmConflict v) => v.quote;
+  static const Field<ForumLlmConflict, String> _f$quote = Field(
+    'quote',
+    _$quote,
+  );
+
+  @override
+  final MappableFields<ForumLlmConflict> fields = const {
+    #name: _f$name,
+    #quote: _f$quote,
+  };
+
+  static ForumLlmConflict _instantiate(DecodingData data) {
+    return ForumLlmConflict(name: data.dec(_f$name), quote: data.dec(_f$quote));
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumLlmConflict fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmConflict>(map);
+  }
+
+  static ForumLlmConflict fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmConflict>(json);
+  }
+}
+
+mixin ForumLlmConflictMappable {
+  String toJson() {
+    return ForumLlmConflictMapper.ensureInitialized()
+        .encodeJson<ForumLlmConflict>(this as ForumLlmConflict);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumLlmConflictMapper.ensureInitialized()
+        .encodeMap<ForumLlmConflict>(this as ForumLlmConflict);
+  }
+
+  ForumLlmConflictCopyWith<ForumLlmConflict, ForumLlmConflict, ForumLlmConflict>
+  get copyWith =>
+      _ForumLlmConflictCopyWithImpl<ForumLlmConflict, ForumLlmConflict>(
+        this as ForumLlmConflict,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return ForumLlmConflictMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmConflict,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumLlmConflictMapper.ensureInitialized().equalsValue(
+      this as ForumLlmConflict,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumLlmConflictMapper.ensureInitialized().hashValue(
+      this as ForumLlmConflict,
+    );
+  }
+}
+
+extension ForumLlmConflictValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmConflict, $Out> {
+  ForumLlmConflictCopyWith<$R, ForumLlmConflict, $Out>
+  get $asForumLlmConflict =>
+      $base.as((v, t, t2) => _ForumLlmConflictCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class ForumLlmConflictCopyWith<$R, $In extends ForumLlmConflict, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? name, String? quote});
+  ForumLlmConflictCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumLlmConflictCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmConflict, $Out>
+    implements ForumLlmConflictCopyWith<$R, ForumLlmConflict, $Out> {
+  _ForumLlmConflictCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumLlmConflict> $mapper =
+      ForumLlmConflictMapper.ensureInitialized();
+  @override
+  $R call({String? name, String? quote}) => $apply(
+    FieldCopyWithData({
+      if (name != null) #name: name,
+      if (quote != null) #quote: quote,
+    }),
+  );
+  @override
+  ForumLlmConflict $make(CopyWithData data) => ForumLlmConflict(
+    name: data.get(#name, or: $value.name),
+    quote: data.get(#quote, or: $value.quote),
+  );
+
+  @override
+  ForumLlmConflictCopyWith<$R2, ForumLlmConflict, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _ForumLlmConflictCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumLlmSourceCodeMapper extends ClassMapperBase<ForumLlmSourceCode> {
+  ForumLlmSourceCodeMapper._();
+
+  static ForumLlmSourceCodeMapper? _instance;
+  static ForumLlmSourceCodeMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumLlmSourceCodeMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumLlmSourceCode';
+
+  static String? _$url(ForumLlmSourceCode v) => v.url;
+  static const Field<ForumLlmSourceCode, String> _f$url = Field(
+    'url',
+    _$url,
+    opt: true,
+  );
+  static String? _$license(ForumLlmSourceCode v) => v.license;
+  static const Field<ForumLlmSourceCode, String> _f$license = Field(
+    'license',
+    _$license,
+    opt: true,
+  );
+
+  @override
+  final MappableFields<ForumLlmSourceCode> fields = const {
+    #url: _f$url,
+    #license: _f$license,
+  };
+
+  static ForumLlmSourceCode _instantiate(DecodingData data) {
+    return ForumLlmSourceCode(
+      url: data.dec(_f$url),
+      license: data.dec(_f$license),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumLlmSourceCode fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmSourceCode>(map);
+  }
+
+  static ForumLlmSourceCode fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmSourceCode>(json);
+  }
+}
+
+mixin ForumLlmSourceCodeMappable {
+  String toJson() {
+    return ForumLlmSourceCodeMapper.ensureInitialized()
+        .encodeJson<ForumLlmSourceCode>(this as ForumLlmSourceCode);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumLlmSourceCodeMapper.ensureInitialized()
+        .encodeMap<ForumLlmSourceCode>(this as ForumLlmSourceCode);
+  }
+
+  ForumLlmSourceCodeCopyWith<
+    ForumLlmSourceCode,
+    ForumLlmSourceCode,
+    ForumLlmSourceCode
+  >
+  get copyWith =>
+      _ForumLlmSourceCodeCopyWithImpl<ForumLlmSourceCode, ForumLlmSourceCode>(
+        this as ForumLlmSourceCode,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return ForumLlmSourceCodeMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmSourceCode,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumLlmSourceCodeMapper.ensureInitialized().equalsValue(
+      this as ForumLlmSourceCode,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumLlmSourceCodeMapper.ensureInitialized().hashValue(
+      this as ForumLlmSourceCode,
+    );
+  }
+}
+
+extension ForumLlmSourceCodeValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmSourceCode, $Out> {
+  ForumLlmSourceCodeCopyWith<$R, ForumLlmSourceCode, $Out>
+  get $asForumLlmSourceCode => $base.as(
+    (v, t, t2) => _ForumLlmSourceCodeCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class ForumLlmSourceCodeCopyWith<
+  $R,
+  $In extends ForumLlmSourceCode,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? url, String? license});
+  ForumLlmSourceCodeCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumLlmSourceCodeCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmSourceCode, $Out>
+    implements ForumLlmSourceCodeCopyWith<$R, ForumLlmSourceCode, $Out> {
+  _ForumLlmSourceCodeCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumLlmSourceCode> $mapper =
+      ForumLlmSourceCodeMapper.ensureInitialized();
+  @override
+  $R call({Object? url = $none, Object? license = $none}) => $apply(
+    FieldCopyWithData({
+      if (url != $none) #url: url,
+      if (license != $none) #license: license,
+    }),
+  );
+  @override
+  ForumLlmSourceCode $make(CopyWithData data) => ForumLlmSourceCode(
+    url: data.get(#url, or: $value.url),
+    license: data.get(#license, or: $value.license),
+  );
+
+  @override
+  ForumLlmSourceCodeCopyWith<$R2, ForumLlmSourceCode, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _ForumLlmSourceCodeCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumLlmSupportLinkMapper extends ClassMapperBase<ForumLlmSupportLink> {
+  ForumLlmSupportLinkMapper._();
+
+  static ForumLlmSupportLinkMapper? _instance;
+  static ForumLlmSupportLinkMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumLlmSupportLinkMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumLlmSupportLink';
+
+  static String _$url(ForumLlmSupportLink v) => v.url;
+  static const Field<ForumLlmSupportLink, String> _f$url = Field('url', _$url);
+  static String _$type(ForumLlmSupportLink v) => v.type;
+  static const Field<ForumLlmSupportLink, String> _f$type = Field(
+    'type',
+    _$type,
+    opt: true,
+    def: 'other',
+  );
+
+  @override
+  final MappableFields<ForumLlmSupportLink> fields = const {
+    #url: _f$url,
+    #type: _f$type,
+  };
+
+  static ForumLlmSupportLink _instantiate(DecodingData data) {
+    return ForumLlmSupportLink(url: data.dec(_f$url), type: data.dec(_f$type));
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumLlmSupportLink fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmSupportLink>(map);
+  }
+
+  static ForumLlmSupportLink fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmSupportLink>(json);
+  }
+}
+
+mixin ForumLlmSupportLinkMappable {
+  String toJson() {
+    return ForumLlmSupportLinkMapper.ensureInitialized()
+        .encodeJson<ForumLlmSupportLink>(this as ForumLlmSupportLink);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumLlmSupportLinkMapper.ensureInitialized()
+        .encodeMap<ForumLlmSupportLink>(this as ForumLlmSupportLink);
+  }
+
+  ForumLlmSupportLinkCopyWith<
+    ForumLlmSupportLink,
+    ForumLlmSupportLink,
+    ForumLlmSupportLink
+  >
+  get copyWith =>
+      _ForumLlmSupportLinkCopyWithImpl<
+        ForumLlmSupportLink,
+        ForumLlmSupportLink
+      >(this as ForumLlmSupportLink, $identity, $identity);
+  @override
+  String toString() {
+    return ForumLlmSupportLinkMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmSupportLink,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumLlmSupportLinkMapper.ensureInitialized().equalsValue(
+      this as ForumLlmSupportLink,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumLlmSupportLinkMapper.ensureInitialized().hashValue(
+      this as ForumLlmSupportLink,
+    );
+  }
+}
+
+extension ForumLlmSupportLinkValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmSupportLink, $Out> {
+  ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, $Out>
+  get $asForumLlmSupportLink => $base.as(
+    (v, t, t2) => _ForumLlmSupportLinkCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class ForumLlmSupportLinkCopyWith<
+  $R,
+  $In extends ForumLlmSupportLink,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? url, String? type});
+  ForumLlmSupportLinkCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumLlmSupportLinkCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmSupportLink, $Out>
+    implements ForumLlmSupportLinkCopyWith<$R, ForumLlmSupportLink, $Out> {
+  _ForumLlmSupportLinkCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumLlmSupportLink> $mapper =
+      ForumLlmSupportLinkMapper.ensureInitialized();
+  @override
+  $R call({String? url, String? type}) => $apply(
+    FieldCopyWithData({
+      if (url != null) #url: url,
+      if (type != null) #type: type,
+    }),
+  );
+  @override
+  ForumLlmSupportLink $make(CopyWithData data) => ForumLlmSupportLink(
+    url: data.get(#url, or: $value.url),
+    type: data.get(#type, or: $value.type),
+  );
+
+  @override
+  ForumLlmSupportLinkCopyWith<$R2, ForumLlmSupportLink, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _ForumLlmSupportLinkCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumLlmDescriptionMapper extends ClassMapperBase<ForumLlmDescription> {
+  ForumLlmDescriptionMapper._();
+
+  static ForumLlmDescriptionMapper? _instance;
+  static ForumLlmDescriptionMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumLlmDescriptionMapper._());
+      ForumLlmSummaryMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumLlmDescription';
+
+  static ForumLlmSummary? _$summary(ForumLlmDescription v) => v.summary;
+  static const Field<ForumLlmDescription, ForumLlmSummary> _f$summary = Field(
+    'summary',
+    _$summary,
+    opt: true,
+  );
+
+  @override
+  final MappableFields<ForumLlmDescription> fields = const {
+    #summary: _f$summary,
+  };
+
+  static ForumLlmDescription _instantiate(DecodingData data) {
+    return ForumLlmDescription(summary: data.dec(_f$summary));
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumLlmDescription fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmDescription>(map);
+  }
+
+  static ForumLlmDescription fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmDescription>(json);
+  }
+}
+
+mixin ForumLlmDescriptionMappable {
+  String toJson() {
+    return ForumLlmDescriptionMapper.ensureInitialized()
+        .encodeJson<ForumLlmDescription>(this as ForumLlmDescription);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumLlmDescriptionMapper.ensureInitialized()
+        .encodeMap<ForumLlmDescription>(this as ForumLlmDescription);
+  }
+
+  ForumLlmDescriptionCopyWith<
+    ForumLlmDescription,
+    ForumLlmDescription,
+    ForumLlmDescription
+  >
+  get copyWith =>
+      _ForumLlmDescriptionCopyWithImpl<
+        ForumLlmDescription,
+        ForumLlmDescription
+      >(this as ForumLlmDescription, $identity, $identity);
+  @override
+  String toString() {
+    return ForumLlmDescriptionMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmDescription,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumLlmDescriptionMapper.ensureInitialized().equalsValue(
+      this as ForumLlmDescription,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumLlmDescriptionMapper.ensureInitialized().hashValue(
+      this as ForumLlmDescription,
+    );
+  }
+}
+
+extension ForumLlmDescriptionValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmDescription, $Out> {
+  ForumLlmDescriptionCopyWith<$R, ForumLlmDescription, $Out>
+  get $asForumLlmDescription => $base.as(
+    (v, t, t2) => _ForumLlmDescriptionCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class ForumLlmDescriptionCopyWith<
+  $R,
+  $In extends ForumLlmDescription,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ForumLlmSummaryCopyWith<$R, ForumLlmSummary, ForumLlmSummary>? get summary;
+  $R call({ForumLlmSummary? summary});
+  ForumLlmDescriptionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumLlmDescriptionCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmDescription, $Out>
+    implements ForumLlmDescriptionCopyWith<$R, ForumLlmDescription, $Out> {
+  _ForumLlmDescriptionCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumLlmDescription> $mapper =
+      ForumLlmDescriptionMapper.ensureInitialized();
+  @override
+  ForumLlmSummaryCopyWith<$R, ForumLlmSummary, ForumLlmSummary>? get summary =>
+      $value.summary?.copyWith.$chain((v) => call(summary: v));
+  @override
+  $R call({Object? summary = $none}) =>
+      $apply(FieldCopyWithData({if (summary != $none) #summary: summary}));
+  @override
+  ForumLlmDescription $make(CopyWithData data) =>
+      ForumLlmDescription(summary: data.get(#summary, or: $value.summary));
+
+  @override
+  ForumLlmDescriptionCopyWith<$R2, ForumLlmDescription, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _ForumLlmDescriptionCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class ForumLlmSummaryMapper extends ClassMapperBase<ForumLlmSummary> {
+  ForumLlmSummaryMapper._();
+
+  static ForumLlmSummaryMapper? _instance;
+  static ForumLlmSummaryMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = ForumLlmSummaryMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'ForumLlmSummary';
+
+  static String _$sentence(ForumLlmSummary v) => v.sentence;
+  static const Field<ForumLlmSummary, String> _f$sentence = Field(
+    'sentence',
+    _$sentence,
+  );
+  static String? _$paragraph(ForumLlmSummary v) => v.paragraph;
+  static const Field<ForumLlmSummary, String> _f$paragraph = Field(
+    'paragraph',
+    _$paragraph,
+    opt: true,
+  );
+
+  @override
+  final MappableFields<ForumLlmSummary> fields = const {
+    #sentence: _f$sentence,
+    #paragraph: _f$paragraph,
+  };
+
+  static ForumLlmSummary _instantiate(DecodingData data) {
+    return ForumLlmSummary(
+      sentence: data.dec(_f$sentence),
+      paragraph: data.dec(_f$paragraph),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static ForumLlmSummary fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ForumLlmSummary>(map);
+  }
+
+  static ForumLlmSummary fromJson(String json) {
+    return ensureInitialized().decodeJson<ForumLlmSummary>(json);
+  }
+}
+
+mixin ForumLlmSummaryMappable {
+  String toJson() {
+    return ForumLlmSummaryMapper.ensureInitialized()
+        .encodeJson<ForumLlmSummary>(this as ForumLlmSummary);
+  }
+
+  Map<String, dynamic> toMap() {
+    return ForumLlmSummaryMapper.ensureInitialized().encodeMap<ForumLlmSummary>(
+      this as ForumLlmSummary,
+    );
+  }
+
+  ForumLlmSummaryCopyWith<ForumLlmSummary, ForumLlmSummary, ForumLlmSummary>
+  get copyWith =>
+      _ForumLlmSummaryCopyWithImpl<ForumLlmSummary, ForumLlmSummary>(
+        this as ForumLlmSummary,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return ForumLlmSummaryMapper.ensureInitialized().stringifyValue(
+      this as ForumLlmSummary,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return ForumLlmSummaryMapper.ensureInitialized().equalsValue(
+      this as ForumLlmSummary,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return ForumLlmSummaryMapper.ensureInitialized().hashValue(
+      this as ForumLlmSummary,
+    );
+  }
+}
+
+extension ForumLlmSummaryValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ForumLlmSummary, $Out> {
+  ForumLlmSummaryCopyWith<$R, ForumLlmSummary, $Out> get $asForumLlmSummary =>
+      $base.as((v, t, t2) => _ForumLlmSummaryCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class ForumLlmSummaryCopyWith<$R, $In extends ForumLlmSummary, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({String? sentence, String? paragraph});
+  ForumLlmSummaryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _ForumLlmSummaryCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ForumLlmSummary, $Out>
+    implements ForumLlmSummaryCopyWith<$R, ForumLlmSummary, $Out> {
+  _ForumLlmSummaryCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<ForumLlmSummary> $mapper =
+      ForumLlmSummaryMapper.ensureInitialized();
+  @override
+  $R call({String? sentence, Object? paragraph = $none}) => $apply(
+    FieldCopyWithData({
+      if (sentence != null) #sentence: sentence,
+      if (paragraph != $none) #paragraph: paragraph,
+    }),
+  );
+  @override
+  ForumLlmSummary $make(CopyWithData data) => ForumLlmSummary(
+    sentence: data.get(#sentence, or: $value.sentence),
+    paragraph: data.get(#paragraph, or: $value.paragraph),
+  );
+
+  @override
+  ForumLlmSummaryCopyWith<$R2, ForumLlmSummary, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _ForumLlmSummaryCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

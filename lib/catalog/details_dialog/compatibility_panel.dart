@@ -34,26 +34,29 @@ List<SaveQuestion> saveQuestionsFor(CatalogMod mod) {
 
   final extras = mod.extras;
   if (extras != null) {
+    final save = extras.saveCompat;
     return [
-      if (extras.canAdd case final answer?)
-        SaveQuestion(addLabel, answer, extras.saveCompatibilityText),
-      if (extras.canUpdate case final answer?)
-        SaveQuestion(updateLabel, answer, extras.updateCompatibilityText),
-      if (extras.canRemove case final answer?)
-        SaveQuestion(removeLabel, answer, extras.removalCompatibilityText),
+      if (save?.adding?.answer case final answer?)
+        SaveQuestion(addLabel, answer, save?.adding?.quote),
+      if (save?.latestUpdateNote?.answer case final answer?)
+        SaveQuestion(updateLabel, answer, save?.latestUpdateNote?.quote),
+      if (save?.removing?.answer case final answer?)
+        SaveQuestion(removeLabel, answer, save?.removing?.quote),
     ];
   }
 
-  final llm = mod.llmMod?.extras;
-  if (llm == null) return const [];
-  final updateNote = llm.updateNotes?.firstWhereOrNull((n) => n.answer != null);
+  final save = mod.llmMod?.saveCompat;
+  if (save == null) return const [];
+  final updateNote = save.updateNotes?.firstWhereOrNull(
+    (n) => n.answer != null,
+  );
   return [
-    if (_answerFrom(llm.canAdd) case final answer?)
-      SaveQuestion(addLabel, answer, llm.saveCompatibility),
+    if (save.adding?.answer case final answer?)
+      SaveQuestion(addLabel, answer, save.adding?.quote),
     if (_answerFrom(updateNote?.answer) case final answer?)
       SaveQuestion(updateLabel, answer, updateNote?.quote),
-    if (_answerFrom(llm.canRemove) case final answer?)
-      SaveQuestion(removeLabel, answer, llm.removalCompatibility),
+    if (save.removing?.answer case final answer?)
+      SaveQuestion(removeLabel, answer, save.removing?.quote),
   ];
 }
 
@@ -155,6 +158,7 @@ class CompatibilityRows extends StatelessWidget {
         if (gameVersion != null && gameVersion.isNotEmpty)
           SidePanelRow(
             label: 'Game version',
+            crossAxisAlignment: .center,
             value: CatalogGameVersionBadge(mod: mod.entry),
           ),
         if (mod.requiredMods.isNotEmpty)

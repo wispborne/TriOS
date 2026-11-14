@@ -19,7 +19,7 @@ ModRepoEntry mod({String? directDownload, String? forum}) => ModRepoEntry(
 
 ForumLlmDownload dl(
   String url, {
-  LlmDownloadKind kind = LlmDownloadKind.direct,
+  LlmDownloadType type = LlmDownloadType.direct,
   LlmDownloadConfidence confidence = LlmDownloadConfidence.high,
   String label = '',
   bool requiresManualStep = false,
@@ -27,7 +27,7 @@ ForumLlmDownload dl(
 }) => ForumLlmDownload(
   url: url,
   label: label,
-  kind: kind,
+  type: type,
   confidence: confidence,
   requiresManualStep: requiresManualStep,
   resolvedDirectUrl: resolvedDirectUrl,
@@ -41,7 +41,7 @@ ForumLlmDownload trilink(String url, {String? version}) {
       : jsonEncode({'url': url, 'version': version});
   return dl(
     'https://trilink.wispborne.com/open.html?mod=${Uri.encodeComponent(entry)}',
-    kind: LlmDownloadKind.trios,
+    type: LlmDownloadType.trios,
   );
 }
 
@@ -68,7 +68,7 @@ ForumLlmMod threadMod(
 }) => ForumLlmMod(
   name: name,
   role: role,
-  requires: requires,
+  parentMods: requires,
   downloads: [dl('https://example.com/${name.alphanumericLower()}.zip')],
 );
 
@@ -114,10 +114,10 @@ void main() {
       final candidates = resolveDownloadCandidates(
         mod(),
         llmMod([
-          dl('https://a.com/mod.zip', kind: LlmDownloadKind.direct),
+          dl('https://a.com/mod.zip', type: LlmDownloadType.direct),
           dl(
             'https://trilink.wispborne.com/open.html?mod=x',
-            kind: LlmDownloadKind.trios,
+            type: LlmDownloadType.trios,
             confidence: LlmDownloadConfidence.low,
           ),
         ]),
@@ -131,7 +131,7 @@ void main() {
     test('catalog direct beats a forum direct link', () {
       final candidates = resolveDownloadCandidates(
         mod(directDownload: 'https://catalog.com/mod.zip'),
-        llmMod([dl('https://forum.com/mod.zip', kind: LlmDownloadKind.direct)]),
+        llmMod([dl('https://forum.com/mod.zip', type: LlmDownloadType.direct)]),
       );
 
       expect(candidates.first.kind, DownloadCandidateKind.catalogDirect);
@@ -143,13 +143,13 @@ void main() {
         mod(),
         llmMod([
           dl('https://mirror.com/m.zip',
-              kind: LlmDownloadKind.mirror,
+              type: LlmDownloadType.mirror,
               confidence: LlmDownloadConfidence.high),
           dl('https://low.com/m.zip',
-              kind: LlmDownloadKind.direct,
+              type: LlmDownloadType.direct,
               confidence: LlmDownloadConfidence.low),
           dl('https://high.com/m.zip',
-              kind: LlmDownloadKind.direct,
+              type: LlmDownloadType.direct,
               confidence: LlmDownloadConfidence.high),
         ]),
       );
@@ -178,11 +178,11 @@ void main() {
         mod(),
         llmMod([
           dl('https://manual.com/page',
-              kind: LlmDownloadKind.direct,
+              type: LlmDownloadType.direct,
               confidence: LlmDownloadConfidence.high,
               requiresManualStep: true),
           dl('https://direct.com/m.zip',
-              kind: LlmDownloadKind.direct,
+              type: LlmDownloadType.direct,
               confidence: LlmDownloadConfidence.low),
         ]),
       );
@@ -197,7 +197,7 @@ void main() {
         mod(forum: 'https://forum'),
         llmMod([
           dl('https://manual.com/page',
-              kind: LlmDownloadKind.direct, requiresManualStep: true),
+              type: LlmDownloadType.direct, requiresManualStep: true),
         ]),
       );
 
@@ -211,15 +211,15 @@ void main() {
         mod(),
         llmMod([
           dl('https://a.com/full.zip',
-              kind: LlmDownloadKind.direct,
+              type: LlmDownloadType.direct,
               confidence: LlmDownloadConfidence.high,
               label: 'Download'),
           dl('https://a.com/patch.zip',
-              kind: LlmDownloadKind.direct,
+              type: LlmDownloadType.direct,
               confidence: LlmDownloadConfidence.high,
               label: 'Patch (0.3.1 → 0.3.1b)'),
           dl('https://a.com/old.zip',
-              kind: LlmDownloadKind.direct,
+              type: LlmDownloadType.direct,
               confidence: LlmDownloadConfidence.low),
         ]),
       );

@@ -36,7 +36,7 @@ CatalogMod catalogMod(
     isWip: isWip,
     llmMod: ForumLlmMod(
       name: name,
-      extras: ForumLlmExtras(aiUse: CatalogAiUse(usesAi: usesAi)),
+      aiUse: CatalogAiUse(usesAi: usesAi),
     ),
   );
 }

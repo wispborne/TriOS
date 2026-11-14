@@ -30,7 +30,7 @@ class LinksPanel extends StatelessWidget {
     final forumUrl = mod.topicUrl ?? urls?[ModUrlType.Forum];
     final discordUrl = urls?[ModUrlType.Discord];
     final nexusUrl = urls?[ModUrlType.NexusMods];
-    final changelogUrl = mod.changelog?.link?.trim();
+    final changelogUrl = mod.changelog?.url?.trim();
     return [
       if (forumUrl != null && forumUrl.isNotEmpty)
         _PageLink('Forum thread', Icons.public, forumUrl, forumUrl),

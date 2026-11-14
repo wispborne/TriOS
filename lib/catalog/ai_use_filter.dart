@@ -255,7 +255,7 @@ bool isOn(AiUseFilterSettings settings) =>
 
 /// Whether a use matches the level and optional settings, whatever its part.
 bool _useCounts(CatalogAiUseEntry use, AiUseFilterSettings settings) {
-  if (settings.skipOptional && use.optional == true) return false;
+  if (settings.skipOptional && use.isOptional == true) return false;
   if (settings.wholeOnly && use.extent != 'all') return false;
   final how = use.how;
   if (how == null || how.isEmpty) return true;

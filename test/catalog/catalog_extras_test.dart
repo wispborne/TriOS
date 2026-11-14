@@ -6,8 +6,8 @@ import 'package:trios/catalog/models/forum_mod_index.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/utils/log_collapser.dart';
 
-/// One record shaped like the scraper's `mod-catalog-extras.json`, based on
-/// ED Shipyard's, with every field filled in.
+/// One schema 2 record shaped like the scraper's `mod-catalog-extras.json`,
+/// based on ED Shipyard's, with every field filled in.
 Map<String, dynamic> _fullRecord() => {
   'displayName': 'ED Shipyard',
   'summary': 'Ships from the ED Shipyard.',
@@ -28,16 +28,17 @@ Map<String, dynamic> _fullRecord() => {
       'newVersion': '2.7.3',
       'gameVersion': '0.98a',
       'changelogNotes': 'Fixed a crash.',
-      'updateCompatibilityText': 'Save compatible.',
-      'canUpdate': 'yes',
+      'updateNote': {'quote': 'Save compatible.', 'answer': 'yes'},
     },
   ],
-  'needs': [
-    {'name': 'LazyLib', 'id': 'lazylib'},
-  ],
-  'optionalNeeds': [
-    {'name': 'Some Mod'},
-  ],
+  'requirements': {
+    'required': [
+      {'name': 'LazyLib', 'id': 'lazylib'},
+    ],
+    'optional': [
+      {'name': 'Some Mod'},
+    ],
+  },
   'conflicts': [
     {
       'name': 'Particle Engine',
@@ -45,14 +46,12 @@ Map<String, dynamic> _fullRecord() => {
       'quote': 'Particle Engine may rarely crash in very large battles.',
     },
   ],
-  'isTool': false,
-  'saveCompatible': true,
-  'canAdd': 'yes',
-  'canUpdate': 'yes',
-  'canRemove': 'no',
-  'saveCompatibilityText': 'Safe to add mid playthrough',
-  'updateCompatibilityText': 'Save compatible.',
-  'removalCompatibilityText': 'Do not remove.',
+  'types': ['mod'],
+  'saveCompat': {
+    'adding': {'quote': 'Safe to add mid playthrough', 'answer': 'yes'},
+    'latestUpdateNote': {'quote': 'Save compatible.', 'answer': 'yes'},
+    'removing': {'quote': 'Do not remove.', 'answer': 'no'},
+  },
   'aiUse': <String, dynamic>{},
   'sameNameMods': [
     {
@@ -80,6 +79,41 @@ Map<String, dynamic> _fullRecord() => {
   'discordPostHtml': '<p>Hello</p>',
 };
 
+/// The same record as [_fullRecord] in schema 1, before the scraper moved to
+/// nested fields.
+Map<String, dynamic> _schema1Record() => {
+  'releases': [
+    {
+      'modId': 'ed-shipyard',
+      'modName': 'ED Shipyard',
+      'seenOn': '2026-09-15',
+      'newVersion': '2.7.3',
+      'updateCompatibilityText': 'Save compatible.',
+      'canUpdate': 'yes',
+    },
+  ],
+  'needs': [
+    {'name': 'LazyLib', 'id': 'lazylib'},
+  ],
+  'optionalNeeds': [
+    {'name': 'Some Mod'},
+  ],
+  'isTool': true,
+  'saveCompatible': true,
+  'canAdd': 'yes',
+  'canUpdate': 'yes',
+  'canRemove': 'no',
+  'saveCompatibilityText': 'Safe to add mid playthrough',
+  'updateCompatibilityText': 'Save compatible.',
+  'removalCompatibilityText': 'Do not remove.',
+  'aiUse': {
+    'usesAi': true,
+    'uses': [
+      {'area': 'portraits', 'optional': true},
+    ],
+  },
+};
+
 ModRepoEntry _makeEntry({List<String>? categories}) => ModRepoEntry(
   id: 'ed-shipyard',
   name: 'ED Shipyard',
@@ -94,7 +128,7 @@ ModRepoEntry _makeEntry({List<String>? categories}) => ModRepoEntry(
   ],
 );
 
-ForumModIndex _makeIndex(ForumLlmExtras extras) => ForumModIndex(
+ForumModIndex _makeIndex(ForumLlmMod llmMod) => ForumModIndex(
   topicId: 1,
   title: 'ED Shipyard',
   author: 'Ed',
@@ -104,11 +138,7 @@ ForumModIndex _makeIndex(ForumLlmExtras extras) => ForumModIndex(
   views: 0,
   topicUrl: 'https://example.com/topic=1',
   isWip: false,
-  llm: ForumLlmData(
-    mods: [
-      ForumLlmMod(name: 'ED Shipyard', role: LlmModRole.main, extras: extras),
-    ],
-  ),
+  llm: ForumLlmData(mods: [llmMod]),
 );
 
 void main() {
@@ -117,12 +147,12 @@ void main() {
   group('parseCatalogExtrasFile', () {
     test('reads every field', () {
       final file = parseCatalogExtrasFile({
-        'schemaVersion': 1,
+        'schemaVersion': 2,
         'generatedAt': '2026-10-29T03:01:44.127205Z',
         'mods': {'ed-shipyard': _fullRecord()},
       });
 
-      expect(file.schemaVersion, 1);
+      expect(file.schemaVersion, 2);
       expect(file.isKnownSchema, isTrue);
       expect(file.generatedAt, DateTime.utc(2026, 10, 29, 3, 1, 44, 127, 205));
 
@@ -144,23 +174,24 @@ void main() {
       expect(release.newVersion, '2.7.3');
       expect(release.gameVersion, '0.98a');
       expect(release.changelogNotes, 'Fixed a crash.');
-      expect(release.updateCompatibilityText, 'Save compatible.');
-      expect(release.canUpdate, CatalogSaveAnswer.yes);
+      expect(release.updateNote?.quote, 'Save compatible.');
+      expect(release.updateNote?.answer, CatalogSaveAnswer.yes);
 
-      expect(record.needs.single.name, 'LazyLib');
-      expect(record.needs.single.id, 'lazylib');
-      expect(record.optionalNeeds.single.id, isNull);
+      expect(record.requirements?.required.single.name, 'LazyLib');
+      expect(record.requirements?.required.single.id, 'lazylib');
+      expect(record.requirements?.optional.single.id, isNull);
       expect(record.conflicts.single.name, 'Particle Engine');
       expect(record.conflicts.single.id, 'particle-engine');
       expect(record.conflicts.single.quote, contains('rarely crash'));
+      expect(record.types, ['mod']);
       expect(record.isTool, isFalse);
-      expect(record.saveCompatible, isTrue);
-      expect(record.canAdd, CatalogSaveAnswer.yes);
-      expect(record.canUpdate, CatalogSaveAnswer.yes);
-      expect(record.canRemove, CatalogSaveAnswer.no);
-      expect(record.saveCompatibilityText, 'Safe to add mid playthrough');
-      expect(record.updateCompatibilityText, 'Save compatible.');
-      expect(record.removalCompatibilityText, 'Do not remove.');
+      final save = record.saveCompat!;
+      expect(save.adding?.answer, CatalogSaveAnswer.yes);
+      expect(save.adding?.quote, 'Safe to add mid playthrough');
+      expect(save.latestUpdateNote?.answer, CatalogSaveAnswer.yes);
+      expect(save.latestUpdateNote?.quote, 'Save compatible.');
+      expect(save.removing?.answer, CatalogSaveAnswer.no);
+      expect(save.removing?.quote, 'Do not remove.');
       expect(record.aiUse, isNotNull);
       expect(record.aiUse?.usesAi, isNull);
 
@@ -186,9 +217,47 @@ void main() {
       expect(record.discordPostHtml, '<p>Hello</p>');
     });
 
-    test('a record with only some fields fills the rest with empty values', () {
+    test('a schema 1 record reads into the schema 2 fields', () {
       final file = parseCatalogExtrasFile({
         'schemaVersion': 1,
+        'mods': {'ed-shipyard': _schema1Record()},
+      });
+
+      expect(file.isKnownSchema, isTrue);
+      final record = file.mods['ed-shipyard']!;
+      final release = record.releases.single;
+      expect(release.updateNote?.quote, 'Save compatible.');
+      expect(release.updateNote?.answer, CatalogSaveAnswer.yes);
+      expect(record.requirements?.required.single.id, 'lazylib');
+      expect(record.requirements?.optional.single.name, 'Some Mod');
+      expect(record.isTool, isTrue);
+      final save = record.saveCompat!;
+      expect(save.adding?.answer, CatalogSaveAnswer.yes);
+      expect(save.adding?.quote, 'Safe to add mid playthrough');
+      expect(save.latestUpdateNote?.answer, CatalogSaveAnswer.yes);
+      expect(save.latestUpdateNote?.quote, 'Save compatible.');
+      expect(save.removing?.answer, CatalogSaveAnswer.no);
+      expect(save.removing?.quote, 'Do not remove.');
+      expect(record.aiUse?.uses?.single.isOptional, isTrue);
+    });
+
+    test('a schema 1 record with no tool or save answers has none', () {
+      final file = parseCatalogExtrasFile({
+        'schemaVersion': 1,
+        'mods': {
+          'a': {'displayName': 'A'},
+        },
+      });
+
+      final record = file.mods['a']!;
+      expect(record.types, isNull);
+      expect(record.saveCompat, isNull);
+      expect(record.requirements, isNull);
+    });
+
+    test('a record with only some fields fills the rest with empty values', () {
+      final file = parseCatalogExtrasFile({
+        'schemaVersion': 2,
         'mods': {
           'a': {'addedOn': '2025-03-01', 'somethingNew': 42},
         },
@@ -199,13 +268,13 @@ void main() {
       expect(record.categories, isEmpty);
       expect(record.releases, isEmpty);
       expect(record.otherAuthorNames, isEmpty);
-      expect(record.canAdd, isNull);
+      expect(record.saveCompat, isNull);
       expect(record.aiUse, isNull);
     });
 
     test('a bad record is dropped and the rest still load', () {
       final file = parseCatalogExtrasFile({
-        'schemaVersion': 1,
+        'schemaVersion': 2,
         'mods': {
           'good': _fullRecord(),
           'bad': {'categories': 'not a list'},
@@ -218,10 +287,12 @@ void main() {
 
     test('an unknown enum value reads as unknown', () {
       final file = parseCatalogExtrasFile({
-        'schemaVersion': 1,
+        'schemaVersion': 2,
         'mods': {
           'a': {
-            'canAdd': 'sometimes',
+            'saveCompat': {
+              'adding': {'answer': 'sometimes'},
+            },
             'gallery': [
               {
                 'url': 'https://example.com/a.png',
@@ -235,7 +306,7 @@ void main() {
       });
 
       final record = file.mods['a']!;
-      expect(record.canAdd, CatalogSaveAnswer.unknown);
+      expect(record.saveCompat?.adding?.answer, CatalogSaveAnswer.unknown);
       final picture = record.gallery.single;
       expect(picture.aiKind, CatalogPictureKind.unknown);
       expect(picture.aiFit, CatalogPictureFit.unknown);
@@ -244,7 +315,7 @@ void main() {
 
     test('a newer schema version gives no records', () {
       final file = parseCatalogExtrasFile({
-        'schemaVersion': 2,
+        'schemaVersion': 3,
         'mods': {'ed-shipyard': _fullRecord()},
       });
 
@@ -254,17 +325,26 @@ void main() {
   });
 
   group('CatalogMod extras and fallbacks', () {
-    final llmExtras = ForumLlmExtras(
-      needs: ['LazyLib'],
-      optionalNeeds: ['Nexerelin'],
+    final llmMod = ForumLlmMod(
+      name: 'ED Shipyard',
+      role: LlmModRole.main,
+      requirements: ForumLlmRequirements(
+        required: ['LazyLib'],
+        optional: ['Nexerelin'],
+      ),
       conflicts: [ForumLlmConflict(name: 'BoxUtil', quote: 'BoxUtil breaks.')],
-      canAdd: 'no',
+      saveCompat: ForumLlmSaveCompat(
+        adding: CatalogSaveStatement(
+          quote: 'Start a new game.',
+          answer: CatalogSaveAnswer.no,
+        ),
+      ),
     );
 
     test('with no record, the getters fall back', () {
       final mod = gatherCatalogMod(
         mod: _makeEntry(categories: ['Ship Pack', 'Discord Only']),
-        forumIndex: _makeIndex(llmExtras),
+        forumIndex: _makeIndex(llmMod),
       );
 
       expect(mod.extras, isNull);
@@ -282,7 +362,7 @@ void main() {
       final record = CatalogExtrasMapper.fromMap(_fullRecord());
       final mod = gatherCatalogMod(
         mod: _makeEntry(categories: ['Ship Pack']),
-        forumIndex: _makeIndex(llmExtras),
+        forumIndex: _makeIndex(llmMod),
         extras: record,
       );
 
@@ -298,7 +378,7 @@ void main() {
     test('a record with no categories or canAdd still wins', () {
       final mod = gatherCatalogMod(
         mod: _makeEntry(categories: ['Discord Only']),
-        forumIndex: _makeIndex(llmExtras),
+        forumIndex: _makeIndex(llmMod),
         extras: CatalogExtras(),
       );
 

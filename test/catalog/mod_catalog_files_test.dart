@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:trios/catalog/models/catalog_extras.dart';
 import 'package:trios/catalog/models/forum_data_bundle.dart';
 import 'package:trios/catalog/models/forum_llm_data.dart';
 import 'package:trios/catalog/models/mod_repo_entry.dart';
@@ -118,11 +119,11 @@ void main() {
       final mod = thread.mods.single;
       expect(mod.name, 'Example Mod');
       expect(mod.role, LlmModRole.main);
-      expect(mod.downloads.single.kind, LlmDownloadKind.direct);
-      expect(mod.extras?.summary?.sentence, 'Adds a new mod to the game.');
+      expect(mod.downloads.single.type, LlmDownloadType.direct);
+      expect(mod.summary?.sentence, 'Adds a new mod to the game.');
     });
 
-    test('reads nicknames, the tool flag, canAdd and aiUse', () {
+    test('reads nicknames, the tool flag, canAdd and aiUse in the old format', () {
       final mod = ForumLlmModMapper.fromMap({
         'name': 'Example Mod',
         'role': 'main',
@@ -130,6 +131,7 @@ void main() {
         'nicknames': ['EM'],
         'isTool': true,
         'extras': {
+          'saveCompatibility': 'Save compatible.',
           'canAdd': 'yes',
           'aiUse': {
             'quote': 'Some portraits were generated.',
@@ -145,54 +147,95 @@ void main() {
 
       expect(mod.nicknames, ['EM']);
       expect(mod.isTool, isTrue);
-      expect(mod.extras?.canAdd, 'yes');
-      final aiUse = mod.extras?.aiUse;
+      expect(mod.saveCompat?.adding?.answer, CatalogSaveAnswer.yes);
+      final aiUse = mod.aiUse;
       expect(aiUse?.usesAi, isTrue);
       expect(aiUse?.uses?.first.area, 'portraits');
       expect(aiUse?.uses?.first.how, 'generated');
-      expect(aiUse?.uses?.last.optional, isTrue);
+      expect(aiUse?.uses?.last.isOptional, isTrue);
       expect(aiUse?.tools, ['Midjourney']);
     });
 
-    test('reads requirements and the save answers', () {
+    test('reads requirements and the save answers in the old format', () {
       // Nexerelin's answer, copied from the details file.
-      final extras = ForumLlmExtrasMapper.fromMap({
-        'needs': ['LazyLib', 'MagicLib'],
-        'optionalNeeds': ['Version Checker'],
-        'canAdd': 'depends',
-        'saveCompatibility':
-            'Can be added to existing save, although a few features may be missing.',
-        'canRemove': 'no',
-        'removalCompatibility': 'Cannot be removed from an existing save.',
-        'updateNotes': [
-          {
-            'quote':
-                'Updates will almost always be save-compatible for several versions.',
-            'answer': 'depends',
-          },
-        ],
+      final mod = ForumLlmModMapper.fromMap({
+        'name': 'Nexerelin',
+        'extras': _nexerelinOldExtras,
       });
 
-      expect(extras.needs, ['LazyLib', 'MagicLib']);
-      expect(extras.optionalNeeds, ['Version Checker']);
-      expect(extras.canAdd, 'depends');
-      expect(extras.canRemove, 'no');
+      expect(mod.requirements?.required, ['LazyLib', 'MagicLib']);
+      expect(mod.requirements?.optional, ['Version Checker']);
+      expect(mod.saveCompat?.adding?.answer, CatalogSaveAnswer.depends);
+      expect(mod.saveCompat?.removing?.answer, CatalogSaveAnswer.no);
       expect(
-        extras.removalCompatibility,
+        mod.saveCompat?.removing?.quote,
         'Cannot be removed from an existing save.',
       );
-      final note = extras.updateNotes!.single;
+      final note = mod.saveCompat!.updateNotes!.single;
       expect(note.version, isNull);
       expect(note.answer, 'depends');
     });
 
+    test('reads requirements and the save answers in the new format', () {
+      final mod = ForumLlmModMapper.fromMap({
+        'name': 'Nexerelin',
+        'requirements': {
+          'required': ['LazyLib', 'MagicLib'],
+          'optional': ['Version Checker'],
+        },
+        'saveCompat': {
+          'adding': {
+            'quote':
+                'Can be added to existing save, although a few features may be missing.',
+            'answer': 'depends',
+          },
+          'removing': {
+            'quote': 'Cannot be removed from an existing save.',
+            'answer': 'no',
+          },
+          'updateNotes': [
+            {
+              'quote':
+                  'Updates will almost always be save-compatible for several versions.',
+              'answer': 'depends',
+            },
+          ],
+        },
+      });
+
+      expect(mod.requirements?.required, ['LazyLib', 'MagicLib']);
+      expect(mod.requirements?.optional, ['Version Checker']);
+      expect(mod.saveCompat?.adding?.answer, CatalogSaveAnswer.depends);
+      expect(mod.saveCompat?.removing?.answer, CatalogSaveAnswer.no);
+      expect(mod.saveCompat?.updateNotes?.single.answer, 'depends');
+    });
+
     test('an empty aiUse means the post says nothing about AI', () {
-      final extras = ForumLlmExtrasMapper.fromMap({
+      final mod = ForumLlmModMapper.fromMap({
+        'name': 'Example Mod',
         'aiUse': <String, dynamic>{},
       });
 
-      expect(extras.aiUse, isNotNull);
-      expect(extras.aiUse?.usesAi, isNull);
+      expect(mod.aiUse, isNotNull);
+      expect(mod.aiUse?.usesAi, isNull);
     });
   });
 }
+
+/// Nexerelin's answer in the old format, copied from the details file.
+const Map<String, dynamic> _nexerelinOldExtras = {
+  'needs': ['LazyLib', 'MagicLib'],
+  'optionalNeeds': ['Version Checker'],
+  'canAdd': 'depends',
+  'saveCompatibility':
+      'Can be added to existing save, although a few features may be missing.',
+  'canRemove': 'no',
+  'removalCompatibility': 'Cannot be removed from an existing save.',
+  'updateNotes': [
+    {
+      'quote':
+          'Updates will almost always be save-compatible for several versions.',
+      'answer': 'depends',
+    },
+  ],
+};

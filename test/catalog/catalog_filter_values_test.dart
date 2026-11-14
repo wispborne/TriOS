@@ -19,7 +19,7 @@ ModRepoEntry _makeEntry({DateTime? created}) => ModRepoEntry(
   ],
 );
 
-ForumModIndex _makeIndex({bool? isTool, ForumLlmExtras? extras}) =>
+ForumModIndex _makeIndex({bool? isTool, CatalogAiUse? aiUse}) =>
     ForumModIndex(
       topicId: 1,
       title: 'ED Shipyard',
@@ -35,8 +35,8 @@ ForumModIndex _makeIndex({bool? isTool, ForumLlmExtras? extras}) =>
           ForumLlmMod(
             name: 'ED Shipyard',
             role: LlmModRole.main,
-            isTool: isTool,
-            extras: extras,
+            types: isTool == null ? null : [isTool ? 'tool' : 'mod'],
+            aiUse: aiUse,
           ),
         ],
       ),
@@ -97,7 +97,7 @@ void main() {
         mod: _makeEntry(),
         forumIndex: _makeIndex(
           isTool: true,
-          extras: ForumLlmExtras(aiUse: CatalogAiUse(usesAi: false)),
+          aiUse: CatalogAiUse(usesAi: false),
         ),
       );
       expect(mod.isTool, isTrue);
@@ -110,9 +110,9 @@ void main() {
         mod: _makeEntry(),
         forumIndex: _makeIndex(
           isTool: true,
-          extras: ForumLlmExtras(aiUse: CatalogAiUse(usesAi: false)),
+          aiUse: CatalogAiUse(usesAi: false),
         ),
-        extras: CatalogExtras(isTool: false, aiUse: CatalogAiUse(usesAi: true)),
+        extras: CatalogExtras(types: ['mod'], aiUse: CatalogAiUse(usesAi: true)),
       );
       expect(mod.isTool, isFalse);
       expect(mod.usesAi, isTrue);
@@ -123,7 +123,7 @@ void main() {
       final mod = gatherCatalogMod(
         mod: _makeEntry(),
         forumIndex: _makeIndex(
-          extras: ForumLlmExtras(aiUse: CatalogAiUse(usesAi: true)),
+          aiUse: CatalogAiUse(usesAi: true),
         ),
         extras: CatalogExtras(),
       );
@@ -135,7 +135,11 @@ void main() {
     test('is added only when the answer is yes', () {
       CatalogMod withAnswer(CatalogSaveAnswer answer) => gatherCatalogMod(
         mod: _makeEntry(),
-        extras: CatalogExtras(canAdd: answer),
+        extras: CatalogExtras(
+          saveCompat: CatalogSaveCompat(
+            adding: CatalogSaveStatement(answer: answer),
+          ),
+        ),
       );
       expect(withAnswer(CatalogSaveAnswer.yes).attributeKeys,
           contains('safeToAdd'));

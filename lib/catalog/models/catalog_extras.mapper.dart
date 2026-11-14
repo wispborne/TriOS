@@ -470,10 +470,10 @@ class CatalogAiUseEntryMapper extends ClassMapperBase<CatalogAiUseEntry> {
     _$extent,
     opt: true,
   );
-  static bool? _$optional(CatalogAiUseEntry v) => v.optional;
-  static const Field<CatalogAiUseEntry, bool> _f$optional = Field(
-    'optional',
-    _$optional,
+  static bool? _$isOptional(CatalogAiUseEntry v) => v.isOptional;
+  static const Field<CatalogAiUseEntry, bool> _f$isOptional = Field(
+    'isOptional',
+    _$isOptional,
     opt: true,
   );
 
@@ -482,7 +482,7 @@ class CatalogAiUseEntryMapper extends ClassMapperBase<CatalogAiUseEntry> {
     #area: _f$area,
     #how: _f$how,
     #extent: _f$extent,
-    #optional: _f$optional,
+    #isOptional: _f$isOptional,
   };
 
   static CatalogAiUseEntry _instantiate(DecodingData data) {
@@ -490,7 +490,7 @@ class CatalogAiUseEntryMapper extends ClassMapperBase<CatalogAiUseEntry> {
       area: data.dec(_f$area),
       how: data.dec(_f$how),
       extent: data.dec(_f$extent),
-      optional: data.dec(_f$optional),
+      isOptional: data.dec(_f$isOptional),
     );
   }
 
@@ -565,7 +565,7 @@ abstract class CatalogAiUseEntryCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? area, String? how, String? extent, bool? optional});
+  $R call({String? area, String? how, String? extent, bool? isOptional});
   CatalogAiUseEntryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -584,13 +584,13 @@ class _CatalogAiUseEntryCopyWithImpl<$R, $Out>
     String? area,
     Object? how = $none,
     Object? extent = $none,
-    Object? optional = $none,
+    Object? isOptional = $none,
   }) => $apply(
     FieldCopyWithData({
       if (area != null) #area: area,
       if (how != $none) #how: how,
       if (extent != $none) #extent: extent,
-      if (optional != $none) #optional: optional,
+      if (isOptional != $none) #isOptional: isOptional,
     }),
   );
   @override
@@ -598,7 +598,7 @@ class _CatalogAiUseEntryCopyWithImpl<$R, $Out>
     area: data.get(#area, or: $value.area),
     how: data.get(#how, or: $value.how),
     extent: data.get(#extent, or: $value.extent),
-    optional: data.get(#optional, or: $value.optional),
+    isOptional: data.get(#isOptional, or: $value.isOptional),
   );
 
   @override
@@ -607,788 +607,499 @@ class _CatalogAiUseEntryCopyWithImpl<$R, $Out>
   ) => _CatalogAiUseEntryCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
-class CatalogExtrasMapper extends ClassMapperBase<CatalogExtras> {
-  CatalogExtrasMapper._();
+class CatalogSaveStatementMapper extends ClassMapperBase<CatalogSaveStatement> {
+  CatalogSaveStatementMapper._();
 
-  static CatalogExtrasMapper? _instance;
-  static CatalogExtrasMapper ensureInitialized() {
+  static CatalogSaveStatementMapper? _instance;
+  static CatalogSaveStatementMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = CatalogExtrasMapper._());
-      CatalogReleaseMapper.ensureInitialized();
-      CatalogNeedMapper.ensureInitialized();
-      CatalogConflictMapper.ensureInitialized();
+      MapperContainer.globals.use(_instance = CatalogSaveStatementMapper._());
       CatalogSaveAnswerMapper.ensureInitialized();
-      CatalogAiUseMapper.ensureInitialized();
-      CatalogSameNameModMapper.ensureInitialized();
-      CatalogGalleryPictureMapper.ensureInitialized();
     }
     return _instance!;
   }
 
   @override
-  final String id = 'CatalogExtras';
+  final String id = 'CatalogSaveStatement';
 
-  static String? _$displayName(CatalogExtras v) => v.displayName;
-  static const Field<CatalogExtras, String> _f$displayName = Field(
-    'displayName',
-    _$displayName,
+  static String? _$quote(CatalogSaveStatement v) => v.quote;
+  static const Field<CatalogSaveStatement, String> _f$quote = Field(
+    'quote',
+    _$quote,
     opt: true,
   );
-  static String? _$summary(CatalogExtras v) => v.summary;
-  static const Field<CatalogExtras, String> _f$summary = Field(
-    'summary',
-    _$summary,
-    opt: true,
-  );
-  static List<String> _$categories(CatalogExtras v) => v.categories;
-  static const Field<CatalogExtras, List<String>> _f$categories = Field(
-    'categories',
-    _$categories,
-    opt: true,
-    def: const [],
-  );
-  static List<String> _$rawCategories(CatalogExtras v) => v.rawCategories;
-  static const Field<CatalogExtras, List<String>> _f$rawCategories = Field(
-    'rawCategories',
-    _$rawCategories,
-    opt: true,
-    def: const [],
-  );
-  static Map<String, List<String>> _$otherAuthorNames(CatalogExtras v) =>
-      v.otherAuthorNames;
-  static const Field<CatalogExtras, Map<String, List<String>>>
-  _f$otherAuthorNames = Field(
-    'otherAuthorNames',
-    _$otherAuthorNames,
-    opt: true,
-    def: const {},
-  );
-  static DateTime? _$addedOn(CatalogExtras v) => v.addedOn;
-  static const Field<CatalogExtras, DateTime> _f$addedOn = Field(
-    'addedOn',
-    _$addedOn,
-    opt: true,
-  );
-  static DateTime? _$editedOn(CatalogExtras v) => v.editedOn;
-  static const Field<CatalogExtras, DateTime> _f$editedOn = Field(
-    'editedOn',
-    _$editedOn,
-    opt: true,
-  );
-  static DateTime? _$lastReleaseDate(CatalogExtras v) => v.lastReleaseDate;
-  static const Field<CatalogExtras, DateTime> _f$lastReleaseDate = Field(
-    'lastReleaseDate',
-    _$lastReleaseDate,
-    opt: true,
-  );
-  static List<CatalogRelease> _$releases(CatalogExtras v) => v.releases;
-  static const Field<CatalogExtras, List<CatalogRelease>> _f$releases = Field(
-    'releases',
-    _$releases,
-    opt: true,
-    def: const [],
-  );
-  static List<CatalogNeed> _$needs(CatalogExtras v) => v.needs;
-  static const Field<CatalogExtras, List<CatalogNeed>> _f$needs = Field(
-    'needs',
-    _$needs,
-    opt: true,
-    def: const [],
-  );
-  static List<CatalogNeed> _$optionalNeeds(CatalogExtras v) => v.optionalNeeds;
-  static const Field<CatalogExtras, List<CatalogNeed>> _f$optionalNeeds = Field(
-    'optionalNeeds',
-    _$optionalNeeds,
-    opt: true,
-    def: const [],
-  );
-  static List<CatalogConflict> _$conflicts(CatalogExtras v) => v.conflicts;
-  static const Field<CatalogExtras, List<CatalogConflict>> _f$conflicts = Field(
-    'conflicts',
-    _$conflicts,
-    opt: true,
-    def: const [],
-  );
-  static bool? _$isTool(CatalogExtras v) => v.isTool;
-  static const Field<CatalogExtras, bool> _f$isTool = Field(
-    'isTool',
-    _$isTool,
-    opt: true,
-  );
-  static bool? _$saveCompatible(CatalogExtras v) => v.saveCompatible;
-  static const Field<CatalogExtras, bool> _f$saveCompatible = Field(
-    'saveCompatible',
-    _$saveCompatible,
-    opt: true,
-  );
-  static CatalogSaveAnswer? _$canAdd(CatalogExtras v) => v.canAdd;
-  static const Field<CatalogExtras, CatalogSaveAnswer> _f$canAdd = Field(
-    'canAdd',
-    _$canAdd,
-    opt: true,
-  );
-  static CatalogSaveAnswer? _$canUpdate(CatalogExtras v) => v.canUpdate;
-  static const Field<CatalogExtras, CatalogSaveAnswer> _f$canUpdate = Field(
-    'canUpdate',
-    _$canUpdate,
-    opt: true,
-  );
-  static CatalogSaveAnswer? _$canRemove(CatalogExtras v) => v.canRemove;
-  static const Field<CatalogExtras, CatalogSaveAnswer> _f$canRemove = Field(
-    'canRemove',
-    _$canRemove,
-    opt: true,
-  );
-  static String? _$saveCompatibilityText(CatalogExtras v) =>
-      v.saveCompatibilityText;
-  static const Field<CatalogExtras, String> _f$saveCompatibilityText = Field(
-    'saveCompatibilityText',
-    _$saveCompatibilityText,
-    opt: true,
-  );
-  static String? _$updateCompatibilityText(CatalogExtras v) =>
-      v.updateCompatibilityText;
-  static const Field<CatalogExtras, String> _f$updateCompatibilityText = Field(
-    'updateCompatibilityText',
-    _$updateCompatibilityText,
-    opt: true,
-  );
-  static String? _$removalCompatibilityText(CatalogExtras v) =>
-      v.removalCompatibilityText;
-  static const Field<CatalogExtras, String> _f$removalCompatibilityText = Field(
-    'removalCompatibilityText',
-    _$removalCompatibilityText,
-    opt: true,
-  );
-  static CatalogAiUse? _$aiUse(CatalogExtras v) => v.aiUse;
-  static const Field<CatalogExtras, CatalogAiUse> _f$aiUse = Field(
-    'aiUse',
-    _$aiUse,
-    opt: true,
-  );
-  static List<CatalogSameNameMod> _$sameNameMods(CatalogExtras v) =>
-      v.sameNameMods;
-  static const Field<CatalogExtras, List<CatalogSameNameMod>> _f$sameNameMods =
-      Field('sameNameMods', _$sameNameMods, opt: true, def: const []);
-  static List<CatalogGalleryPicture> _$gallery(CatalogExtras v) => v.gallery;
-  static const Field<CatalogExtras, List<CatalogGalleryPicture>> _f$gallery =
-      Field('gallery', _$gallery, opt: true, def: const []);
-  static String? _$discordPostHtml(CatalogExtras v) => v.discordPostHtml;
-  static const Field<CatalogExtras, String> _f$discordPostHtml = Field(
-    'discordPostHtml',
-    _$discordPostHtml,
+  static CatalogSaveAnswer? _$answer(CatalogSaveStatement v) => v.answer;
+  static const Field<CatalogSaveStatement, CatalogSaveAnswer> _f$answer = Field(
+    'answer',
+    _$answer,
     opt: true,
   );
 
   @override
-  final MappableFields<CatalogExtras> fields = const {
-    #displayName: _f$displayName,
-    #summary: _f$summary,
-    #categories: _f$categories,
-    #rawCategories: _f$rawCategories,
-    #otherAuthorNames: _f$otherAuthorNames,
-    #addedOn: _f$addedOn,
-    #editedOn: _f$editedOn,
-    #lastReleaseDate: _f$lastReleaseDate,
-    #releases: _f$releases,
-    #needs: _f$needs,
-    #optionalNeeds: _f$optionalNeeds,
-    #conflicts: _f$conflicts,
-    #isTool: _f$isTool,
-    #saveCompatible: _f$saveCompatible,
-    #canAdd: _f$canAdd,
-    #canUpdate: _f$canUpdate,
-    #canRemove: _f$canRemove,
-    #saveCompatibilityText: _f$saveCompatibilityText,
-    #updateCompatibilityText: _f$updateCompatibilityText,
-    #removalCompatibilityText: _f$removalCompatibilityText,
-    #aiUse: _f$aiUse,
-    #sameNameMods: _f$sameNameMods,
-    #gallery: _f$gallery,
-    #discordPostHtml: _f$discordPostHtml,
+  final MappableFields<CatalogSaveStatement> fields = const {
+    #quote: _f$quote,
+    #answer: _f$answer,
   };
 
-  static CatalogExtras _instantiate(DecodingData data) {
-    return CatalogExtras(
-      displayName: data.dec(_f$displayName),
-      summary: data.dec(_f$summary),
-      categories: data.dec(_f$categories),
-      rawCategories: data.dec(_f$rawCategories),
-      otherAuthorNames: data.dec(_f$otherAuthorNames),
-      addedOn: data.dec(_f$addedOn),
-      editedOn: data.dec(_f$editedOn),
-      lastReleaseDate: data.dec(_f$lastReleaseDate),
-      releases: data.dec(_f$releases),
-      needs: data.dec(_f$needs),
-      optionalNeeds: data.dec(_f$optionalNeeds),
-      conflicts: data.dec(_f$conflicts),
-      isTool: data.dec(_f$isTool),
-      saveCompatible: data.dec(_f$saveCompatible),
-      canAdd: data.dec(_f$canAdd),
-      canUpdate: data.dec(_f$canUpdate),
-      canRemove: data.dec(_f$canRemove),
-      saveCompatibilityText: data.dec(_f$saveCompatibilityText),
-      updateCompatibilityText: data.dec(_f$updateCompatibilityText),
-      removalCompatibilityText: data.dec(_f$removalCompatibilityText),
-      aiUse: data.dec(_f$aiUse),
-      sameNameMods: data.dec(_f$sameNameMods),
-      gallery: data.dec(_f$gallery),
-      discordPostHtml: data.dec(_f$discordPostHtml),
+  static CatalogSaveStatement _instantiate(DecodingData data) {
+    return CatalogSaveStatement(
+      quote: data.dec(_f$quote),
+      answer: data.dec(_f$answer),
     );
   }
 
   @override
   final Function instantiate = _instantiate;
 
-  static CatalogExtras fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<CatalogExtras>(map);
+  static CatalogSaveStatement fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogSaveStatement>(map);
   }
 
-  static CatalogExtras fromJson(String json) {
-    return ensureInitialized().decodeJson<CatalogExtras>(json);
+  static CatalogSaveStatement fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogSaveStatement>(json);
   }
 }
 
-mixin CatalogExtrasMappable {
+mixin CatalogSaveStatementMappable {
   String toJson() {
-    return CatalogExtrasMapper.ensureInitialized().encodeJson<CatalogExtras>(
-      this as CatalogExtras,
-    );
+    return CatalogSaveStatementMapper.ensureInitialized()
+        .encodeJson<CatalogSaveStatement>(this as CatalogSaveStatement);
   }
 
   Map<String, dynamic> toMap() {
-    return CatalogExtrasMapper.ensureInitialized().encodeMap<CatalogExtras>(
-      this as CatalogExtras,
-    );
+    return CatalogSaveStatementMapper.ensureInitialized()
+        .encodeMap<CatalogSaveStatement>(this as CatalogSaveStatement);
   }
 
-  CatalogExtrasCopyWith<CatalogExtras, CatalogExtras, CatalogExtras>
-  get copyWith => _CatalogExtrasCopyWithImpl<CatalogExtras, CatalogExtras>(
-    this as CatalogExtras,
-    $identity,
-    $identity,
-  );
+  CatalogSaveStatementCopyWith<
+    CatalogSaveStatement,
+    CatalogSaveStatement,
+    CatalogSaveStatement
+  >
+  get copyWith =>
+      _CatalogSaveStatementCopyWithImpl<
+        CatalogSaveStatement,
+        CatalogSaveStatement
+      >(this as CatalogSaveStatement, $identity, $identity);
   @override
   String toString() {
-    return CatalogExtrasMapper.ensureInitialized().stringifyValue(
-      this as CatalogExtras,
+    return CatalogSaveStatementMapper.ensureInitialized().stringifyValue(
+      this as CatalogSaveStatement,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return CatalogExtrasMapper.ensureInitialized().equalsValue(
-      this as CatalogExtras,
+    return CatalogSaveStatementMapper.ensureInitialized().equalsValue(
+      this as CatalogSaveStatement,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return CatalogExtrasMapper.ensureInitialized().hashValue(
-      this as CatalogExtras,
+    return CatalogSaveStatementMapper.ensureInitialized().hashValue(
+      this as CatalogSaveStatement,
     );
   }
 }
 
-extension CatalogExtrasValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, CatalogExtras, $Out> {
-  CatalogExtrasCopyWith<$R, CatalogExtras, $Out> get $asCatalogExtras =>
-      $base.as((v, t, t2) => _CatalogExtrasCopyWithImpl<$R, $Out>(v, t, t2));
+extension CatalogSaveStatementValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogSaveStatement, $Out> {
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, $Out>
+  get $asCatalogSaveStatement => $base.as(
+    (v, t, t2) => _CatalogSaveStatementCopyWithImpl<$R, $Out>(v, t, t2),
+  );
 }
 
-abstract class CatalogExtrasCopyWith<$R, $In extends CatalogExtras, $Out>
+abstract class CatalogSaveStatementCopyWith<
+  $R,
+  $In extends CatalogSaveStatement,
+  $Out
+>
     implements ClassCopyWith<$R, $In, $Out> {
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get categories;
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
-  get rawCategories;
-  MapCopyWith<
-    $R,
-    String,
-    List<String>,
-    ObjectCopyWith<$R, List<String>, List<String>>
-  >
-  get otherAuthorNames;
-  ListCopyWith<
-    $R,
-    CatalogRelease,
-    CatalogReleaseCopyWith<$R, CatalogRelease, CatalogRelease>
-  >
-  get releases;
-  ListCopyWith<
-    $R,
-    CatalogNeed,
-    CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
-  >
-  get needs;
-  ListCopyWith<
-    $R,
-    CatalogNeed,
-    CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
-  >
-  get optionalNeeds;
-  ListCopyWith<
-    $R,
-    CatalogConflict,
-    CatalogConflictCopyWith<$R, CatalogConflict, CatalogConflict>
-  >
-  get conflicts;
-  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse;
-  ListCopyWith<
-    $R,
-    CatalogSameNameMod,
-    CatalogSameNameModCopyWith<$R, CatalogSameNameMod, CatalogSameNameMod>
-  >
-  get sameNameMods;
-  ListCopyWith<
-    $R,
-    CatalogGalleryPicture,
-    CatalogGalleryPictureCopyWith<
-      $R,
-      CatalogGalleryPicture,
-      CatalogGalleryPicture
-    >
-  >
-  get gallery;
-  $R call({
-    String? displayName,
-    String? summary,
-    List<String>? categories,
-    List<String>? rawCategories,
-    Map<String, List<String>>? otherAuthorNames,
-    DateTime? addedOn,
-    DateTime? editedOn,
-    DateTime? lastReleaseDate,
-    List<CatalogRelease>? releases,
-    List<CatalogNeed>? needs,
-    List<CatalogNeed>? optionalNeeds,
-    List<CatalogConflict>? conflicts,
-    bool? isTool,
-    bool? saveCompatible,
-    CatalogSaveAnswer? canAdd,
-    CatalogSaveAnswer? canUpdate,
-    CatalogSaveAnswer? canRemove,
-    String? saveCompatibilityText,
-    String? updateCompatibilityText,
-    String? removalCompatibilityText,
-    CatalogAiUse? aiUse,
-    List<CatalogSameNameMod>? sameNameMods,
-    List<CatalogGalleryPicture>? gallery,
-    String? discordPostHtml,
-  });
-  CatalogExtrasCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+  $R call({String? quote, CatalogSaveAnswer? answer});
+  CatalogSaveStatementCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
 }
 
-class _CatalogExtrasCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, CatalogExtras, $Out>
-    implements CatalogExtrasCopyWith<$R, CatalogExtras, $Out> {
-  _CatalogExtrasCopyWithImpl(super.value, super.then, super.then2);
+class _CatalogSaveStatementCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogSaveStatement, $Out>
+    implements CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, $Out> {
+  _CatalogSaveStatementCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<CatalogExtras> $mapper =
-      CatalogExtrasMapper.ensureInitialized();
+  late final ClassMapperBase<CatalogSaveStatement> $mapper =
+      CatalogSaveStatementMapper.ensureInitialized();
   @override
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get categories =>
-      ListCopyWith(
-        $value.categories,
-        (v, t) => ObjectCopyWith(v, $identity, t),
-        (v) => call(categories: v),
+  $R call({Object? quote = $none, Object? answer = $none}) => $apply(
+    FieldCopyWithData({
+      if (quote != $none) #quote: quote,
+      if (answer != $none) #answer: answer,
+    }),
+  );
+  @override
+  CatalogSaveStatement $make(CopyWithData data) => CatalogSaveStatement(
+    quote: data.get(#quote, or: $value.quote),
+    answer: data.get(#answer, or: $value.answer),
+  );
+
+  @override
+  CatalogSaveStatementCopyWith<$R2, CatalogSaveStatement, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _CatalogSaveStatementCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class CatalogSaveCompatMapper extends ClassMapperBase<CatalogSaveCompat> {
+  CatalogSaveCompatMapper._();
+
+  static CatalogSaveCompatMapper? _instance;
+  static CatalogSaveCompatMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CatalogSaveCompatMapper._());
+      CatalogSaveStatementMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'CatalogSaveCompat';
+
+  static CatalogSaveStatement? _$adding(CatalogSaveCompat v) => v.adding;
+  static const Field<CatalogSaveCompat, CatalogSaveStatement> _f$adding = Field(
+    'adding',
+    _$adding,
+    opt: true,
+  );
+  static CatalogSaveStatement? _$removing(CatalogSaveCompat v) => v.removing;
+  static const Field<CatalogSaveCompat, CatalogSaveStatement> _f$removing =
+      Field('removing', _$removing, opt: true);
+  static CatalogSaveStatement? _$latestUpdateNote(CatalogSaveCompat v) =>
+      v.latestUpdateNote;
+  static const Field<CatalogSaveCompat, CatalogSaveStatement>
+  _f$latestUpdateNote = Field(
+    'latestUpdateNote',
+    _$latestUpdateNote,
+    opt: true,
+  );
+
+  @override
+  final MappableFields<CatalogSaveCompat> fields = const {
+    #adding: _f$adding,
+    #removing: _f$removing,
+    #latestUpdateNote: _f$latestUpdateNote,
+  };
+
+  static CatalogSaveCompat _instantiate(DecodingData data) {
+    return CatalogSaveCompat(
+      adding: data.dec(_f$adding),
+      removing: data.dec(_f$removing),
+      latestUpdateNote: data.dec(_f$latestUpdateNote),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static CatalogSaveCompat fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogSaveCompat>(map);
+  }
+
+  static CatalogSaveCompat fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogSaveCompat>(json);
+  }
+}
+
+mixin CatalogSaveCompatMappable {
+  String toJson() {
+    return CatalogSaveCompatMapper.ensureInitialized()
+        .encodeJson<CatalogSaveCompat>(this as CatalogSaveCompat);
+  }
+
+  Map<String, dynamic> toMap() {
+    return CatalogSaveCompatMapper.ensureInitialized()
+        .encodeMap<CatalogSaveCompat>(this as CatalogSaveCompat);
+  }
+
+  CatalogSaveCompatCopyWith<
+    CatalogSaveCompat,
+    CatalogSaveCompat,
+    CatalogSaveCompat
+  >
+  get copyWith =>
+      _CatalogSaveCompatCopyWithImpl<CatalogSaveCompat, CatalogSaveCompat>(
+        this as CatalogSaveCompat,
+        $identity,
+        $identity,
       );
   @override
-  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
-  get rawCategories => ListCopyWith(
-    $value.rawCategories,
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(rawCategories: v),
-  );
-  @override
-  MapCopyWith<
-    $R,
-    String,
-    List<String>,
-    ObjectCopyWith<$R, List<String>, List<String>>
-  >
-  get otherAuthorNames => MapCopyWith(
-    $value.otherAuthorNames,
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(otherAuthorNames: v),
-  );
-  @override
-  ListCopyWith<
-    $R,
-    CatalogRelease,
-    CatalogReleaseCopyWith<$R, CatalogRelease, CatalogRelease>
-  >
-  get releases => ListCopyWith(
-    $value.releases,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(releases: v),
-  );
-  @override
-  ListCopyWith<
-    $R,
-    CatalogNeed,
-    CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
-  >
-  get needs => ListCopyWith(
-    $value.needs,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(needs: v),
-  );
-  @override
-  ListCopyWith<
-    $R,
-    CatalogNeed,
-    CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
-  >
-  get optionalNeeds => ListCopyWith(
-    $value.optionalNeeds,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(optionalNeeds: v),
-  );
-  @override
-  ListCopyWith<
-    $R,
-    CatalogConflict,
-    CatalogConflictCopyWith<$R, CatalogConflict, CatalogConflict>
-  >
-  get conflicts => ListCopyWith(
-    $value.conflicts,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(conflicts: v),
-  );
-  @override
-  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse =>
-      $value.aiUse?.copyWith.$chain((v) => call(aiUse: v));
-  @override
-  ListCopyWith<
-    $R,
-    CatalogSameNameMod,
-    CatalogSameNameModCopyWith<$R, CatalogSameNameMod, CatalogSameNameMod>
-  >
-  get sameNameMods => ListCopyWith(
-    $value.sameNameMods,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(sameNameMods: v),
-  );
-  @override
-  ListCopyWith<
-    $R,
-    CatalogGalleryPicture,
-    CatalogGalleryPictureCopyWith<
-      $R,
-      CatalogGalleryPicture,
-      CatalogGalleryPicture
-    >
-  >
-  get gallery => ListCopyWith(
-    $value.gallery,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(gallery: v),
-  );
-  @override
-  $R call({
-    Object? displayName = $none,
-    Object? summary = $none,
-    List<String>? categories,
-    List<String>? rawCategories,
-    Map<String, List<String>>? otherAuthorNames,
-    Object? addedOn = $none,
-    Object? editedOn = $none,
-    Object? lastReleaseDate = $none,
-    List<CatalogRelease>? releases,
-    List<CatalogNeed>? needs,
-    List<CatalogNeed>? optionalNeeds,
-    List<CatalogConflict>? conflicts,
-    Object? isTool = $none,
-    Object? saveCompatible = $none,
-    Object? canAdd = $none,
-    Object? canUpdate = $none,
-    Object? canRemove = $none,
-    Object? saveCompatibilityText = $none,
-    Object? updateCompatibilityText = $none,
-    Object? removalCompatibilityText = $none,
-    Object? aiUse = $none,
-    List<CatalogSameNameMod>? sameNameMods,
-    List<CatalogGalleryPicture>? gallery,
-    Object? discordPostHtml = $none,
-  }) => $apply(
-    FieldCopyWithData({
-      if (displayName != $none) #displayName: displayName,
-      if (summary != $none) #summary: summary,
-      if (categories != null) #categories: categories,
-      if (rawCategories != null) #rawCategories: rawCategories,
-      if (otherAuthorNames != null) #otherAuthorNames: otherAuthorNames,
-      if (addedOn != $none) #addedOn: addedOn,
-      if (editedOn != $none) #editedOn: editedOn,
-      if (lastReleaseDate != $none) #lastReleaseDate: lastReleaseDate,
-      if (releases != null) #releases: releases,
-      if (needs != null) #needs: needs,
-      if (optionalNeeds != null) #optionalNeeds: optionalNeeds,
-      if (conflicts != null) #conflicts: conflicts,
-      if (isTool != $none) #isTool: isTool,
-      if (saveCompatible != $none) #saveCompatible: saveCompatible,
-      if (canAdd != $none) #canAdd: canAdd,
-      if (canUpdate != $none) #canUpdate: canUpdate,
-      if (canRemove != $none) #canRemove: canRemove,
-      if (saveCompatibilityText != $none)
-        #saveCompatibilityText: saveCompatibilityText,
-      if (updateCompatibilityText != $none)
-        #updateCompatibilityText: updateCompatibilityText,
-      if (removalCompatibilityText != $none)
-        #removalCompatibilityText: removalCompatibilityText,
-      if (aiUse != $none) #aiUse: aiUse,
-      if (sameNameMods != null) #sameNameMods: sameNameMods,
-      if (gallery != null) #gallery: gallery,
-      if (discordPostHtml != $none) #discordPostHtml: discordPostHtml,
-    }),
-  );
-  @override
-  CatalogExtras $make(CopyWithData data) => CatalogExtras(
-    displayName: data.get(#displayName, or: $value.displayName),
-    summary: data.get(#summary, or: $value.summary),
-    categories: data.get(#categories, or: $value.categories),
-    rawCategories: data.get(#rawCategories, or: $value.rawCategories),
-    otherAuthorNames: data.get(#otherAuthorNames, or: $value.otherAuthorNames),
-    addedOn: data.get(#addedOn, or: $value.addedOn),
-    editedOn: data.get(#editedOn, or: $value.editedOn),
-    lastReleaseDate: data.get(#lastReleaseDate, or: $value.lastReleaseDate),
-    releases: data.get(#releases, or: $value.releases),
-    needs: data.get(#needs, or: $value.needs),
-    optionalNeeds: data.get(#optionalNeeds, or: $value.optionalNeeds),
-    conflicts: data.get(#conflicts, or: $value.conflicts),
-    isTool: data.get(#isTool, or: $value.isTool),
-    saveCompatible: data.get(#saveCompatible, or: $value.saveCompatible),
-    canAdd: data.get(#canAdd, or: $value.canAdd),
-    canUpdate: data.get(#canUpdate, or: $value.canUpdate),
-    canRemove: data.get(#canRemove, or: $value.canRemove),
-    saveCompatibilityText: data.get(
-      #saveCompatibilityText,
-      or: $value.saveCompatibilityText,
-    ),
-    updateCompatibilityText: data.get(
-      #updateCompatibilityText,
-      or: $value.updateCompatibilityText,
-    ),
-    removalCompatibilityText: data.get(
-      #removalCompatibilityText,
-      or: $value.removalCompatibilityText,
-    ),
-    aiUse: data.get(#aiUse, or: $value.aiUse),
-    sameNameMods: data.get(#sameNameMods, or: $value.sameNameMods),
-    gallery: data.get(#gallery, or: $value.gallery),
-    discordPostHtml: data.get(#discordPostHtml, or: $value.discordPostHtml),
-  );
-
-  @override
-  CatalogExtrasCopyWith<$R2, CatalogExtras, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  ) => _CatalogExtrasCopyWithImpl<$R2, $Out2>($value, $cast, t);
-}
-
-class CatalogReleaseMapper extends ClassMapperBase<CatalogRelease> {
-  CatalogReleaseMapper._();
-
-  static CatalogReleaseMapper? _instance;
-  static CatalogReleaseMapper ensureInitialized() {
-    if (_instance == null) {
-      MapperContainer.globals.use(_instance = CatalogReleaseMapper._());
-      CatalogSaveAnswerMapper.ensureInitialized();
-    }
-    return _instance!;
-  }
-
-  @override
-  final String id = 'CatalogRelease';
-
-  static DateTime _$seenOn(CatalogRelease v) => v.seenOn;
-  static const Field<CatalogRelease, DateTime> _f$seenOn = Field(
-    'seenOn',
-    _$seenOn,
-  );
-  static String? _$oldVersion(CatalogRelease v) => v.oldVersion;
-  static const Field<CatalogRelease, String> _f$oldVersion = Field(
-    'oldVersion',
-    _$oldVersion,
-    opt: true,
-  );
-  static String _$newVersion(CatalogRelease v) => v.newVersion;
-  static const Field<CatalogRelease, String> _f$newVersion = Field(
-    'newVersion',
-    _$newVersion,
-  );
-  static String? _$gameVersion(CatalogRelease v) => v.gameVersion;
-  static const Field<CatalogRelease, String> _f$gameVersion = Field(
-    'gameVersion',
-    _$gameVersion,
-    opt: true,
-  );
-  static String? _$changelogNotes(CatalogRelease v) => v.changelogNotes;
-  static const Field<CatalogRelease, String> _f$changelogNotes = Field(
-    'changelogNotes',
-    _$changelogNotes,
-    opt: true,
-  );
-  static String? _$updateCompatibilityText(CatalogRelease v) =>
-      v.updateCompatibilityText;
-  static const Field<CatalogRelease, String> _f$updateCompatibilityText = Field(
-    'updateCompatibilityText',
-    _$updateCompatibilityText,
-    opt: true,
-  );
-  static CatalogSaveAnswer? _$canUpdate(CatalogRelease v) => v.canUpdate;
-  static const Field<CatalogRelease, CatalogSaveAnswer> _f$canUpdate = Field(
-    'canUpdate',
-    _$canUpdate,
-    opt: true,
-  );
-
-  @override
-  final MappableFields<CatalogRelease> fields = const {
-    #seenOn: _f$seenOn,
-    #oldVersion: _f$oldVersion,
-    #newVersion: _f$newVersion,
-    #gameVersion: _f$gameVersion,
-    #changelogNotes: _f$changelogNotes,
-    #updateCompatibilityText: _f$updateCompatibilityText,
-    #canUpdate: _f$canUpdate,
-  };
-
-  static CatalogRelease _instantiate(DecodingData data) {
-    return CatalogRelease(
-      seenOn: data.dec(_f$seenOn),
-      oldVersion: data.dec(_f$oldVersion),
-      newVersion: data.dec(_f$newVersion),
-      gameVersion: data.dec(_f$gameVersion),
-      changelogNotes: data.dec(_f$changelogNotes),
-      updateCompatibilityText: data.dec(_f$updateCompatibilityText),
-      canUpdate: data.dec(_f$canUpdate),
-    );
-  }
-
-  @override
-  final Function instantiate = _instantiate;
-
-  static CatalogRelease fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<CatalogRelease>(map);
-  }
-
-  static CatalogRelease fromJson(String json) {
-    return ensureInitialized().decodeJson<CatalogRelease>(json);
-  }
-}
-
-mixin CatalogReleaseMappable {
-  String toJson() {
-    return CatalogReleaseMapper.ensureInitialized().encodeJson<CatalogRelease>(
-      this as CatalogRelease,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return CatalogReleaseMapper.ensureInitialized().encodeMap<CatalogRelease>(
-      this as CatalogRelease,
-    );
-  }
-
-  CatalogReleaseCopyWith<CatalogRelease, CatalogRelease, CatalogRelease>
-  get copyWith => _CatalogReleaseCopyWithImpl<CatalogRelease, CatalogRelease>(
-    this as CatalogRelease,
-    $identity,
-    $identity,
-  );
-  @override
   String toString() {
-    return CatalogReleaseMapper.ensureInitialized().stringifyValue(
-      this as CatalogRelease,
+    return CatalogSaveCompatMapper.ensureInitialized().stringifyValue(
+      this as CatalogSaveCompat,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return CatalogReleaseMapper.ensureInitialized().equalsValue(
-      this as CatalogRelease,
+    return CatalogSaveCompatMapper.ensureInitialized().equalsValue(
+      this as CatalogSaveCompat,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return CatalogReleaseMapper.ensureInitialized().hashValue(
-      this as CatalogRelease,
+    return CatalogSaveCompatMapper.ensureInitialized().hashValue(
+      this as CatalogSaveCompat,
     );
   }
 }
 
-extension CatalogReleaseValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, CatalogRelease, $Out> {
-  CatalogReleaseCopyWith<$R, CatalogRelease, $Out> get $asCatalogRelease =>
-      $base.as((v, t, t2) => _CatalogReleaseCopyWithImpl<$R, $Out>(v, t, t2));
+extension CatalogSaveCompatValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogSaveCompat, $Out> {
+  CatalogSaveCompatCopyWith<$R, CatalogSaveCompat, $Out>
+  get $asCatalogSaveCompat => $base.as(
+    (v, t, t2) => _CatalogSaveCompatCopyWithImpl<$R, $Out>(v, t, t2),
+  );
 }
 
-abstract class CatalogReleaseCopyWith<$R, $In extends CatalogRelease, $Out>
+abstract class CatalogSaveCompatCopyWith<
+  $R,
+  $In extends CatalogSaveCompat,
+  $Out
+>
     implements ClassCopyWith<$R, $In, $Out> {
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get adding;
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get removing;
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get latestUpdateNote;
   $R call({
-    DateTime? seenOn,
-    String? oldVersion,
-    String? newVersion,
-    String? gameVersion,
-    String? changelogNotes,
-    String? updateCompatibilityText,
-    CatalogSaveAnswer? canUpdate,
+    CatalogSaveStatement? adding,
+    CatalogSaveStatement? removing,
+    CatalogSaveStatement? latestUpdateNote,
   });
-  CatalogReleaseCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+  CatalogSaveCompatCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
 }
 
-class _CatalogReleaseCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, CatalogRelease, $Out>
-    implements CatalogReleaseCopyWith<$R, CatalogRelease, $Out> {
-  _CatalogReleaseCopyWithImpl(super.value, super.then, super.then2);
+class _CatalogSaveCompatCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogSaveCompat, $Out>
+    implements CatalogSaveCompatCopyWith<$R, CatalogSaveCompat, $Out> {
+  _CatalogSaveCompatCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<CatalogRelease> $mapper =
-      CatalogReleaseMapper.ensureInitialized();
+  late final ClassMapperBase<CatalogSaveCompat> $mapper =
+      CatalogSaveCompatMapper.ensureInitialized();
+  @override
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get adding => $value.adding?.copyWith.$chain((v) => call(adding: v));
+  @override
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get removing => $value.removing?.copyWith.$chain((v) => call(removing: v));
+  @override
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get latestUpdateNote => $value.latestUpdateNote?.copyWith.$chain(
+    (v) => call(latestUpdateNote: v),
+  );
   @override
   $R call({
-    DateTime? seenOn,
-    Object? oldVersion = $none,
-    String? newVersion,
-    Object? gameVersion = $none,
-    Object? changelogNotes = $none,
-    Object? updateCompatibilityText = $none,
-    Object? canUpdate = $none,
+    Object? adding = $none,
+    Object? removing = $none,
+    Object? latestUpdateNote = $none,
   }) => $apply(
     FieldCopyWithData({
-      if (seenOn != null) #seenOn: seenOn,
-      if (oldVersion != $none) #oldVersion: oldVersion,
-      if (newVersion != null) #newVersion: newVersion,
-      if (gameVersion != $none) #gameVersion: gameVersion,
-      if (changelogNotes != $none) #changelogNotes: changelogNotes,
-      if (updateCompatibilityText != $none)
-        #updateCompatibilityText: updateCompatibilityText,
-      if (canUpdate != $none) #canUpdate: canUpdate,
+      if (adding != $none) #adding: adding,
+      if (removing != $none) #removing: removing,
+      if (latestUpdateNote != $none) #latestUpdateNote: latestUpdateNote,
     }),
   );
   @override
-  CatalogRelease $make(CopyWithData data) => CatalogRelease(
-    seenOn: data.get(#seenOn, or: $value.seenOn),
-    oldVersion: data.get(#oldVersion, or: $value.oldVersion),
-    newVersion: data.get(#newVersion, or: $value.newVersion),
-    gameVersion: data.get(#gameVersion, or: $value.gameVersion),
-    changelogNotes: data.get(#changelogNotes, or: $value.changelogNotes),
-    updateCompatibilityText: data.get(
-      #updateCompatibilityText,
-      or: $value.updateCompatibilityText,
-    ),
-    canUpdate: data.get(#canUpdate, or: $value.canUpdate),
+  CatalogSaveCompat $make(CopyWithData data) => CatalogSaveCompat(
+    adding: data.get(#adding, or: $value.adding),
+    removing: data.get(#removing, or: $value.removing),
+    latestUpdateNote: data.get(#latestUpdateNote, or: $value.latestUpdateNote),
   );
 
   @override
-  CatalogReleaseCopyWith<$R2, CatalogRelease, $Out2> $chain<$R2, $Out2>(
+  CatalogSaveCompatCopyWith<$R2, CatalogSaveCompat, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _CatalogReleaseCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _CatalogSaveCompatCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class CatalogRequirementsMapper extends ClassMapperBase<CatalogRequirements> {
+  CatalogRequirementsMapper._();
+
+  static CatalogRequirementsMapper? _instance;
+  static CatalogRequirementsMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CatalogRequirementsMapper._());
+      CatalogNeedMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'CatalogRequirements';
+
+  static List<CatalogNeed> _$required(CatalogRequirements v) => v.required;
+  static const Field<CatalogRequirements, List<CatalogNeed>> _f$required =
+      Field('required', _$required, opt: true, def: const []);
+  static List<CatalogNeed> _$optional(CatalogRequirements v) => v.optional;
+  static const Field<CatalogRequirements, List<CatalogNeed>> _f$optional =
+      Field('optional', _$optional, opt: true, def: const []);
+
+  @override
+  final MappableFields<CatalogRequirements> fields = const {
+    #required: _f$required,
+    #optional: _f$optional,
+  };
+
+  static CatalogRequirements _instantiate(DecodingData data) {
+    return CatalogRequirements(
+      required: data.dec(_f$required),
+      optional: data.dec(_f$optional),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static CatalogRequirements fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogRequirements>(map);
+  }
+
+  static CatalogRequirements fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogRequirements>(json);
+  }
+}
+
+mixin CatalogRequirementsMappable {
+  String toJson() {
+    return CatalogRequirementsMapper.ensureInitialized()
+        .encodeJson<CatalogRequirements>(this as CatalogRequirements);
+  }
+
+  Map<String, dynamic> toMap() {
+    return CatalogRequirementsMapper.ensureInitialized()
+        .encodeMap<CatalogRequirements>(this as CatalogRequirements);
+  }
+
+  CatalogRequirementsCopyWith<
+    CatalogRequirements,
+    CatalogRequirements,
+    CatalogRequirements
+  >
+  get copyWith =>
+      _CatalogRequirementsCopyWithImpl<
+        CatalogRequirements,
+        CatalogRequirements
+      >(this as CatalogRequirements, $identity, $identity);
+  @override
+  String toString() {
+    return CatalogRequirementsMapper.ensureInitialized().stringifyValue(
+      this as CatalogRequirements,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return CatalogRequirementsMapper.ensureInitialized().equalsValue(
+      this as CatalogRequirements,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return CatalogRequirementsMapper.ensureInitialized().hashValue(
+      this as CatalogRequirements,
+    );
+  }
+}
+
+extension CatalogRequirementsValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogRequirements, $Out> {
+  CatalogRequirementsCopyWith<$R, CatalogRequirements, $Out>
+  get $asCatalogRequirements => $base.as(
+    (v, t, t2) => _CatalogRequirementsCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class CatalogRequirementsCopyWith<
+  $R,
+  $In extends CatalogRequirements,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<
+    $R,
+    CatalogNeed,
+    CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
+  >
+  get required;
+  ListCopyWith<
+    $R,
+    CatalogNeed,
+    CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
+  >
+  get optional;
+  $R call({List<CatalogNeed>? required, List<CatalogNeed>? optional});
+  CatalogRequirementsCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _CatalogRequirementsCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogRequirements, $Out>
+    implements CatalogRequirementsCopyWith<$R, CatalogRequirements, $Out> {
+  _CatalogRequirementsCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<CatalogRequirements> $mapper =
+      CatalogRequirementsMapper.ensureInitialized();
+  @override
+  ListCopyWith<
+    $R,
+    CatalogNeed,
+    CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
+  >
+  get required => ListCopyWith(
+    $value.required,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(required: v),
+  );
+  @override
+  ListCopyWith<
+    $R,
+    CatalogNeed,
+    CatalogNeedCopyWith<$R, CatalogNeed, CatalogNeed>
+  >
+  get optional => ListCopyWith(
+    $value.optional,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(optional: v),
+  );
+  @override
+  $R call({List<CatalogNeed>? required, List<CatalogNeed>? optional}) => $apply(
+    FieldCopyWithData({
+      if (required != null) #required: required,
+      if (optional != null) #optional: optional,
+    }),
+  );
+  @override
+  CatalogRequirements $make(CopyWithData data) => CatalogRequirements(
+    required: data.get(#required, or: $value.required),
+    optional: data.get(#optional, or: $value.optional),
+  );
+
+  @override
+  CatalogRequirementsCopyWith<$R2, CatalogRequirements, $Out2>
+  $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
+      _CatalogRequirementsCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class CatalogNeedMapper extends ClassMapperBase<CatalogNeed> {
@@ -1522,6 +1233,660 @@ class _CatalogNeedCopyWithImpl<$R, $Out>
   CatalogNeedCopyWith<$R2, CatalogNeed, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _CatalogNeedCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class CatalogExtrasMapper extends ClassMapperBase<CatalogExtras> {
+  CatalogExtrasMapper._();
+
+  static CatalogExtrasMapper? _instance;
+  static CatalogExtrasMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CatalogExtrasMapper._());
+      CatalogReleaseMapper.ensureInitialized();
+      CatalogRequirementsMapper.ensureInitialized();
+      CatalogConflictMapper.ensureInitialized();
+      CatalogSaveCompatMapper.ensureInitialized();
+      CatalogAiUseMapper.ensureInitialized();
+      CatalogSameNameModMapper.ensureInitialized();
+      CatalogGalleryPictureMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'CatalogExtras';
+
+  static String? _$displayName(CatalogExtras v) => v.displayName;
+  static const Field<CatalogExtras, String> _f$displayName = Field(
+    'displayName',
+    _$displayName,
+    opt: true,
+  );
+  static String? _$summary(CatalogExtras v) => v.summary;
+  static const Field<CatalogExtras, String> _f$summary = Field(
+    'summary',
+    _$summary,
+    opt: true,
+  );
+  static List<String> _$categories(CatalogExtras v) => v.categories;
+  static const Field<CatalogExtras, List<String>> _f$categories = Field(
+    'categories',
+    _$categories,
+    opt: true,
+    def: const [],
+  );
+  static List<String> _$rawCategories(CatalogExtras v) => v.rawCategories;
+  static const Field<CatalogExtras, List<String>> _f$rawCategories = Field(
+    'rawCategories',
+    _$rawCategories,
+    opt: true,
+    def: const [],
+  );
+  static Map<String, List<String>> _$otherAuthorNames(CatalogExtras v) =>
+      v.otherAuthorNames;
+  static const Field<CatalogExtras, Map<String, List<String>>>
+  _f$otherAuthorNames = Field(
+    'otherAuthorNames',
+    _$otherAuthorNames,
+    opt: true,
+    def: const {},
+  );
+  static DateTime? _$addedOn(CatalogExtras v) => v.addedOn;
+  static const Field<CatalogExtras, DateTime> _f$addedOn = Field(
+    'addedOn',
+    _$addedOn,
+    opt: true,
+  );
+  static DateTime? _$editedOn(CatalogExtras v) => v.editedOn;
+  static const Field<CatalogExtras, DateTime> _f$editedOn = Field(
+    'editedOn',
+    _$editedOn,
+    opt: true,
+  );
+  static DateTime? _$lastReleaseDate(CatalogExtras v) => v.lastReleaseDate;
+  static const Field<CatalogExtras, DateTime> _f$lastReleaseDate = Field(
+    'lastReleaseDate',
+    _$lastReleaseDate,
+    opt: true,
+  );
+  static List<CatalogRelease> _$releases(CatalogExtras v) => v.releases;
+  static const Field<CatalogExtras, List<CatalogRelease>> _f$releases = Field(
+    'releases',
+    _$releases,
+    opt: true,
+    def: const [],
+  );
+  static CatalogRequirements? _$requirements(CatalogExtras v) => v.requirements;
+  static const Field<CatalogExtras, CatalogRequirements> _f$requirements =
+      Field('requirements', _$requirements, opt: true);
+  static List<CatalogConflict> _$conflicts(CatalogExtras v) => v.conflicts;
+  static const Field<CatalogExtras, List<CatalogConflict>> _f$conflicts = Field(
+    'conflicts',
+    _$conflicts,
+    opt: true,
+    def: const [],
+  );
+  static List<String>? _$types(CatalogExtras v) => v.types;
+  static const Field<CatalogExtras, List<String>> _f$types = Field(
+    'types',
+    _$types,
+    opt: true,
+  );
+  static CatalogSaveCompat? _$saveCompat(CatalogExtras v) => v.saveCompat;
+  static const Field<CatalogExtras, CatalogSaveCompat> _f$saveCompat = Field(
+    'saveCompat',
+    _$saveCompat,
+    opt: true,
+  );
+  static CatalogAiUse? _$aiUse(CatalogExtras v) => v.aiUse;
+  static const Field<CatalogExtras, CatalogAiUse> _f$aiUse = Field(
+    'aiUse',
+    _$aiUse,
+    opt: true,
+  );
+  static List<CatalogSameNameMod> _$sameNameMods(CatalogExtras v) =>
+      v.sameNameMods;
+  static const Field<CatalogExtras, List<CatalogSameNameMod>> _f$sameNameMods =
+      Field('sameNameMods', _$sameNameMods, opt: true, def: const []);
+  static List<CatalogGalleryPicture> _$gallery(CatalogExtras v) => v.gallery;
+  static const Field<CatalogExtras, List<CatalogGalleryPicture>> _f$gallery =
+      Field('gallery', _$gallery, opt: true, def: const []);
+  static String? _$discordPostHtml(CatalogExtras v) => v.discordPostHtml;
+  static const Field<CatalogExtras, String> _f$discordPostHtml = Field(
+    'discordPostHtml',
+    _$discordPostHtml,
+    opt: true,
+  );
+
+  @override
+  final MappableFields<CatalogExtras> fields = const {
+    #displayName: _f$displayName,
+    #summary: _f$summary,
+    #categories: _f$categories,
+    #rawCategories: _f$rawCategories,
+    #otherAuthorNames: _f$otherAuthorNames,
+    #addedOn: _f$addedOn,
+    #editedOn: _f$editedOn,
+    #lastReleaseDate: _f$lastReleaseDate,
+    #releases: _f$releases,
+    #requirements: _f$requirements,
+    #conflicts: _f$conflicts,
+    #types: _f$types,
+    #saveCompat: _f$saveCompat,
+    #aiUse: _f$aiUse,
+    #sameNameMods: _f$sameNameMods,
+    #gallery: _f$gallery,
+    #discordPostHtml: _f$discordPostHtml,
+  };
+
+  static CatalogExtras _instantiate(DecodingData data) {
+    return CatalogExtras(
+      displayName: data.dec(_f$displayName),
+      summary: data.dec(_f$summary),
+      categories: data.dec(_f$categories),
+      rawCategories: data.dec(_f$rawCategories),
+      otherAuthorNames: data.dec(_f$otherAuthorNames),
+      addedOn: data.dec(_f$addedOn),
+      editedOn: data.dec(_f$editedOn),
+      lastReleaseDate: data.dec(_f$lastReleaseDate),
+      releases: data.dec(_f$releases),
+      requirements: data.dec(_f$requirements),
+      conflicts: data.dec(_f$conflicts),
+      types: data.dec(_f$types),
+      saveCompat: data.dec(_f$saveCompat),
+      aiUse: data.dec(_f$aiUse),
+      sameNameMods: data.dec(_f$sameNameMods),
+      gallery: data.dec(_f$gallery),
+      discordPostHtml: data.dec(_f$discordPostHtml),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static CatalogExtras fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogExtras>(map);
+  }
+
+  static CatalogExtras fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogExtras>(json);
+  }
+}
+
+mixin CatalogExtrasMappable {
+  String toJson() {
+    return CatalogExtrasMapper.ensureInitialized().encodeJson<CatalogExtras>(
+      this as CatalogExtras,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return CatalogExtrasMapper.ensureInitialized().encodeMap<CatalogExtras>(
+      this as CatalogExtras,
+    );
+  }
+
+  CatalogExtrasCopyWith<CatalogExtras, CatalogExtras, CatalogExtras>
+  get copyWith => _CatalogExtrasCopyWithImpl<CatalogExtras, CatalogExtras>(
+    this as CatalogExtras,
+    $identity,
+    $identity,
+  );
+  @override
+  String toString() {
+    return CatalogExtrasMapper.ensureInitialized().stringifyValue(
+      this as CatalogExtras,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return CatalogExtrasMapper.ensureInitialized().equalsValue(
+      this as CatalogExtras,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return CatalogExtrasMapper.ensureInitialized().hashValue(
+      this as CatalogExtras,
+    );
+  }
+}
+
+extension CatalogExtrasValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogExtras, $Out> {
+  CatalogExtrasCopyWith<$R, CatalogExtras, $Out> get $asCatalogExtras =>
+      $base.as((v, t, t2) => _CatalogExtrasCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class CatalogExtrasCopyWith<$R, $In extends CatalogExtras, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get categories;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get rawCategories;
+  MapCopyWith<
+    $R,
+    String,
+    List<String>,
+    ObjectCopyWith<$R, List<String>, List<String>>
+  >
+  get otherAuthorNames;
+  ListCopyWith<
+    $R,
+    CatalogRelease,
+    CatalogReleaseCopyWith<$R, CatalogRelease, CatalogRelease>
+  >
+  get releases;
+  CatalogRequirementsCopyWith<$R, CatalogRequirements, CatalogRequirements>?
+  get requirements;
+  ListCopyWith<
+    $R,
+    CatalogConflict,
+    CatalogConflictCopyWith<$R, CatalogConflict, CatalogConflict>
+  >
+  get conflicts;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get types;
+  CatalogSaveCompatCopyWith<$R, CatalogSaveCompat, CatalogSaveCompat>?
+  get saveCompat;
+  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse;
+  ListCopyWith<
+    $R,
+    CatalogSameNameMod,
+    CatalogSameNameModCopyWith<$R, CatalogSameNameMod, CatalogSameNameMod>
+  >
+  get sameNameMods;
+  ListCopyWith<
+    $R,
+    CatalogGalleryPicture,
+    CatalogGalleryPictureCopyWith<
+      $R,
+      CatalogGalleryPicture,
+      CatalogGalleryPicture
+    >
+  >
+  get gallery;
+  $R call({
+    String? displayName,
+    String? summary,
+    List<String>? categories,
+    List<String>? rawCategories,
+    Map<String, List<String>>? otherAuthorNames,
+    DateTime? addedOn,
+    DateTime? editedOn,
+    DateTime? lastReleaseDate,
+    List<CatalogRelease>? releases,
+    CatalogRequirements? requirements,
+    List<CatalogConflict>? conflicts,
+    List<String>? types,
+    CatalogSaveCompat? saveCompat,
+    CatalogAiUse? aiUse,
+    List<CatalogSameNameMod>? sameNameMods,
+    List<CatalogGalleryPicture>? gallery,
+    String? discordPostHtml,
+  });
+  CatalogExtrasCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+}
+
+class _CatalogExtrasCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogExtras, $Out>
+    implements CatalogExtrasCopyWith<$R, CatalogExtras, $Out> {
+  _CatalogExtrasCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<CatalogExtras> $mapper =
+      CatalogExtrasMapper.ensureInitialized();
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get categories =>
+      ListCopyWith(
+        $value.categories,
+        (v, t) => ObjectCopyWith(v, $identity, t),
+        (v) => call(categories: v),
+      );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get rawCategories => ListCopyWith(
+    $value.rawCategories,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(rawCategories: v),
+  );
+  @override
+  MapCopyWith<
+    $R,
+    String,
+    List<String>,
+    ObjectCopyWith<$R, List<String>, List<String>>
+  >
+  get otherAuthorNames => MapCopyWith(
+    $value.otherAuthorNames,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(otherAuthorNames: v),
+  );
+  @override
+  ListCopyWith<
+    $R,
+    CatalogRelease,
+    CatalogReleaseCopyWith<$R, CatalogRelease, CatalogRelease>
+  >
+  get releases => ListCopyWith(
+    $value.releases,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(releases: v),
+  );
+  @override
+  CatalogRequirementsCopyWith<$R, CatalogRequirements, CatalogRequirements>?
+  get requirements =>
+      $value.requirements?.copyWith.$chain((v) => call(requirements: v));
+  @override
+  ListCopyWith<
+    $R,
+    CatalogConflict,
+    CatalogConflictCopyWith<$R, CatalogConflict, CatalogConflict>
+  >
+  get conflicts => ListCopyWith(
+    $value.conflicts,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(conflicts: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>? get types =>
+      $value.types != null
+      ? ListCopyWith(
+          $value.types!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(types: v),
+        )
+      : null;
+  @override
+  CatalogSaveCompatCopyWith<$R, CatalogSaveCompat, CatalogSaveCompat>?
+  get saveCompat =>
+      $value.saveCompat?.copyWith.$chain((v) => call(saveCompat: v));
+  @override
+  CatalogAiUseCopyWith<$R, CatalogAiUse, CatalogAiUse>? get aiUse =>
+      $value.aiUse?.copyWith.$chain((v) => call(aiUse: v));
+  @override
+  ListCopyWith<
+    $R,
+    CatalogSameNameMod,
+    CatalogSameNameModCopyWith<$R, CatalogSameNameMod, CatalogSameNameMod>
+  >
+  get sameNameMods => ListCopyWith(
+    $value.sameNameMods,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(sameNameMods: v),
+  );
+  @override
+  ListCopyWith<
+    $R,
+    CatalogGalleryPicture,
+    CatalogGalleryPictureCopyWith<
+      $R,
+      CatalogGalleryPicture,
+      CatalogGalleryPicture
+    >
+  >
+  get gallery => ListCopyWith(
+    $value.gallery,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(gallery: v),
+  );
+  @override
+  $R call({
+    Object? displayName = $none,
+    Object? summary = $none,
+    List<String>? categories,
+    List<String>? rawCategories,
+    Map<String, List<String>>? otherAuthorNames,
+    Object? addedOn = $none,
+    Object? editedOn = $none,
+    Object? lastReleaseDate = $none,
+    List<CatalogRelease>? releases,
+    Object? requirements = $none,
+    List<CatalogConflict>? conflicts,
+    Object? types = $none,
+    Object? saveCompat = $none,
+    Object? aiUse = $none,
+    List<CatalogSameNameMod>? sameNameMods,
+    List<CatalogGalleryPicture>? gallery,
+    Object? discordPostHtml = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (displayName != $none) #displayName: displayName,
+      if (summary != $none) #summary: summary,
+      if (categories != null) #categories: categories,
+      if (rawCategories != null) #rawCategories: rawCategories,
+      if (otherAuthorNames != null) #otherAuthorNames: otherAuthorNames,
+      if (addedOn != $none) #addedOn: addedOn,
+      if (editedOn != $none) #editedOn: editedOn,
+      if (lastReleaseDate != $none) #lastReleaseDate: lastReleaseDate,
+      if (releases != null) #releases: releases,
+      if (requirements != $none) #requirements: requirements,
+      if (conflicts != null) #conflicts: conflicts,
+      if (types != $none) #types: types,
+      if (saveCompat != $none) #saveCompat: saveCompat,
+      if (aiUse != $none) #aiUse: aiUse,
+      if (sameNameMods != null) #sameNameMods: sameNameMods,
+      if (gallery != null) #gallery: gallery,
+      if (discordPostHtml != $none) #discordPostHtml: discordPostHtml,
+    }),
+  );
+  @override
+  CatalogExtras $make(CopyWithData data) => CatalogExtras(
+    displayName: data.get(#displayName, or: $value.displayName),
+    summary: data.get(#summary, or: $value.summary),
+    categories: data.get(#categories, or: $value.categories),
+    rawCategories: data.get(#rawCategories, or: $value.rawCategories),
+    otherAuthorNames: data.get(#otherAuthorNames, or: $value.otherAuthorNames),
+    addedOn: data.get(#addedOn, or: $value.addedOn),
+    editedOn: data.get(#editedOn, or: $value.editedOn),
+    lastReleaseDate: data.get(#lastReleaseDate, or: $value.lastReleaseDate),
+    releases: data.get(#releases, or: $value.releases),
+    requirements: data.get(#requirements, or: $value.requirements),
+    conflicts: data.get(#conflicts, or: $value.conflicts),
+    types: data.get(#types, or: $value.types),
+    saveCompat: data.get(#saveCompat, or: $value.saveCompat),
+    aiUse: data.get(#aiUse, or: $value.aiUse),
+    sameNameMods: data.get(#sameNameMods, or: $value.sameNameMods),
+    gallery: data.get(#gallery, or: $value.gallery),
+    discordPostHtml: data.get(#discordPostHtml, or: $value.discordPostHtml),
+  );
+
+  @override
+  CatalogExtrasCopyWith<$R2, CatalogExtras, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _CatalogExtrasCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class CatalogReleaseMapper extends ClassMapperBase<CatalogRelease> {
+  CatalogReleaseMapper._();
+
+  static CatalogReleaseMapper? _instance;
+  static CatalogReleaseMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = CatalogReleaseMapper._());
+      CatalogSaveStatementMapper.ensureInitialized();
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'CatalogRelease';
+
+  static DateTime _$seenOn(CatalogRelease v) => v.seenOn;
+  static const Field<CatalogRelease, DateTime> _f$seenOn = Field(
+    'seenOn',
+    _$seenOn,
+  );
+  static String? _$oldVersion(CatalogRelease v) => v.oldVersion;
+  static const Field<CatalogRelease, String> _f$oldVersion = Field(
+    'oldVersion',
+    _$oldVersion,
+    opt: true,
+  );
+  static String _$newVersion(CatalogRelease v) => v.newVersion;
+  static const Field<CatalogRelease, String> _f$newVersion = Field(
+    'newVersion',
+    _$newVersion,
+  );
+  static String? _$gameVersion(CatalogRelease v) => v.gameVersion;
+  static const Field<CatalogRelease, String> _f$gameVersion = Field(
+    'gameVersion',
+    _$gameVersion,
+    opt: true,
+  );
+  static String? _$changelogNotes(CatalogRelease v) => v.changelogNotes;
+  static const Field<CatalogRelease, String> _f$changelogNotes = Field(
+    'changelogNotes',
+    _$changelogNotes,
+    opt: true,
+  );
+  static CatalogSaveStatement? _$updateNote(CatalogRelease v) => v.updateNote;
+  static const Field<CatalogRelease, CatalogSaveStatement> _f$updateNote =
+      Field('updateNote', _$updateNote, opt: true);
+
+  @override
+  final MappableFields<CatalogRelease> fields = const {
+    #seenOn: _f$seenOn,
+    #oldVersion: _f$oldVersion,
+    #newVersion: _f$newVersion,
+    #gameVersion: _f$gameVersion,
+    #changelogNotes: _f$changelogNotes,
+    #updateNote: _f$updateNote,
+  };
+
+  static CatalogRelease _instantiate(DecodingData data) {
+    return CatalogRelease(
+      seenOn: data.dec(_f$seenOn),
+      oldVersion: data.dec(_f$oldVersion),
+      newVersion: data.dec(_f$newVersion),
+      gameVersion: data.dec(_f$gameVersion),
+      changelogNotes: data.dec(_f$changelogNotes),
+      updateNote: data.dec(_f$updateNote),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static CatalogRelease fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<CatalogRelease>(map);
+  }
+
+  static CatalogRelease fromJson(String json) {
+    return ensureInitialized().decodeJson<CatalogRelease>(json);
+  }
+}
+
+mixin CatalogReleaseMappable {
+  String toJson() {
+    return CatalogReleaseMapper.ensureInitialized().encodeJson<CatalogRelease>(
+      this as CatalogRelease,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return CatalogReleaseMapper.ensureInitialized().encodeMap<CatalogRelease>(
+      this as CatalogRelease,
+    );
+  }
+
+  CatalogReleaseCopyWith<CatalogRelease, CatalogRelease, CatalogRelease>
+  get copyWith => _CatalogReleaseCopyWithImpl<CatalogRelease, CatalogRelease>(
+    this as CatalogRelease,
+    $identity,
+    $identity,
+  );
+  @override
+  String toString() {
+    return CatalogReleaseMapper.ensureInitialized().stringifyValue(
+      this as CatalogRelease,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return CatalogReleaseMapper.ensureInitialized().equalsValue(
+      this as CatalogRelease,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return CatalogReleaseMapper.ensureInitialized().hashValue(
+      this as CatalogRelease,
+    );
+  }
+}
+
+extension CatalogReleaseValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, CatalogRelease, $Out> {
+  CatalogReleaseCopyWith<$R, CatalogRelease, $Out> get $asCatalogRelease =>
+      $base.as((v, t, t2) => _CatalogReleaseCopyWithImpl<$R, $Out>(v, t, t2));
+}
+
+abstract class CatalogReleaseCopyWith<$R, $In extends CatalogRelease, $Out>
+    implements ClassCopyWith<$R, $In, $Out> {
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get updateNote;
+  $R call({
+    DateTime? seenOn,
+    String? oldVersion,
+    String? newVersion,
+    String? gameVersion,
+    String? changelogNotes,
+    CatalogSaveStatement? updateNote,
+  });
+  CatalogReleaseCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _CatalogReleaseCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, CatalogRelease, $Out>
+    implements CatalogReleaseCopyWith<$R, CatalogRelease, $Out> {
+  _CatalogReleaseCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<CatalogRelease> $mapper =
+      CatalogReleaseMapper.ensureInitialized();
+  @override
+  CatalogSaveStatementCopyWith<$R, CatalogSaveStatement, CatalogSaveStatement>?
+  get updateNote =>
+      $value.updateNote?.copyWith.$chain((v) => call(updateNote: v));
+  @override
+  $R call({
+    DateTime? seenOn,
+    Object? oldVersion = $none,
+    String? newVersion,
+    Object? gameVersion = $none,
+    Object? changelogNotes = $none,
+    Object? updateNote = $none,
+  }) => $apply(
+    FieldCopyWithData({
+      if (seenOn != null) #seenOn: seenOn,
+      if (oldVersion != $none) #oldVersion: oldVersion,
+      if (newVersion != null) #newVersion: newVersion,
+      if (gameVersion != $none) #gameVersion: gameVersion,
+      if (changelogNotes != $none) #changelogNotes: changelogNotes,
+      if (updateNote != $none) #updateNote: updateNote,
+    }),
+  );
+  @override
+  CatalogRelease $make(CopyWithData data) => CatalogRelease(
+    seenOn: data.get(#seenOn, or: $value.seenOn),
+    oldVersion: data.get(#oldVersion, or: $value.oldVersion),
+    newVersion: data.get(#newVersion, or: $value.newVersion),
+    gameVersion: data.get(#gameVersion, or: $value.gameVersion),
+    changelogNotes: data.get(#changelogNotes, or: $value.changelogNotes),
+    updateNote: data.get(#updateNote, or: $value.updateNote),
+  );
+
+  @override
+  CatalogReleaseCopyWith<$R2, CatalogRelease, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _CatalogReleaseCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class CatalogConflictMapper extends ClassMapperBase<CatalogConflict> {

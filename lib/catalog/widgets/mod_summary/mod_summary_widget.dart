@@ -184,7 +184,7 @@ class ModSummaryWidget extends ConsumerWidget {
   static bool _changelogHasContent(ForumLlmChangelog? changelog) {
     if (changelog == null) return false;
     final hasEntries = changelog.entries?.isNotEmpty ?? false;
-    final hasLink = changelog.link?.trim().isNotEmpty ?? false;
+    final hasLink = changelog.url?.trim().isNotEmpty ?? false;
     return hasEntries || hasLink;
   }
 }
@@ -680,7 +680,7 @@ class ChangelogSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final entries = changelog.entries;
-    final link = changelog.link?.trim();
+    final link = changelog.url?.trim();
     final hasEntries = entries != null && entries.isNotEmpty;
     final hasLink = link?.isNotEmpty ?? false;
 

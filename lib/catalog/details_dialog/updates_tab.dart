@@ -9,7 +9,7 @@ import 'package:trios/catalog/widgets/mod_summary/mod_summary_widget.dart';
 bool changelogHasContent(ForumLlmChangelog? changelog) {
   if (changelog == null) return false;
   final hasEntries = changelog.entries?.isNotEmpty ?? false;
-  final hasLink = changelog.link?.trim().isNotEmpty ?? false;
+  final hasLink = changelog.url?.trim().isNotEmpty ?? false;
   return hasEntries || hasLink;
 }
 

@@ -79,7 +79,17 @@ class SidePanelRow extends StatelessWidget {
   final String label;
   final Widget value;
 
-  const SidePanelRow({super.key, required this.label, required this.value});
+  /// How the label lines up with the value. Top by default, so the label
+  /// stays on the first line of text that wraps. Use center for a value
+  /// taller than one line of text, such as a badge.
+  final CrossAxisAlignment crossAxisAlignment;
+
+  const SidePanelRow({
+    super.key,
+    required this.label,
+    required this.value,
+    this.crossAxisAlignment = .start,
+  });
 
   /// A row whose value is plain text. [mono] shows it in the monospace font,
   /// for versions.
@@ -100,7 +110,7 @@ class SidePanelRow extends StatelessWidget {
     // A question reads better without a colon after it.
     final shownLabel = label.endsWith('?') ? label : '$label:';
     return Row(
-      crossAxisAlignment: .start,
+      crossAxisAlignment: crossAxisAlignment,
       spacing: 8,
       children: [
         Text(shownLabel, style: sidePanelLabelStyle(theme)),

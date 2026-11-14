@@ -90,7 +90,7 @@ ForumLlmMod _threadMod(String name, {LlmModRole role = LlmModRole.main}) =>
     ForumLlmMod(
       name: name,
       role: role,
-      extras: ForumLlmExtras(
+      description: ForumLlmDescription(
         summary: ForumLlmSummary(sentence: 'AI wrote this about $name.'),
       ),
     );

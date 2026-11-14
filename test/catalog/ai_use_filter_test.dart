@@ -21,7 +21,7 @@ final _mods = [
     CatalogAiUseEntry(area: 'portraits', how: 'generated'),
   ])),
   _Mod('optional-portraits', _used([
-    CatalogAiUseEntry(area: 'portraits', how: 'edited', optional: true),
+    CatalogAiUseEntry(area: 'portraits', how: 'edited', isOptional: true),
   ])),
   _Mod('assisted-code', _used([
     CatalogAiUseEntry(area: 'code', how: 'assisted'),

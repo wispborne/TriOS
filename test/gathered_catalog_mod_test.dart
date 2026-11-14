@@ -61,26 +61,28 @@ ForumModIndex _makeIndex({
 ForumLlmMod _makeLlmMod({
   required String name,
   LlmModRole role = LlmModRole.unknown,
-  ForumLlmExtras? extras,
+  ForumLlmDescription? description,
+  ForumLlmSourceCode? sourceCode,
   String? image,
 }) =>
     ForumLlmMod(
       name: name,
       role: role,
-      extras: extras,
+      description: description,
+      sourceCode: sourceCode,
       image: image,
     );
 
 void main() {
   group('gatherCatalogMod', () {
     test('add-on card gets its own AI entry', () {
-      final mainExtras = ForumLlmExtras(
+      final mainExtras = ForumLlmDescription(
         summary: ForumLlmSummary(
           sentence: 'Main sentence.',
           paragraph: 'Main paragraph.',
         ),
       );
-      final addonExtras = ForumLlmExtras(
+      final addonExtras = ForumLlmDescription(
         summary: ForumLlmSummary(
           sentence: 'Addon sentence.',
           paragraph: 'Addon paragraph.',
@@ -90,12 +92,12 @@ void main() {
         _makeLlmMod(
           name: 'Nexerelin',
           role: LlmModRole.main,
-          extras: mainExtras,
+          description: mainExtras,
         ),
         _makeLlmMod(
           name: 'Nexerelin Extras',
           role: LlmModRole.addon,
-          extras: addonExtras,
+          description: addonExtras,
         ),
       ]);
       final index = _makeIndex(llm: llm);
@@ -110,7 +112,7 @@ void main() {
     });
 
     test('an AI name missing from the answer gives no AI entry', () {
-      final mainExtras = ForumLlmExtras(
+      final mainExtras = ForumLlmDescription(
         summary: ForumLlmSummary(
           sentence: 'Main sentence.',
           paragraph: 'Main paragraph.',
@@ -120,7 +122,7 @@ void main() {
         _makeLlmMod(
           name: 'Nexerelin',
           role: LlmModRole.main,
-          extras: mainExtras,
+          description: mainExtras,
         ),
       ]);
       final index = _makeIndex(llm: llm);
@@ -133,7 +135,7 @@ void main() {
     });
 
     test('normal entry gets the AI entry the catalog names', () {
-      final extras = ForumLlmExtras(
+      final extras = ForumLlmDescription(
         summary: ForumLlmSummary(
           sentence: 'A sentence.',
           paragraph: 'A paragraph.',
@@ -143,7 +145,7 @@ void main() {
         _makeLlmMod(
           name: 'TestMod',
           role: LlmModRole.main,
-          extras: extras,
+          description: extras,
         ),
         _makeLlmMod(name: 'SomeAddon', role: LlmModRole.addon),
       ]);
@@ -157,7 +159,7 @@ void main() {
     });
 
     test('all five texts survive', () {
-      final extras = ForumLlmExtras(
+      final extras = ForumLlmDescription(
         summary: ForumLlmSummary(
           sentence: 'AI sentence.',
           paragraph: 'AI paragraph.',
@@ -167,7 +169,7 @@ void main() {
         _makeLlmMod(
           name: 'TestMod',
           role: LlmModRole.main,
-          extras: extras,
+          description: extras,
         ),
       ]);
       final index = _makeIndex(llm: llm);
@@ -228,7 +230,7 @@ void main() {
         _makeLlmMod(
           name: 'TestMod',
           role: LlmModRole.main,
-          extras: ForumLlmExtras(sourceCode: sourceCode, license: license),
+          sourceCode: ForumLlmSourceCode(url: sourceCode, license: license),
         ),
       ]);
       return gatherCatalogMod(

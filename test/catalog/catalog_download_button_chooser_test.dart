@@ -42,13 +42,13 @@ void main() {
         ForumLlmDownload(
           url: 'https://example.com/addon.rar',
           label: 'Rar',
-          kind: LlmDownloadKind.direct,
+          type: LlmDownloadType.direct,
           confidence: LlmDownloadConfidence.high,
         ),
         ForumLlmDownload(
           url: 'https://example.com/addon.zip',
           label: 'Zip',
-          kind: LlmDownloadKind.direct,
+          type: LlmDownloadType.direct,
           confidence: LlmDownloadConfidence.high,
         ),
       ],

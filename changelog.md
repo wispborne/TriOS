@@ -31,6 +31,7 @@
   - Skins with the same name and base hull are now collapsed into a single row.
   - Sorting the mod grid by version now works too, but why would you do that.
   - Updated Sentry (opt-in error reporting library) to hopefully not spawn Powershell instances on launch.
+  - Migrated to a new schema of the mod catalog.
 
 # 1.7.0
 - Added

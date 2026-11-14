@@ -43,15 +43,60 @@ class CatalogAiUseEntry with CatalogAiUseEntryMappable {
 
   /// True when the player can leave this part out, such as an optional
   /// portrait pack.
-  final bool? optional;
+  final bool? isOptional;
 
-  CatalogAiUseEntry({required this.area, this.how, this.extent, this.optional});
+  CatalogAiUseEntry({
+    required this.area,
+    this.how,
+    this.extent,
+    this.isOptional,
+  });
 }
 
 /// Yes, no or depends: the author's answer to a save question, such as
 /// whether the mod can be added to a game in progress.
 @MappableEnum(defaultValue: CatalogSaveAnswer.unknown)
 enum CatalogSaveAnswer { yes, no, depends, unknown }
+
+/// The author's words on one save question, and the short answer read from
+/// them.
+@MappableClass()
+class CatalogSaveStatement with CatalogSaveStatementMappable {
+  /// The author's own words.
+  final String? quote;
+
+  final CatalogSaveAnswer? answer;
+
+  CatalogSaveStatement({this.quote, this.answer});
+}
+
+/// What the author says about saves, in `mod-catalog-extras.json`.
+@MappableClass()
+class CatalogSaveCompat with CatalogSaveCompatMappable {
+  /// Whether the mod can be added to a game in progress.
+  final CatalogSaveStatement? adding;
+
+  /// Whether the mod can be removed from a game in progress.
+  final CatalogSaveStatement? removing;
+
+  /// Whether a game in progress survives updating to the mod's current
+  /// version.
+  final CatalogSaveStatement? latestUpdateNote;
+
+  CatalogSaveCompat({this.adding, this.removing, this.latestUpdateNote});
+}
+
+/// The mods a mod needs or works with.
+@MappableClass()
+class CatalogRequirements with CatalogRequirementsMappable {
+  /// Mods it won't run without.
+  final List<CatalogNeed> required;
+
+  /// Mods it works with but doesn't require.
+  final List<CatalogNeed> optional;
+
+  CatalogRequirements({this.required = const [], this.optional = const []});
+}
 
 /// What kind of picture the AI saw.
 @MappableEnum(defaultValue: CatalogPictureKind.unknown)
@@ -84,7 +129,7 @@ enum CatalogPictureSource { forum, discord, nexus, unknown }
 class CatalogExtrasFile {
   /// The newest schema version TriOS can read. The scraper raises its number
   /// when it renames a field or changes its shape, not when it adds one.
-  static const knownSchemaVersion = 1;
+  static const knownSchemaVersion = 2;
 
   final int schemaVersion;
   final DateTime? generatedAt;
@@ -126,8 +171,9 @@ CatalogExtrasFile parseCatalogExtrasFile(Map<String, dynamic> json) {
   if (rawMods is Map) {
     rawMods.forEach((id, value) {
       try {
+        final record = Map<String, dynamic>.from(value as Map);
         mods['$id'] = CatalogExtrasMapper.fromMap(
-          Map<String, dynamic>.from(value as Map),
+          schemaVersion < 2 ? catalogExtrasRecordToSchema2(record) : record,
         );
       } catch (ex) {
         dropped.add('$ex');
@@ -141,6 +187,101 @@ CatalogExtrasFile parseCatalogExtrasFile(Map<String, dynamic> json) {
     mods: mods,
   );
 }
+
+/// One schema 1 record of `mod-catalog-extras.json` in the schema 2 shape, so
+/// files published before the scraper switched still read.
+///
+/// | Schema 1 | Schema 2 |
+/// |---|---|
+/// | `needs`, `optionalNeeds` | `requirements.required`, `.optional` |
+/// | `isTool` | `types` |
+/// | `canAdd`, `saveCompatibilityText` | `saveCompat.adding.answer`, `.quote` |
+/// | `canUpdate`, `updateCompatibilityText` | `saveCompat.latestUpdateNote.answer`, `.quote` |
+/// | `canRemove`, `removalCompatibilityText` | `saveCompat.removing.answer`, `.quote` |
+/// | `releases[].canUpdate`, `.updateCompatibilityText` | `releases[].updateNote.answer`, `.quote` |
+/// | `aiUse.uses[].optional` | `isOptional` |
+///
+/// `saveCompatible` has no schema 2 field and is dropped.
+Map<String, dynamic> catalogExtrasRecordToSchema2(Map<String, dynamic> record) {
+  const moved = {
+    'needs',
+    'optionalNeeds',
+    'isTool',
+    'saveCompatible',
+    'canAdd',
+    'canUpdate',
+    'canRemove',
+    'saveCompatibilityText',
+    'updateCompatibilityText',
+    'removalCompatibilityText',
+  };
+  final out = <String, dynamic>{
+    for (final e in record.entries)
+      if (!moved.contains(e.key)) e.key: e.value,
+  };
+
+  final requirements = <String, dynamic>{
+    'required': ?record['needs'],
+    'optional': ?record['optionalNeeds'],
+  };
+  if (requirements.isNotEmpty) out['requirements'] = requirements;
+
+  if (record['isTool'] case final bool isTool) {
+    out['types'] = isTool ? ['tool'] : ['mod'];
+  }
+
+  Map<String, dynamic>? statement(String answerKey, String quoteKey) {
+    final answer = record[answerKey];
+    final quote = record[quoteKey];
+    if (answer == null && quote == null) return null;
+    return {'quote': ?quote, 'answer': ?answer};
+  }
+
+  final saveCompat = <String, dynamic>{
+    'adding': ?statement('canAdd', 'saveCompatibilityText'),
+    'latestUpdateNote': ?statement('canUpdate', 'updateCompatibilityText'),
+    'removing': ?statement('canRemove', 'removalCompatibilityText'),
+  };
+  if (saveCompat.isNotEmpty) out['saveCompat'] = saveCompat;
+
+  if (record['releases'] case final List releases) {
+    out['releases'] = [
+      for (final r in releases)
+        if (r is Map) _releaseToSchema2(Map<String, dynamic>.from(r)) else r,
+    ];
+  }
+  if (record['aiUse'] case final Map aiUse) {
+    out['aiUse'] = aiUseToNewFormat(Map<String, dynamic>.from(aiUse));
+  }
+  return out;
+}
+
+Map<String, dynamic> _releaseToSchema2(Map<String, dynamic> release) {
+  final answer = release.remove('canUpdate');
+  final quote = release.remove('updateCompatibilityText');
+  if (answer != null || quote != null) {
+    release['updateNote'] = {'quote': ?quote, 'answer': ?answer};
+  }
+  return release;
+}
+
+/// An `aiUse` object with each use's `optional` renamed to `isOptional`. Used
+/// for both old extras records and old forum answers.
+Map<String, dynamic> aiUseToNewFormat(Map<String, dynamic> aiUse) => {
+  for (final e in aiUse.entries)
+    e.key: e.key == 'uses' && e.value is List
+        ? [
+            for (final u in e.value as List)
+              if (u is Map && u.containsKey('optional') && !u.containsKey('isOptional'))
+                {
+                  for (final f in u.entries)
+                    (f.key == 'optional' ? 'isOptional' : '${f.key}'): f.value,
+                }
+              else
+                u,
+          ]
+        : e.value,
+};
 
 /// One catalog mod's record in `mod-catalog-extras.json`. The scraper leaves
 /// out nulls, empty lists and empty maps, so a missing list reads as empty.
@@ -177,37 +318,18 @@ class CatalogExtras with CatalogExtrasMappable {
   /// Newest first.
   final List<CatalogRelease> releases;
 
-  /// Mods this mod requires.
-  final List<CatalogNeed> needs;
-
-  /// Mods this mod works with but doesn't require.
-  final List<CatalogNeed> optionalNeeds;
+  /// Mods this mod requires or works with. Null when the mod has none.
+  final CatalogRequirements? requirements;
 
   /// Mods the author says conflict with this mod.
   final List<CatalogConflict> conflicts;
 
-  /// True when the mod is a tool rather than a game mod.
-  final bool? isTool;
+  /// `mod`, `tool` or both. Null when the post hasn't been read for it.
+  final List<String>? types;
 
-  final bool? saveCompatible;
-
-  /// Whether the mod can be added to a game in progress.
-  final CatalogSaveAnswer? canAdd;
-
-  /// Whether a game in progress survives updating the mod.
-  final CatalogSaveAnswer? canUpdate;
-
-  /// Whether the mod can be removed from a game in progress.
-  final CatalogSaveAnswer? canRemove;
-
-  /// The author's words behind [canAdd].
-  final String? saveCompatibilityText;
-
-  /// The author's words behind [canUpdate].
-  final String? updateCompatibilityText;
-
-  /// The author's words behind [canRemove].
-  final String? removalCompatibilityText;
+  /// What the author says about adding, removing and updating the mod in a
+  /// game in progress.
+  final CatalogSaveCompat? saveCompat;
 
   /// What the author says about using AI tools. Null when the post hasn't
   /// been read for it.
@@ -232,22 +354,19 @@ class CatalogExtras with CatalogExtrasMappable {
     this.editedOn,
     this.lastReleaseDate,
     this.releases = const [],
-    this.needs = const [],
-    this.optionalNeeds = const [],
+    this.requirements,
     this.conflicts = const [],
-    this.isTool,
-    this.saveCompatible,
-    this.canAdd,
-    this.canUpdate,
-    this.canRemove,
-    this.saveCompatibilityText,
-    this.updateCompatibilityText,
-    this.removalCompatibilityText,
+    this.types,
+    this.saveCompat,
     this.aiUse,
     this.sameNameMods = const [],
     this.gallery = const [],
     this.discordPostHtml,
   });
+
+  /// True when the mod is a tool rather than a game mod. Null when the post
+  /// hasn't been read for it.
+  bool? get isTool => types?.contains('tool');
 }
 
 /// One new version of a mod, as the scraper saw it.
@@ -268,10 +387,7 @@ class CatalogRelease with CatalogReleaseMappable {
   final String? changelogNotes;
 
   /// What the post says about updating to this version.
-  final String? updateCompatibilityText;
-
-  /// Yes, no or depends, read from [updateCompatibilityText].
-  final CatalogSaveAnswer? canUpdate;
+  final CatalogSaveStatement? updateNote;
 
   CatalogRelease({
     required this.seenOn,
@@ -279,8 +395,7 @@ class CatalogRelease with CatalogReleaseMappable {
     required this.newVersion,
     this.gameVersion,
     this.changelogNotes,
-    this.updateCompatibilityText,
-    this.canUpdate,
+    this.updateNote,
   });
 }
 

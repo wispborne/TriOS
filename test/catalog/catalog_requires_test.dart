@@ -18,10 +18,12 @@ CatalogMod _mod(
   llmMod: aiNeeds != null || hasAiAnswer
       ? ForumLlmMod(
           name: id,
-          extras: ForumLlmExtras(needs: aiNeeds),
+          requirements: ForumLlmRequirements(required: aiNeeds),
         )
       : null,
-  extras: needs != null ? CatalogExtras(needs: needs) : null,
+  extras: needs != null
+      ? CatalogExtras(requirements: CatalogRequirements(required: needs))
+      : null,
 );
 
 void main() {

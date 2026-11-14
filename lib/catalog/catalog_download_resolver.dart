@@ -188,13 +188,13 @@ List<DownloadCandidate> forumDownloadCandidates(ForumLlmMod mod) {
 }
 
 DownloadCandidate _forumCandidate(ForumLlmDownload download) {
-  final kind = switch (download.kind) {
-    LlmDownloadKind.trios => DownloadCandidateKind.triosDeepLink,
-    LlmDownloadKind.direct => DownloadCandidateKind.forumDirect,
+  final kind = switch (download.type) {
+    LlmDownloadType.trios => DownloadCandidateKind.triosDeepLink,
+    LlmDownloadType.direct => DownloadCandidateKind.forumDirect,
     // Mirrors and anything we couldn't classify sit in the lowest one-click
     // tier, below `direct` links.
-    LlmDownloadKind.mirror => DownloadCandidateKind.forumMirror,
-    LlmDownloadKind.unknown => DownloadCandidateKind.forumMirror,
+    LlmDownloadType.mirror => DownloadCandidateKind.forumMirror,
+    LlmDownloadType.unknown => DownloadCandidateKind.forumMirror,
   };
   final url = (download.resolvedDirectUrl?.isNotEmpty == true)
       ? download.resolvedDirectUrl!
@@ -470,7 +470,7 @@ ForumLlmMod? _matchIn(List<ForumLlmMod> rows, ForumLlmMod? mod) {
 
 /// The rows [self] names in its `requires`.
 Set<ForumLlmMod> _requiredRows(List<ForumLlmMod> rows, ForumLlmMod? self) {
-  final required = self?.requires ?? const <String>[];
+  final required = self?.parentMods ?? const <String>[];
   if (required.isEmpty) return const {};
   return {
     for (final row in rows)
@@ -503,7 +503,7 @@ List<DependencyStatus> _dependenciesFor(
   bool Function(String name) isInstalled,
 ) {
   final dependencies = <DependencyStatus>[];
-  for (final name in mod.requires ?? const <String>[]) {
+  for (final name in mod.parentMods ?? const <String>[]) {
     if (name.trim().isEmpty) continue;
     if (rowNames.any((rowName) => modNamesMatch(name, rowName))) continue;
     // Scraped names carry version decoration ("GraphicsLib 1.0.4"), which no

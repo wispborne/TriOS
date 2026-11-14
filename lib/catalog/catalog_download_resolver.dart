@@ -462,6 +462,16 @@ List<DownloadGroup> buildDownloadGroups({
   ];
 }
 
+/// The row whose download links include [url], or null when no row lists it.
+DownloadGroup? downloadGroupForUrl(List<DownloadGroup> groups, String url) {
+  final wanted = url.trim().fixModDownloadUrl();
+  return groups.firstWhereOrNull(
+    (group) => group.candidates.any(
+      (candidate) => candidate.url.trim().fixModDownloadUrl() == wanted,
+    ),
+  );
+}
+
 /// The row in [rows] that is [mod], or null when the thread doesn't list it.
 ForumLlmMod? _matchIn(List<ForumLlmMod> rows, ForumLlmMod? mod) {
   if (mod == null) return null;

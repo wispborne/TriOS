@@ -264,6 +264,7 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
       url,
       modName: mod.title,
       forumThreadId: forumThreadId,
+      downloadGroups: downloadGroups,
       linkLoader: widget.linkLoader,
     );
 

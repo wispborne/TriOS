@@ -498,4 +498,42 @@ void main() {
       ]);
     });
   });
+  group('downloadGroupForUrl', () {
+    DownloadGroup row(String? name, List<String> urls) => DownloadGroup(
+      modName: name,
+      role: LlmModRole.unknown,
+      installsDependencies: false,
+      candidates: [
+        for (final url in urls)
+          DownloadCandidate(
+            url: url,
+            label: url,
+            kind: DownloadCandidateKind.forumDirect,
+          ),
+      ],
+    );
+
+    final groups = [
+      row('Mod A', ['https://a.com/mod_a.zip']),
+      row('LazyLib', ['https://b.com/lazylib.zip']),
+    ];
+
+    test('finds the row that lists the link', () {
+      expect(
+        downloadGroupForUrl(groups, 'https://b.com/lazylib.zip')?.modName,
+        'LazyLib',
+      );
+    });
+
+    test('ignores surrounding spaces', () {
+      expect(
+        downloadGroupForUrl(groups, ' https://a.com/mod_a.zip ')?.modName,
+        'Mod A',
+      );
+    });
+
+    test('returns null for a link no row lists', () {
+      expect(downloadGroupForUrl(groups, 'https://c.com/other.zip'), isNull);
+    });
+  });
 }

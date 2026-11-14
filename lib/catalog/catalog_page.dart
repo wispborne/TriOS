@@ -7,6 +7,7 @@ import 'package:trios/catalog/catalog_mod_card.dart';
 import 'package:trios/catalog/catalog_page_controller.dart';
 import 'package:trios/catalog/models/ai_summary_mode.dart';
 import 'package:trios/catalog/models/catalog_mod.dart';
+import 'package:trios/catalog/models/mod_repo_entry.dart';
 import 'package:trios/catalog/side_rail/side_rail.dart';
 import 'package:trios/catalog/side_rail/side_rail_panel.dart';
 import 'package:trios/catalog/widgets/catalog_filters_panel.dart';
@@ -70,7 +71,11 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
   InAppWebViewController? webViewController;
   InAppWebViewSettings? webSettings;
   double? webLoadingProgress;
-  String? selectedModName;
+
+  /// The catalog mod whose link was last opened in the browser. Its name is
+  /// used for a download only while the browser is still on that mod's own
+  /// page, because any other page may belong to a different mod.
+  ModRepoEntry? _browserMod;
   WebViewStatus _webViewStatus = WebViewStatus.loading;
 
   /// A URL waiting to open in the built-in browser once it finishes loading.
@@ -420,8 +425,7 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                                 currentPlatform !=
                                                 TargetPlatform.linux,
                                             linkLoader: (url) {
-                                              selectedModName =
-                                                  gathered.entry.name;
+                                              _browserMod = gathered.entry;
                                               _openInEmbeddedBrowser(url);
                                             },
                                             isSelected:
@@ -855,13 +859,24 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
                                                   );
 
                                               if (isDownloadFile) {
+                                                final displayName =
+                                                    _isOnBrowserModPage()
+                                                    ? _browserMod!.name
+                                                    : await ref
+                                                          .read(
+                                                            downloadManagerInstance,
+                                                          )
+                                                          .fetchFileNameFromUrl(
+                                                            url.toString(),
+                                                            finalUrlAndHeaders
+                                                                .headersMap,
+                                                          );
                                                 ref
                                                     .read(
                                                       downloadManager.notifier,
                                                     )
                                                     .downloadAndInstallMod(
-                                                      selectedModName ??
-                                                          "Catalog Mod",
+                                                      displayName,
                                                       url.toString(),
                                                       activateVariantOnComplete:
                                                           false,
@@ -979,6 +994,17 @@ class _CatalogPageState extends ConsumerState<CatalogPage>
         ),
       ],
     );
+  }
+
+  /// True when the browser is showing [_browserMod]'s own page: its website,
+  /// or any page of its forum thread.
+  bool _isOnBrowserModPage() {
+    final mod = _browserMod;
+    final page = currentUrl;
+    if (mod == null || page == null) return false;
+    if (page == mod.getBestWebsiteUrl()) return true;
+    final topicId = catalogForumTopicId(mod);
+    return topicId != null && extractForumThreadId(page) == topicId.toString();
   }
 
   @override

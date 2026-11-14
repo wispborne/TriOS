@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:trios/catalog/catalog_download_resolver.dart';
 import 'package:trios/catalog/details_dialog/details_panel_section.dart';
 import 'package:trios/catalog/download_confirm.dart';
 import 'package:trios/catalog/forum_post_dialog/html_to_widgets.dart';
@@ -250,6 +251,11 @@ class _Post extends StatelessWidget {
 /// Handles a link clicked in a post. A link to a mod file downloads it.
 /// Anything else goes to [linkLoader].
 ///
+/// A post often links to other mods' files too, such as dependencies. So a
+/// file is named after the mod only when [downloadGroups] lists the link under
+/// a named mod. Otherwise it is named after the file and isn't linked to a
+/// catalog entry.
+///
 /// Shows a spinner while it checks whether the link is a file.
 Future<void> openPostLink(
   BuildContext context,
@@ -257,6 +263,7 @@ Future<void> openPostLink(
   String url, {
   required String modName,
   required String? forumThreadId,
+  required List<DownloadGroup> downloadGroups,
   required void Function(String url) linkLoader,
 }) async {
   if (!context.mounted) return;
@@ -289,16 +296,32 @@ Future<void> openPostLink(
     );
     navigator.pop(); // dismiss spinner
     if (isDownload && context.mounted) {
+      final group =
+          downloadGroupForUrl(downloadGroups, url) ??
+          downloadGroupForUrl(downloadGroups, result.url);
+      final linkModName = group == null || group.modName == null
+          ? null
+          : group.isDialogMod
+          ? modName
+          : group.rawModName ?? group.modName;
+      final displayName =
+          linkModName ??
+          await ref
+              .read(downloadManagerInstance)
+              .fetchFileNameFromUrl(result.url, result.headersMap);
+      if (!context.mounted) return;
       confirmAndDownloadModViaManager(
         context,
         ref,
-        modName: modName,
+        modName: displayName,
         downloadUrl: result.url,
         skipDialog: true,
-        sourceHint: DownloadSourceHint(
-          catalogName: modName,
-          forumThreadId: forumThreadId,
-        ),
+        sourceHint: linkModName == null
+            ? null
+            : DownloadSourceHint(
+                catalogName: linkModName,
+                forumThreadId: forumThreadId,
+              ),
       );
       return;
     }

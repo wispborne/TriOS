@@ -1,145 +1,394 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:trios/dashboard/mod_summary_widget.dart';
+import 'package:trios/mod_manager/mod_manager_extensions.dart';
 import 'package:trios/mod_manager/mod_manager_logic.dart';
 import 'package:trios/models/mod.dart';
 import 'package:trios/models/mod_variant.dart';
 import 'package:trios/trios/app_state.dart';
+import 'package:trios/trios/constants_theme.dart';
 import 'package:trios/trios/settings/app_settings_logic.dart';
 import 'package:trios/utils/logging.dart';
 import 'package:trios/widgets/checkbox_with_label.dart';
 import 'package:trios/widgets/force_game_version_warning_dialog.dart';
+import 'package:trios/widgets/mod_icon.dart';
+import 'package:trios/widgets/moving_tooltip.dart';
+import 'package:trios/widgets/snackbar.dart';
+import 'package:trios/widgets/trios_expansion_tile.dart';
 
 /// Shown when an update installed a mod with a different ID from the mod it
-/// was started from.
+/// was started from. The old mod is shown above the new one.
 ///
 /// If the old mod is enabled, it asks whether to switch to the new mod, and
 /// closes with `true` on Switch. If the old mod is disabled, it only has an OK
 /// button. Every other way of closing it returns `false` or `null`.
 ///
-/// It doesn't read providers or change anything. The mute checkbox reads and
-/// writes [muteOldMod], which the caller owns, so its value survives the
-/// dialog closing with Escape or a click outside.
+/// It doesn't change anything. The mute checkbox reads and writes
+/// [muteOldMod], which the caller owns, so its value survives the dialog
+/// closing with Escape or a click outside.
 class ModIdChangeDialog extends StatelessWidget {
-  final String oldModName;
-  final String oldModId;
-  final String newModName;
-  final String newModId;
+  /// The old mod's enabled version, or its highest version if it's disabled.
+  final ModVariant oldVariant;
   final bool isOldModEnabled;
+  final ModVariant newVariant;
 
-  /// Names of the enabled mods that depend on the old mod's ID.
-  final List<String> dependentNames;
+  /// The enabled mods that depend on the old mod's ID.
+  final List<Mod> dependents;
+
+  /// The current game version, used to color each mod's game version.
+  final String? gameVersion;
   final ValueNotifier<bool> muteOldMod;
 
   const ModIdChangeDialog({
     super.key,
-    required this.oldModName,
-    required this.oldModId,
-    required this.newModName,
-    required this.newModId,
+    required this.oldVariant,
     required this.isOldModEnabled,
-    required this.dependentNames,
+    required this.newVariant,
+    required this.dependents,
+    required this.gameVersion,
     required this.muteOldMod,
   });
 
   @override
   Widget build(BuildContext context) {
-    final monoStyle = TextStyle(
-      fontFamily: GoogleFonts.sourceCodePro().fontFamily,
-    );
-    TextSpan modId(String id) => TextSpan(text: id, style: monoStyle);
+    final theme = Theme.of(context);
 
     return AlertDialog(
       title: const Text("Mod ID change"),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
+      content: SizedBox(
+        width: 480,
         child: Column(
           mainAxisSize: .min,
-          crossAxisAlignment: .start,
+          crossAxisAlignment: .stretch,
           spacing: 16,
           children: [
             Text.rich(
               TextSpan(
                 children: [
-                  TextSpan(text: "The update for $oldModName ("),
-                  modId(oldModId),
+                  const TextSpan(text: "The update for "),
                   TextSpan(
-                    text:
-                        ") installed a mod with a different id: $newModName (",
+                    text: oldVariant.modInfo.nameOrId,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  modId(newModId),
-                  const TextSpan(text: ")."),
+                  const TextSpan(text: " installed a mod with a different ID."),
                 ],
               ),
             ),
-            if (isOldModEnabled)
-              const Text("Do you want to switch to this new mod?"),
-            if (isOldModEnabled && dependentNames.isNotEmpty)
-              Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text:
-                          "${_joinNames(dependentNames)} ${dependentNames.length == 1 ? "depends" : "depend"} on the old mod (",
-                    ),
-                    modId(oldModId),
-                    const TextSpan(
-                      text: ") and may or may not work with the new mod.",
-                    ),
-                  ],
+            Column(
+              crossAxisAlignment: .stretch,
+              spacing: 4,
+              children: [
+                _ModCard(variant: oldVariant, gameVersion: gameVersion),
+                Center(
+                  child: Text(
+                    "updated to a different mod",
+                    style: theme.textTheme.labelLarge,
+                  ),
                 ),
+                _ModCard(variant: newVariant, gameVersion: gameVersion),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (isOldModEnabled && dependents.isNotEmpty)
+              Padding(
+                padding: const .only(bottom: 24),
+                child: _buildDependents(context),
+              ),
+            if (isOldModEnabled)
+              Text(
+                "Do you want to switch to the new mod?",
+                style: theme.textTheme.titleSmall,
               ),
             ValueListenableBuilder<bool>(
               valueListenable: muteOldMod,
               builder: (context, isMuteChecked, _) => CheckboxWithLabel(
                 value: isMuteChecked,
                 onChanged: (value) => muteOldMod.value = value ?? false,
-                labelWidget: Text.rich(
-                  TextSpan(
-                    children: [
-                      const TextSpan(
-                        text: "Also mute updates for the old mod (",
+                // labelWidget, not label: label centers its text.
+                labelWidget: Row(
+                  mainAxisSize: .min,
+                  spacing: 8,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "Mute updates for the old mod",
+                        style: theme.textTheme.labelLarge,
                       ),
-                      modId(oldModId),
-                      const TextSpan(
-                        text:
-                            "), since it will always redownload this new mod (",
+                    ),
+                    MovingTooltipWidget.text(
+                      message: "The old mod will always show as having an update but always redownload the new mod.",
+                      child: Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: theme.disabledColor,
                       ),
-                      modId(newModId),
-                      const TextSpan(text: ")."),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+                textPadding: const .only(left: 8),
               ),
             ),
           ],
         ),
       ),
-      actions: isOldModEnabled
-          ? [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text("Don't switch"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(isOldModEnabled ? "Don't switch" : "OK"),
+        ),
+        if (isOldModEnabled)
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Switch"),
+          ),
+      ],
+    );
+  }
+
+  /// A warning saying how many mods depend on the old mod, with the mods
+  /// listed inside it. Drawn like the dashboard's and catalog's warnings: a
+  /// folding tile with a yellow warning icon.
+  Widget _buildDependents(BuildContext context) {
+    final count = dependents.length;
+    final theme = Theme.of(context);
+    final variants =
+        dependents
+            .map((mod) => mod.findFirstEnabledOrHighestVersion)
+            .nonNulls
+            .toList()
+          ..sort(
+            (a, b) => a.modInfo.nameOrId.toLowerCase().compareTo(
+              b.modInfo.nameOrId.toLowerCase(),
+            ),
+          );
+
+    // Colorless: the default fill would make it look like another card.
+    return TriOSExpansionTile.colorless(
+      leading: const Icon(
+        Icons.warning_amber_rounded,
+        color: TriOSThemeConstants.vanillaWarningColor,
+      ),
+      expandedCrossAxisAlignment: CrossAxisAlignment.start,
+      title: Text(
+        count == 1
+            ? "1 mod depends on the old mod"
+            : "$count mods depend on the old mod",
+      ),
+      subtitle: Text(
+        "They may or may not work with the new mod.",
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+        ),
+      ),
+      childrenPadding: const .only(left: 24),
+      children: [
+        TextButton.icon(
+          icon: const Icon(Icons.copy, size: 16),
+          label: const Text("Copy names and IDs"),
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            foregroundColor: theme.colorScheme.onSurface,
+          ),
+          onPressed: () {
+            Clipboard.setData(
+              ClipboardData(
+                text: variants
+                    .map((v) => "${v.modInfo.nameOrId} (${v.modInfo.id})")
+                    .join("\n"),
               ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text("Switch"),
-              ),
-            ]
-          : [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text("OK"),
-              ),
-            ],
+            );
+            showSnackBar(
+              context: context,
+              content: const Text("Copied to clipboard"),
+            );
+          },
+        ),
+        _DependentsList(variants: variants, gameVersion: gameVersion),
+      ],
     );
   }
 }
 
-/// Joins names as "X", "X and Y", or "X, Y and Z".
-String _joinNames(List<String> names) {
-  if (names.length <= 1) return names.join();
-  return "${names.sublist(0, names.length - 1).join(", ")} and ${names.last}";
+/// The mods that depend on the old mod, in a list that scrolls once it's
+/// [_maxHeight] tall. Each mod shows its summary on hover.
+class _DependentsList extends StatefulWidget {
+  static const _maxHeight = 160.0;
+
+  /// The dependent mods' versions, already sorted.
+  final List<ModVariant> variants;
+
+  /// The current game version, for the hover summaries.
+  final String? gameVersion;
+
+  const _DependentsList({required this.variants, required this.gameVersion});
+
+  @override
+  State<_DependentsList> createState() => _DependentsListState();
+}
+
+class _DependentsListState extends State<_DependentsList> {
+  // Scrollbar needs the list's controller to keep its thumb showing.
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final variants = widget.variants;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: _DependentsList._maxHeight),
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: ListView.builder(
+          controller: _scrollController,
+          shrinkWrap: true,
+          padding: const .symmetric(vertical: 8),
+          itemCount: variants.length,
+          itemBuilder: (context, index) {
+            final variant = variants[index];
+            return _withModSummaryTooltip(
+              variant,
+              widget.gameVersion,
+              Padding(
+                padding: const .symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  spacing: 8,
+                  children: [
+                    ModIcon.fromVariant(
+                      variant,
+                      size: 24,
+                      takeUpSpaceIfNoIcon: true,
+                    ),
+                    Expanded(
+                      child: Text(
+                        variant.modInfo.nameOrId,
+                        maxLines: 1,
+                        overflow: .ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// One mod in [ModIdChangeDialog]: its icon, name, ID, version and game
+/// version.
+class _ModCard extends StatelessWidget {
+  final ModVariant variant;
+  final String? gameVersion;
+
+  const _ModCard({required this.variant, required this.gameVersion});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final modInfo = variant.modInfo;
+    final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    final separator = TextSpan(
+      text: "  •  ",
+      style: TextStyle(color: mutedColor),
+    );
+    final gameVersionColor = modInfo
+        .isCompatibleWithGame(gameVersion)
+        .getGameCompatibilityColor();
+
+    final card = Card.outlined(
+      margin: .zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: .circular(8),
+        side: BorderSide(color: theme.dividerColor),
+      ),
+      child: Padding(
+        padding: const .all(16),
+        child: Row(
+          spacing: 16,
+          children: [
+            ModIcon.fromVariant(variant, size: 32, takeUpSpaceIfNoIcon: true),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: .start,
+                children: [
+                  Text(
+                    modInfo.nameOrId,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text.rich(
+                    TextSpan(
+                      style: theme.textTheme.bodySmall,
+                      children: [
+                        TextSpan(
+                          text: modInfo.id,
+                          style: TextStyle(
+                            fontFamily: GoogleFonts.sourceCodePro().fontFamily,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (modInfo.version != null) ...[
+                          separator,
+                          TextSpan(text: "v${modInfo.version}"),
+                        ],
+                        if (modInfo.gameVersion != null) ...[
+                          separator,
+                          TextSpan(
+                            text: modInfo.gameVersion,
+                            style: TextStyle(color: gameVersionColor),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return _withModSummaryTooltip(variant, gameVersion, card);
+  }
+}
+
+/// Wraps [child] in the mod summary tooltip that the dashboard and Activity
+/// Panel show on hover. [gameVersion] is the current game version.
+Widget _withModSummaryTooltip(
+  ModVariant variant,
+  String? gameVersion,
+  Widget child,
+) {
+  return MovingTooltipWidget.framed(
+    position: TooltipPosition.topLeft,
+    padding: .zero,
+    tooltipWidgetBuilder: (context) {
+      // Only needed once the tooltip shows.
+      final compatWithGame = variant.modInfo.isCompatibleWithGame(gameVersion);
+      return SizedBox(
+        width: 400,
+        child: ModSummaryWidget(
+          modVariant: variant,
+          compatWithGame: compatWithGame,
+          compatTextColor: compatWithGame.getGameCompatibilityColor(),
+          showIconTip: false,
+        ),
+      );
+    },
+    child: child,
+  );
 }
 
 /// Shows [ModIdChangeDialog] for an update that installed [newVariant]
@@ -161,24 +410,16 @@ Future<void> askAboutModIdChange(
 }) async {
   final muteOldMod = ValueNotifier(true);
   try {
-    final isOldModEnabled = oldMod.isEnabledInGame;
-    final oldModInfo = oldMod.findFirstEnabledOrHighestVersion?.modInfo;
-
     final shouldSwitch = await showDialog<bool>(
       context: context,
       builder: (context) => ModIdChangeDialog(
-        oldModName: oldModInfo?.nameOrId ?? oldMod.id,
-        oldModId: oldMod.id,
-        newModName: newVariant.modInfo.nameOrId,
-        newModId: newVariant.modInfo.id,
-        isOldModEnabled: isOldModEnabled,
-        dependentNames: dependents
-            .map(
-              (mod) =>
-                  mod.findFirstEnabledOrHighestVersion?.modInfo.nameOrId ??
-                  mod.id,
-            )
-            .toList(),
+        oldVariant: oldMod.findFirstEnabledOrHighestVersion!,
+        isOldModEnabled: oldMod.isEnabledInGame,
+        newVariant: newVariant,
+        dependents: dependents,
+        gameVersion: ref.read(
+          appSettings.select((s) => s.lastStarsectorVersion),
+        ),
         muteOldMod: muteOldMod,
       ),
     );

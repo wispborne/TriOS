@@ -10,6 +10,7 @@
   - Ships and weapons can be grouped/sorted by faction.
   - Data warning if .version file says something different than mod_info.json (like the 1.7.0 feature but now works in the other direction).
   - Grid column widths can auto-size now.
+  - Notification if a mod updates a new mod (e.g. author changes their mod name and id).
 - Fixed
   - Vertical alignment of game icon with sidebar layout.
   - Weapons with dual barrels now display stats correctly.

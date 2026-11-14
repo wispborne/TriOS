@@ -538,12 +538,17 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                           })
                           .toList();
 
+                // "Update All" leaves out muted mods, whether or not they're
+                // shown. Otherwise muting a mod whose update downloads a
+                // different mod wouldn't stop it from downloading it again.
+                final modsToUpdate = modsWithUpdates - mutedModsWithUpdates;
+
                 final updatesToDisplay =
                     switch (dashboardGridModUpdateVisibility) {
                       DashboardGridModUpdateVisibility.allVisible =>
                         modsWithUpdates,
                       DashboardGridModUpdateVisibility.hideMuted =>
-                        modsWithUpdates - mutedModsWithUpdates,
+                        modsToUpdate,
                       DashboardGridModUpdateVisibility.hideAll => <Mod?>[null],
                     };
                 final listItems =
@@ -568,12 +573,6 @@ class _ModListMiniState extends ConsumerState<ModListMini>
                             itemBuilder: (context, index) {
                               if (index == 0 &&
                                   modsWithUpdates.nonNulls.isNotEmpty) {
-                                // Leave out muted mods, whether or not they're
-                                // shown. Otherwise muting a mod whose update
-                                // downloads a different mod wouldn't stop this
-                                // from downloading it again.
-                                final modsToUpdate =
-                                    modsWithUpdates - mutedModsWithUpdates;
                                 final modUpdatesCount =
                                     modsToUpdate.nonNulls.length;
                                 return Column(

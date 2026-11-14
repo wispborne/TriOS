@@ -13,6 +13,8 @@ import 'package:trios/catalog/forum_data_manager.dart';
 import 'package:trios/chipper/utils.dart';
 import 'package:trios/companion_mod/companion_mod_manager.dart';
 import 'package:trios/compression/archive.dart';
+import 'package:trios/mod_manager/batch_installation/mod_id_change.dart';
+import 'package:trios/mod_manager/mod_id_change_dialog.dart';
 import 'package:trios/vmparams/vmparams_manager.dart';
 import 'package:trios/mod_profiles/mod_profiles_manager.dart';
 import 'package:trios/models/download_progress.dart';
@@ -63,6 +65,45 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
   void initState() {
     super.initState();
     _fetchReleases();
+  }
+
+  /// Shows [ModIdChangeDialog] with two installed mods, without installing
+  /// anything. Its buttons and checkbox do nothing here.
+  void _showModIdChangeDialogPreview({required bool isOldModEnabled}) {
+    final mods = ref.read(AppState.mods);
+    if (mods.length < 2) {
+      showSnackBar(
+        context: context,
+        content: const Text('Needs at least two installed mods.'),
+      );
+      return;
+    }
+
+    // Use the mod the most enabled mods depend on, so the dependents line
+    // shows.
+    final dependentCounts = {
+      for (final mod in mods)
+        mod.id: enabledModsDependingOn(mods, mod.id).length,
+    };
+    final oldMod = mods.reduce(
+      (a, b) => dependentCounts[b.id]! > dependentCounts[a.id]! ? b : a,
+    );
+    final newMod = mods.firstWhere((mod) => mod.id != oldMod.id);
+
+    final muteOldMod = ValueNotifier(true);
+    showDialog(
+      context: context,
+      builder: (context) => ModIdChangeDialog(
+        oldVariant: oldMod.findFirstEnabledOrHighestVersion!,
+        isOldModEnabled: isOldModEnabled,
+        newVariant: newMod.findFirstEnabledOrHighestVersion!,
+        dependents: enabledModsDependingOn(mods, oldMod.id),
+        gameVersion: ref.read(
+          appSettings.select((s) => s.lastStarsectorVersion),
+        ),
+        muteOldMod: muteOldMod,
+      ),
+    ).whenComplete(muteOldMod.dispose);
   }
 
   void _fetchReleases() {
@@ -442,6 +483,22 @@ class _SettingsDebugSectionState extends ConsumerState<SettingsDebugSection> {
           },
           label: const Text('Show Mod Added Toast for MagicLib'),
         ),
+        for (final isOldModEnabled in [true, false])
+          MovingTooltipWidget.text(
+            message:
+                "Shows the dialog for an update that installed a mod with a different ID, using two of your mods."
+                "\nIts buttons and checkbox don't change anything.",
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.swap_vert),
+              onPressed: () => _showModIdChangeDialogPreview(
+                isOldModEnabled: isOldModEnabled,
+              ),
+              label: Text(
+                'Show Mod ID Change Dialog '
+                '(old mod ${isOldModEnabled ? "enabled" : "disabled"})',
+              ),
+            ),
+          ),
         ElevatedButton.icon(
           icon: const Icon(Icons.clean_hands),
           onPressed: () {

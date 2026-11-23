@@ -41,7 +41,9 @@ class AuditLogPersistenceManager
 }
 
 class AuditLog extends GenericSettingsAsyncNotifier<List<AuditEntry>> {
-  static const maxAuditEntries = 100;
+  /// Roughly 5 MB of saved JSON. A typical entry takes about 200 bytes in
+  /// the file, so 25,000 entries lands near 5 MB.
+  static const maxAuditEntries = 25000;
 
   @override
   List<AuditEntry> createDefaultState() => [];

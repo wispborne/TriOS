@@ -37,14 +37,18 @@ class _AuditPageState extends ConsumerState<AuditPage> {
       (ref.watch(AppState.modAudit).value ?? []).reversed.toList(),
     );
 
+    // Flatten once here; with thousands of entries, doing it per row is slow.
+    final flatAuditLog = auditLog.flatten();
+    final groupEndIndices = auditLog.map((group) => group.length - 1).toSet();
+
     final dateFormat = DateFormat.yMMMMd(Intl.getCurrentLocale()).add_jms();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mod Audit Log')),
       body: ListView.separated(
-        itemCount: auditLog.flatten().length,
+        itemCount: flatAuditLog.length,
         itemBuilder: (context, index) {
-          final entry = auditLog.flatten()[index];
+          final entry = flatAuditLog[index];
           final variant = modVariantsBySmolId[entry.smolId];
           final actionWord =
               "${entry.action.name.replaceFirstMapped(RegExp(r'^.'), (match) => match.group(0)!.toUpperCase())}d";
@@ -103,10 +107,7 @@ class _AuditPageState extends ConsumerState<AuditPage> {
           );
         },
         separatorBuilder: (BuildContext context, int index) {
-          if (auditLog
-              .map((group) => group.length - 1)
-              .toList()
-              .contains(index)) {
+          if (groupEndIndices.contains(index)) {
             return SizedBox(height: 2, child: Container(color: Colors.black));
           } else {
             return Container();
